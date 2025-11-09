@@ -1,0 +1,37 @@
+[gd_scene load_steps=2 format=3 uid="uid://diku73kk4tjv7"]
+
+[ext_resource type="Script" uid="uid://c2o3dssew3lm2" path="res://src/battle/actor_queue.gd" id="1_gqsil"]
+
+[node name="ActorQueue" type="Control"]
+custom_minimum_size = Vector2(400, 40)
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -1520.0
+offset_bottom = -1040.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_gqsil")
+
+[node name="NameLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 87.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 32
+text = "Asher"
+
+[node name="CtLabel" type="Label" parent="."]
+modulate = Color(0.87058824, 0.45882353, 0.14509805, 1)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 32
+text = "99%"

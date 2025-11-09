@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="Action" load_steps=2 format=3 uid="uid://cg0jwg4m14vwn"]
+
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_uro7t"]
+
+[resource]
+script = ExtResource("1_uro7t")
+action_name = "Leeching Shots"
+description = "Attack an enemy three times, each hit dealing X% damage. Then heal HP equal to 50% of the damage you dealt."
+focus_cost = 3
+hit_count = 3
+potency = 0.5
+power_type = 1
+damage_type = 1
+metadata/_custom_type_script = "uid://dm08rhkg3bai3"
