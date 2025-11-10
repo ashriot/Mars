@@ -1,6 +1,8 @@
 extends Node
 class_name BattleManager
 
+var speed = 1.0
+
 # --- State Machine ---
 enum State { LOADING, PLAYER_ACTION, WAITING_FOR_TARGET, ENEMY_ACTION, EXECUTING_ACTION }
 var current_state = State.LOADING
@@ -24,7 +26,7 @@ signal turn_order_updated(turn_queue_data)
 var current_hero: HeroCard = null
 var selected_action: Action = null
 var actor_list: Array = [] # Renamed from turn_queue
-var TARGET_CT: int = 1000 # Your CT target
+var TARGET_CT: int = 10000 # Your CT target
 
 func change_state(new_state):
 	print("--- State Change: ", State.keys()[current_state], " > ", State.keys()[new_state], " ---")
@@ -32,7 +34,7 @@ func change_state(new_state):
 
 func _ready():
 	randomize() # For tie-breakers
-	await get_tree().create_timer(0.5).timeout
+	await get_tree().create_timer(speed * 0.5).timeout
 	action_bar.action_selected.connect(_on_action_selected)
 	action_bar.shift_button_pressed.connect(_on_shift_button_pressed)
 
@@ -48,6 +50,7 @@ func spawn_encounter():
 		var hero_card: HeroCard = hero_card_scene.instantiate()
 		hero_area.add_child(hero_card)
 		hero_card.setup(hero_data)
+		hero_card.i_was_breached.connect(_on_actor_breached)
 		hero_card.current_ct = randi_range(0, 400) # Give a random starting charge
 		hero_card.role_shifted.connect(_on_hero_role_shifted)
 		actor_list.append(hero_card)
@@ -56,12 +59,13 @@ func spawn_encounter():
 		var enemy_card: EnemyCard = enemy_card_scene.instantiate()
 		enemy_area.add_child(enemy_card)
 		enemy_card.setup(enemy_data)
+		enemy_card.i_was_breached.connect(_on_actor_breached)
 		enemy_card.current_ct = randi_range(0, 400) # Give a random starting charge
 		enemy_card.enemy_clicked.connect(_on_enemy_clicked)
 		actor_list.append(enemy_card)
 	print("Spawning complete.")
 
-func _run_ct_simulation(num_turns: int) -> Array:
+func _run_ct_simulation(num_turns := 10) -> Array:
 	var projected_queue = []
 	var relative_ticks = 0
 
@@ -81,9 +85,6 @@ func _run_ct_simulation(num_turns: int) -> Array:
 		# 3. Find the next winner in the "ghost" list
 		for data in sim_data:
 			var ct_needed = TARGET_CT - data.ct
-			if data.actor.current_stats.speed <= 0:
-				continue
-
 			var ticks_needed = ceil(float(ct_needed) / data.actor.current_stats.speed)
 
 			if ticks_needed < ticks_needed_for_winner:
@@ -110,7 +111,7 @@ func _run_ct_simulation(num_turns: int) -> Array:
 	return projected_queue
 
 func find_and_start_next_turn():
-	var projection = _run_ct_simulation(5)
+	var projection = _run_ct_simulation()
 
 	if projection.is_empty():
 		push_error("Error: No one can take a turn!")
@@ -134,12 +135,14 @@ func find_and_start_next_turn():
 	if winner.is_in_group("player"):
 		self.current_hero = winner
 		change_state(State.PLAYER_ACTION)
+		await winner.on_turn_started()
 		player_turn_started.emit(current_hero)
 	else:
 		self.current_hero = null
 		change_state(State.ENEMY_ACTION)
+		await winner.on_turn_started()
 		await execute_enemy_turn(winner)
-		find_and_start_next_turn() # Find the next turn
+		find_and_start_next_turn()
 
 func sort_actors_by_ct(a, b):
 	var a_is_player = a.is_in_group("player")
@@ -149,6 +152,12 @@ func sort_actors_by_ct(a, b):
 	if not a_is_player and b_is_player: return false
 	return randf() > 0.5
 
+func _on_actor_breached():
+	print("\n New Queue: ")
+	var new_projection = _run_ct_simulation()
+
+	turn_order_updated.emit(new_projection)
+
 func _on_action_selected(action: Action):
 	if current_state != State.PLAYER_ACTION: return
 
@@ -157,6 +166,7 @@ func _on_action_selected(action: Action):
 
 func _on_enemy_clicked(target_enemy: EnemyCard):
 	if current_state != State.WAITING_FOR_TARGET: return
+	action_bar.hide_bar()
 
 	change_state(State.EXECUTING_ACTION)
 
@@ -172,6 +182,8 @@ func _on_enemy_clicked(target_enemy: EnemyCard):
 			targets_array = get_adjacent_enemies(target_enemy)
 
 	await execute_action(current_hero, selected_action, targets_array)
+	current_hero.on_turn_ended()
+	await get_tree().create_timer(speed * 1.0).timeout
 
 	self.selected_action = null
 	find_and_start_next_turn()
@@ -222,10 +234,12 @@ func execute_action(actor: ActorCard, action: Action, targets: Array):
 	return
 
 func execute_enemy_turn(enemy: EnemyCard):
+	if enemy.is_breached:
+		enemy.recover_breach()
 	change_state(State.EXECUTING_ACTION)
 
 	print("\n", enemy.enemy_data.stats.actor_name, " is thinking...")
-	await get_tree().create_timer(0.5).timeout
+	await get_tree().create_timer(speed * 1.0).timeout
 
 	var action = enemy.get_next_action()
 	if not action: return

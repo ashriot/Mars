@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=5 format=3 uid="uid://iofc48r1ubbm"]
+
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_yxqo2"]
+[ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://data/scripts/enemy_data.gd" id="2_y0noh"]
+[ext_resource type="Script" uid="uid://b70gwt4gd4cun" path="res://data/scripts/actor_stats.gd" id="3_fwxav"]
+
+[sub_resource type="Resource" id="Resource_4j3ma"]
+script = ExtResource("3_fwxav")
+actor_name = "Guardian"
+max_hp = 600
+starting_guard = 7
+attack = 30
+psyche = 30
+speed = 70
+kinetic_defense = 0.8
+energy_defense = 0.5
+metadata/_custom_type_script = "uid://b70gwt4gd4cun"
+
+[resource]
+script = ExtResource("2_y0noh")
+stats = SubResource("Resource_4j3ma")
+metadata/_custom_type_script = "uid://b3t5esgv1d2ku"

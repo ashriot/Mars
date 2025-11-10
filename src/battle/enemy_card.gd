@@ -9,8 +9,8 @@ var enemy_data: EnemyData
 var ai_index: int = 0
 
 # --- UNIQUE UI Node References ---
-@onready var intent_icon: TextureRect = $IntentIcon
-@onready var name_label: Label = $NameLabel
+@onready var intent_icon: TextureRect = $Panel/IntentIcon
+@onready var name_label: Label = $Panel/NameLabel
 
 
 func setup(data: EnemyData):
@@ -19,13 +19,12 @@ func setup(data: EnemyData):
 	setup_base(data.stats)
 
 	name_label.text = enemy_data.stats.actor_name
+	$Panel/Defenses.text = "KIN: " + str(int(enemy_data.stats.kinetic_defense * 100)) \
+	+ "%        NRG: " + str(int(enemy_data.stats.energy_defense * 100)) + "%"
 	if enemy_data.portrait:
 		portrait_rect.texture = enemy_data.portrait
 
 	add_to_group("enemy")
-
-func _ready():
-	self.gui_input.connect(_on_gui_input)
 
 func get_next_action() -> Action:
 	return

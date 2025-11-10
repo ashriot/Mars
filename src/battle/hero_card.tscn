@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://cj2ylb1ld6ews"]
+[gd_scene load_steps=10 format=3 uid="uid://cj2ylb1ld6ews"]
 
 [ext_resource type="Script" uid="uid://cp1th7fv4flgo" path="res://src/battle/hero_card.gd" id="1_n7b5o"]
 [ext_resource type="Texture2D" uid="uid://d1te5324os86k" path="res://assets/graphics/icons/bolt.png" id="2_1ptom"]
@@ -18,11 +18,116 @@ corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
-[node name="HeroCard" type="Panel"]
+[sub_resource type="Animation" id="Animation_n7b5o"]
+resource_name = "move_up"
+length = 0.2
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.13333334, 0.2),
+"transitions": PackedFloat32Array(1, 3.7321315, 1.0717733),
+"update": 0,
+"values": [Vector2(0, 0), Vector2(0, -75), Vector2(0, -50)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Title:modulate")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.2),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 1), Color(1, 0.7647059, 0.1764706, 1)]
+}
+
+[sub_resource type="Animation" id="Animation_1ptom"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(0, 0)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Title:modulate")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(1, 1, 1, 1)]
+}
+
+[sub_resource type="Animation" id="Animation_d6207"]
+resource_name = "move_down"
+length = 0.2
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.2),
+"transitions": PackedFloat32Array(1, 3.4822018),
+"update": 0,
+"values": [Vector2(0, -50), Vector2(0, 0)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Title:modulate")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.2),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Color(1, 0.7647059, 0.1764706, 1), Color(1, 1, 1, 1)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_d6207"]
+_data = {
+&"RESET": SubResource("Animation_1ptom"),
+&"move_down": SubResource("Animation_d6207"),
+&"move_up": SubResource("Animation_n7b5o")
+}
+
+[node name="HeroCard" type="Control"]
 custom_minimum_size = Vector2(400, 200)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+mouse_filter = 2
 script = ExtResource("1_n7b5o")
 
-[node name="HP" type="Control" parent="."]
+[node name="Panel" type="Panel" parent="."]
+custom_minimum_size = Vector2(400, 200)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="HP" type="Control" parent="Panel"]
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
@@ -35,7 +140,7 @@ offset_bottom = -13.0
 grow_horizontal = 2
 grow_vertical = 0
 
-[node name="Bar" type="ProgressBar" parent="HP"]
+[node name="Bar" type="ProgressBar" parent="Panel/HP"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -47,7 +152,7 @@ theme_override_styles/fill = SubResource("StyleBoxFlat_mswv1")
 value = 40.0
 show_percentage = false
 
-[node name="Label" type="Label" parent="HP"]
+[node name="Label" type="Label" parent="Panel/HP"]
 layout_mode = 1
 anchors_preset = 14
 anchor_top = 0.5
@@ -61,7 +166,7 @@ grow_vertical = 2
 theme_override_font_sizes/font_size = 40
 text = "HP"
 
-[node name="Value" type="Label" parent="HP"]
+[node name="Value" type="Label" parent="Panel/HP"]
 layout_mode = 1
 anchors_preset = 14
 anchor_top = 0.5
@@ -76,7 +181,7 @@ theme_override_font_sizes/font_size = 40
 text = "9999"
 horizontal_alignment = 2
 
-[node name="Title" type="Label" parent="."]
+[node name="Title" type="Label" parent="Panel"]
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
@@ -89,7 +194,7 @@ grow_vertical = 2
 theme_override_font_sizes/font_size = 40
 text = "Unit Name"
 
-[node name="FocusBar" type="HBoxContainer" parent="."]
+[node name="FocusBar" type="HBoxContainer" parent="Panel"]
 modulate = Color(0.20784314, 0.7411765, 0.77254903, 1)
 layout_mode = 1
 anchors_preset = 10
@@ -99,67 +204,67 @@ offset_bottom = 17.0
 grow_horizontal = 2
 theme_override_constants/separation = -10
 
-[node name="Bolt" type="TextureRect" parent="FocusBar"]
+[node name="Bolt" type="TextureRect" parent="Panel/FocusBar"]
 custom_minimum_size = Vector2(50, 42)
 layout_mode = 2
 texture = ExtResource("2_1ptom")
 expand_mode = 1
 
-[node name="Bolt2" type="TextureRect" parent="FocusBar"]
+[node name="Bolt2" type="TextureRect" parent="Panel/FocusBar"]
 custom_minimum_size = Vector2(50, 42)
 layout_mode = 2
 texture = ExtResource("2_1ptom")
 expand_mode = 1
 
-[node name="Bolt3" type="TextureRect" parent="FocusBar"]
+[node name="Bolt3" type="TextureRect" parent="Panel/FocusBar"]
 custom_minimum_size = Vector2(50, 42)
 layout_mode = 2
 texture = ExtResource("2_1ptom")
 expand_mode = 1
 
-[node name="Bolt4" type="TextureRect" parent="FocusBar"]
+[node name="Bolt4" type="TextureRect" parent="Panel/FocusBar"]
 custom_minimum_size = Vector2(50, 42)
 layout_mode = 2
 texture = ExtResource("2_1ptom")
 expand_mode = 1
 
-[node name="Bolt5" type="TextureRect" parent="FocusBar"]
+[node name="Bolt5" type="TextureRect" parent="Panel/FocusBar"]
 custom_minimum_size = Vector2(50, 42)
 layout_mode = 2
 texture = ExtResource("2_1ptom")
 expand_mode = 1
 
-[node name="Bolt6" type="TextureRect" parent="FocusBar"]
+[node name="Bolt6" type="TextureRect" parent="Panel/FocusBar"]
 custom_minimum_size = Vector2(50, 42)
 layout_mode = 2
 texture = ExtResource("2_1ptom")
 expand_mode = 1
 
-[node name="Bolt7" type="TextureRect" parent="FocusBar"]
+[node name="Bolt7" type="TextureRect" parent="Panel/FocusBar"]
 custom_minimum_size = Vector2(50, 42)
 layout_mode = 2
 texture = ExtResource("2_1ptom")
 expand_mode = 1
 
-[node name="Bolt8" type="TextureRect" parent="FocusBar"]
+[node name="Bolt8" type="TextureRect" parent="Panel/FocusBar"]
 custom_minimum_size = Vector2(50, 42)
 layout_mode = 2
 texture = ExtResource("2_1ptom")
 expand_mode = 1
 
-[node name="Bolt9" type="TextureRect" parent="FocusBar"]
+[node name="Bolt9" type="TextureRect" parent="Panel/FocusBar"]
 custom_minimum_size = Vector2(50, 42)
 layout_mode = 2
 texture = ExtResource("2_1ptom")
 expand_mode = 1
 
-[node name="Bolt10" type="TextureRect" parent="FocusBar"]
+[node name="Bolt10" type="TextureRect" parent="Panel/FocusBar"]
 custom_minimum_size = Vector2(50, 42)
 layout_mode = 2
 texture = ExtResource("2_1ptom")
 expand_mode = 1
 
-[node name="GuardBar" type="HBoxContainer" parent="."]
+[node name="GuardBar" type="HBoxContainer" parent="Panel"]
 modulate = Color(0.5882353, 0.5882353, 0.5882353, 1)
 layout_mode = 1
 anchors_preset = 10
@@ -171,63 +276,71 @@ offset_bottom = 220.0
 grow_horizontal = 2
 theme_override_constants/separation = 3
 
-[node name="Shield" type="TextureRect" parent="GuardBar"]
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 2
 texture = ExtResource("3_d6207")
 expand_mode = 1
 
-[node name="Shield2" type="TextureRect" parent="GuardBar"]
+[node name="Shield2" type="TextureRect" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 2
 texture = ExtResource("3_d6207")
 expand_mode = 1
 
-[node name="Shield3" type="TextureRect" parent="GuardBar"]
+[node name="Shield3" type="TextureRect" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 2
 texture = ExtResource("3_d6207")
 expand_mode = 1
 
-[node name="Shield4" type="TextureRect" parent="GuardBar"]
+[node name="Shield4" type="TextureRect" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 2
 texture = ExtResource("3_d6207")
 expand_mode = 1
 
-[node name="Shield5" type="TextureRect" parent="GuardBar"]
+[node name="Shield5" type="TextureRect" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 2
 texture = ExtResource("3_d6207")
 expand_mode = 1
 
-[node name="Shield6" type="TextureRect" parent="GuardBar"]
+[node name="Shield6" type="TextureRect" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 2
 texture = ExtResource("3_d6207")
 expand_mode = 1
 
-[node name="Shield7" type="TextureRect" parent="GuardBar"]
+[node name="Shield7" type="TextureRect" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 2
 texture = ExtResource("3_d6207")
 expand_mode = 1
 
-[node name="Shield8" type="TextureRect" parent="GuardBar"]
+[node name="Shield8" type="TextureRect" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 2
 texture = ExtResource("3_d6207")
 expand_mode = 1
 
-[node name="Shield9" type="TextureRect" parent="GuardBar"]
+[node name="Shield9" type="TextureRect" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 2
 texture = ExtResource("3_d6207")
 expand_mode = 1
 
-[node name="Portrait" type="TextureRect" parent="."]
+[node name="Portrait" type="TextureRect" parent="Panel"]
 layout_mode = 0
 offset_left = 264.0
 offset_top = 22.0
 offset_right = 380.0
 offset_bottom = 138.0
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+root_node = NodePath("../Panel")
+libraries = {
+&"": SubResource("AnimationLibrary_d6207")
+}
+
+[connection signal="gui_input" from="." to="." method="_on_gui_input"]

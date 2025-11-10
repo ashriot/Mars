@@ -4,6 +4,7 @@ signal action_selected(action, target)
 signal shift_button_pressed(direction)
 
 
+@onready var anim = $AnimationPlayer
 @onready var button_container = $Actions
 @onready var left_shift_button = $LeftShift/Button
 @onready var right_shift_button = $RightShift/Button
@@ -15,7 +16,7 @@ signal shift_button_pressed(direction)
 
 func _ready():
 	battle_manager.player_turn_started.connect(on_player_turn_started)
-
+	hide()
 	left_shift_button.pressed.connect(_on_shift_button_pressed.bind("left"))
 	right_shift_button.pressed.connect(_on_shift_button_pressed.bind("right"))
 
@@ -23,6 +24,16 @@ func on_player_turn_started(hero_card: HeroCard):
 	if not hero_card.role_shifted.is_connected(update_action_bar):
 		hero_card.role_shifted.connect(update_action_bar)
 	update_action_bar(hero_card)
+	show()
+	anim.play("fade_in")
+
+func hide_bar():
+	anim.play("fade_out")
+	await anim.animation_finished
+	hide()
+
+	for child in button_container.get_children():
+		child.queue_free()
 
 func update_action_bar(hero_card: HeroCard):
 	if not hero_card:
@@ -53,7 +64,6 @@ func update_action_bar(hero_card: HeroCard):
 	if next_role:
 		right_shift_button.get_child(0).text = next_role.role_name
 		right_shift_button.disabled = next_role == current_role or next_role == prev_role
-
 
 func _on_shift_button_pressed(direction: String):
 	shift_button_pressed.emit(direction)

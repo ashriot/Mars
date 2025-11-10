@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="Action" load_steps=2 format=3 uid="uid://dea3writltnu5"]
+
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_phsro"]
+
+[resource]
+script = ExtResource("1_phsro")
+action_name = "Psi-Shot"
+potency = 1.5
+damage_type = 1
+metadata/_custom_type_script = "uid://dm08rhkg3bai3"

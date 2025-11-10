@@ -1,5 +1,3 @@
-# HeroCard.gd
-# --- THIS IS THE BIG CHANGE ---
 extends ActorCard
 class_name HeroCard
 
@@ -13,8 +11,9 @@ var current_focus_pips: int = 0
 var current_role_index: int = 0
 
 # --- UNIQUE UI Node References ---
-@onready var focus_bar: HBoxContainer = $FocusBar
-@onready var name_label: Label = $Title
+@onready var focus_bar: HBoxContainer = $Panel/FocusBar
+@onready var name_label: Label = $Panel/Title
+@onready var anim = $AnimationPlayer
 
 # ===================================================================
 # 1. SETUP & READY
@@ -28,13 +27,24 @@ func setup(data: HeroData):
 	if hero_data.portrait:
 		portrait_rect.texture = hero_data.portrait
 
-	self.current_focus_pips = 1 # Starting focus
+	self.current_focus_pips = 0
 	add_to_group("player")
 	update_focus_bar()
 
-# ===================================================================
-# 2. UNIQUE FUNCTIONS (Focus & Role)
-# ===================================================================
+
+func on_turn_started() -> void:
+	anim.play("move_up")
+	if current_focus_pips < 10:
+		current_focus_pips += 1
+		update_focus_bar()
+		print(hero_data.base_stats.actor_name, " gained 1 Focus (now at ", current_focus_pips, ")")
+	await super.on_turn_started()
+	return
+
+
+func on_turn_ended() -> void:
+	anim.play("move_down")
+
 
 func get_current_role() -> Role:
 	if hero_data.unlocked_roles.size() > 0:
@@ -72,3 +82,7 @@ func update_focus_bar():
 		else:
 			pips[i].visible = false
 	focus_changed.emit(current_focus_pips)
+
+
+func _on_gui_input(event: InputEvent) -> void:
+	pass # Replace with function body.

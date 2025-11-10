@@ -9,11 +9,25 @@ bg_color = Color(0.30980393, 0.15294118, 0.14509805, 1)
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mswv1"]
 bg_color = Color(0.9411765, 0.30588236, 0.32941177, 1)
 
-[node name="EnemyCard" type="Panel"]
+[node name="EnemyCard" type="Control"]
 custom_minimum_size = Vector2(400, 200)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
 script = ExtResource("1_cu1kv")
 
-[node name="HP" type="Control" parent="."]
+[node name="Panel" type="Panel" parent="."]
+custom_minimum_size = Vector2(400, 200)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="HP" type="Control" parent="Panel"]
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
@@ -27,7 +41,7 @@ grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
 
-[node name="Bar" type="ProgressBar" parent="HP"]
+[node name="Bar" type="ProgressBar" parent="Panel/HP"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -40,7 +54,7 @@ theme_override_styles/fill = SubResource("StyleBoxFlat_mswv1")
 value = 40.0
 show_percentage = false
 
-[node name="Label" type="Label" parent="HP"]
+[node name="Label" type="Label" parent="Panel/HP"]
 layout_mode = 1
 anchors_preset = 14
 anchor_top = 0.5
@@ -54,7 +68,7 @@ grow_vertical = 2
 theme_override_font_sizes/font_size = 40
 text = "HP"
 
-[node name="Value" type="Label" parent="HP"]
+[node name="Value" type="Label" parent="Panel/HP"]
 layout_mode = 1
 anchors_preset = 14
 anchor_top = 0.5
@@ -69,7 +83,7 @@ theme_override_font_sizes/font_size = 40
 text = "9999"
 horizontal_alignment = 2
 
-[node name="NameLabel" type="Label" parent="."]
+[node name="NameLabel" type="Label" parent="Panel"]
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
@@ -82,7 +96,7 @@ grow_vertical = 2
 theme_override_font_sizes/font_size = 40
 text = "Unit Name"
 
-[node name="GuardBar" type="HBoxContainer" parent="."]
+[node name="GuardBar" type="HBoxContainer" parent="Panel"]
 modulate = Color(0.5882353, 0.5882353, 0.5882353, 1)
 layout_mode = 1
 anchors_preset = 10
@@ -95,61 +109,61 @@ grow_horizontal = 2
 mouse_filter = 2
 theme_override_constants/separation = 3
 
-[node name="Shield" type="TextureRect" parent="GuardBar"]
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 2
 texture = ExtResource("2_4kuvy")
 expand_mode = 1
 
-[node name="Shield2" type="TextureRect" parent="GuardBar"]
+[node name="Shield2" type="TextureRect" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 2
 texture = ExtResource("2_4kuvy")
 expand_mode = 1
 
-[node name="Shield3" type="TextureRect" parent="GuardBar"]
+[node name="Shield3" type="TextureRect" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 2
 texture = ExtResource("2_4kuvy")
 expand_mode = 1
 
-[node name="Shield4" type="TextureRect" parent="GuardBar"]
+[node name="Shield4" type="TextureRect" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 2
 texture = ExtResource("2_4kuvy")
 expand_mode = 1
 
-[node name="Shield5" type="TextureRect" parent="GuardBar"]
+[node name="Shield5" type="TextureRect" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 2
 texture = ExtResource("2_4kuvy")
 expand_mode = 1
 
-[node name="Shield6" type="TextureRect" parent="GuardBar"]
+[node name="Shield6" type="TextureRect" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 2
 texture = ExtResource("2_4kuvy")
 expand_mode = 1
 
-[node name="Shield7" type="TextureRect" parent="GuardBar"]
+[node name="Shield7" type="TextureRect" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 2
 texture = ExtResource("2_4kuvy")
 expand_mode = 1
 
-[node name="Shield8" type="TextureRect" parent="GuardBar"]
+[node name="Shield8" type="TextureRect" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 2
 texture = ExtResource("2_4kuvy")
 expand_mode = 1
 
-[node name="Shield9" type="TextureRect" parent="GuardBar"]
+[node name="Shield9" type="TextureRect" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 2
 texture = ExtResource("2_4kuvy")
 expand_mode = 1
 
-[node name="IntentIcon" type="TextureRect" parent="."]
+[node name="IntentIcon" type="TextureRect" parent="Panel"]
 layout_mode = 0
 offset_left = 134.0
 offset_top = -8.0
@@ -157,10 +171,22 @@ offset_right = 174.0
 offset_bottom = 32.0
 mouse_filter = 2
 
-[node name="Portrait" type="TextureRect" parent="."]
+[node name="Portrait" type="TextureRect" parent="Panel"]
 layout_mode = 0
 offset_left = 272.0
 offset_top = 12.0
 offset_right = 377.0
 offset_bottom = 117.0
 mouse_filter = 2
+
+[node name="Defenses" type="Label" parent="Panel"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 44.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 36
+text = "KIN: 25%        NRG: 50%"
+horizontal_alignment = 1
+
+[connection signal="gui_input" from="." to="." method="_on_gui_input"]

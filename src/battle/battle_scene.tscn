@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://dc5du0o5phhma"]
+[gd_scene load_steps=13 format=3 uid="uid://dc5du0o5phhma"]
 
 [ext_resource type="Script" uid="uid://deoohlwp7dcfm" path="res://src/battle/battle_manager.gd" id="1_6cbqe"]
 [ext_resource type="PackedScene" uid="uid://cj2ylb1ld6ews" path="res://src/battle/hero_card.tscn" id="1_sft4c"]
@@ -6,9 +6,11 @@
 [ext_resource type="Script" uid="uid://dc5sk0b0jubvj" path="res://data/scripts/hero_data.gd" id="4_w6n6o"]
 [ext_resource type="Resource" uid="uid://ctg8csrcqdj57" path="res://data/heroes/asher.tres" id="5_16l6v"]
 [ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://data/scripts/enemy_data.gd" id="6_6by3n"]
+[ext_resource type="Resource" uid="uid://b2bkd217htd2n" path="res://data/heroes/echo.tres" id="6_vtpwn"]
 [ext_resource type="Resource" uid="uid://cpdokr12lby8i" path="res://data/enemies/trooper.tres" id="7_vtpwn"]
 [ext_resource type="PackedScene" uid="uid://260uyw1v5su0" path="res://src/battle/action_bar.tscn" id="8_w6n6o"]
 [ext_resource type="Script" uid="uid://bf5t2mtgtkbsn" path="res://src/battle/turn_queue.gd" id="9_16l6v"]
+[ext_resource type="Resource" uid="uid://iofc48r1ubbm" path="res://data/enemies/guardian.tres" id="9_nbe2n"]
 [ext_resource type="PackedScene" uid="uid://diku73kk4tjv7" path="res://src/battle/actor_queue.tscn" id="10_6by3n"]
 
 [node name="BattleScene" type="Control"]
@@ -27,8 +29,8 @@ enemy_card_scene = ExtResource("1_u5n4n")
 hero_area = NodePath("../UI/Heroes/HBox")
 enemy_area = NodePath("../UI/Enemies/HBox")
 action_bar = NodePath("../UI/ActionBar")
-hero_data_files = Array[ExtResource("4_w6n6o")]([ExtResource("5_16l6v")])
-enemy_data_files = Array[ExtResource("6_6by3n")]([ExtResource("7_vtpwn")])
+hero_data_files = Array[ExtResource("4_w6n6o")]([ExtResource("5_16l6v"), ExtResource("6_vtpwn")])
+enemy_data_files = Array[ExtResource("6_6by3n")]([ExtResource("7_vtpwn"), ExtResource("9_nbe2n")])
 
 [node name="UI" type="Control" parent="."]
 layout_mode = 1

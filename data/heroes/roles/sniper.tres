@@ -1,8 +1,8 @@
 [gd_resource type="Resource" script_class="Role" load_steps=5 format=3 uid="uid://c03acvaovbpqc"]
 
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_gahah"]
-[ext_resource type="Resource" uid="uid://7dg4i7k6dya0" path="res://data/heroes/actions/double_shot.tres" id="2_agejl"]
-[ext_resource type="Resource" uid="uid://cg0jwg4m14vwn" path="res://data/heroes/actions/leeching_shots.tres" id="3_8sksw"]
+[ext_resource type="Resource" uid="uid://7dg4i7k6dya0" path="res://data/heroes/actions/asher/double_shot.tres" id="2_agejl"]
+[ext_resource type="Resource" uid="uid://cg0jwg4m14vwn" path="res://data/heroes/actions/asher/leeching_shots.tres" id="3_8sksw"]
 [ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/role.gd" id="4_041vc"]
 
 [resource]

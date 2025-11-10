@@ -7,7 +7,15 @@
 [sub_resource type="Resource" id="Resource_4j3ma"]
 script = ExtResource("3_n3ati")
 actor_name = "Trooper"
-speed = 16
+max_hp = 400
+starting_guard = 4
+attack = 40
+psyche = 40
+precision = 15
+overload = 30
+speed = 90
+kinetic_defense = 0.5
+energy_defense = 0.5
 metadata/_custom_type_script = "uid://b70gwt4gd4cun"
 
 [resource]
