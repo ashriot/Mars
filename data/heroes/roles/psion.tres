@@ -1,11 +1,11 @@
 [gd_resource type="Resource" script_class="Role" load_steps=4 format=3 uid="uid://dl1i3sftsuywj"]
 
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_bdft1"]
-[ext_resource type="Resource" uid="uid://dea3writltnu5" path="res://data/heroes/actions/echo/psi-shot.tres" id="2_cerf1"]
+[ext_resource type="Resource" uid="uid://dea3writltnu5" path="res://data/heroes/actions/echo/focused_bolt.tres" id="2_cerf1"]
 [ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/role.gd" id="2_xcj62"]
 
 [resource]
 script = ExtResource("2_xcj62")
 role_name = "Psion"
-actions = Array[ExtResource("1_bdft1")]([ExtResource("2_cerf1")])
+actions = Array[ExtResource("1_bdft1")]([ExtResource("2_cerf1"), null, null, null])
 metadata/_custom_type_script = "uid://d3mhjutrnvwsp"

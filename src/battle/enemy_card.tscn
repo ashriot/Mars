@@ -1,13 +1,29 @@
-[gd_scene load_steps=5 format=3 uid="uid://b4tt3yil85l7j"]
+[gd_scene load_steps=7 format=3 uid="uid://b4tt3yil85l7j"]
 
 [ext_resource type="Script" uid="uid://carvfoj4h04nm" path="res://src/battle/enemy_card.gd" id="1_cu1kv"]
 [ext_resource type="Texture2D" uid="uid://dje00e457xu8o" path="res://assets/graphics/icons/shield.png" id="2_4kuvy"]
+[ext_resource type="Texture2D" uid="uid://jeiq1r6ke2t7" path="res://assets/graphics/icons/plus.png" id="2_e8ixv"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_u5n4n"]
-bg_color = Color(0.30980393, 0.15294118, 0.14509805, 1)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cu1kv"]
+bg_color = Color(0.25021347, 0.25021347, 0.25021335, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mswv1"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4kuvy"]
+bg_color = Color(0, 0, 0, 0.19607843)
+corner_radius_top_left = 15
+corner_radius_top_right = 15
+corner_radius_bottom_right = 15
+corner_radius_bottom_left = 15
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_e8ixv"]
 bg_color = Color(0.9411765, 0.30588236, 0.32941177, 1)
+corner_radius_top_left = 15
+corner_radius_top_right = 15
+corner_radius_bottom_right = 15
+corner_radius_bottom_left = 15
 
 [node name="EnemyCard" type="Control"]
 custom_minimum_size = Vector2(400, 200)
@@ -26,6 +42,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_cu1kv")
 
 [node name="HP" type="Control" parent="Panel"]
 layout_mode = 1
@@ -33,10 +50,10 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 14.0
-offset_top = -68.0
-offset_right = -14.0
-offset_bottom = -13.0
+offset_left = 6.0
+offset_top = -81.0
+offset_right = -6.0
+offset_bottom = -39.118286
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
@@ -49,24 +66,24 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-theme_override_styles/background = SubResource("StyleBoxFlat_u5n4n")
-theme_override_styles/fill = SubResource("StyleBoxFlat_mswv1")
+theme_override_styles/background = SubResource("StyleBoxFlat_4kuvy")
+theme_override_styles/fill = SubResource("StyleBoxFlat_e8ixv")
 value = 40.0
 show_percentage = false
 
-[node name="Label" type="Label" parent="Panel/HP"]
+[node name="HeartIcon" type="TextureRect" parent="Panel/HP"]
 layout_mode = 1
-anchors_preset = 14
-anchor_top = 0.5
-anchor_right = 1.0
-anchor_bottom = 0.5
-offset_left = 9.0
-offset_top = -24.5
-offset_bottom = 24.5
-grow_horizontal = 2
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_left = 5.0
+offset_top = 4.881714
+offset_right = 39.509636
+offset_bottom = -4.881714
 grow_vertical = 2
-theme_override_font_sizes/font_size = 40
-text = "HP"
+mouse_filter = 2
+texture = ExtResource("2_e8ixv")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="Value" type="Label" parent="Panel/HP"]
 layout_mode = 1
@@ -83,31 +100,91 @@ theme_override_font_sizes/font_size = 40
 text = "9999"
 horizontal_alignment = 2
 
-[node name="NameLabel" type="Label" parent="Panel"]
+[node name="Title" type="Label" parent="Panel"]
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_left = 36.0
-offset_top = -38.0
-offset_right = 339.0
-offset_bottom = 11.0
+offset_left = 10.0
+offset_top = -26.0
+offset_right = 391.0
+offset_bottom = 23.0
 grow_vertical = 2
 theme_override_font_sizes/font_size = 40
 text = "Unit Name"
+horizontal_alignment = 2
+
+[node name="Defenses" type="Label" parent="Panel"]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -399.0
+offset_top = -100.0
+offset_bottom = -60.616245
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 32
+text = "Defense"
+horizontal_alignment = 1
+
+[node name="IntentName" type="Label" parent="Panel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -193.5
+offset_top = -59.0
+offset_right = 193.5
+offset_bottom = -29.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/line_spacing = -5
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 24
+text = "[Intent]"
+horizontal_alignment = 1
+
+[node name="IntentEffect" type="Label" parent="Panel"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -193.5
+offset_top = 23.0
+offset_right = 193.5
+offset_bottom = 61.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/line_spacing = -5
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 30
+text = "22x5 KIN > Asher"
+horizontal_alignment = 1
 
 [node name="GuardBar" type="HBoxContainer" parent="Panel"]
 modulate = Color(0.5882353, 0.5882353, 0.5882353, 1)
 layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_left = 4.0
-offset_top = 178.0
-offset_right = -2.0
-offset_bottom = 220.0
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -192.0
+offset_top = -33.0
+offset_right = 193.0
+offset_bottom = 9.0
 grow_horizontal = 2
+grow_vertical = 0
 mouse_filter = 2
-theme_override_constants/separation = 3
+theme_override_constants/separation = 2
 
 [node name="Shield" type="TextureRect" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 42)
@@ -163,30 +240,39 @@ layout_mode = 2
 texture = ExtResource("2_4kuvy")
 expand_mode = 1
 
-[node name="IntentIcon" type="TextureRect" parent="Panel"]
-layout_mode = 0
-offset_left = 134.0
-offset_top = -8.0
-offset_right = 174.0
-offset_bottom = 32.0
-mouse_filter = 2
-
 [node name="Portrait" type="TextureRect" parent="Panel"]
 layout_mode = 0
-offset_left = 272.0
-offset_top = 12.0
-offset_right = 377.0
-offset_bottom = 117.0
+offset_left = 264.0
+offset_top = 22.0
+offset_right = 380.0
+offset_bottom = 138.0
 mouse_filter = 2
 
-[node name="Defenses" type="Label" parent="Panel"]
+[node name="BreachedLabel" type="Label" parent="Panel"]
+visible = false
 layout_mode = 1
-anchors_preset = 10
+anchors_preset = 12
+anchor_top = 1.0
 anchor_right = 1.0
-offset_bottom = 44.0
+anchor_bottom = 1.0
+offset_top = -23.0
+offset_bottom = 29.0
 grow_horizontal = 2
-theme_override_font_sizes/font_size = 36
-text = "KIN: 25%        NRG: 50%"
+grow_vertical = 0
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.32941177)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 0
+theme_override_constants/outline_size = 5
+theme_override_constants/shadow_outline_size = 20
+theme_override_font_sizes/font_size = 40
+text = "BREACHED"
 horizontal_alignment = 1
+
+[node name="IntentIcon" type="TextureRect" parent="Panel"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+mouse_filter = 2
 
 [connection signal="gui_input" from="." to="." method="_on_gui_input"]

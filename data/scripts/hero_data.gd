@@ -2,7 +2,7 @@ extends Resource
 class_name HeroData
 
 @export var portrait: Texture
-@export var base_stats: ActorStats # <-- The hero's base stats
+@export var stats: ActorStats # <-- The hero's base stats
 
 # This is where you'll store all the roles they have unlocked
 @export var unlocked_roles: Array[Role]

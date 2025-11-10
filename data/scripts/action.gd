@@ -17,3 +17,6 @@ enum DamageType { KINETIC, ENERGY, PIERCING }
 @export var power_type: PowerType = PowerType.ATTACK
 @export var damage_type: DamageType = DamageType.KINETIC
 # @export var status_effect: Resource # For later
+
+func get_dynamic_potency(attacker: ActorCard, defender: ActorCard) -> float:
+	return potency

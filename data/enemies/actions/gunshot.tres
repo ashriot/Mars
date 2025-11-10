@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="Action" load_steps=2 format=3 uid="uid://d0m01fmh2ig2s"]
+
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_qfc2x"]
+
+[resource]
+script = ExtResource("1_qfc2x")
+action_name = "Gunshot"
+metadata/_custom_type_script = "uid://dm08rhkg3bai3"

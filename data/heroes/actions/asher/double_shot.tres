@@ -7,5 +7,5 @@ script = ExtResource("1_rgwap")
 action_name = "Double Shot"
 description = "Attack an enemy twice, each hit dealing X% damage."
 hit_count = 2
-potency = 0.5
+potency = 0.25
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

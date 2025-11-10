@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ActionFocusScaled" load_steps=2 format=3 uid="uid://dea3writltnu5"]
+
+[ext_resource type="Script" uid="uid://bbc43lgu37l0d" path="res://data/scripts/action_focused_scaled.gd" id="1_1xit7"]
+
+[resource]
+script = ExtResource("1_1xit7")
+action_name = "Focused Bolt"
+potency = 0.5
+damage_type = 1
+metadata/_custom_type_script = "uid://dm08rhkg3bai3"

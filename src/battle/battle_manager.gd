@@ -1,8 +1,6 @@
 extends Node
 class_name BattleManager
 
-var speed = 1.0
-
 # --- State Machine ---
 enum State { LOADING, PLAYER_ACTION, WAITING_FOR_TARGET, ENEMY_ACTION, EXECUTING_ACTION }
 var current_state = State.LOADING
@@ -10,6 +8,8 @@ var current_state = State.LOADING
 # --- Signals ---
 signal player_turn_started(hero_card)
 signal turn_order_updated(turn_queue_data)
+
+@export_range(0.1, 5.0) var global_animation_speed: float = 1.0
 
 # --- Scene Links ---
 @export var hero_card_scene: PackedScene
@@ -26,7 +26,7 @@ signal turn_order_updated(turn_queue_data)
 var current_hero: HeroCard = null
 var selected_action: Action = null
 var actor_list: Array = [] # Renamed from turn_queue
-var TARGET_CT: int = 10000 # Your CT target
+var TARGET_CT: int = 5000 # Your CT target
 
 func change_state(new_state):
 	print("--- State Change: ", State.keys()[current_state], " > ", State.keys()[new_state], " ---")
@@ -34,7 +34,7 @@ func change_state(new_state):
 
 func _ready():
 	randomize() # For tie-breakers
-	await get_tree().create_timer(speed * 0.5).timeout
+	await wait(0.5)
 	action_bar.action_selected.connect(_on_action_selected)
 	action_bar.shift_button_pressed.connect(_on_shift_button_pressed)
 
@@ -50,8 +50,10 @@ func spawn_encounter():
 		var hero_card: HeroCard = hero_card_scene.instantiate()
 		hero_area.add_child(hero_card)
 		hero_card.setup(hero_data)
-		hero_card.i_was_breached.connect(_on_actor_breached)
-		hero_card.current_ct = randi_range(0, 400) # Give a random starting charge
+		hero_card.actor_breached.connect(_on_actor_breached)
+		hero_card.actor_defeated.connect(_on_actor_died)
+		hero_card.actor_revived.connect(_on_actor_revived)
+		hero_card.current_ct = randi_range(hero_data.stats.speed / 2, hero_data.stats.speed * 2)
 		hero_card.role_shifted.connect(_on_hero_role_shifted)
 		actor_list.append(hero_card)
 
@@ -59,13 +61,16 @@ func spawn_encounter():
 		var enemy_card: EnemyCard = enemy_card_scene.instantiate()
 		enemy_area.add_child(enemy_card)
 		enemy_card.setup(enemy_data)
-		enemy_card.i_was_breached.connect(_on_actor_breached)
-		enemy_card.current_ct = randi_range(0, 400) # Give a random starting charge
+		enemy_card.actor_breached.connect(_on_actor_breached)
+		enemy_card.actor_defeated.connect(_on_actor_died)
+		enemy_card.actor_revived.connect(_on_actor_revived)
+		enemy_card.current_ct = randi_range(enemy_data.stats.speed / 2, enemy_data.stats.speed * 2)
+		enemy_card.decide_intent(get_living_heroes())
 		enemy_card.enemy_clicked.connect(_on_enemy_clicked)
 		actor_list.append(enemy_card)
 	print("Spawning complete.")
 
-func _run_ct_simulation(num_turns := 10) -> Array:
+func _run_ct_simulation(num_turns := 7) -> Array:
 	var projected_queue = []
 	var relative_ticks = 0
 
@@ -134,14 +139,17 @@ func find_and_start_next_turn():
 	# 6. Start the winner's turn
 	if winner.is_in_group("player"):
 		self.current_hero = winner
-		change_state(State.PLAYER_ACTION)
+		change_state(State.EXECUTING_ACTION)
 		await winner.on_turn_started()
 		player_turn_started.emit(current_hero)
+		await action_bar.slide_in()
+		change_state(State.PLAYER_ACTION)
 	else:
 		self.current_hero = null
 		change_state(State.ENEMY_ACTION)
 		await winner.on_turn_started()
 		await execute_enemy_turn(winner)
+		await wait(0.5)
 		find_and_start_next_turn()
 
 func sort_actors_by_ct(a, b):
@@ -158,6 +166,42 @@ func _on_actor_breached():
 
 	turn_order_updated.emit(new_projection)
 
+func _on_actor_died(actor: ActorCard):
+	print(actor.actor_name, " has died. Removing from actor_list.")
+
+	# 1. Remove from the "master list"
+	if actor_list.has(actor):
+		actor_list.erase(actor)
+	else:
+		print("Error: Actor was not in actor_list.")
+
+	# 2. Re-run the simulation to update the UI
+	# This is the same logic from _on_actor_breached
+	var new_projection = _run_ct_simulation()
+	turn_order_updated.emit(new_projection)
+
+	# 3. Check for victory/defeat
+	if get_living_heroes().is_empty():
+		print("--- GAME OVER ---")
+		change_state(State.EXECUTING_ACTION) # (Or a new DEFEAT state)
+	elif get_living_enemies().is_empty():
+		print("--- VICTORY ---")
+		change_state(State.EXECUTING_ACTION) # (Or a new VICTORY state)
+
+func _on_actor_revived(actor: ActorCard):
+	print(actor.name, " has revived! Adding back to actor_list.")
+
+	if not actor_list.has(actor):
+		actor_list.append(actor)
+	else:
+		print("Actor was already in actor_list?")
+
+	var new_projection = _run_ct_simulation()
+	turn_order_updated.emit(new_projection)
+
+	# 3. Check if the battle needs to "un-end"
+	# (This is a future-proof check)
+
 func _on_action_selected(action: Action):
 	if current_state != State.PLAYER_ACTION: return
 
@@ -166,9 +210,13 @@ func _on_action_selected(action: Action):
 
 func _on_enemy_clicked(target_enemy: EnemyCard):
 	if current_state != State.WAITING_FOR_TARGET: return
-	action_bar.hide_bar()
+
+	if target_enemy.is_defeated:
+			print("Target is already defeated.")
+			return
 
 	change_state(State.EXECUTING_ACTION)
+	action_bar.hide_bar()
 
 	var targets_array = []
 	match selected_action.target_type:
@@ -183,7 +231,7 @@ func _on_enemy_clicked(target_enemy: EnemyCard):
 
 	await execute_action(current_hero, selected_action, targets_array)
 	current_hero.on_turn_ended()
-	await get_tree().create_timer(speed * 1.0).timeout
+	await wait(1.0)
 
 	self.selected_action = null
 	find_and_start_next_turn()
@@ -206,7 +254,7 @@ func get_adjacent_enemies(target_enemy: EnemyCard) -> Array:
 	return final_targets
 
 func execute_action(actor: ActorCard, action: Action, targets: Array):
-	var actor_name = actor.current_stats.actor_name
+	var actor_name = actor.actor_name
 
 	print(actor_name, " uses ", action.action_name)
 
@@ -215,9 +263,9 @@ func execute_action(actor: ActorCard, action: Action, targets: Array):
 		match action.target_type:
 			Action.TargetType.ALL_ENEMIES:
 				if actor.is_in_group("player"):
-					targets = enemy_area.get_children()
+					targets = get_living_enemies()
 				else:
-					targets = hero_area.get_children()
+					targets = get_living_heroes()
 			Action.TargetType.SELF:
 				targets.append(actor)
 			# (Add more auto-target logic here)
@@ -234,32 +282,45 @@ func execute_action(actor: ActorCard, action: Action, targets: Array):
 	return
 
 func execute_enemy_turn(enemy: EnemyCard):
-	if enemy.is_breached:
-		enemy.recover_breach()
 	change_state(State.EXECUTING_ACTION)
+	print("\n", enemy.actor_name, " is executing its turn!")
+	await wait(1.0)
 
-	print("\n", enemy.enemy_data.stats.actor_name, " is thinking...")
-	await get_tree().create_timer(speed * 1.0).timeout
+	var action = enemy.intended_action
+	var target = enemy.intended_target
 
-	var action = enemy.get_next_action()
-	if not action: return
-	var targets = [] # We'll build this array
+	if not action:
+		print(enemy.actor_name, " has no action to perform.")
+		enemy.decide_intent(get_living_heroes())
+		return
 
-	# --- Enemy AI Target Logic ---
+	var targets = []
 	match action.target_type:
 		Action.TargetType.ONE_ENEMY:
-			# TODO: Add real targeting logic
-			if not hero_area.get_children().is_empty():
-				targets.append(hero_area.get_child(0))
+			if target and is_instance_valid(target):
+				targets.append(target)
 		Action.TargetType.ALL_ENEMIES:
-			# "All Enemies" for an enemy means "All Heroes"
-			targets = hero_area.get_children()
+			targets = get_living_heroes()
 		Action.TargetType.SELF:
 			targets.append(enemy)
-	# --- End AI Target Logic ---
 
 	await execute_action(enemy, action, targets)
+	enemy.decide_intent(get_living_heroes())
 	return
+
+func get_living_heroes() -> Array[HeroCard]:
+	var living_heroes: Array[HeroCard] = []
+	for hero_card in hero_area.get_children():
+		if not hero_card.is_defeated:
+			living_heroes.append(hero_card)
+	return living_heroes
+
+func get_living_enemies() -> Array[EnemyCard]:
+	var living_enemies: Array[EnemyCard] = []
+	for enemy_card in enemy_area.get_children():
+		if not enemy_card.is_defeated:
+			living_enemies.append(enemy_card)
+	return living_enemies
 
 func _on_shift_button_pressed(direction: String):
 	if current_state != State.PLAYER_ACTION: return
@@ -293,3 +354,7 @@ func _on_hero_role_shifted(hero_card: HeroCard):
 	# If we're still here, it's an auto-execute action
 	await execute_action(current_hero, action, targets_array)
 	return
+
+func wait(duration : float) -> void:
+	var scaled_duration = duration / global_animation_speed
+	await get_tree().create_timer(scaled_duration).timeout

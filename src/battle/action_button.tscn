@@ -1,7 +1,9 @@
-[gd_scene load_steps=3 format=3 uid="uid://d0wglriavtij"]
+[gd_scene load_steps=5 format=3 uid="uid://d0wglriavtij"]
 
 [ext_resource type="Script" uid="uid://bs7vlao78wiht" path="res://src/battle/action_button.gd" id="1_juqvx"]
 [ext_resource type="Texture2D" uid="uid://d1te5324os86k" path="res://assets/graphics/icons/bolt.png" id="1_sm4rn"]
+[ext_resource type="Texture2D" uid="uid://dnqtno8jlgean" path="res://assets/graphics/icons/skills/striking-splinter.png" id="2_4g37w"]
+[ext_resource type="Texture2D" uid="uid://ebo48y7vo0tu" path="res://assets/graphics/glyphs/Button - PS Circle White 1.png" id="4_pk42m"]
 
 [node name="ActionButton" type="Control"]
 custom_minimum_size = Vector2(280, 120)
@@ -20,6 +22,21 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_font_sizes/font_size = 30
 
+[node name="Icon" type="TextureRect" parent="."]
+visible = false
+modulate = Color(0.58674, 0.44660002, 0.77, 1)
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 10.0
+offset_top = -43.0
+offset_right = 90.0
+offset_bottom = 37.0
+grow_vertical = 2
+texture = ExtResource("2_4g37w")
+expand_mode = 1
+
 [node name="Title" type="Label" parent="."]
 layout_mode = 1
 anchors_preset = 14
@@ -33,7 +50,7 @@ offset_bottom = 19.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_font_sizes/font_size = 30
-text = "Provoke"
+text = "Focused Shot"
 horizontal_alignment = 2
 
 [node name="FocusPips" type="HBoxContainer" parent="."]
@@ -43,6 +60,7 @@ anchors_preset = 10
 anchor_right = 1.0
 offset_bottom = 31.0
 grow_horizontal = 2
+mouse_filter = 2
 theme_override_constants/separation = -5
 alignment = 2
 
@@ -92,6 +110,20 @@ expand_mode = 1
 custom_minimum_size = Vector2(40, 35)
 layout_mode = 2
 texture = ExtResource("1_sm4rn")
+expand_mode = 1
+
+[node name="Glyph" type="TextureRect" parent="."]
+modulate = Color(1, 1, 1, 0.78431374)
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -15.0
+offset_top = -65.0
+offset_right = 47.0
+offset_bottom = -3.0
+grow_vertical = 0
+texture = ExtResource("4_pk42m")
 expand_mode = 1
 
 [connection signal="pressed" from="Button" to="." method="_on_button_pressed"]

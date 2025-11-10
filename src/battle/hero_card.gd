@@ -10,41 +10,50 @@ var hero_data: HeroData
 var current_focus_pips: int = 0
 var current_role_index: int = 0
 
+# --- NEW: Animation Vars ---
+@export var slide_offset_y: int = -30
+@export var duration: float = 0.2
+
 # --- UNIQUE UI Node References ---
 @onready var focus_bar: HBoxContainer = $Panel/FocusBar
-@onready var name_label: Label = $Panel/Title
-@onready var anim = $AnimationPlayer
-
-# ===================================================================
-# 1. SETUP & READY
-# ===================================================================
+@onready var role_label: Label = $Panel/Role
 
 func setup(data: HeroData):
 	self.hero_data = data
-	setup_base(data.base_stats)
-	name_label.text = hero_data.base_stats.actor_name
+	setup_base(data.stats)
+	name_label.text = hero_data.stats.actor_name
+	role_label.text = get_current_role().role_name
+	panel.self_modulate.a = 0.7
 
 	if hero_data.portrait:
 		portrait_rect.texture = hero_data.portrait
-
-	self.current_focus_pips = 0
+	self.current_focus_pips = 3
 	add_to_group("player")
 	update_focus_bar()
 
-
 func on_turn_started() -> void:
-	anim.play("move_up")
+	_slide_up()
 	if current_focus_pips < 10:
 		current_focus_pips += 1
 		update_focus_bar()
-		print(hero_data.base_stats.actor_name, " gained 1 Focus (now at ", current_focus_pips, ")")
+		print(hero_data.stats.actor_name, " gained 1 Focus (now at ", current_focus_pips, ")")
 	await super.on_turn_started()
 	return
 
-
 func on_turn_ended() -> void:
-	anim.play("move_down")
+	_slide_down()
 
+func take_healing(heal_amount: int, is_revive: bool = false):
+	super.take_healing(heal_amount, is_revive)
+	if is_defeated and is_revive:
+		print(hero_data.base_stats.actor_name, " is revived!")
+		is_defeated = false
+		self_modulate = Color.WHITE
+		actor_revived.emit(self)
+
+func defeated():
+	super.defeated()
+	self_modulate.a = 0.25
 
 func get_current_role() -> Role:
 	if hero_data.unlocked_roles.size() > 0:
@@ -71,7 +80,7 @@ func shift_role(direction: String):
 		current_role_index = (current_role_index - 1 + role_count) % role_count
 	else:
 		current_role_index = (current_role_index + 1) % role_count
-
+	role_label.text = get_current_role().role_name
 	role_shifted.emit(self) # Pass 'self'
 
 func update_focus_bar():
@@ -83,6 +92,25 @@ func update_focus_bar():
 			pips[i].visible = false
 	focus_changed.emit(current_focus_pips)
 
+func _slide_up():
+	var tween = create_tween().set_parallel()
+	tween.tween_property(
+		panel,
+		"position",
+		panel_home_position + Vector2(0, slide_offset_y),
+		duration
+	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tween.tween_property(panel, "self_modulate:a", 1.0, duration)
+
+func _slide_down():
+	var tween = create_tween().set_parallel()
+	tween.tween_property(
+		panel,
+		"position",
+		panel_home_position,
+		duration
+	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	tween.tween_property(panel, "self_modulate:a", 0.7, duration)
 
 func _on_gui_input(event: InputEvent) -> void:
 	pass # Replace with function body.

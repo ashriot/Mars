@@ -6,19 +6,19 @@
 [ext_resource type="Resource" uid="uid://dl1i3sftsuywj" path="res://data/heroes/roles/psion.tres" id="4_56w4w"]
 [ext_resource type="Resource" uid="uid://jqybnec33mi0" path="res://data/heroes/roles/empath.tres" id="5_2uprg"]
 
-[sub_resource type="Resource" id="Resource_c4olr"]
+[sub_resource type="Resource" id="Resource_2uprg"]
 script = ExtResource("1_2uprg")
 actor_name = "Echo"
-max_hp = 500
-attack = 40
-psyche = 60
-precision = 25
-overload = 50
-speed = 90
+max_hp = 90
+starting_guard = 0
+attack = 15
+psyche = 25
+precision = 15
+energy_defense = 0.75
 metadata/_custom_type_script = "uid://b70gwt4gd4cun"
 
 [resource]
 script = ExtResource("2_bo7cj")
-base_stats = SubResource("Resource_c4olr")
+stats = SubResource("Resource_2uprg")
 unlocked_roles = Array[ExtResource("3_v0kqx")]([ExtResource("4_56w4w"), ExtResource("5_2uprg")])
 metadata/_custom_type_script = "uid://dc5sk0b0jubvj"
