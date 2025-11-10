@@ -6,9 +6,17 @@
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_u5n4n"]
 bg_color = Color(0.30980393, 0.15294118, 0.14509805, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mswv1"]
 bg_color = Color(0.9411765, 0.30588236, 0.32941177, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
 
 [node name="HeroCard" type="Panel"]
 custom_minimum_size = Vector2(400, 200)

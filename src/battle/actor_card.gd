@@ -55,6 +55,13 @@ func take_damage_from_action(action: Action, attacker: ActorCard) -> void:
 		var is_breached = (current_guard == 0)
 		var final_damage = 0
 
+		if current_guard > 0:
+			current_guard -= 1
+			if current_guard == 0:
+				i_was_breached.emit()
+				current_ct = 0
+				print("CT Set to 0")
+
 		# 4. Calculate damage for *this* hit
 		if action.damage_type == Action.DamageType.PIERCING:
 			# Piercing logic
@@ -67,7 +74,6 @@ func take_damage_from_action(action: Action, attacker: ActorCard) -> void:
 
 		else: # Kinetic or Energy
 			if is_breached:
-				# --- THIS IS YOUR NEW OVERLOAD LOGIC ---
 				final_damage = int((base_power + attacker_stats.overload) * action.potency)
 			else:
 				# --- It's an Armored hit ---
@@ -76,12 +82,6 @@ func take_damage_from_action(action: Action, attacker: ActorCard) -> void:
 					final_damage = int(damage_before_defense * (1.0 - current_stats.kinetic_defense))
 				else: # ENERGY
 					final_damage = int(damage_before_defense * (1.0 - current_stats.energy_defense))
-
-			if current_guard > 0:
-				current_guard -= 1
-				if current_guard == 0:
-					i_was_breached.emit()
-					current_ct = 0
 
 		# 5. Apply the damage
 		final_damage = max(0, final_damage) # Ensure damage is not negative

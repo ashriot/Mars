@@ -1,6 +1,27 @@
-[gd_scene load_steps=2 format=3 uid="uid://diku73kk4tjv7"]
+[gd_scene load_steps=5 format=3 uid="uid://diku73kk4tjv7"]
 
 [ext_resource type="Script" uid="uid://c2o3dssew3lm2" path="res://src/battle/actor_queue.gd" id="1_gqsil"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gqsil"]
+bg_color = Color(1, 0.47433335, 0.17000002, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wvepw"]
+bg_color = Color(0.72, 0.34152, 0.122400016, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xrck3"]
+bg_color = Color(0.43, 0.20396334, 0.07310001, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
 
 [node name="ActorQueue" type="Control"]
 custom_minimum_size = Vector2(400, 40)
@@ -14,24 +35,64 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_gqsil")
 
-[node name="NameLabel" type="Label" parent="."]
+[node name="CtLabel" type="Label" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 87.0
+offset_left = 41.0
 grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 32
+text = "99"
+horizontal_alignment = 2
+
+[node name="NameLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_top = -20.0
+offset_right = 94.0
+offset_bottom = 20.0
 grow_vertical = 2
 theme_override_font_sizes/font_size = 32
 text = "Asher"
 
-[node name="CtLabel" type="Label" parent="."]
-modulate = Color(0.87058824, 0.45882353, 0.14509805, 1)
+[node name="CT" type="Control" parent="."]
+anchors_preset = 0
+offset_right = 100.0
+offset_bottom = 40.0
+
+[node name="Bar1" type="ProgressBar" parent="CT"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 32
-text = "99%"
+theme_override_styles/fill = SubResource("StyleBoxFlat_gqsil")
+value = 40.0
+show_percentage = false
+
+[node name="Bar2" type="ProgressBar" parent="CT"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/fill = SubResource("StyleBoxFlat_wvepw")
+value = 40.0
+show_percentage = false
+
+[node name="Bar3" type="ProgressBar" parent="CT"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/fill = SubResource("StyleBoxFlat_xrck3")
+value = 40.0
+show_percentage = false

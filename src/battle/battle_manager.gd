@@ -61,25 +61,24 @@ func spawn_encounter():
 		actor_list.append(enemy_card)
 	print("Spawning complete.")
 
-# Add this new function to BattleManager.gd
-func project_turn_order(num_turns_to_project: int) -> Array:
-	var projected_queue = [] # This is the list we will return
+func _run_ct_simulation(num_turns: int) -> Array:
+	var projected_queue = []
+	var relative_ticks = 0
 
-	# 1. Create a "simulation" list. We can't mess with the "real" actor_list.
-	# We'll make an array of dictionaries to hold the "ghost" data.
+	# 1. Create a "ghost" list so we don't mess with real data
 	var sim_data = []
 	for actor in actor_list:
 		sim_data.append({
-			"actor": actor, # A reference to the real actor
-			"ct": actor.current_ct # A *copy* of their current CT
+			"actor": actor,
+			"ct": actor.current_ct # Copy the REAL, current CT
 		})
 
-	# 2. Run the simulation 10 times
-	while projected_queue.size() < num_turns_to_project:
-		# 3. Find the "next" winner in the simulation
+	# 2. Run the simulation 'num_turns' times
+	while projected_queue.size() < num_turns:
 		var winner_dict = null
 		var ticks_needed_for_winner = 999999
 
+		# 3. Find the next winner in the "ghost" list
 		for data in sim_data:
 			var ct_needed = TARGET_CT - data.ct
 			if data.actor.current_stats.speed <= 0:
@@ -91,63 +90,57 @@ func project_turn_order(num_turns_to_project: int) -> Array:
 				ticks_needed_for_winner = ticks_needed
 				winner_dict = data
 			elif ticks_needed == ticks_needed_for_winner:
-				# Tie-breaker (using your existing sort function)
 				if sort_actors_by_ct(data.actor, winner_dict.actor):
 					winner_dict = data
 
-		# 4. If we can't find a winner (e.g., all speeds are 0), stop.
 		if not winner_dict:
 			break
 
-		# 5. Add the winner to our projected list
-		projected_queue.append(winner_dict.actor)
+		relative_ticks += ticks_needed_for_winner
+		projected_queue.append({
+			"actor": winner_dict.actor,
+			"ticks_needed": relative_ticks # e.g., 0, 28, 48
+		})
 
-		# 6. "Fast-forward" the simulation clock
 		for data in sim_data:
 			data.ct += data.actor.current_stats.speed * ticks_needed_for_winner
 
 		winner_dict.ct = 0
 
-	# 8. Return the final, 10-turn projected list
 	return projected_queue
 
 func find_and_start_next_turn():
-	var winner = null
-	var ticks_needed_for_winner = 999999
+	var projection = _run_ct_simulation(5)
 
+	if projection.is_empty():
+		push_error("Error: No one can take a turn!")
+		return
+
+	# 2. Get the winner and the "time" that passed
+	var first_turn_data = projection[0]
+	var winner: ActorCard = first_turn_data.actor
+	# This is the "real" time that passed since the last turn
+	var real_ticks_passed = first_turn_data.ticks_needed
+
+	# 3. "Fast-forward" the REAL game clock
 	for actor in actor_list:
-		var ct_needed = TARGET_CT - actor.current_ct
-		if actor.current_stats.speed <= 0:
-			continue
-
-		var ticks_needed = ceil(float(ct_needed) / actor.current_stats.speed)
-
-		if ticks_needed < ticks_needed_for_winner:
-			ticks_needed_for_winner = ticks_needed
-			winner = actor
-		elif ticks_needed == ticks_needed_for_winner:
-			if sort_actors_by_ct(actor, winner):
-				winner = actor
-
-	for actor in actor_list:
-		actor.current_ct += actor.current_stats.speed * ticks_needed_for_winner
-
-	var projected_queue = project_turn_order(10)
-	turn_order_updated.emit(projected_queue)
+		actor.current_ct += actor.current_stats.speed * real_ticks_passed
 
 	winner.current_ct = 0
 
+	turn_order_updated.emit(projection)
+
+	# 6. Start the winner's turn
 	if winner.is_in_group("player"):
 		self.current_hero = winner
-		change_state(State.PLAYER_ACTION) # <-- CORRECT STATE
+		change_state(State.PLAYER_ACTION)
 		player_turn_started.emit(current_hero)
 	else:
 		self.current_hero = null
 		change_state(State.ENEMY_ACTION)
 		await execute_enemy_turn(winner)
-		find_and_start_next_turn()
+		find_and_start_next_turn() # Find the next turn
 
-# Tie-breaker function
 func sort_actors_by_ct(a, b):
 	var a_is_player = a.is_in_group("player")
 	var b_is_player = b.is_in_group("player")
@@ -255,12 +248,12 @@ func execute_enemy_turn(enemy: EnemyCard):
 	return
 
 func _on_shift_button_pressed(direction: String):
-	if current_state != State.PLAYER_ACTION: return # <-- CORRECT STATE
+	if current_state != State.PLAYER_ACTION: return
 
 	if current_hero:
 		change_state(State.EXECUTING_ACTION)
 		await current_hero.shift_role(direction)
-		change_state(State.PLAYER_ACTION) # <-- CORRECT STATE
+		change_state(State.PLAYER_ACTION)
 		print("Shift complete. Returning to player's action.")
 
 func _on_hero_role_shifted(hero_card: HeroCard):

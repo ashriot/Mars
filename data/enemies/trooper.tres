@@ -7,7 +7,7 @@
 [sub_resource type="Resource" id="Resource_4j3ma"]
 script = ExtResource("3_n3ati")
 actor_name = "Trooper"
-speed = 15
+speed = 16
 metadata/_custom_type_script = "uid://b70gwt4gd4cun"
 
 [resource]
