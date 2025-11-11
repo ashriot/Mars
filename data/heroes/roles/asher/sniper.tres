@@ -1,13 +1,15 @@
-[gd_resource type="Resource" script_class="Role" load_steps=5 format=3 uid="uid://c03acvaovbpqc"]
+[gd_resource type="Resource" script_class="Role" load_steps=6 format=3 uid="uid://c03acvaovbpqc"]
 
-[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/actions/action.gd" id="1_gahah"]
-[ext_resource type="Resource" uid="uid://7dg4i7k6dya0" path="res://data/heroes/actions/asher/double_tap.tres" id="2_gahah"]
-[ext_resource type="Resource" uid="uid://cg0jwg4m14vwn" path="res://data/heroes/actions/asher/leeching_shots.tres" id="3_8sksw"]
-[ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/role.gd" id="4_041vc"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/actions/action.gd" id="1_ift6d"]
+[ext_resource type="Resource" uid="uid://7dg4i7k6dya0" path="res://data/heroes/actions/asher/double_tap.tres" id="2_ung8m"]
+[ext_resource type="Resource" uid="uid://cg0jwg4m14vwn" path="res://data/heroes/actions/asher/leeching_shots.tres" id="3_bnepl"]
+[ext_resource type="Texture2D" uid="uid://m4ffcp1dre36" path="res://assets/graphics/icons/roles/steyr-aug.png" id="4_ung8m"]
+[ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/role.gd" id="4_y6513"]
 
 [resource]
-script = ExtResource("4_041vc")
+script = ExtResource("4_y6513")
 role_name = "Sniper"
-color = Color(0.8627451, 0.8039216, 0, 1)
-actions = Array[ExtResource("1_gahah")]([ExtResource("2_gahah"), ExtResource("3_8sksw"), null, null])
+icon = ExtResource("4_ung8m")
+color = Color(0.706, 1, 0.37, 1)
+actions = Array[ExtResource("1_ift6d")]([ExtResource("2_ung8m"), ExtResource("3_bnepl"), null, null])
 metadata/_custom_type_script = "uid://d3mhjutrnvwsp"

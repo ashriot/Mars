@@ -9,6 +9,6 @@
 script = ExtResource("3_vefjr")
 role_name = "Empath"
 icon = ExtResource("3_hdinu")
-color = Color(0.37, 1, 0.9474999, 1)
+color = Color(0.32999998, 0.65383315, 1, 1)
 actions = Array[ExtResource("1_v3pq2")]([ExtResource("2_v3pq2"), null, null, null])
 metadata/_custom_type_script = "uid://d3mhjutrnvwsp"
