@@ -10,6 +10,6 @@
 script = ExtResource("5_qoyy0")
 role_name = "Kineticist"
 icon = ExtResource("4_mbt5s")
-color = Color(0.32941177, 0.654902, 1, 1)
+color = Color(0.32999998, 0.74316657, 1, 1)
 actions = Array[ExtResource("1_krxnr")]([ExtResource("2_procj"), ExtResource("3_2q7x7"), null, null])
 metadata/_custom_type_script = "uid://d3mhjutrnvwsp"

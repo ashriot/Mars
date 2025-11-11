@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="Action" load_steps=6 format=3 uid="uid://cd8ogb3cwgrb4"]
+
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/actions/action_effect.gd" id="1_6oktr"]
+[ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/actions/effect_damage.gd" id="2_wet2c"]
+[ext_resource type="Texture2D" uid="uid://cyt37kvi4a73i" path="res://assets/graphics/icons/skills/laser-sparks.png" id="3_6oktr"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/actions/action.gd" id="4_psj4h"]
+
+[sub_resource type="Resource" id="Resource_dp3ce"]
+script = ExtResource("2_wet2c")
+potency = 0.75
+hit_count = 4
+metadata/_custom_type_script = "uid://d0eibi4b735ay"
+
+[resource]
+script = ExtResource("4_psj4h")
+action_name = "Barrage"
+icon = ExtResource("3_6oktr")
+description = "Attack an enemy twice, each hit dealing X% damage."
+focus_cost = 4
+target_type = 7
+effects = Array[ExtResource("1_6oktr")]([SubResource("Resource_dp3ce")])
+metadata/_custom_type_script = "uid://dm08rhkg3bai3"

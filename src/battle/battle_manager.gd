@@ -204,12 +204,15 @@ func _on_actor_revived(actor: ActorCard):
 	# (This is a future-proof check)
 
 func _on_action_selected(action: Action):
-	if current_state != State.PLAYER_ACTION: return
+	if current_state in [State.LOADING, State.EXECUTING_ACTION]: return
+
+	if current_hero.current_focus_pips < action.focus_cost:
+		return
 
 	self.selected_action = action
 	var target_list = []
 	match action.target_type:
-		Action.TargetType.ONE_ENEMY, Action.TargetType.ENEMY_GROUP, Action.TargetType.ALL_ENEMIES:
+		Action.TargetType.ONE_ENEMY, Action.TargetType.ALL_ENEMIES, Action.TargetType.RANDOM_ENEMY:
 			change_state(State.TARGETING_ENEMIES)
 			target_list = get_living_enemies()
 			if not target_list.is_empty():
@@ -231,8 +234,8 @@ func _on_hero_clicked(target_hero: HeroCard):
 	# 2. We have our action and our target!
 	print("Target selected: ", target_hero.actor_name)
 	change_state(State.EXECUTING_ACTION)
+	action_bar.hide_bar()
 
-	# 3. Build the target list (this is the "confirmation" step)
 	var targets_array = []
 	match selected_action.target_type:
 		Action.TargetType.TEAM_MEMBER:
@@ -243,14 +246,9 @@ func _on_hero_clicked(target_hero: HeroCard):
 			for ally in get_living_heroes():
 				if ally != current_hero:
 					targets_array.append(ally)
-		# (etc.)
 
-	# 4. Call the "dumb" executor
 	await execute_action(current_hero, selected_action, targets_array)
-
-	# 5. Clean up and end the turn
-	self.selected_action = null
-	find_and_start_next_turn()
+	_finish_hero_turn()
 
 func _on_enemy_clicked(target_enemy: EnemyCard):
 	if current_state != State.TARGETING_ENEMIES: return
@@ -270,34 +268,19 @@ func _on_enemy_clicked(target_enemy: EnemyCard):
 		Action.TargetType.ALL_ENEMIES:
 			targets_array = enemy_area.get_children()
 
-		Action.TargetType.ENEMY_GROUP:
-			targets_array = get_adjacent_enemies(target_enemy)
-
 	await execute_action(current_hero, selected_action, targets_array)
-	current_hero.on_turn_ended()
-	await wait(1.0)
+	_finish_hero_turn()
 
+func _finish_hero_turn():
+	current_hero.on_turn_ended()
 	self.selected_action = null
+	await wait(0.25)
+
 	find_and_start_next_turn()
 
-func get_adjacent_enemies(target_enemy: EnemyCard) -> Array:
-	var all_enemies = enemy_area.get_children()
-	var target_index = all_enemies.find(target_enemy)
-
-	if target_index == -1:
-		return [target_enemy] # Safety check
-
-	var final_targets = [target_enemy]
-	# Add left neighbor (if it exists)
-	if target_index > 0:
-		final_targets.append(all_enemies[target_index - 1])
-	# Add right neighbor (if it exists)
-	if target_index < all_enemies.size() - 1:
-		final_targets.append(all_enemies[target_index + 1])
-
-	return final_targets
-
 func execute_action(actor: ActorCard, action: Action, targets: Array):
+	if actor is HeroCard:
+		actor.spend_focus(action.focus_cost)
 	var actor_name = actor.actor_name
 
 	print(actor_name, " uses ", action.action_name)

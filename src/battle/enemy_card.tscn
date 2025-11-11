@@ -64,7 +64,7 @@ grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
 
-[node name="BarInstant" type="ProgressBar" parent="Panel/HP"]
+[node name="BarGhost" type="ProgressBar" parent="Panel/HP"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -77,7 +77,7 @@ theme_override_styles/fill = SubResource("StyleBoxFlat_e8ixv")
 value = 85.0
 show_percentage = false
 
-[node name="BarVisual" type="ProgressBar" parent="Panel/HP"]
+[node name="BarActual" type="ProgressBar" parent="Panel/HP"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -125,148 +125,6 @@ theme_override_font_sizes/font_size = 40
 text = "9999"
 horizontal_alignment = 2
 
-[node name="GuardBar" type="HBoxContainer" parent="Panel"]
-layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -192.0
-offset_top = -28.0
-offset_right = 193.0
-offset_bottom = 14.0
-grow_horizontal = 2
-grow_vertical = 0
-mouse_filter = 2
-theme_override_constants/separation = 2
-
-[node name="Pip" type="Control" parent="Panel/GuardBar"]
-custom_minimum_size = Vector2(41, 41)
-layout_mode = 2
-mouse_filter = 2
-
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip"]
-custom_minimum_size = Vector2(41, 42)
-layout_mode = 0
-offset_left = 2.0
-offset_right = 43.0
-offset_bottom = 42.0
-texture = ExtResource("2_4kuvy")
-expand_mode = 1
-
-[node name="Pip2" type="Control" parent="Panel/GuardBar"]
-custom_minimum_size = Vector2(41, 41)
-layout_mode = 2
-mouse_filter = 2
-
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip2"]
-custom_minimum_size = Vector2(41, 42)
-layout_mode = 0
-offset_left = 2.0
-offset_right = 43.0
-offset_bottom = 42.0
-texture = ExtResource("2_4kuvy")
-expand_mode = 1
-
-[node name="Pip3" type="Control" parent="Panel/GuardBar"]
-custom_minimum_size = Vector2(41, 41)
-layout_mode = 2
-mouse_filter = 2
-
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip3"]
-custom_minimum_size = Vector2(41, 42)
-layout_mode = 0
-offset_left = 2.0
-offset_right = 43.0
-offset_bottom = 42.0
-texture = ExtResource("2_4kuvy")
-expand_mode = 1
-
-[node name="Pip4" type="Control" parent="Panel/GuardBar"]
-custom_minimum_size = Vector2(41, 41)
-layout_mode = 2
-mouse_filter = 2
-
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip4"]
-custom_minimum_size = Vector2(41, 42)
-layout_mode = 0
-offset_left = 2.0
-offset_right = 43.0
-offset_bottom = 42.0
-texture = ExtResource("2_4kuvy")
-expand_mode = 1
-
-[node name="Pip5" type="Control" parent="Panel/GuardBar"]
-custom_minimum_size = Vector2(41, 41)
-layout_mode = 2
-mouse_filter = 2
-
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip5"]
-custom_minimum_size = Vector2(41, 42)
-layout_mode = 0
-offset_left = 2.0
-offset_right = 43.0
-offset_bottom = 42.0
-texture = ExtResource("2_4kuvy")
-expand_mode = 1
-
-[node name="Pip6" type="Control" parent="Panel/GuardBar"]
-custom_minimum_size = Vector2(41, 41)
-layout_mode = 2
-mouse_filter = 2
-
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip6"]
-custom_minimum_size = Vector2(41, 42)
-layout_mode = 0
-offset_left = 2.0
-offset_right = 43.0
-offset_bottom = 42.0
-texture = ExtResource("2_4kuvy")
-expand_mode = 1
-
-[node name="Pip7" type="Control" parent="Panel/GuardBar"]
-custom_minimum_size = Vector2(41, 41)
-layout_mode = 2
-mouse_filter = 2
-
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip7"]
-custom_minimum_size = Vector2(41, 42)
-layout_mode = 0
-offset_left = 2.0
-offset_right = 43.0
-offset_bottom = 42.0
-texture = ExtResource("2_4kuvy")
-expand_mode = 1
-
-[node name="Pip8" type="Control" parent="Panel/GuardBar"]
-custom_minimum_size = Vector2(41, 41)
-layout_mode = 2
-mouse_filter = 2
-
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip8"]
-custom_minimum_size = Vector2(41, 42)
-layout_mode = 0
-offset_left = 2.0
-offset_right = 43.0
-offset_bottom = 42.0
-texture = ExtResource("2_4kuvy")
-expand_mode = 1
-
-[node name="Pip9" type="Control" parent="Panel/GuardBar"]
-custom_minimum_size = Vector2(41, 41)
-layout_mode = 2
-mouse_filter = 2
-
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip9"]
-custom_minimum_size = Vector2(41, 42)
-layout_mode = 0
-offset_left = 2.0
-offset_right = 43.0
-offset_bottom = 42.0
-texture = ExtResource("2_4kuvy")
-expand_mode = 1
-
 [node name="Title" type="Label" parent="Panel"]
 layout_mode = 1
 anchors_preset = 4
@@ -285,6 +143,172 @@ theme_override_constants/outline_size = 4
 theme_override_constants/shadow_outline_size = 20
 theme_override_font_sizes/font_size = 40
 text = "Unit Name"
+
+[node name="GuardBar" type="HBoxContainer" parent="Panel"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -198.0
+offset_top = -24.0
+offset_right = 197.0
+offset_bottom = 18.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/separation = -2
+
+[node name="Pip" type="Control" parent="Panel/GuardBar"]
+custom_minimum_size = Vector2(41, 41)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip"]
+custom_minimum_size = Vector2(41, 42)
+layout_mode = 0
+offset_left = 2.0
+offset_right = 43.0
+offset_bottom = 42.0
+mouse_filter = 2
+texture = ExtResource("2_4kuvy")
+expand_mode = 1
+
+[node name="Pip2" type="Control" parent="Panel/GuardBar"]
+custom_minimum_size = Vector2(41, 41)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip2"]
+custom_minimum_size = Vector2(41, 42)
+layout_mode = 0
+offset_left = 2.0
+offset_right = 43.0
+offset_bottom = 42.0
+mouse_filter = 2
+texture = ExtResource("2_4kuvy")
+expand_mode = 1
+
+[node name="Pip3" type="Control" parent="Panel/GuardBar"]
+custom_minimum_size = Vector2(41, 41)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip3"]
+custom_minimum_size = Vector2(41, 42)
+layout_mode = 0
+offset_left = 2.0
+offset_right = 43.0
+offset_bottom = 42.0
+mouse_filter = 2
+texture = ExtResource("2_4kuvy")
+expand_mode = 1
+
+[node name="Pip4" type="Control" parent="Panel/GuardBar"]
+custom_minimum_size = Vector2(41, 41)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip4"]
+custom_minimum_size = Vector2(41, 42)
+layout_mode = 0
+offset_left = 2.0
+offset_right = 43.0
+offset_bottom = 42.0
+mouse_filter = 2
+texture = ExtResource("2_4kuvy")
+expand_mode = 1
+
+[node name="Pip5" type="Control" parent="Panel/GuardBar"]
+custom_minimum_size = Vector2(41, 41)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip5"]
+custom_minimum_size = Vector2(41, 42)
+layout_mode = 0
+offset_left = 2.0
+offset_right = 43.0
+offset_bottom = 42.0
+mouse_filter = 2
+texture = ExtResource("2_4kuvy")
+expand_mode = 1
+
+[node name="Pip6" type="Control" parent="Panel/GuardBar"]
+custom_minimum_size = Vector2(41, 41)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip6"]
+custom_minimum_size = Vector2(41, 42)
+layout_mode = 0
+offset_left = 2.0
+offset_right = 43.0
+offset_bottom = 42.0
+mouse_filter = 2
+texture = ExtResource("2_4kuvy")
+expand_mode = 1
+
+[node name="Pip7" type="Control" parent="Panel/GuardBar"]
+custom_minimum_size = Vector2(41, 41)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip7"]
+custom_minimum_size = Vector2(41, 42)
+layout_mode = 0
+offset_left = 2.0
+offset_right = 43.0
+offset_bottom = 42.0
+mouse_filter = 2
+texture = ExtResource("2_4kuvy")
+expand_mode = 1
+
+[node name="Pip8" type="Control" parent="Panel/GuardBar"]
+custom_minimum_size = Vector2(41, 41)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip8"]
+custom_minimum_size = Vector2(41, 42)
+layout_mode = 0
+offset_left = 2.0
+offset_right = 43.0
+offset_bottom = 42.0
+mouse_filter = 2
+texture = ExtResource("2_4kuvy")
+expand_mode = 1
+
+[node name="Pip9" type="Control" parent="Panel/GuardBar"]
+custom_minimum_size = Vector2(41, 41)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip9"]
+custom_minimum_size = Vector2(41, 42)
+layout_mode = 0
+offset_left = 2.0
+offset_right = 43.0
+offset_bottom = 42.0
+mouse_filter = 2
+texture = ExtResource("2_4kuvy")
+expand_mode = 1
+
+[node name="Pip10" type="Control" parent="Panel/GuardBar"]
+custom_minimum_size = Vector2(41, 41)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip10"]
+custom_minimum_size = Vector2(41, 42)
+layout_mode = 0
+offset_left = 2.0
+offset_right = 43.0
+offset_bottom = 42.0
+mouse_filter = 2
+texture = ExtResource("2_4kuvy")
+expand_mode = 1
 
 [node name="Portrait" type="TextureRect" parent="Panel"]
 layout_mode = 0

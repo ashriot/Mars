@@ -89,6 +89,10 @@ func shift_role(direction: String):
 	role_shifted.emit(self) # Pass 'self'
 	recolor()
 
+func spend_focus(amount: int):
+	current_focus_pips -= amount
+	update_focus_bar()
+
 func update_focus_bar():
 	var pips = focus_bar.get_children()
 	for i in pips.size():

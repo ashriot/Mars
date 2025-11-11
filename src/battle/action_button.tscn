@@ -99,48 +99,56 @@ metadata/_edit_group_ = true
 [node name="Bolt" type="TextureRect" parent="FocusPips"]
 custom_minimum_size = Vector2(30, 26)
 layout_mode = 2
+mouse_filter = 2
 texture = ExtResource("1_sm4rn")
 expand_mode = 1
 
 [node name="Bolt2" type="TextureRect" parent="FocusPips"]
 custom_minimum_size = Vector2(30, 26)
 layout_mode = 2
+mouse_filter = 2
 texture = ExtResource("1_sm4rn")
 expand_mode = 1
 
 [node name="Bolt3" type="TextureRect" parent="FocusPips"]
 custom_minimum_size = Vector2(30, 26)
 layout_mode = 2
+mouse_filter = 2
 texture = ExtResource("1_sm4rn")
 expand_mode = 1
 
 [node name="Bolt4" type="TextureRect" parent="FocusPips"]
 custom_minimum_size = Vector2(30, 26)
 layout_mode = 2
+mouse_filter = 2
 texture = ExtResource("1_sm4rn")
 expand_mode = 1
 
 [node name="Bolt5" type="TextureRect" parent="FocusPips"]
 custom_minimum_size = Vector2(30, 26)
 layout_mode = 2
+mouse_filter = 2
 texture = ExtResource("1_sm4rn")
 expand_mode = 1
 
 [node name="Bolt6" type="TextureRect" parent="FocusPips"]
 custom_minimum_size = Vector2(30, 26)
 layout_mode = 2
+mouse_filter = 2
 texture = ExtResource("1_sm4rn")
 expand_mode = 1
 
 [node name="Bolt7" type="TextureRect" parent="FocusPips"]
 custom_minimum_size = Vector2(30, 26)
 layout_mode = 2
+mouse_filter = 2
 texture = ExtResource("1_sm4rn")
 expand_mode = 1
 
 [node name="Bolt8" type="TextureRect" parent="FocusPips"]
 custom_minimum_size = Vector2(30, 26)
 layout_mode = 2
+mouse_filter = 2
 texture = ExtResource("1_sm4rn")
 expand_mode = 1
 

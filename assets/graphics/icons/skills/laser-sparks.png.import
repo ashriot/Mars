@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dsurg3fp8niaf"
-path="res://.godot/imported/baton.png-dc79d1fc214629383eca64ef36a62532.ctex"
+uid="uid://cyt37kvi4a73i"
+path="res://.godot/imported/laser-sparks.png-1ba7dec56e199b9e1d2ad666bf352a3d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/icons/roles/baton.png"
-dest_files=["res://.godot/imported/baton.png-dc79d1fc214629383eca64ef36a62532.ctex"]
+source_file="res://assets/graphics/icons/skills/laser-sparks.png"
+dest_files=["res://.godot/imported/laser-sparks.png-1ba7dec56e199b9e1d2ad666bf352a3d.ctex"]
 
 [params]
 

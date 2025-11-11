@@ -9,6 +9,6 @@
 script = ExtResource("4_gh0xr")
 role_name = "Domniator"
 icon = ExtResource("3_oj8d5")
-color = Color(0.5529412, 0.32941177, 1, 1)
+color = Color(0.6173333, 0.44, 1, 1)
 actions = Array[ExtResource("1_oj8d5")]([ExtResource("2_l3qo3"), null, null, null])
 metadata/_custom_type_script = "uid://d3mhjutrnvwsp"

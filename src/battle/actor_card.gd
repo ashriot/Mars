@@ -29,8 +29,8 @@ var panel_home_position: Vector2
 
 # --- UI Node References (Shared) ---
 @onready var name_label: Label = $Panel/Title
-@onready var hp_bar_instant: ProgressBar = $Panel/HP/BarInstant
-@onready var hp_bar_visual: ProgressBar = $Panel/HP/BarVisual
+@onready var hp_bar_ghost: ProgressBar = $Panel/HP/BarGhost
+@onready var hp_bar_actual: ProgressBar = $Panel/HP/BarActual
 @onready var hp_value: Label = $Panel/HP/Value
 @onready var guard_bar: HBoxContainer = $Panel/GuardBar
 @onready var portrait_rect: TextureRect = $Panel/Portrait
@@ -44,10 +44,10 @@ func setup_base(stats: ActorStats):
 	battle_manager = get_parent().get_node("%BattleManager")
 	self.current_stats = stats.duplicate()
 	actor_name = stats.actor_name
-	hp_bar_instant.max_value = current_stats.max_hp
-	current_hp = current_stats.max_hp / 4
-	hp_bar_visual.max_value = current_stats.max_hp
-	hp_bar_instant.max_value = current_stats.max_hp
+	hp_bar_ghost.max_value = current_stats.max_hp
+	current_hp = current_stats.max_hp / 2
+	hp_bar_actual.max_value = current_stats.max_hp
+	hp_bar_ghost.max_value = current_stats.max_hp
 	current_guard = current_stats.starting_guard
 	panel_home_position = panel.position
 	breached_label.hide()
@@ -98,6 +98,8 @@ func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_po
 			actor_breached.emit()
 			shake_panel(1.0)
 			_start_breach_pulse()
+		else:
+			shake_panel()
 	else:
 		current_guard -= 1
 		shake_panel()
@@ -116,9 +118,11 @@ func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_po
 
 	var final_damage = max(0, int(base_hit_damage))
 	current_hp = max(0, current_hp - final_damage)
+	hp_bar_actual.value = current_hp
+	hp_value.text = str(current_hp)
+	hp_changed.emit(current_hp, current_stats.max_hp)
 
 	print("Hit for ", final_damage, " damage!")
-	update_health_bar()
 	update_guard_bar()
 
 	# 7. Check for death
@@ -128,53 +132,52 @@ func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_po
 
 	return
 
-func defeated():
-	if is_defeated:
-		push_error("Defeated twice!!!!")
-		return
-
-	print(actor_name, " is defeated!")
-	is_defeated = true
-	current_ct = 0
-
-	if breached_label and breached_label.visible:
-		_stop_breach_pulse()
-
-	actor_defeated.emit(self)
-
 func take_healing(heal_amount: int, is_revive: bool = false):
-	# Base guard clause
 	if (is_defeated and not is_revive) or heal_amount <= 0:
 		return
 
-	# --- 1. Calculate new HP ---
 	var new_hp = min(current_stats.max_hp, current_hp + heal_amount)
 
-	# --- 2. Instantly update the Model (the data) ---
 	current_hp = new_hp
 	print(actor_name, " healed for ", heal_amount, ". HP is now: ", current_hp)
-
-	# --- 3. Instantly update the "Ghost Bar" ---
-	# This shows the player the "instant result"
-	hp_bar_instant.value = new_hp
-
-	# --- 4. Instantly update the data-changed signal ---
+	hp_bar_ghost.value = new_hp
 	hp_changed.emit(current_hp, current_stats.max_hp)
 
-func sync_visual_health()-> Tween:
-	# Get the "from" (visual) and "to" (real) values
-	var from_hp = hp_bar_visual.value
-	var to_hp = current_hp
+func sync_visual_health() -> Tween:
+	var actual_hp = hp_bar_actual.value
+	var ghost_hp = hp_bar_ghost.value
 
-	# If they're already the same, we're done. No animation.
-	if from_hp == to_hp:
+	var real_hp = current_hp
+
+	if actual_hp == real_hp and ghost_hp == real_hp:
 		return null
 
-	# We are "flushing" the visual change
-	print(actor_name, " is animating health from ", from_hp, " to ", to_hp)
+	var DURATION = 0.75
 
-	# We 'await' the animation
-	return _animate_health_change(from_hp, to_hp)
+	if health_tween and health_tween.is_running():
+		health_tween.kill()
+
+	health_tween = create_tween()
+	health_tween.set_trans(Tween.TRANS_SINE)
+	health_tween.set_ease(Tween.EASE_OUT)
+
+	if actual_hp < real_hp:
+		print(actor_name, " animating heal from ", actual_hp, " to ", real_hp)
+
+		health_tween.tween_property(hp_bar_actual, "value", real_hp, DURATION)
+		health_tween.tween_method(
+			func(val): hp_value.text = str(roundi(val)),
+			actual_hp,
+			real_hp,
+			DURATION
+		)
+
+	elif ghost_hp > real_hp:
+		print(actor_name, " animating damage from ", ghost_hp, " to ", real_hp)
+
+		health_tween.tween_property(hp_bar_ghost, "value", real_hp, DURATION)
+
+	return health_tween
 
 func _animate_health_change(from_hp: float, to_hp: float) -> Tween:
 	var DURATION = 0.75
@@ -197,13 +200,27 @@ func _animate_health_change(from_hp: float, to_hp: float) -> Tween:
 	return health_tween
 
 func _update_health_display(value_from_tween: float):
-	hp_bar_visual.value = value_from_tween
+	hp_bar_ghost.value = value_from_tween
 	hp_value.text = str(roundi(value_from_tween))
 
 func update_health_bar():
-	hp_bar_visual.value = current_hp
-	hp_bar_instant.value = current_hp
+	hp_bar_actual.value = current_hp
+	hp_bar_ghost.value = current_hp
 	hp_value.text = str(current_hp)
+
+func defeated():
+	if is_defeated:
+		push_error("Defeated twice!!!!")
+		return
+
+	print(actor_name, " is defeated!")
+	is_defeated = true
+	current_ct = 0
+
+	if breached_label and breached_label.visible:
+		_stop_breach_pulse()
+
+	actor_defeated.emit(self)
 
 func recover_breach():
 	gain_guard(current_stats.starting_guard)
@@ -285,7 +302,6 @@ func _stop_breach_pulse():
 func shake_panel(intensity: float = 0.5):
 	if not panel or intensity == 0.0:
 		return
-	print("Shaking ", actor_name, "'s Panel!")
 
 	# Kill old shake if it's running
 	if shake_tween and shake_tween.is_running():
