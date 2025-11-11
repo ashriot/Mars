@@ -9,7 +9,7 @@ class_name Effect_Healing
 @export var is_revive: bool = false
 
 
-func execute(attacker: ActorCard, primary_targets: Array, battle_manager: BattleManager, _action: Action) -> void:
+func execute(attacker: ActorCard, primary_targets: Array, battle_manager: BattleManager, _action: Action = null) -> void:
 
 	print("--- Executing Healing Effect ---")
 

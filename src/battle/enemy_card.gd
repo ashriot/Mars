@@ -37,30 +37,43 @@ func get_next_action() -> Action:
 	# Just grab the first action every time for testing.
 	var next_action = enemy_data.action_deck[0]
 	return next_action
-	if enemy_data.ai_script_indices.is_empty():
-		return null
+	#if enemy_data.ai_script_indices.is_empty():
+		#return null
+#
+	#var script = enemy_data.ai_script_indices
+	#var ability_index = script[ai_index]
+	#next_action = enemy_data.action_deck[ability_index]
+#
+	#ai_index = (ai_index + 1) % script.size()
+	#return next_action
 
-	var script = enemy_data.ai_script_indices
-	var ability_index = script[ai_index]
-	next_action = enemy_data.action_deck[ability_index]
-
-	ai_index = (ai_index + 1) % script.size()
-	return next_action
-
-func decide_intent(hero_targets: Array):
+func decide_intent(hero_targets: Array[HeroCard]):
 	self.intended_action = get_next_action()
+	get_a_target(hero_targets)
+
+func get_a_target(hero_targets: Array[HeroCard]):
 	self.intended_target = null
+
+	if not intended_action or hero_targets.is_empty():
+		update_intent_ui()
+		return
 
 	match intended_action.target_type:
 		Action.TargetType.ONE_ENEMY:
-			# This is your "random target" logic
-			if not hero_targets.is_empty():
+			if hero_targets.is_empty():
+				return
+			var taunting_hero = null
+			for hero in hero_targets:
+				if hero.has_condition("Provoke"):
+					taunting_hero = hero
+					break
+			if taunting_hero:
+				self.intended_target = taunting_hero
+			else:
 				self.intended_target = hero_targets.pick_random()
 
 		Action.TargetType.SELF:
-			self.intended_target = self # Target itself
-
-		# For these, no specific target is needed
+			self.intended_target = self
 		Action.TargetType.ALL_ENEMIES:
 			pass
 

@@ -18,16 +18,20 @@ class_name Effect_Damage
 @export var potency_scalar_per_focus: float = 0.0
 
 
-func execute(attacker: ActorCard, primary_targets: Array, battle_manager: BattleManager, action: Action) -> void:
+func execute(attacker: ActorCard, primary_targets: Array, battle_manager: BattleManager, action: Action = null) -> void:
 
 	print("\n--- Executing Damage Effect for ", hit_count, " hit(s) ---")
 	var random = false
-	if action.target_type == Action.TargetType.RANDOM_ENEMY:
-		random = true
-		primary_targets = battle_manager.get_living_enemies()
-		if primary_targets.is_empty():
-			print("RANDOM_ENEMY: No living enemies to target!")
-			return
+	var focus_cost = 0
+
+	if action:
+		focus_cost = action.focus_cost
+		if action.target_type == Action.TargetType.RANDOM_ENEMY:
+			random = true
+			primary_targets = battle_manager.get_living_enemies()
+			if primary_targets.is_empty():
+				print("RANDOM_ENEMY: No living enemies to target!")
+				return
 
 	var target = null
 	for t in primary_targets.size():
@@ -36,7 +40,7 @@ func execute(attacker: ActorCard, primary_targets: Array, battle_manager: Battle
 				target = primary_targets.pick_random()
 			else:
 				target = primary_targets[t]
-			var dynamic_potency = get_dynamic_potency(attacker, target, action.focus_cost)
+			var dynamic_potency = get_dynamic_potency(attacker, target, focus_cost)
 
 			if not target or not is_instance_valid(target):
 				continue

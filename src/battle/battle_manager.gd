@@ -23,7 +23,7 @@ signal turn_order_updated(turn_queue_data)
 @export var enemy_data_files: Array[EnemyData] = []
 
 # --- Actor Tracking ---
-var current_hero: HeroCard = null
+var current_actor: ActorCard = null
 var selected_action: Action = null
 var actor_list: Array = [] # Renamed from turn_queue
 var TARGET_CT: int = 5000 # Your CT target
@@ -54,6 +54,7 @@ func spawn_encounter():
 		hero_card.actor_breached.connect(_on_actor_breached)
 		hero_card.actor_defeated.connect(_on_actor_died)
 		hero_card.actor_revived.connect(_on_actor_revived)
+		hero_card.actor_conditions_changed.connect(_on_actor_conditions_changed)
 		hero_card.current_ct = randi_range(hero_data.stats.speed / 5, hero_data.stats.speed * 3)
 		hero_card.role_shifted.connect(_on_hero_role_shifted)
 		actor_list.append(hero_card)
@@ -66,6 +67,7 @@ func spawn_encounter():
 		enemy_card.actor_breached.connect(_on_actor_breached)
 		enemy_card.actor_defeated.connect(_on_actor_died)
 		enemy_card.actor_revived.connect(_on_actor_revived)
+		enemy_card.actor_conditions_changed.connect(_on_actor_conditions_changed)
 		enemy_card.current_ct = randi_range(enemy_data.stats.speed / 5, enemy_data.stats.speed * 3)
 		enemy_card.decide_intent(get_living_heroes())
 		actor_list.append(enemy_card)
@@ -134,19 +136,17 @@ func find_and_start_next_turn():
 		actor.current_ct += actor.current_stats.speed * real_ticks_passed
 
 	winner.current_ct = 0
-
 	turn_order_updated.emit(projection)
 
 	# 6. Start the winner's turn
+	self.current_actor = winner
 	if winner.is_in_group("player"):
-		self.current_hero = winner
 		change_state(State.EXECUTING_ACTION)
 		await winner.on_turn_started()
-		player_turn_started.emit(current_hero)
+		player_turn_started.emit(current_actor)
 		await action_bar.slide_in()
 		change_state(State.PLAYER_ACTION)
 	else:
-		self.current_hero = null
 		change_state(State.ENEMY_ACTION)
 		await winner.on_turn_started()
 		await execute_enemy_turn(winner)
@@ -206,7 +206,7 @@ func _on_actor_revived(actor: ActorCard):
 func _on_action_selected(action: Action):
 	if current_state in [State.LOADING, State.EXECUTING_ACTION]: return
 
-	if current_hero.current_focus_pips < action.focus_cost:
+	if current_actor.current_focus_pips < action.focus_cost:
 		return
 
 	self.selected_action = action
@@ -244,10 +244,10 @@ func _on_hero_clicked(target_hero: HeroCard):
 			targets_array = get_living_heroes()
 		Action.TargetType.TEAMMATES_ONLY:
 			for ally in get_living_heroes():
-				if ally != current_hero:
+				if ally != current_actor:
 					targets_array.append(ally)
 
-	await execute_action(current_hero, selected_action, targets_array)
+	await execute_action(current_actor, selected_action, targets_array)
 	_finish_hero_turn()
 
 func _on_enemy_clicked(target_enemy: EnemyCard):
@@ -268,11 +268,11 @@ func _on_enemy_clicked(target_enemy: EnemyCard):
 		Action.TargetType.ALL_ENEMIES:
 			targets_array = enemy_area.get_children()
 
-	await execute_action(current_hero, selected_action, targets_array)
+	await execute_action(current_actor, selected_action, targets_array)
 	_finish_hero_turn()
 
 func _finish_hero_turn():
-	current_hero.on_turn_ended()
+	current_actor.on_turn_ended()
 	self.selected_action = null
 	await wait(0.25)
 
@@ -289,6 +289,10 @@ func execute_action(actor: ActorCard, action: Action, targets: Array):
 		await effect.execute(actor, targets, self, action)
 	await _flush_all_health_animations()
 	return
+
+func execute_triggered_effect(actor: ActorCard, effect: ActionEffect, targets: Array):
+
+	await effect.execute(actor, targets, self, null)
 
 func execute_enemy_turn(enemy: EnemyCard):
 	change_state(State.EXECUTING_ACTION)
@@ -331,12 +335,21 @@ func get_living_enemies() -> Array[EnemyCard]:
 			living_enemies.append(enemy_card)
 	return living_enemies
 
+func _on_actor_conditions_changed(_actor_who_changed: ActorCard, retarget: bool):
+	var living_heroes = get_living_heroes()
+
+	for enemy in get_living_enemies():
+		if current_state == State.ENEMY_ACTION and enemy == current_actor:
+			continue
+		if retarget:
+			enemy.get_a_target(living_heroes)
+
 func _on_shift_button_pressed(direction: String):
 	if current_state != State.PLAYER_ACTION: return
 
-	if current_hero:
+	if current_actor:
 		change_state(State.EXECUTING_ACTION)
-		await current_hero.shift_role(direction)
+		await current_actor.shift_role(direction)
 		change_state(State.PLAYER_ACTION)
 		print("Shift complete. Returning to player's action.")
 
@@ -350,19 +363,17 @@ func _on_hero_role_shifted(hero_card: HeroCard):
 	if action.auto_target:
 		print("Auto-executing shift action...")
 
-		# Build the auto-target list
 		var target_list = []
 		match action.target_type:
 			Action.TargetType.SELF:
-				target_list.append(current_hero)
+				target_list.append(current_actor)
 			Action.TargetType.ALL_ENEMIES:
 				target_list = get_living_enemies()
 			Action.TargetType.TEAM:
 				target_list = get_living_heroes()
-			# (etc. for other auto-types)
 
-		await execute_action(current_hero, action, target_list)
-		return # We're done, return to _on_shift_button_pressed
+		await execute_action(current_actor, action, target_list)
+		return
 
 	print("Action requires a target. Waiting for click...")
 	_on_action_selected(action)

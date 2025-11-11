@@ -86,7 +86,8 @@ func shift_role(direction: String):
 		current_role_index = (current_role_index + 1) % role_count
 	role_label.text = get_current_role().role_name
 	role_icon.texture = get_current_role().icon
-	role_shifted.emit(self) # Pass 'self'
+	await _fire_condition_event(Trigger.TriggerType.ON_SHIFT)
+	role_shifted.emit(self)
 	recolor()
 
 func spend_focus(amount: int):

@@ -7,6 +7,7 @@ signal actor_defeated(actor)
 signal actor_revived(actor)
 signal hp_changed(new_hp, max_hp)
 signal armor_changed(new_pips)
+signal actor_conditions_changed(actor, retarget)
 
 const MAX_GUARD = 10
 
@@ -21,6 +22,7 @@ var current_ct: int = 0
 var is_breached: bool
 var is_defeated: bool
 var active_conditions: Array[Condition] = []
+var active_state_tags: Array[String] = []
 
 # --- Animation Tweens ---
 var shake_tween: Tween
@@ -46,7 +48,7 @@ func setup_base(stats: ActorStats):
 	self.current_stats = stats.duplicate()
 	actor_name = stats.actor_name
 	hp_bar_ghost.max_value = current_stats.max_hp
-	current_hp = current_stats.max_hp / 2
+	current_hp = current_stats.max_hp
 	hp_bar_actual.max_value = current_stats.max_hp
 	hp_bar_ghost.max_value = current_stats.max_hp
 	current_guard = current_stats.starting_guard
@@ -86,11 +88,7 @@ func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_po
 		shake_panel()
 	elif current_guard == 0:
 		if not is_breached:
-			is_breached = true
-			current_ct = 0
-			actor_breached.emit()
-			shake_panel(1.0)
-			_start_breach_pulse()
+			breached()
 		else:
 			shake_panel()
 	else:
@@ -125,6 +123,14 @@ func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_po
 
 	return
 
+func breached():
+	is_breached = true
+	current_ct = 0
+	actor_breached.emit()
+	_start_breach_pulse()
+	shake_panel(1.0)
+	await _fire_condition_event(Trigger.TriggerType.ON_BREACHED)
+
 func take_healing(heal_amount: int, is_revive: bool = false):
 	if (is_defeated and not is_revive) or heal_amount <= 0:
 		return
@@ -136,12 +142,31 @@ func take_healing(heal_amount: int, is_revive: bool = false):
 	hp_bar_ghost.value = new_hp
 	hp_changed.emit(current_hp, current_stats.max_hp)
 
-func _fire_condition_event(event_type: Trigger.TriggerType) -> void:
+func add_condition(condition_resource: Condition):
+	if not condition_resource:
+		push_error("add_condition was called with a null resource!")
+		return
+
+	var new_condition = condition_resource.duplicate(true)
+	active_conditions.append(new_condition)
+	print(actor_name, " gained condition: ", new_condition.condition_name)
+
+	await _fire_condition_event(Trigger.TriggerType.ON_APPLIED)
+	actor_conditions_changed.emit(self, new_condition.retarget)
+
+func has_condition(condition_name: String) -> bool:
 	for condition in active_conditions:
-		for trigger in condition.triggers:
-			if trigger.trigger_type == event_type:
-				var targets = []
-				await battle_manager.execute_effect_list(self, trigger.effects, targets)
+		if condition.condition_name == condition_name:
+			return true
+
+	return false
+
+func remove_condition(condition: Condition):
+	if active_conditions.has(condition):
+		for effect in condition.effects:
+			effect.on_removed(self)
+		active_conditions.erase(condition)
+	actor_conditions_changed.emit(self, false)
 
 func sync_visual_health() -> Tween:
 	var actual_hp = hp_bar_actual.value
@@ -180,6 +205,36 @@ func sync_visual_health() -> Tween:
 
 func _update_health_display(value_from_tween: float):
 	hp_value.text = str(roundi(value_from_tween))
+
+func _fire_condition_event(event_type: Trigger.TriggerType) -> void:
+	for i in range(active_conditions.size() - 1, -1, -1):
+		var condition = active_conditions[i]
+
+		if condition.remove_on_triggers.has(event_type):
+			print(actor_name, "'s ", condition.condition_name, " was removed by trigger.")
+			remove_condition(condition)
+			continue
+
+		for trigger in condition.triggers:
+			if trigger.trigger_type != event_type: continue
+
+			print("Condition '", condition.condition_name, "' is firing effects for '", event_type, "'")
+
+			var targets = [self]
+
+			for effect in trigger.effects_to_run:
+				await battle_manager.execute_triggered_effect(self, effect, targets)
+
+func add_state_tag(tag: String):
+	if not active_state_tags.has(tag):
+		active_state_tags.append(tag)
+
+func remove_state_tag(tag: String):
+	if active_state_tags.has(tag):
+		active_state_tags.erase(tag)
+
+func has_state_tag(tag: String) -> bool:
+	return active_state_tags.has(tag)
 
 func update_health_bar():
 	hp_bar_actual.value = current_hp

@@ -2,20 +2,12 @@
 extends ActionEffect
 class_name Effect_GrantGuard
 
-enum EffectTarget {
-	PRIMARY, # The target(s) the player clicked
-	SELF,
-	LEAST_GUARD_ALLY,
-	ALL_ALLIES,
-	ALL_ENEMIES
-}
-
 @export var guard_amount: int = 1
 # --- 2. RENAMED VARIABLE ---
 @export var effect_target_type: EffectTarget = EffectTarget.SELF
 
 
-func execute(attacker: ActorCard, primary_targets: Array, battle_manager: BattleManager, action: Action) -> void:
+func execute(attacker: ActorCard, primary_targets: Array, battle_manager: BattleManager, _action: Action = null) -> void:
 
 	print("--- Executing Grant Guard Effect ---")
 
