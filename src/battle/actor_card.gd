@@ -20,6 +20,7 @@ var current_guard: int
 var current_ct: int = 0
 var is_breached: bool
 var is_defeated: bool
+var active_conditions: Array[Condition] = []
 
 # --- Animation Tweens ---
 var shake_tween: Tween
@@ -62,15 +63,7 @@ func setup_base(stats: ActorStats):
 
 func on_turn_started() -> void:
 	await battle_manager.wait(0.1)
-	# This is where all your "start of turn" buff/debuff
-	# logic will go. For example:
-
-	# for buff in active_buffs:
-	#     if buff.has_start_of_turn_effect():
-	#         await buff.execute_effect(self)
-
-	# For now, it's just a tiny placeholder await
-	# so the 'async' function is valid.
+	await _fire_condition_event(Trigger.TriggerType.ON_TURN_START)
 
 	if is_breached:
 		recover_breach()
@@ -121,7 +114,7 @@ func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_po
 	hp_bar_actual.value = current_hp
 	hp_value.text = str(current_hp)
 	hp_changed.emit(current_hp, current_stats.max_hp)
-
+	await _fire_condition_event(Trigger.TriggerType.ON_BEING_HIT)
 	print("Hit for ", final_damage, " damage!")
 	update_guard_bar()
 
@@ -143,10 +136,16 @@ func take_healing(heal_amount: int, is_revive: bool = false):
 	hp_bar_ghost.value = new_hp
 	hp_changed.emit(current_hp, current_stats.max_hp)
 
+func _fire_condition_event(event_type: Trigger.TriggerType) -> void:
+	for condition in active_conditions:
+		for trigger in condition.triggers:
+			if trigger.trigger_type == event_type:
+				var targets = []
+				await battle_manager.execute_effect_list(self, trigger.effects, targets)
+
 func sync_visual_health() -> Tween:
 	var actual_hp = hp_bar_actual.value
 	var ghost_hp = hp_bar_ghost.value
-
 	var real_hp = current_hp
 
 	if actual_hp == real_hp and ghost_hp == real_hp:
@@ -165,8 +164,8 @@ func sync_visual_health() -> Tween:
 		print(actor_name, " animating heal from ", actual_hp, " to ", real_hp)
 
 		health_tween.tween_property(hp_bar_actual, "value", real_hp, DURATION)
-		health_tween.tween_method(
-			func(val): hp_value.text = str(roundi(val)),
+		health_tween.parallel().tween_method(
+			_update_health_display,
 			actual_hp,
 			real_hp,
 			DURATION
@@ -179,28 +178,7 @@ func sync_visual_health() -> Tween:
 
 	return health_tween
 
-func _animate_health_change(from_hp: float, to_hp: float) -> Tween:
-	var DURATION = 0.75
-
-	if health_tween and health_tween.is_running():
-		health_tween.kill()
-
-	health_tween = create_tween()
-	health_tween.set_trans(Tween.TRANS_SINE)
-	health_tween.set_ease(Tween.EASE_OUT)
-
-	health_tween.tween_method(
-		_update_health_display, # The function to call
-		from_hp,                # Start value
-		to_hp,                  # End value
-		DURATION
-	)
-
-	# Wait for the tween to finish
-	return health_tween
-
 func _update_health_display(value_from_tween: float):
-	hp_bar_ghost.value = value_from_tween
 	hp_value.text = str(roundi(value_from_tween))
 
 func update_health_bar():
@@ -237,6 +215,7 @@ func gain_guard(amount: int):
 	current_guard = min(current_guard + amount, MAX_GUARD)
 
 	print(actor_name, " gained ", amount, " guard. Total: ", current_guard)
+	await _fire_condition_event(Trigger.TriggerType.ON_GAINING_GUARD)
 	update_guard_bar()
 
 func update_guard_bar():
