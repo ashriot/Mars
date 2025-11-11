@@ -17,12 +17,14 @@ var current_role_index: int = 0
 # --- UNIQUE UI Node References ---
 @onready var focus_bar: HBoxContainer = $Panel/FocusBar
 @onready var role_label: Label = $Panel/Role
+@onready var role_icon: TextureRect = $Panel/RoleIcon
 
 func setup(data: HeroData):
 	self.hero_data = data
 	setup_base(data.stats)
 	name_label.text = hero_data.stats.actor_name
 	role_label.text = get_current_role().role_name
+	role_icon.texture = get_current_role().icon
 	panel.self_modulate.a = 0.7
 	recolor()
 	if hero_data.portrait:
@@ -81,6 +83,7 @@ func shift_role(direction: String):
 	else:
 		current_role_index = (current_role_index + 1) % role_count
 	role_label.text = get_current_role().role_name
+	role_icon.texture = get_current_role().icon
 	role_shifted.emit(self) # Pass 'self'
 	recolor()
 
@@ -113,7 +116,7 @@ func _slide_down():
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 	tween.tween_property(panel, "self_modulate:a", 0.7, duration)
 
-func _on_gui_input(event: InputEvent) -> void:
+func _on_gui_input(_event: InputEvent) -> void:
 	pass # Replace with function body.
 
 func recolor():
@@ -121,5 +124,6 @@ func recolor():
 	panel.self_modulate = color
 	name_label.self_modulate = color
 	role_label.self_modulate = color
+	role_icon.self_modulate = color
 	focus_bar.modulate = color
 	guard_bar.modulate = color

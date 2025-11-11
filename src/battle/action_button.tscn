@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=3 uid="uid://d0wglriavtij"]
 
 [ext_resource type="Script" uid="uid://bs7vlao78wiht" path="res://src/battle/action_button.gd" id="1_juqvx"]
-[ext_resource type="Texture2D" uid="uid://d1te5324os86k" path="res://assets/graphics/icons/bolt.png" id="1_sm4rn"]
+[ext_resource type="Texture2D" uid="uid://d1te5324os86k" path="res://assets/graphics/icons/textures/bolt.png" id="1_sm4rn"]
 [ext_resource type="Texture2D" uid="uid://fs6u3e62xn0o" path="res://assets/graphics/icons/skills/striking-splinter.png" id="2_4g37w"]
 [ext_resource type="Texture2D" uid="uid://ebo48y7vo0tu" path="res://assets/graphics/glyphs/ps/Button - PS Circle White 1.png" id="4_pk42m"]
 
@@ -64,17 +64,21 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -230.0
+offset_left = -310.0
 offset_top = -67.0
 offset_right = -15.0
 offset_bottom = -27.0
 grow_horizontal = 0
 grow_vertical = 0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.78431374)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 12
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 0
+theme_override_constants/outline_size = 2
+theme_override_constants/shadow_outline_size = 20
 theme_override_font_sizes/font_size = 32
-text = "Focused Shot"
+text = "Leeching Shots"
 horizontal_alignment = 2
 
 [node name="FocusPips" type="HBoxContainer" parent="."]

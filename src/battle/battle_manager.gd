@@ -258,27 +258,9 @@ func execute_action(actor: ActorCard, action: Action, targets: Array):
 
 	print(actor_name, " uses ", action.action_name)
 
-	# Build target list if it's empty (for auto-actions)
-	if targets.is_empty():
-		match action.target_type:
-			Action.TargetType.ALL_ENEMIES:
-				if actor.is_in_group("player"):
-					targets = get_living_enemies()
-				else:
-					targets = get_living_heroes()
-			Action.TargetType.SELF:
-				targets.append(actor)
-			# (Add more auto-target logic here)
+	for effect in action.effects:
+		await effect.execute(actor, targets, self, action)
 
-	if targets.is_empty():
-		print("Action has no targets.")
-		return
-
-	for target in targets:
-		if target and is_instance_valid(target):
-			await target.take_damage_from_action(action, actor)
-		else:
-			print("Target is invalid or null.")
 	return
 
 func execute_enemy_turn(enemy: EnemyCard):

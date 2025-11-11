@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bm26wuhqb46wc"
-path="res://.godot/imported/play.png-30eff8917a4eed2db46cb3464c7e762e.ctex"
+uid="uid://dsriy3sccbg28"
+path="res://.godot/imported/bolt-spell-cast.png-04b54d37a14424c6f3d4cf635874bf13.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/icons/play.png"
-dest_files=["res://.godot/imported/play.png-30eff8917a4eed2db46cb3464c7e762e.ctex"]
+source_file="res://assets/graphics/icons/roles/bolt-spell-cast.png"
+dest_files=["res://.godot/imported/bolt-spell-cast.png-04b54d37a14424c6f3d4cf635874bf13.ctex"]
 
 [params]
 

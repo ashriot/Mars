@@ -1,9 +1,10 @@
-[gd_scene load_steps=7 format=3 uid="uid://cj2ylb1ld6ews"]
+[gd_scene load_steps=8 format=3 uid="uid://cj2ylb1ld6ews"]
 
 [ext_resource type="Script" uid="uid://cp1th7fv4flgo" path="res://src/battle/hero_card.gd" id="1_n7b5o"]
-[ext_resource type="Texture2D" uid="uid://d1te5324os86k" path="res://assets/graphics/icons/bolt.png" id="2_1ptom"]
-[ext_resource type="Texture2D" uid="uid://jeiq1r6ke2t7" path="res://assets/graphics/icons/plus.png" id="2_d6207"]
-[ext_resource type="Texture2D" uid="uid://dje00e457xu8o" path="res://assets/graphics/icons/shield.png" id="3_d6207"]
+[ext_resource type="Texture2D" uid="uid://d1te5324os86k" path="res://assets/graphics/icons/textures/bolt.png" id="2_1ptom"]
+[ext_resource type="Texture2D" uid="uid://dve0tjghg88kw" path="res://assets/graphics/icons/roles/blindfold.png" id="2_53q4u"]
+[ext_resource type="Texture2D" uid="uid://jeiq1r6ke2t7" path="res://assets/graphics/icons/textures/plus.png" id="2_d6207"]
+[ext_resource type="Texture2D" uid="uid://dje00e457xu8o" path="res://assets/graphics/icons/textures/shield.png" id="3_d6207"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_u5n4n"]
 bg_color = Color(0, 0, 0, 0.19607843)
@@ -38,6 +39,19 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+
+[node name="RoleIcon" type="TextureRect" parent="Panel"]
+modulate = Color(1, 1, 1, 0.5882353)
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -130.0
+offset_bottom = 130.0
+grow_horizontal = 0
+mouse_filter = 2
+texture = ExtResource("2_53q4u")
+expand_mode = 1
 
 [node name="HP" type="Control" parent="Panel"]
 layout_mode = 1
@@ -80,6 +94,7 @@ text = "9999"
 horizontal_alignment = 2
 
 [node name="HeartIcon" type="TextureRect" parent="Panel/HP"]
+modulate = Color(1, 0.6784314, 0.6784314, 1)
 layout_mode = 1
 anchors_preset = 9
 anchor_bottom = 1.0
@@ -102,11 +117,14 @@ offset_top = -26.0
 offset_right = 385.0
 offset_bottom = 23.0
 grow_vertical = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.78431374)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 12
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 0
+theme_override_constants/outline_size = 4
+theme_override_constants/shadow_outline_size = 20
 theme_override_font_sizes/font_size = 40
 text = "Unit Name"
-horizontal_alignment = 2
 
 [node name="Role" type="Label" parent="Panel"]
 layout_mode = 1
@@ -123,7 +141,6 @@ grow_horizontal = 0
 grow_vertical = 2
 theme_override_font_sizes/font_size = 24
 text = "Enforcer"
-horizontal_alignment = 2
 
 [node name="FocusBar" type="HBoxContainer" parent="Panel"]
 layout_mode = 1
@@ -212,57 +229,120 @@ grow_horizontal = 2
 grow_vertical = 0
 theme_override_constants/separation = 2
 
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar"]
-custom_minimum_size = Vector2(41, 42)
+[node name="Pip" type="Control" parent="Panel/GuardBar"]
+custom_minimum_size = Vector2(41, 41)
 layout_mode = 2
+
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip"]
+custom_minimum_size = Vector2(41, 42)
+layout_mode = 0
+offset_left = 2.0
+offset_right = 43.0
+offset_bottom = 42.0
 texture = ExtResource("3_d6207")
 expand_mode = 1
 
-[node name="Shield2" type="TextureRect" parent="Panel/GuardBar"]
-custom_minimum_size = Vector2(41, 42)
+[node name="Pip2" type="Control" parent="Panel/GuardBar"]
+custom_minimum_size = Vector2(41, 41)
 layout_mode = 2
+
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip2"]
+custom_minimum_size = Vector2(41, 42)
+layout_mode = 0
+offset_left = 2.0
+offset_right = 43.0
+offset_bottom = 42.0
 texture = ExtResource("3_d6207")
 expand_mode = 1
 
-[node name="Shield3" type="TextureRect" parent="Panel/GuardBar"]
-custom_minimum_size = Vector2(41, 42)
+[node name="Pip3" type="Control" parent="Panel/GuardBar"]
+custom_minimum_size = Vector2(41, 41)
 layout_mode = 2
+
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip3"]
+custom_minimum_size = Vector2(41, 42)
+layout_mode = 0
+offset_left = 2.0
+offset_right = 43.0
+offset_bottom = 42.0
 texture = ExtResource("3_d6207")
 expand_mode = 1
 
-[node name="Shield4" type="TextureRect" parent="Panel/GuardBar"]
-custom_minimum_size = Vector2(41, 42)
+[node name="Pip4" type="Control" parent="Panel/GuardBar"]
+custom_minimum_size = Vector2(41, 41)
 layout_mode = 2
+
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip4"]
+custom_minimum_size = Vector2(41, 42)
+layout_mode = 0
+offset_left = 2.0
+offset_right = 43.0
+offset_bottom = 42.0
 texture = ExtResource("3_d6207")
 expand_mode = 1
 
-[node name="Shield5" type="TextureRect" parent="Panel/GuardBar"]
-custom_minimum_size = Vector2(41, 42)
+[node name="Pip5" type="Control" parent="Panel/GuardBar"]
+custom_minimum_size = Vector2(41, 41)
 layout_mode = 2
+
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip5"]
+custom_minimum_size = Vector2(41, 42)
+layout_mode = 0
+offset_left = 2.0
+offset_right = 43.0
+offset_bottom = 42.0
 texture = ExtResource("3_d6207")
 expand_mode = 1
 
-[node name="Shield6" type="TextureRect" parent="Panel/GuardBar"]
-custom_minimum_size = Vector2(41, 42)
+[node name="Pip6" type="Control" parent="Panel/GuardBar"]
+custom_minimum_size = Vector2(41, 41)
 layout_mode = 2
+
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip6"]
+custom_minimum_size = Vector2(41, 42)
+layout_mode = 0
+offset_left = 2.0
+offset_right = 43.0
+offset_bottom = 42.0
 texture = ExtResource("3_d6207")
 expand_mode = 1
 
-[node name="Shield7" type="TextureRect" parent="Panel/GuardBar"]
-custom_minimum_size = Vector2(41, 42)
+[node name="Pip7" type="Control" parent="Panel/GuardBar"]
+custom_minimum_size = Vector2(41, 41)
 layout_mode = 2
+
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip7"]
+custom_minimum_size = Vector2(41, 42)
+layout_mode = 0
+offset_left = 2.0
+offset_right = 43.0
+offset_bottom = 42.0
 texture = ExtResource("3_d6207")
 expand_mode = 1
 
-[node name="Shield8" type="TextureRect" parent="Panel/GuardBar"]
-custom_minimum_size = Vector2(41, 42)
+[node name="Pip8" type="Control" parent="Panel/GuardBar"]
+custom_minimum_size = Vector2(41, 41)
 layout_mode = 2
+
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip8"]
+custom_minimum_size = Vector2(41, 42)
+layout_mode = 0
+offset_left = 2.0
+offset_right = 43.0
+offset_bottom = 42.0
 texture = ExtResource("3_d6207")
 expand_mode = 1
 
-[node name="Shield9" type="TextureRect" parent="Panel/GuardBar"]
-custom_minimum_size = Vector2(41, 42)
+[node name="Pip9" type="Control" parent="Panel/GuardBar"]
+custom_minimum_size = Vector2(41, 41)
 layout_mode = 2
+
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip9"]
+custom_minimum_size = Vector2(41, 42)
+layout_mode = 0
+offset_left = 2.0
+offset_right = 43.0
+offset_bottom = 42.0
 texture = ExtResource("3_d6207")
 expand_mode = 1
 

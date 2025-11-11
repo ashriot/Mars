@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://jeiq1r6ke2t7"
-path="res://.godot/imported/plus.png-c77d77d97cb3bb0400bd0a349dcbc787.ctex"
+uid="uid://dve0tjghg88kw"
+path="res://.godot/imported/blindfold.png-c6ddb2258dde7ac776d91b4ac057706e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/icons/plus.png"
-dest_files=["res://.godot/imported/plus.png-c77d77d97cb3bb0400bd0a349dcbc787.ctex"]
+source_file="res://assets/graphics/icons/roles/blindfold.png"
+dest_files=["res://.godot/imported/blindfold.png-c6ddb2258dde7ac776d91b4ac057706e.ctex"]
 
 [params]
 

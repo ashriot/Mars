@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="EnemyData" load_steps=6 format=3 uid="uid://cpdokr12lby8i"]
 
-[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_4qxmx"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/actions/action.gd" id="1_4qxmx"]
 [ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://data/scripts/enemy_data.gd" id="2_n3ati"]
 [ext_resource type="Resource" uid="uid://d0m01fmh2ig2s" path="res://data/enemies/actions/gunshot.tres" id="2_odqln"]
 [ext_resource type="Script" uid="uid://b70gwt4gd4cun" path="res://data/scripts/actor_stats.gd" id="3_n3ati"]

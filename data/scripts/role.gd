@@ -2,6 +2,7 @@ extends Resource
 class_name Role
 
 @export var role_name: String = "New Role"
+@export var icon: Texture
 @export var color: Color
 @export var shift_action: Action
 @export var passive: Resource # You'll make a Passive.gd resource later

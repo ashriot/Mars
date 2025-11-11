@@ -64,7 +64,6 @@ func decide_intent(hero_targets: Array):
 		Action.TargetType.ALL_ENEMIES:
 			pass
 
-		# (Add other target types like ENEMY_GROUP here later)
 	update_intent_ui()
 
 func update_intent_ui():
@@ -72,15 +71,22 @@ func update_intent_ui():
 		intent_effect.text = ""
 		return
 
-	if intended_target:
-		var target_name = "Self"
-		if intended_target.is_in_group("player"):
-			target_name = intended_target.actor_name
+	if intended_action.effects.is_empty():
+		return
 
-		var power = get_power(intended_action.power_type)
-		var intended_dmg = int(power * intended_action.potency)
+	var first_effect = intended_action.effects[0]
+
+	if first_effect is Effect_Damage:
+		# We cast it to access its unique properties
+		var damage_effect: Effect_Damage = first_effect
+
+		# --- 3. Now your code will work ---
+		var power = get_power(damage_effect.power_type)
+
+		var intended_dmg = int(power * damage_effect.potency)
+
 		var dmg_type = ""
-		match intended_action.damage_type:
+		match damage_effect.damage_type:
 			Action.DamageType.KINETIC:
 				dmg_type = "KIN"
 			Action.DamageType.ENERGY:
@@ -88,8 +94,25 @@ func update_intent_ui():
 			Action.DamageType.PIERCING:
 				dmg_type = "PRC"
 
-		var hits_text = "x" + (str(intended_action.hit_count) if intended_action.hit_count > 1 else "")
-		intent_effect.text = str(intended_dmg) + hits_text + " " + dmg_type + " > " + target_name
+		var hits_text = "x" + str(damage_effect.hit_count) if damage_effect.hit_count > 1 else ""
+
+		# This is your final text string
+		var final_text = str(intended_dmg) + hits_text + " " + dmg_type
+
+		if intended_target:
+			# Your 'actor_name' fix now works
+			final_text += " > " + intended_target.actor_name
+
+		intent_effect.text = final_text
+
+	else:
+		# --- 4. It's a non-damage effect (like Grant Guard) ---
+		# Just show the action's name and target
+		var final_text = intended_action.action_name
+		if intended_target:
+			final_text += " > " + intended_target.actor_name
+
+		intent_effect.text = final_text
 
 func defeated():
 	super.defeated()

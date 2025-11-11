@@ -8,6 +8,8 @@ signal actor_revived(actor)
 signal hp_changed(new_hp, max_hp)
 signal armor_changed(new_pips)
 
+const MAX_GUARD = 10
+
 var battle_manager: BattleManager
 
 # --- Data (Shared by both) ---
@@ -49,6 +51,10 @@ func setup_base(stats: ActorStats):
 	is_defeated = false
 	is_breached = false
 	update_health_bar()
+	await get_tree().process_frame
+
+	for pip in guard_bar.get_children():
+		pip.get_child(0).set_pivot_offset(pip.size / 2.0)
 	update_guard_bar()
 
 func on_turn_started() -> void:
@@ -77,52 +83,46 @@ func get_power(power_type: Action.PowerType) -> int:
 		return current_stats.psyche
 	return 0
 
-func take_damage_from_action(action: Action, attacker: ActorCard) -> void:
-	print("\n--- Executing action: ", action.action_name, " for ", action.hit_count, " hit(s) ---")
+func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_potency: float) -> void:
+	if is_defeated: return
 
-	for i in action.hit_count:
-		if is_defeated: return
-
-		if action.damage_type == Action.DamageType.PIERCING:
-			shake_panel()
-		elif current_guard == 0:
-			if not is_breached:
-				is_breached = true
-				current_ct = 0
-				actor_breached.emit()
-				shake_panel(1.0)
-				_start_breach_pulse()
-		else:
-			current_guard -= 1
-			shake_panel()
-
-		var power_for_hit = attacker.get_power(action.power_type)
-		if is_breached:
-			power_for_hit += attacker.current_stats.overload
-		var dynamic_potency = action.get_dynamic_potency(attacker, self)
-		var base_hit_damage = int(power_for_hit * dynamic_potency)
-		var final_damage = base_hit_damage # PIERCING DAMAGE
-
+	if damage_effect.damage_type == Action.DamageType.PIERCING:
+		shake_panel()
+	elif current_guard == 0:
 		if not is_breached:
-			if action.damage_type == Action.DamageType.KINETIC:
-				final_damage = base_hit_damage * (1.0 - current_stats.kinetic_defense)
-			else: # ENERGY
-				final_damage = base_hit_damage * (1.0 - current_stats.energy_defense)
+			is_breached = true
+			current_ct = 0
+			actor_breached.emit()
+			shake_panel(1.0)
+			_start_breach_pulse()
+	else:
+		current_guard -= 1
+		shake_panel()
 
-		final_damage = max(0, int(final_damage))
-		current_hp = max(0, current_hp - final_damage)
-		print("Hit ", i+1, ": ", final_damage, " damage!")
+	var power_for_hit = attacker.get_power(damage_effect.power_type)
+	if is_breached:
+		power_for_hit += attacker.current_stats.overload
 
-		update_health_bar()
-		update_guard_bar()
+	var base_hit_damage: float = power_for_hit * dynamic_potency
 
-		# 7. Check for death
-		if current_hp == 0:
-			await defeated()
-			return
+	if not is_breached:
+		if damage_effect.damage_type == Action.DamageType.KINETIC:
+			base_hit_damage = base_hit_damage * (1.0 - current_stats.kinetic_defense)
+		else: # ENERGY
+			base_hit_damage = base_hit_damage * (1.0 - current_stats.energy_defense)
 
-		if action.hit_count > 1 and i < action.hit_count - 1:
-				await battle_manager.wait(0.25)
+	var final_damage = max(0, int(base_hit_damage))
+	current_hp = max(0, current_hp - final_damage)
+
+	print("Hit for ", final_damage, " damage!")
+	update_health_bar()
+	update_guard_bar()
+
+	# 7. Check for death
+	if current_hp == 0:
+		await defeated()
+		return
+
 	return
 
 func defeated():
@@ -147,11 +147,22 @@ func take_healing(heal_amount: int, is_revive: bool = false):
 	print(name, " healed for ", heal_amount, ". HP is now: ", current_hp)
 	update_health_bar()
 
-func recover_breach():
-	is_breached = false
-	current_guard = current_stats.starting_guard
-	_stop_breach_pulse()
+func gain_guard(amount: int):
+	if is_defeated or amount <= 0:
+		return
+
+	if current_guard == 0 and is_breached:
+		is_breached = false
+		_stop_breach_pulse()
+		print(actor_name, " recovered from Breach!")
+
+	current_guard = min(current_guard + amount, MAX_GUARD)
+
+	print(actor_name, " gained ", amount, " guard. Total: ", current_guard)
 	update_guard_bar()
+
+func recover_breach():
+	gain_guard(current_stats.starting_guard)
 
 func update_health_bar():
 	hp_bar.value = current_hp
@@ -160,11 +171,21 @@ func update_health_bar():
 
 func update_guard_bar():
 	var pips = guard_bar.get_children()
+
+	if pips.is_empty() or pips[0].size.x == 0:
+		await get_tree().process_frame
+
 	for i in pips.size():
+		var pip_node = pips[i]
+
 		if i < current_guard:
-			pips[i].visible = true
+
+			if not pip_node.visible:
+				_animate_pip(pip_node)
 		else:
-			pips[i].visible = false
+			pip_node.visible = false
+			pip_node.scale = Vector2(1.0, 1.0)
+
 	armor_changed.emit(current_guard)
 
 func _start_breach_pulse():
@@ -235,3 +256,40 @@ func shake_panel(intensity: float = 0.5):
 	# 4. Return to the home position
 	shake_tween.tween_property(panel, "position",
 		panel_home_position, duration)
+
+# In ActorCard.gd
+
+func _animate_pip(pip_node: Control):
+	var pip_texture = pip_node.get_child(0)
+	pip_node.show()
+	# This 'await' is perfect, it ensures the node is ready
+	await get_tree().process_frame
+
+	# --- 1. Fix: Call create_tween() to get an instance ---
+	var tween = create_tween()
+
+	# --- 2. CRITICAL: Set the tween to parallel ---
+	# This makes the scale and flash happen simultaneously.
+	tween.set_parallel()
+
+	# You can set different transitions for each property,
+	# but we'll set a default for the "pop"
+	tween.set_trans(Tween.TRANS_BOUNCE)
+	tween.set_ease(Tween.EASE_OUT)
+
+	pip_texture.scale = Vector2(2.0, 2.0)
+	pip_texture.modulate = Color(5.0, 5.0, 5.0)
+
+	tween.tween_property(
+		pip_texture,
+		"scale",
+		Vector2(1.0, 1.0),
+		0.75 # Your "pop" duration
+	)
+
+	tween.tween_property(
+		pip_texture,
+		"modulate",
+		Color(1.0, 1.0, 1.0), # The normal Color.WHITE
+		0.25 # A much faster duration
+	).set_trans(Tween.TRANS_SINE) # Use a smooth fade for the color

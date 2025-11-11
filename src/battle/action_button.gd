@@ -2,6 +2,7 @@ extends Control
 class_name ActionButton
 
 @onready var label = $Title
+@onready var icon: TextureRect = $Icon
 @onready var button : Button = $Button
 @onready var focus_pips = $FocusPips
 @onready var panel := $Button/Panel
@@ -12,6 +13,7 @@ var action : Action
 func setup(_action: Action, cur_focus: int, color: Color):
 	action = _action
 	label.text = action.action_name
+	icon.texture = action.icon
 	update_cost()
 	button.disabled = cur_focus < action.focus_cost
 	self.modulate = color

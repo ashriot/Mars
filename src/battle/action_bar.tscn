@@ -10,9 +10,9 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -685.0
+offset_left = -805.0
 offset_top = -348.0
-offset_right = 685.0
+offset_right = 805.0
 grow_horizontal = 2
 grow_vertical = 0
 script = ExtResource("1_f8q7d")
@@ -96,6 +96,15 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_font_sizes/font_size = 30
 
+[node name="Icon" type="TextureRect" parent="LeftShift"]
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_right = 70.0
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
 [node name="Title" type="Label" parent="LeftShift"]
 layout_mode = 1
 anchors_preset = 12
@@ -118,13 +127,14 @@ horizontal_alignment = 2
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_left = 10.0
-offset_top = 3.0
-offset_right = -10.0
-offset_bottom = 28.0
+offset_left = 25.0
+offset_top = 5.0
+offset_right = -35.0
+offset_bottom = 30.0
 grow_horizontal = 2
 theme_override_font_sizes/font_size = 20
-text = "Shift Form"
+text = "Shift"
+horizontal_alignment = 2
 vertical_alignment = 2
 
 [node name="RightShift" type="Control" parent="."]
@@ -149,6 +159,18 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_font_sizes/font_size = 30
 
+[node name="Icon" type="TextureRect" parent="RightShift"]
+layout_mode = 1
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -70.0
+grow_horizontal = 0
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
 [node name="Title" type="Label" parent="RightShift"]
 layout_mode = 1
 anchors_preset = 12
@@ -170,12 +192,11 @@ text = "Commander"
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_left = 10.0
-offset_top = 3.0
-offset_right = -10.0
-offset_bottom = 28.0
+offset_left = 25.0
+offset_top = 5.0
+offset_right = -35.0
+offset_bottom = 30.0
 grow_horizontal = 2
 theme_override_font_sizes/font_size = 20
-text = "Shift Form"
-horizontal_alignment = 2
+text = "Shift"
 vertical_alignment = 2

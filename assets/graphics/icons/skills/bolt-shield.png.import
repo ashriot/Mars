@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d1te5324os86k"
-path="res://.godot/imported/bolt.png-73c1611df455c4eae57e3c6639086ada.ctex"
+uid="uid://da0cmyog0oiqo"
+path="res://.godot/imported/bolt-shield.png-f3ed5dc443d748a1790d1984e65583cc.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/icons/bolt.png"
-dest_files=["res://.godot/imported/bolt.png-73c1611df455c4eae57e3c6639086ada.ctex"]
+source_file="res://assets/graphics/icons/skills/bolt-shield.png"
+dest_files=["res://.godot/imported/bolt-shield.png-f3ed5dc443d748a1790d1984e65583cc.ctex"]
 
 [params]
 

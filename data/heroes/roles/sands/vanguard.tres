@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="Role" load_steps=5 format=3 uid="uid://cq1q0tcpy41i3"]
 
-[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_go1l7"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/actions/action.gd" id="1_go1l7"]
 [ext_resource type="Resource" uid="uid://7dg4i7k6dya0" path="res://data/heroes/actions/asher/double_tap.tres" id="2_w50ul"]
 [ext_resource type="Resource" uid="uid://cg0jwg4m14vwn" path="res://data/heroes/actions/asher/leeching_shots.tres" id="3_gp21p"]
 [ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/role.gd" id="4_5mtuo"]

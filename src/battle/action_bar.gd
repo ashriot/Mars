@@ -73,11 +73,13 @@ func update_action_bar(hero_card: HeroCard):
 		$LeftShift/Title.text = prev_role.role_name
 		left_shift_button.disabled = prev_role == current_role
 		left_shift_ui.modulate = prev_role.color
+		$LeftShift/Icon.texture = prev_role.icon
 
 	if next_role:
 		$RightShift/Title.text = next_role.role_name
 		right_shift_button.disabled = next_role == current_role or next_role == prev_role
 		right_shift_ui.modulate = next_role.color
+		$RightShift/Icon.texture = next_role.icon
 
 func _on_shift_button_pressed(direction: String):
 	await slide_out()
@@ -109,7 +111,6 @@ func slide_in(duration: float = 0.2):
 
 	await tween.finished
 
-# This function animates all 3 pieces out
 func slide_out(duration: float = 0.2):
 	var tween = create_tween().set_parallel()
 	tween.set_trans(Tween.TRANS_SINE)
