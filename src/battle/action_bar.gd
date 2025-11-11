@@ -63,7 +63,7 @@ func update_action_bar(hero_card: HeroCard):
 		if button.pressed.is_connected(_on_action_button_pressed):
 			button.pressed.disconnect(_on_action_button_pressed)
 		button.pressed.connect(_on_action_button_pressed.bind(action_data))
-		button.setup(action_data, hero_card.current_focus_pips)
+		button.setup(action_data, hero_card.current_focus_pips, current_role.color)
 		button.show()
 
 	var prev_role: Role = hero_card.get_previous_role()
@@ -72,14 +72,16 @@ func update_action_bar(hero_card: HeroCard):
 	if prev_role:
 		$LeftShift/Title.text = prev_role.role_name
 		left_shift_button.disabled = prev_role == current_role
+		left_shift_ui.modulate = prev_role.color
 
 	if next_role:
 		$RightShift/Title.text = next_role.role_name
 		right_shift_button.disabled = next_role == current_role or next_role == prev_role
+		right_shift_ui.modulate = next_role.color
 
 func _on_shift_button_pressed(direction: String):
-	shift_button_pressed.emit(direction)
 	await slide_out()
+	shift_button_pressed.emit(direction)
 	slide_in()
 
 func _on_action_button_pressed(action_data: Action):

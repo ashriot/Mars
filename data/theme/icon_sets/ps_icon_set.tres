@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="IconSet" load_steps=11 format=3 uid="uid://6uvc43vqmf46"]
+
+[ext_resource type="Script" uid="uid://c0142noy3120s" path="res://data/theme/icon_sets/icon_set.gd" id="1_ctk1k"]
+[ext_resource type="Texture2D" uid="uid://imbxmixlr2e2" path="res://assets/graphics/glyphs/ps/Button - PS Cross White 1.png" id="1_w3wes"]
+[ext_resource type="Texture2D" uid="uid://ebo48y7vo0tu" path="res://assets/graphics/glyphs/ps/Button - PS Circle White 1.png" id="2_wcyn8"]
+[ext_resource type="Texture2D" uid="uid://ws8eq5kq70ri" path="res://assets/graphics/glyphs/ps/Button - PS Square White 1.png" id="3_3rcd3"]
+[ext_resource type="Texture2D" uid="uid://cc46r876nimhd" path="res://assets/graphics/glyphs/ps/Button - PS Triangle White 1.png" id="4_dk7sq"]
+[ext_resource type="Texture2D" uid="uid://bbps27gfxkpcb" path="res://assets/graphics/glyphs/ps/Button - PS L2.png" id="5_w5c77"]
+[ext_resource type="Texture2D" uid="uid://dlgbqm08ty0mo" path="res://assets/graphics/glyphs/ps/Button - PS R1.png" id="6_hip8w"]
+[ext_resource type="Texture2D" uid="uid://p50r7el4q3tc" path="res://assets/graphics/glyphs/ps/Button - PS L1.png" id="7_xq44q"]
+[ext_resource type="Texture2D" uid="uid://dnk0381scfbgk" path="res://assets/graphics/glyphs/ps/Button - PS Directional Arrow Right.png" id="8_bvnhe"]
+[ext_resource type="Texture2D" uid="uid://ccyojy6w8isp6" path="res://assets/graphics/glyphs/ps/Button - PS Directional Arrow Left.png" id="9_5xx47"]
+
+[resource]
+script = ExtResource("1_ctk1k")
+action_icons = {
+"ui_accept": ExtResource("1_w3wes"),
+"ui_action_left": ExtResource("3_3rcd3"),
+"ui_action_up": ExtResource("4_dk7sq"),
+"ui_cancel": ExtResource("2_wcyn8"),
+"ui_inventory": ExtResource("6_hip8w"),
+"ui_shift_left": ExtResource("5_w5c77"),
+"ui_shift_right": ExtResource("6_hip8w"),
+"ui_target_next": ExtResource("8_bvnhe"),
+"ui_target_prev": ExtResource("9_5xx47"),
+"ui_tooltip": ExtResource("7_xq44q")
+}
+metadata/_custom_type_script = "uid://c0142noy3120s"

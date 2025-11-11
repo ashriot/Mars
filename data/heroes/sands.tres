@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="HeroData" load_steps=8 format=3 uid="uid://bycnj3e0g7w6x"]
+
+[ext_resource type="Script" uid="uid://dc5sk0b0jubvj" path="res://data/scripts/hero_data.gd" id="1_ng8ip"]
+[ext_resource type="Script" uid="uid://b70gwt4gd4cun" path="res://data/scripts/actor_stats.gd" id="2_626k6"]
+[ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/role.gd" id="3_kqimu"]
+[ext_resource type="Resource" uid="uid://csvw6yyxfd7vj" path="res://data/heroes/roles/sands/blitzer.tres" id="4_626k6"]
+[ext_resource type="Resource" uid="uid://bbkj0x4me6c7f" path="res://data/heroes/roles/sands/commander.tres" id="5_kqimu"]
+[ext_resource type="Resource" uid="uid://cq1q0tcpy41i3" path="res://data/heroes/roles/sands/vanguard.tres" id="6_xxlgj"]
+
+[sub_resource type="Resource" id="Resource_2uprg"]
+script = ExtResource("2_626k6")
+actor_name = "Sands"
+max_hp = 150
+starting_guard = 6
+speed = 15
+kinetic_defense = 0.6
+energy_defense = 0.4
+metadata/_custom_type_script = "uid://b70gwt4gd4cun"
+
+[resource]
+script = ExtResource("1_ng8ip")
+stats = SubResource("Resource_2uprg")
+unlocked_roles = Array[ExtResource("3_kqimu")]([ExtResource("4_626k6"), ExtResource("5_kqimu"), ExtResource("6_xxlgj")])
+metadata/_custom_type_script = "uid://dc5sk0b0jubvj"

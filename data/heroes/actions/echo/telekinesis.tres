@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="Action" load_steps=2 format=3 uid="uid://bua2w6l1vluii"]
+
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_4720d"]
+
+[resource]
+script = ExtResource("1_4720d")
+action_name = "Telekinesis"
+description = "Attack an enemy twice, each hit dealing X% damage."
+potency = 0.75
+power_type = 1
+metadata/_custom_type_script = "uid://dm08rhkg3bai3"

@@ -12,7 +12,6 @@ var intended_target: ActorCard
 
 # --- UNIQUE UI Node References ---
 @onready var intent_icon: TextureRect = $Panel/IntentIcon
-@onready var intent_name: Label = $Panel/IntentName
 @onready var intent_effect: Label = $Panel/IntentEffect
 @onready var defenses: Label = $Panel/Defenses
 
@@ -70,7 +69,6 @@ func decide_intent(hero_targets: Array):
 
 func update_intent_ui():
 	if not intended_action:
-		intent_name.text = "..."
 		intent_effect.text = ""
 		return
 
@@ -91,11 +89,7 @@ func update_intent_ui():
 				dmg_type = "PRC"
 
 		var hits_text = "x" + (str(intended_action.hit_count) if intended_action.hit_count > 1 else "")
-		intent_name.text = "[" + intended_action.action_name + "]"
 		intent_effect.text = str(intended_dmg) + hits_text + " " + dmg_type + " > " + target_name
-	else:
-		# No specific target (e.g., "All Enemies")
-		intent_name.text = intended_action.action_name
 
 func defeated():
 	super.defeated()

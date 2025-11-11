@@ -1,10 +1,10 @@
 [gd_resource type="Resource" script_class="Action" load_steps=2 format=3 uid="uid://7dg4i7k6dya0"]
 
-[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_rgwap"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_3om7x"]
 
 [resource]
-script = ExtResource("1_rgwap")
-action_name = "Double Shot"
+script = ExtResource("1_3om7x")
+action_name = "Double Tap"
 description = "Attack an enemy twice, each hit dealing X% damage."
 hit_count = 2
 potency = 0.25

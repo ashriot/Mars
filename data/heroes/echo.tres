@@ -1,16 +1,17 @@
-[gd_resource type="Resource" script_class="HeroData" load_steps=7 format=3 uid="uid://b2bkd217htd2n"]
+[gd_resource type="Resource" script_class="HeroData" load_steps=8 format=3 uid="uid://b2bkd217htd2n"]
 
 [ext_resource type="Script" uid="uid://b70gwt4gd4cun" path="res://data/scripts/actor_stats.gd" id="1_2uprg"]
 [ext_resource type="Script" uid="uid://dc5sk0b0jubvj" path="res://data/scripts/hero_data.gd" id="2_bo7cj"]
 [ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/role.gd" id="3_v0kqx"]
-[ext_resource type="Resource" uid="uid://dl1i3sftsuywj" path="res://data/heroes/roles/psion.tres" id="4_56w4w"]
-[ext_resource type="Resource" uid="uid://jqybnec33mi0" path="res://data/heroes/roles/empath.tres" id="5_2uprg"]
+[ext_resource type="Resource" uid="uid://dl1i3sftsuywj" path="res://data/heroes/roles/echo/psion.tres" id="4_bo7cj"]
+[ext_resource type="Resource" uid="uid://jqybnec33mi0" path="res://data/heroes/roles/echo/telekinetic.tres" id="5_v0kqx"]
+[ext_resource type="Resource" uid="uid://b2noe3oayrjvt" path="res://data/heroes/roles/echo/empath.tres" id="6_rc422"]
 
 [sub_resource type="Resource" id="Resource_2uprg"]
 script = ExtResource("1_2uprg")
 actor_name = "Echo"
 max_hp = 90
-starting_guard = 0
+starting_guard = 4
 attack = 15
 psyche = 25
 precision = 15
@@ -20,5 +21,5 @@ metadata/_custom_type_script = "uid://b70gwt4gd4cun"
 [resource]
 script = ExtResource("2_bo7cj")
 stats = SubResource("Resource_2uprg")
-unlocked_roles = Array[ExtResource("3_v0kqx")]([ExtResource("4_56w4w"), ExtResource("5_2uprg")])
+unlocked_roles = Array[ExtResource("3_v0kqx")]([ExtResource("4_bo7cj"), ExtResource("5_v0kqx"), ExtResource("6_rc422")])
 metadata/_custom_type_script = "uid://dc5sk0b0jubvj"

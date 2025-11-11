@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://imbxmixlr2e2"
-path="res://.godot/imported/Button - PS Cross White 1.png-c07b333c8f516365946a3d8400be54c7.ctex"
+uid="uid://c328u8xd2udxx"
+path="res://.godot/imported/Button - PS Directional Arrow Up 2.png-87d4f451883e9474013eedc98dc970a3.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/glyphs/Button - PS Cross White 1.png"
-dest_files=["res://.godot/imported/Button - PS Cross White 1.png-c07b333c8f516365946a3d8400be54c7.ctex"]
+source_file="res://assets/graphics/glyphs/ps/Button - PS Directional Arrow Up 2.png"
+dest_files=["res://.godot/imported/Button - PS Directional Arrow Up 2.png-87d4f451883e9474013eedc98dc970a3.ctex"]
 
 [params]
 

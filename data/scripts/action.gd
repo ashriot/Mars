@@ -20,3 +20,6 @@ enum DamageType { KINETIC, ENERGY, PIERCING }
 
 func get_dynamic_potency(attacker: ActorCard, defender: ActorCard) -> float:
 	return potency
+
+func execute_secondary_effect(attacker: ActorCard, targets: Array, battle_manager: BattleManager) -> void:
+	pass

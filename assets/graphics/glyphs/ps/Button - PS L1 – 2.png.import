@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://fs6u3e62xn0o"
-path="res://.godot/imported/striking-splinter.png-da66f16e4d83623741c2ebb8b0e9300c.ctex"
+uid="uid://cr5ar5gufmxmr"
+path="res://.godot/imported/Button - PS L1 – 2.png-d7a2df92b002a5fb23975b9adef1510c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/icons/skills/striking-splinter.png"
-dest_files=["res://.godot/imported/striking-splinter.png-da66f16e4d83623741c2ebb8b0e9300c.ctex"]
+source_file="res://assets/graphics/glyphs/ps/Button - PS L1 – 2.png"
+dest_files=["res://.godot/imported/Button - PS L1 – 2.png-d7a2df92b002a5fb23975b9adef1510c.ctex"]
 
 [params]
 

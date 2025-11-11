@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="Action" load_steps=2 format=3 uid="uid://811d3h1n464x"]
+
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_hg6xq"]
+
+[resource]
+script = ExtResource("1_hg6xq")
+action_name = "Obscure"
+description = "Attack an enemy twice, each hit dealing X% damage."
+potency = 0.75
+power_type = 1
+metadata/_custom_type_script = "uid://dm08rhkg3bai3"

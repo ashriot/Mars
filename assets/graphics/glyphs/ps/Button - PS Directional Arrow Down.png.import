@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dvwmfpwmrhvcd"
-path="res://.godot/imported/Button - PS Square White 2.png-229be2dd855f7eb0c4b2fa0b07f0576b.ctex"
+uid="uid://bhk28mg1reyry"
+path="res://.godot/imported/Button - PS Directional Arrow Down.png-f3420735028da70a6cb10093dd1d8b9e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/glyphs/Button - PS Square White 2.png"
-dest_files=["res://.godot/imported/Button - PS Square White 2.png-229be2dd855f7eb0c4b2fa0b07f0576b.ctex"]
+source_file="res://assets/graphics/glyphs/ps/Button - PS Directional Arrow Down.png"
+dest_files=["res://.godot/imported/Button - PS Directional Arrow Down.png-f3420735028da70a6cb10093dd1d8b9e.ctex"]
 
 [params]
 

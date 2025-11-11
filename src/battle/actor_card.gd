@@ -30,7 +30,7 @@ var panel_home_position: Vector2
 @onready var hp_value: Label = $Panel/HP/Value
 @onready var guard_bar: HBoxContainer = $Panel/GuardBar
 @onready var portrait_rect: TextureRect = $Panel/Portrait
-@onready var breached_label: Label = $Panel/BreachedLabel
+@onready var breached_label: Label = $BreachedLabel
 @onready var panel: Panel = $Panel
 
 func setup_base(stats: ActorStats):

@@ -24,7 +24,7 @@ func setup(data: HeroData):
 	name_label.text = hero_data.stats.actor_name
 	role_label.text = get_current_role().role_name
 	panel.self_modulate.a = 0.7
-
+	recolor()
 	if hero_data.portrait:
 		portrait_rect.texture = hero_data.portrait
 	self.current_focus_pips = 3
@@ -82,6 +82,7 @@ func shift_role(direction: String):
 		current_role_index = (current_role_index + 1) % role_count
 	role_label.text = get_current_role().role_name
 	role_shifted.emit(self) # Pass 'self'
+	recolor()
 
 func update_focus_bar():
 	var pips = focus_bar.get_children()
@@ -114,3 +115,11 @@ func _slide_down():
 
 func _on_gui_input(event: InputEvent) -> void:
 	pass # Replace with function body.
+
+func recolor():
+	var color = get_current_role().color
+	panel.self_modulate = color
+	name_label.self_modulate = color
+	role_label.self_modulate = color
+	focus_bar.modulate = color
+	guard_bar.modulate = color

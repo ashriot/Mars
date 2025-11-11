@@ -1,30 +1,23 @@
-[gd_scene load_steps=8 format=3 uid="uid://cj2ylb1ld6ews"]
+[gd_scene load_steps=7 format=3 uid="uid://cj2ylb1ld6ews"]
 
 [ext_resource type="Script" uid="uid://cp1th7fv4flgo" path="res://src/battle/hero_card.gd" id="1_n7b5o"]
 [ext_resource type="Texture2D" uid="uid://d1te5324os86k" path="res://assets/graphics/icons/bolt.png" id="2_1ptom"]
 [ext_resource type="Texture2D" uid="uid://jeiq1r6ke2t7" path="res://assets/graphics/icons/plus.png" id="2_d6207"]
 [ext_resource type="Texture2D" uid="uid://dje00e457xu8o" path="res://assets/graphics/icons/shield.png" id="3_d6207"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_n7b5o"]
-bg_color = Color(0.25021347, 0.25021347, 0.25021335, 1)
-corner_radius_top_left = 20
-corner_radius_top_right = 20
-corner_radius_bottom_right = 20
-corner_radius_bottom_left = 20
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_u5n4n"]
 bg_color = Color(0, 0, 0, 0.19607843)
-corner_radius_top_left = 15
-corner_radius_top_right = 15
-corner_radius_bottom_right = 15
-corner_radius_bottom_left = 15
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 101
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mswv1"]
 bg_color = Color(0.9411765, 0.30588236, 0.32941177, 1)
-corner_radius_top_left = 15
-corner_radius_top_right = 15
-corner_radius_bottom_right = 15
-corner_radius_bottom_left = 15
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
 
 [node name="HeroCard" type="Control"]
 custom_minimum_size = Vector2(400, 200)
@@ -45,7 +38,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_n7b5o")
 
 [node name="HP" type="Control" parent="Panel"]
 layout_mode = 1
@@ -53,9 +45,9 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 6.0
+offset_left = 13.0
 offset_top = -81.0
-offset_right = -6.0
+offset_right = -13.0
 offset_bottom = -39.118286
 grow_horizontal = 2
 grow_vertical = 0
@@ -69,7 +61,7 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/background = SubResource("StyleBoxFlat_u5n4n")
 theme_override_styles/fill = SubResource("StyleBoxFlat_mswv1")
-value = 40.0
+value = 85.0
 show_percentage = false
 
 [node name="Value" type="Label" parent="Panel/HP"]
@@ -105,17 +97,18 @@ layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_left = 10.0
+offset_left = 16.0
 offset_top = -26.0
-offset_right = 391.0
+offset_right = 385.0
 offset_bottom = 23.0
 grow_vertical = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 12
 theme_override_font_sizes/font_size = 40
 text = "Unit Name"
 horizontal_alignment = 2
 
 [node name="Role" type="Label" parent="Panel"]
-modulate = Color(0.67275196, 0.6727514, 0.6727516, 1)
 layout_mode = 1
 anchors_preset = 6
 anchor_left = 1.0
@@ -133,7 +126,6 @@ text = "Enforcer"
 horizontal_alignment = 2
 
 [node name="FocusBar" type="HBoxContainer" parent="Panel"]
-modulate = Color(0.20784314, 0.7411765, 0.77254903, 1)
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -206,7 +198,6 @@ texture = ExtResource("2_1ptom")
 expand_mode = 1
 
 [node name="GuardBar" type="HBoxContainer" parent="Panel"]
-modulate = Color(0.5882353, 0.5882353, 0.5882353, 1)
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -214,9 +205,9 @@ anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -192.0
-offset_top = -33.0
+offset_top = -28.0
 offset_right = 193.0
-offset_bottom = 9.0
+offset_bottom = 14.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_override_constants/separation = 2
@@ -282,22 +273,22 @@ offset_top = 22.0
 offset_right = 380.0
 offset_bottom = 138.0
 
-[node name="BreachedLabel" type="Label" parent="Panel"]
+[node name="BreachedLabel" type="Label" parent="."]
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -23.0
-offset_bottom = 29.0
+offset_top = -18.0
+offset_bottom = 34.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.32941177)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/shadow_offset_x = 0
 theme_override_constants/shadow_offset_y = 0
-theme_override_constants/outline_size = 5
-theme_override_constants/shadow_outline_size = 20
+theme_override_constants/outline_size = 12
+theme_override_constants/shadow_outline_size = 25
 theme_override_font_sizes/font_size = 40
 text = "BREACHED"
 horizontal_alignment = 1

@@ -24,6 +24,7 @@ window/stretch/aspect="expand"
 
 [gui]
 
+theme/custom="uid://ccvulqeqoxd07"
 theme/custom_font="uid://bngamonal1d40"
 
 [rendering]
