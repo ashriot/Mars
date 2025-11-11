@@ -135,6 +135,7 @@ func hide_intent():
 	intent_icon.visible = false
 
 func _on_gui_input(event: InputEvent):
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+	if event.is_action_pressed("ui_accept"):
+		print("Clicked on: ", actor_name)
 		enemy_clicked.emit(self)
 		get_viewport().set_input_as_handled()

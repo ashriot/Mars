@@ -2,8 +2,6 @@
 extends Resource
 class_name Action
 
-# --- Enums (These live here for global access) ---
-# The *primary* target type for the BattleManager's "targeting" state
 enum TargetType {
 	SELF, TEAM_MEMBER, TEAMMATE, TEAM, TEAMMATES_ONLY,
 	ONE_ENEMY, ALL_ENEMIES, ENEMY_GROUP, RANDOM_GROUP, RANDOM_ALL
@@ -17,6 +15,7 @@ enum DamageType { KINETIC, ENERGY, PIERCING }
 @export var icon: Texture
 @export_multiline var description: String = ""
 @export var focus_cost: int = 1
+@export var auto_target: bool = false
 
 # --- "Logic" Data (What the BattleManager uses) ---
 @export var target_type: TargetType = TargetType.ONE_ENEMY

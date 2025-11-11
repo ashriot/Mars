@@ -4,8 +4,8 @@
 [ext_resource type="Script" uid="uid://dc5sk0b0jubvj" path="res://data/scripts/hero_data.gd" id="2_bo7cj"]
 [ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/role.gd" id="3_v0kqx"]
 [ext_resource type="Resource" uid="uid://dl1i3sftsuywj" path="res://data/heroes/roles/echo/psion.tres" id="4_bo7cj"]
-[ext_resource type="Resource" uid="uid://jqybnec33mi0" path="res://data/heroes/roles/echo/telekinetic.tres" id="5_v0kqx"]
-[ext_resource type="Resource" uid="uid://b2noe3oayrjvt" path="res://data/heroes/roles/echo/empath.tres" id="6_rc422"]
+[ext_resource type="Resource" uid="uid://jqybnec33mi0" path="res://data/heroes/roles/echo/kineticist.tres" id="5_v0kqx"]
+[ext_resource type="Resource" uid="uid://b2noe3oayrjvt" path="res://data/heroes/roles/echo/domniator.tres" id="6_rc422"]
 
 [sub_resource type="Resource" id="Resource_2uprg"]
 script = ExtResource("1_2uprg")

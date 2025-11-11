@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://cj2ylb1ld6ews"]
+[gd_scene load_steps=10 format=3 uid="uid://cj2ylb1ld6ews"]
 
 [ext_resource type="Script" uid="uid://cp1th7fv4flgo" path="res://src/battle/hero_card.gd" id="1_n7b5o"]
 [ext_resource type="Texture2D" uid="uid://d1te5324os86k" path="res://assets/graphics/icons/textures/bolt.png" id="2_1ptom"]
@@ -6,15 +6,29 @@
 [ext_resource type="Texture2D" uid="uid://jeiq1r6ke2t7" path="res://assets/graphics/icons/textures/plus.png" id="2_d6207"]
 [ext_resource type="Texture2D" uid="uid://dje00e457xu8o" path="res://assets/graphics/icons/textures/shield.png" id="3_d6207"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_u5n4n"]
-bg_color = Color(0, 0, 0, 0.19607843)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_d6207"]
+bg_color = Color(0, 0, 0, 0.39215687)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 0.31, 0.4134997, 1)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
-corner_radius_bottom_left = 101
+corner_radius_bottom_left = 10
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mswv1"]
-bg_color = Color(0.9411765, 0.30588236, 0.32941177, 1)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_53q4u"]
+bg_color = Color(0.98, 0.7995167, 0.14699998, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_nheih"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wyvcu"]
+bg_color = Color(1, 0.30980393, 0.4117647, 1)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
@@ -26,7 +40,6 @@ layout_mode = 3
 anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
-mouse_filter = 2
 script = ExtResource("1_n7b5o")
 slide_offset_y = -50
 
@@ -40,19 +53,6 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="RoleIcon" type="TextureRect" parent="Panel"]
-modulate = Color(1, 1, 1, 0.5882353)
-layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -130.0
-offset_bottom = 130.0
-grow_horizontal = 0
-mouse_filter = 2
-texture = ExtResource("2_53q4u")
-expand_mode = 1
-
 [node name="HP" type="Control" parent="Panel"]
 layout_mode = 1
 anchors_preset = 12
@@ -60,23 +60,53 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 13.0
-offset_top = -81.0
+offset_top = -75.0
 offset_right = -13.0
-offset_bottom = -39.118286
+offset_bottom = -33.118286
 grow_horizontal = 2
 grow_vertical = 0
+mouse_filter = 2
 
-[node name="Bar" type="ProgressBar" parent="Panel/HP"]
+[node name="BarInstant" type="ProgressBar" parent="Panel/HP"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_styles/background = SubResource("StyleBoxFlat_u5n4n")
-theme_override_styles/fill = SubResource("StyleBoxFlat_mswv1")
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_d6207")
+theme_override_styles/fill = SubResource("StyleBoxFlat_53q4u")
 value = 85.0
 show_percentage = false
+
+[node name="BarVisual" type="ProgressBar" parent="Panel/HP"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxEmpty_nheih")
+theme_override_styles/fill = SubResource("StyleBoxFlat_wyvcu")
+value = 50.0
+show_percentage = false
+
+[node name="HeartIcon" type="TextureRect" parent="Panel/HP"]
+modulate = Color(1, 1, 1, 0.5882353)
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_left = 5.0
+offset_top = 4.881714
+offset_right = 39.509636
+offset_bottom = -4.881714
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_d6207")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="Value" type="Label" parent="Panel/HP"]
 layout_mode = 1
@@ -89,23 +119,27 @@ offset_right = -9.0
 offset_bottom = 24.5
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.5882353)
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 0
+theme_override_constants/outline_size = 4
+theme_override_constants/shadow_outline_size = 10
 theme_override_font_sizes/font_size = 40
 text = "9999"
 horizontal_alignment = 2
 
-[node name="HeartIcon" type="TextureRect" parent="Panel/HP"]
-modulate = Color(1, 0.6784314, 0.6784314, 1)
+[node name="RoleIcon" type="TextureRect" parent="Panel"]
+modulate = Color(1, 1, 1, 0.5882353)
 layout_mode = 1
-anchors_preset = 9
-anchor_bottom = 1.0
-offset_left = 5.0
-offset_top = 4.881714
-offset_right = 39.509636
-offset_bottom = -4.881714
-grow_vertical = 2
-texture = ExtResource("2_d6207")
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -130.0
+offset_bottom = 130.0
+grow_horizontal = 0
+mouse_filter = 2
+texture = ExtResource("2_53q4u")
 expand_mode = 1
-stretch_mode = 5
 
 [node name="Title" type="Label" parent="Panel"]
 layout_mode = 1
@@ -152,6 +186,7 @@ offset_top = 8.0
 offset_right = 196.0
 offset_bottom = 50.0
 grow_horizontal = 2
+mouse_filter = 2
 theme_override_constants/separation = -11
 
 [node name="Bolt" type="TextureRect" parent="Panel/FocusBar"]
@@ -214,6 +249,14 @@ layout_mode = 2
 texture = ExtResource("2_1ptom")
 expand_mode = 1
 
+[node name="Portrait" type="TextureRect" parent="Panel"]
+layout_mode = 0
+offset_left = 264.0
+offset_top = 22.0
+offset_right = 380.0
+offset_bottom = 138.0
+mouse_filter = 2
+
 [node name="GuardBar" type="HBoxContainer" parent="Panel"]
 layout_mode = 1
 anchors_preset = 7
@@ -227,11 +270,13 @@ offset_right = 193.0
 offset_bottom = 14.0
 grow_horizontal = 2
 grow_vertical = 0
+mouse_filter = 2
 theme_override_constants/separation = 2
 
 [node name="Pip" type="Control" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 41)
 layout_mode = 2
+mouse_filter = 2
 
 [node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip"]
 custom_minimum_size = Vector2(41, 42)
@@ -239,12 +284,14 @@ layout_mode = 0
 offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
+mouse_filter = 2
 texture = ExtResource("3_d6207")
 expand_mode = 1
 
 [node name="Pip2" type="Control" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 41)
 layout_mode = 2
+mouse_filter = 2
 
 [node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip2"]
 custom_minimum_size = Vector2(41, 42)
@@ -252,12 +299,14 @@ layout_mode = 0
 offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
+mouse_filter = 2
 texture = ExtResource("3_d6207")
 expand_mode = 1
 
 [node name="Pip3" type="Control" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 41)
 layout_mode = 2
+mouse_filter = 2
 
 [node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip3"]
 custom_minimum_size = Vector2(41, 42)
@@ -265,12 +314,14 @@ layout_mode = 0
 offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
+mouse_filter = 2
 texture = ExtResource("3_d6207")
 expand_mode = 1
 
 [node name="Pip4" type="Control" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 41)
 layout_mode = 2
+mouse_filter = 2
 
 [node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip4"]
 custom_minimum_size = Vector2(41, 42)
@@ -278,12 +329,14 @@ layout_mode = 0
 offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
+mouse_filter = 2
 texture = ExtResource("3_d6207")
 expand_mode = 1
 
 [node name="Pip5" type="Control" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 41)
 layout_mode = 2
+mouse_filter = 2
 
 [node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip5"]
 custom_minimum_size = Vector2(41, 42)
@@ -291,12 +344,14 @@ layout_mode = 0
 offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
+mouse_filter = 2
 texture = ExtResource("3_d6207")
 expand_mode = 1
 
 [node name="Pip6" type="Control" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 41)
 layout_mode = 2
+mouse_filter = 2
 
 [node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip6"]
 custom_minimum_size = Vector2(41, 42)
@@ -304,12 +359,14 @@ layout_mode = 0
 offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
+mouse_filter = 2
 texture = ExtResource("3_d6207")
 expand_mode = 1
 
 [node name="Pip7" type="Control" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 41)
 layout_mode = 2
+mouse_filter = 2
 
 [node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip7"]
 custom_minimum_size = Vector2(41, 42)
@@ -317,12 +374,14 @@ layout_mode = 0
 offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
+mouse_filter = 2
 texture = ExtResource("3_d6207")
 expand_mode = 1
 
 [node name="Pip8" type="Control" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 41)
 layout_mode = 2
+mouse_filter = 2
 
 [node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip8"]
 custom_minimum_size = Vector2(41, 42)
@@ -330,12 +389,14 @@ layout_mode = 0
 offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
+mouse_filter = 2
 texture = ExtResource("3_d6207")
 expand_mode = 1
 
 [node name="Pip9" type="Control" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 41)
 layout_mode = 2
+mouse_filter = 2
 
 [node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip9"]
 custom_minimum_size = Vector2(41, 42)
@@ -343,15 +404,9 @@ layout_mode = 0
 offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
+mouse_filter = 2
 texture = ExtResource("3_d6207")
 expand_mode = 1
-
-[node name="Portrait" type="TextureRect" parent="Panel"]
-layout_mode = 0
-offset_left = 264.0
-offset_top = 22.0
-offset_right = 380.0
-offset_bottom = 138.0
 
 [node name="BreachedLabel" type="Label" parent="."]
 layout_mode = 1

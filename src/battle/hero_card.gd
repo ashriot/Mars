@@ -2,8 +2,9 @@ extends ActorCard
 class_name HeroCard
 
 # --- UNIQUE Signals ---
-signal role_shifted(hero_card) # (We pass 'self' for the brain)
+signal role_shifted(hero_card)
 signal focus_changed(new_pips)
+signal hero_clicked(hero_card)
 
 # --- UNIQUE Data ---
 var hero_data: HeroData
@@ -46,12 +47,13 @@ func on_turn_ended() -> void:
 	_slide_down()
 
 func take_healing(heal_amount: int, is_revive: bool = false):
-	super.take_healing(heal_amount, is_revive)
 	if is_defeated and is_revive:
 		print(hero_data.base_stats.actor_name, " is revived!")
 		is_defeated = false
 		self_modulate = Color.WHITE
 		actor_revived.emit(self)
+
+	super.take_healing(heal_amount, is_revive)
 
 func defeated():
 	super.defeated()
@@ -116,13 +118,16 @@ func _slide_down():
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 	tween.tween_property(panel, "self_modulate:a", 0.7, duration)
 
-func _on_gui_input(_event: InputEvent) -> void:
-	pass # Replace with function body.
+func _on_gui_input(event: InputEvent):
+	if event.is_action_pressed("ui_accept"):
+		print("Clicked on: ", actor_name)
+		hero_clicked.emit(self)
+		get_viewport().set_input_as_handled()
 
 func recolor():
 	var color = get_current_role().color
 	panel.self_modulate = color
-	name_label.self_modulate = color
+	#name_label.self_modulate = color
 	role_label.self_modulate = color
 	role_icon.self_modulate = color
 	focus_bar.modulate = color

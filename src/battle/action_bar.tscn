@@ -11,26 +11,25 @@ anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -805.0
-offset_top = -358.0
+offset_top = -263.0
 offset_right = 805.0
 offset_bottom = -10.0
 grow_horizontal = 2
 grow_vertical = 0
+mouse_filter = 2
 script = ExtResource("1_f8q7d")
 ActionButtonScene = ExtResource("2_664ah")
 
 [node name="Actions" type="Control" parent="."]
 layout_mode = 1
-anchors_preset = 7
+anchors_preset = 13
 anchor_left = 0.5
-anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -504.0
-offset_top = -236.0
-offset_right = 504.0
+offset_left = -502.0
+offset_right = 502.0
 grow_horizontal = 2
-grow_vertical = 0
+grow_vertical = 2
 
 [node name="ActionButtonD" parent="Actions" instance=ExtResource("2_664ah")]
 layout_mode = 1

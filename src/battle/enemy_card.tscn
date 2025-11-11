@@ -1,18 +1,32 @@
-[gd_scene load_steps=6 format=3 uid="uid://b4tt3yil85l7j"]
+[gd_scene load_steps=8 format=3 uid="uid://b4tt3yil85l7j"]
 
 [ext_resource type="Script" uid="uid://carvfoj4h04nm" path="res://src/battle/enemy_card.gd" id="1_cu1kv"]
 [ext_resource type="Texture2D" uid="uid://dje00e457xu8o" path="res://assets/graphics/icons/textures/shield.png" id="2_4kuvy"]
 [ext_resource type="Texture2D" uid="uid://jeiq1r6ke2t7" path="res://assets/graphics/icons/textures/plus.png" id="2_e8ixv"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4kuvy"]
-bg_color = Color(0, 0, 0, 0.19607843)
+bg_color = Color(0, 0, 0, 0.39215687)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 0.31, 0.4134997, 1)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
-corner_radius_bottom_left = 101
+corner_radius_bottom_left = 10
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_e8ixv"]
-bg_color = Color(0.9411765, 0.30588236, 0.32941177, 1)
+bg_color = Color(0.98, 0.7995167, 0.14699998, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_xkcvw"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8i7ma"]
+bg_color = Color(1, 0.30980393, 0.4117647, 1)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
@@ -34,7 +48,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
+mouse_filter = 1
 
 [node name="HP" type="Control" parent="Panel"]
 layout_mode = 1
@@ -43,14 +57,14 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 13.0
-offset_top = -81.0
+offset_top = -75.0
 offset_right = -13.0
-offset_bottom = -39.118286
+offset_bottom = -33.118286
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
 
-[node name="Bar" type="ProgressBar" parent="Panel/HP"]
+[node name="BarInstant" type="ProgressBar" parent="Panel/HP"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -63,23 +77,21 @@ theme_override_styles/fill = SubResource("StyleBoxFlat_e8ixv")
 value = 85.0
 show_percentage = false
 
-[node name="Value" type="Label" parent="Panel/HP"]
+[node name="BarVisual" type="ProgressBar" parent="Panel/HP"]
 layout_mode = 1
-anchors_preset = 14
-anchor_top = 0.5
+anchors_preset = 15
 anchor_right = 1.0
-anchor_bottom = 0.5
-offset_top = -24.5
-offset_right = -9.0
-offset_bottom = 24.5
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 40
-text = "9999"
-horizontal_alignment = 2
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxEmpty_xkcvw")
+theme_override_styles/fill = SubResource("StyleBoxFlat_8i7ma")
+value = 50.0
+show_percentage = false
 
 [node name="HeartIcon" type="TextureRect" parent="Panel/HP"]
-modulate = Color(1, 0.6784314, 0.6784314, 1)
+modulate = Color(1, 1, 1, 0.5882353)
 layout_mode = 1
 anchors_preset = 9
 anchor_bottom = 1.0
@@ -92,6 +104,26 @@ mouse_filter = 2
 texture = ExtResource("2_e8ixv")
 expand_mode = 1
 stretch_mode = 5
+
+[node name="Value" type="Label" parent="Panel/HP"]
+layout_mode = 1
+anchors_preset = 14
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_top = -24.5
+offset_right = -9.0
+offset_bottom = 24.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.5882353)
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 0
+theme_override_constants/outline_size = 4
+theme_override_constants/shadow_outline_size = 10
+theme_override_font_sizes/font_size = 40
+text = "9999"
+horizontal_alignment = 2
 
 [node name="GuardBar" type="HBoxContainer" parent="Panel"]
 layout_mode = 1
@@ -112,6 +144,7 @@ theme_override_constants/separation = 2
 [node name="Pip" type="Control" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 41)
 layout_mode = 2
+mouse_filter = 2
 
 [node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip"]
 custom_minimum_size = Vector2(41, 42)
@@ -125,6 +158,7 @@ expand_mode = 1
 [node name="Pip2" type="Control" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 41)
 layout_mode = 2
+mouse_filter = 2
 
 [node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip2"]
 custom_minimum_size = Vector2(41, 42)
@@ -138,6 +172,7 @@ expand_mode = 1
 [node name="Pip3" type="Control" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 41)
 layout_mode = 2
+mouse_filter = 2
 
 [node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip3"]
 custom_minimum_size = Vector2(41, 42)
@@ -151,6 +186,7 @@ expand_mode = 1
 [node name="Pip4" type="Control" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 41)
 layout_mode = 2
+mouse_filter = 2
 
 [node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip4"]
 custom_minimum_size = Vector2(41, 42)
@@ -164,6 +200,7 @@ expand_mode = 1
 [node name="Pip5" type="Control" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 41)
 layout_mode = 2
+mouse_filter = 2
 
 [node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip5"]
 custom_minimum_size = Vector2(41, 42)
@@ -177,6 +214,7 @@ expand_mode = 1
 [node name="Pip6" type="Control" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 41)
 layout_mode = 2
+mouse_filter = 2
 
 [node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip6"]
 custom_minimum_size = Vector2(41, 42)
@@ -190,6 +228,7 @@ expand_mode = 1
 [node name="Pip7" type="Control" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 41)
 layout_mode = 2
+mouse_filter = 2
 
 [node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip7"]
 custom_minimum_size = Vector2(41, 42)
@@ -203,6 +242,7 @@ expand_mode = 1
 [node name="Pip8" type="Control" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 41)
 layout_mode = 2
+mouse_filter = 2
 
 [node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip8"]
 custom_minimum_size = Vector2(41, 42)
@@ -216,6 +256,7 @@ expand_mode = 1
 [node name="Pip9" type="Control" parent="Panel/GuardBar"]
 custom_minimum_size = Vector2(41, 41)
 layout_mode = 2
+mouse_filter = 2
 
 [node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip9"]
 custom_minimum_size = Vector2(41, 42)

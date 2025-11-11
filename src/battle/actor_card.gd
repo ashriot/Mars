@@ -24,11 +24,13 @@ var is_defeated: bool
 # --- Animation Tweens ---
 var shake_tween: Tween
 var pulse_tween: Tween
+var health_tween: Tween
 var panel_home_position: Vector2
 
 # --- UI Node References (Shared) ---
 @onready var name_label: Label = $Panel/Title
-@onready var hp_bar: ProgressBar = $Panel/HP/Bar
+@onready var hp_bar_instant: ProgressBar = $Panel/HP/BarInstant
+@onready var hp_bar_visual: ProgressBar = $Panel/HP/BarVisual
 @onready var hp_value: Label = $Panel/HP/Value
 @onready var guard_bar: HBoxContainer = $Panel/GuardBar
 @onready var portrait_rect: TextureRect = $Panel/Portrait
@@ -42,9 +44,10 @@ func setup_base(stats: ActorStats):
 	battle_manager = get_parent().get_node("%BattleManager")
 	self.current_stats = stats.duplicate()
 	actor_name = stats.actor_name
-	hp_bar.max_value = current_stats.max_hp
-	current_hp = current_stats.max_hp
-	hp_bar.value = current_hp
+	hp_bar_instant.max_value = current_stats.max_hp
+	current_hp = current_stats.max_hp / 4
+	hp_bar_visual.max_value = current_stats.max_hp
+	hp_bar_instant.max_value = current_stats.max_hp
 	current_guard = current_stats.starting_guard
 	panel_home_position = panel.position
 	breached_label.hide()
@@ -140,12 +143,70 @@ func defeated():
 	actor_defeated.emit(self)
 
 func take_healing(heal_amount: int, is_revive: bool = false):
+	# Base guard clause
 	if (is_defeated and not is_revive) or heal_amount <= 0:
 		return
 
-	current_hp = min(current_stats.max_hp, current_hp + heal_amount)
-	print(name, " healed for ", heal_amount, ". HP is now: ", current_hp)
-	update_health_bar()
+	# --- 1. Calculate new HP ---
+	var new_hp = min(current_stats.max_hp, current_hp + heal_amount)
+
+	# --- 2. Instantly update the Model (the data) ---
+	current_hp = new_hp
+	print(actor_name, " healed for ", heal_amount, ". HP is now: ", current_hp)
+
+	# --- 3. Instantly update the "Ghost Bar" ---
+	# This shows the player the "instant result"
+	hp_bar_instant.value = new_hp
+
+	# --- 4. Instantly update the data-changed signal ---
+	hp_changed.emit(current_hp, current_stats.max_hp)
+
+func sync_visual_health()-> Tween:
+	# Get the "from" (visual) and "to" (real) values
+	var from_hp = hp_bar_visual.value
+	var to_hp = current_hp
+
+	# If they're already the same, we're done. No animation.
+	if from_hp == to_hp:
+		return null
+
+	# We are "flushing" the visual change
+	print(actor_name, " is animating health from ", from_hp, " to ", to_hp)
+
+	# We 'await' the animation
+	return _animate_health_change(from_hp, to_hp)
+
+func _animate_health_change(from_hp: float, to_hp: float) -> Tween:
+	var DURATION = 0.75
+
+	if health_tween and health_tween.is_running():
+		health_tween.kill()
+
+	health_tween = create_tween()
+	health_tween.set_trans(Tween.TRANS_SINE)
+	health_tween.set_ease(Tween.EASE_OUT)
+
+	health_tween.tween_method(
+		_update_health_display, # The function to call
+		from_hp,                # Start value
+		to_hp,                  # End value
+		DURATION
+	)
+
+	# Wait for the tween to finish
+	return health_tween
+
+func _update_health_display(value_from_tween: float):
+	hp_bar_visual.value = value_from_tween
+	hp_value.text = str(roundi(value_from_tween))
+
+func update_health_bar():
+	hp_bar_visual.value = current_hp
+	hp_bar_instant.value = current_hp
+	hp_value.text = str(current_hp)
+
+func recover_breach():
+	gain_guard(current_stats.starting_guard)
 
 func gain_guard(amount: int):
 	if is_defeated or amount <= 0:
@@ -160,14 +221,6 @@ func gain_guard(amount: int):
 
 	print(actor_name, " gained ", amount, " guard. Total: ", current_guard)
 	update_guard_bar()
-
-func recover_breach():
-	gain_guard(current_stats.starting_guard)
-
-func update_health_bar():
-	hp_bar.value = current_hp
-	hp_value.text = str(current_hp)
-	hp_changed.emit(current_hp, current_stats.max_hp)
 
 func update_guard_bar():
 	var pips = guard_bar.get_children()
@@ -257,8 +310,6 @@ func shake_panel(intensity: float = 0.5):
 	shake_tween.tween_property(panel, "position",
 		panel_home_position, duration)
 
-# In ActorCard.gd
-
 func _animate_pip(pip_node: Control):
 	var pip_texture = pip_node.get_child(0)
 	pip_node.show()
@@ -293,3 +344,6 @@ func _animate_pip(pip_node: Control):
 		Color(1.0, 1.0, 1.0), # The normal Color.WHITE
 		0.25 # A much faster duration
 	).set_trans(Tween.TRANS_SINE) # Use a smooth fade for the color
+
+func _on_gui_input(_event: InputEvent):
+	pass

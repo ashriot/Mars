@@ -2,7 +2,7 @@ extends Node
 class_name BattleManager
 
 # --- State Machine ---
-enum State { LOADING, PLAYER_ACTION, WAITING_FOR_TARGET, ENEMY_ACTION, EXECUTING_ACTION }
+enum State { LOADING, PLAYER_ACTION, TARGETING_ENEMIES, TARGETING_TEAM, ENEMY_ACTION, EXECUTING_ACTION }
 var current_state = State.LOADING
 
 # --- Signals ---
@@ -50,10 +50,11 @@ func spawn_encounter():
 		var hero_card: HeroCard = hero_card_scene.instantiate()
 		hero_area.add_child(hero_card)
 		hero_card.setup(hero_data)
+		hero_card.hero_clicked.connect(_on_hero_clicked)
 		hero_card.actor_breached.connect(_on_actor_breached)
 		hero_card.actor_defeated.connect(_on_actor_died)
 		hero_card.actor_revived.connect(_on_actor_revived)
-		hero_card.current_ct = randi_range(hero_data.stats.speed / 2, hero_data.stats.speed * 2)
+		hero_card.current_ct = randi_range(hero_data.stats.speed / 5, hero_data.stats.speed * 3)
 		hero_card.role_shifted.connect(_on_hero_role_shifted)
 		actor_list.append(hero_card)
 
@@ -61,12 +62,12 @@ func spawn_encounter():
 		var enemy_card: EnemyCard = enemy_card_scene.instantiate()
 		enemy_area.add_child(enemy_card)
 		enemy_card.setup(enemy_data)
+		enemy_card.enemy_clicked.connect(_on_enemy_clicked)
 		enemy_card.actor_breached.connect(_on_actor_breached)
 		enemy_card.actor_defeated.connect(_on_actor_died)
 		enemy_card.actor_revived.connect(_on_actor_revived)
-		enemy_card.current_ct = randi_range(enemy_data.stats.speed / 2, enemy_data.stats.speed * 2)
+		enemy_card.current_ct = randi_range(enemy_data.stats.speed / 5, enemy_data.stats.speed * 3)
 		enemy_card.decide_intent(get_living_heroes())
-		enemy_card.enemy_clicked.connect(_on_enemy_clicked)
 		actor_list.append(enemy_card)
 	print("Spawning complete.")
 
@@ -206,10 +207,53 @@ func _on_action_selected(action: Action):
 	if current_state != State.PLAYER_ACTION: return
 
 	self.selected_action = action
-	change_state(State.WAITING_FOR_TARGET)
+	var target_list = []
+	match action.target_type:
+		Action.TargetType.ONE_ENEMY, Action.TargetType.ENEMY_GROUP, Action.TargetType.ALL_ENEMIES:
+			change_state(State.TARGETING_ENEMIES)
+			target_list = get_living_enemies()
+			if not target_list.is_empty():
+				target_list[0].grab_focus()
+
+		Action.TargetType.SELF, Action.TargetType.TEAM_MEMBER, Action.TargetType.TEAMMATE, Action.TargetType.TEAM, Action.TargetType.TEAMMATES_ONLY:
+			change_state(State.TARGETING_TEAM)
+			target_list = get_living_heroes()
+			if not target_list.is_empty():
+				target_list[0].grab_focus()
+
+		_:
+			push_error("Unknown target type! Canceling.")
+			#_on_target_canceled()
+
+func _on_hero_clicked(target_hero: HeroCard):
+	if current_state != State.TARGETING_TEAM: return
+
+	# 2. We have our action and our target!
+	print("Target selected: ", target_hero.actor_name)
+	change_state(State.EXECUTING_ACTION)
+
+	# 3. Build the target list (this is the "confirmation" step)
+	var targets_array = []
+	match selected_action.target_type:
+		Action.TargetType.TEAM_MEMBER:
+			targets_array.append(target_hero)
+		Action.TargetType.TEAM:
+			targets_array = get_living_heroes()
+		Action.TargetType.TEAMMATES_ONLY:
+			for ally in get_living_heroes():
+				if ally != current_hero:
+					targets_array.append(ally)
+		# (etc.)
+
+	# 4. Call the "dumb" executor
+	await execute_action(current_hero, selected_action, targets_array)
+
+	# 5. Clean up and end the turn
+	self.selected_action = null
+	find_and_start_next_turn()
 
 func _on_enemy_clicked(target_enemy: EnemyCard):
-	if current_state != State.WAITING_FOR_TARGET: return
+	if current_state != State.TARGETING_ENEMIES: return
 
 	if target_enemy.is_defeated:
 			print("Target is already defeated.")
@@ -260,7 +304,7 @@ func execute_action(actor: ActorCard, action: Action, targets: Array):
 
 	for effect in action.effects:
 		await effect.execute(actor, targets, self, action)
-
+	await _flush_all_health_animations()
 	return
 
 func execute_enemy_turn(enemy: EnemyCard):
@@ -320,22 +364,38 @@ func _on_hero_role_shifted(hero_card: HeroCard):
 	if not action:
 		return
 
-	var targets_array = []
-	match action.target_type:
-		Action.TargetType.ALL_ENEMIES:
-			targets_array = enemy_area.get_children()
-		Action.TargetType.SELF:
-			targets_array.append(current_hero)
-		Action.TargetType.ONE_ENEMY:
-			# This is the logic we fixed: wait for a target
-			print("Action requires a target. Waiting for click...")
-			self.selected_action = action
-			change_state(State.WAITING_FOR_TARGET)
-			return # Exit the function, we're now waiting
+	if action.auto_target:
+		print("Auto-executing shift action...")
 
-	# If we're still here, it's an auto-execute action
-	await execute_action(current_hero, action, targets_array)
-	return
+		# Build the auto-target list
+		var target_list = []
+		match action.target_type:
+			Action.TargetType.SELF:
+				target_list.append(current_hero)
+			Action.TargetType.ALL_ENEMIES:
+				target_list = get_living_enemies()
+			Action.TargetType.TEAM:
+				target_list = get_living_heroes()
+			# (etc. for other auto-types)
+
+		await execute_action(current_hero, action, target_list)
+		return # We're done, return to _on_shift_button_pressed
+
+	print("Action requires a target. Waiting for click...")
+	_on_action_selected(action)
+
+func _flush_all_health_animations() -> void:
+	var tweens_to_await = []
+	for actor in actor_list:
+		var new_tween = actor.sync_visual_health()
+		if new_tween:
+			tweens_to_await.append(new_tween)
+
+	if tweens_to_await.is_empty(): return
+	print("flushing health animations")
+
+	for tween in tweens_to_await:
+		await tween.finished
 
 func wait(duration : float) -> void:
 	var scaled_duration = duration / global_animation_speed

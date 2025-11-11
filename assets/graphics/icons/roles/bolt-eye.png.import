@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d15slnim75gkm"
-path="res://.godot/imported/lovers.png-347f4460c082da14055d3389a58960bc.ctex"
+uid="uid://r6a5eh2mlkyk"
+path="res://.godot/imported/bolt-eye.png-e3b4b097cc8abb3fbd610af496c33cd8.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/icons/roles/lovers.png"
-dest_files=["res://.godot/imported/lovers.png-347f4460c082da14055d3389a58960bc.ctex"]
+source_file="res://assets/graphics/icons/roles/bolt-eye.png"
+dest_files=["res://.godot/imported/bolt-eye.png-e3b4b097cc8abb3fbd610af496c33cd8.ctex"]
 
 [params]
 
