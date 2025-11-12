@@ -3,24 +3,24 @@
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/actions/action.gd" id="1_4qxmx"]
 [ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://data/scripts/enemy_data.gd" id="2_n3ati"]
 [ext_resource type="Resource" uid="uid://d0m01fmh2ig2s" path="res://data/enemies/actions/gunshot.tres" id="2_odqln"]
-[ext_resource type="Script" uid="uid://b70gwt4gd4cun" path="res://data/scripts/actor_stats.gd" id="3_n3ati"]
+[ext_resource type="Script" uid="uid://djm3iwmyexcia" path="res://data/scripts/enemy_stats.gd" id="4_ooj02"]
 
-[sub_resource type="Resource" id="Resource_4j3ma"]
-script = ExtResource("3_n3ati")
+[sub_resource type="Resource" id="Resource_ooj02"]
+script = ExtResource("4_ooj02")
 actor_name = "Trooper"
-max_hp = 200
-starting_guard = 4
-attack = 25
-psyche = 12
-precision = 15
-overload = 15
-speed = 30
-kinetic_defense = 0.5
-energy_defense = 0.5
-metadata/_custom_type_script = "uid://b70gwt4gd4cun"
+max_hp = 3
+guard = 2
+attack = 4
+psyche = 3
+overload = 3
+speed = 3
+precision = 2
+kinetic_defense = 3
+energy_defense = 2
+metadata/_custom_type_script = "uid://djm3iwmyexcia"
 
 [resource]
 script = ExtResource("2_n3ati")
-stats = SubResource("Resource_4j3ma")
+stat_ranks = SubResource("Resource_ooj02")
 action_deck = Array[ExtResource("1_4qxmx")]([ExtResource("2_odqln")])
 metadata/_custom_type_script = "uid://b3t5esgv1d2ku"

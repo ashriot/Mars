@@ -16,6 +16,5 @@ metadata/_custom_type_script = "uid://d0eibi4b735ay"
 script = ExtResource("2_6fici")
 action_name = "Focused Bolt"
 icon = ExtResource("3_mavwc")
-focus_cost = 0
 effects = Array[ExtResource("1_6kh5k")]([SubResource("Resource_6nryw")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

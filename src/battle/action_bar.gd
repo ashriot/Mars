@@ -1,26 +1,30 @@
 extends Control
+class_name ActionBar
 
 signal action_selected(action, target)
+signal slide_finished
 signal shift_button_pressed(direction)
+
+@export var ActionButtonScene : PackedScene
+@export var battle_manager : BattleManager
 
 @onready var actions_ui = $Actions
 @onready var left_shift_button = $LeftShift/Button
 @onready var right_shift_button = $RightShift/Button
 @onready var left_shift_ui = $LeftShift
 @onready var right_shift_ui = $RightShift
-@export var ActionButtonScene : PackedScene
-@export var battle_manager : BattleManager
 @onready var passive_panel: Panel = $Actions/Passive
 
+var sliding: bool
 var left_shift_on_screen_pos: Vector2
 var right_shift_on_screen_pos: Vector2
 var actions_on_screen_pos: Vector2
 var passive_flash_tween: Tween
 var active_hero: HeroCard
 
+
 func _ready():
 	battle_manager.player_turn_started.connect(on_player_turn_started)
-	hide()
 	left_shift_button.pressed.connect(_on_shift_button_pressed.bind("left"))
 	right_shift_button.pressed.connect(_on_shift_button_pressed.bind("right"))
 
@@ -31,21 +35,15 @@ func _ready():
 	right_shift_ui.modulate.a = 0.0
 	actions_ui.modulate.a = 0.0
 
-	hide()
 	slide_out(0.0)
 
 func on_player_turn_started(hero_card: HeroCard):
 	active_hero = hero_card
 	if not active_hero.role_shifted.is_connected(update_action_bar):
 		active_hero.role_shifted.connect(update_action_bar)
-	#if not active_hero.passive_fired.is_connected(_on_hero_passive_fired):
-		#active_hero.passive_fired.connect(_on_hero_passive_fired)
 	update_action_bar(active_hero)
-	show()
 
 func hide_bar():
-	if active_hero.passive_fired.is_connected(_on_hero_passive_fired):
-		active_hero.passive_fired.disconnect(_on_hero_passive_fired)
 	for button in actions_ui.get_children():
 		if button is not ActionButton: continue
 		button.hide()
@@ -53,7 +51,6 @@ func hide_bar():
 			button.pressed.disconnect(_on_action_button_pressed)
 
 	await slide_out()
-	hide()
 
 func update_action_bar(hero_card: HeroCard):
 	if not hero_card:
@@ -100,9 +97,7 @@ func update_action_bar(hero_card: HeroCard):
 		$RightShift/Icon.texture = next_role.icon
 
 func _on_shift_button_pressed(direction: String):
-	await slide_out()
 	shift_button_pressed.emit(direction)
-	slide_in()
 
 func _on_action_button_pressed(action_data: Action):
 	action_selected.emit(action_data)
@@ -126,6 +121,9 @@ func _on_hero_passive_fired():
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 func slide_in(duration: float = 0.2):
+	sliding = true
+	duration = duration * battle_manager.global_animation_speed
+
 	var tween = create_tween().set_parallel()
 	tween.set_trans(Tween.TRANS_SINE)
 
@@ -146,8 +144,12 @@ func slide_in(duration: float = 0.2):
 	tween.tween_property(actions_ui, "modulate:a", 1.0, duration)
 
 	await tween.finished
+	slide_finished.emit()
+	sliding = false
 
 func slide_out(duration: float = 0.2):
+	sliding = true
+	duration = duration * battle_manager.global_animation_speed
 	var tween = create_tween().set_parallel()
 	tween.set_trans(Tween.TRANS_SINE)
 
@@ -167,3 +169,5 @@ func slide_out(duration: float = 0.2):
 	tween.tween_property(actions_ui, "modulate:a", 0.0, duration)
 
 	await tween.finished
+	slide_finished.emit()
+	sliding = false

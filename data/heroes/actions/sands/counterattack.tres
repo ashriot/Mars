@@ -23,7 +23,6 @@ metadata/_custom_type_script = "uid://cdugd6pnm6py"
 [sub_resource type="Resource" id="Resource_oln6w"]
 script = ExtResource("2_u466f")
 condition_name = "Counterattack"
-aura = true
 triggers = Array[ExtResource("3_jbdj3")]([SubResource("Resource_gc3t6")])
 remove_on_triggers = Array[int]([10])
 metadata/_custom_type_script = "uid://df30dm288ne1d"
@@ -37,7 +36,6 @@ metadata/_custom_type_script = "uid://dggojfw8tmpnk"
 script = ExtResource("6_vuc7h")
 action_name = "Counterattack"
 icon = ExtResource("5_hvq7e")
-focus_cost = 0
 auto_target = true
 target_type = 0
 effects = Array[ExtResource("1_hvq7e")]([SubResource("Resource_vuc7h")])

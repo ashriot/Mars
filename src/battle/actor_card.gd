@@ -51,7 +51,7 @@ func setup_base(stats: ActorStats):
 	current_hp = current_stats.max_hp
 	hp_bar_actual.max_value = current_stats.max_hp
 	hp_bar_ghost.max_value = current_stats.max_hp
-	current_guard = current_stats.starting_guard
+	current_guard = current_stats.guard
 	panel_home_position = panel.position
 	breached_label.hide()
 	is_defeated = false
@@ -65,6 +65,7 @@ func setup_base(stats: ActorStats):
 
 func on_turn_started() -> void:
 	await battle_manager.wait(0.1)
+	$Panel/Title.modulate = Color.GOLD
 	await _fire_condition_event(Trigger.TriggerType.ON_TURN_START)
 
 	if is_breached:
@@ -72,7 +73,9 @@ func on_turn_started() -> void:
 	return
 
 func on_turn_ended() -> void:
-	pass
+	await battle_manager.wait(0.1)
+	$Panel/Title.modulate = Color.WHITE
+	await _fire_condition_event(Trigger.TriggerType.ON_TURN_END)
 
 func get_power(power_type: Action.PowerType) -> int:
 	if power_type == Action.PowerType.ATTACK:
@@ -183,7 +186,7 @@ func sync_visual_health() -> Tween:
 	if actual_hp == real_hp and ghost_hp == real_hp:
 		return null
 
-	var DURATION = 0.5
+	var DURATION = 0.5 * battle_manager.global_animation_speed
 
 	if health_tween and health_tween.is_running():
 		health_tween.kill()
@@ -252,7 +255,7 @@ func defeated():
 	actor_defeated.emit(self)
 
 func recover_breach():
-	gain_guard(current_stats.starting_guard)
+	gain_guard(current_stats.guard)
 
 func gain_guard(amount: int):
 	if is_defeated or amount <= 0:
@@ -289,44 +292,31 @@ func update_guard_bar():
 	armor_changed.emit(current_guard)
 
 func _start_breach_pulse():
-	if not breached_label: return
+	breached_label.show()
+	if pulse_tween: pulse_tween.kill()
 
-	breached_label.visible = true
-
-	# Kill old tween if it's somehow still running
-	if pulse_tween:
-		pulse_tween.kill()
-
-	# Create a new tween that will loop
 	pulse_tween = create_tween()
 	pulse_tween.set_loops()
-
-	# Use "self_modulate" so it doesn't affect child nodes (if you add any)
-	# 1. Fade from its current color (white) to red
 	pulse_tween.tween_property(
 		breached_label,
 		"self_modulate",
 		Color.ORANGE_RED,
-		0.5 # 0.5 seconds to fade to red
+		0.5
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
-	# 2. Fade from red back to white
 	pulse_tween.tween_property(
 		breached_label,
 		"self_modulate",
 		Color.WHITE,
-		0.5 # 0.5 seconds to fade back
+		0.5
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 func _stop_breach_pulse():
-	if not breached_label: return
-
 	if pulse_tween:
 		pulse_tween.kill()
 		pulse_tween = null
 
-	breached_label.visible = false
-	# Reset the color to default
+	breached_label.hide()
 	breached_label.self_modulate = Color.WHITE
 
 func shake_panel(intensity: float = 0.5):

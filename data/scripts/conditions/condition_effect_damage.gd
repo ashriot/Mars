@@ -24,7 +24,6 @@ func execute(attacker: ActorCard, primary_targets: Array, battle_manager: Battle
 			target.is_breached # (We just check their current state)
 		)
 
-		# 4. Apply the hit
 		await target.apply_one_hit_simple(roundi(final_damage_float), damage_type)
 
 	return

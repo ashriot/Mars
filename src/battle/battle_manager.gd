@@ -16,7 +16,7 @@ signal turn_order_updated(turn_queue_data)
 @export var enemy_card_scene: PackedScene
 @export var hero_area: Control
 @export var enemy_area: Control
-@export var action_bar: Control
+@export var action_bar: ActionBar
 
 # --- Encounter Data Links ---
 @export var hero_data_files: Array[HeroData] = []
@@ -152,6 +152,8 @@ func find_and_start_next_turn():
 	self.current_actor = winner
 	if winner is HeroCard:
 		change_state(State.EXECUTING_ACTION)
+		if action_bar.sliding:
+			await action_bar.slide_finished
 		await winner.on_turn_started()
 		player_turn_started.emit(current_actor)
 		await action_bar.slide_in()
@@ -160,6 +162,7 @@ func find_and_start_next_turn():
 		change_state(State.ENEMY_ACTION)
 		await winner.on_turn_started()
 		await execute_enemy_turn(winner)
+		await winner.on_turn_ended()
 		await wait(0.5)
 		find_and_start_next_turn()
 
@@ -220,28 +223,19 @@ func _on_action_selected(action: Action):
 		return
 
 	self.selected_action = action
-	var target_list = []
 	match action.target_type:
 		Action.TargetType.ONE_ENEMY, Action.TargetType.ALL_ENEMIES, Action.TargetType.RANDOM_ENEMY:
 			change_state(State.TARGETING_ENEMIES)
-			target_list = get_living_enemies()
-			if not target_list.is_empty():
-				target_list[0].grab_focus()
 
 		Action.TargetType.SELF, Action.TargetType.TEAM_MEMBER, Action.TargetType.TEAMMATE, Action.TargetType.TEAM, Action.TargetType.TEAMMATES_ONLY:
 			change_state(State.TARGETING_TEAM)
-			target_list = get_living_heroes()
-			if not target_list.is_empty():
-				target_list[0].grab_focus()
 
 		_:
 			push_error("Unknown target type! Canceling.")
-			#_on_target_canceled()
 
 func _on_hero_clicked(target_hero: HeroCard):
 	if current_state != State.TARGETING_TEAM: return
 
-	# 2. We have our action and our target!
 	print("Target selected: ", target_hero.actor_name)
 	change_state(State.EXECUTING_ACTION)
 	action_bar.hide_bar()
@@ -258,7 +252,7 @@ func _on_hero_clicked(target_hero: HeroCard):
 					targets_array.append(ally)
 
 	await execute_action(current_actor, selected_action, targets_array)
-	_finish_hero_turn()
+	await _finish_hero_turn()
 
 func _on_enemy_clicked(target_enemy: EnemyCard):
 	if current_state != State.TARGETING_ENEMIES: return
@@ -284,7 +278,7 @@ func _on_enemy_clicked(target_enemy: EnemyCard):
 func _finish_hero_turn():
 	current_actor.on_turn_ended()
 	self.selected_action = null
-	await wait(0.1)
+	await wait(0.01)
 
 	find_and_start_next_turn()
 
@@ -363,11 +357,12 @@ func _on_actor_conditions_changed(_actor_who_changed: ActorCard, retarget: bool)
 
 func _on_shift_button_pressed(direction: String):
 	if current_state in [State.LOADING, State.EXECUTING_ACTION]: return
-
 	selected_action = null
 	if current_actor:
 		change_state(State.EXECUTING_ACTION)
+		await action_bar.slide_out()
 		await current_actor.shift_role(direction)
+		await action_bar.slide_in()
 		change_state(State.PLAYER_ACTION)
 		print("Shift complete. Returning to player's action.")
 
