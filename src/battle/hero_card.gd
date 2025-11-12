@@ -31,7 +31,7 @@ func setup(data: HeroData):
 	if hero_data.portrait:
 		portrait_rect.texture = hero_data.portrait
 	self.current_focus_pips = 3
-	add_to_group("player")
+
 	update_focus_bar()
 
 func on_turn_started() -> void:

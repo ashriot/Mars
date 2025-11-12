@@ -40,8 +40,9 @@ func _ready():
 
 	spawn_encounter()
 
-	# We start by finding the first turn
-	change_state(State.EXECUTING_ACTION) # "Pause" the game
+	change_state(State.EXECUTING_ACTION)
+	await _apply_starting_passives()
+
 	find_and_start_next_turn()
 
 func spawn_encounter():
@@ -72,6 +73,15 @@ func spawn_encounter():
 		enemy_card.decide_intent(get_living_heroes())
 		actor_list.append(enemy_card)
 	print("Spawning complete.")
+
+func _apply_starting_passives() -> void:
+	print("--- Applying Starting Passives ---")
+
+	for actor in actor_list:
+		if actor is HeroCard and not actor.is_defeated:
+			await _apply_role_passive(actor)
+	print("--- Starting Passives Applied ---")
+	return
 
 func _run_ct_simulation(num_turns := 7) -> Array:
 	var projected_queue = []
@@ -140,7 +150,7 @@ func find_and_start_next_turn():
 
 	# 6. Start the winner's turn
 	self.current_actor = winner
-	if winner.is_in_group("player"):
+	if winner is HeroCard:
 		change_state(State.EXECUTING_ACTION)
 		await winner.on_turn_started()
 		player_turn_started.emit(current_actor)
@@ -154,8 +164,8 @@ func find_and_start_next_turn():
 		find_and_start_next_turn()
 
 func sort_actors_by_ct(a, b):
-	var a_is_player = a.is_in_group("player")
-	var b_is_player = b.is_in_group("player")
+	var a_is_player = a is HeroCard
+	var b_is_player = b is HeroCard
 
 	if a_is_player and not b_is_player: return true
 	if not a_is_player and b_is_player: return false
@@ -274,9 +284,16 @@ func _on_enemy_clicked(target_enemy: EnemyCard):
 func _finish_hero_turn():
 	current_actor.on_turn_ended()
 	self.selected_action = null
-	await wait(0.25)
+	await wait(0.1)
 
 	find_and_start_next_turn()
+
+func _apply_role_passive(hero: HeroCard):
+	var current_role = hero.get_current_role()
+	if current_role and current_role.passive:
+		var passive_action: Action = current_role.passive
+		print("Applying passive: ", passive_action.action_name, " to ", hero.actor_name)
+		await execute_action(hero, passive_action, [hero])
 
 func execute_action(actor: ActorCard, action: Action, targets: Array):
 	if actor is HeroCard:
@@ -345,8 +362,9 @@ func _on_actor_conditions_changed(_actor_who_changed: ActorCard, retarget: bool)
 			enemy.get_a_target(living_heroes)
 
 func _on_shift_button_pressed(direction: String):
-	if current_state != State.PLAYER_ACTION: return
+	if current_state in [State.LOADING, State.EXECUTING_ACTION]: return
 
+	selected_action = null
 	if current_actor:
 		change_state(State.EXECUTING_ACTION)
 		await current_actor.shift_role(direction)

@@ -5,6 +5,7 @@ class_name ActorCard
 signal actor_breached(actor)
 signal actor_defeated(actor)
 signal actor_revived(actor)
+signal passive_fired()
 signal hp_changed(new_hp, max_hp)
 signal armor_changed(new_pips)
 signal actor_conditions_changed(actor, retarget)
@@ -22,7 +23,6 @@ var current_ct: int = 0
 var is_breached: bool
 var is_defeated: bool
 var active_conditions: Array[Condition] = []
-var active_state_tags: Array[String] = []
 
 # --- Animation Tweens ---
 var shake_tween: Tween
@@ -120,6 +120,8 @@ func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_po
 	if current_hp == 0:
 		await defeated()
 		return
+	var context = { "targets": [attacker] }
+	await _fire_condition_event(Trigger.TriggerType.ON_BEING_HIT, context)
 
 	return
 
@@ -147,6 +149,10 @@ func add_condition(condition_resource: Condition):
 		push_error("add_condition was called with a null resource!")
 		return
 
+	if has_condition(condition_resource.condition_name):
+		print(actor_name, " already has ", condition_resource.condition_name)
+		return
+
 	var new_condition = condition_resource.duplicate(true)
 	active_conditions.append(new_condition)
 	print(actor_name, " gained condition: ", new_condition.condition_name)
@@ -162,11 +168,12 @@ func has_condition(condition_name: String) -> bool:
 	return false
 
 func remove_condition(condition: Condition):
-	if active_conditions.has(condition):
-		for effect in condition.effects:
-			effect.on_removed(self)
-		active_conditions.erase(condition)
-	actor_conditions_changed.emit(self, false)
+	if not active_conditions.has(condition):
+		push_error("[ERROR] Trying to remove an invalid condition: ", actor_name, " -> ", condition.condition_name)
+		return
+
+	print(actor_name, " is removing condition: ", condition.condition_name)
+	active_conditions.erase(condition)
 
 func sync_visual_health() -> Tween:
 	var actual_hp = hp_bar_actual.value
@@ -176,7 +183,7 @@ func sync_visual_health() -> Tween:
 	if actual_hp == real_hp and ghost_hp == real_hp:
 		return null
 
-	var DURATION = 0.75
+	var DURATION = 0.5
 
 	if health_tween and health_tween.is_running():
 		health_tween.kill()
@@ -206,35 +213,24 @@ func sync_visual_health() -> Tween:
 func _update_health_display(value_from_tween: float):
 	hp_value.text = str(roundi(value_from_tween))
 
-func _fire_condition_event(event_type: Trigger.TriggerType) -> void:
+func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary = {}) -> void:
 	for i in range(active_conditions.size() - 1, -1, -1):
 		var condition = active_conditions[i]
+		for trigger in condition.triggers:
+			if trigger.trigger_type != event_type: continue
+			await battle_manager.wait(0.2)
+			if condition.condition_type == Condition.ConditionType.PASSIVE and self is HeroCard:
+				passive_fired.emit()
+			print("Condition '", condition.condition_name, "' is firing effects for '", event_type, "'")
+			var targets = [self]
+			for effect in trigger.effects_to_run:
+				if context.has("targets"):
+					targets = context.targets
+					await battle_manager.execute_triggered_effect(self, effect, targets)
 
 		if condition.remove_on_triggers.has(event_type):
 			print(actor_name, "'s ", condition.condition_name, " was removed by trigger.")
 			remove_condition(condition)
-			continue
-
-		for trigger in condition.triggers:
-			if trigger.trigger_type != event_type: continue
-
-			print("Condition '", condition.condition_name, "' is firing effects for '", event_type, "'")
-
-			var targets = [self]
-
-			for effect in trigger.effects_to_run:
-				await battle_manager.execute_triggered_effect(self, effect, targets)
-
-func add_state_tag(tag: String):
-	if not active_state_tags.has(tag):
-		active_state_tags.append(tag)
-
-func remove_state_tag(tag: String):
-	if active_state_tags.has(tag):
-		active_state_tags.erase(tag)
-
-func has_state_tag(tag: String) -> bool:
-	return active_state_tags.has(tag)
 
 func update_health_bar():
 	hp_bar_actual.value = current_hp

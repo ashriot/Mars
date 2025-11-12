@@ -1,8 +1,9 @@
-[gd_resource type="Resource" script_class="Role" load_steps=5 format=3 uid="uid://cd2xsqr4p5xyg"]
+[gd_resource type="Resource" script_class="Role" load_steps=6 format=3 uid="uid://cd2xsqr4p5xyg"]
 
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/actions/action.gd" id="1_umdty"]
 [ext_resource type="Resource" uid="uid://vk5px1abwyri" path="res://data/heroes/actions/sands/provoke.tres" id="2_umdty"]
 [ext_resource type="Texture2D" uid="uid://brxh73qv0bq0b" path="res://assets/graphics/icons/roles/winged-sword.png" id="4_0c62t"]
+[ext_resource type="Resource" uid="uid://dv4r7yc61o8e6" path="res://data/heroes/actions/sands/counterattack.tres" id="4_1x5rg"]
 [ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/role.gd" id="4_5mtuo"]
 
 [resource]
@@ -10,5 +11,6 @@ script = ExtResource("4_5mtuo")
 role_name = "Vanguard"
 icon = ExtResource("4_0c62t")
 color = Color(1, 0.31, 0.31, 1)
+passive = ExtResource("4_1x5rg")
 actions = Array[ExtResource("1_umdty")]([ExtResource("2_umdty"), null, null, null])
 metadata/_custom_type_script = "uid://d3mhjutrnvwsp"

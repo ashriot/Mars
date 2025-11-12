@@ -35,7 +35,7 @@ corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
 [node name="HeroCard" type="Control"]
-custom_minimum_size = Vector2(400, 200)
+custom_minimum_size = Vector2(400, 220)
 layout_mode = 3
 anchors_preset = 0
 offset_right = 40.0
@@ -49,6 +49,7 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2

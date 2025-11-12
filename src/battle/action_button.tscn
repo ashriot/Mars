@@ -153,7 +153,6 @@ texture = ExtResource("1_sm4rn")
 expand_mode = 1
 
 [node name="Glyph" type="TextureRect" parent="."]
-visible = false
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5

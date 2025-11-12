@@ -14,7 +14,6 @@ metadata/_custom_type_script = "uid://d0eibi4b735ay"
 
 [sub_resource type="Resource" id="Resource_6jgyu"]
 script = ExtResource("3_m4yoj")
-guard_amount = 3
 effect_target_type = 2
 metadata/_custom_type_script = "uid://cu12q7dfj3hfe"
 
@@ -23,6 +22,5 @@ script = ExtResource("4_5vcw3")
 action_name = "Telekinesis"
 icon = ExtResource("4_8w1o2")
 description = "Attack an enemy twice, each hit dealing X% damage."
-focus_cost = 0
 effects = Array[ExtResource("1_4l446")]([SubResource("Resource_hlc1a"), SubResource("Resource_6jgyu")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

@@ -12,7 +12,7 @@ enum TargetType {
 @export var action_name: String = "New Action"
 @export var icon: Texture
 @export_multiline var description: String = ""
-@export var focus_cost: int = 1
+@export var focus_cost: int = 0
 @export var auto_target: bool = false
 
 @export var target_type: TargetType = TargetType.ONE_ENEMY
