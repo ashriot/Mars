@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/actions/action_effect.gd" id="1_6kh5k"]
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/actions/action.gd" id="2_6fici"]
 [ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/actions/effect_damage.gd" id="2_mavwc"]
-[ext_resource type="Texture2D" uid="uid://fs6u3e62xn0o" path="res://assets/graphics/icons/skills/striking-splinter.png" id="3_mavwc"]
+[ext_resource type="Texture2D" uid="uid://cfhv6q8svang4" path="res://assets/graphics/icons/skills/hypersonic-bolt.png" id="3_mavwc"]
 
 [sub_resource type="Resource" id="Resource_6nryw"]
 script = ExtResource("2_mavwc")

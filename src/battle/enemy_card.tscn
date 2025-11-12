@@ -1,9 +1,28 @@
-[gd_scene load_steps=9 format=3 uid="uid://b4tt3yil85l7j"]
+[gd_scene load_steps=11 format=3 uid="uid://b4tt3yil85l7j"]
 
 [ext_resource type="Script" uid="uid://carvfoj4h04nm" path="res://src/battle/enemy_card.gd" id="1_cu1kv"]
 [ext_resource type="Texture2D" uid="uid://dje00e457xu8o" path="res://assets/graphics/icons/textures/shield.png" id="2_4kuvy"]
 [ext_resource type="Texture2D" uid="uid://jeiq1r6ke2t7" path="res://assets/graphics/icons/textures/plus.png" id="2_e8ixv"]
 [ext_resource type="Texture2D" uid="uid://bhk28mg1reyry" path="res://assets/graphics/glyphs/ps/Button - PS Directional Arrow Down.png" id="4_e8ixv"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8i7ma"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_width_left = 8
+border_width_top = 8
+border_width_right = 8
+border_width_bottom = 8
+border_color = Color(1, 0.78431374, 0, 1)
+corner_radius_top_left = 17
+corner_radius_top_right = 17
+corner_radius_bottom_right = 17
+corner_radius_bottom_left = 17
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1mnyd"]
+bg_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_e8ixv"]
 bg_color = Color(0, 0, 0, 0.39215687)
@@ -45,6 +64,35 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 1
+
+[node name="Highlight" type="Panel" parent="Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -5.0
+offset_top = -5.0
+offset_right = 5.0
+offset_bottom = 5.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_8i7ma")
+
+[node name="TargetFlash" type="Panel" parent="Panel"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 2.0
+offset_top = 2.0
+offset_right = -2.0
+offset_bottom = -2.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_1mnyd")
 
 [node name="Title" type="Label" parent="Panel"]
 layout_mode = 1
@@ -338,7 +386,7 @@ offset_right = 40.0
 offset_bottom = 40.0
 mouse_filter = 2
 
-[node name="IntentEffect" type="Label" parent="Panel"]
+[node name="IntentText" type="Label" parent="Panel"]
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5

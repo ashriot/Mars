@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/actions/action.gd" id="1_ift6d"]
 [ext_resource type="Resource" uid="uid://7dg4i7k6dya0" path="res://data/heroes/actions/asher/double_tap.tres" id="2_ung8m"]
-[ext_resource type="Resource" uid="uid://cg0jwg4m14vwn" path="res://data/heroes/actions/asher/leeching_shots.tres" id="3_bnepl"]
+[ext_resource type="Resource" uid="uid://cg0jwg4m14vwn" path="res://data/heroes/actions/asher/siphon_shots.tres" id="3_bnepl"]
 [ext_resource type="Texture2D" uid="uid://m4ffcp1dre36" path="res://assets/graphics/icons/roles/steyr-aug.png" id="4_ung8m"]
 [ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/role.gd" id="4_y6513"]
 

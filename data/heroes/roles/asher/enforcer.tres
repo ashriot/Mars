@@ -1,10 +1,11 @@
-[gd_resource type="Resource" script_class="Role" load_steps=7 format=3 uid="uid://c7bb8vuamp7ai"]
+[gd_resource type="Resource" script_class="Role" load_steps=8 format=3 uid="uid://c7bb8vuamp7ai"]
 
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/actions/action.gd" id="1_rlx5o"]
 [ext_resource type="Resource" uid="uid://7dg4i7k6dya0" path="res://data/heroes/actions/asher/double_tap.tres" id="2_yj3iy"]
-[ext_resource type="Resource" uid="uid://cg0jwg4m14vwn" path="res://data/heroes/actions/asher/leeching_shots.tres" id="3_i7sro"]
+[ext_resource type="Resource" uid="uid://bbf5ij7wcomd4" path="res://data/heroes/actions/asher/kinetic_ammo.tres" id="3_mru05"]
 [ext_resource type="Resource" uid="uid://cd8ogb3cwgrb4" path="res://data/heroes/actions/asher/barrage.tres" id="4_i7sro"]
 [ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/role.gd" id="4_mru05"]
+[ext_resource type="Resource" uid="uid://cg0jwg4m14vwn" path="res://data/heroes/actions/asher/siphon_shots.tres" id="4_qjg01"]
 [ext_resource type="Texture2D" uid="uid://dmf762f6cw8l6" path="res://assets/graphics/icons/roles/glock.png" id="5_i7sro"]
 
 [resource]
@@ -12,5 +13,5 @@ script = ExtResource("4_mru05")
 role_name = "Enforcer"
 icon = ExtResource("5_i7sro")
 color = Color(1, 1, 0.37, 1)
-actions = Array[ExtResource("1_rlx5o")]([ExtResource("2_yj3iy"), ExtResource("3_i7sro"), null, ExtResource("4_i7sro")])
+actions = Array[ExtResource("1_rlx5o")]([ExtResource("2_yj3iy"), ExtResource("3_mru05"), ExtResource("4_qjg01"), ExtResource("4_i7sro")])
 metadata/_custom_type_script = "uid://d3mhjutrnvwsp"

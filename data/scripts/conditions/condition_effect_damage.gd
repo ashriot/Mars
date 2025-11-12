@@ -5,7 +5,7 @@ class_name ConditionEffect_Damage
 @export var power_type: Action.PowerType = Action.PowerType.PSYCHE
 @export var damage_type: Action.DamageType = Action.DamageType.PIERCING
 
-func execute(attacker: ActorCard, primary_targets: Array, battle_manager: BattleManager) -> void:
+func execute(attacker: ActorCard, primary_targets: Array, _battle_manager: BattleManager) -> void:
 
 	for target in primary_targets:
 		if not target or not is_instance_valid(target) or target.is_defeated:
@@ -24,6 +24,6 @@ func execute(attacker: ActorCard, primary_targets: Array, battle_manager: Battle
 			target.is_breached # (We just check their current state)
 		)
 
-		await target.apply_one_hit_simple(roundi(final_damage_float), damage_type)
+		await target.apply_one_hit(roundi(final_damage_float), damage_type)
 
 	return

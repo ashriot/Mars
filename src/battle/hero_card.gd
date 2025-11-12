@@ -30,7 +30,7 @@ func setup(data: HeroData):
 	recolor()
 	if hero_data.portrait:
 		portrait_rect.texture = hero_data.portrait
-	self.current_focus_pips = 3
+	self.current_focus_pips = 9
 
 	update_focus_bar()
 
@@ -45,6 +45,7 @@ func on_turn_started() -> void:
 
 func on_turn_ended() -> void:
 	_slide_down()
+	await super.on_turn_ended()
 
 func take_healing(heal_amount: int, is_revive: bool = false):
 	if is_defeated and is_revive:

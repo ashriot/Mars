@@ -70,8 +70,8 @@ func spawn_encounter():
 		enemy_card.actor_revived.connect(_on_actor_revived)
 		enemy_card.actor_conditions_changed.connect(_on_actor_conditions_changed)
 		enemy_card.current_ct = randi_range(enemy_data.stats.speed / 5, enemy_data.stats.speed * 3)
-		enemy_card.decide_intent(get_living_heroes())
 		actor_list.append(enemy_card)
+		enemy_card.decide_intent(get_living_heroes())
 	print("Spawning complete.")
 
 func _apply_starting_passives() -> void:
@@ -129,6 +129,9 @@ func _run_ct_simulation(num_turns := 7) -> Array:
 	return projected_queue
 
 func find_and_start_next_turn():
+	if current_actor:
+		current_actor.highlight(false)
+
 	var projection = _run_ct_simulation()
 
 	if projection.is_empty():
@@ -175,10 +178,11 @@ func sort_actors_by_ct(a, b):
 	return randf() > 0.5
 
 func _on_actor_breached():
-	print("\n New Queue: ")
-	var new_projection = _run_ct_simulation()
+	print("\n Actor was Breached -> New Queue: ")
+	update_turn_order()
 
-	turn_order_updated.emit(new_projection)
+func update_turn_order():
+	turn_order_updated.emit(_run_ct_simulation())
 
 func _on_actor_died(actor: ActorCard):
 	print(actor.actor_name, " has died. Removing from actor_list.")
@@ -191,8 +195,7 @@ func _on_actor_died(actor: ActorCard):
 
 	# 2. Re-run the simulation to update the UI
 	# This is the same logic from _on_actor_breached
-	var new_projection = _run_ct_simulation()
-	turn_order_updated.emit(new_projection)
+	update_turn_order()
 
 	# 3. Check for victory/defeat
 	if get_living_heroes().is_empty():
@@ -210,8 +213,7 @@ func _on_actor_revived(actor: ActorCard):
 	else:
 		print("Actor was already in actor_list?")
 
-	var new_projection = _run_ct_simulation()
-	turn_order_updated.emit(new_projection)
+	update_turn_order()
 
 	# 3. Check if the battle needs to "un-end"
 	# (This is a future-proof check)
@@ -222,16 +224,26 @@ func _on_action_selected(action: Action):
 	if current_actor.current_focus_pips < action.focus_cost:
 		return
 
+	var target_list = []
+
 	self.selected_action = action
 	match action.target_type:
 		Action.TargetType.ONE_ENEMY, Action.TargetType.ALL_ENEMIES, Action.TargetType.RANDOM_ENEMY:
 			change_state(State.TARGETING_ENEMIES)
+			target_list = get_living_enemies()
 
-		Action.TargetType.SELF, Action.TargetType.TEAM_MEMBER, Action.TargetType.TEAMMATE, Action.TargetType.TEAM, Action.TargetType.TEAMMATES_ONLY:
+		Action.TargetType.SELF:
 			change_state(State.TARGETING_TEAM)
+			target_list = [current_actor]
+		Action.TargetType.TEAM_MEMBER, Action.TargetType.TEAMMATE, Action.TargetType.TEAM, Action.TargetType.TEAMMATES_ONLY:
+			change_state(State.TARGETING_TEAM)
+			target_list = get_living_heroes()
 
 		_:
 			push_error("Unknown target type! Canceling.")
+
+	for target in target_list:
+		target.start_flashing()
 
 func _on_hero_clicked(target_hero: HeroCard):
 	if current_state != State.TARGETING_TEAM: return
@@ -242,7 +254,7 @@ func _on_hero_clicked(target_hero: HeroCard):
 
 	var targets_array = []
 	match selected_action.target_type:
-		Action.TargetType.TEAM_MEMBER:
+		Action.TargetType.SELF, Action.TargetType.TEAM_MEMBER:
 			targets_array.append(target_hero)
 		Action.TargetType.TEAM:
 			targets_array = get_living_heroes()
@@ -269,15 +281,15 @@ func _on_enemy_clicked(target_enemy: EnemyCard):
 		Action.TargetType.ONE_ENEMY:
 			targets_array.append(target_enemy)
 
-		Action.TargetType.ALL_ENEMIES:
+		Action.TargetType.ALL_ENEMIES, Action.TargetType.RANDOM_ENEMY:
 			targets_array = enemy_area.get_children()
 
 	await execute_action(current_actor, selected_action, targets_array)
 	_finish_hero_turn()
 
 func _finish_hero_turn():
-	current_actor.on_turn_ended()
 	self.selected_action = null
+	await current_actor.on_turn_ended()
 	await wait(0.01)
 
 	find_and_start_next_turn()
@@ -292,23 +304,28 @@ func _apply_role_passive(hero: HeroCard):
 func execute_action(actor: ActorCard, action: Action, targets: Array):
 	if actor is HeroCard:
 		actor.spend_focus(action.focus_cost)
+		_clear_all_targeting_ui()
 	var actor_name = actor.actor_name
-
 	print(actor_name, " uses ", action.action_name)
 
 	for effect in action.effects:
 		await effect.execute(actor, targets, self, action)
+	if action.is_attack:
+		var context = { "targets": targets, "action": action }
+		await actor._fire_condition_event(Trigger.TriggerType.AFTER_ATTACKING, context)
 	await _flush_all_health_animations()
 	return
 
-func execute_triggered_effect(actor: ActorCard, effect: ActionEffect, targets: Array):
+func execute_triggered_effect(actor: ActorCard, effect: ActionEffect, targets: Array, action: Action):
 
-	await effect.execute(actor, targets, self, null)
+	await effect.execute(actor, targets, self, action)
 
 func execute_enemy_turn(enemy: EnemyCard):
 	change_state(State.EXECUTING_ACTION)
 	print("\n", enemy.actor_name, " is executing its turn!")
-	await wait(1.0)
+	await wait(0.25)
+	for i in range(2):
+		await enemy.flash_intent(0.1)
 
 	var action = enemy.intended_action
 	var target = enemy.intended_target
@@ -327,7 +344,6 @@ func execute_enemy_turn(enemy: EnemyCard):
 			targets = get_living_heroes()
 		Action.TargetType.SELF:
 			targets.append(enemy)
-
 	await execute_action(enemy, action, targets)
 	enemy.decide_intent(get_living_heroes())
 	return
@@ -354,6 +370,7 @@ func _on_actor_conditions_changed(_actor_who_changed: ActorCard, retarget: bool)
 			continue
 		if retarget:
 			enemy.get_a_target(living_heroes)
+			enemy.flash_intent(0.3)
 
 func _on_shift_button_pressed(direction: String):
 	if current_state in [State.LOADING, State.EXECUTING_ACTION]: return
@@ -403,6 +420,10 @@ func _flush_all_health_animations() -> void:
 
 	for tween in tweens_to_await:
 		await tween.finished
+
+func _clear_all_targeting_ui():
+	for actor in actor_list:
+		actor.stop_flashing()
 
 func wait(duration : float) -> void:
 	var scaled_duration = duration / global_animation_speed

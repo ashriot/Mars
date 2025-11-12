@@ -17,3 +17,10 @@ enum TargetType {
 
 @export var target_type: TargetType = TargetType.ONE_ENEMY
 @export var effects: Array[ActionEffect]
+
+var is_attack: bool :
+	get:
+		for effect in effects:
+			if effect is Effect_Damage:
+				return true
+		return false

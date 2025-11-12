@@ -9,6 +9,8 @@ enum EffectTarget {
 	ALL_ENEMIES
 }
 
+@export var effect_target: EffectTarget = EffectTarget.PRIMARY
+
 func execute(_attacker: ActorCard, _primary_targets: Array, battle_manager: BattleManager, _action: Action = null) -> void:
 	await battle_manager.wait(0.1)
 	pass

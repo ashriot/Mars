@@ -24,7 +24,7 @@ metadata/_custom_type_script = "uid://cdugd6pnm6py"
 script = ExtResource("2_u466f")
 condition_name = "Counterattack"
 triggers = Array[ExtResource("3_jbdj3")]([SubResource("Resource_gc3t6")])
-remove_on_triggers = Array[int]([10])
+remove_on_triggers = Array[int]([11])
 metadata/_custom_type_script = "uid://df30dm288ne1d"
 
 [sub_resource type="Resource" id="Resource_vuc7h"]

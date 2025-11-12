@@ -13,6 +13,8 @@ signal actor_conditions_changed(actor, retarget)
 const MAX_GUARD = 10
 
 var battle_manager: BattleManager
+var flash_tween: Tween
+var is_valid_target: bool
 
 # --- Data (Shared by both) ---
 var actor_name: String
@@ -39,6 +41,8 @@ var panel_home_position: Vector2
 @onready var portrait_rect: TextureRect = $Panel/Portrait
 @onready var breached_label: Label = $BreachedLabel
 @onready var panel: Panel = $Panel
+@onready var highlight_panel: Panel = $Panel/Highlight
+@onready var target_flash: Panel = $Panel/TargetFlash
 
 func setup_base(stats: ActorStats):
 	if not stats:
@@ -56,6 +60,9 @@ func setup_base(stats: ActorStats):
 	breached_label.hide()
 	is_defeated = false
 	is_breached = false
+	highlight_panel.hide()
+	target_flash.hide()
+	target_flash.modulate.a = 0.2
 	update_health_bar()
 	await get_tree().process_frame
 
@@ -65,7 +72,7 @@ func setup_base(stats: ActorStats):
 
 func on_turn_started() -> void:
 	await battle_manager.wait(0.1)
-	$Panel/Title.modulate = Color.GOLD
+	highlight(true)
 	await _fire_condition_event(Trigger.TriggerType.ON_TURN_START)
 
 	if is_breached:
@@ -74,8 +81,16 @@ func on_turn_started() -> void:
 
 func on_turn_ended() -> void:
 	await battle_manager.wait(0.1)
-	$Panel/Title.modulate = Color.WHITE
+	highlight(false)
 	await _fire_condition_event(Trigger.TriggerType.ON_TURN_END)
+
+func highlight(value: bool):
+	if value:
+		$Panel/Title.modulate = Color("#ffc800")
+		highlight_panel.show()
+	else:
+		$Panel/Title.modulate = Color.WHITE
+		highlight_panel.hide()
 
 func get_power(power_type: Action.PowerType) -> int:
 	if power_type == Action.PowerType.ATTACK:
@@ -115,7 +130,6 @@ func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_po
 	hp_bar_actual.value = current_hp
 	hp_value.text = str(current_hp)
 	hp_changed.emit(current_hp, current_stats.max_hp)
-	await _fire_condition_event(Trigger.TriggerType.ON_BEING_HIT)
 	print("Hit for ", final_damage, " damage!")
 	update_guard_bar()
 
@@ -221,15 +235,16 @@ func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary 
 		var condition = active_conditions[i]
 		for trigger in condition.triggers:
 			if trigger.trigger_type != event_type: continue
-			await battle_manager.wait(0.2)
+			await battle_manager.wait(0.25)
 			if condition.condition_type == Condition.ConditionType.PASSIVE and self is HeroCard:
 				passive_fired.emit()
 			print("Condition '", condition.condition_name, "' is firing effects for '", event_type, "'")
-			var targets = [self]
+			var targets = []
+			var action = context.get("action")
+			if context.has("targets"):
+				targets = context.targets
 			for effect in trigger.effects_to_run:
-				if context.has("targets"):
-					targets = context.targets
-					await battle_manager.execute_triggered_effect(self, effect, targets)
+				await battle_manager.execute_triggered_effect(self, effect, targets, action)
 
 		if condition.remove_on_triggers.has(event_type):
 			print(actor_name, "'s ", condition.condition_name, " was removed by trigger.")
@@ -380,6 +395,39 @@ func _animate_pip(pip_node: Control):
 		Color(1.0, 1.0, 1.0), # The normal Color.WHITE
 		0.25 # A much faster duration
 	).set_trans(Tween.TRANS_SINE) # Use a smooth fade for the color
+
+func start_flashing():
+	target_flash.modulate.a = 0
+	target_flash.visible = true
+
+	# Kill old tween if it's running
+	if flash_tween and flash_tween.is_running():
+		flash_tween.kill()
+
+	flash_tween = create_tween().set_loops()
+
+	flash_tween.tween_property(
+		target_flash,
+		"modulate:a",
+		0.6,
+		0.2
+	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+	flash_tween.tween_property(
+		target_flash,
+		"modulate:a",
+		0.2,
+		0.6
+	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+func stop_flashing():
+	if flash_tween and flash_tween.is_running():
+		flash_tween.kill()
+		flash_tween = null
+
+	if target_flash:
+		target_flash.visible = false
+		target_flash.modulate.a = 0.2
 
 func _on_gui_input(_event: InputEvent):
 	pass

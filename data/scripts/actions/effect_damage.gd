@@ -8,13 +8,7 @@ class_name Effect_Damage
 @export var power_type: Action.PowerType = Action.PowerType.ATTACK
 @export var damage_type: Action.DamageType = Action.DamageType.KINETIC
 
-# --- NEW: Focus Scaling Properties ---
-# (As you said, default to 0.0 so they are ignored)
-
-# This is for "potency *per* focus pip" (e.g., Focused Bolt)
 @export var potency_per_focus: float = 0.0
-
-# This is for "potency *scaled by* remaining focus"
 @export var potency_scalar_per_focus: float = 0.0
 
 
@@ -28,7 +22,6 @@ func execute(attacker: ActorCard, primary_targets: Array, battle_manager: Battle
 		focus_cost = action.focus_cost
 		if action.target_type == Action.TargetType.RANDOM_ENEMY:
 			random = true
-			primary_targets = battle_manager.get_living_enemies()
 			if primary_targets.is_empty():
 				print("RANDOM_ENEMY: No living enemies to target!")
 				return
@@ -37,7 +30,7 @@ func execute(attacker: ActorCard, primary_targets: Array, battle_manager: Battle
 	for t in primary_targets.size():
 		for i in hit_count:
 			if random:
-				target = primary_targets.pick_random()
+				target = primary_targets.pick_random() as ActorCard
 			else:
 				target = primary_targets[t]
 			var dynamic_potency = get_dynamic_potency(attacker, target, focus_cost)
@@ -45,10 +38,13 @@ func execute(attacker: ActorCard, primary_targets: Array, battle_manager: Battle
 			if not target or not is_instance_valid(target):
 				continue
 
-			if target.is_defeated:
+			if target.is_defeated and not random:
 				break
 
 			await target.apply_one_hit(self, attacker, dynamic_potency)
+
+			if random and target.is_defeated:
+				primary_targets.remove_at(t)
 
 			if hit_count > 1 and i < hit_count - 1:
 				await battle_manager.wait(0.25)

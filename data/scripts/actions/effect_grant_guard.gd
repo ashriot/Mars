@@ -3,9 +3,6 @@ extends ActionEffect
 class_name Effect_GrantGuard
 
 @export var guard_amount: int = 1
-# --- 2. RENAMED VARIABLE ---
-@export var effect_target_type: EffectTarget = EffectTarget.SELF
-
 
 func execute(attacker: ActorCard, primary_targets: Array, battle_manager: BattleManager, _action: Action = null) -> void:
 
@@ -14,7 +11,7 @@ func execute(attacker: ActorCard, primary_targets: Array, battle_manager: Battle
 	# --- 3. BUILD THE "FINAL" TARGET LIST ---
 	var final_targets: Array[ActorCard] = []
 
-	match effect_target_type:
+	match effect_target:
 		EffectTarget.PRIMARY:
 			# This effect *uses* the player's clicked target(s)
 			final_targets = primary_targets

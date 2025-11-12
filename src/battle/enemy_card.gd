@@ -9,10 +9,11 @@ var enemy_data: EnemyData
 var ai_index: int = 0
 var intended_action: Action
 var intended_target: ActorCard
+var intent_flash_tween: Tween
 
 # --- UNIQUE UI Node References ---
 @onready var intent_icon: TextureRect = $Panel/IntentIcon
-@onready var intent_effect: Label = $Panel/IntentEffect
+@onready var intent_text: Label = $Panel/IntentText
 @onready var defenses: Label = $Panel/Defenses
 
 
@@ -26,8 +27,6 @@ func setup(data: EnemyData):
 	+ "%       NRG: " + str(int(enemy_data.stats.energy_defense * 100)) + "%"
 	if enemy_data.portrait:
 		portrait_rect.texture = enemy_data.portrait
-
-	add_to_group("enemy")
 
 func get_next_action() -> Action:
 	if enemy_data.action_deck.is_empty():
@@ -81,7 +80,7 @@ func get_a_target(hero_targets: Array[HeroCard]):
 
 func update_intent_ui():
 	if not intended_action:
-		intent_effect.text = ""
+		intent_text.text = ""
 		return
 
 	if intended_action.effects.is_empty():
@@ -116,7 +115,7 @@ func update_intent_ui():
 			# Your 'actor_name' fix now works
 			final_text += " > " + intended_target.actor_name
 
-		intent_effect.text = final_text
+		intent_text.text = final_text
 
 	else:
 		# --- 4. It's a non-damage effect (like Grant Guard) ---
@@ -125,7 +124,7 @@ func update_intent_ui():
 		if intended_target:
 			final_text += " > " + intended_target.actor_name
 
-		intent_effect.text = final_text
+		intent_text.text = final_text
 
 func defeated():
 	super.defeated()
@@ -146,6 +145,22 @@ func show_intent(icon: Texture):
 
 func hide_intent():
 	intent_icon.visible = false
+
+func flash_intent(duration: float):
+	if intent_flash_tween and intent_flash_tween.is_running():
+		intent_flash_tween.kill()
+
+	var flash_color = Color.ORANGE_RED
+	var base_color = Color(1.0, 1.0, 1.0)
+
+	intent_flash_tween = create_tween()
+
+	intent_flash_tween.tween_property(intent_text, "modulate",
+		flash_color, duration).set_trans(Tween.TRANS_SINE)
+	intent_flash_tween.tween_property(intent_text, "modulate",
+		base_color, duration).set_trans(Tween.TRANS_SINE)
+
+	await intent_flash_tween.finished
 
 func _on_gui_input(event: InputEvent):
 	if event.is_action_pressed("ui_accept"):
