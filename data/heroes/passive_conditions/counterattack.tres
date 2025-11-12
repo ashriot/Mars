@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="Condition" load_steps=7 format=3 uid="uid://dg67swbrox0m6"]
+
+[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://data/scripts/conditions/condition.gd" id="1_filty"]
+[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://data/scripts/conditions/trigger.gd" id="2_0dtu3"]
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="3_f2j0r"]
+[ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/action_effects/effect_damage.gd" id="4_y5p80"]
+
+[sub_resource type="Resource" id="Resource_2fqom"]
+script = ExtResource("4_y5p80")
+potency = 0.75
+damage_type = 2
+metadata/_custom_type_script = "uid://d0eibi4b735ay"
+
+[sub_resource type="Resource" id="Resource_icqbr"]
+script = ExtResource("2_0dtu3")
+trigger_type = 4
+effects_to_run = Array[ExtResource("3_f2j0r")]([SubResource("Resource_2fqom")])
+metadata/_custom_type_script = "uid://cdugd6pnm6py"
+
+[resource]
+script = ExtResource("1_filty")
+condition_name = "Counterattack"
+is_passive = true
+triggers = Array[ExtResource("2_0dtu3")]([SubResource("Resource_icqbr")])
+remove_on_triggers = Array[int]([11])
+metadata/_custom_type_script = "uid://df30dm288ne1d"

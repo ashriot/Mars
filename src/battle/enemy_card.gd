@@ -14,7 +14,6 @@ var intent_flash_tween: Tween
 # --- UNIQUE UI Node References ---
 @onready var intent_icon: TextureRect = $Panel/IntentIcon
 @onready var intent_text: Label = $Panel/IntentText
-@onready var defenses: Label = $Panel/Defenses
 
 
 func setup(data: EnemyData):
@@ -23,8 +22,8 @@ func setup(data: EnemyData):
 	setup_base(data.stats)
 
 	name_label.text = enemy_data.stats.actor_name
-	$Panel/Defenses.text = "KIN: " + str(int(enemy_data.stats.kinetic_defense * 100)) \
-	+ "%       NRG: " + str(int(enemy_data.stats.energy_defense * 100)) + "%"
+	$Panel/KinDef.text = "KIN:\n" + str(enemy_data.stats.kinetic_defense) + "%"
+	$Panel/NrgDef.text = "NRG:\n" + str(enemy_data.stats.energy_defense) + "%"
 	if enemy_data.portrait:
 		portrait_rect.texture = enemy_data.portrait
 
@@ -33,8 +32,7 @@ func get_next_action() -> Action:
 		push_error(enemy_data.enemy_name + " has no actions in its action_deck!")
 		return null
 
-	# Just grab the first action every time for testing.
-	var next_action = enemy_data.action_deck[0]
+	var next_action = enemy_data.action_deck.pick_random()
 	return next_action
 	#if enemy_data.ai_script_indices.is_empty():
 		#return null

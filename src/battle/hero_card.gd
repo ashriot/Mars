@@ -31,7 +31,7 @@ func setup(data: HeroData):
 	recolor()
 	if hero_data.portrait:
 		portrait_rect.texture = hero_data.portrait
-	current_focus_pips = 2
+	current_focus_pips = 5
 	update_focus_bar()
 
 func on_turn_started() -> void:
@@ -49,7 +49,7 @@ func on_turn_ended() -> void:
 
 func take_healing(heal_amount: int, is_revive: bool = false):
 	if is_defeated and is_revive:
-		print(hero_data.base_stats.actor_name, " is revived!")
+		print(actor_name, " is revived!")
 		is_defeated = false
 		self_modulate = Color.WHITE
 		actor_revived.emit(self)

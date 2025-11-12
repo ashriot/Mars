@@ -1,8 +1,8 @@
 [gd_resource type="Resource" script_class="Action" load_steps=4 format=3 uid="uid://cg0jwg4m14vwn"]
 
-[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/actions/action_effect.gd" id="1_d6ul5"]
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_d6ul5"]
 [ext_resource type="Texture2D" uid="uid://b6akugnahj553" path="res://assets/graphics/icons/skills/leeching-worm.png" id="2_trwkj"]
-[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/actions/action.gd" id="3_mlwr2"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="3_mlwr2"]
 
 [resource]
 script = ExtResource("3_mlwr2")

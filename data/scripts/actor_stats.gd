@@ -1,6 +1,18 @@
 extends Resource
 class_name ActorStats
 
+enum Stats {
+	HP,
+	GRD,
+	ATK,
+	PSY,
+	OVR,
+	SPD,
+	PRC,
+	KIN_DEF,
+	NRG_DEF
+}
+
 # --- Core Stats ---
 @export var actor_name: String
 @export var level: int = 1
@@ -11,7 +23,10 @@ class_name ActorStats
 @export var overload: int = 20
 @export var speed: int = 20
 @export var precision: int = 10
+@export var kinetic_defense: int = 10
+@export var energy_defense: int = 10
 
-# --- Defensive Stats ---
-@export_range(0.0, 1.0) var kinetic_defense: float = 0.25 # 25% reduction
-@export_range(0.0, 1.0) var energy_defense: float = 0.25 # 25% reduction
+func get_stat(stat: Stats):
+	match (stat):
+		Stats.SPD:
+			return speed

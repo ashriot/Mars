@@ -1,13 +1,13 @@
 [gd_resource type="Resource" script_class="Action" load_steps=14 format=3 uid="uid://bbf5ij7wcomd4"]
 
-[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/actions/action_effect.gd" id="1_qa070"]
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_qa070"]
 [ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://data/scripts/conditions/condition.gd" id="2_gxl6p"]
 [ext_resource type="Texture2D" uid="uid://c2gwjo0dxv750" path="res://assets/graphics/icons/skills/supersonic-bullet.png" id="2_xf0g5"]
-[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/actions/action.gd" id="2_ycjio"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="2_ycjio"]
 [ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://data/scripts/conditions/trigger.gd" id="3_1uwls"]
-[ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/actions/effect_damage.gd" id="4_1uwls"]
-[ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://data/scripts/actions/effect_apply_condition.gd" id="4_7j35k"]
-[ext_resource type="Script" uid="uid://dgkss5d1axeag" path="res://data/scripts/actions/effect_modify_ct.gd" id="6_7j35k"]
+[ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/action_effects/effect_damage.gd" id="4_1uwls"]
+[ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://data/scripts/action_effects/effect_apply_condition.gd" id="4_7j35k"]
+[ext_resource type="Script" uid="uid://dgkss5d1axeag" path="res://data/scripts/action_effects/effect_modify_ct.gd" id="6_7j35k"]
 
 [sub_resource type="Resource" id="Resource_7j35k"]
 script = ExtResource("4_1uwls")

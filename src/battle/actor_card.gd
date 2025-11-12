@@ -18,13 +18,15 @@ var is_valid_target: bool
 
 # --- Data (Shared by both) ---
 var actor_name: String
-var current_stats: ActorStats
+var stat_mods: Dictionary
+var stat_scalars: Dictionary
 var current_hp: int
 var current_guard: int
 var current_ct: int = 0
 var is_breached: bool
 var is_defeated: bool
 var active_conditions: Array[Condition] = []
+var current_stats: ActorStats
 
 # --- Animation Tweens ---
 var shake_tween: Tween
@@ -121,9 +123,9 @@ func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_po
 
 	if not is_breached:
 		if damage_effect.damage_type == Action.DamageType.KINETIC:
-			base_hit_damage = base_hit_damage * (1.0 - current_stats.kinetic_defense)
+			base_hit_damage = base_hit_damage * (1.0 - float(current_stats.kinetic_defense) / 100)
 		else: # ENERGY
-			base_hit_damage = base_hit_damage * (1.0 - current_stats.energy_defense)
+			base_hit_damage = base_hit_damage * (1.0 - float(current_stats.energy_defense) / 100)
 
 	var final_damage = max(0, int(base_hit_damage))
 	current_hp = max(0, current_hp - final_damage)
@@ -236,7 +238,7 @@ func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary 
 		for trigger in condition.triggers:
 			if trigger.trigger_type != event_type: continue
 			await battle_manager.wait(0.25)
-			if condition.condition_type == Condition.ConditionType.PASSIVE and self is HeroCard:
+			if condition.is_passive and self is HeroCard:
 				passive_fired.emit()
 			print("Condition '", condition.condition_name, "' is firing effects for '", event_type, "'")
 			var targets = []
@@ -431,3 +433,12 @@ func stop_flashing():
 
 func _on_gui_input(_event: InputEvent):
 	pass
+
+func _get_stat(stat: ActorStats.Stats) -> int:
+	var mods = 0
+	var scalars = 1.0
+	for mod in stat_mods.get(stat):
+		mods += mod
+	for scalar in stat_scalars.get(stat):
+		scalars += scalar
+	return (current_stats.get_stat(stat) + mods) * scalars

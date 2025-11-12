@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="EnemyData" load_steps=6 format=3 uid="uid://iofc48r1ubbm"]
 
-[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/actions/action.gd" id="1_yxqo2"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_tpotm"]
 [ext_resource type="Resource" uid="uid://d0m01fmh2ig2s" path="res://data/enemies/actions/gunshot.tres" id="2_fwxav"]
 [ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://data/scripts/enemy_data.gd" id="2_y0noh"]
 [ext_resource type="Script" uid="uid://djm3iwmyexcia" path="res://data/scripts/enemy_stats.gd" id="4_e5ebm"]
@@ -8,6 +8,7 @@
 [sub_resource type="Resource" id="Resource_g7tkw"]
 script = ExtResource("4_e5ebm")
 actor_name = "Guardian"
+level = 2
 max_hp = 4
 guard = 3
 attack = 3
@@ -22,5 +23,5 @@ metadata/_custom_type_script = "uid://djm3iwmyexcia"
 [resource]
 script = ExtResource("2_y0noh")
 stat_ranks = SubResource("Resource_g7tkw")
-action_deck = Array[ExtResource("1_yxqo2")]([ExtResource("2_fwxav")])
+action_deck = Array[ExtResource("1_tpotm")]([ExtResource("2_fwxav")])
 metadata/_custom_type_script = "uid://b3t5esgv1d2ku"

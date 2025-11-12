@@ -22,6 +22,6 @@ func _calculate_stats() -> ActorStats:
 	actor_stats.overload = (stat_ranks.level + 2) * (5 + stat_ranks.overload)
 	actor_stats.speed = (stat_ranks.level + 2) * (5 + stat_ranks.speed)
 	actor_stats.precision = stat_ranks.precision * 5
-	actor_stats.kinetic_defense = float(stat_ranks.kinetic_defense * 15) / 100
-	actor_stats.energy_defense = float(stat_ranks.energy_defense * 15) / 100
+	actor_stats.kinetic_defense = float(stat_ranks.kinetic_defense * 15)
+	actor_stats.energy_defense = float(stat_ranks.energy_defense * 15)
 	return actor_stats

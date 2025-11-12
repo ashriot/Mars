@@ -1,4 +1,3 @@
-# Action.gd
 extends Resource
 class_name Action
 

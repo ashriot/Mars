@@ -1,10 +1,11 @@
 extends Resource
 class_name Condition
 
-enum ConditionType { BUFF, DEBUFF, PASSIVE }
+enum ConditionType { BUFF, DEBUFF }
 
 @export var condition_name: String
 @export var condition_type: ConditionType = ConditionType.BUFF
+@export var is_passive: bool = false
 @export var retarget: bool = false
 
 @export var triggers: Array[Trigger]
