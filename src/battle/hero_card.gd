@@ -21,8 +21,9 @@ var current_role_index: int = 0
 @onready var role_icon: TextureRect = $Panel/RoleIcon
 
 func setup(data: HeroData):
-	self.hero_data = data
+	hero_data = data
 	setup_base(data.stats)
+	duration /= battle_manager.battle_speed
 	name_label.text = hero_data.stats.actor_name
 	role_label.text = get_current_role().role_name
 	role_icon.texture = get_current_role().icon
@@ -30,16 +31,15 @@ func setup(data: HeroData):
 	recolor()
 	if hero_data.portrait:
 		portrait_rect.texture = hero_data.portrait
-	self.current_focus_pips = 9
-
+	current_focus_pips = 2
 	update_focus_bar()
 
 func on_turn_started() -> void:
-	_slide_up()
 	if current_focus_pips < 10:
 		current_focus_pips += 1
 		update_focus_bar()
-		print(hero_data.stats.actor_name, " gained 1 Focus (now at ", current_focus_pips, ")")
+	await _slide_up()
+	await battle_manager.action_bar.load_actions(self)
 	await super.on_turn_started()
 	return
 

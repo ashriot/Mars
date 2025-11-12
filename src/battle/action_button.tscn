@@ -171,6 +171,4 @@ mouse_filter = 2
 texture = ExtResource("4_pk42m")
 expand_mode = 1
 
-[connection signal="focus_entered" from="Button" to="." method="_on_button_focus_entered"]
-[connection signal="focus_exited" from="Button" to="." method="_on_button_focus_exited"]
 [connection signal="pressed" from="Button" to="." method="_on_button_pressed"]

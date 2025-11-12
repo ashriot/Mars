@@ -5,6 +5,7 @@ class_name Effect_Damage
 # --- Base Damage Properties ---
 @export var potency: float = 1.0
 @export var hit_count: int = 1
+@export var shreds_guard: bool = true
 @export var power_type: Action.PowerType = Action.PowerType.ATTACK
 @export var damage_type: Action.DamageType = Action.DamageType.KINETIC
 
@@ -14,7 +15,19 @@ class_name Effect_Damage
 
 func execute(attacker: ActorCard, primary_targets: Array, battle_manager: BattleManager, action: Action = null) -> void:
 
-	print("\n--- Executing Damage Effect for ", hit_count, " hit(s) ---")
+	var final_targets: Array = []
+	match effect_target:
+		EffectTarget.PRIMARY:
+			final_targets = primary_targets
+		EffectTarget.ALL_ENEMIES:
+			if attacker is HeroCard:
+				for enemy in battle_manager.get_living_enemies():
+					final_targets.append(enemy)
+			else:
+				for hero in battle_manager.get_living_heroes():
+					final_targets.append(hero)
+
+	print("\n--- Damage Effect for ", hit_count, " hit(s) ---")
 	var random = false
 	var focus_cost = 0
 
@@ -22,17 +35,17 @@ func execute(attacker: ActorCard, primary_targets: Array, battle_manager: Battle
 		focus_cost = action.focus_cost
 		if action.target_type == Action.TargetType.RANDOM_ENEMY:
 			random = true
-			if primary_targets.is_empty():
+			if final_targets.is_empty():
 				print("RANDOM_ENEMY: No living enemies to target!")
 				return
 
 	var target = null
-	for t in primary_targets.size():
+	for t in final_targets.size():
 		for i in hit_count:
 			if random:
-				target = primary_targets.pick_random() as ActorCard
+				target = final_targets.pick_random() as ActorCard
 			else:
-				target = primary_targets[t]
+				target = final_targets[t]
 			var dynamic_potency = get_dynamic_potency(attacker, target, focus_cost)
 
 			if not target or not is_instance_valid(target):
@@ -44,7 +57,7 @@ func execute(attacker: ActorCard, primary_targets: Array, battle_manager: Battle
 			await target.apply_one_hit(self, attacker, dynamic_potency)
 
 			if random and target.is_defeated:
-				primary_targets.remove_at(t)
+				final_targets.remove_at(t)
 
 			if hit_count > 1 and i < hit_count - 1:
 				await battle_manager.wait(0.25)

@@ -4,13 +4,14 @@
 [ext_resource type="StyleBox" uid="uid://b8kulx87fc6hp" path="res://data/theme/styleboxes/button_disabled.tres" id="1_3vshq"]
 [ext_resource type="StyleBox" uid="uid://b2v1ft2i0wg0u" path="res://data/theme/styleboxes/button_hover.tres" id="1_jik1c"]
 [ext_resource type="StyleBox" uid="uid://uc8el2l1ne33" path="res://data/theme/styleboxes/button_pressed.tres" id="1_vnit1"]
-[ext_resource type="StyleBox" uid="uid://bxesu2si1w7w6" path="res://data/theme/styleboxes/button_focus.tres" id="2_tsa6w"]
 [ext_resource type="StyleBox" uid="uid://c4ceted4k7fof" path="res://data/theme/styleboxes/panel.tres" id="5_dfs0r"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_smiq6"]
 
 [resource]
 Button/colors/font_color = Color(1, 1, 1, 1)
 Button/styles/disabled = ExtResource("1_3vshq")
-Button/styles/focus = ExtResource("2_tsa6w")
+Button/styles/focus = SubResource("StyleBoxEmpty_smiq6")
 Button/styles/hover = ExtResource("1_jik1c")
 Button/styles/normal = ExtResource("1_1rtxc")
 Button/styles/pressed = ExtResource("1_vnit1")

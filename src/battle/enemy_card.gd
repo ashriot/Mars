@@ -119,7 +119,6 @@ func update_intent_ui():
 
 	else:
 		# --- 4. It's a non-damage effect (like Grant Guard) ---
-		# Just show the action's name and target
 		var final_text = intended_action.action_name
 		if intended_target:
 			final_text += " > " + intended_target.actor_name
@@ -147,6 +146,8 @@ func hide_intent():
 	intent_icon.visible = false
 
 func flash_intent(duration: float):
+	duration /= battle_manager.battle_speed
+
 	if intent_flash_tween and intent_flash_tween.is_running():
 		intent_flash_tween.kill()
 

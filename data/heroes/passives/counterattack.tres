@@ -22,5 +22,5 @@ script = ExtResource("1_wg12b")
 condition_name = "Counterattack"
 condition_type = 2
 triggers = Array[ExtResource("2_a6jvw")]([SubResource("Resource_icqbr")])
-remove_on_triggers = Array[int]([10])
+remove_on_triggers = Array[int]([11])
 metadata/_custom_type_script = "uid://df30dm288ne1d"

@@ -6,10 +6,10 @@ enum State { LOADING, PLAYER_ACTION, TARGETING_ENEMIES, TARGETING_TEAM, ENEMY_AC
 var current_state = State.LOADING
 
 # --- Signals ---
-signal player_turn_started(hero_card)
 signal turn_order_updated(turn_queue_data)
+signal battle_state_changed(new_state)
 
-@export_range(0.1, 5.0) var global_animation_speed: float = 1.0
+@export_range(0.1, 5.0) var battle_speed: float = 1.0
 
 # --- Scene Links ---
 @export var hero_card_scene: PackedScene
@@ -24,24 +24,27 @@ signal turn_order_updated(turn_queue_data)
 
 # --- Actor Tracking ---
 var current_actor: ActorCard = null
-var selected_action: Action = null
-var actor_list: Array = [] # Renamed from turn_queue
-var TARGET_CT: int = 5000 # Your CT target
+var current_action: Action = null
+var focused_button: ActionButton = null
+var actor_list: Array = []
+var TARGET_CT: int = 5000
 
 func change_state(new_state):
 	print("--- State Change: ", State.keys()[current_state], " > ", State.keys()[new_state], " ---")
 	current_state = new_state
+	battle_state_changed.emit(current_state)
 
 func _ready():
 	randomize() # For tie-breakers
-	await wait(0.5)
-	action_bar.action_selected.connect(_on_action_selected)
+	await wait(0.1)
+	action_bar.action_selected.connect(_on_action_button_pressed)
 	action_bar.shift_button_pressed.connect(_on_shift_button_pressed)
 
 	spawn_encounter()
 
 	change_state(State.EXECUTING_ACTION)
 	await _apply_starting_passives()
+	await wait(0.5)
 
 	find_and_start_next_turn()
 
@@ -154,12 +157,11 @@ func find_and_start_next_turn():
 	# 6. Start the winner's turn
 	self.current_actor = winner
 	if winner is HeroCard:
-		change_state(State.EXECUTING_ACTION)
+		change_state(State.LOADING)
 		if action_bar.sliding:
 			await action_bar.slide_finished
+		change_state(State.EXECUTING_ACTION)
 		await winner.on_turn_started()
-		player_turn_started.emit(current_actor)
-		await action_bar.slide_in()
 		change_state(State.PLAYER_ACTION)
 	else:
 		change_state(State.ENEMY_ACTION)
@@ -218,15 +220,11 @@ func _on_actor_revived(actor: ActorCard):
 	# 3. Check if the battle needs to "un-end"
 	# (This is a future-proof check)
 
-func _on_action_selected(action: Action):
-	if current_state in [State.LOADING, State.EXECUTING_ACTION]: return
-
-	if current_actor.current_focus_pips < action.focus_cost:
-		return
-
+func set_current_action(action: Action):
 	var target_list = []
 
-	self.selected_action = action
+	self.current_action = action
+
 	match action.target_type:
 		Action.TargetType.ONE_ENEMY, Action.TargetType.ALL_ENEMIES, Action.TargetType.RANDOM_ENEMY:
 			change_state(State.TARGETING_ENEMIES)
@@ -245,6 +243,24 @@ func _on_action_selected(action: Action):
 	for target in target_list:
 		target.start_flashing()
 
+func _on_action_button_pressed(button: ActionButton):
+	if current_state in [State.LOADING, State.EXECUTING_ACTION]: return
+
+	var action = button.action
+	if current_actor.current_focus_pips < action.focus_cost:
+		return
+
+	_focus_button(button)
+	set_current_action(action)
+
+func _focus_button(button: ActionButton):
+	if focused_button:
+		focused_button.focused(false)
+		_clear_all_targeting_ui()
+		focused_button = null
+	focused_button = button
+	focused_button.focused(true)
+
 func _on_hero_clicked(target_hero: HeroCard):
 	if current_state != State.TARGETING_TEAM: return
 
@@ -253,7 +269,7 @@ func _on_hero_clicked(target_hero: HeroCard):
 	action_bar.hide_bar()
 
 	var targets_array = []
-	match selected_action.target_type:
+	match current_action.target_type:
 		Action.TargetType.SELF, Action.TargetType.TEAM_MEMBER:
 			targets_array.append(target_hero)
 		Action.TargetType.TEAM:
@@ -263,7 +279,7 @@ func _on_hero_clicked(target_hero: HeroCard):
 				if ally != current_actor:
 					targets_array.append(ally)
 
-	await execute_action(current_actor, selected_action, targets_array)
+	await execute_action(current_actor, current_action, targets_array)
 	await _finish_hero_turn()
 
 func _on_enemy_clicked(target_enemy: EnemyCard):
@@ -277,18 +293,21 @@ func _on_enemy_clicked(target_enemy: EnemyCard):
 	action_bar.hide_bar()
 
 	var targets_array = []
-	match selected_action.target_type:
+	match current_action.target_type:
 		Action.TargetType.ONE_ENEMY:
 			targets_array.append(target_enemy)
 
 		Action.TargetType.ALL_ENEMIES, Action.TargetType.RANDOM_ENEMY:
 			targets_array = enemy_area.get_children()
 
-	await execute_action(current_actor, selected_action, targets_array)
+	await execute_action(current_actor, current_action, targets_array)
 	_finish_hero_turn()
 
 func _finish_hero_turn():
-	self.selected_action = null
+	current_action = null
+	if focused_button:
+		focused_button.focused(false)
+		focused_button = null
 	await current_actor.on_turn_ended()
 	await wait(0.01)
 
@@ -319,6 +338,8 @@ func execute_action(actor: ActorCard, action: Action, targets: Array):
 func execute_triggered_effect(actor: ActorCard, effect: ActionEffect, targets: Array, action: Action):
 
 	await effect.execute(actor, targets, self, action)
+	await _flush_all_health_animations()
+
 
 func execute_enemy_turn(enemy: EnemyCard):
 	change_state(State.EXECUTING_ACTION)
@@ -374,7 +395,9 @@ func _on_actor_conditions_changed(_actor_who_changed: ActorCard, retarget: bool)
 
 func _on_shift_button_pressed(direction: String):
 	if current_state in [State.LOADING, State.EXECUTING_ACTION]: return
-	selected_action = null
+	current_action = null
+	_clear_all_targeting_ui()
+
 	if current_actor:
 		change_state(State.EXECUTING_ACTION)
 		await action_bar.slide_out()
@@ -406,7 +429,7 @@ func _on_hero_role_shifted(hero_card: HeroCard):
 		return
 
 	print("Action requires a target. Waiting for click...")
-	_on_action_selected(action)
+	set_current_action(action)
 
 func _flush_all_health_animations() -> void:
 	var tweens_to_await = []
@@ -426,5 +449,5 @@ func _clear_all_targeting_ui():
 		actor.stop_flashing()
 
 func wait(duration : float) -> void:
-	var scaled_duration = duration / global_animation_speed
+	var scaled_duration = duration / battle_speed
 	await get_tree().create_timer(scaled_duration).timeout

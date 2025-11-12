@@ -105,13 +105,13 @@ func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_po
 	if damage_effect.damage_type == Action.DamageType.PIERCING:
 		shake_panel()
 	elif current_guard == 0:
-		if not is_breached:
+		if not is_breached and damage_effect.shreds_guard:
 			breached()
 		else:
 			shake_panel()
-	else:
+	elif damage_effect.shreds_guard:
 		current_guard -= 1
-		shake_panel()
+	shake_panel()
 
 	var power_for_hit = attacker.get_power(damage_effect.power_type)
 	if is_breached:
@@ -200,7 +200,7 @@ func sync_visual_health() -> Tween:
 	if actual_hp == real_hp and ghost_hp == real_hp:
 		return null
 
-	var DURATION = 0.5 * battle_manager.global_animation_speed
+	var DURATION = 0.5 / battle_manager.battle_speed
 
 	if health_tween and health_tween.is_running():
 		health_tween.kill()
@@ -410,14 +410,14 @@ func start_flashing():
 		target_flash,
 		"modulate:a",
 		0.6,
-		0.2
+		0.2 / battle_manager.battle_speed
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 	flash_tween.tween_property(
 		target_flash,
 		"modulate:a",
 		0.2,
-		0.6
+		0.6 / battle_manager.battle_speed
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 func stop_flashing():

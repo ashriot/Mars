@@ -1,7 +1,7 @@
 extends Control
 class_name ActionBar
 
-signal action_selected(action, target)
+signal action_selected(button, target)
 signal slide_finished
 signal shift_button_pressed(direction)
 
@@ -24,7 +24,7 @@ var active_hero: HeroCard
 
 
 func _ready():
-	battle_manager.player_turn_started.connect(on_player_turn_started)
+	battle_manager.battle_state_changed.connect(_on_state_changed)
 	left_shift_button.pressed.connect(_on_shift_button_pressed.bind("left"))
 	right_shift_button.pressed.connect(_on_shift_button_pressed.bind("right"))
 
@@ -37,13 +37,21 @@ func _ready():
 
 	slide_out(0.0)
 
-func on_player_turn_started(hero_card: HeroCard):
+func load_actions(hero_card: HeroCard):
 	active_hero = hero_card
 	if not active_hero.role_shifted.is_connected(update_action_bar):
 		active_hero.role_shifted.connect(update_action_bar)
+	if not active_hero.passive_fired.is_connected(_on_hero_passive_fired):
+		active_hero.passive_fired.connect(_on_hero_passive_fired)
 	update_action_bar(active_hero)
+	await slide_in()
 
 func hide_bar():
+
+	if active_hero.role_shifted.is_connected(update_action_bar):
+		active_hero.role_shifted.disconnect(update_action_bar)
+	if active_hero.passive_fired.is_connected(_on_hero_passive_fired):
+		active_hero.passive_fired.disconnect(_on_hero_passive_fired)
 	for button in actions_ui.get_children():
 		if button is not ActionButton: continue
 		button.hide()
@@ -68,7 +76,7 @@ func update_action_bar(hero_card: HeroCard):
 		if not action_data: continue
 		if button.pressed.is_connected(_on_action_button_pressed):
 			button.pressed.disconnect(_on_action_button_pressed)
-		button.pressed.connect(_on_action_button_pressed.bind(action_data))
+		button.pressed.connect(_on_action_button_pressed.bind(button))
 		button.setup(action_data, hero_card.current_focus_pips, current_role.color)
 		button.show()
 
@@ -99,12 +107,10 @@ func update_action_bar(hero_card: HeroCard):
 func _on_shift_button_pressed(direction: String):
 	shift_button_pressed.emit(direction)
 
-func _on_action_button_pressed(action_data: Action):
-	action_selected.emit(action_data)
+func _on_action_button_pressed(button: ActionButton):
+	action_selected.emit(button)
 
 func _on_hero_passive_fired():
-	print("ActionBar: Passive fired, playing flash animation.")
-
 	var base_color = passive_panel.modulate
 	var flash_color = Color(3.0, 3.0, 3.0, 1.0)
 
@@ -117,12 +123,19 @@ func _on_hero_passive_fired():
 		passive_panel,
 		"modulate",
 		base_color,
-		0.2
+		0.5
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+
+func _on_state_changed(state: BattleManager.State):
+	if not active_hero: return
+	var value = state not in [BattleManager.State.PLAYER_ACTION, BattleManager.State.TARGETING_ENEMIES, BattleManager.State.TARGETING_TEAM]
+	for button in actions_ui.get_children():
+		if button is ActionButton:
+			button.disabled = value
 
 func slide_in(duration: float = 0.2):
 	sliding = true
-	duration = duration * battle_manager.global_animation_speed
+	duration = duration / battle_manager.battle_speed
 
 	var tween = create_tween().set_parallel()
 	tween.set_trans(Tween.TRANS_SINE)
@@ -149,7 +162,7 @@ func slide_in(duration: float = 0.2):
 
 func slide_out(duration: float = 0.2):
 	sliding = true
-	duration = duration * battle_manager.global_animation_speed
+	duration = duration / battle_manager.battle_speed
 	var tween = create_tween().set_parallel()
 	tween.set_trans(Tween.TRANS_SINE)
 

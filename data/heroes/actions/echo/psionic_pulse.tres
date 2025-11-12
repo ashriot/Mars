@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="Action" load_steps=12 format=3 uid="uid://c0engj2adit4x"]
+
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/actions/action_effect.gd" id="1_seu72"]
+[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://data/scripts/conditions/condition.gd" id="2_r064y"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/actions/action.gd" id="2_rjpbc"]
+[ext_resource type="Texture2D" uid="uid://div7g73yak03i" path="res://assets/graphics/icons/skills/crowned-explosion.png" id="2_twjb0"]
+[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://data/scripts/conditions/trigger.gd" id="3_tw0x3"]
+[ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://data/scripts/actions/effect_apply_condition.gd" id="4_ru73y"]
+[ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/actions/effect_damage.gd" id="4_tw0x3"]
+
+[sub_resource type="Resource" id="Resource_ru73y"]
+script = ExtResource("4_tw0x3")
+potency = 0.75
+shreds_guard = false
+power_type = 1
+damage_type = 1
+effect_target = 4
+metadata/_custom_type_script = "uid://d0eibi4b735ay"
+
+[sub_resource type="Resource" id="Resource_1deto"]
+script = ExtResource("3_tw0x3")
+trigger_type = 1
+effects_to_run = Array[ExtResource("1_seu72")]([SubResource("Resource_ru73y")])
+metadata/_custom_type_script = "uid://cdugd6pnm6py"
+
+[sub_resource type="Resource" id="Resource_ovo31"]
+script = ExtResource("2_r064y")
+condition_name = "Psionic Pulse"
+condition_type = 2
+triggers = Array[ExtResource("3_tw0x3")]([SubResource("Resource_1deto")])
+remove_on_triggers = Array[int]([11])
+metadata/_custom_type_script = "uid://df30dm288ne1d"
+
+[sub_resource type="Resource" id="Resource_02ksk"]
+script = ExtResource("4_ru73y")
+condition = SubResource("Resource_ovo31")
+metadata/_custom_type_script = "uid://dggojfw8tmpnk"
+
+[resource]
+script = ExtResource("2_rjpbc")
+action_name = "Psionic Pulse"
+icon = ExtResource("2_twjb0")
+target_type = 0
+effects = Array[ExtResource("1_seu72")]([SubResource("Resource_02ksk")])
+metadata/_custom_type_script = "uid://dm08rhkg3bai3"

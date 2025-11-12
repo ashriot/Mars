@@ -45,6 +45,7 @@ metadata/_edit_lock_ = true
 [node name="BattleManager" type="Node" parent="." node_paths=PackedStringArray("hero_area", "enemy_area", "action_bar")]
 unique_name_in_owner = true
 script = ExtResource("1_6cbqe")
+battle_speed = 0.7
 hero_card_scene = ExtResource("1_sft4c")
 enemy_card_scene = ExtResource("1_u5n4n")
 hero_area = NodePath("../UI/Heroes/HBox")

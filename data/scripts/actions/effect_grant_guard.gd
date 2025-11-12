@@ -5,15 +5,12 @@ class_name Effect_GrantGuard
 @export var guard_amount: int = 1
 
 func execute(attacker: ActorCard, primary_targets: Array, battle_manager: BattleManager, _action: Action = null) -> void:
-
 	print("--- Executing Grant Guard Effect ---")
 
-	# --- 3. BUILD THE "FINAL" TARGET LIST ---
 	var final_targets: Array[ActorCard] = []
 
 	match effect_target:
 		EffectTarget.PRIMARY:
-			# This effect *uses* the player's clicked target(s)
 			final_targets = primary_targets
 
 		EffectTarget.SELF:
@@ -21,8 +18,7 @@ func execute(attacker: ActorCard, primary_targets: Array, battle_manager: Battle
 
 		EffectTarget.LEAST_GUARD_ALLY:
 			var allies = battle_manager.get_living_heroes()
-			if allies.is_empty():
-				return # No one to buff
+			if allies.is_empty(): return
 
 			var target_ally: ActorCard = allies[0]
 			for ally in allies:
@@ -38,7 +34,6 @@ func execute(attacker: ActorCard, primary_targets: Array, battle_manager: Battle
 			for enemy in battle_manager.get_living_enemies():
 				final_targets.append(enemy)
 
-	# --- 4. Loop through the *final* list and apply the effect ---
 	if final_targets.is_empty():
 		print("Grant Guard effect had no targets.")
 		return

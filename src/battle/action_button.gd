@@ -10,13 +10,23 @@ class_name ActionButton
 signal pressed(action_button: ActionButton)
 
 var action : Action
+var user_focus: int
+var disabled:
+	set(value):
+		button.disabled = value
+		if action:
+			if not value:
+				button.disabled = user_focus < action.focus_cost
+	get: return button.disabled
+
 
 func setup(_action: Action, cur_focus: int, color: Color):
 	action = _action
+	user_focus = cur_focus
 	label.text = action.action_name
 	icon.texture = action.icon
 	update_cost()
-	button.disabled = cur_focus < action.focus_cost
+	button.disabled = user_focus < action.focus_cost
 	button.modulate = color
 	icon.modulate = color
 	label.modulate = color
@@ -35,8 +45,5 @@ func update_cost():
 func _on_button_pressed():
 	pressed.emit()
 
-func _on_button_focus_entered():
-	highlight_panel.show()
-
-func _on_button_focus_exited():
-	highlight_panel.hide()
+func focused(value: bool):
+	highlight_panel.visible = value
