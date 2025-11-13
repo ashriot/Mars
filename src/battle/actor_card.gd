@@ -109,7 +109,7 @@ func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_po
 		else:
 			shake_panel()
 	elif damage_effect.shreds_guard:
-		current_guard -= 2 if is_crit else 1
+		current_guard -= 1
 		current_guard = clamp(current_guard, 0, MAX_GUARD)
 		print("Current guard is: ", current_guard)
 	shake_panel()

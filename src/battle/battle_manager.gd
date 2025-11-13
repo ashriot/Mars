@@ -61,7 +61,7 @@ func spawn_encounter():
 		hero_card.actor_defeated.connect(_on_actor_died)
 		hero_card.actor_revived.connect(_on_actor_revived)
 		hero_card.actor_conditions_changed.connect(_on_actor_conditions_changed)
-		hero_card.current_ct = randi_range(hero_data.stats.speed / 5, hero_data.stats.speed * 3)
+		hero_card.current_ct = randi_range(0, hero_data.stats.speed * 5)
 		hero_card.role_shifted.connect(_on_hero_role_shifted)
 		actor_list.append(hero_card)
 
@@ -74,7 +74,7 @@ func spawn_encounter():
 		enemy_card.actor_defeated.connect(_on_actor_died)
 		enemy_card.actor_revived.connect(_on_actor_revived)
 		enemy_card.actor_conditions_changed.connect(_on_actor_conditions_changed)
-		enemy_card.current_ct = randi_range(enemy_data.stats.speed / 5, enemy_data.stats.speed * 3)
+		enemy_card.current_ct = randi_range(0, enemy_data.stats.speed * 5)
 		actor_list.append(enemy_card)
 		enemy_card.decide_intent(get_living_heroes())
 	print("Spawning complete.")

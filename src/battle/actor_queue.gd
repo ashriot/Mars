@@ -7,7 +7,7 @@ class_name ActorQueue
 @onready var ct_bar_2: ProgressBar = $CT/Bar2
 @onready var ct_bar_3: ProgressBar = $CT/Bar3
 
-const TICK_SEGMENT_COST: int = 100
+const TICK_SEGMENT_COST: int = 50
 
 func setup(actor: ActorCard, ticks: int):
 	$NameLabel.text = actor.actor_name
