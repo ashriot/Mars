@@ -139,8 +139,10 @@ battle_manager = NodePath("../../BattleManager")
 [node name="TurnQueue" type="Control" parent="UI" node_paths=PackedStringArray("battle_manager")]
 custom_minimum_size = Vector2(300, 0)
 anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
+offset_left = 25.0
+offset_top = 22.0
+offset_right = 325.0
+offset_bottom = 62.0
 script = ExtResource("9_16l6v")
 actor_queue_scene = ExtResource("10_6by3n")
 battle_manager = NodePath("../../BattleManager")

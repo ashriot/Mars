@@ -1,15 +1,17 @@
-[gd_resource type="Resource" script_class="Role" load_steps=6 format=3 uid="uid://c7bb8vuamp7ai"]
+[gd_resource type="Resource" script_class="Role" load_steps=7 format=3 uid="uid://c7bb8vuamp7ai"]
 
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_rlx5o"]
 [ext_resource type="Resource" uid="uid://7dg4i7k6dya0" path="res://data/heroes/actions/asher/double_tap.tres" id="2_yj3iy"]
 [ext_resource type="Resource" uid="uid://bbf5ij7wcomd4" path="res://data/heroes/actions/asher/kinetic_ammo.tres" id="3_mru05"]
 [ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/role.gd" id="4_mru05"]
 [ext_resource type="Texture2D" uid="uid://dmf762f6cw8l6" path="res://assets/graphics/icons/roles/glock.png" id="5_i7sro"]
+[ext_resource type="Resource" uid="uid://bmdof7bqrfmkb" path="res://data/heroes/actions/asher/gang_up.tres" id="5_mru05"]
 
 [resource]
 script = ExtResource("4_mru05")
 role_name = "Enforcer"
 icon = ExtResource("5_i7sro")
 color = Color(1, 1, 0.37, 1)
+passive = ExtResource("5_mru05")
 actions = Array[ExtResource("1_rlx5o")]([ExtResource("2_yj3iy"), ExtResource("3_mru05"), null, null])
 metadata/_custom_type_script = "uid://d3mhjutrnvwsp"

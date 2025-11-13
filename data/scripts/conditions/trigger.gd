@@ -14,7 +14,8 @@ enum TriggerType {
 	ON_GAINING_GUARD,
 	ON_HEALED,
 	ON_SHIFT,
-	ON_BREACHED
+	ON_BREACHED,
+	ON_REMOVED
 }
 @export var trigger_type: TriggerType
 @export var effects_to_run: Array[ActionEffect]

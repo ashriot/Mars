@@ -106,7 +106,7 @@ func _run_ct_simulation(num_turns := 7) -> Array:
 		# 3. Find the next winner in the "ghost" list
 		for data in sim_data:
 			var ct_needed = TARGET_CT - data.ct
-			var ticks_needed = ceil(float(ct_needed) / data.actor.current_stats.speed)
+			var ticks_needed = ceil(float(ct_needed) / data.actor.get_speed())
 
 			if ticks_needed < ticks_needed_for_winner:
 				ticks_needed_for_winner = ticks_needed
@@ -125,7 +125,7 @@ func _run_ct_simulation(num_turns := 7) -> Array:
 		})
 
 		for data in sim_data:
-			data.ct += data.actor.current_stats.speed * ticks_needed_for_winner
+			data.ct += data.actor.get_speed() * ticks_needed_for_winner
 
 		winner_dict.ct = 0
 
@@ -149,7 +149,7 @@ func find_and_start_next_turn():
 
 	# 3. "Fast-forward" the REAL game clock
 	for actor in actor_list:
-		actor.current_ct += actor.current_stats.speed * real_ticks_passed
+		actor.current_ct += actor.get_speed() * real_ticks_passed
 
 	winner.current_ct = 0
 	turn_order_updated.emit(projection)
@@ -312,11 +312,12 @@ func _finish_hero_turn():
 	find_and_start_next_turn()
 
 func _apply_role_passive(hero: HeroCard):
+	current_actor = hero
 	var current_role = hero.get_current_role()
 	if current_role and current_role.passive:
-		var passive_action: Action = current_role.passive
-		print("Applying passive: ", passive_action.action_name, " to ", hero.actor_name)
-		await execute_action(hero, passive_action, [hero])
+		var action: Action = current_role.passive
+		print("Applying passive: ", action.action_name, " to ", hero.actor_name)
+		await execute_action(hero, action, [hero])
 
 func execute_action(actor: ActorCard, action: Action, targets: Array):
 	if actor is HeroCard:
@@ -326,6 +327,8 @@ func execute_action(actor: ActorCard, action: Action, targets: Array):
 	print(actor_name, " uses ", action.action_name)
 
 	for effect in action.effects:
+		if effect.effect_target != ActionEffect.EffectTarget.PRIMARY:
+			targets = _get_effect_targets_for_type(effect.effect_target, actor is HeroCard)
 		await effect.execute(actor, targets, self, action)
 	if action.is_attack:
 		var context = { "targets": targets, "action": action }
@@ -337,7 +340,6 @@ func execute_triggered_effect(actor: ActorCard, effect: ActionEffect, targets: A
 
 	await effect.execute(actor, targets, self, action)
 	await _flush_all_health_animations()
-
 
 func execute_enemy_turn(enemy: EnemyCard):
 	change_state(State.EXECUTING_ACTION)
@@ -356,13 +358,12 @@ func execute_enemy_turn(enemy: EnemyCard):
 
 	var targets = []
 	match action.target_type:
-		Action.TargetType.ONE_ENEMY:
-			if target and is_instance_valid(target):
-				targets.append(target)
-		Action.TargetType.ALL_ENEMIES:
-			targets = get_living_heroes()
 		Action.TargetType.SELF:
 			targets.append(enemy)
+		Action.TargetType.ONE_ENEMY:
+			targets.append(target)
+		Action.TargetType.ALL_ENEMIES:
+			targets = get_living_heroes()
 	await execute_action(enemy, action, targets)
 	enemy.decide_intent(get_living_heroes())
 	return
@@ -413,21 +414,47 @@ func _on_hero_role_shifted(hero_card: HeroCard):
 
 	if action.auto_target:
 		print("Auto-executing shift action...")
-
-		var target_list = []
-		match action.target_type:
-			Action.TargetType.SELF:
-				target_list.append(current_actor)
-			Action.TargetType.ALL_ENEMIES:
-				target_list = get_living_enemies()
-			Action.TargetType.TEAM:
-				target_list = get_living_heroes()
+		var target_list = _get_targets_for_type(action.target_type, true)
 
 		await execute_action(current_actor, action, target_list)
 		return
 
 	print("Action requires a target. Waiting for click...")
 	set_current_action(action)
+
+func _get_targets_for_type(target_type: Action.TargetType, friendly: bool) -> Array:
+		var target_list = []
+		match target_type:
+			Action.TargetType.SELF:
+				target_list.append(current_actor)
+			Action.TargetType.ALL_ENEMIES:
+				if friendly:
+					target_list = get_living_enemies()
+				else:
+					target_list = get_living_heroes()
+			Action.TargetType.TEAM:
+				if friendly:
+					target_list = get_living_heroes()
+				else:
+					target_list = get_living_enemies()
+		return target_list
+
+func _get_effect_targets_for_type(target_type: ActionEffect.EffectTarget, friendly: bool) -> Array:
+		var target_list = []
+		match target_type:
+			ActionEffect.EffectTarget.SELF:
+				target_list.append(current_actor)
+			ActionEffect.EffectTarget.ALL_ENEMIES:
+				if friendly:
+					target_list = get_living_enemies()
+				else:
+					target_list = get_living_heroes()
+			ActionEffect.EffectTarget.ALL_ALLIES:
+				if friendly:
+					target_list = get_living_heroes()
+				else:
+					target_list = get_living_enemies()
+		return target_list
 
 func _flush_all_health_animations() -> void:
 	var tweens_to_await = []

@@ -54,7 +54,7 @@ func setup_base(stats: ActorStats):
 	self.current_stats = stats.duplicate()
 	actor_name = stats.actor_name
 	hp_bar_ghost.max_value = current_stats.max_hp
-	current_hp = current_stats.max_hp / 6
+	current_hp = current_stats.max_hp
 	hp_bar_actual.max_value = current_stats.max_hp
 	hp_bar_ghost.max_value = current_stats.max_hp
 	current_guard = current_stats.guard
@@ -106,6 +106,18 @@ func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_po
 
 	var base_hit_damage: float = power_for_hit * dynamic_potency
 
+	var is_crit: bool = false
+	var crit_chance: int = attacker.get_precision()
+
+	if randi_range(1, 100) <= crit_chance:
+		is_crit = true
+
+	if is_crit:
+		print("Critical Hit!")
+		var crit_bonus: float = 0.0
+		crit_bonus = attacker.get_crit_damage_bonus()
+		base_hit_damage *= (1.0 + crit_bonus)
+
 	if not is_breached:
 		if damage_effect.damage_type == Action.DamageType.KINETIC:
 			base_hit_damage = base_hit_damage * (1.0 - float(current_stats.kinetic_defense) / 100)
@@ -113,6 +125,7 @@ func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_po
 			base_hit_damage = base_hit_damage * (1.0 - float(current_stats.energy_defense) / 100)
 
 	base_hit_damage *= attacker.get_damage_dealt_scalar()
+	base_hit_damage *= self.get_damage_taken_scalar()
 
 	var final_damage = max(0, int(base_hit_damage))
 	current_hp = max(0, current_hp - final_damage)
@@ -173,13 +186,16 @@ func has_condition(condition_name: String) -> bool:
 
 	return false
 
-func remove_condition(condition: Condition):
-	if not active_conditions.has(condition):
+func remove_condition(condition_name: String):
+	for condition in active_conditions:
+		if condition.condition_name == condition_name:
+			active_conditions.erase(condition)
+			print(actor_name, " is removing condition: ", condition.condition_name)
+
+			return
+
 		push_error("[ERROR] Trying to remove an invalid condition: ", actor_name, " -> ", condition.condition_name)
 		return
-
-	print(actor_name, " is removing condition: ", condition.condition_name)
-	active_conditions.erase(condition)
 
 func sync_visual_health() -> Tween:
 	var actual_hp = hp_bar_actual.value
@@ -237,7 +253,9 @@ func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary 
 
 		if condition.remove_on_triggers.has(event_type):
 			print(actor_name, "'s ", condition.condition_name, " was removed by trigger.")
-			remove_condition(condition)
+			await _fire_condition_event(Trigger.TriggerType.ON_REMOVED)
+			remove_condition(condition.condition_name)
+
 
 func update_health_bar():
 	hp_bar_actual.value = current_hp
@@ -437,18 +455,20 @@ func get_power(power_type: Action.PowerType) -> int:
 	return 0
 
 func get_speed() -> int:
-	var mod: int = 0
+	var scalar: float = 1.0
 	for condition in active_conditions:
-		mod += condition.speed_mod
-
-	return current_stats.speed + mod
+		scalar += condition.speed_scalar
+	return int(current_stats.speed * scalar)
 
 func get_precision() -> int:
 	var mod: int = 0
 	for condition in active_conditions:
-		mod += condition.aim_mod
+		mod += condition.precision_mod
 
 	return current_stats.precision + mod
+
+func get_crit_damage_bonus() -> float:
+	return 0.5
 
 func get_damage_dealt_scalar() -> float:
 	var scalar: float = 1.0

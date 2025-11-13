@@ -25,8 +25,3 @@ enum Stats {
 @export var precision: int = 10
 @export var kinetic_defense: int = 10
 @export var energy_defense: int = 10
-
-func get_stat(stat: Stats):
-	match (stat):
-		Stats.SPD:
-			return speed
