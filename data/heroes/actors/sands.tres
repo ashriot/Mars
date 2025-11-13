@@ -11,9 +11,8 @@
 script = ExtResource("2_626k6")
 actor_name = "Sands"
 max_hp = 205
-attack = 47
-psyche = 41
-overload = 28
+attack = 40
+psyche = 40
 speed = 45
 precision = 12
 kinetic_defense = 41

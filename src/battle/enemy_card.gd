@@ -51,6 +51,7 @@ func decide_intent(hero_targets: Array[HeroCard]):
 	get_a_target(hero_targets)
 
 func get_a_target(hero_targets: Array[HeroCard]):
+	var enemy_targets = battle_manager.get_living_enemies() as Array[EnemyCard]
 	var new_targets: Array[ActorCard] = []
 
 	if not intended_action or hero_targets.is_empty():
@@ -73,9 +74,15 @@ func get_a_target(hero_targets: Array[HeroCard]):
 
 		Action.TargetType.SELF:
 			new_targets = [self]
-		Action.TargetType.ALL_ENEMIES:
+		Action.TargetType.ALL_ENEMIES, Action.TargetType.RANDOM_ENEMY:
 			for target in hero_targets:
 				new_targets.append(target)
+		Action.TargetType.LEAST_GUARD_ALLY:
+			var final_target = enemy_targets[0]
+			for target in enemy_targets:
+				if target.current_guard < final_target.current_guard:
+					final_target = target
+			new_targets = [final_target]
 
 	if new_targets != intended_targets:
 		intended_targets = new_targets
@@ -116,16 +123,18 @@ func update_intent_ui():
 
 		if intended_targets:
 			if intended_targets.size() > 1:
-				final_text += " > EVERYONE"
+				if intended_action.target_type == Action.TargetType.RANDOM_ENEMY:
+					final_text += " > RANDOM"
+				else:
+					final_text += " > EVERYONE"
 			else:
 				final_text += " > " + intended_targets[0].actor_name
 
 		intent_text.text = final_text
 
 	else:
-		# --- 4. It's a non-damage effect (like Grant Guard) ---
 		var final_text = intended_action.action_name
-		if intended_targets.size() > 0:
+		if intended_targets.size() > 1:
 			final_text += " > EVERYONE"
 		else:
 			final_text += " > " + intended_targets[0].actor_name

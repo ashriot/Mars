@@ -9,6 +9,7 @@ offset_right = 300.0
 offset_bottom = 100.0
 scale = Vector2(2, 2)
 pivot_offset = Vector2(150, 50)
+mouse_filter = 2
 script = ExtResource("1_upjup")
 
 [node name="Label" type="Label" parent="."]

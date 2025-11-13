@@ -156,6 +156,7 @@ func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_po
 	return
 
 func breached():
+	guard_bar.modulate.a = 0.5
 	is_breached = true
 	current_ct = 0
 	actor_breached.emit()
@@ -250,6 +251,7 @@ func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary 
 	for i in range(active_conditions.size() - 1, -1, -1):
 		var condition = active_conditions[i]
 		for trigger in condition.triggers:
+			trigger = trigger as Trigger
 			if trigger.trigger_type != event_type: continue
 			await battle_manager.wait(0.25)
 			if condition.is_passive and self is HeroCard:
@@ -260,6 +262,8 @@ func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary 
 			if context.has("targets"):
 				targets = context.targets
 			for effect in trigger.effects_to_run:
+				effect = effect as ActionEffect
+				targets = battle_manager.get_targets(effect.target_type, self is HeroCard, targets)
 				await battle_manager.execute_triggered_effect(self, effect, targets, action)
 
 		if condition.remove_on_triggers.has(event_type):
@@ -287,16 +291,14 @@ func defeated():
 	actor_defeated.emit(self)
 
 func recover_breach():
+	is_breached = false
+	guard_bar.modulate.a = 1
+	_stop_breach_pulse()
 	gain_guard(current_stats.guard)
 
 func gain_guard(amount: int):
 	if is_defeated or amount <= 0:
 		return
-
-	if current_guard == 0 and is_breached:
-		is_breached = false
-		_stop_breach_pulse()
-		print(actor_name, " recovered from Breach!")
 
 	current_guard = min(current_guard + amount, MAX_GUARD)
 
@@ -486,6 +488,7 @@ func _on_gui_input(_event: InputEvent):
 	pass
 
 func get_power(power_type: Action.PowerType) -> int:
+	print(actor_name, "'s ATK is: ", current_stats.attack)
 	if power_type == Action.PowerType.ATTACK:
 		return current_stats.attack
 	elif power_type == Action.PowerType.PSYCHE:
