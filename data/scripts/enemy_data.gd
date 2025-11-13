@@ -16,7 +16,7 @@ func _calculate_stats() -> ActorStats:
 	var actor_stats = ActorStats.new()
 	actor_stats.actor_name = stat_ranks.actor_name
 	actor_stats.max_hp = (stat_ranks.level + 2) * (stat_ranks.max_hp + 2) * (10 + stat_ranks.level)
-	actor_stats.guard = int(stat_ranks.level / 10) + 3 + stat_ranks.guard
+	actor_stats.guard = int(stat_ranks.level / 5) + 1 + stat_ranks.guard
 	actor_stats.attack = (stat_ranks.level + 2) * (5 + stat_ranks.attack)
 	actor_stats.psyche = (stat_ranks.level + 2) * (5 + stat_ranks.psyche)
 	actor_stats.overload = (stat_ranks.level + 2) * (5 + stat_ranks.overload)

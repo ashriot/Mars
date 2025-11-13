@@ -8,7 +8,6 @@
 [sub_resource type="Resource" id="Resource_g7tkw"]
 script = ExtResource("4_e5ebm")
 actor_name = "Guardian"
-level = 2
 max_hp = 4
 guard = 3
 attack = 3

@@ -54,7 +54,7 @@ func setup_base(stats: ActorStats):
 	self.current_stats = stats.duplicate()
 	actor_name = stats.actor_name
 	hp_bar_ghost.max_value = current_stats.max_hp
-	current_hp = current_stats.max_hp
+	current_hp = current_stats.max_hp / 6
 	hp_bar_actual.max_value = current_stats.max_hp
 	hp_bar_ghost.max_value = current_stats.max_hp
 	current_guard = current_stats.guard
@@ -86,21 +86,6 @@ func on_turn_ended() -> void:
 	highlight(false)
 	await _fire_condition_event(Trigger.TriggerType.ON_TURN_END)
 
-func highlight(value: bool):
-	if value:
-		$Panel/Title.modulate = Color("#ffc800")
-		highlight_panel.show()
-	else:
-		$Panel/Title.modulate = Color.WHITE
-		highlight_panel.hide()
-
-func get_power(power_type: Action.PowerType) -> int:
-	if power_type == Action.PowerType.ATTACK:
-		return current_stats.attack
-	elif power_type == Action.PowerType.PSYCHE:
-		return current_stats.psyche
-	return 0
-
 func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_potency: float) -> void:
 	if is_defeated: return
 
@@ -126,6 +111,8 @@ func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_po
 			base_hit_damage = base_hit_damage * (1.0 - float(current_stats.kinetic_defense) / 100)
 		else: # ENERGY
 			base_hit_damage = base_hit_damage * (1.0 - float(current_stats.energy_defense) / 100)
+
+	base_hit_damage *= attacker.get_damage_dealt_scalar()
 
 	var final_damage = max(0, int(base_hit_damage))
 	current_hp = max(0, current_hp - final_damage)
@@ -398,6 +385,14 @@ func _animate_pip(pip_node: Control):
 		0.25 # A much faster duration
 	).set_trans(Tween.TRANS_SINE) # Use a smooth fade for the color
 
+func highlight(value: bool):
+	if value:
+		$Panel/Title.modulate = Color("#ffc800")
+		highlight_panel.show()
+	else:
+		$Panel/Title.modulate = Color.WHITE
+		highlight_panel.hide()
+
 func start_flashing():
 	target_flash.modulate.a = 0
 	target_flash.visible = true
@@ -434,11 +429,35 @@ func stop_flashing():
 func _on_gui_input(_event: InputEvent):
 	pass
 
-func _get_stat(stat: ActorStats.Stats) -> int:
-	var mods = 0
-	var scalars = 1.0
-	for mod in stat_mods.get(stat):
-		mods += mod
-	for scalar in stat_scalars.get(stat):
-		scalars += scalar
-	return (current_stats.get_stat(stat) + mods) * scalars
+func get_power(power_type: Action.PowerType) -> int:
+	if power_type == Action.PowerType.ATTACK:
+		return current_stats.attack
+	elif power_type == Action.PowerType.PSYCHE:
+		return current_stats.psyche
+	return 0
+
+func get_speed() -> int:
+	var mod: int = 0
+	for condition in active_conditions:
+		mod += condition.speed_mod
+
+	return current_stats.speed + mod
+
+func get_precision() -> int:
+	var mod: int = 0
+	for condition in active_conditions:
+		mod += condition.aim_mod
+
+	return current_stats.precision + mod
+
+func get_damage_dealt_scalar() -> float:
+	var scalar: float = 1.0
+	for condition in active_conditions:
+		scalar += condition.damage_dealt_scalar
+	return scalar
+
+func get_damage_taken_scalar() -> float:
+	var scalar: float = 1.0
+	for condition in active_conditions:
+		scalar += condition.damage_taken_scalar
+	return scalar

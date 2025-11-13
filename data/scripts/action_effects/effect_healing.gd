@@ -29,9 +29,9 @@ func execute(attacker: ActorCard, primary_targets: Array, battle_manager: Battle
 
 		# 3. Calculate your "Missing HP" scalar
 		var scalar: float = 1.0
-		if scales_with_missing_hp and target.current_stats.max_hp > 0:
+		if scales_with_missing_hp:
 			var hp_percent = float(target.current_hp) / target.current_stats.max_hp
-			scalar = 1.0 + (1.0 - hp_percent)
+			scalar += (1.0 - hp_percent)
 
 		# 4. Calculate the final, rounded heal
 		var final_heal_float = base_heal_float * scalar

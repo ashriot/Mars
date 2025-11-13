@@ -9,7 +9,6 @@
 [sub_resource type="Resource" id="Resource_ooj02"]
 script = ExtResource("4_ooj02")
 actor_name = "Trooper"
-level = 2
 max_hp = 3
 guard = 2
 attack = 4

@@ -195,8 +195,6 @@ func _on_actor_died(actor: ActorCard):
 	else:
 		print("Error: Actor was not in actor_list.")
 
-	# 2. Re-run the simulation to update the UI
-	# This is the same logic from _on_actor_breached
 	update_turn_order()
 
 	# 3. Check for victory/defeat

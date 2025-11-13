@@ -31,7 +31,7 @@ func setup(data: HeroData):
 	recolor()
 	if hero_data.portrait:
 		portrait_rect.texture = hero_data.portrait
-	current_focus_pips = 5
+	current_focus_pips = 2
 	update_focus_bar()
 
 func on_turn_started() -> void:
