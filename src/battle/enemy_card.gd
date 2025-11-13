@@ -8,16 +8,17 @@ signal enemy_clicked(enemy_card)
 var enemy_data: EnemyData
 var ai_index: int = 0
 var intended_action: Action
-var intended_target: ActorCard
+var intended_targets: Array[ActorCard]
 var intent_flash_tween: Tween
 
 # --- UNIQUE UI Node References ---
 @onready var intent_icon: TextureRect = $Panel/IntentIcon
 @onready var intent_text: Label = $Panel/IntentText
+@onready var action_display: PanelContainer = $Panel/ActionName
 
 
 func setup(data: EnemyData):
-	self.enemy_data = data
+	enemy_data = data
 	# --- Call the PARENT's setup function ---
 	setup_base(data.stats)
 
@@ -26,6 +27,7 @@ func setup(data: EnemyData):
 	$Panel/NrgDef.text = "NRG:\n" + str(enemy_data.stats.energy_defense) + "%"
 	if enemy_data.portrait:
 		portrait_rect.texture = enemy_data.portrait
+	action_display.hide()
 
 func get_next_action() -> Action:
 	if enemy_data.action_deck.is_empty():
@@ -45,11 +47,11 @@ func get_next_action() -> Action:
 	#return next_action
 
 func decide_intent(hero_targets: Array[HeroCard]):
-	self.intended_action = get_next_action()
+	intended_action = get_next_action()
 	get_a_target(hero_targets)
 
 func get_a_target(hero_targets: Array[HeroCard]):
-	self.intended_target = null
+	var new_targets: Array[ActorCard] = []
 
 	if not intended_action or hero_targets.is_empty():
 		update_intent_ui()
@@ -65,16 +67,19 @@ func get_a_target(hero_targets: Array[HeroCard]):
 					taunting_hero = hero
 					break
 			if taunting_hero:
-				self.intended_target = taunting_hero
+				new_targets = [taunting_hero]
 			else:
-				self.intended_target = hero_targets.pick_random()
+				new_targets = [hero_targets.pick_random()]
 
 		Action.TargetType.SELF:
-			self.intended_target = self
+			new_targets = [self]
 		Action.TargetType.ALL_ENEMIES:
-			pass
+			for target in hero_targets:
+				new_targets.append(target)
 
-	update_intent_ui()
+	if new_targets != intended_targets:
+		intended_targets = new_targets
+		update_intent_ui()
 
 func update_intent_ui():
 	if not intended_action:
@@ -109,19 +114,24 @@ func update_intent_ui():
 		# This is your final text string
 		var final_text = str(intended_dmg) + hits_text + " " + dmg_type
 
-		if intended_target:
-			# Your 'actor_name' fix now works
-			final_text += " > " + intended_target.actor_name
+		if intended_targets:
+			if intended_targets.size() > 1:
+				final_text += " > EVERYONE"
+			else:
+				final_text += " > " + intended_targets[0].actor_name
 
 		intent_text.text = final_text
 
 	else:
 		# --- 4. It's a non-damage effect (like Grant Guard) ---
 		var final_text = intended_action.action_name
-		if intended_target:
-			final_text += " > " + intended_target.actor_name
+		if intended_targets.size() > 0:
+			final_text += " > EVERYONE"
+		else:
+			final_text += " > " + intended_targets[0].actor_name
 
 		intent_text.text = final_text
+	flash_intent()
 
 func defeated():
 	super.defeated()
@@ -134,7 +144,7 @@ func defeated():
 	).set_trans(Tween.TRANS_SINE)
 
 	await tween.finished
-	self.modulate.a = 0
+	modulate.a = 0
 
 func show_intent(icon: Texture):
 	intent_icon.texture = icon
@@ -143,7 +153,7 @@ func show_intent(icon: Texture):
 func hide_intent():
 	intent_icon.visible = false
 
-func flash_intent(duration: float):
+func flash_intent(duration: float = 0.3):
 	duration /= battle_manager.battle_speed
 
 	if intent_flash_tween and intent_flash_tween.is_running():
@@ -160,6 +170,22 @@ func flash_intent(duration: float):
 		base_color, duration).set_trans(Tween.TRANS_SINE)
 
 	await intent_flash_tween.finished
+
+func show_action():
+	var duration = 0.1 / battle_manager.battle_speed
+	var label = action_display.get_node("MarginContainer/Label")
+	label.text = intended_action.action_name.to_upper()
+	action_display.modulate.a = 0.0
+	action_display.show()
+
+	var tween = create_tween()
+	tween.tween_property(action_display, "modulate:a", 1.0, duration)
+
+func hide_action():
+	var duration = 0.3 / battle_manager.battle_speed
+	var tween = create_tween()
+	tween.tween_property(action_display, "modulate:a", 0.0, duration)
+	await tween.finished.connect(func(): action_display.hide())
 
 func _on_gui_input(event: InputEvent):
 	if event.is_action_pressed("ui_accept"):

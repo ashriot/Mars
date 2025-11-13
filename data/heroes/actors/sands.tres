@@ -10,12 +10,14 @@
 [sub_resource type="Resource" id="Resource_2uprg"]
 script = ExtResource("2_626k6")
 actor_name = "Sands"
-max_hp = 200
-guard = 6
-attack = 25
-psyche = 25
-kinetic_defense = 0.7
-energy_defense = 0.5
+max_hp = 205
+attack = 47
+psyche = 41
+overload = 28
+speed = 45
+precision = 12
+kinetic_defense = 41
+energy_defense = 41
 metadata/_custom_type_script = "uid://b70gwt4gd4cun"
 
 [resource]

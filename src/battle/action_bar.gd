@@ -128,10 +128,10 @@ func _on_hero_passive_fired():
 
 func _on_state_changed(state: BattleManager.State):
 	if not active_hero: return
-	var value = state not in [BattleManager.State.PLAYER_ACTION, BattleManager.State.TARGETING_ENEMIES, BattleManager.State.TARGETING_TEAM]
-	for button in actions_ui.get_children():
-		if button is ActionButton:
-			button.disabled = value
+	#var value = state not in [BattleManager.State.PLAYER_ACTION, BattleManager.State.TARGETING_ENEMIES, BattleManager.State.TARGETING_TEAM]
+	#for button in actions_ui.get_children():
+		#if button is ActionButton:
+			#button.disabled = value
 
 func slide_in(duration: float = 0.2):
 	sliding = true

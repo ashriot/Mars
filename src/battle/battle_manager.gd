@@ -2,7 +2,7 @@ extends Node
 class_name BattleManager
 
 # --- State Machine ---
-enum State { LOADING, PLAYER_ACTION, TARGETING_ENEMIES, TARGETING_TEAM, ENEMY_ACTION, EXECUTING_ACTION }
+enum State { LOADING, PLAYER_ACTION, ENEMY_ACTION, EXECUTING_ACTION }
 var current_state = State.LOADING
 
 # --- Signals ---
@@ -157,7 +157,7 @@ func find_and_start_next_turn():
 	turn_order_updated.emit(projection)
 
 	# 6. Start the winner's turn
-	self.current_actor = winner
+	current_actor = winner
 	if winner is HeroCard:
 		change_state(State.LOADING)
 		if action_bar.sliding:
@@ -223,18 +223,15 @@ func _on_actor_revived(actor: ActorCard):
 func set_current_action(action: Action):
 	var target_list = []
 
-	self.current_action = action
+	current_action = action
 
 	match action.target_type:
 		Action.TargetType.ONE_ENEMY, Action.TargetType.ALL_ENEMIES, Action.TargetType.RANDOM_ENEMY:
-			change_state(State.TARGETING_ENEMIES)
 			target_list = get_living_enemies()
 
 		Action.TargetType.SELF:
-			change_state(State.TARGETING_TEAM)
 			target_list = [current_actor]
-		Action.TargetType.TEAM_MEMBER, Action.TargetType.TEAMMATE, Action.TargetType.TEAM, Action.TargetType.TEAMMATES_ONLY:
-			change_state(State.TARGETING_TEAM)
+		Action.TargetType.ALLY, Action.TargetType.ALLY_ONLY, Action.TargetType.ALL_ALLIES, Action.TargetType.ALLIES_ONLY:
 			target_list = get_living_heroes()
 
 		_:
@@ -244,7 +241,7 @@ func set_current_action(action: Action):
 		target.start_flashing()
 
 func _on_action_button_pressed(button: ActionButton):
-	if current_state in [State.LOADING, State.EXECUTING_ACTION]: return
+	if current_state in [State.LOADING]: return
 
 	var action = button.action
 	if current_actor.current_focus_pips < action.focus_cost:
@@ -262,7 +259,7 @@ func _focus_button(button: ActionButton):
 	focused_button.focused(true)
 
 func _on_hero_clicked(target_hero: HeroCard):
-	if current_state != State.TARGETING_TEAM: return
+	if not target_hero.is_valid_target: return
 
 	print("Target selected: ", target_hero.actor_name)
 	change_state(State.EXECUTING_ACTION)
@@ -270,11 +267,11 @@ func _on_hero_clicked(target_hero: HeroCard):
 
 	var targets_array = []
 	match current_action.target_type:
-		Action.TargetType.SELF, Action.TargetType.TEAM_MEMBER:
+		Action.TargetType.SELF, Action.TargetType.ALLY:
 			targets_array.append(target_hero)
-		Action.TargetType.TEAM:
+		Action.TargetType.ALL_ALLIES:
 			targets_array = get_living_heroes()
-		Action.TargetType.TEAMMATES_ONLY:
+		Action.TargetType.ALLIES_ONLY:
 			for ally in get_living_heroes():
 				if ally != current_actor:
 					targets_array.append(ally)
@@ -283,7 +280,7 @@ func _on_hero_clicked(target_hero: HeroCard):
 	await _finish_hero_turn()
 
 func _on_enemy_clicked(target_enemy: EnemyCard):
-	if current_state != State.TARGETING_ENEMIES: return
+	if not target_enemy.is_valid_target: return
 
 	if target_enemy.is_defeated:
 			print("Target is already defeated.")
@@ -329,8 +326,8 @@ func execute_action(actor: ActorCard, action: Action, targets: Array):
 	print(actor_name, " uses ", action.action_name)
 
 	for effect in action.effects:
-		if effect.effect_target != ActionEffect.EffectTarget.PRIMARY:
-			targets = _get_effect_targets_for_type(effect.effect_target, actor is HeroCard)
+		if effect.target_type != Action.TargetType.PARENT:
+			targets = get_targets(effect.target_type, actor is HeroCard)
 		await effect.execute(actor, targets, self, action)
 	if action.is_attack:
 		var context = { "targets": targets, "action": action }
@@ -346,27 +343,18 @@ func execute_triggered_effect(actor: ActorCard, effect: ActionEffect, targets: A
 func execute_enemy_turn(enemy: EnemyCard):
 	change_state(State.EXECUTING_ACTION)
 	print("\n", enemy.actor_name, " is executing its turn!")
+	enemy.show_action()
 	await wait(0.25)
-	for i in range(2):
-		await enemy.flash_intent(0.1)
 
 	var action = enemy.intended_action
-	var target = enemy.intended_target
+	var targets = enemy.intended_targets
 
 	if not action:
-		print(enemy.actor_name, " has no action to perform.")
-		enemy.decide_intent(get_living_heroes())
+		push_error(enemy.actor_name, " is missing an action!")
 		return
 
-	var targets = []
-	match action.target_type:
-		Action.TargetType.SELF:
-			targets.append(enemy)
-		Action.TargetType.ONE_ENEMY:
-			targets.append(target)
-		Action.TargetType.ALL_ENEMIES:
-			targets = get_living_heroes()
 	await execute_action(enemy, action, targets)
+	await enemy.hide_action()
 	enemy.decide_intent(get_living_heroes())
 	return
 
@@ -392,7 +380,6 @@ func _on_actor_conditions_changed(_actor_who_changed: ActorCard, retarget: bool)
 			continue
 		if retarget:
 			enemy.get_a_target(living_heroes)
-			enemy.flash_intent(0.3)
 
 func _on_shift_button_pressed(direction: String):
 	if current_state in [State.LOADING, State.EXECUTING_ACTION]: return
@@ -416,7 +403,7 @@ func _on_hero_role_shifted(hero_card: HeroCard):
 
 	if action.auto_target:
 		print("Auto-executing shift action...")
-		var target_list = _get_targets_for_type(action.target_type, true)
+		var target_list = get_targets(action.target_type, true)
 
 		await execute_action(current_actor, action, target_list)
 		return
@@ -424,9 +411,11 @@ func _on_hero_role_shifted(hero_card: HeroCard):
 	print("Action requires a target. Waiting for click...")
 	set_current_action(action)
 
-func _get_targets_for_type(target_type: Action.TargetType, friendly: bool) -> Array:
+func get_targets(target_type: Action.TargetType, friendly: bool, parent_targets: Array = []) -> Array:
 		var target_list = []
 		match target_type:
+			Action.TargetType.PARENT:
+				target_list = parent_targets
 			Action.TargetType.SELF:
 				target_list.append(current_actor)
 			Action.TargetType.ALL_ENEMIES:
@@ -434,24 +423,7 @@ func _get_targets_for_type(target_type: Action.TargetType, friendly: bool) -> Ar
 					target_list = get_living_enemies()
 				else:
 					target_list = get_living_heroes()
-			Action.TargetType.TEAM:
-				if friendly:
-					target_list = get_living_heroes()
-				else:
-					target_list = get_living_enemies()
-		return target_list
-
-func _get_effect_targets_for_type(target_type: ActionEffect.EffectTarget, friendly: bool) -> Array:
-		var target_list = []
-		match target_type:
-			ActionEffect.EffectTarget.SELF:
-				target_list.append(current_actor)
-			ActionEffect.EffectTarget.ALL_ENEMIES:
-				if friendly:
-					target_list = get_living_enemies()
-				else:
-					target_list = get_living_heroes()
-			ActionEffect.EffectTarget.ALL_ALLIES:
+			Action.TargetType.ALL_ALLIES:
 				if friendly:
 					target_list = get_living_heroes()
 				else:

@@ -21,6 +21,6 @@ script = ExtResource("2_ycjio")
 action_name = "Kinetic Ammo"
 icon = ExtResource("2_xf0g5")
 focus_cost = 2
-target_type = 0
+target_type = 4
 effects = Array[ExtResource("1_qa070")]([SubResource("Resource_ls38x"), SubResource("Resource_b28wf")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

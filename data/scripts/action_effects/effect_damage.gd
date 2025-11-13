@@ -4,6 +4,7 @@ class_name Effect_Damage
 
 # --- Base Damage Properties ---
 @export var potency: float = 1.0
+@export var split_damage: bool = false
 @export var hit_count: int = 1
 @export var shreds_guard: bool = true
 @export var power_type: Action.PowerType = Action.PowerType.ATTACK
@@ -13,13 +14,13 @@ class_name Effect_Damage
 @export var potency_scalar_per_focus: float = 0.0
 
 
-func execute(attacker: ActorCard, primary_targets: Array, battle_manager: BattleManager, action: Action = null) -> void:
+func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleManager, action: Action = null) -> void:
 
 	var final_targets: Array = []
-	match effect_target:
-		EffectTarget.PRIMARY:
-			final_targets = primary_targets
-		EffectTarget.ALL_ENEMIES:
+	match target_type:
+		Action.TargetType.PARENT:
+			final_targets = parent_targets
+		Action.TargetType.ALL_ENEMIES:
 			if attacker is HeroCard:
 				for enemy in battle_manager.get_living_enemies():
 					final_targets.append(enemy)
@@ -53,7 +54,7 @@ func execute(attacker: ActorCard, primary_targets: Array, battle_manager: Battle
 
 			if target.is_defeated and not random:
 				break
-
+			if split_damage: dynamic_potency /= final_targets.size()
 			await target.apply_one_hit(self, attacker, dynamic_potency)
 
 			if random and target.is_defeated:

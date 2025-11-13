@@ -1,4 +1,5 @@
 extends Control
+
 @onready var label = $Label
 
 # --- 1. Define all your animation "tweak" variables here ---
@@ -16,7 +17,7 @@ const NORMAL_POP_SCALE = Vector2(1.3, 1.3)
 const NORMAL_POP_DURATION = 0.2
 const NORMAL_LINGER_DURATION = 0.3
 
-func show_damage(amount: int, up: bool, is_crit := false):
+func show_damage(amount: int, up: bool, speed: float, is_crit := false):
 	label.text = str(amount)
 
 	# --- 2. Define variables based on 'is_crit' ---
@@ -28,13 +29,13 @@ func show_damage(amount: int, up: bool, is_crit := false):
 
 	if is_crit:
 		pop_scale = CRIT_POP_SCALE
-		pop_duration = CRIT_POP_DURATION
-		linger_duration = CRIT_LINGER_DURATION
+		pop_duration = CRIT_POP_DURATION / speed
+		linger_duration = CRIT_LINGER_DURATION / speed
 		start_color = CRIT_FLASH_COLOR
 	else:
 		pop_scale = NORMAL_POP_SCALE
-		pop_duration = NORMAL_POP_DURATION
-		linger_duration = NORMAL_LINGER_DURATION
+		pop_duration = NORMAL_POP_DURATION / speed
+		linger_duration = NORMAL_LINGER_DURATION / speed
 		start_color = base_color # No flash
 
 	# --- 3. Set initial state ---

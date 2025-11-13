@@ -1,0 +1,9 @@
+[gd_resource type="FontVariation" load_steps=2 format=3 uid="uid://convptsodr4d5"]
+
+[ext_resource type="FontFile" uid="uid://bngamonal1d40" path="res://data/theme/fonts/union_gothic-variable.ttf" id="1_i71n2"]
+
+[resource]
+base_font = ExtResource("1_i71n2")
+opentype_features = {
+1667329140: 1
+}

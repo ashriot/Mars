@@ -9,16 +9,16 @@ class_name Effect_Healing
 @export var is_revive: bool = false
 
 
-func execute(attacker: ActorCard, primary_targets: Array, battle_manager: BattleManager, _action: Action = null) -> void:
+func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleManager, _action: Action = null) -> void:
 
 	print("--- Executing Healing Effect ---")
 
-	if primary_targets.is_empty():
+	if parent_targets.is_empty():
 		print("Healing effect had no targets.")
 		return
 
 	# --- 1. Loop through the targets this effect was given ---
-	for target in primary_targets:
+	for target in parent_targets:
 		# Check for "is_revive" logic
 		if not target or not is_instance_valid(target) or (target.is_defeated and not is_revive):
 			continue # Skip dead or invalid targets

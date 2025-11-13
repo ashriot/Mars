@@ -10,13 +10,15 @@
 [sub_resource type="Resource" id="Resource_tqnt4"]
 script = ExtResource("1_s0m5y")
 actor_name = "Asher"
-max_hp = 150
-attack = 30
-overload = 25
-speed = 25
-precision = 15
-kinetic_defense = 0.5
-energy_defense = 0.5
+max_hp = 200
+guard = 4
+attack = 42
+psyche = 40
+overload = 33
+speed = 46
+precision = 14
+kinetic_defense = 36
+energy_defense = 31
 metadata/_custom_type_script = "uid://b70gwt4gd4cun"
 
 [resource]

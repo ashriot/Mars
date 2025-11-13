@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="Action" load_steps=6 format=3 uid="uid://811d3h1n464x"]
+
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_vanod"]
+[ext_resource type="Script" uid="uid://cu12q7dfj3hfe" path="res://data/scripts/action_effects/effect_grant_guard.gd" id="2_410vi"]
+[ext_resource type="Texture2D" uid="uid://ccvfh6p4cpjd8" path="res://assets/graphics/icons/skills/dodging.png" id="3_410vi"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="3_yfoa7"]
+
+[sub_resource type="Resource" id="Resource_76ybm"]
+script = ExtResource("2_410vi")
+guard_amount = 2
+metadata/_custom_type_script = "uid://cu12q7dfj3hfe"
+
+[resource]
+script = ExtResource("3_yfoa7")
+action_name = "Displace"
+icon = ExtResource("3_410vi")
+description = "Attack an enemy twice, each hit dealing X% damage."
+target_type = 5
+effects = Array[ExtResource("1_vanod")]([SubResource("Resource_76ybm")])
+metadata/_custom_type_script = "uid://dm08rhkg3bai3"

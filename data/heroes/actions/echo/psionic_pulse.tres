@@ -15,6 +15,6 @@ metadata/_custom_type_script = "uid://dggojfw8tmpnk"
 script = ExtResource("2_rjpbc")
 action_name = "Psionic Pulse"
 icon = ExtResource("2_twjb0")
-target_type = 0
+target_type = 4
 effects = Array[ExtResource("1_seu72")]([SubResource("Resource_02ksk")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

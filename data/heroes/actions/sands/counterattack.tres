@@ -16,6 +16,6 @@ script = ExtResource("6_vuc7h")
 action_name = "Counterattack"
 icon = ExtResource("5_hvq7e")
 auto_target = true
-target_type = 0
+target_type = 4
 effects = Array[ExtResource("1_hvq7e")]([SubResource("Resource_vuc7h")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

@@ -15,6 +15,6 @@ metadata/_custom_type_script = "uid://dggojfw8tmpnk"
 script = ExtResource("2_tvmli")
 action_name = "Provoke"
 icon = ExtResource("5_jx5c7")
-target_type = 0
+target_type = 4
 effects = Array[ExtResource("1_l5wm1")]([SubResource("Resource_7kmks")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

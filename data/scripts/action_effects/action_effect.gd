@@ -1,16 +1,8 @@
 extends Resource
 class_name ActionEffect
 
-enum EffectTarget {
-	PRIMARY, # The target(s) the player clicked
-	SELF,
-	LEAST_GUARD_ALLY,
-	ALL_ALLIES,
-	ALL_ENEMIES
-}
+@export var target_type: Action.TargetType = Action.TargetType.PARENT
 
-@export var effect_target: EffectTarget = EffectTarget.PRIMARY
-
-func execute(_attacker: ActorCard, _primary_targets: Array, battle_manager: BattleManager, _action: Action = null) -> void:
+func execute(_attacker: ActorCard, _parent_targets: Array, battle_manager: BattleManager, _action: Action = null) -> void:
 	await battle_manager.wait(0.1)
 	pass

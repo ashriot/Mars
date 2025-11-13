@@ -5,8 +5,8 @@ class_name Effect_ModifyStat
 @export var mod: int = 0
 @export var scalar: float = 0.0
 
-func execute(_attacker: ActorCard, primary_targets: Array, battle_manager: BattleManager, _action: Action = null) -> void:
-	for target in primary_targets:
+func execute(_attacker: ActorCard, parent_targets: Array, battle_manager: BattleManager, _action: Action = null) -> void:
+	for target in parent_targets:
 		target = target as HeroCard
 		if mod > 0:
 			target.stat_mods.get_or_add()

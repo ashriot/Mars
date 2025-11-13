@@ -16,6 +16,6 @@ script = ExtResource("4_2ks3s")
 action_name = "Mend Wounds"
 icon = ExtResource("3_oig8d")
 description = "Attack an enemy twice, each hit dealing X% damage."
-target_type = 1
+target_type = 5
 effects = Array[ExtResource("1_oig8d")]([SubResource("Resource_bkx48")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

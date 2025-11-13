@@ -4,8 +4,19 @@ class_name Action
 enum PowerType { ATTACK, PSYCHE }
 enum DamageType { KINETIC, ENERGY, PIERCING }
 enum TargetType {
-	SELF, TEAM_MEMBER, TEAMMATE, TEAM, TEAMMATES_ONLY,
-	ONE_ENEMY, ALL_ENEMIES, RANDOM_ENEMY
+	ONE_ENEMY,
+	ALL_ENEMIES,
+	ENEMY_GROUP,
+	RANDOM_ENEMY,
+	SELF,
+	ALLY,
+	ALLY_ONLY,
+	ALL_ALLIES,
+	ALLIES_ONLY,
+
+	# Effect-facing (for the Effect scripts)
+	PARENT, # "Use the target(s) from the parent action"
+	LEAST_GUARD_ALLY
 }
 
 @export var action_name: String = "New Action"

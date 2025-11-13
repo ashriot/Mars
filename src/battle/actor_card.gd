@@ -58,7 +58,7 @@ func setup_base(stats: ActorStats):
 		push_error("ActorCard was given null stats!")
 		return
 	battle_manager = get_parent().get_node("%BattleManager")
-	self.current_stats = stats.duplicate()
+	current_stats = stats.duplicate()
 	actor_name = stats.actor_name
 	hp_bar_ghost.max_value = current_stats.max_hp
 	current_hp = current_stats.max_hp
@@ -96,6 +96,11 @@ func on_turn_ended() -> void:
 func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_potency: float) -> void:
 	if is_defeated: return
 
+	var is_crit: bool = false
+	var crit_chance: int = attacker.get_precision()
+	if randi_range(1, 100) <= crit_chance:
+		is_crit = true
+
 	if damage_effect.damage_type == Action.DamageType.PIERCING:
 		shake_panel()
 	elif current_guard == 0:
@@ -104,7 +109,9 @@ func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_po
 		else:
 			shake_panel()
 	elif damage_effect.shreds_guard:
-		current_guard -= 1
+		current_guard -= 2 if is_crit else 1
+		current_guard = clamp(current_guard, 0, MAX_GUARD)
+		print("Current guard is: ", current_guard)
 	shake_panel()
 
 	var power_for_hit = attacker.get_power(damage_effect.power_type)
@@ -113,27 +120,22 @@ func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_po
 
 	var base_hit_damage: float = power_for_hit * dynamic_potency
 
-	var is_crit: bool = false
-	var crit_chance: int = attacker.get_precision()
-
-	if randi_range(1, 100) <= crit_chance:
-		is_crit = true
-
 	if is_crit:
 		print("Critical Hit!")
 		var crit_bonus: float = 0.0
 		crit_bonus = attacker.get_crit_damage_bonus()
 		base_hit_damage *= (1.0 + crit_bonus)
 
+	var final_dmg_float = float(base_hit_damage)
 	if not is_breached:
 		if damage_effect.damage_type == Action.DamageType.KINETIC:
-			base_hit_damage = base_hit_damage * (1.0 - float(current_stats.kinetic_defense) / 100)
+			final_dmg_float *= (1.0 - float(current_stats.kinetic_defense) / 100)
 		else: # ENERGY
-			base_hit_damage = base_hit_damage * (1.0 - float(current_stats.energy_defense) / 100)
+			final_dmg_float *= (1.0 - float(current_stats.energy_defense) / 100)
 
-	base_hit_damage *= attacker.get_damage_dealt_scalar()
-	base_hit_damage *= self.get_damage_taken_scalar()
-	var final_damage = max(0, int(base_hit_damage))
+	final_dmg_float *= attacker.get_damage_dealt_scalar()
+	final_dmg_float *= get_damage_taken_scalar()
+	var final_damage = max(0, int(final_dmg_float))
 	var up = attacker is EnemyCard
 	_spawn_damage_popup(final_damage, up, is_crit)
 
@@ -141,7 +143,7 @@ func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_po
 	hp_bar_actual.value = current_hp
 	hp_value.text = str(current_hp)
 	hp_changed.emit(current_hp, current_stats.max_hp)
-	print("Hit for ", final_damage, " damage!")
+	print("Hit for ", final_damage, " damage! (", base_hit_damage, ")")
 	update_guard_bar()
 
 	# 7. Check for death
@@ -203,8 +205,8 @@ func remove_condition(condition_name: String):
 
 			return
 
-		push_error("[ERROR] Trying to remove an invalid condition: ", actor_name, " -> ", condition.condition_name)
-		return
+	push_error("[ERROR] Trying to remove an invalid condition: ", actor_name, " -> ", condition_name)
+	return
 
 func sync_visual_health() -> Tween:
 	var actual_hp = hp_bar_actual.value
@@ -261,7 +263,7 @@ func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary 
 				await battle_manager.execute_triggered_effect(self, effect, targets, action)
 
 		if condition.remove_on_triggers.has(event_type):
-			print(actor_name, "'s ", condition.condition_name, " was removed by trigger.")
+			print(actor_name, "'s ", condition.condition_name, " needs to be removed.")
 			await _fire_condition_event(Trigger.TriggerType.ON_REMOVED)
 			remove_condition(condition.condition_name)
 
@@ -446,6 +448,7 @@ func highlight(value: bool):
 		highlight_panel.hide()
 
 func start_flashing():
+	is_valid_target = true
 	target_flash.modulate.a = 0
 	target_flash.visible = true
 
@@ -470,6 +473,7 @@ func start_flashing():
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 func stop_flashing():
+	is_valid_target = false
 	if flash_tween and flash_tween.is_running():
 		flash_tween.kill()
 		flash_tween = null
@@ -528,7 +532,7 @@ func _spawn_damage_popup(amount: int, up: bool, is_crit: bool):
 	battle_manager.add_child(popup)
 
 	# 3. Calculate position - center by default
-	var target_position = self.global_position - Vector2(100, 0)
+	var target_position = global_position - Vector2(100, 0)
 
 	# Check if we spawned a popup recently
 	var current_time = Time.get_ticks_msec() / 1000.0
@@ -548,4 +552,4 @@ func _spawn_damage_popup(amount: int, up: bool, is_crit: bool):
 	last_popup_time = current_time
 
 	# 5. "Fire and forget"
-	popup.show_damage(amount, up, is_crit)
+	popup.show_damage(amount, up, battle_manager.battle_speed, is_crit)
