@@ -1,8 +1,9 @@
-[gd_scene load_steps=11 format=3 uid="uid://b4tt3yil85l7j"]
+[gd_scene load_steps=12 format=3 uid="uid://b4tt3yil85l7j"]
 
 [ext_resource type="Script" uid="uid://carvfoj4h04nm" path="res://src/battle/enemy_card.gd" id="1_cu1kv"]
 [ext_resource type="Texture2D" uid="uid://dje00e457xu8o" path="res://assets/graphics/icons/textures/shield.png" id="2_4kuvy"]
 [ext_resource type="Texture2D" uid="uid://jeiq1r6ke2t7" path="res://assets/graphics/icons/textures/plus.png" id="2_e8ixv"]
+[ext_resource type="PackedScene" uid="uid://ckw8rm3jl32bx" path="res://data/heroes/passive_conditions/damage_popup.tscn" id="2_xkcvw"]
 [ext_resource type="Texture2D" uid="uid://bhk28mg1reyry" path="res://assets/graphics/glyphs/ps/Button - PS Directional Arrow Down.png" id="4_e8ixv"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8i7ma"]
@@ -54,6 +55,7 @@ anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
 script = ExtResource("1_cu1kv")
+damage_popup_scene = ExtResource("2_xkcvw")
 
 [node name="Panel" type="Panel" parent="."]
 custom_minimum_size = Vector2(400, 200)

@@ -1,9 +1,10 @@
-[gd_scene load_steps=12 format=3 uid="uid://cj2ylb1ld6ews"]
+[gd_scene load_steps=13 format=3 uid="uid://cj2ylb1ld6ews"]
 
 [ext_resource type="Script" uid="uid://cp1th7fv4flgo" path="res://src/battle/hero_card.gd" id="1_n7b5o"]
 [ext_resource type="Texture2D" uid="uid://d1te5324os86k" path="res://assets/graphics/icons/textures/bolt.png" id="2_1ptom"]
 [ext_resource type="Texture2D" uid="uid://dve0tjghg88kw" path="res://assets/graphics/icons/roles/blindfold.png" id="2_53q4u"]
 [ext_resource type="Texture2D" uid="uid://jeiq1r6ke2t7" path="res://assets/graphics/icons/textures/plus.png" id="2_d6207"]
+[ext_resource type="PackedScene" uid="uid://ckw8rm3jl32bx" path="res://data/heroes/passive_conditions/damage_popup.tscn" id="2_nheih"]
 [ext_resource type="Texture2D" uid="uid://dje00e457xu8o" path="res://assets/graphics/icons/textures/shield.png" id="3_d6207"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_nheih"]
@@ -56,6 +57,7 @@ offset_right = 40.0
 offset_bottom = 40.0
 script = ExtResource("1_n7b5o")
 slide_offset_y = -50
+damage_popup_scene = ExtResource("2_nheih")
 
 [node name="Panel" type="Panel" parent="."]
 custom_minimum_size = Vector2(400, 200)

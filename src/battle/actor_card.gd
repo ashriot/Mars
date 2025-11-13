@@ -1,6 +1,8 @@
 extends Control
 class_name ActorCard
 
+@export var damage_popup_scene: PackedScene
+
 # --- Signals (Shared by both) ---
 signal actor_breached(actor)
 signal actor_defeated(actor)
@@ -70,7 +72,7 @@ func setup_base(stats: ActorStats):
 
 	for pip in guard_bar.get_children():
 		pip.get_child(0).set_pivot_offset(pip.size / 2.0)
-	update_guard_bar()
+	update_guard_bar(false)
 
 func on_turn_started() -> void:
 	await battle_manager.wait(0.1)
@@ -126,8 +128,9 @@ func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_po
 
 	base_hit_damage *= attacker.get_damage_dealt_scalar()
 	base_hit_damage *= self.get_damage_taken_scalar()
-
 	var final_damage = max(0, int(base_hit_damage))
+	var up = attacker is EnemyCard
+	_spawn_damage_popup(final_damage, up, is_crit)
 	current_hp = max(0, current_hp - final_damage)
 	hp_bar_actual.value = current_hp
 	hp_value.text = str(current_hp)
@@ -256,7 +259,6 @@ func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary 
 			await _fire_condition_event(Trigger.TriggerType.ON_REMOVED)
 			remove_condition(condition.condition_name)
 
-
 func update_health_bar():
 	hp_bar_actual.value = current_hp
 	hp_bar_ghost.value = current_hp
@@ -294,7 +296,7 @@ func gain_guard(amount: int):
 	await _fire_condition_event(Trigger.TriggerType.ON_GAINING_GUARD)
 	update_guard_bar()
 
-func update_guard_bar():
+func update_guard_bar(animate: bool = true):
 	var pips = guard_bar.get_children()
 
 	if pips.is_empty() or pips[0].size.x == 0:
@@ -304,12 +306,13 @@ func update_guard_bar():
 		var pip_node = pips[i]
 
 		if i < current_guard:
-
 			if not pip_node.visible:
-				_animate_pip(pip_node)
-		else:
-			pip_node.visible = false
-			pip_node.scale = Vector2(1.0, 1.0)
+				_animate_pip_gain(pip_node)
+		elif pip_node.visible:
+			if animate:
+				_animate_pip_loss(pip_node)
+			else:
+				pip_node.hide()
 
 	armor_changed.emit(current_guard)
 
@@ -368,7 +371,7 @@ func shake_panel(intensity: float = 0.5):
 	shake_tween.tween_property(panel, "position",
 		panel_home_position, duration)
 
-func _animate_pip(pip_node: Control):
+func _animate_pip_gain(pip_node: Control):
 	var pip_texture = pip_node.get_child(0)
 	pip_node.show()
 	# This 'await' is perfect, it ensures the node is ready
@@ -402,6 +405,31 @@ func _animate_pip(pip_node: Control):
 		Color(1.0, 1.0, 1.0), # The normal Color.WHITE
 		0.25 # A much faster duration
 	).set_trans(Tween.TRANS_SINE) # Use a smooth fade for the color
+
+func _animate_pip_loss(pip_node: Control):
+	var pip_texture = pip_node.get_child(0)
+	# Make sure the pip is visible before animating
+	pip_node.show()
+	await get_tree().process_frame
+
+	# Set initial state - flash to orange red
+	pip_texture.modulate = Color(5.0, 5.0, 5.0)
+
+	# Create tween for the fade out
+	var tween = create_tween()
+	tween.set_trans(Tween.TRANS_SINE)
+	tween.set_ease(Tween.EASE_IN)
+
+	# Fade the alpha to 0 over time
+	tween.tween_property(
+		pip_texture,
+		"modulate:a",
+		0.0,
+		0.5 # Fade duration - adjust to your preference
+	)
+
+	# Optional: Hide the pip node after fade completes
+	tween.finished.connect(func(): pip_node.hide())
 
 func highlight(value: bool):
 	if value:
@@ -481,3 +509,24 @@ func get_damage_taken_scalar() -> float:
 	for condition in active_conditions:
 		scalar += condition.damage_taken_scalar
 	return scalar
+
+func _spawn_damage_popup(amount: int, up: bool, is_crit: bool):
+	if not damage_popup_scene:
+		push_warning("DamagePopupScene not set on ActorCard!")
+		return
+
+	# 1. Create the instance
+	var popup = damage_popup_scene.instantiate() as Control
+
+	# 2. Add it to the *main scene tree* (not this card)
+	#    This prevents it from moving when the card shakes.
+	battle_manager.add_child(popup)
+
+	# 3. Set its position (this is your random offset)
+	# We use 'global_position' to place it on the screen
+	# relative to the card that was hit.
+	var random_offset = Vector2(randf_range(-20, 20), randf_range(-30, -10))
+	popup.global_position = self.global_position + random_offset
+
+	# 4. "Fire and forget"
+	popup.show_damage(amount, up, is_crit)
