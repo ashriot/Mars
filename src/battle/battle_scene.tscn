@@ -42,7 +42,7 @@ grow_horizontal = 2
 grow_vertical = 2
 metadata/_edit_lock_ = true
 
-[node name="BattleManager" type="Node" parent="." node_paths=PackedStringArray("hero_area", "enemy_area", "action_bar")]
+[node name="BattleManager" type="Node" parent="." node_paths=PackedStringArray("hero_area", "enemy_area", "action_bar", "fade_overlay")]
 unique_name_in_owner = true
 script = ExtResource("1_6cbqe")
 hero_card_scene = ExtResource("1_sft4c")
@@ -50,6 +50,7 @@ enemy_card_scene = ExtResource("1_u5n4n")
 hero_area = NodePath("../UI/Heroes/HBox")
 enemy_area = NodePath("../UI/Enemies/HBox")
 action_bar = NodePath("../UI/ActionBar")
+fade_overlay = NodePath("../FadeOverlay")
 hero_data_files = Array[ExtResource("4_w6n6o")]([ExtResource("5_16l6v"), ExtResource("6_vtpwn"), ExtResource("7_rvyyd")])
 enemy_data_files = Array[ExtResource("6_6by3n")]([ExtResource("7_vtpwn"), ExtResource("9_nbe2n")])
 
@@ -151,3 +152,13 @@ battle_manager = NodePath("../../BattleManager")
 layout_mode = 0
 offset_right = 282.0
 offset_bottom = 440.0
+
+[node name="FadeOverlay" type="ColorRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 1)

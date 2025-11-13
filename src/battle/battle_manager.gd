@@ -17,6 +17,7 @@ signal battle_state_changed(new_state)
 @export var hero_area: Control
 @export var enemy_area: Control
 @export var action_bar: ActionBar
+@export var fade_overlay: ColorRect
 
 # --- Encounter Data Links ---
 @export var hero_data_files: Array[HeroData] = []
@@ -35,6 +36,7 @@ func change_state(new_state):
 	battle_state_changed.emit(current_state)
 
 func _ready():
+	fade_overlay.show()
 	randomize() # For tie-breakers
 	await wait(0.1)
 	action_bar.action_selected.connect(_on_action_button_pressed)
@@ -45,7 +47,7 @@ func _ready():
 	change_state(State.EXECUTING_ACTION)
 	await _apply_starting_passives()
 	await wait(0.5)
-
+	await _fade_in()
 	find_and_start_next_turn()
 
 func spawn_encounter():
@@ -476,3 +478,17 @@ func _clear_all_targeting_ui():
 func wait(duration : float) -> void:
 	var scaled_duration = duration / battle_speed
 	await get_tree().create_timer(scaled_duration).timeout
+
+func _fade_in(duration: float = 0.5):
+	var tween = create_tween()
+	tween.set_trans(Tween.TRANS_SINE)
+	tween.set_ease(Tween.EASE_IN)
+
+	tween.tween_property(
+		fade_overlay,
+		"modulate:a",
+		0.0,
+		duration
+	)
+	await tween.finished
+	fade_overlay.hide()

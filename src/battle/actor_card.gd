@@ -36,6 +36,11 @@ var pulse_tween: Tween
 var health_tween: Tween
 var panel_home_position: Vector2
 
+# -- Popup Settings ---
+var last_popup_time: float = 0.0
+var popup_stack_offset: int = 0
+const POPUP_SPACING_TIME: float = 1.0
+
 # --- UI Node References (Shared) ---
 @onready var name_label: Label = $Panel/Title
 @onready var hp_bar_ghost: ProgressBar = $Panel/HP/BarGhost
@@ -131,6 +136,7 @@ func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_po
 	var final_damage = max(0, int(base_hit_damage))
 	var up = attacker is EnemyCard
 	_spawn_damage_popup(final_damage, up, is_crit)
+
 	current_hp = max(0, current_hp - final_damage)
 	hp_bar_actual.value = current_hp
 	hp_value.text = str(current_hp)
@@ -518,15 +524,28 @@ func _spawn_damage_popup(amount: int, up: bool, is_crit: bool):
 	# 1. Create the instance
 	var popup = damage_popup_scene.instantiate() as Control
 
-	# 2. Add it to the *main scene tree* (not this card)
-	#    This prevents it from moving when the card shakes.
+	# 2. Add it to the main scene tree
 	battle_manager.add_child(popup)
 
-	# 3. Set its position (this is your random offset)
-	# We use 'global_position' to place it on the screen
-	# relative to the card that was hit.
-	var random_offset = Vector2(randf_range(-20, 20), randf_range(-30, -10))
-	popup.global_position = self.global_position + random_offset
+	# 3. Calculate position - center by default
+	var target_position = self.global_position - Vector2(100, 0)
 
-	# 4. "Fire and forget"
+	# Check if we spawned a popup recently
+	var current_time = Time.get_ticks_msec() / 1000.0
+	if current_time - last_popup_time < POPUP_SPACING_TIME:
+		# Stack them with alternating offsets
+		popup_stack_offset += 1
+		var side = 1 if popup_stack_offset % 2 == 0 else -1
+		target_position.x += side * 60  # Offset horizontally
+		target_position.y -= popup_stack_offset * 30  # Stack upward
+	else:
+		# Reset stack if enough time has passed
+		popup_stack_offset = 0
+
+	popup.global_position = target_position
+
+	# 4. Update tracking
+	last_popup_time = current_time
+
+	# 5. "Fire and forget"
 	popup.show_damage(amount, up, is_crit)
