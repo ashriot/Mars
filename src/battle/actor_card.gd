@@ -127,11 +127,13 @@ func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_po
 		base_hit_damage *= (1.0 + crit_bonus)
 
 	var final_dmg_float = float(base_hit_damage)
-	if not is_breached:
-		if damage_effect.damage_type == Action.DamageType.KINETIC:
-			final_dmg_float *= (1.0 - float(current_stats.kinetic_defense) / 100)
-		else: # ENERGY
-			final_dmg_float *= (1.0 - float(current_stats.energy_defense) / 100)
+	var def_mod = 1.0
+	if is_breached:
+		def_mod = 0.5
+	if damage_effect.damage_type == Action.DamageType.KINETIC:
+		final_dmg_float *= (1.0 - float(current_stats.kinetic_defense * def_mod) / 100)
+	else: # ENERGY
+		final_dmg_float *= (1.0 - float(current_stats.energy_defense * def_mod) / 100)
 
 	final_dmg_float *= attacker.get_damage_dealt_scalar()
 	final_dmg_float *= get_damage_taken_scalar()

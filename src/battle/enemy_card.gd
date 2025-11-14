@@ -106,6 +106,8 @@ func update_intent_ui():
 		var power = get_power(damage_effect.power_type)
 
 		var intended_dmg = int(power * damage_effect.potency)
+		if damage_effect.split_damage:
+			intended_dmg /= 3
 
 		var dmg_type = ""
 		match damage_effect.damage_type:
@@ -141,6 +143,18 @@ func update_intent_ui():
 
 		intent_text.text = final_text
 	flash_intent()
+
+func breached():
+	super.breached()
+	name_label.text = enemy_data.stats.actor_name
+	$Panel/KinDef.text = "KIN:\n" + str(int(enemy_data.stats.kinetic_defense / 2)) + "%"
+	$Panel/NrgDef.text = "NRG:\n" + str(int(enemy_data.stats.energy_defense / 2)) + "%"
+
+func recover_breach():
+	super.recover_breach()
+	name_label.text = enemy_data.stats.actor_name
+	$Panel/KinDef.text = "KIN:\n" + str(int(enemy_data.stats.kinetic_defense)) + "%"
+	$Panel/NrgDef.text = "NRG:\n" + str(int(enemy_data.stats.energy_defense)) + "%"
 
 func defeated():
 	super.defeated()
