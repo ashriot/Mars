@@ -25,14 +25,12 @@ func setup(data: HeroData):
 	setup_base(data.stats)
 	duration /= battle_manager.battle_speed
 	name_label.text = hero_data.stats.actor_name
-	role_label.text = get_current_role().role_name
-	role_icon.texture = get_current_role().icon
 	panel.self_modulate.a = 0.7
-	recolor()
 	if hero_data.portrait:
 		portrait_rect.texture = hero_data.portrait
 	current_focus_pips = 2
 	update_focus_bar()
+	update_current_role()
 
 func on_turn_started() -> void:
 	if current_focus_pips < 10:
@@ -85,10 +83,13 @@ func shift_role(direction: String):
 		current_role_index = (current_role_index - 1 + role_count) % role_count
 	else:
 		current_role_index = (current_role_index + 1) % role_count
-	role_label.text = get_current_role().role_name
-	role_icon.texture = get_current_role().icon
+	update_current_role()
 	await _fire_condition_event(Trigger.TriggerType.ON_SHIFT)
 	role_shifted.emit(self)
+
+func update_current_role():
+	role_label.text = get_current_role().role_name.to_upper()
+	role_icon.texture = get_current_role().icon
 	recolor()
 
 func spend_focus(amount: int):

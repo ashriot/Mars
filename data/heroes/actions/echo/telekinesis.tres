@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_4l446"]
 [ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/action_effects/effect_damage.gd" id="2_8w1o2"]
-[ext_resource type="Script" uid="uid://cu12q7dfj3hfe" path="res://data/scripts/action_effects/effect_grant_guard.gd" id="3_m4yoj"]
+[ext_resource type="Script" uid="uid://cu12q7dfj3hfe" path="res://data/scripts/action_effects/effect_change_guard.gd" id="3_m4yoj"]
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="4_5vcw3"]
 [ext_resource type="Texture2D" uid="uid://da0cmyog0oiqo" path="res://assets/graphics/icons/skills/bolt-shield.png" id="4_8w1o2"]
 

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="Action" load_steps=6 format=3 uid="uid://br0tqj3ba2itq"]
+
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_ii07i"]
+[ext_resource type="Texture2D" uid="uid://bhxiy8yn4b52g" path="res://assets/graphics/icons/skills/striking-balls.png" id="2_hx00v"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="2_l0ktv"]
+[ext_resource type="Script" uid="uid://cu12q7dfj3hfe" path="res://data/scripts/action_effects/effect_change_guard.gd" id="2_lafht"]
+
+[sub_resource type="Resource" id="Resource_meswp"]
+script = ExtResource("2_lafht")
+guard_amount = -1
+metadata/_custom_type_script = "uid://cu12q7dfj3hfe"
+
+[resource]
+script = ExtResource("2_l0ktv")
+action_name = "Suppressive Fire"
+icon = ExtResource("2_hx00v")
+auto_target = true
+target_type = 1
+effects = Array[ExtResource("1_ii07i")]([SubResource("Resource_meswp")])
+metadata/_custom_type_script = "uid://dm08rhkg3bai3"

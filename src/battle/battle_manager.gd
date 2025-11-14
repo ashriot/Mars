@@ -391,30 +391,53 @@ func _on_hero_role_shifted(hero_card: HeroCard):
 	set_current_action(action)
 
 func get_targets(target_type: Action.TargetType, friendly: bool, parent_targets: Array = []) -> Array:
-		var target_list = []
-		match target_type:
-			Action.TargetType.PARENT:
-				target_list = parent_targets
-			Action.TargetType.SELF:
-				target_list.append(current_actor)
-			Action.TargetType.ALL_ENEMIES:
-				if friendly:
-					target_list = get_living_enemies()
-				else:
-					target_list = get_living_heroes()
-			Action.TargetType.ALLY, Action.TargetType.ALL_ALLIES:
-				if friendly:
-					target_list = get_living_heroes()
-			Action.TargetType.ALLIES_ONLY, Action.TargetType.ALLY_ONLY:
-				if friendly:
-					for ally in get_living_heroes():
-						if ally != current_actor:
-							target_list.append(ally)
-				else:
-					target_list = get_living_enemies()
-			_:
-				push_error("get_target() unknown target type!")
-		return target_list
+	var enemies = []
+	var heroes = []
+	enemies = get_living_enemies()
+	heroes = get_living_heroes()
+
+	var target_list = []
+	match target_type:
+		Action.TargetType.PARENT:
+			target_list = parent_targets
+		Action.TargetType.SELF:
+			target_list.append(current_actor)
+		Action.TargetType.ONE_ENEMY, Action.TargetType.RANDOM_ENEMY, Action.TargetType.ALL_ENEMIES:
+			if friendly:
+				target_list = enemies
+			else:
+				target_list = heroes
+		Action.TargetType.ALLY, Action.TargetType.ALL_ALLIES:
+			if friendly:
+				target_list = heroes
+			else:
+				target_list = enemies
+		Action.TargetType.ALLIES_ONLY, Action.TargetType.ALLY_ONLY:
+			var allies = []
+			if friendly:
+				allies = heroes
+			else:
+				allies = enemies
+			for ally in allies:
+				if ally != current_actor:
+					target_list.append(ally)
+		Action.TargetType.LEAST_GUARD_ALLY:
+			var allies = []
+			if friendly:
+				allies = heroes
+			else:
+				allies = enemies
+			if allies.is_empty():
+				push_error("No allies found!")
+				return []
+			var target_ally: ActorCard = allies[0]
+			for ally in allies:
+				if ally.current_guard < target_ally.current_guard:
+					target_ally = ally
+					target_list.append(target_ally)
+		_:
+			push_error("get_target() unknown target type!")
+	return target_list
 
 func _flush_all_health_animations() -> void:
 	var tweens_to_await = []

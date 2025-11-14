@@ -107,6 +107,20 @@ theme_override_font_sizes/font_size = 30
 text = "Counterattack"
 horizontal_alignment = 2
 
+[node name="ShiftForm" type="Label" parent="Actions/Passive/Title"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 15.0
+offset_top = -21.0
+offset_right = -45.0
+offset_bottom = 4.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 20
+text = "PASSIVE"
+horizontal_alignment = 2
+vertical_alignment = 2
+
 [node name="Icon" type="TextureRect" parent="Actions/Passive"]
 layout_mode = 1
 anchors_preset = 9
@@ -117,7 +131,21 @@ mouse_filter = 2
 texture = ExtResource("3_yabx2")
 expand_mode = 1
 
-[node name="ShiftForm" type="Label" parent="Actions/Passive"]
+[node name="ShiftAction" type="Panel" parent="Actions"]
+modulate = Color(1, 1, 1, 0.5019608)
+custom_minimum_size = Vector2(320, 70)
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -320.0
+offset_top = -70.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="ShiftAction" type="Label" parent="Actions/ShiftAction"]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
@@ -127,9 +155,37 @@ offset_right = -35.0
 offset_bottom = 30.0
 grow_horizontal = 2
 theme_override_font_sizes/font_size = 20
-text = "Passive"
+text = "SHIFT ACTION"
 horizontal_alignment = 2
 vertical_alignment = 2
+
+[node name="ActionName" type="Label" parent="Actions/ShiftAction"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = -44.0
+offset_right = -10.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 12
+theme_override_font_sizes/font_size = 30
+text = "Opening Shot"
+horizontal_alignment = 2
+
+[node name="Icon" type="TextureRect" parent="Actions/ShiftAction"]
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_right = 70.0
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("3_yabx2")
+expand_mode = 1
 
 [node name="LeftShift" type="Control" parent="."]
 custom_minimum_size = Vector2(280, 0)
@@ -140,6 +196,20 @@ anchor_bottom = 1.0
 offset_top = -70.0
 offset_right = 280.0
 grow_vertical = 0
+
+[node name="ShiftForm" type="Label" parent="LeftShift"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 25.0
+offset_top = 5.0
+offset_right = -35.0
+offset_bottom = 30.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 20
+text = "<SHIFT"
+horizontal_alignment = 2
+vertical_alignment = 2
 
 [node name="Button" type="Button" parent="LeftShift"]
 layout_mode = 1
@@ -177,20 +247,6 @@ theme_override_font_sizes/font_size = 30
 text = "Commander"
 horizontal_alignment = 2
 
-[node name="ShiftForm" type="Label" parent="LeftShift"]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_left = 25.0
-offset_top = 5.0
-offset_right = -35.0
-offset_bottom = 30.0
-grow_horizontal = 2
-theme_override_font_sizes/font_size = 20
-text = "Shift"
-horizontal_alignment = 2
-vertical_alignment = 2
-
 [node name="RightShift" type="Control" parent="."]
 custom_minimum_size = Vector2(280, 0)
 layout_mode = 1
@@ -203,6 +259,19 @@ offset_left = -280.0
 offset_top = -70.0
 grow_horizontal = 0
 grow_vertical = 0
+
+[node name="ShiftForm" type="Label" parent="RightShift"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 25.0
+offset_top = 5.0
+offset_right = -35.0
+offset_bottom = 30.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 20
+text = "SHIFT>"
+vertical_alignment = 2
 
 [node name="Button" type="Button" parent="RightShift"]
 layout_mode = 1
@@ -241,16 +310,3 @@ theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 12
 theme_override_font_sizes/font_size = 30
 text = "Commander"
-
-[node name="ShiftForm" type="Label" parent="RightShift"]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_left = 25.0
-offset_top = 5.0
-offset_right = -35.0
-offset_bottom = 30.0
-grow_horizontal = 2
-theme_override_font_sizes/font_size = 20
-text = "Shift"
-vertical_alignment = 2
