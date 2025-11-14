@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="Condition" load_steps=4 format=3 uid="uid://donnpsftfeodn"]
+
+[ext_resource type="Texture2D" uid="uid://6j4nnmndm12j" path="res://assets/graphics/icons/skills/bullets.png" id="1_t13li"]
+[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://data/scripts/conditions/condition.gd" id="2_5uhi3"]
+[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://data/scripts/conditions/trigger.gd" id="3_5atxy"]
+
+[resource]
+script = ExtResource("2_5uhi3")
+condition_name = "Bullet Time"
+icon = ExtResource("1_t13li")
+condition_type = 1
+speed_scalar = -0.15
+is_passive = true
+metadata/_custom_type_script = "uid://df30dm288ne1d"

@@ -3,19 +3,19 @@
 [ext_resource type="Script" uid="uid://dc5sk0b0jubvj" path="res://data/scripts/hero_data.gd" id="1_avsjj"]
 [ext_resource type="Script" uid="uid://b70gwt4gd4cun" path="res://data/scripts/actor_stats.gd" id="1_s0m5y"]
 [ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/role.gd" id="2_s0m5y"]
-[ext_resource type="Resource" uid="uid://c7bb8vuamp7ai" path="res://data/heroes/roles/asher/enforcer.tres" id="4_5x710"]
+[ext_resource type="Resource" uid="uid://c7bb8vuamp7ai" path="res://data/heroes/roles/asher/gunslinger.tres" id="4_me7og"]
 [ext_resource type="Resource" uid="uid://c03acvaovbpqc" path="res://data/heroes/roles/asher/sniper.tres" id="5_eg0kb"]
 [ext_resource type="Resource" uid="uid://cny303enqave" path="res://data/heroes/roles/asher/operative.tres" id="6_ic7xg"]
 
 [sub_resource type="Resource" id="Resource_tqnt4"]
 script = ExtResource("1_s0m5y")
 actor_name = "Asher"
-max_hp = 200
+max_hp = 121
 guard = 4
-attack = 35
-psyche = 30
-overload = 30
-speed = 46
+attack = 50
+psyche = 35
+overload = 34
+speed = 66
 precision = 14
 kinetic_defense = 36
 energy_defense = 31
@@ -24,5 +24,5 @@ metadata/_custom_type_script = "uid://b70gwt4gd4cun"
 [resource]
 script = ExtResource("1_avsjj")
 stats = SubResource("Resource_tqnt4")
-unlocked_roles = Array[ExtResource("2_s0m5y")]([ExtResource("4_5x710"), ExtResource("5_eg0kb"), ExtResource("6_ic7xg")])
+unlocked_roles = Array[ExtResource("2_s0m5y")]([ExtResource("4_me7og"), ExtResource("5_eg0kb"), ExtResource("6_ic7xg")])
 metadata/_custom_type_script = "uid://dc5sk0b0jubvj"

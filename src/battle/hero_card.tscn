@@ -13,7 +13,7 @@ border_width_left = 8
 border_width_top = 8
 border_width_right = 8
 border_width_bottom = 8
-border_color = Color(1, 0.65, 0, 1)
+border_color = Color(1, 1, 1, 1)
 corner_radius_top_left = 17
 corner_radius_top_right = 17
 corner_radius_bottom_right = 17
@@ -55,6 +55,7 @@ layout_mode = 3
 anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
+mouse_filter = 2
 script = ExtResource("1_n7b5o")
 slide_offset_y = -50
 damage_popup_scene = ExtResource("2_nheih")
@@ -68,7 +69,6 @@ anchor_bottom = 1.0
 offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
 
 [node name="Highlight" type="Panel" parent="Panel"]
 layout_mode = 1
@@ -473,14 +473,14 @@ mouse_filter = 2
 texture = ExtResource("3_d6207")
 expand_mode = 1
 
-[node name="BreachedLabel" type="Label" parent="."]
+[node name="BreachedLabel" type="Label" parent="Panel"]
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -27.0
-offset_bottom = 25.0
+offset_top = -7.0
+offset_bottom = 45.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.32941177)
@@ -493,4 +493,4 @@ theme_override_font_sizes/font_size = 40
 text = "BREACHED"
 horizontal_alignment = 1
 
-[connection signal="gui_input" from="." to="." method="_on_gui_input"]
+[connection signal="gui_input" from="Panel" to="." method="_on_gui_input"]

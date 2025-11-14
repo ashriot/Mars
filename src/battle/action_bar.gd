@@ -77,7 +77,7 @@ func update_action_bar(hero_card: HeroCard):
 		if button.pressed.is_connected(_on_action_button_pressed):
 			button.pressed.disconnect(_on_action_button_pressed)
 		button.pressed.connect(_on_action_button_pressed.bind(button))
-		button.setup(action_data, hero_card.current_focus_pips, current_role.color)
+		button.setup(action_data, hero_card.current_focus_pips, hero_card.get_scaled_focus_cost(action_data.focus_cost),current_role.color)
 		button.show()
 
 	if current_role.passive:

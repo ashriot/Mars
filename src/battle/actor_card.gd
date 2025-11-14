@@ -45,11 +45,11 @@ const POPUP_SPACING_TIME: float = 1.0
 @onready var name_label: Label = $Panel/Title
 @onready var hp_bar_ghost: ProgressBar = $Panel/HP/BarGhost
 @onready var hp_bar_actual: ProgressBar = $Panel/HP/BarActual
+@onready var panel: Panel = $Panel
 @onready var hp_value: Label = $Panel/HP/Value
 @onready var guard_bar: HBoxContainer = $Panel/GuardBar
 @onready var portrait_rect: TextureRect = $Panel/Portrait
-@onready var breached_label: Label = $BreachedLabel
-@onready var panel: Panel = $Panel
+@onready var breached_label: Label = $Panel/BreachedLabel
 @onready var highlight_panel: Panel = $Panel/Highlight
 @onready var target_flash: Panel = $Panel/TargetFlash
 
@@ -130,6 +130,8 @@ func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_po
 	var def_mod = 1.0
 	if is_breached:
 		def_mod = 0.5
+	if is_crit:
+		def_mod = 0
 	if damage_effect.damage_type == Action.DamageType.KINETIC:
 		final_dmg_float *= (1.0 - float(current_stats.kinetic_defense * def_mod) / 100)
 	else: # ENERGY
@@ -444,12 +446,7 @@ func _animate_pip_loss(pip_node: Control):
 	tween.finished.connect(func(): pip_node.hide())
 
 func highlight(value: bool):
-	if value:
-		$Panel/Title.modulate = Color("#ffc800")
-		highlight_panel.show()
-	else:
-		$Panel/Title.modulate = Color.WHITE
-		highlight_panel.hide()
+	highlight_panel.visible = value
 
 func start_flashing():
 	is_valid_target = true
@@ -511,7 +508,7 @@ func get_precision() -> int:
 	return current_stats.precision + mod
 
 func get_crit_damage_bonus() -> float:
-	return 0.5
+	return 0.0
 
 func get_damage_dealt_scalar() -> float:
 	var scalar: float = 1.0

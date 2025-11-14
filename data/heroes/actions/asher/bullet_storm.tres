@@ -13,9 +13,8 @@ metadata/_custom_type_script = "uid://d0eibi4b735ay"
 
 [resource]
 script = ExtResource("4_psj4h")
-action_name = "Barrage"
+action_name = "Bullet Storm"
 icon = ExtResource("3_6oktr")
-description = "Attack an enemy twice, each hit dealing X% damage."
 focus_cost = 4
 target_type = 3
 effects = Array[ExtResource("1_6oktr")]([SubResource("Resource_dp3ce")])

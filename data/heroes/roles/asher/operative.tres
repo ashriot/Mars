@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="Role" load_steps=6 format=3 uid="uid://cny303enqave"]
 
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_6fell"]
-[ext_resource type="Resource" uid="uid://7dg4i7k6dya0" path="res://data/heroes/actions/asher/double_tap.tres" id="2_gbex6"]
+[ext_resource type="Resource" uid="uid://dwd1ggnmfyj7t" path="res://data/heroes/actions/asher/preparation.tres" id="2_gbex6"]
 [ext_resource type="Resource" uid="uid://cg0jwg4m14vwn" path="res://data/heroes/actions/asher/siphon_shots.tres" id="3_gytd5"]
 [ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/role.gd" id="4_04tj5"]
 [ext_resource type="Texture2D" uid="uid://m3oty7ssw1by" path="res://assets/graphics/icons/roles/walkie-talkie.png" id="4_gbex6"]

@@ -6,7 +6,7 @@
 
 [resource]
 script = ExtResource("3_mlwr2")
-action_name = "Siphoning Shots"
+action_name = "Siphon Shots"
 icon = ExtResource("2_trwkj")
 description = "Attack an enemy three times, each hit dealing X% damage. Then heal HP equal to 50% of the damage you dealt."
 focus_cost = 3

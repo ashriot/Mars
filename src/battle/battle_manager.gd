@@ -221,34 +221,11 @@ func _on_actor_revived(actor: ActorCard):
 	# (This is a future-proof check)
 
 func set_current_action(action: Action):
-	var target_list = []
-
 	current_action = action
-
-	match action.target_type:
-		Action.TargetType.ONE_ENEMY, Action.TargetType.ALL_ENEMIES, Action.TargetType.RANDOM_ENEMY:
-			target_list = get_living_enemies()
-
-		Action.TargetType.SELF:
-			target_list = [current_actor]
-		Action.TargetType.ALLY, Action.TargetType.ALLY_ONLY, Action.TargetType.ALL_ALLIES, Action.TargetType.ALLIES_ONLY:
-			target_list = get_living_heroes()
-
-		_:
-			push_error("Unknown target type! Canceling.")
+	var target_list = get_targets(action.target_type, true)
 
 	for target in target_list:
 		target.start_flashing()
-
-func _on_action_button_pressed(button: ActionButton):
-	if current_state in [State.LOADING]: return
-
-	var action = button.action
-	if current_actor.current_focus_pips < action.focus_cost:
-		return
-
-	_focus_button(button)
-	set_current_action(action)
 
 func _focus_button(button: ActionButton):
 	if focused_button:
@@ -257,48 +234,6 @@ func _focus_button(button: ActionButton):
 		focused_button = null
 	focused_button = button
 	focused_button.focused(true)
-
-func _on_hero_clicked(target_hero: HeroCard):
-	if not target_hero.is_valid_target: return
-
-	print("Target selected: ", target_hero.actor_name)
-	change_state(State.EXECUTING_ACTION)
-	action_bar.hide_bar()
-
-	var targets_array = []
-	match current_action.target_type:
-		Action.TargetType.SELF, Action.TargetType.ALLY:
-			targets_array.append(target_hero)
-		Action.TargetType.ALL_ALLIES:
-			targets_array = get_living_heroes()
-		Action.TargetType.ALLIES_ONLY:
-			for ally in get_living_heroes():
-				if ally != current_actor:
-					targets_array.append(ally)
-
-	await execute_action(current_actor, current_action, targets_array)
-	await _finish_hero_turn()
-
-func _on_enemy_clicked(target_enemy: EnemyCard):
-	if not target_enemy.is_valid_target: return
-
-	if target_enemy.is_defeated:
-			print("Target is already defeated.")
-			return
-
-	change_state(State.EXECUTING_ACTION)
-	action_bar.hide_bar()
-
-	var targets_array = []
-	match current_action.target_type:
-		Action.TargetType.ONE_ENEMY:
-			targets_array.append(target_enemy)
-
-		Action.TargetType.ALL_ENEMIES, Action.TargetType.RANDOM_ENEMY:
-			targets_array = enemy_area.get_children()
-
-	await execute_action(current_actor, current_action, targets_array)
-	_finish_hero_turn()
 
 func _finish_hero_turn():
 	current_action = null
@@ -344,7 +279,7 @@ func execute_enemy_turn(enemy: EnemyCard):
 	change_state(State.EXECUTING_ACTION)
 	print("\n", enemy.actor_name, " is executing its turn!")
 	enemy.show_action()
-	await wait(0.25)
+	await wait(0.5)
 
 	var action = enemy.intended_action
 	var targets = enemy.intended_targets
@@ -381,13 +316,57 @@ func _on_actor_conditions_changed(_actor_who_changed: ActorCard, retarget: bool)
 		if retarget:
 			enemy.get_a_target(living_heroes)
 
+func _on_action_button_pressed(button: ActionButton):
+	if current_state in [State.LOADING]: return
+
+	var action = button.action
+	if current_actor.current_focus_pips < action.focus_cost:
+		return
+
+	_focus_button(button)
+	set_current_action(action)
+
+func _on_hero_clicked(target_hero: HeroCard):
+	if not target_hero.is_valid_target: return
+
+	print("Target selected: ", target_hero.actor_name)
+	change_state(State.EXECUTING_ACTION)
+	action_bar.hide_bar()
+
+	var target_list = []
+	target_list = get_targets(current_action.target_type, true)
+
+	await execute_action(current_actor, current_action, target_list)
+	await _finish_hero_turn()
+
+func _on_enemy_clicked(target_enemy: EnemyCard):
+	if not target_enemy.is_valid_target: return
+
+	if target_enemy.is_defeated:
+			print("Target is already defeated.")
+			return
+
+	change_state(State.EXECUTING_ACTION)
+	action_bar.hide_bar()
+
+	var targets_array = []
+	match current_action.target_type:
+		Action.TargetType.ONE_ENEMY:
+			targets_array.append(target_enemy)
+
+		Action.TargetType.ALL_ENEMIES, Action.TargetType.RANDOM_ENEMY:
+			targets_array = enemy_area.get_children()
+
+	await execute_action(current_actor, current_action, targets_array)
+	_finish_hero_turn()
+
 func _on_shift_button_pressed(direction: String):
-	if current_state in [State.LOADING, State.EXECUTING_ACTION]: return
+	if current_state in [State.LOADING]: return
 	current_action = null
 	_clear_all_targeting_ui()
 
 	if current_actor:
-		change_state(State.EXECUTING_ACTION)
+		change_state(State.LOADING)
 		await action_bar.slide_out()
 		await current_actor.shift_role(direction)
 		await action_bar.slide_in()
@@ -423,11 +402,18 @@ func get_targets(target_type: Action.TargetType, friendly: bool, parent_targets:
 					target_list = get_living_enemies()
 				else:
 					target_list = get_living_heroes()
-			Action.TargetType.ALL_ALLIES:
+			Action.TargetType.ALLY, Action.TargetType.ALL_ALLIES:
 				if friendly:
 					target_list = get_living_heroes()
+			Action.TargetType.ALLIES_ONLY, Action.TargetType.ALLY_ONLY:
+				if friendly:
+					for ally in get_living_heroes():
+						if ally != current_actor:
+							target_list.append(ally)
 				else:
 					target_list = get_living_enemies()
+			_:
+				push_error("get_target() unknown target type!")
 		return target_list
 
 func _flush_all_health_animations() -> void:

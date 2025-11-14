@@ -94,6 +94,7 @@ func shift_role(direction: String):
 func spend_focus(amount: int):
 	current_focus_pips -= amount
 	update_focus_bar()
+	await _fire_condition_event(Trigger.TriggerType.ON_SPENDING_FOCUS)
 
 func update_focus_bar():
 	var pips = focus_bar.get_children()
@@ -103,6 +104,11 @@ func update_focus_bar():
 		else:
 			pips[i].visible = false
 	focus_changed.emit(current_focus_pips)
+
+func get_scaled_focus_cost(cost: int) -> int:
+	if has_condition("Preparation"):
+		return int(cost / 2)
+	return cost
 
 func _slide_up():
 	var tween = create_tween().set_parallel()
@@ -138,3 +144,4 @@ func recolor():
 	role_icon.self_modulate = color
 	focus_bar.modulate = color
 	guard_bar.modulate = color
+	highlight_panel.modulate = color

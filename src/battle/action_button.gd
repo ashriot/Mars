@@ -11,33 +11,36 @@ signal pressed(action_button: ActionButton)
 
 var action : Action
 var user_focus: int
+var focus_cost: int
 var disabled:
 	set(value):
 		button.disabled = value
 		if action:
 			if not value:
-				button.disabled = user_focus < action.focus_cost
+				button.disabled = user_focus < focus_cost
 	get: return button.disabled
 
 
-func setup(_action: Action, cur_focus: int, color: Color):
+func setup(_action: Action, cur_focus: int, scaled_focus: int, color: Color):
 	action = _action
 	user_focus = cur_focus
+	focus_cost = scaled_focus
 	label.text = action.action_name
 	icon.texture = action.icon
 	update_cost()
-	button.disabled = user_focus < action.focus_cost
+	button.disabled = user_focus < focus_cost
 	button.modulate = color
 	icon.modulate = color
 	label.modulate = color
 	focus_pips.modulate = color
+	highlight_panel.modulate = color
 	$Glyph.modulate = color
 	highlight_panel.hide()
 
 func update_cost():
 	var pips = focus_pips.get_children()
 	for i in pips.size():
-		if i < action.focus_cost:
+		if i < focus_cost:
 			pips[i].visible = true
 		else:
 			pips[i].visible = false
