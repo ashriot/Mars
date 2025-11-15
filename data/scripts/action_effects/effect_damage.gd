@@ -16,17 +16,17 @@ class_name Effect_Damage
 
 
 func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleManager, action: Action = null) -> void:
-	var final_targets: Array = []
-	match target_type:
-		Action.TargetType.PARENT:
-			final_targets = parent_targets
-		Action.TargetType.ALL_ENEMIES:
-			if attacker is HeroCard:
-				for enemy in battle_manager.get_living_enemies():
-					final_targets.append(enemy)
-			else:
-				for hero in battle_manager.get_living_heroes():
-					final_targets.append(hero)
+	var final_targets: Array = parent_targets
+	#match target_type:
+		#Action.TargetType.PARENT:
+			#final_targets = parent_targets
+		#Action.TargetType.ALL_ENEMIES:
+			#if attacker is HeroCard:
+				#for enemy in battle_manager.get_living_enemies():
+					#final_targets.append(enemy)
+			#else:
+				#for hero in battle_manager.get_living_heroes():
+					#final_targets.append(hero)
 
 	print("\n--- Damage Effect for ", hit_count, " hit(s) ---")
 	var random = false

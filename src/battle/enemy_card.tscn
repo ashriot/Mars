@@ -49,7 +49,7 @@ corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
 [node name="EnemyCard" type="Control"]
-custom_minimum_size = Vector2(400, 200)
+custom_minimum_size = Vector2(400, 180)
 layout_mode = 3
 anchors_preset = 0
 offset_right = 40.0
@@ -58,7 +58,6 @@ script = ExtResource("1_cu1kv")
 damage_popup_scene = ExtResource("2_xkcvw")
 
 [node name="Panel" type="Panel" parent="."]
-custom_minimum_size = Vector2(400, 200)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -97,14 +96,14 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_1mnyd")
 
 [node name="Title" type="Label" parent="Panel"]
 layout_mode = 1
-anchors_preset = 4
-anchor_top = 0.5
-anchor_bottom = 0.5
-offset_left = 4.0
-offset_top = -44.0
-offset_right = 397.0
-offset_bottom = 5.0
-grow_vertical = 2
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -196.5
+offset_top = 37.0
+offset_right = 196.5
+offset_bottom = 86.0
+grow_horizontal = 2
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.78431374)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/shadow_offset_x = 0
@@ -313,17 +312,9 @@ mouse_filter = 2
 [node name="KinDef" type="Label" parent="Panel"]
 modulate = Color(1, 1, 1, 0.7058824)
 layout_mode = 1
-anchors_preset = 6
-anchor_left = 1.0
-anchor_top = 0.5
-anchor_right = 1.0
-anchor_bottom = 0.5
-offset_left = -390.0
-offset_top = -95.0
-offset_right = -250.0
-offset_bottom = -15.0
-grow_horizontal = 0
-grow_vertical = 2
+offset_left = 8.0
+offset_right = 148.0
+offset_bottom = 80.0
 theme_override_constants/outline_size = 5
 theme_override_font_sizes/font_size = 32
 text = "Defense"
@@ -331,17 +322,13 @@ text = "Defense"
 [node name="NrgDef" type="Label" parent="Panel"]
 modulate = Color(1, 1, 1, 0.7058824)
 layout_mode = 1
-anchors_preset = 6
+anchors_preset = 1
 anchor_left = 1.0
-anchor_top = 0.5
 anchor_right = 1.0
-anchor_bottom = 0.5
-offset_left = -150.0
-offset_top = -95.0
-offset_right = -10.0
-offset_bottom = -15.0
+offset_left = -147.0
+offset_right = -7.0
+offset_bottom = 80.0
 grow_horizontal = 0
-grow_vertical = 2
 theme_override_constants/outline_size = 5
 theme_override_font_sizes/font_size = 32
 text = "Defense"
@@ -426,6 +413,26 @@ mouse_filter = 2
 texture = ExtResource("2_e8ixv")
 expand_mode = 1
 stretch_mode = 5
+
+[node name="HP" type="Label" parent="Panel/HP"]
+visible = false
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 13.0
+offset_top = -48.440857
+offset_right = 179.0
+offset_bottom = 13.559143
+grow_vertical = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.78431374)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 0
+theme_override_constants/outline_size = 4
+theme_override_constants/shadow_outline_size = 20
+theme_override_font_sizes/font_size = 50
+text = "HP"
 
 [node name="Value" type="Label" parent="Panel/HP"]
 layout_mode = 1

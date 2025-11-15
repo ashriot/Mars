@@ -27,6 +27,7 @@ var current_hp: int
 var current_guard: int
 var current_ct: int = 0
 var is_breached: bool
+var is_in_danger: bool
 var is_defeated: bool
 var active_conditions: Array[Condition] = []
 var current_stats: ActorStats
@@ -114,9 +115,7 @@ func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_po
 		else:
 			shake_panel()
 	elif damage_effect.shreds_guard:
-		current_guard -= 1
-		current_guard = clamp(current_guard, 0, MAX_GUARD)
-		print("Current guard is: ", current_guard)
+		modify_guard(-1)
 	shake_panel()
 
 	var power_for_hit = attacker.get_power(damage_effect.power_type)
@@ -156,18 +155,26 @@ func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_po
 	if current_hp == 0:
 		await defeated()
 		return
-	var context = { }
+	var context = { "attacker": attacker, "targets": [self] }
 	if damage_effect.damage_type == Action.DamageType.KINETIC:
-		context.get_or_add("targets", [self])
 		await _fire_condition_event(Trigger.TriggerType.ON_TAKING_KINETIC_DAMAGE, context)
 	elif damage_effect.damage_type == Action.DamageType.ENERGY:
-		context.get_or_add("targets", [self])
 		await _fire_condition_event(Trigger.TriggerType.ON_TAKING_ENERGY_DAMAGE, context)
 	await _fire_condition_event(Trigger.TriggerType.ON_BEING_HIT, context)
 
 	return
 
+func in_danger(value: bool):
+	is_in_danger = value
+	breached_label.text = "CAUTION"
+	if value:
+		_start_breach_pulse()
+	else:
+		_stop_breach_pulse()
+
 func breached():
+	is_in_danger = false
+	breached_label.text = "BREACHED"
 	guard_bar.modulate.a = 0.5
 	is_breached = true
 	current_ct = 0
@@ -284,20 +291,22 @@ func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary 
 					self.passive_fired.emit()
 			if trigger.is_attack:
 				is_attack = true
-			await battle_manager.wait(0.25)
+			await battle_manager.wait(0.15)
 			print("Condition '", condition.condition_name, "' is firing effects for '", event_type, "'")
 			var targets = []
-			var attacker = self
+			var source = self
+			var attacker = null
 			if condition.attacker:
-				attacker = condition.attacker
+				source = condition.attacker
 			var action = context.get("action")
 			if context.has("targets"):
 				targets = context.targets
+			if context.has("attacker"):
+				attacker = context.attacker
 			for effect in trigger.effects_to_run:
 				effect = effect as ActionEffect
-				if targets.is_empty():
-					targets = battle_manager.get_targets(effect.target_type, self is HeroCard, targets)
-				await battle_manager.execute_triggered_effect(attacker, effect, targets, action)
+				targets = battle_manager.get_targets(effect.target_type, self is HeroCard, targets, attacker)
+				await battle_manager.execute_triggered_effect(source, effect, targets, action)
 				await battle_manager._flush_all_health_animations()
 
 func update_health_bar():
@@ -329,7 +338,13 @@ func modify_guard(amount: int):
 	current_guard = clamp(current_guard + amount, 0, MAX_GUARD)
 
 	print(actor_name, " gained ", amount, " guard. Total: ", current_guard)
-	await _fire_condition_event(Trigger.TriggerType.ON_GAINING_GUARD)
+	if amount > 0:
+		await _fire_condition_event(Trigger.TriggerType.ON_GAINING_GUARD)
+	if current_guard == 0:
+		in_danger(true)
+	elif is_in_danger:
+		in_danger(false)
+
 	update_guard_bar()
 
 func update_guard_bar(animate: bool = true):
@@ -369,6 +384,9 @@ func hide_action():
 	await tween.finished.connect(func(): action_display.hide())
 
 func _start_breach_pulse():
+	var color = Color.ORANGE_RED
+	if is_in_danger:
+		color = Color.GOLD
 	breached_label.show()
 	if pulse_tween: pulse_tween.kill()
 
@@ -377,7 +395,7 @@ func _start_breach_pulse():
 	pulse_tween.tween_property(
 		breached_label,
 		"self_modulate",
-		Color.ORANGE_RED,
+		color,
 		0.5 / battle_manager.battle_speed
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 

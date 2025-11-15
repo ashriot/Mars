@@ -13,10 +13,9 @@ enum TargetType {
 	ALLY_ONLY,
 	ALL_ALLIES,
 	ALLIES_ONLY,
-
-	# Effect-facing (for the Effect scripts)
 	PARENT, # "Use the target(s) from the parent action"
-	LEAST_GUARD_ALLY
+	LEAST_GUARD_ALLY,
+	ATTACKER
 }
 
 @export var action_name: String = "New Action"

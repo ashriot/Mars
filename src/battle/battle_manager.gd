@@ -404,7 +404,7 @@ func _on_hero_role_shifted(hero_card: HeroCard):
 	print("Action requires a target. Waiting for click...")
 	set_current_action(action)
 
-func get_targets(target_type: Action.TargetType, friendly: bool, parent_targets: Array = []) -> Array:
+func get_targets(target_type: Action.TargetType, friendly: bool, parent_targets: Array = [], attacker: ActorCard = null) -> Array:
 	var enemies = []
 	var heroes = []
 	enemies = get_living_enemies()
@@ -414,6 +414,8 @@ func get_targets(target_type: Action.TargetType, friendly: bool, parent_targets:
 	match target_type:
 		Action.TargetType.PARENT:
 			target_list = parent_targets
+		Action.TargetType.ATTACKER:
+			target_list = [attacker]
 		Action.TargetType.SELF:
 			target_list.append(current_actor)
 		Action.TargetType.ONE_ENEMY, Action.TargetType.RANDOM_ENEMY, Action.TargetType.ALL_ENEMIES:

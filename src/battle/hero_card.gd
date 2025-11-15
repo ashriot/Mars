@@ -109,7 +109,7 @@ func update_focus_bar(animate: bool = true):
 				_animate_pip_gain(pip_node)
 		elif pip_node.visible:
 			if animate:
-				await _animate_pip_loss(pip_node)
+				_animate_pip_loss(pip_node)
 			else:
 				pip_node.hide()
 

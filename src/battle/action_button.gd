@@ -23,6 +23,7 @@ var disabled:
 
 func setup(_action: Action, cur_focus: int, scaled_focus: int, color: Color):
 	action = _action
+	button.tooltip_text = action.description
 	user_focus = cur_focus
 	focus_cost = scaled_focus
 	label.text = action.action_name
