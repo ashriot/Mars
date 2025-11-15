@@ -28,7 +28,6 @@ func setup(_action: Action, cur_focus: int, scaled_focus: int, color: Color):
 	label.text = action.action_name
 	icon.texture = action.icon
 	update_cost()
-	button.disabled = user_focus < focus_cost
 	button.modulate = color
 	icon.modulate = color
 	label.modulate = color

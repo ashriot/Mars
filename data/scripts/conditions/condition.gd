@@ -12,6 +12,7 @@ enum ConditionType { BUFF, DEBUFF }
 @export var speed_scalar: float = 0.0
 @export var damage_dealt_scalar: float = 0.0
 @export var damage_taken_scalar: float = 0.0
+@export var focus_cost_reduction: float = 0.0
 
 @export_group("Triggers & Effects")
 @export var is_passive: bool = false

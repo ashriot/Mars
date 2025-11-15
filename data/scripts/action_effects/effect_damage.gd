@@ -12,10 +12,10 @@ class_name Effect_Damage
 
 @export var potency_per_focus: float = 0.0
 @export var potency_scalar_per_focus: float = 0.0
+@export var on_hit_triggers: Array[HitTrigger]
 
 
 func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleManager, action: Action = null) -> void:
-
 	var final_targets: Array = []
 	match target_type:
 		Action.TargetType.PARENT:
@@ -56,6 +56,7 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 				break
 			if split_damage: dynamic_potency /= final_targets.size()
 			await target.apply_one_hit(self, attacker, dynamic_potency)
+			await _process_on_hit_triggers(attacker, target, battle_manager)
 
 			if random and target.is_defeated:
 				final_targets.remove_at(t)
@@ -81,3 +82,28 @@ func get_dynamic_potency(attacker: ActorCard, _target: ActorCard, focus_cost: in
 		return potency * (1.0 + (potency_scalar_per_focus * remaining_focus))
 
 	return potency
+
+func _process_on_hit_triggers(attacker: ActorCard, target: ActorCard, battle_manager: BattleManager) -> void:
+	for hit_trigger in on_hit_triggers:
+		var condition_met = false
+
+		# --- Check the "WHEN" ---
+		match hit_trigger.condition:
+			HitTrigger.HitCondition.ALWAYS:
+				condition_met = true
+
+			HitTrigger.HitCondition.IF_TARGET_IS_BREACHED:
+				if target.is_breached:
+					condition_met = true
+
+			HitTrigger.HitCondition.IF_TARGET_HAS_DEBUFF:
+				# (We need to add this helper to ActorCard)
+				if target.count_debuffs() > 0:
+					condition_met = true
+
+			# (Add more checks here as you need them)
+
+		if condition_met:
+			print("On-hit trigger fired!")
+			for effect in hit_trigger.effects_to_run:
+				await battle_manager.execute_triggered_effect(attacker, effect, [target], null)

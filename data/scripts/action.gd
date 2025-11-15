@@ -24,6 +24,7 @@ enum TargetType {
 @export_multiline var description: String = ""
 @export var focus_cost: int = 0
 @export var auto_target: bool = false
+@export var is_shift_action: bool = false
 
 @export var target_type: TargetType = TargetType.ONE_ENEMY
 @export var effects: Array[ActionEffect]

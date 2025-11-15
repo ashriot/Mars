@@ -14,7 +14,6 @@ var intent_flash_tween: Tween
 # --- UNIQUE UI Node References ---
 @onready var intent_icon: TextureRect = $Panel/IntentIcon
 @onready var intent_text: Label = $Panel/IntentText
-@onready var action_display: PanelContainer = $Panel/ActionName
 
 
 func setup(data: EnemyData):
@@ -27,7 +26,6 @@ func setup(data: EnemyData):
 	$Panel/NrgDef.text = "NRG:\n" + str(enemy_data.stats.energy_defense) + "%"
 	if enemy_data.portrait:
 		portrait_rect.texture = enemy_data.portrait
-	action_display.hide()
 
 func get_next_action() -> Action:
 	if enemy_data.action_deck.is_empty():
@@ -193,22 +191,6 @@ func flash_intent(duration: float = 0.3):
 		base_color, duration).set_trans(Tween.TRANS_SINE)
 
 	await intent_flash_tween.finished
-
-func show_action():
-	var duration = 0.1 / battle_manager.battle_speed
-	var label = action_display.get_node("MarginContainer/Label")
-	label.text = intended_action.action_name.to_upper()
-	action_display.modulate.a = 0.0
-	action_display.show()
-
-	var tween = create_tween()
-	tween.tween_property(action_display, "modulate:a", 1.0, duration)
-
-func hide_action():
-	var duration = 0.3 / battle_manager.battle_speed
-	var tween = create_tween()
-	tween.tween_property(action_display, "modulate:a", 0.0, duration)
-	await tween.finished.connect(func(): action_display.hide())
 
 func _on_gui_input(event: InputEvent):
 	if event.is_action_pressed("ui_accept"):

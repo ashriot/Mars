@@ -1,25 +1,27 @@
 extends Control
 class_name ActionBar
 
-signal action_selected(button, target)
 signal slide_finished
+signal action_selected(button, target)
 signal shift_button_pressed(direction)
 
 @export var ActionButtonScene : PackedScene
 @export var battle_manager : BattleManager
 
 @onready var actions_ui = $Actions
-@onready var left_shift_button = $LeftShift/Button
-@onready var right_shift_button = $RightShift/Button
+@onready var left_shift_button: Button = $LeftShift/Button
+@onready var right_shift_button: Button = $RightShift/Button
 @onready var left_shift_ui = $LeftShift
 @onready var right_shift_ui = $RightShift
 @onready var passive_panel: Panel = $Actions/Passive
+@onready var shift_action_panel: Panel = $Actions/ShiftAction
 
 var sliding: bool
 var left_shift_on_screen_pos: Vector2
 var right_shift_on_screen_pos: Vector2
 var actions_on_screen_pos: Vector2
 var passive_flash_tween: Tween
+var flashing_tween: Tween
 var active_hero: HeroCard
 
 
@@ -37,22 +39,16 @@ func _ready():
 
 	slide_out(0.0)
 
-func load_actions(hero_card: HeroCard):
+func load_actions(hero_card: HeroCard, shifted: bool = false):
 	active_hero = hero_card
-	if not active_hero.role_shifted.is_connected(update_action_bar):
-		active_hero.role_shifted.connect(update_action_bar)
 	if not active_hero.passive_fired.is_connected(_on_hero_passive_fired):
 		active_hero.passive_fired.connect(_on_hero_passive_fired)
-	update_action_bar(active_hero)
+	update_action_bar(active_hero, shifted)
 	await slide_in()
 
 func hide_bar():
-
-	if active_hero.role_shifted.is_connected(update_action_bar):
-		active_hero.role_shifted.disconnect(update_action_bar)
-	if active_hero.passive_fired.is_connected(_on_hero_passive_fired):
-		active_hero.passive_fired.disconnect(_on_hero_passive_fired)
-	for button in actions_ui.get_children():
+	for i in range(4):
+		var button = actions_ui.get_child(i) as ActionButton
 		if button is not ActionButton: continue
 		button.hide()
 		if button.pressed.is_connected(_on_action_button_pressed):
@@ -60,7 +56,7 @@ func hide_bar():
 
 	await slide_out()
 
-func update_action_bar(hero_card: HeroCard):
+func update_action_bar(hero_card: HeroCard, shifted: bool = false):
 	if not hero_card:
 		return
 
@@ -89,18 +85,33 @@ func update_action_bar(hero_card: HeroCard):
 	else:
 		passive_panel.hide()
 
+	if current_role.shift_action:
+		$Actions/ShiftAction/Title.text = current_role.shift_action.action_name
+		$Actions/ShiftAction/Icon.texture = current_role.shift_action.icon
+		shift_action_panel.modulate = current_role.color
+		shift_action_panel.modulate.a = 0.75
+		shift_action_panel.show()
+		var pending = ! hero_card.get_current_role().shift_action.auto_target
+		if shifted:
+			if pending:
+				start_flashing_panel(shift_action_panel)
+			else:
+				flash_panel(shift_action_panel)
+	else:
+		shift_action_panel.hide()
+
 	var prev_role: Role = hero_card.get_previous_role()
 	var next_role: Role = hero_card.get_next_role()
 
 	if prev_role:
 		$LeftShift/Title.text = prev_role.role_name
-		left_shift_button.disabled = prev_role == current_role
+		left_shift_button.disabled = prev_role == current_role or next_role == prev_role or left_shift_button.disabled
 		left_shift_ui.modulate = prev_role.color
 		$LeftShift/Icon.texture = prev_role.icon
 
 	if next_role:
 		$RightShift/Title.text = next_role.role_name
-		right_shift_button.disabled = next_role == current_role or next_role == prev_role
+		right_shift_button.disabled = next_role == current_role or next_role == prev_role or right_shift_button.disabled
 		right_shift_ui.modulate = next_role.color
 		$RightShift/Icon.texture = next_role.icon
 
@@ -110,28 +121,71 @@ func _on_shift_button_pressed(direction: String):
 func _on_action_button_pressed(button: ActionButton):
 	action_selected.emit(button)
 
-func _on_hero_passive_fired():
-	var base_color = passive_panel.modulate
+func hero_passive_fired():
+	var passive = active_hero.get_current_role().passive
+	if passive:
+		if passive.is_attack:
+			flash_panel(passive_panel)
+
+func flash_panel(panel: Panel):
+	var base_color = panel.modulate
 	var flash_color = Color(3.0, 3.0, 3.0, 1.0)
 
 	if passive_flash_tween and passive_flash_tween.is_running():
 		passive_flash_tween.kill()
 
 	passive_flash_tween = create_tween()
-	passive_panel.modulate = flash_color
+	panel.modulate = flash_color
 	passive_flash_tween.tween_property(
-		passive_panel,
+		panel,
 		"modulate",
 		base_color,
 		0.5
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
+func _on_hero_passive_fired():
+	flash_panel(passive_panel)
+
+func start_flashing_panel(panel: Panel):
+	panel.modulate.a = 0.0
+
+	if flashing_tween and flashing_tween.is_running():
+		flashing_tween.kill()
+
+	flashing_tween = create_tween().set_loops()
+
+	flashing_tween.tween_property(
+		panel,
+		"modulate:a",
+		1.0,
+		0.2 / battle_manager.battle_speed
+	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+	flashing_tween.tween_property(
+		panel,
+		"modulate:a",
+		0.4,
+		0.6 / battle_manager.battle_speed
+	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+func stop_flashing_panel(panel: Panel):
+	if flashing_tween and flashing_tween.is_running():
+		flashing_tween.kill()
+		flashing_tween = null
+
+	panel.modulate.a = 0.5
+
 func _on_state_changed(state: BattleManager.State):
 	if not active_hero: return
-	#var value = state not in [BattleManager.State.PLAYER_ACTION, BattleManager.State.TARGETING_ENEMIES, BattleManager.State.TARGETING_TEAM]
-	#for button in actions_ui.get_children():
-		#if button is ActionButton:
-			#button.disabled = value
+	var is_forced = state == BattleManager.State.FORCED_TARGET
+	for button in actions_ui.get_children():
+		if button is ActionButton:
+			button.disabled = is_forced
+	left_shift_button.disabled = is_forced
+	right_shift_button.disabled = is_forced
+	#if not is_forced and flash_tween:
+		#if flash_tween.is_running():
+			#stop_flashing_panel(shift_action_panel)
 
 func slide_in(duration: float = 0.2):
 	sliding = true

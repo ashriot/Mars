@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="Action" load_steps=9 format=3 uid="uid://c1tsuo00ej03r"]
+
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_3v4hi"]
+[ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://data/scripts/conditions/hit_trigger.gd" id="2_jlify"]
+[ext_resource type="Script" uid="uid://bhblyd70hrd4m" path="res://data/scripts/action_effects/effect_modify_focus.gd" id="3_jlify"]
+[ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/action_effects/effect_damage.gd" id="3_mu8rt"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="4_0qesr"]
+
+[sub_resource type="Resource" id="Resource_mu8rt"]
+script = ExtResource("3_jlify")
+focus_amount = 2
+target_type = 4
+metadata/_custom_type_script = "uid://bhblyd70hrd4m"
+
+[sub_resource type="Resource" id="Resource_ol13h"]
+script = ExtResource("2_jlify")
+condition = 1
+effects_to_run = Array[ExtResource("1_3v4hi")]([SubResource("Resource_mu8rt")])
+metadata/_custom_type_script = "uid://bhpiwhufv87v7"
+
+[sub_resource type="Resource" id="Resource_dq0ry"]
+script = ExtResource("3_mu8rt")
+potency = 1.25
+on_hit_triggers = Array[ExtResource("2_jlify")]([SubResource("Resource_ol13h")])
+metadata/_custom_type_script = "uid://d0eibi4b735ay"
+
+[resource]
+script = ExtResource("4_0qesr")
+action_name = "Charged Shot"
+is_shift_action = true
+effects = Array[ExtResource("1_3v4hi")]([SubResource("Resource_dq0ry")])
+metadata/_custom_type_script = "uid://dm08rhkg3bai3"

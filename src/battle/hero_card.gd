@@ -5,6 +5,7 @@ class_name HeroCard
 signal role_shifted(hero_card)
 signal focus_changed(new_pips)
 signal hero_clicked(hero_card)
+signal passive_fired
 
 # --- UNIQUE Data ---
 var hero_data: HeroData
@@ -34,10 +35,9 @@ func setup(data: HeroData):
 
 func on_turn_started() -> void:
 	if current_focus_pips < 10:
-		current_focus_pips += 1
-		update_focus_bar()
+		modify_focus(1)
 	await _slide_up()
-	await battle_manager.action_bar.load_actions(self)
+	await battle_manager.action_bar.load_actions(self, false)
 	await super.on_turn_started()
 	return
 
@@ -92,8 +92,9 @@ func update_current_role():
 	role_icon.texture = get_current_role().icon
 	recolor()
 
-func spend_focus(amount: int):
-	current_focus_pips -= amount
+func modify_focus(amount: int):
+	current_focus_pips += amount
+	current_focus_pips = clamp(current_focus_pips, 0, 10)
 	update_focus_bar()
 	await _fire_condition_event(Trigger.TriggerType.ON_SPENDING_FOCUS)
 
@@ -107,9 +108,10 @@ func update_focus_bar():
 	focus_changed.emit(current_focus_pips)
 
 func get_scaled_focus_cost(cost: int) -> int:
-	if has_condition("Preparation"):
-		return int(cost / 2)
-	return cost
+	var scalar: float = 1.0
+	for condition in active_conditions:
+		scalar -= condition.focus_cost_reduction
+	return cost * scalar
 
 func _slide_up():
 	var tween = create_tween().set_parallel()

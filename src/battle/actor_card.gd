@@ -7,7 +7,6 @@ class_name ActorCard
 signal actor_breached(actor)
 signal actor_defeated(actor)
 signal actor_revived(actor)
-signal passive_fired()
 signal hp_changed(new_hp, max_hp)
 signal armor_changed(new_pips)
 signal actor_conditions_changed(actor, retarget)
@@ -52,6 +51,8 @@ const POPUP_SPACING_TIME: float = 1.0
 @onready var breached_label: Label = $Panel/BreachedLabel
 @onready var highlight_panel: Panel = $Panel/Highlight
 @onready var target_flash: Panel = $Panel/TargetFlash
+@onready var action_display: PanelContainer = $Panel/ActionName
+
 
 func setup_base(stats: ActorStats):
 	if not stats:
@@ -73,6 +74,7 @@ func setup_base(stats: ActorStats):
 	target_flash.hide()
 	target_flash.modulate.a = 0.2
 	update_health_bar()
+	action_display.hide()
 	await get_tree().process_frame
 
 	for pip in guard_bar.get_children():
@@ -258,8 +260,6 @@ func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary 
 			trigger = trigger as Trigger
 			if trigger.trigger_type != event_type: continue
 			await battle_manager.wait(0.25)
-			if condition.is_passive and self is HeroCard:
-				passive_fired.emit()
 			print("Condition '", condition.condition_name, "' is firing effects for '", event_type, "'")
 			var targets = []
 			var action = context.get("action")
@@ -269,7 +269,9 @@ func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary 
 				effect = effect as ActionEffect
 				targets = battle_manager.get_targets(effect.target_type, self is HeroCard, targets)
 				await battle_manager.execute_triggered_effect(self, effect, targets, action)
-
+		if condition.is_passive:
+			if self is HeroCard:
+				self.passive_fired.emit
 		if condition.remove_on_triggers.has(event_type):
 			print(actor_name, "'s ", condition.condition_name, " needs to be removed.")
 			await _fire_condition_event(Trigger.TriggerType.ON_REMOVED)
@@ -298,13 +300,10 @@ func recover_breach():
 	is_breached = false
 	guard_bar.modulate.a = 1
 	_stop_breach_pulse()
-	gain_guard(current_stats.guard)
+	modify_guard(current_stats.guard)
 
-func gain_guard(amount: int):
-	if is_defeated or amount <= 0:
-		return
-
-	current_guard = min(current_guard + amount, MAX_GUARD)
+func modify_guard(amount: int):
+	current_guard = clamp(current_guard + amount, 0, MAX_GUARD)
 
 	print(actor_name, " gained ", amount, " guard. Total: ", current_guard)
 	await _fire_condition_event(Trigger.TriggerType.ON_GAINING_GUARD)
@@ -324,11 +323,27 @@ func update_guard_bar(animate: bool = true):
 				_animate_pip_gain(pip_node)
 		elif pip_node.visible:
 			if animate:
-				_animate_pip_loss(pip_node)
+				await _animate_pip_loss(pip_node)
 			else:
 				pip_node.hide()
 
 	armor_changed.emit(current_guard)
+
+func show_action(action_name: String):
+	var duration = 0.1 / battle_manager.battle_speed
+	var label = action_display.get_node("MarginContainer/Label")
+	label.text = action_name.to_upper()
+	action_display.modulate.a = 0.0
+	action_display.show()
+
+	var tween = create_tween()
+	tween.tween_property(action_display, "modulate:a", 1.0, duration)
+
+func hide_action():
+	var duration = 0.3 / battle_manager.battle_speed
+	var tween = create_tween()
+	tween.tween_property(action_display, "modulate:a", 0.0, duration)
+	await tween.finished.connect(func(): action_display.hide())
 
 func _start_breach_pulse():
 	breached_label.show()
@@ -388,18 +403,11 @@ func shake_panel(intensity: float = 0.5):
 func _animate_pip_gain(pip_node: Control):
 	var pip_texture = pip_node.get_child(0)
 	pip_node.show()
-	# This 'await' is perfect, it ensures the node is ready
 	await get_tree().process_frame
 
-	# --- 1. Fix: Call create_tween() to get an instance ---
 	var tween = create_tween()
-
-	# --- 2. CRITICAL: Set the tween to parallel ---
-	# This makes the scale and flash happen simultaneously.
 	tween.set_parallel()
 
-	# You can set different transitions for each property,
-	# but we'll set a default for the "pop"
 	tween.set_trans(Tween.TRANS_BOUNCE)
 	tween.set_ease(Tween.EASE_OUT)
 
@@ -410,39 +418,43 @@ func _animate_pip_gain(pip_node: Control):
 		pip_texture,
 		"scale",
 		Vector2(1.0, 1.0),
-		0.75 # Your "pop" duration
+		0.75
 	)
 
 	tween.tween_property(
 		pip_texture,
 		"modulate",
-		Color(1.0, 1.0, 1.0), # The normal Color.WHITE
-		0.25 # A much faster duration
-	).set_trans(Tween.TRANS_SINE) # Use a smooth fade for the color
+		Color(1.0, 1.0, 1.0),
+		0.25
+	).set_trans(Tween.TRANS_SINE)
 
 func _animate_pip_loss(pip_node: Control):
 	var pip_texture = pip_node.get_child(0)
-	# Make sure the pip is visible before animating
 	pip_node.show()
 	await get_tree().process_frame
 
-	# Set initial state - flash to orange red
+	var tween = create_tween()
+	tween.set_parallel()
+
+	tween.set_trans(Tween.TRANS_BOUNCE)
+	tween.set_ease(Tween.EASE_OUT)
+
 	pip_texture.modulate = Color(5.0, 5.0, 5.0)
 
-	# Create tween for the fade out
-	var tween = create_tween()
-	tween.set_trans(Tween.TRANS_SINE)
-	tween.set_ease(Tween.EASE_IN)
-
-	# Fade the alpha to 0 over time
 	tween.tween_property(
 		pip_texture,
-		"modulate:a",
-		0.0,
-		0.5 # Fade duration - adjust to your preference
+		"scale",
+		Vector2(2.0, 2.0),
+		0.5 / battle_manager.battle_speed
 	)
 
-	# Optional: Hide the pip node after fade completes
+	tween.tween_property(
+		pip_texture,
+		"modulate",
+		Color.TRANSPARENT,
+		0.5 / battle_manager.battle_speed
+	).set_trans(Tween.TRANS_SINE)
+
 	tween.finished.connect(func(): pip_node.hide())
 
 func highlight(value: bool):

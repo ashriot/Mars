@@ -2,7 +2,7 @@ extends Node
 class_name BattleManager
 
 # --- State Machine ---
-enum State { LOADING, PLAYER_ACTION, ENEMY_ACTION, EXECUTING_ACTION }
+enum State { LOADING, PLAYER_ACTION, ENEMY_ACTION, EXECUTING_ACTION, FORCED_TARGET }
 var current_state = State.LOADING
 
 # --- Signals ---
@@ -44,10 +44,10 @@ func _ready():
 
 	spawn_encounter()
 
-	change_state(State.EXECUTING_ACTION)
-	await _apply_starting_passives()
+	change_state(State.LOADING)
 	await wait(0.5)
 	await _fade_in()
+	await _apply_starting_passives()
 	find_and_start_next_turn()
 
 func spawn_encounter():
@@ -143,28 +143,23 @@ func find_and_start_next_turn():
 		push_error("Error: No one can take a turn!")
 		return
 
-	# 2. Get the winner and the "time" that passed
 	var first_turn_data = projection[0]
 	var winner: ActorCard = first_turn_data.actor
-	# This is the "real" time that passed since the last turn
 	var real_ticks_passed = first_turn_data.ticks_needed
 
-	# 3. "Fast-forward" the REAL game clock
 	for actor in actor_list:
 		actor.current_ct += actor.get_speed() * real_ticks_passed
 
 	winner.current_ct = 0
 	turn_order_updated.emit(projection)
 
-	# 6. Start the winner's turn
 	current_actor = winner
 	if winner is HeroCard:
 		change_state(State.LOADING)
 		if action_bar.sliding:
 			await action_bar.slide_finished
-		change_state(State.EXECUTING_ACTION)
-		await winner.on_turn_started()
 		change_state(State.PLAYER_ACTION)
+		await winner.on_turn_started()
 	else:
 		change_state(State.ENEMY_ACTION)
 		await winner.on_turn_started()
@@ -236,14 +231,15 @@ func _focus_button(button: ActionButton):
 	focused_button.focused(true)
 
 func _finish_hero_turn():
+	var is_shift_action = current_action.is_shift_action
 	current_action = null
 	if focused_button:
 		focused_button.focused(false)
 		focused_button = null
-	await current_actor.on_turn_ended()
+	if not is_shift_action:
+		await current_actor.on_turn_ended()
+		find_and_start_next_turn()
 	await wait(0.01)
-
-	find_and_start_next_turn()
 
 func _apply_role_passive(hero: HeroCard):
 	current_actor = hero
@@ -251,12 +247,15 @@ func _apply_role_passive(hero: HeroCard):
 	if current_role and current_role.passive:
 		var action: Action = current_role.passive
 		print("Applying passive: ", action.action_name, " to ", hero.actor_name)
-		await execute_action(hero, action, [hero])
+		await execute_action(hero, action, [hero], false)
 
-func execute_action(actor: ActorCard, action: Action, targets: Array):
+func execute_action(actor: ActorCard, action: Action, targets: Array, display_name: bool = true):
 	if actor is HeroCard:
-		actor.spend_focus(action.focus_cost)
+		actor.modify_focus(-action.focus_cost)
 		_clear_all_targeting_ui()
+		if display_name:
+			actor.show_action(action.action_name)
+			await wait(0.25)
 	var actor_name = actor.actor_name
 	print(actor_name, " uses ", action.action_name)
 
@@ -267,29 +266,28 @@ func execute_action(actor: ActorCard, action: Action, targets: Array):
 	if action.is_attack:
 		var context = { "targets": targets, "action": action }
 		await actor._fire_condition_event(Trigger.TriggerType.AFTER_ATTACKING, context)
+	if display_name: await actor.hide_action()
 	await _flush_all_health_animations()
 	return
 
 func execute_triggered_effect(actor: ActorCard, effect: ActionEffect, targets: Array, action: Action):
-
 	await effect.execute(actor, targets, self, action)
 	await _flush_all_health_animations()
 
 func execute_enemy_turn(enemy: EnemyCard):
 	change_state(State.EXECUTING_ACTION)
 	print("\n", enemy.actor_name, " is executing its turn!")
-	enemy.show_action()
-	await wait(0.5)
-
 	var action = enemy.intended_action
 	var targets = enemy.intended_targets
+	enemy.show_action(action.action_name)
+	await wait(0.5)
+
 
 	if not action:
 		push_error(enemy.actor_name, " is missing an action!")
 		return
 
 	await execute_action(enemy, action, targets)
-	await enemy.hide_action()
 	enemy.decide_intent(get_living_heroes())
 	return
 
@@ -317,7 +315,7 @@ func _on_actor_conditions_changed(_actor_who_changed: ActorCard, retarget: bool)
 			enemy.get_a_target(living_heroes)
 
 func _on_action_button_pressed(button: ActionButton):
-	if current_state in [State.LOADING]: return
+	if current_state in [State.LOADING, State.FORCED_TARGET]: return
 
 	var action = button.action
 	if current_actor.current_focus_pips < action.focus_cost:
@@ -331,7 +329,8 @@ func _on_hero_clicked(target_hero: HeroCard):
 
 	print("Target selected: ", target_hero.actor_name)
 	change_state(State.EXECUTING_ACTION)
-	action_bar.hide_bar()
+	if not current_action.is_shift_action:
+		action_bar.hide_bar()
 
 	var target_list = []
 	target_list = get_targets(current_action.target_type, true)
@@ -347,7 +346,8 @@ func _on_enemy_clicked(target_enemy: EnemyCard):
 			return
 
 	change_state(State.EXECUTING_ACTION)
-	action_bar.hide_bar()
+	if not current_action.is_shift_action:
+		action_bar.hide_bar()
 
 	var targets_array = []
 	match current_action.target_type:
@@ -361,32 +361,40 @@ func _on_enemy_clicked(target_enemy: EnemyCard):
 	_finish_hero_turn()
 
 func _on_shift_button_pressed(direction: String):
-	if current_state in [State.LOADING]: return
+	var current_hero = current_actor as HeroCard
+	if current_state in [State.LOADING, State.FORCED_TARGET]: return
 	current_action = null
 	_clear_all_targeting_ui()
 
-	if current_actor:
+	if current_hero:
 		change_state(State.LOADING)
 		await action_bar.slide_out()
 		await current_actor.shift_role(direction)
 		await action_bar.slide_in()
-		change_state(State.PLAYER_ACTION)
+		action_bar.hero_passive_fired()
+		_apply_role_passive(current_hero)
 		print("Shift complete. Returning to player's action.")
+		if current_hero.get_current_role().shift_action:
+			if current_hero.get_current_role().shift_action.auto_target:
+				change_state(State.PLAYER_ACTION)
+		else:
+			change_state(State.PLAYER_ACTION)
 
 func _on_hero_role_shifted(hero_card: HeroCard):
 	var new_role = hero_card.get_current_role()
+	action_bar.update_action_bar(hero_card, true)
 	var action: Action = new_role.shift_action
-
-	if not action:
-		return
+	if not action: return
 
 	if action.auto_target:
 		print("Auto-executing shift action...")
 		var target_list = get_targets(action.target_type, true)
 
 		await execute_action(current_actor, action, target_list)
+		change_state(State.PLAYER_ACTION)
 		return
 
+	change_state(State.FORCED_TARGET)
 	print("Action requires a target. Waiting for click...")
 	set_current_action(action)
 

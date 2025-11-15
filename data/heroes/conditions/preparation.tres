@@ -8,5 +8,6 @@
 script = ExtResource("1_c7rk8")
 condition_name = "Preparation"
 icon = ExtResource("1_w7xfi")
+focus_cost_reduction = 0.5
 remove_on_triggers = Array[int]([3])
 metadata/_custom_type_script = "uid://df30dm288ne1d"
