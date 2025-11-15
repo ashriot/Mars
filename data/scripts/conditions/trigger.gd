@@ -20,3 +20,10 @@ enum TriggerType {
 }
 @export var trigger_type: TriggerType
 @export var effects_to_run: Array[ActionEffect]
+
+var is_attack: bool :
+	get:
+		for effect in effects_to_run:
+			if effect is Effect_Damage:
+				return true
+		return false
