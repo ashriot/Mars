@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="Action" load_steps=10 format=3 uid="uid://g6ncue0rx5ej"]
+
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_g04ix"]
+[ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://data/scripts/conditions/hit_trigger.gd" id="2_pbr3m"]
+[ext_resource type="Script" uid="uid://bhblyd70hrd4m" path="res://data/scripts/action_effects/effect_modify_focus.gd" id="3_q17t0"]
+[ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/action_effects/effect_damage.gd" id="4_7popt"]
+[ext_resource type="Texture2D" uid="uid://7a8ih8o6g8g2" path="res://assets/graphics/icons/skills/multiple-targets.png" id="5_ykd3v"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="6_p46ui"]
+
+[sub_resource type="Resource" id="Resource_xapkb"]
+script = ExtResource("3_q17t0")
+target_type = 4
+metadata/_custom_type_script = "uid://bhblyd70hrd4m"
+
+[sub_resource type="Resource" id="Resource_r02fq"]
+script = ExtResource("2_pbr3m")
+condition = 2
+effects_to_run = Array[ExtResource("1_g04ix")]([SubResource("Resource_xapkb")])
+metadata/_custom_type_script = "uid://bhpiwhufv87v7"
+
+[sub_resource type="Resource" id="Resource_occlv"]
+script = ExtResource("4_7popt")
+potency = 0.75
+on_hit_triggers = Array[ExtResource("2_pbr3m")]([SubResource("Resource_r02fq")])
+metadata/_custom_type_script = "uid://d0eibi4b735ay"
+
+[resource]
+script = ExtResource("6_p46ui")
+action_name = "Focus Fire"
+icon = ExtResource("5_ykd3v")
+focus_cost = 4
+target_type = 1
+effects = Array[ExtResource("1_g04ix")]([SubResource("Resource_occlv")])
+metadata/_custom_type_script = "uid://dm08rhkg3bai3"

@@ -337,8 +337,9 @@ func _on_hero_clicked(target_hero: HeroCard):
 	if not current_action.is_shift_action:
 		action_bar.hide_bar()
 
-	var target_list = []
-	target_list = get_targets(current_action.target_type, true)
+	var target_list = [target_hero]
+	if current_action.target_type != Action.TargetType.ONE_ALLY:
+		target_list = get_targets(current_action.target_type, true, target_list)
 
 	await execute_action(current_actor, current_action, target_list)
 	await _finish_hero_turn()
@@ -420,7 +421,7 @@ func get_targets(target_type: Action.TargetType, friendly: bool, parent_targets:
 				target_list = enemies
 			else:
 				target_list = heroes
-		Action.TargetType.ALLY, Action.TargetType.ALL_ALLIES:
+		Action.TargetType.ONE_ALLY, Action.TargetType.ALL_ALLIES:
 			if friendly:
 				target_list = heroes
 			else:

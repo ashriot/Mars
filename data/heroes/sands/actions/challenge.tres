@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="Action" load_steps=7 format=3 uid="uid://vk5px1abwyri"]
+
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_eu15s"]
+[ext_resource type="Resource" uid="uid://3daimnlv4sye" path="res://data/heroes/sands/conditions/challenge.tres" id="2_x48kj"]
+[ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://data/scripts/action_effects/effect_apply_condition.gd" id="3_e8m3u"]
+[ext_resource type="Texture2D" uid="uid://b1ywkg0a2pxnk" path="res://assets/graphics/icons/skills/confrontation.png" id="4_toiwm"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="5_1ym4f"]
+
+[sub_resource type="Resource" id="Resource_7kmks"]
+script = ExtResource("3_e8m3u")
+condition = ExtResource("2_x48kj")
+metadata/_custom_type_script = "uid://dggojfw8tmpnk"
+
+[resource]
+script = ExtResource("5_1ym4f")
+action_name = "Challenge"
+icon = ExtResource("4_toiwm")
+target_type = 4
+effects = Array[ExtResource("1_eu15s")]([SubResource("Resource_7kmks")])
+metadata/_custom_type_script = "uid://dm08rhkg3bai3"

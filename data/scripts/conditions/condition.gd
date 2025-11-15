@@ -21,3 +21,4 @@ enum ConditionType { BUFF, DEBUFF }
 @export var remove_on_triggers: Array[Trigger.TriggerType]
 
 var id: String = resource_path.get_file().get_basename()
+var attacker: ActorCard

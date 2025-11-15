@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="Condition" load_steps=11 format=3 uid="uid://b2tvfisdchylq"]
+
+[ext_resource type="Texture2D" uid="uid://b1kc4ws08mv8m" path="res://assets/graphics/icons/skills/divert.png" id="1_ruy1o"]
+[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://data/scripts/conditions/condition.gd" id="2_w8o6c"]
+[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://data/scripts/conditions/trigger.gd" id="3_ddk4p"]
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="4_n0581"]
+[ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://data/scripts/conditions/hit_trigger.gd" id="5_3ohqc"]
+[ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/action_effects/effect_damage.gd" id="6_jksuy"]
+
+[sub_resource type="Resource" id="Resource_axeqk"]
+script = ExtResource("6_jksuy")
+potency = 0.75
+metadata/_custom_type_script = "uid://d0eibi4b735ay"
+
+[sub_resource type="Resource" id="Resource_tsi1q"]
+script = ExtResource("5_3ohqc")
+condition = 3
+context = "Overwatch"
+effects_to_run = Array[ExtResource("4_n0581")]([SubResource("Resource_axeqk")])
+metadata/_custom_type_script = "uid://bhpiwhufv87v7"
+
+[sub_resource type="Resource" id="Resource_jbdj3"]
+script = ExtResource("6_jksuy")
+potency = 0.75
+damage_type = 2
+on_hit_triggers = Array[ExtResource("5_3ohqc")]([SubResource("Resource_tsi1q")])
+metadata/_custom_type_script = "uid://d0eibi4b735ay"
+
+[sub_resource type="Resource" id="Resource_gc3t6"]
+script = ExtResource("3_ddk4p")
+trigger_type = 5
+effects_to_run = Array[ExtResource("4_n0581")]([SubResource("Resource_jbdj3")])
+metadata/_custom_type_script = "uid://cdugd6pnm6py"
+
+[resource]
+script = ExtResource("2_w8o6c")
+condition_name = "Return Fire"
+icon = ExtResource("1_ruy1o")
+is_passive = true
+triggers = Array[ExtResource("3_ddk4p")]([SubResource("Resource_gc3t6")])
+remove_on_triggers = Array[int]([12])
+metadata/_custom_type_script = "uid://df30dm288ne1d"

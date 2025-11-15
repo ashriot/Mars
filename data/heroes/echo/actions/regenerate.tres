@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="Action" load_steps=6 format=3 uid="uid://dpuvmachojp84"]
+
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_12cbd"]
+[ext_resource type="Script" uid="uid://nqyc4vuadjr5" path="res://data/scripts/action_effects/effect_healing.gd" id="2_rlunf"]
+[ext_resource type="Texture2D" uid="uid://c1trrfvap735y" path="res://assets/graphics/icons/skills/cherish.png" id="3_blpb4"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="4_uyiif"]
+
+[sub_resource type="Resource" id="Resource_bkx48"]
+script = ExtResource("2_rlunf")
+scales_with_missing_hp = true
+is_revive = true
+metadata/_custom_type_script = "uid://nqyc4vuadjr5"
+
+[resource]
+script = ExtResource("4_uyiif")
+action_name = "Regenerate"
+icon = ExtResource("3_blpb4")
+description = "Attack an enemy twice, each hit dealing X% damage."
+focus_cost = 2
+target_type = 5
+effects = Array[ExtResource("1_12cbd")]([SubResource("Resource_bkx48")])
+metadata/_custom_type_script = "uid://dm08rhkg3bai3"

@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="Action" load_steps=10 format=3 uid="uid://bikya1n52nsow"]
+
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_t1vww"]
+[ext_resource type="Resource" uid="uid://dd5jh6mwgwgij" path="res://data/heroes/sands/conditions/overwatch_buff.tres" id="2_r7g3a"]
+[ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://data/scripts/action_effects/effect_apply_condition.gd" id="3_e1gem"]
+[ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://data/scripts/conditions/hit_trigger.gd" id="4_2iv8j"]
+[ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/action_effects/effect_damage.gd" id="5_l58sx"]
+[ext_resource type="Texture2D" uid="uid://dtx678d2ds4p3" path="res://assets/graphics/icons/skills/virtual-marker.png" id="6_g27ww"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="7_pyrp2"]
+
+[sub_resource type="Resource" id="Resource_d4a0j"]
+script = ExtResource("3_e1gem")
+condition = ExtResource("2_r7g3a")
+target_type = 4
+metadata/_custom_type_script = "uid://dggojfw8tmpnk"
+
+[sub_resource type="Resource" id="Resource_hhd1q"]
+script = ExtResource("5_l58sx")
+potency = 0.5
+hit_count = 2
+metadata/_custom_type_script = "uid://d0eibi4b735ay"
+
+[resource]
+script = ExtResource("7_pyrp2")
+action_name = "Overwatch"
+icon = ExtResource("6_g27ww")
+focus_cost = 1
+effects = Array[ExtResource("1_t1vww")]([SubResource("Resource_d4a0j"), SubResource("Resource_hhd1q")])
+metadata/_custom_type_script = "uid://dm08rhkg3bai3"

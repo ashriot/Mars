@@ -153,11 +153,16 @@ func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_po
 	print("Hit for ", final_damage, " damage! (", base_hit_damage, ")")
 	update_guard_bar()
 
-	# 7. Check for death
 	if current_hp == 0:
 		await defeated()
 		return
-	var context = { "targets": [attacker] }
+	var context = { }
+	if damage_effect.damage_type == Action.DamageType.KINETIC:
+		context.get_or_add("targets", [self])
+		await _fire_condition_event(Trigger.TriggerType.ON_TAKING_KINETIC_DAMAGE, context)
+	elif damage_effect.damage_type == Action.DamageType.ENERGY:
+		context.get_or_add("targets", [self])
+		await _fire_condition_event(Trigger.TriggerType.ON_TAKING_ENERGY_DAMAGE, context)
 	await _fire_condition_event(Trigger.TriggerType.ON_BEING_HIT, context)
 
 	return
@@ -192,6 +197,7 @@ func add_condition(condition_resource: Condition):
 		return
 
 	var new_condition = condition_resource.duplicate(true)
+	new_condition.attacker = condition_resource.attacker
 	active_conditions.append(new_condition)
 	print(actor_name, " gained condition: ", new_condition.condition_name)
 
@@ -263,12 +269,16 @@ func _update_health_display(value_from_tween: float):
 
 func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary = {}) -> void:
 	for i in range(active_conditions.size() - 1, -1, -1):
-		var condition = active_conditions[i]
-		var is_removing = condition.remove_on_triggers.has(event_type)
+		var condition = active_conditions[i] as Condition
 		var is_attack = false
+		var is_removing = condition.remove_on_triggers.has(event_type)
 		for trigger in condition.triggers:
 			trigger = trigger as Trigger
 			if trigger.trigger_type != event_type: continue
+			if is_removing:
+				print(actor_name, "'s ", condition.condition_name, " needs to be removed.")
+				await _fire_condition_event(Trigger.TriggerType.ON_REMOVED)
+				remove_condition(condition.condition_name)
 			if condition.is_passive and not is_removing:
 				if self is HeroCard and trigger.is_attack:
 					self.passive_fired.emit()
@@ -277,18 +287,18 @@ func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary 
 			await battle_manager.wait(0.25)
 			print("Condition '", condition.condition_name, "' is firing effects for '", event_type, "'")
 			var targets = []
+			var attacker = self
+			if condition.attacker:
+				attacker = condition.attacker
 			var action = context.get("action")
 			if context.has("targets"):
 				targets = context.targets
 			for effect in trigger.effects_to_run:
 				effect = effect as ActionEffect
-				targets = battle_manager.get_targets(effect.target_type, self is HeroCard, targets)
-				await battle_manager.execute_triggered_effect(self, effect, targets, action)
+				if targets.is_empty():
+					targets = battle_manager.get_targets(effect.target_type, self is HeroCard, targets)
+				await battle_manager.execute_triggered_effect(attacker, effect, targets, action)
 				await battle_manager._flush_all_health_animations()
-		if is_removing:
-			print(actor_name, "'s ", condition.condition_name, " needs to be removed.")
-			await _fire_condition_event(Trigger.TriggerType.ON_REMOVED)
-			remove_condition(condition.condition_name)
 
 func update_health_bar():
 	hp_bar_actual.value = current_hp

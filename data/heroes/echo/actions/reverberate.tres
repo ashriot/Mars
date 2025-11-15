@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="Action" load_steps=10 format=3 uid="uid://cyeb0bt4dei2"]
+
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_h878q"]
+[ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://data/scripts/conditions/hit_trigger.gd" id="2_plwkg"]
+[ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/action_effects/effect_damage.gd" id="3_6qrm5"]
+[ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://data/scripts/action_effects/effect_apply_condition.gd" id="4_1s2r3"]
+[ext_resource type="Resource" uid="uid://blr0lyyn17tfu" path="res://data/heroes/echo/conditions/reverberate.tres" id="4_plwkg"]
+[ext_resource type="Texture2D" uid="uid://uxe1med2wsg8" path="res://assets/graphics/icons/skills/round-struck.png" id="5_llc15"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="6_pfr8c"]
+
+[sub_resource type="Resource" id="Resource_57bxt"]
+script = ExtResource("3_6qrm5")
+potency = 2.0
+damage_type = 1
+metadata/_custom_type_script = "uid://d0eibi4b735ay"
+
+[sub_resource type="Resource" id="Resource_6jifb"]
+script = ExtResource("4_1s2r3")
+condition = ExtResource("4_plwkg")
+metadata/_custom_type_script = "uid://dggojfw8tmpnk"
+
+[resource]
+script = ExtResource("6_pfr8c")
+action_name = "Reverberate"
+icon = ExtResource("5_llc15")
+focus_cost = 3
+effects = Array[ExtResource("1_h878q")]([SubResource("Resource_57bxt"), SubResource("Resource_6jifb")])
+metadata/_custom_type_script = "uid://dm08rhkg3bai3"
