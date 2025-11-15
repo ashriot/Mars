@@ -15,10 +15,10 @@ guard = 3
 attack = 54
 psyche = 50
 overload = 36
-speed = 46
+speed = 49
 precision = 17
-kinetic_defense = 31
-energy_defense = 36
+kinetic_defense = 21
+energy_defense = 51
 metadata/_custom_type_script = "uid://b70gwt4gd4cun"
 
 [resource]

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Action" load_steps=7 format=3 uid="uid://dv4r7yc61o8e6"]
+
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_0jf8m"]
+[ext_resource type="Resource" uid="uid://b2tvfisdchylq" path="res://data/heroes/passive_conditions/return_fire.tres" id="2_1bk51"]
+[ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://data/scripts/action_effects/effect_apply_condition.gd" id="3_6hde7"]
+[ext_resource type="Texture2D" uid="uid://b1kc4ws08mv8m" path="res://assets/graphics/icons/skills/divert.png" id="4_70njm"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="5_hasx7"]
+
+[sub_resource type="Resource" id="Resource_vuc7h"]
+script = ExtResource("3_6hde7")
+condition = ExtResource("2_1bk51")
+metadata/_custom_type_script = "uid://dggojfw8tmpnk"
+
+[resource]
+script = ExtResource("5_hasx7")
+action_name = "Return Fire"
+icon = ExtResource("4_70njm")
+auto_target = true
+target_type = 4
+effects = Array[ExtResource("1_0jf8m")]([SubResource("Resource_vuc7h")])
+metadata/_custom_type_script = "uid://dm08rhkg3bai3"

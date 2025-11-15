@@ -16,9 +16,9 @@ attack = 49
 psyche = 42
 overload = 29
 speed = 38
-precision = 12
-kinetic_defense = 41
-energy_defense = 41
+precision = 9
+kinetic_defense = 51
+energy_defense = 51
 metadata/_custom_type_script = "uid://b70gwt4gd4cun"
 
 [resource]

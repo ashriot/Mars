@@ -23,5 +23,5 @@ metadata/_custom_type_script = "uid://djm3iwmyexcia"
 [resource]
 script = ExtResource("2_y0noh")
 stat_ranks = SubResource("Resource_g7tkw")
-action_deck = Array[ExtResource("1_tpotm")]([ExtResource("2_fwxav"), ExtResource("3_g7tkw"), ExtResource("3_g7tkw")])
+action_deck = Array[ExtResource("1_tpotm")]([ExtResource("2_fwxav"), ExtResource("2_fwxav"), ExtResource("3_g7tkw")])
 metadata/_custom_type_script = "uid://b3t5esgv1d2ku"

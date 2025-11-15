@@ -73,7 +73,7 @@ func update_action_bar(hero_card: HeroCard, shifted: bool = false):
 		if button.pressed.is_connected(_on_action_button_pressed):
 			button.pressed.disconnect(_on_action_button_pressed)
 		button.pressed.connect(_on_action_button_pressed.bind(button))
-		button.setup(action_data, hero_card.current_focus_pips, hero_card.get_scaled_focus_cost(action_data.focus_cost),current_role.color)
+		button.setup(action_data, hero_card.current_focus, hero_card.get_scaled_focus_cost(action_data.focus_cost),current_role.color)
 		button.show()
 
 	if current_role.passive:
@@ -102,6 +102,9 @@ func update_action_bar(hero_card: HeroCard, shifted: bool = false):
 
 	var prev_role: Role = hero_card.get_previous_role()
 	var next_role: Role = hero_card.get_next_role()
+
+	left_shift_ui.visible = prev_role != null
+	right_shift_ui.visible = next_role != null
 
 	if prev_role:
 		$LeftShift/Title.text = prev_role.role_name

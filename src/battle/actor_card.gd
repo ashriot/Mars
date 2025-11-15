@@ -16,6 +16,8 @@ const MAX_GUARD = 10
 var battle_manager: BattleManager
 var flash_tween: Tween
 var is_valid_target: bool
+var pip_tweens: Dictionary = {}
+
 
 # --- Data (Shared by both) ---
 var actor_name: String
@@ -97,13 +99,14 @@ func on_turn_ended() -> void:
 
 func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_potency: float) -> void:
 	if is_defeated: return
+	var is_piercing = damage_effect.damage_type == Action.DamageType.PIERCING
 
 	var is_crit: bool = false
 	var crit_chance: int = attacker.get_precision()
 	if randi_range(1, 100) <= crit_chance:
 		is_crit = true
 
-	if damage_effect.damage_type == Action.DamageType.PIERCING:
+	if is_piercing:
 		shake_panel()
 	elif current_guard == 0:
 		if not is_breached and damage_effect.shreds_guard:
@@ -125,18 +128,16 @@ func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_po
 	if is_crit:
 		print("Critical Hit!")
 		var crit_bonus: float = 0.0
-		crit_bonus = attacker.get_crit_damage_bonus()
+		crit_bonus = attacker.get_crit_damage_bonus(is_piercing)
 		base_hit_damage *= (1.0 + crit_bonus)
 
 	var final_dmg_float = float(base_hit_damage)
-	var def_mod = 1.0
+	var def_mod = 1.0 if not is_crit else 0.0
 	if is_breached:
 		def_mod = 0.5
-	if is_crit:
-		def_mod = 0
 	if damage_effect.damage_type == Action.DamageType.KINETIC:
 		final_dmg_float *= (1.0 - float(current_stats.kinetic_defense * def_mod) / 100)
-	else: # ENERGY
+	elif damage_effect.damage_type == Action.DamageType.ENERGY:
 		final_dmg_float *= (1.0 - float(current_stats.energy_defense * def_mod) / 100)
 
 	final_dmg_float *= attacker.get_damage_dealt_scalar()
@@ -215,6 +216,13 @@ func remove_condition(condition_name: String):
 	push_error("[ERROR] Trying to remove an invalid condition: ", actor_name, " -> ", condition_name)
 	return
 
+func count_debuffs() -> int:
+	var count = 0
+	for c in active_conditions:
+		if c.condition_type == Condition.ConditionType.DEBUFF and not c.is_passive:
+			count += 1
+	return count
+
 func sync_visual_health() -> Tween:
 	var actual_hp = hp_bar_actual.value
 	var ghost_hp = hp_bar_ghost.value
@@ -256,12 +264,16 @@ func _update_health_display(value_from_tween: float):
 func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary = {}) -> void:
 	for i in range(active_conditions.size() - 1, -1, -1):
 		var condition = active_conditions[i]
+		var is_removing = condition.remove_on_triggers.has(event_type)
 		var is_attack = false
 		for trigger in condition.triggers:
 			trigger = trigger as Trigger
+			if trigger.trigger_type != event_type: continue
+			if condition.is_passive and not is_removing:
+				if self is HeroCard and trigger.is_attack:
+					self.passive_fired.emit()
 			if trigger.is_attack:
 				is_attack = true
-			if trigger.trigger_type != event_type: continue
 			await battle_manager.wait(0.25)
 			print("Condition '", condition.condition_name, "' is firing effects for '", event_type, "'")
 			var targets = []
@@ -272,13 +284,11 @@ func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary 
 				effect = effect as ActionEffect
 				targets = battle_manager.get_targets(effect.target_type, self is HeroCard, targets)
 				await battle_manager.execute_triggered_effect(self, effect, targets, action)
-		if condition.remove_on_triggers.has(event_type):
+				await battle_manager._flush_all_health_animations()
+		if is_removing:
 			print(actor_name, "'s ", condition.condition_name, " needs to be removed.")
 			await _fire_condition_event(Trigger.TriggerType.ON_REMOVED)
 			remove_condition(condition.condition_name)
-		if condition.is_passive:
-			if self is HeroCard and is_attack:
-				self.passive_fired.emit()
 
 func update_health_bar():
 	hp_bar_actual.value = current_hp
@@ -358,7 +368,7 @@ func _start_breach_pulse():
 		breached_label,
 		"self_modulate",
 		Color.ORANGE_RED,
-		0.5
+		0.5 / battle_manager.battle_speed
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 	pulse_tween.tween_property(
@@ -403,62 +413,54 @@ func shake_panel(intensity: float = 0.5):
 	shake_tween.tween_property(panel, "position",
 		panel_home_position, duration)
 
-func _animate_pip_gain(pip_node: Control):
-	var pip_texture = pip_node.get_child(0)
+func _animate_pip_gain(pip_node: Control, animate: bool = true):
+	if pip_tweens.has(pip_node):
+		pip_tweens[pip_node].kill()
+		pip_tweens.erase(pip_node)
+
 	pip_node.show()
-	await get_tree().process_frame
+	var pip_texture = pip_node.get_child(0)
+
+	if not animate:
+		pip_texture.scale = Vector2(1.0, 1.0)
+		pip_texture.modulate = Color(1.0, 1.0, 1.0)
+		return
 
 	var tween = create_tween()
 	tween.set_parallel()
-
 	tween.set_trans(Tween.TRANS_BOUNCE)
 	tween.set_ease(Tween.EASE_OUT)
+
+	pip_tweens[pip_node] = tween
 
 	pip_texture.scale = Vector2(2.0, 2.0)
 	pip_texture.modulate = Color(5.0, 5.0, 5.0)
 
-	tween.tween_property(
-		pip_texture,
-		"scale",
-		Vector2(1.0, 1.0),
-		0.75
-	)
+	tween.tween_property(pip_texture, "scale", Vector2(1.0, 1.0), 0.75)
+	tween.tween_property(pip_texture, "modulate", Color(1.0, 1.0, 1.0), 0.25).set_trans(Tween.TRANS_SINE)
 
-	tween.tween_property(
-		pip_texture,
-		"modulate",
-		Color(1.0, 1.0, 1.0),
-		0.25
-	).set_trans(Tween.TRANS_SINE)
+	tween.finished.connect(func(): pip_tweens.erase(pip_node))
 
-func _animate_pip_loss(pip_node: Control):
-	var pip_texture = pip_node.get_child(0)
-	pip_node.show()
-	await get_tree().process_frame
+func _animate_pip_loss(pip_node: Control, animate: bool = true):
+	if pip_tweens.has(pip_node):
+		pip_tweens[pip_node].kill()
+		pip_tweens.erase(pip_node)
+
+	if not animate:
+		pip_node.hide()
+		return
 
 	var tween = create_tween()
-	tween.set_parallel()
 
-	tween.set_trans(Tween.TRANS_BOUNCE)
-	tween.set_ease(Tween.EASE_OUT)
+	pip_tweens[pip_node] = tween
 
-	pip_texture.modulate = Color(5.0, 5.0, 5.0)
+	tween.tween_property(pip_node, "modulate:a", 0.0, 0.2).set_trans(Tween.TRANS_SINE)
 
-	tween.tween_property(
-		pip_texture,
-		"scale",
-		Vector2(2.0, 2.0),
-		0.5 / battle_manager.battle_speed
+	tween.finished.connect(func():
+		pip_node.hide()
+		pip_node.modulate.a = 1.0
+		pip_tweens.erase(pip_node)
 	)
-
-	tween.tween_property(
-		pip_texture,
-		"modulate",
-		Color.TRANSPARENT,
-		0.5 / battle_manager.battle_speed
-	).set_trans(Tween.TRANS_SINE)
-
-	tween.finished.connect(func(): pip_node.hide())
 
 func highlight(value: bool):
 	highlight_panel.visible = value
@@ -522,8 +524,11 @@ func get_precision() -> int:
 
 	return current_stats.precision + mod
 
-func get_crit_damage_bonus() -> float:
-	return 0.0
+func get_crit_damage_bonus(is_piercing:= false) -> float:
+	if is_piercing:
+		return float(current_stats.precision) / 100
+	else:
+		return 0.0
 
 func get_damage_dealt_scalar() -> float:
 	var scalar: float = 1.0

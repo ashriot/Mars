@@ -3,14 +3,9 @@ class_name HeroCard
 
 # --- UNIQUE Signals ---
 signal role_shifted(hero_card)
-signal focus_changed(new_pips)
 signal hero_clicked(hero_card)
+@warning_ignore("unused_signal")
 signal passive_fired
-
-# --- UNIQUE Data ---
-var hero_data: HeroData
-var current_focus_pips: int = 0
-var current_role_index: int = 0
 
 # --- NEW: Animation Vars ---
 @export var slide_offset_y: int = -30
@@ -21,6 +16,11 @@ var current_role_index: int = 0
 @onready var role_label: Label = $Panel/Role
 @onready var role_icon: TextureRect = $Panel/RoleIcon
 
+# --- UNIQUE Data ---
+var hero_data: HeroData
+var current_focus: int = 0
+var current_role_index: int = 0
+
 func setup(data: HeroData):
 	hero_data = data
 	setup_base(data.stats)
@@ -29,12 +29,12 @@ func setup(data: HeroData):
 	panel.self_modulate.a = 0.7
 	if hero_data.portrait:
 		portrait_rect.texture = hero_data.portrait
-	current_focus_pips = 2
-	update_focus_bar()
+	current_focus = 3
+	update_focus_bar(false)
 	update_current_role()
 
 func on_turn_started() -> void:
-	if current_focus_pips < 10:
+	if current_focus < 10:
 		modify_focus(1)
 	await _slide_up()
 	await battle_manager.action_bar.load_actions(self, false)
@@ -93,25 +93,31 @@ func update_current_role():
 	recolor()
 
 func modify_focus(amount: int):
-	current_focus_pips += amount
-	current_focus_pips = clamp(current_focus_pips, 0, 10)
+	current_focus += amount
+	current_focus = clamp(current_focus, 0, 10)
 	update_focus_bar()
 	await _fire_condition_event(Trigger.TriggerType.ON_SPENDING_FOCUS)
 
-func update_focus_bar():
+func update_focus_bar(animate: bool = true):
 	var pips = focus_bar.get_children()
+
 	for i in pips.size():
-		if i < current_focus_pips:
-			pips[i].visible = true
-		else:
-			pips[i].visible = false
-	focus_changed.emit(current_focus_pips)
+		var pip_node = pips[i]
+
+		if i < current_focus:
+			if not pip_node.visible:
+				_animate_pip_gain(pip_node)
+		elif pip_node.visible:
+			if animate:
+				await _animate_pip_loss(pip_node)
+			else:
+				pip_node.hide()
 
 func get_scaled_focus_cost(cost: int) -> int:
 	var scalar: float = 1.0
 	for condition in active_conditions:
 		scalar -= condition.focus_cost_reduction
-	return cost * scalar
+	return int(cost * scalar)
 
 func _slide_up():
 	var tween = create_tween().set_parallel()

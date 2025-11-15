@@ -1,14 +1,20 @@
-[gd_resource type="Resource" script_class="Action" load_steps=6 format=3 uid="uid://br0tqj3ba2itq"]
+[gd_resource type="Resource" script_class="Action" load_steps=8 format=3 uid="uid://br0tqj3ba2itq"]
 
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_ii07i"]
 [ext_resource type="Texture2D" uid="uid://bhxiy8yn4b52g" path="res://assets/graphics/icons/skills/striking-balls.png" id="2_hx00v"]
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="2_l0ktv"]
 [ext_resource type="Script" uid="uid://cu12q7dfj3hfe" path="res://data/scripts/action_effects/effect_modify_guard.gd" id="2_lafht"]
+[ext_resource type="Script" uid="uid://dgkss5d1axeag" path="res://data/scripts/action_effects/effect_modify_ct.gd" id="3_lafht"]
 
 [sub_resource type="Resource" id="Resource_meswp"]
 script = ExtResource("2_lafht")
 guard_amount = -1
 metadata/_custom_type_script = "uid://cu12q7dfj3hfe"
+
+[sub_resource type="Resource" id="Resource_36ivr"]
+script = ExtResource("3_lafht")
+ct_boost_percent = -0.15
+metadata/_custom_type_script = "uid://dgkss5d1axeag"
 
 [resource]
 script = ExtResource("2_l0ktv")
@@ -17,5 +23,5 @@ icon = ExtResource("2_hx00v")
 auto_target = true
 is_shift_action = true
 target_type = 1
-effects = Array[ExtResource("1_ii07i")]([SubResource("Resource_meswp")])
+effects = Array[ExtResource("1_ii07i")]([SubResource("Resource_meswp"), SubResource("Resource_36ivr")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

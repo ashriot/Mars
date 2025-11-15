@@ -250,6 +250,7 @@ func _apply_role_passive(hero: HeroCard):
 		await execute_action(hero, action, [hero], false)
 
 func execute_action(actor: ActorCard, action: Action, targets: Array, display_name: bool = true):
+	var parent_targets = targets
 	if actor is HeroCard:
 		actor.modify_focus(-action.focus_cost)
 		_clear_all_targeting_ui()
@@ -264,6 +265,8 @@ func execute_action(actor: ActorCard, action: Action, targets: Array, display_na
 	for effect in action.effects:
 		if effect.target_type != Action.TargetType.PARENT:
 			targets = get_targets(effect.target_type, actor is HeroCard)
+		else:
+			targets = parent_targets
 		await effect.execute(actor, targets, self, action)
 	if action.is_attack:
 		var context = { "targets": targets, "action": action }
@@ -274,7 +277,7 @@ func execute_action(actor: ActorCard, action: Action, targets: Array, display_na
 
 func execute_triggered_effect(actor: ActorCard, effect: ActionEffect, targets: Array, action: Action):
 	await effect.execute(actor, targets, self, action)
-	await _flush_all_health_animations()
+	#await _flush_all_health_animations()
 
 func execute_enemy_turn(enemy: EnemyCard):
 	change_state(State.EXECUTING_ACTION)
@@ -320,7 +323,7 @@ func _on_action_button_pressed(button: ActionButton):
 	if current_state in [State.LOADING, State.FORCED_TARGET]: return
 
 	var action = button.action
-	if current_actor.current_focus_pips < action.focus_cost:
+	if current_actor.current_focus < action.focus_cost:
 		return
 
 	_focus_button(button)
@@ -444,7 +447,7 @@ func get_targets(target_type: Action.TargetType, friendly: bool, parent_targets:
 			for ally in allies:
 				if ally.current_guard < target_ally.current_guard:
 					target_ally = ally
-					target_list.append(target_ally)
+			target_list.append(target_ally)
 		_:
 			push_error("get_target() unknown target type!")
 	return target_list
@@ -467,6 +470,7 @@ func _clear_all_targeting_ui():
 		actor.stop_flashing()
 
 func wait(duration : float) -> void:
+	print("waiting..")
 	var scaled_duration = duration / battle_speed
 	await get_tree().create_timer(scaled_duration).timeout
 

@@ -71,13 +71,13 @@ func get_dynamic_potency(attacker: ActorCard, _target: ActorCard, focus_cost: in
 	if potency_per_focus > 0.0:
 		var focus_pips = 0
 		if attacker is HeroCard:
-			focus_pips = attacker.current_focus_pips
+			focus_pips = attacker.current_focus
 		return potency_per_focus * focus_pips
 
 	if potency_scalar_per_focus > 0.0:
 		var remaining_focus = 0
 		if attacker is HeroCard:
-			remaining_focus = max(0, attacker.current_focus_pips - focus_cost)
+			remaining_focus = max(0, attacker.current_focus - focus_cost)
 
 		return potency * (1.0 + (potency_scalar_per_focus * remaining_focus))
 
@@ -87,23 +87,25 @@ func _process_on_hit_triggers(attacker: ActorCard, target: ActorCard, battle_man
 	for hit_trigger in on_hit_triggers:
 		var condition_met = false
 
-		# --- Check the "WHEN" ---
 		match hit_trigger.condition:
 			HitTrigger.HitCondition.ALWAYS:
 				condition_met = true
-
 			HitTrigger.HitCondition.IF_TARGET_IS_BREACHED:
-				if target.is_breached:
-					condition_met = true
-
+				condition_met = target.is_breached
 			HitTrigger.HitCondition.IF_TARGET_HAS_DEBUFF:
-				# (We need to add this helper to ActorCard)
-				if target.count_debuffs() > 0:
-					condition_met = true
-
-			# (Add more checks here as you need them)
+				if hit_trigger.context.is_empty():
+					condition_met = target.count_debuffs() > 0
+				else:
+					condition_met = target.has_condition(hit_trigger.context)
+			HitTrigger.HitCondition.IF_ATTACKER_HAS_BUFF:
+				if hit_trigger.context.is_empty():
+					condition_met = attacker.count_debuffs() > 0
+				else:
+					condition_met = attacker.has_condition(hit_trigger.context)
 
 		if condition_met:
 			print("On-hit trigger fired!")
 			for effect in hit_trigger.effects_to_run:
+				if effect is Effect_Damage:
+					await battle_manager.wait(0.25)
 				await battle_manager.execute_triggered_effect(attacker, effect, [target], null)

@@ -9,5 +9,5 @@ enum HitCondition {
 	# (You can add more here later, like IF_HIT_IS_CRIT)
 }
 @export var condition: HitCondition = HitCondition.ALWAYS
-
+@export var context: String
 @export var effects_to_run: Array[ActionEffect]
