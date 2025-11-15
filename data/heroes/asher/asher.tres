@@ -14,7 +14,7 @@ guard = 4
 attack = 50
 psyche = 35
 overload = 34
-speed = 42
+speed = 40
 precision = 15
 kinetic_defense = 36
 energy_defense = 36
@@ -23,5 +23,5 @@ metadata/_custom_type_script = "uid://b70gwt4gd4cun"
 [resource]
 script = ExtResource("1_avsjj")
 stats = SubResource("Resource_tqnt4")
-unlocked_roles = Array[ExtResource("2_s0m5y")]([ExtResource("4_cgx8j"), ExtResource("5_me7og"), null])
+unlocked_roles = Array[ExtResource("2_s0m5y")]([ExtResource("5_me7og"), ExtResource("5_me7og"), ExtResource("4_cgx8j")])
 metadata/_custom_type_script = "uid://dc5sk0b0jubvj"

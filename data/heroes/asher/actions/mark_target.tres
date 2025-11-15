@@ -1,19 +1,33 @@
-[gd_resource type="Resource" script_class="Action" load_steps=7 format=3 uid="uid://dqhx55x1hr2tt"]
+[gd_resource type="Resource" script_class="Action" load_steps=11 format=3 uid="uid://dqhx55x1hr2tt"]
 
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_6ff7n"]
-[ext_resource type="Resource" uid="uid://bnkh1gf3l78oq" path="res://data/heroes/asher/conditions/marked.tres" id="2_gb4yo"]
+[ext_resource type="Script" uid="uid://ddjg3oka0dtvg" path="res://data/scripts/action_effects/effect_remove_condition.gd" id="2_8s7nv"]
 [ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://data/scripts/action_effects/effect_apply_condition.gd" id="2_ia4qe"]
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="2_nbefs"]
 [ext_resource type="Texture2D" uid="uid://xxnprxq1umec" path="res://assets/graphics/icons/skills/digital-trace.png" id="3_gb4yo"]
+[ext_resource type="Resource" uid="uid://bnkh1gf3l78oq" path="res://data/heroes/asher/conditions/marked_debuff.tres" id="3_m15ye"]
+[ext_resource type="Resource" uid="uid://dya51rfrgr2bw" path="res://data/heroes/asher/conditions/marked_buff.tres" id="5_m15ye"]
+
+[sub_resource type="Resource" id="Resource_b537w"]
+script = ExtResource("2_8s7nv")
+condition_name = "Marked"
+target_type = 1
+metadata/_custom_type_script = "uid://ddjg3oka0dtvg"
 
 [sub_resource type="Resource" id="Resource_8s7nv"]
 script = ExtResource("2_ia4qe")
-condition = ExtResource("2_gb4yo")
+condition = ExtResource("3_m15ye")
+metadata/_custom_type_script = "uid://dggojfw8tmpnk"
+
+[sub_resource type="Resource" id="Resource_82nfl"]
+script = ExtResource("2_ia4qe")
+condition = ExtResource("5_m15ye")
+target_type = 4
 metadata/_custom_type_script = "uid://dggojfw8tmpnk"
 
 [resource]
 script = ExtResource("2_nbefs")
 action_name = "Mark Target"
 icon = ExtResource("3_gb4yo")
-effects = Array[ExtResource("1_6ff7n")]([SubResource("Resource_8s7nv")])
+effects = Array[ExtResource("1_6ff7n")]([SubResource("Resource_b537w"), SubResource("Resource_8s7nv"), SubResource("Resource_82nfl")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

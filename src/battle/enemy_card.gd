@@ -12,18 +12,20 @@ var intended_targets: Array[ActorCard]
 var intent_flash_tween: Tween
 
 # --- UNIQUE UI Node References ---
-@onready var intent_icon: TextureRect = $Panel/IntentIcon
 @onready var intent_text: Label = $Panel/IntentText
+@onready var kin_def_gauge: TextureProgressBar = $Panel/KinDef
+@onready var kin_def_value: Label = $Panel/KinDef/Value
+@onready var nrg_def_gauge: TextureProgressBar = $Panel/NrgDef
+@onready var nrg_def_value: Label = $Panel/NrgDef/Value
 
 
 func setup(data: EnemyData):
 	enemy_data = data
 	# --- Call the PARENT's setup function ---
 	setup_base(data.stats)
+	update_defenses()
 
 	name_label.text = enemy_data.stats.actor_name
-	$Panel/KinDef.text = "KIN:\n" + str(enemy_data.stats.kinetic_defense) + "%"
-	$Panel/NrgDef.text = "NRG:\n" + str(enemy_data.stats.energy_defense) + "%"
 	if enemy_data.portrait:
 		portrait_rect.texture = enemy_data.portrait
 
@@ -142,17 +144,24 @@ func update_intent_ui():
 		intent_text.text = final_text
 	flash_intent()
 
-func breached():
+func breach():
 	super.breach()
-	name_label.text = enemy_data.stats.actor_name
-	$Panel/KinDef.text = "KIN:\n" + str(int(enemy_data.stats.kinetic_defense / 2)) + "%"
-	$Panel/NrgDef.text = "NRG:\n" + str(int(enemy_data.stats.energy_defense / 2)) + "%"
+	update_defenses()
 
 func recover_breach():
 	super.recover_breach()
-	name_label.text = enemy_data.stats.actor_name
-	$Panel/KinDef.text = "KIN:\n" + str(int(enemy_data.stats.kinetic_defense)) + "%"
-	$Panel/NrgDef.text = "NRG:\n" + str(int(enemy_data.stats.energy_defense)) + "%"
+	update_defenses()
+
+func update_defenses():
+	var kin_def = enemy_data.stats.kinetic_defense
+	var nrg_def = enemy_data.stats.energy_defense
+	if is_breached:
+		kin_def /= 2
+		nrg_def /= 2
+	kin_def_value.text = str(kin_def) + "%"
+	nrg_def_value.text = str(nrg_def) + "%"
+	kin_def_gauge.value = kin_def
+	nrg_def_gauge.value = nrg_def
 
 func defeated():
 	super.defeated()
@@ -167,12 +176,12 @@ func defeated():
 	await tween.finished
 	modulate.a = 0
 
-func show_intent(icon: Texture):
-	intent_icon.texture = icon
-	intent_icon.visible = true
-
-func hide_intent():
-	intent_icon.visible = false
+#func show_intent(icon: Texture):
+	#intent_icon.texture = icon
+	#intent_icon.visible = true
+#
+#func hide_intent():
+	#intent_icon.visible = false
 
 func flash_intent(duration: float = 0.3):
 	duration /= battle_manager.battle_speed

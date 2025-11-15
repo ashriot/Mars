@@ -126,7 +126,6 @@ func apply_one_hit(damage: int, damage_effect: Effect_Damage, attacker: ActorCar
 		await _fire_condition_event(Trigger.TriggerType.ON_TAKING_KINETIC_DAMAGE, context)
 	elif damage_effect.damage_type == Action.DamageType.ENERGY:
 		await _fire_condition_event(Trigger.TriggerType.ON_TAKING_ENERGY_DAMAGE, context)
-	await _fire_condition_event(Trigger.TriggerType.ON_BEING_HIT, context)
 
 	context = { "attacker": attacker, "damage_dealt": damage }
 	await _fire_condition_event(Trigger.TriggerType.ON_BEING_HIT, context)
@@ -143,10 +142,10 @@ func in_danger(value: bool):
 		_stop_breach_pulse()
 
 func breach():
+	is_breached = true
 	is_in_danger = false
 	breached_label.text = "BREACHED"
 	guard_bar.modulate.a = 0.5
-	is_breached = true
 	current_ct = 0
 	actor_breached.emit()
 	_start_breach_pulse()
@@ -251,7 +250,6 @@ func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary 
 		var is_removing = condition.remove_on_triggers.has(event_type)
 		for trigger in condition.triggers:
 			trigger = trigger as Trigger
-			if trigger.trigger_type != event_type: continue
 			if is_removing:
 				print(actor_name, "'s ", condition.condition_name, " needs to be removed.")
 				await _fire_condition_event(Trigger.TriggerType.ON_REMOVED)
@@ -259,6 +257,7 @@ func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary 
 			if condition.is_passive and not is_removing:
 				if self is HeroCard and trigger.is_attack:
 					self.passive_fired.emit()
+			if trigger.trigger_type != event_type: continue
 			if trigger.is_attack:
 				is_attack = true
 			await battle_manager.wait(0.15)
@@ -518,12 +517,7 @@ func get_precision() -> int:
 	var mod: int = 0
 	for condition in active_conditions:
 		mod += condition.precision_mod
-
 	return current_stats.precision + mod
-	var scalar: float = 1.0
-	for condition in active_conditions:
-		scalar += condition.speed_scalar
-	return int(current_stats.speed * scalar)
 
 func get_incoming_precision_mods() -> int:
 	var mod: int = 0

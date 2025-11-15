@@ -10,4 +10,5 @@ condition_name = "Marked"
 icon = ExtResource("1_kuku1")
 condition_type = 1
 incoming_precision_mod = 25
+remove_on_triggers = Array[int]([0])
 metadata/_custom_type_script = "uid://df30dm288ne1d"

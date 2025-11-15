@@ -476,7 +476,6 @@ func _clear_all_targeting_ui():
 		actor.stop_flashing()
 
 func wait(duration : float) -> void:
-	print("waiting..")
 	var scaled_duration = duration / battle_speed
 	await get_tree().create_timer(scaled_duration).timeout
 

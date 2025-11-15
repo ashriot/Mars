@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="Condition" load_steps=7 format=3 uid="uid://dya51rfrgr2bw"]
+
+[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://data/scripts/conditions/condition.gd" id="2_n0a27"]
+[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://data/scripts/conditions/trigger.gd" id="3_i87cr"]
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="3_n0a27"]
+[ext_resource type="Script" uid="uid://ddjg3oka0dtvg" path="res://data/scripts/action_effects/effect_remove_condition.gd" id="4_i87cr"]
+
+[sub_resource type="Resource" id="Resource_d80xi"]
+script = ExtResource("4_i87cr")
+condition_name = "Marked"
+target_type = 1
+metadata/_custom_type_script = "uid://ddjg3oka0dtvg"
+
+[sub_resource type="Resource" id="Resource_7o7eh"]
+script = ExtResource("3_i87cr")
+trigger_type = 14
+effects_to_run = Array[ExtResource("3_n0a27")]([SubResource("Resource_d80xi")])
+metadata/_custom_type_script = "uid://cdugd6pnm6py"
+
+[resource]
+script = ExtResource("2_n0a27")
+condition_name = "Marked"
+triggers = Array[ExtResource("3_i87cr")]([SubResource("Resource_7o7eh")])
+remove_on_triggers = Array[int]([12])
+metadata/_custom_type_script = "uid://df30dm288ne1d"

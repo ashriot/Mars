@@ -48,22 +48,11 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 			if split_damage: dynamic_potency /= final_targets.size()
 			var is_piercing = damage_type == Action.DamageType.PIERCING
 			var is_crit: bool = false
-			var crit_chance: int = attacker.get_precision()
+			var crit_chance: int = attacker.get_precision() + target.get_incoming_precision_mods()
 			if pre_hit_context.has("precision_bonus"):
 				crit_chance += pre_hit_context.precision_bonus
 			if randi_range(1, 100) <= crit_chance:
 				is_crit = true
-
-			if is_piercing:
-				target.shake_panel()
-			elif target.current_guard == 0:
-				if not target.is_breached and shreds_guard:
-					target.breach()
-				else:
-					target.shake_panel()
-			elif shreds_guard:
-				target.modify_guard(-1)
-			target.shake_panel()
 
 			var power_for_hit = attacker.get_power(power_type)
 			if target.is_breached:
@@ -92,6 +81,7 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 			var final_damage = max(0, int(final_dmg_float))
 
 			await target.apply_one_hit(final_damage, self, attacker, is_crit)
+			await _process_on_hit_triggers(attacker, target, battle_manager)
 
 			if random and target.is_defeated:
 				final_targets.remove_at(t)
