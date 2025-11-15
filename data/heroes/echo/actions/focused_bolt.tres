@@ -10,6 +10,7 @@
 script = ExtResource("3_284pn")
 potency = 0.0
 power_type = 1
+damage_type = 1
 potency_per_focus = 0.25
 metadata/_custom_type_script = "uid://d0eibi4b735ay"
 

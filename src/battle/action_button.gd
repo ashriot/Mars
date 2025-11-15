@@ -38,12 +38,19 @@ func setup(_action: Action, cur_focus: int, scaled_focus: int, color: Color):
 	highlight_panel.hide()
 
 func update_cost():
+	self.disabled = false
 	var pips = focus_pips.get_children()
+	var unfilled_pips = max(0, focus_cost - user_focus)
 	for i in pips.size():
+		var pip_node = pips[i]
 		if i < focus_cost:
-			pips[i].visible = true
+			pip_node.visible = true
+			if i < unfilled_pips:
+				pip_node.modulate.a = 0.5
+			else:
+				pip_node.modulate.a = 1.0
 		else:
-			pips[i].visible = false
+			pip_node.visible = false
 
 func _on_button_pressed():
 	pressed.emit()

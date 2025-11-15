@@ -12,7 +12,7 @@ script = ExtResource("6_emvu4")
 potency = 0.5
 shreds_guard = false
 power_type = 1
-damage_type = 1
+damage_type = 2
 target_type = 1
 metadata/_custom_type_script = "uid://d0eibi4b735ay"
 
