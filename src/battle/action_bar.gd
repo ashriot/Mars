@@ -168,12 +168,12 @@ func start_flashing_panel(panel: Panel):
 		0.6 / battle_manager.battle_speed
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
-func stop_flashing_panel(panel: Panel):
+func stop_flashing_panel():
 	if flashing_tween and flashing_tween.is_running():
 		flashing_tween.kill()
 		flashing_tween = null
 
-	panel.modulate.a = 0.5
+	shift_action_panel.modulate.a = 0.5
 
 func _on_state_changed(state: BattleManager.State):
 	if not active_hero: return
@@ -183,9 +183,6 @@ func _on_state_changed(state: BattleManager.State):
 			button.disabled = is_forced
 	left_shift_button.disabled = is_forced
 	right_shift_button.disabled = is_forced
-	#if not is_forced and flash_tween:
-		#if flash_tween.is_running():
-			#stop_flashing_panel(shift_action_panel)
 
 func slide_in(duration: float = 0.2):
 	sliding = true

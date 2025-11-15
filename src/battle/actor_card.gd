@@ -269,13 +269,14 @@ func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary 
 				effect = effect as ActionEffect
 				targets = battle_manager.get_targets(effect.target_type, self is HeroCard, targets)
 				await battle_manager.execute_triggered_effect(self, effect, targets, action)
-		if condition.is_passive:
-			if self is HeroCard:
-				self.passive_fired.emit
 		if condition.remove_on_triggers.has(event_type):
 			print(actor_name, "'s ", condition.condition_name, " needs to be removed.")
 			await _fire_condition_event(Trigger.TriggerType.ON_REMOVED)
 			remove_condition(condition.condition_name)
+		else:
+			if condition.is_passive:
+				if self is HeroCard:
+					self.passive_fired.emit()
 
 func update_health_bar():
 	hp_bar_actual.value = current_hp

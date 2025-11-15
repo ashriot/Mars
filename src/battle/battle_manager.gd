@@ -256,6 +256,8 @@ func execute_action(actor: ActorCard, action: Action, targets: Array, display_na
 		if display_name:
 			actor.show_action(action.action_name)
 			await wait(0.25)
+		if action.is_shift_action:
+			action_bar.stop_flashing_panel()
 	var actor_name = actor.actor_name
 	print(actor_name, " uses ", action.action_name)
 
