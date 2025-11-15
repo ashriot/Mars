@@ -143,7 +143,7 @@ func update_intent_ui():
 	flash_intent()
 
 func breached():
-	super.breached()
+	super.breach()
 	name_label.text = enemy_data.stats.actor_name
 	$Panel/KinDef.text = "KIN:\n" + str(int(enemy_data.stats.kinetic_defense / 2)) + "%"
 	$Panel/NrgDef.text = "NRG:\n" + str(int(enemy_data.stats.energy_defense / 2)) + "%"

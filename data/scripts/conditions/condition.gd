@@ -9,6 +9,7 @@ enum ConditionType { BUFF, DEBUFF }
 
 @export_group("Stat Modifiers")
 @export var precision_mod: int = 0
+@export var incoming_precision_mod: int = 0
 @export var speed_scalar: float = 0.0
 @export var damage_dealt_scalar: float = 0.0
 @export var damage_taken_scalar: float = 0.0

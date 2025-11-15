@@ -160,9 +160,11 @@ func find_and_start_next_turn():
 			await action_bar.slide_finished
 		change_state(State.PLAYER_ACTION)
 		await winner.on_turn_started()
+		await _flush_all_health_animations()
 	else:
 		change_state(State.ENEMY_ACTION)
 		await winner.on_turn_started()
+		await _flush_all_health_animations()
 		await execute_enemy_turn(winner)
 		await winner.on_turn_ended()
 		await wait(0.5)
@@ -271,6 +273,7 @@ func execute_action(actor: ActorCard, action: Action, targets: Array, display_na
 	if action.is_attack:
 		var context = { "targets": targets, "action": action }
 		await actor._fire_condition_event(Trigger.TriggerType.AFTER_ATTACKING, context)
+		await _flush_all_health_animations()
 	if display_name: await actor.hide_action()
 	await _flush_all_health_animations()
 	return

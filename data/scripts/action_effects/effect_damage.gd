@@ -13,20 +13,10 @@ class_name Effect_Damage
 @export var potency_per_focus: float = 0.0
 @export var potency_scalar_per_focus: float = 0.0
 @export var on_hit_triggers: Array[HitTrigger]
-
+@export var pre_hit_triggers: Array[PreHitTrigger]
 
 func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleManager, action: Action = null) -> void:
 	var final_targets: Array = parent_targets
-	#match target_type:
-		#Action.TargetType.PARENT:
-			#final_targets = parent_targets
-		#Action.TargetType.ALL_ENEMIES:
-			#if attacker is HeroCard:
-				#for enemy in battle_manager.get_living_enemies():
-					#final_targets.append(enemy)
-			#else:
-				#for hero in battle_manager.get_living_heroes():
-					#final_targets.append(hero)
 
 	print("\n--- Damage Effect for ", hit_count, " hit(s) ---")
 	var random = false
@@ -40,23 +30,68 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 				print("RANDOM_ENEMY: No living enemies to target!")
 				return
 
-	var target = null
+	var target: ActorCard = null
 	for t in final_targets.size():
 		for i in hit_count:
 			if random:
 				target = final_targets.pick_random() as ActorCard
 			else:
 				target = final_targets[t]
+			var pre_hit_context = _get_pre_hit_triggers(attacker, target)
 			var dynamic_potency = get_dynamic_potency(attacker, target, focus_cost)
-
 			if not target or not is_instance_valid(target):
 				continue
 
 			if target.is_defeated and not random:
 				break
+
 			if split_damage: dynamic_potency /= final_targets.size()
-			await target.apply_one_hit(self, attacker, dynamic_potency)
-			await _process_on_hit_triggers(attacker, target, battle_manager)
+			var is_piercing = damage_type == Action.DamageType.PIERCING
+			var is_crit: bool = false
+			var crit_chance: int = attacker.get_precision()
+			if pre_hit_context.has("precision_bonus"):
+				crit_chance += pre_hit_context.precision_bonus
+			if randi_range(1, 100) <= crit_chance:
+				is_crit = true
+
+			if is_piercing:
+				target.shake_panel()
+			elif target.current_guard == 0:
+				if not target.is_breached and shreds_guard:
+					target.breach()
+				else:
+					target.shake_panel()
+			elif shreds_guard:
+				target.modify_guard(-1)
+			target.shake_panel()
+
+			var power_for_hit = attacker.get_power(power_type)
+			if target.is_breached:
+				power_for_hit += attacker.current_stats.overload
+
+			var base_hit_damage: float = power_for_hit * dynamic_potency
+
+			if is_crit:
+				print("Critical Hit!")
+				var crit_bonus: float = 0.0
+				crit_bonus = attacker.get_crit_damage_bonus(is_piercing)
+				base_hit_damage *= (1.0 + crit_bonus)
+
+			var final_dmg_float = float(base_hit_damage)
+			var def_mod = 1.0 if not is_crit else 0.0
+
+			if target.is_breached:
+				def_mod = 0.5
+			if damage_type == Action.DamageType.KINETIC:
+				final_dmg_float *= (1.0 - float(target.current_stats.kinetic_defense * def_mod) / 100)
+			elif damage_type == Action.DamageType.ENERGY:
+				final_dmg_float *= (1.0 - float(target.current_stats.energy_defense * def_mod) / 100)
+
+			final_dmg_float *= attacker.get_damage_dealt_scalar()
+			final_dmg_float *= target.get_damage_taken_scalar()
+			var final_damage = max(0, int(final_dmg_float))
+
+			await target.apply_one_hit(final_damage, self, attacker, is_crit)
 
 			if random and target.is_defeated:
 				final_targets.remove_at(t)
@@ -82,6 +117,27 @@ func get_dynamic_potency(attacker: ActorCard, _target: ActorCard, focus_cost: in
 		return potency * (1.0 + (potency_scalar_per_focus * remaining_focus))
 
 	return potency
+
+func _get_pre_hit_triggers(attacker: ActorCard, target: ActorCard) -> Dictionary:
+	var context = {}
+	for trigger in pre_hit_triggers:
+		var condition_met = false
+
+		match trigger.condition:
+			PreHitTrigger.PreHitCondition.ALWAYS:
+				condition_met = true
+
+			PreHitTrigger.PreHitCondition.IF_TARGET_HAS_CONDITION:
+				if target.has_condition(trigger.string_context):
+					condition_met = true
+
+			PreHitTrigger.PreHitCondition.IF_TARGET_HAS_ANY_DEBUFF:
+				if target.count_debuffs() > 0:
+					condition_met = true
+		if condition_met:
+			for effect in trigger.effects_to_run:
+				effect.execute(context, attacker, target)
+	return context
 
 func _process_on_hit_triggers(attacker: ActorCard, target: ActorCard, battle_manager: BattleManager) -> void:
 	for hit_trigger in on_hit_triggers:

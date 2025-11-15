@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="Condition" load_steps=4 format=3 uid="uid://bnkh1gf3l78oq"]
+
+[ext_resource type="Texture2D" uid="uid://xxnprxq1umec" path="res://assets/graphics/icons/skills/digital-trace.png" id="1_kuku1"]
+[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://data/scripts/conditions/condition.gd" id="1_qikp5"]
+[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://data/scripts/conditions/trigger.gd" id="2_kuku1"]
+
+[resource]
+script = ExtResource("1_qikp5")
+condition_name = "Marked"
+icon = ExtResource("1_kuku1")
+condition_type = 1
+incoming_precision_mod = 25
+metadata/_custom_type_script = "uid://df30dm288ne1d"

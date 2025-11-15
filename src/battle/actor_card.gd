@@ -18,7 +18,6 @@ var flash_tween: Tween
 var is_valid_target: bool
 var pip_tweens: Dictionary = {}
 
-
 # --- Data (Shared by both) ---
 var actor_name: String
 var stat_mods: Dictionary
@@ -98,58 +97,25 @@ func on_turn_ended() -> void:
 	highlight(false)
 	await _fire_condition_event(Trigger.TriggerType.ON_TURN_END)
 
-func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_potency: float) -> void:
+func apply_one_hit(damage: int, damage_effect: Effect_Damage, attacker: ActorCard, is_crit: bool) -> void:
 	if is_defeated: return
-	var is_piercing = damage_effect.damage_type == Action.DamageType.PIERCING
 
-	var is_crit: bool = false
-	var crit_chance: int = attacker.get_precision()
-	if randi_range(1, 100) <= crit_chance:
-		is_crit = true
-
-	if is_piercing:
+	if damage_effect.damage_type == Action.DamageType.PIERCING:
 		shake_panel()
 	elif current_guard == 0:
-		if not is_breached and damage_effect.shreds_guard:
-			breached()
-		else:
-			shake_panel()
-	elif damage_effect.shreds_guard:
+		if not is_breached:
+			breach()
+	else:
 		modify_guard(-1)
-	shake_panel()
+		shake_panel()
 
-	var power_for_hit = attacker.get_power(damage_effect.power_type)
-	if is_breached:
-		power_for_hit += attacker.current_stats.overload
+	_spawn_damage_popup(damage, self is HeroCard, is_crit)
 
-	var base_hit_damage: float = power_for_hit * dynamic_potency
-
-	if is_crit:
-		print("Critical Hit!")
-		var crit_bonus: float = 0.0
-		crit_bonus = attacker.get_crit_damage_bonus(is_piercing)
-		base_hit_damage *= (1.0 + crit_bonus)
-
-	var final_dmg_float = float(base_hit_damage)
-	var def_mod = 1.0 if not is_crit else 0.0
-	if is_breached:
-		def_mod = 0.5
-	if damage_effect.damage_type == Action.DamageType.KINETIC:
-		final_dmg_float *= (1.0 - float(current_stats.kinetic_defense * def_mod) / 100)
-	elif damage_effect.damage_type == Action.DamageType.ENERGY:
-		final_dmg_float *= (1.0 - float(current_stats.energy_defense * def_mod) / 100)
-
-	final_dmg_float *= attacker.get_damage_dealt_scalar()
-	final_dmg_float *= get_damage_taken_scalar()
-	var final_damage = max(0, int(final_dmg_float))
-	var up = attacker is EnemyCard
-	_spawn_damage_popup(final_damage, up, is_crit)
-
-	current_hp = max(0, current_hp - final_damage)
+	current_hp = max(0, current_hp - damage)
 	hp_bar_actual.value = current_hp
 	hp_value.text = str(current_hp)
 	hp_changed.emit(current_hp, current_stats.max_hp)
-	print("Hit for ", final_damage, " damage! (", base_hit_damage, ")")
+	print("Hit for ", damage, " damage!")
 	update_guard_bar()
 
 	if current_hp == 0:
@@ -162,7 +128,11 @@ func apply_one_hit(damage_effect: Effect_Damage, attacker: ActorCard, dynamic_po
 		await _fire_condition_event(Trigger.TriggerType.ON_TAKING_ENERGY_DAMAGE, context)
 	await _fire_condition_event(Trigger.TriggerType.ON_BEING_HIT, context)
 
-	return
+	context = { "attacker": attacker, "damage_dealt": damage }
+	await _fire_condition_event(Trigger.TriggerType.ON_BEING_HIT, context)
+
+	if current_hp == 0:
+		await defeated()
 
 func in_danger(value: bool):
 	is_in_danger = value
@@ -172,7 +142,7 @@ func in_danger(value: bool):
 	else:
 		_stop_breach_pulse()
 
-func breached():
+func breach():
 	is_in_danger = false
 	breached_label.text = "BREACHED"
 	guard_bar.modulate.a = 0.5
@@ -307,7 +277,6 @@ func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary 
 				effect = effect as ActionEffect
 				targets = battle_manager.get_targets(effect.target_type, self is HeroCard, targets, attacker)
 				await battle_manager.execute_triggered_effect(source, effect, targets, action)
-				await battle_manager._flush_all_health_animations()
 
 func update_health_bar():
 	hp_bar_actual.value = current_hp
@@ -551,6 +520,16 @@ func get_precision() -> int:
 		mod += condition.precision_mod
 
 	return current_stats.precision + mod
+	var scalar: float = 1.0
+	for condition in active_conditions:
+		scalar += condition.speed_scalar
+	return int(current_stats.speed * scalar)
+
+func get_incoming_precision_mods() -> int:
+	var mod: int = 0
+	for condition in active_conditions:
+		mod += condition.incoming_precision_mod
+	return mod
 
 func get_crit_damage_bonus(is_piercing:= false) -> float:
 	if is_piercing:
