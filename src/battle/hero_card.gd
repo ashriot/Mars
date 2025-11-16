@@ -34,11 +34,11 @@ func setup(data: HeroData):
 	update_current_role()
 
 func on_turn_started() -> void:
-	await battle_manager.action_bar.load_actions(self, false)
-	await _slide_up()
-	await super.on_turn_started()
 	if current_focus < 10:
 		modify_focus(1)
+	await _slide_up()
+	await battle_manager.action_bar.load_actions(self, false)
+	await super.on_turn_started()
 	return
 
 func on_turn_ended() -> void:

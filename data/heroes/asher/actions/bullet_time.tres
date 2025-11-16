@@ -22,6 +22,7 @@ metadata/_custom_type_script = "uid://dggojfw8tmpnk"
 script = ExtResource("6_p8ltw")
 action_name = "Bullet Time"
 icon = ExtResource("5_tojmx")
+update_turn_order = true
 target_type = 4
 effects = Array[ExtResource("1_hir7p")]([SubResource("Resource_nv23t"), SubResource("Resource_ejk74")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

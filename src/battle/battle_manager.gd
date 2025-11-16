@@ -378,7 +378,6 @@ func _on_shift_button_pressed(direction: String):
 		await action_bar.slide_out()
 		await current_actor.shift_role(direction)
 		await action_bar.slide_in()
-		action_bar.hero_passive_fired()
 		_apply_role_passive(current_hero)
 		print("Shift complete. Returning to player's action.")
 		if current_hero.get_current_role().shift_action:
@@ -473,7 +472,7 @@ func _clear_all_targeting_ui():
 	for actor in actor_list:
 		actor.stop_flashing()
 
-func wait(duration : float) -> void:
+func wait(duration: float = 0.01) -> void:
 	var scaled_duration = duration / battle_speed
 	await get_tree().create_timer(scaled_duration).timeout
 

@@ -271,6 +271,8 @@ func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary 
 				if battle_manager.current_actor is HeroCard and condition.is_passive and effect is Effect_Damage:
 					self.passive_fired.emit()
 				await battle_manager.execute_triggered_effect(source, effect, targets, action)
+				if condition.update_turn_order:
+					battle_manager.update_turn_order()
 
 func update_health_bar():
 	hp_bar_actual.value = current_hp

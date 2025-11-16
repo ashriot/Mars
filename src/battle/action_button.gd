@@ -46,7 +46,7 @@ func update_cost():
 		if i < focus_cost:
 			pip_node.visible = true
 			if i < unfilled_pips:
-				pip_node.modulate.a = 0.5
+				pip_node.modulate.a = 0.33
 			else:
 				pip_node.modulate.a = 1.0
 		else:

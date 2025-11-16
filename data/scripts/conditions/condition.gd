@@ -17,6 +17,7 @@ enum ConditionType { BUFF, DEBUFF }
 
 @export_group("Triggers & Effects")
 @export var is_passive: bool = false
+@export var update_turn_order: bool
 @export var retarget: bool = false
 @export var triggers: Array[Trigger]
 @export var remove_on_triggers: Array[Trigger.TriggerType]

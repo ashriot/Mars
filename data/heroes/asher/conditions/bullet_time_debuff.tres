@@ -11,4 +11,5 @@ icon = ExtResource("1_t13li")
 condition_type = 1
 speed_scalar = -0.15
 is_passive = true
+update_turn_order = true
 metadata/_custom_type_script = "uid://df30dm288ne1d"

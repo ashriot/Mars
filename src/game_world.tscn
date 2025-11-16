@@ -5,8 +5,9 @@
 [sub_resource type="Environment" id="Environment_f0yx4"]
 background_mode = 3
 tonemap_exposure = 0.5
-glow_enabled = true
-glow_strength = 1.6
+glow_intensity = 1.5
+glow_strength = 1.25
+glow_blend_mode = 1
 
 [node name="GameWorld" type="Node2D"]
 

@@ -31,6 +31,6 @@ metadata/_custom_type_script = "uid://d0eibi4b735ay"
 script = ExtResource("2_0knxi")
 action_name = "Aimed Shot"
 icon = ExtResource("4_j1mnd")
-focus_cost = 1
+focus_cost = 2
 effects = Array[ExtResource("1_isrst")]([SubResource("Resource_opeli")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"
