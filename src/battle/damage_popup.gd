@@ -1,4 +1,5 @@
 extends Control
+class_name DamagePopup
 
 @onready var label = $Label
 
@@ -8,38 +9,42 @@ const FALL_DISTANCE = 300.0
 
 # Crit parameters
 const CRIT_POP_SCALE = Vector2(2.0, 2.0)
-const CRIT_POP_DURATION = 0.3
-const CRIT_LINGER_DURATION = 0.5
-const CRIT_FLASH_COLOR = Color.ORANGE_RED
+const CRIT_POP_DURATION = 0.4
+const CRIT_LINGER_DURATION = 0.4
 
 # Normal parameters
 const NORMAL_POP_SCALE = Vector2(1.3, 1.3)
 const NORMAL_POP_DURATION = 0.2
-const NORMAL_LINGER_DURATION = 0.3
+const NORMAL_LINGER_DURATION = 0.2
 
-func show_damage(amount: int, up: bool, speed: float, is_crit := false):
+func show_damage(amount: int, damage_type: Action.DamageType, speed: float, is_crit := false):
 	label.text = str(amount)
 
 	# --- 2. Define variables based on 'is_crit' ---
 	var pop_scale: Vector2
 	var pop_duration: float
 	var linger_duration: float
-	var start_color: Color
-	var base_color = Color(1.0, 1.0, 1.0) # Normal white
+	var base_color = Color.WHITE
+	match damage_type:
+		Action.DamageType.KINETIC:
+			base_color = Color.ORANGE_RED
+		Action.DamageType.ENERGY:
+			base_color = Color.CYAN
+		Action.DamageType.PIERCING:
+			base_color = Color.MAGENTA
 
 	if is_crit:
 		pop_scale = CRIT_POP_SCALE
 		pop_duration = CRIT_POP_DURATION / speed
 		linger_duration = CRIT_LINGER_DURATION / speed
-		start_color = CRIT_FLASH_COLOR
+		label.text += "!"
 	else:
 		pop_scale = NORMAL_POP_SCALE
 		pop_duration = NORMAL_POP_DURATION / speed
 		linger_duration = NORMAL_LINGER_DURATION / speed
-		start_color = base_color # No flash
 
 	# --- 3. Set initial state ---
-	label.modulate = start_color
+	label.modulate = base_color
 	# Store the initial position
 	var start_y = position.y
 
@@ -63,8 +68,6 @@ func show_damage(amount: int, up: bool, speed: float, is_crit := false):
 	# 4c. "Fall" AND "Fade Out" - these run in parallel
 	# Chain after settle, but make the two animations parallel to each other
 	var distance = FALL_DISTANCE
-	if up:
-		distance *= -1
 	tween.tween_property(
 		self, "position:y", start_y + distance, FALL_DURATION
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)

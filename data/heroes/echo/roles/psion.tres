@@ -12,7 +12,7 @@
 script = ExtResource("3_s6q47")
 role_name = "Psion"
 icon = ExtResource("3_ywyp5")
-color = Color(0.31, 0.5285001, 1, 1)
+color = Color(0.24000001, 0.62, 1, 1)
 passive = ExtResource("4_s6q47")
 actions = Array[ExtResource("1_qywa0")]([ExtResource("2_qywa0"), ExtResource("3_vbe7v"), ExtResource("4_5w3kr"), null])
 metadata/_custom_type_script = "uid://d3mhjutrnvwsp"

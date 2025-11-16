@@ -9,7 +9,7 @@
 
 [sub_resource type="Resource" id="Resource_lcsx6"]
 script = ExtResource("2_qo3nh")
-guard_amount = 3
+guard_amount = 2
 metadata/_custom_type_script = "uid://cu12q7dfj3hfe"
 
 [sub_resource type="Resource" id="Resource_ngep8"]

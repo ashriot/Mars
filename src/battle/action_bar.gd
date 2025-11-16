@@ -124,12 +124,6 @@ func _on_shift_button_pressed(direction: String):
 func _on_action_button_pressed(button: ActionButton):
 	action_selected.emit(button)
 
-func hero_passive_fired():
-	var passive = active_hero.get_current_role().passive
-	if passive:
-		if passive.is_attack:
-			flash_panel(passive_panel)
-
 func flash_panel(panel: Panel):
 	var base_color = panel.modulate
 	var flash_color = Color(3.0, 3.0, 3.0, 1.0)

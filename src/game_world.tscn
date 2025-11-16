@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3 uid="uid://cl5f5vup72n32"]
+
+[ext_resource type="PackedScene" uid="uid://dc5du0o5phhma" path="res://src/battle/battle_scene.tscn" id="1_rnajw"]
+
+[sub_resource type="Environment" id="Environment_f0yx4"]
+background_mode = 3
+tonemap_exposure = 0.5
+glow_enabled = true
+glow_strength = 1.6
+
+[node name="GameWorld" type="Node2D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_f0yx4")
+
+[node name="BattleScene" parent="." instance=ExtResource("1_rnajw")]

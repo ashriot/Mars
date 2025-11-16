@@ -45,6 +45,15 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 			if target.is_defeated and not random:
 				break
 
+			if damage_type == Action.DamageType.PIERCING:
+				target.shake_panel()
+			else:
+				if not target.is_breached and target.current_guard == 0:
+					target.breach()
+				else:
+					target.modify_guard(-1)
+					target.shake_panel()
+
 			if split_damage: dynamic_potency /= final_targets.size()
 			var is_piercing = damage_type == Action.DamageType.PIERCING
 			var is_crit: bool = false
@@ -60,19 +69,10 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 
 			var base_hit_damage: float = power_for_hit * dynamic_potency
 
-			if damage_type == Action.DamageType.PIERCING:
-				target.shake_panel()
-			elif target.current_guard == 0:
-				if not target.is_breached:
-					target.breach()
-			else:
-				target.modify_guard(-1)
-				target.shake_panel()
-
 			if is_crit:
 				print("Critical Hit!")
 				var crit_bonus: float = 0.0
-				crit_bonus = attacker.get_crit_damage_bonus(is_piercing)
+				crit_bonus = attacker.get_crit_damage_bonus()
 				base_hit_damage *= (1.0 + crit_bonus)
 
 			var final_dmg_float = float(base_hit_damage)

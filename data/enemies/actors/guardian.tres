@@ -11,9 +11,9 @@
 script = ExtResource("4_e5ebm")
 actor_name = "Guardian"
 max_hp = 4
-guard = 3
+guard = 4
 attack = 3
-psyche = 2
+psyche = 3
 overload = 2
 speed = 2
 precision = 2

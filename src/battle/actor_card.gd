@@ -54,6 +54,7 @@ const POPUP_SPACING_TIME: float = 1.0
 @onready var highlight_panel: Panel = $Panel/Highlight
 @onready var target_flash: Panel = $Panel/TargetFlash
 @onready var action_display: PanelContainer = $Panel/ActionName
+@onready var next_panel: Panel = $Panel/NextPanel
 
 
 func setup_base(stats: ActorStats):
@@ -77,6 +78,7 @@ func setup_base(stats: ActorStats):
 	target_flash.modulate.a = 0.2
 	update_health_bar()
 	action_display.hide()
+	next_panel.hide()
 	await get_tree().process_frame
 
 	for pip in guard_bar.get_children():
@@ -84,6 +86,7 @@ func setup_base(stats: ActorStats):
 	update_guard_bar(false)
 
 func on_turn_started() -> void:
+	next_panel.hide()
 	await battle_manager.wait(0.1)
 	highlight(true)
 	await _fire_condition_event(Trigger.TriggerType.ON_TURN_START)
@@ -100,7 +103,7 @@ func on_turn_ended() -> void:
 func apply_one_hit(damage: int, damage_effect: Effect_Damage, attacker: ActorCard, is_crit: bool) -> void:
 	if is_defeated: return
 
-	_spawn_damage_popup(damage, self is HeroCard, is_crit)
+	_spawn_damage_popup(damage, damage_effect.damage_type, is_crit)
 
 	current_hp = max(0, current_hp - damage)
 	hp_bar_actual.value = current_hp
@@ -245,9 +248,6 @@ func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary 
 				print(actor_name, "'s ", condition.condition_name, " needs to be removed.")
 				await _fire_condition_event(Trigger.TriggerType.ON_REMOVED)
 				remove_condition(condition.condition_name)
-			if condition.is_passive and not is_removing:
-				if self is HeroCard and trigger.is_attack:
-					self.passive_fired.emit()
 			if trigger.trigger_type != event_type: continue
 			if trigger.is_attack:
 				is_attack = true
@@ -264,8 +264,12 @@ func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary 
 			if context.has("attacker"):
 				attacker = context.attacker
 			for effect in trigger.effects_to_run:
+				var is_hero = self is HeroCard
 				effect = effect as ActionEffect
-				targets = battle_manager.get_targets(effect.target_type, self is HeroCard, targets, attacker)
+				targets = battle_manager.get_targets(effect.target_type, is_hero, targets, attacker)
+
+				if battle_manager.current_actor is HeroCard and condition.is_passive and effect is Effect_Damage:
+					self.passive_fired.emit()
 				await battle_manager.execute_triggered_effect(source, effect, targets, action)
 
 func update_health_bar():
@@ -299,7 +303,7 @@ func modify_guard(amount: int):
 	print(actor_name, " gained ", amount, " guard. Total: ", current_guard)
 	if amount > 0:
 		await _fire_condition_event(Trigger.TriggerType.ON_GAINING_GUARD)
-	if current_guard == 0:
+	if current_guard == 0 and not is_breached:
 		in_danger(true)
 	elif is_in_danger:
 		in_danger(false)
@@ -341,6 +345,12 @@ func hide_action():
 	var tween = create_tween()
 	tween.tween_property(action_display, "modulate:a", 0.0, duration)
 	await tween.finished.connect(func(): action_display.hide())
+
+func show_next():
+	next_panel.show()
+
+	#var tween = create_tween()
+	#tween.tween_property(next_panel, "modulate:a", 1.0, 0.1 / battle_manager.battle_speed)
 
 func _start_breach_pulse():
 	var color = Color.ORANGE_RED
@@ -516,11 +526,8 @@ func get_incoming_precision_mods() -> int:
 		mod += condition.incoming_precision_mod
 	return mod
 
-func get_crit_damage_bonus(is_piercing:= false) -> float:
-	if is_piercing:
-		return float(current_stats.precision) / 100
-	else:
-		return 0.0
+func get_crit_damage_bonus() -> float:
+	return 0.5
 
 func get_damage_dealt_scalar() -> float:
 	var scalar: float = 1.0
@@ -534,13 +541,13 @@ func get_damage_taken_scalar() -> float:
 		scalar += condition.damage_taken_scalar
 	return scalar
 
-func _spawn_damage_popup(amount: int, up: bool, is_crit: bool):
+func _spawn_damage_popup(amount: int, damage_type: Action.DamageType, is_crit: bool):
 	if not damage_popup_scene:
 		push_warning("DamagePopupScene not set on ActorCard!")
 		return
 
 	# 1. Create the instance
-	var popup = damage_popup_scene.instantiate() as Control
+	var popup = damage_popup_scene.instantiate() as DamagePopup
 
 	# 2. Add it to the main scene tree
 	battle_manager.add_child(popup)
@@ -565,5 +572,4 @@ func _spawn_damage_popup(amount: int, up: bool, is_crit: bool):
 	# 4. Update tracking
 	last_popup_time = current_time
 
-	# 5. "Fire and forget"
-	popup.show_damage(amount, up, battle_manager.battle_speed, is_crit)
+	popup.show_damage(amount, damage_type, battle_manager.battle_speed, is_crit)

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Condition" load_steps=9 format=3 uid="uid://bfbdhof0hj83s"]
+[gd_resource type="Resource" script_class="Condition" load_steps=10 format=3 uid="uid://bfbdhof0hj83s"]
 
 [ext_resource type="Texture2D" uid="uid://c2gwjo0dxv750" path="res://assets/graphics/icons/skills/supersonic-bullet.png" id="1_a1jqp"]
 [ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://data/scripts/conditions/condition.gd" id="2_g8mco"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="4_4clrl"]
 [ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://data/scripts/conditions/hit_trigger.gd" id="5_tun3f"]
 [ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/action_effects/effect_damage.gd" id="6_fu7np"]
+[ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://data/scripts/action_effects/pre_hit_trigger.gd" id="6_g8mco"]
 
 [sub_resource type="Resource" id="Resource_7j35k"]
 script = ExtResource("6_fu7np")

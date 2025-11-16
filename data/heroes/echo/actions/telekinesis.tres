@@ -1,8 +1,9 @@
-[gd_resource type="Resource" script_class="Action" load_steps=9 format=3 uid="uid://bua2w6l1vluii"]
+[gd_resource type="Resource" script_class="Action" load_steps=10 format=3 uid="uid://bua2w6l1vluii"]
 
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_s0sfa"]
 [ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://data/scripts/conditions/hit_trigger.gd" id="2_hmhbj"]
 [ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/action_effects/effect_damage.gd" id="3_0kk3r"]
+[ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://data/scripts/action_effects/pre_hit_trigger.gd" id="3_hmhbj"]
 [ext_resource type="Script" uid="uid://cu12q7dfj3hfe" path="res://data/scripts/action_effects/effect_modify_guard.gd" id="4_2tyc1"]
 [ext_resource type="Texture2D" uid="uid://da0cmyog0oiqo" path="res://assets/graphics/icons/skills/bolt-shield.png" id="5_128qq"]
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="6_vco1p"]

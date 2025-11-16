@@ -11,12 +11,12 @@
 script = ExtResource("4_ooj02")
 actor_name = "Trooper"
 max_hp = 3
-guard = 2
+guard = 0
 attack = 4
 psyche = 3
-overload = 3
+overload = 4
 speed = 3
-precision = 2
+precision = 3
 kinetic_defense = 3
 energy_defense = 2
 metadata/_custom_type_script = "uid://djm3iwmyexcia"

@@ -92,7 +92,6 @@ func _run_ct_simulation(num_turns := 7) -> Array:
 	var projected_queue = []
 	var relative_ticks = 0
 
-	# 1. Create a "ghost" list so we don't mess with real data
 	var sim_data = []
 	for actor in actor_list:
 		sim_data.append({
@@ -100,7 +99,6 @@ func _run_ct_simulation(num_turns := 7) -> Array:
 			"ct": actor.current_ct # Copy the REAL, current CT
 		})
 
-	# 2. Run the simulation 'num_turns' times
 	while projected_queue.size() < num_turns:
 		var winner_dict = null
 		var ticks_needed_for_winner = 999999

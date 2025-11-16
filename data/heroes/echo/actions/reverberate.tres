@@ -1,7 +1,8 @@
-[gd_resource type="Resource" script_class="Action" load_steps=10 format=3 uid="uid://cyeb0bt4dei2"]
+[gd_resource type="Resource" script_class="Action" load_steps=11 format=3 uid="uid://cyeb0bt4dei2"]
 
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_h878q"]
 [ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://data/scripts/conditions/hit_trigger.gd" id="2_plwkg"]
+[ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://data/scripts/action_effects/pre_hit_trigger.gd" id="3_1s2r3"]
 [ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/action_effects/effect_damage.gd" id="3_6qrm5"]
 [ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://data/scripts/action_effects/effect_apply_condition.gd" id="4_1s2r3"]
 [ext_resource type="Resource" uid="uid://blr0lyyn17tfu" path="res://data/heroes/echo/conditions/reverberate.tres" id="4_plwkg"]

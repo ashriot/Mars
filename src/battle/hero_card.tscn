@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://cj2ylb1ld6ews"]
+[gd_scene load_steps=14 format=3 uid="uid://cj2ylb1ld6ews"]
 
 [ext_resource type="Script" uid="uid://cp1th7fv4flgo" path="res://src/battle/hero_card.gd" id="1_n7b5o"]
 [ext_resource type="Texture2D" uid="uid://bc14dpey83x0x" path="res://assets/graphics/icons/textures/bolt.png" id="2_1ptom"]
@@ -48,6 +48,18 @@ corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ha0bt"]
+bg_color = Color(1, 1, 1, 0.29411766)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
 
 [node name="HeroCard" type="Control"]
 custom_minimum_size = Vector2(400, 220)
@@ -615,6 +627,7 @@ text = "BREACHED"
 horizontal_alignment = 1
 
 [node name="ActionName" type="PanelContainer" parent="Panel"]
+visible = false
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -636,6 +649,33 @@ theme_override_constants/line_spacing = -5
 theme_override_constants/outline_size = 5
 theme_override_font_sizes/font_size = 30
 text = "Attack!"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NextPanel" type="Panel" parent="Panel"]
+modulate = Color(1, 0.4745098, 0.16862746, 1)
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -75.0
+offset_top = -58.0
+offset_right = 75.0
+offset_bottom = -14.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_ha0bt")
+
+[node name="Label" type="Label" parent="Panel/NextPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/line_spacing = -5
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 30
+text = "NEXT"
 horizontal_alignment = 1
 vertical_alignment = 1
 

@@ -22,8 +22,16 @@ func _on_turn_order_updated(projected_queue: Array):
 		var actor_queue_item = actor_queue_scene.instantiate() as ActorQueue
 
 		var actor: ActorCard = turn_data.actor
+		if projected_queue.size() > 1:
+			if projected_queue[1] == turn_data:
+				actor.show_next()
+			else:
+				actor.next_panel.hide()
 
 		var relative_ticks = turn_data.ticks_needed - first_turn_ticks
 
 		queue.add_child(actor_queue_item)
 		actor_queue_item.setup(actor, relative_ticks)
+
+	if projected_queue.size() > 1:
+		projected_queue[1].actor.show_next()

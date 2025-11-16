@@ -1,11 +1,12 @@
-[gd_scene load_steps=13 format=3 uid="uid://b4tt3yil85l7j"]
+[gd_scene load_steps=15 format=3 uid="uid://b4tt3yil85l7j"]
 
 [ext_resource type="Script" uid="uid://carvfoj4h04nm" path="res://src/battle/enemy_card.gd" id="1_cu1kv"]
 [ext_resource type="Texture2D" uid="uid://c0yr6bpij1f16" path="res://assets/graphics/icons/textures/shield.png" id="2_4kuvy"]
 [ext_resource type="Texture2D" uid="uid://jeiq1r6ke2t7" path="res://assets/graphics/icons/textures/plus.png" id="2_e8ixv"]
 [ext_resource type="PackedScene" uid="uid://ckw8rm3jl32bx" path="res://src/battle/damage_popup.tscn" id="2_xkcvw"]
-[ext_resource type="Texture2D" uid="uid://npl47tdbveoc" path="res://assets/graphics/icons/textures/armor.png" id="4_8i7ma"]
 [ext_resource type="Texture2D" uid="uid://bhk28mg1reyry" path="res://assets/graphics/glyphs/ps/Button - PS Directional Arrow Down.png" id="4_e8ixv"]
+[ext_resource type="Texture2D" uid="uid://05lare8hgtys" path="res://assets/graphics/icons/textures/bullet.png" id="4_l4hbp"]
+[ext_resource type="Texture2D" uid="uid://0v6k85gfryip" path="res://assets/graphics/icons/textures/atom.png" id="5_l4hbp"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8i7ma"]
 bg_color = Color(0.6, 0.6, 0.6, 0)
@@ -48,6 +49,18 @@ corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pdx0h"]
+bg_color = Color(1, 1, 1, 0.29411766)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
 
 [node name="EnemyCard" type="Control"]
 custom_minimum_size = Vector2(400, 180)
@@ -316,35 +329,39 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 15.0
-offset_top = 21.0
-offset_right = -325.0
-offset_bottom = -99.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = -337.0
+offset_bottom = -117.0
 grow_horizontal = 2
 grow_vertical = 2
 value = 65.0
 fill_mode = 3
 nine_patch_stretch = true
-texture_under = ExtResource("4_8i7ma")
-texture_progress = ExtResource("4_8i7ma")
+texture_under = ExtResource("4_l4hbp")
+texture_progress = ExtResource("4_l4hbp")
 tint_under = Color(0, 0, 0, 0.5019608)
-tint_progress = Color(1, 0.56666666, 0, 1)
+tint_progress = Color(1, 0.5686275, 0, 1)
 
 [node name="Value" type="Label" parent="Panel/KinDef"]
+modulate = Color(1, 0.753, 0.43, 1)
 layout_mode = 1
-anchors_preset = 5
+anchors_preset = 7
 anchor_left = 0.5
+anchor_top = 1.0
 anchor_right = 0.5
+anchor_bottom = 1.0
 offset_left = -27.0
-offset_top = -18.0
+offset_top = -20.0
 offset_right = 27.0
-offset_bottom = 12.0
+offset_bottom = 10.0
 grow_horizontal = 2
+grow_vertical = 0
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.5019608)
 theme_override_constants/shadow_offset_x = 0
 theme_override_constants/shadow_offset_y = 0
-theme_override_constants/outline_size = 4
-theme_override_constants/shadow_outline_size = 10
+theme_override_constants/outline_size = 8
+theme_override_constants/shadow_outline_size = 20
 theme_override_font_sizes/font_size = 24
 text = "40%"
 horizontal_alignment = 1
@@ -356,34 +373,38 @@ layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -75.0
-offset_top = 21.0
-offset_right = -15.0
-offset_bottom = 81.0
+offset_left = -63.0
+offset_top = 3.0
+offset_right = -3.0
+offset_bottom = 63.0
 grow_horizontal = 0
 value = 65.0
 fill_mode = 3
 nine_patch_stretch = true
-texture_under = ExtResource("4_8i7ma")
-texture_progress = ExtResource("4_8i7ma")
+texture_under = ExtResource("5_l4hbp")
+texture_progress = ExtResource("5_l4hbp")
 tint_under = Color(0, 0, 0, 0.5019608)
 tint_progress = Color(0.58683324, 0.32999998, 1, 1)
 
 [node name="Value" type="Label" parent="Panel/NrgDef"]
+modulate = Color(0.74716663, 0.59000003, 1, 1)
 layout_mode = 1
-anchors_preset = 5
+anchors_preset = 7
 anchor_left = 0.5
+anchor_top = 1.0
 anchor_right = 0.5
+anchor_bottom = 1.0
 offset_left = -27.0
-offset_top = -18.0
+offset_top = -20.0
 offset_right = 27.0
-offset_bottom = 12.0
+offset_bottom = 10.0
 grow_horizontal = 2
+grow_vertical = 0
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.5019608)
 theme_override_constants/shadow_offset_x = 0
 theme_override_constants/shadow_offset_y = 0
-theme_override_constants/outline_size = 4
-theme_override_constants/shadow_outline_size = 10
+theme_override_constants/outline_size = 8
+theme_override_constants/shadow_outline_size = 20
 theme_override_font_sizes/font_size = 24
 text = "40%"
 horizontal_alignment = 1
@@ -505,17 +526,14 @@ horizontal_alignment = 2
 
 [node name="ActionName" type="PanelContainer" parent="Panel"]
 layout_mode = 1
-anchors_preset = 7
+anchors_preset = 5
 anchor_left = 0.5
-anchor_top = 1.0
 anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -53.5
-offset_top = 61.0
-offset_right = 53.5
-offset_bottom = 105.0
+offset_left = -107.5
+offset_top = -58.0
+offset_right = 107.5
+offset_bottom = -14.0
 grow_horizontal = 2
-grow_vertical = 0
 
 [node name="MarginContainer" type="MarginContainer" parent="Panel/ActionName"]
 layout_mode = 2
@@ -551,6 +569,33 @@ theme_override_constants/shadow_outline_size = 20
 theme_override_font_sizes/font_size = 40
 text = "BREACHED"
 horizontal_alignment = 1
+
+[node name="NextPanel" type="Panel" parent="Panel"]
+modulate = Color(1, 0.4745098, 0.16862746, 1)
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -75.0
+offset_top = -58.0
+offset_right = 75.0
+offset_bottom = -14.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_pdx0h")
+
+[node name="Label" type="Label" parent="Panel/NextPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/line_spacing = -5
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 30
+text = "NEXT"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="Glyph" type="TextureRect" parent="."]
 visible = false

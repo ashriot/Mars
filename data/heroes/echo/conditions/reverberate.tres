@@ -1,10 +1,11 @@
-[gd_resource type="Resource" script_class="Condition" load_steps=9 format=3 uid="uid://blr0lyyn17tfu"]
+[gd_resource type="Resource" script_class="Condition" load_steps=10 format=3 uid="uid://blr0lyyn17tfu"]
 
 [ext_resource type="Texture2D" uid="uid://uxe1med2wsg8" path="res://assets/graphics/icons/skills/round-struck.png" id="1_5yysf"]
 [ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://data/scripts/conditions/condition.gd" id="1_dvsv7"]
 [ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://data/scripts/conditions/trigger.gd" id="2_im8ar"]
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="4_e8n1q"]
 [ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://data/scripts/conditions/hit_trigger.gd" id="5_idn5j"]
+[ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://data/scripts/action_effects/pre_hit_trigger.gd" id="6_e8n1q"]
 [ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/action_effects/effect_damage.gd" id="6_wllfs"]
 
 [sub_resource type="Resource" id="Resource_ot216"]

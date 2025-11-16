@@ -10,13 +10,11 @@
 [sub_resource type="Resource" id="Resource_2uprg"]
 script = ExtResource("1_2uprg")
 actor_name = "Echo"
-max_hp = 103
+max_hp = 85
 guard = 3
-attack = 54
-psyche = 50
-overload = 36
-speed = 49
-precision = 17
+psyche = 22
+overload = 19
+speed = 26
 kinetic_defense = 21
 energy_defense = 51
 metadata/_custom_type_script = "uid://b70gwt4gd4cun"
