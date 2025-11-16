@@ -1,10 +1,11 @@
-[gd_resource type="Resource" script_class="Condition" load_steps=9 format=3 uid="uid://cpyvh2kvbd6ot"]
+[gd_resource type="Resource" script_class="Condition" load_steps=10 format=3 uid="uid://cpyvh2kvbd6ot"]
 
 [ext_resource type="Texture2D" uid="uid://dvqx1d2rn34mk" path="res://assets/graphics/icons/skills/eye-shield.png" id="1_akr7n"]
 [ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://data/scripts/conditions/condition.gd" id="1_cdnbj"]
 [ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://data/scripts/conditions/trigger.gd" id="2_akr7n"]
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="4_ujta7"]
 [ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://data/scripts/conditions/hit_trigger.gd" id="5_k54ke"]
+[ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://data/scripts/action_effects/pre_hit_trigger.gd" id="6_k54ke"]
 [ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/action_effects/effect_damage.gd" id="6_sh833"]
 
 [sub_resource type="Resource" id="Resource_bfb1x"]
@@ -12,6 +13,7 @@ script = ExtResource("6_sh833")
 potency = 1.5
 power_type = 1
 damage_type = 1
+target_type = 11
 metadata/_custom_type_script = "uid://d0eibi4b735ay"
 
 [sub_resource type="Resource" id="Resource_wrkjx"]

@@ -100,15 +100,6 @@ func on_turn_ended() -> void:
 func apply_one_hit(damage: int, damage_effect: Effect_Damage, attacker: ActorCard, is_crit: bool) -> void:
 	if is_defeated: return
 
-	if damage_effect.damage_type == Action.DamageType.PIERCING:
-		shake_panel()
-	elif current_guard == 0:
-		if not is_breached:
-			breach()
-	else:
-		modify_guard(-1)
-		shake_panel()
-
 	_spawn_damage_popup(damage, self is HeroCard, is_crit)
 
 	current_hp = max(0, current_hp - damage)

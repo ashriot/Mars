@@ -22,7 +22,7 @@ metadata/_custom_type_script = "uid://bhpiwhufv87v7"
 
 [sub_resource type="Resource" id="Resource_jbdj3"]
 script = ExtResource("6_jksuy")
-potency = 0.75
+potency = 0.25
 damage_type = 2
 on_hit_triggers = Array[ExtResource("5_3ohqc")]([SubResource("Resource_tsi1q")])
 target_type = 11

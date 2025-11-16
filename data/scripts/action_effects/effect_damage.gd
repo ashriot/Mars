@@ -60,6 +60,15 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 
 			var base_hit_damage: float = power_for_hit * dynamic_potency
 
+			if damage_type == Action.DamageType.PIERCING:
+				target.shake_panel()
+			elif target.current_guard == 0:
+				if not target.is_breached:
+					target.breach()
+			else:
+				target.modify_guard(-1)
+				target.shake_panel()
+
 			if is_crit:
 				print("Critical Hit!")
 				var crit_bonus: float = 0.0
