@@ -1,9 +1,11 @@
-[gd_scene load_steps=15 format=3 uid="uid://b4tt3yil85l7j"]
+[gd_scene load_steps=17 format=3 uid="uid://b4tt3yil85l7j"]
 
 [ext_resource type="Script" uid="uid://carvfoj4h04nm" path="res://src/battle/enemy_card.gd" id="1_cu1kv"]
 [ext_resource type="Texture2D" uid="uid://c0yr6bpij1f16" path="res://assets/graphics/icons/textures/shield.png" id="2_4kuvy"]
 [ext_resource type="Texture2D" uid="uid://jeiq1r6ke2t7" path="res://assets/graphics/icons/textures/plus.png" id="2_e8ixv"]
 [ext_resource type="PackedScene" uid="uid://ckw8rm3jl32bx" path="res://src/battle/damage_popup.tscn" id="2_xkcvw"]
+[ext_resource type="PackedScene" uid="uid://dwpde7pjb1jds" path="res://src/battle/debuff.tscn" id="3_1mnyd"]
+[ext_resource type="PackedScene" uid="uid://be3t7advgy14o" path="res://src/battle/buff.tscn" id="3_pdx0h"]
 [ext_resource type="Texture2D" uid="uid://bhk28mg1reyry" path="res://assets/graphics/glyphs/ps/Button - PS Directional Arrow Down.png" id="4_e8ixv"]
 [ext_resource type="Texture2D" uid="uid://05lare8hgtys" path="res://assets/graphics/icons/textures/bullet.png" id="4_l4hbp"]
 [ext_resource type="Texture2D" uid="uid://0v6k85gfryip" path="res://assets/graphics/icons/textures/atom.png" id="5_l4hbp"]
@@ -70,6 +72,8 @@ offset_right = 40.0
 offset_bottom = 40.0
 script = ExtResource("1_cu1kv")
 damage_popup_scene = ExtResource("2_xkcvw")
+buff_scene = ExtResource("3_pdx0h")
+debuff_scene = ExtResource("3_1mnyd")
 
 [node name="Panel" type="Panel" parent="."]
 layout_mode = 1
@@ -410,9 +414,9 @@ anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -193.5
-offset_top = 23.0
+offset_top = 14.0
 offset_right = 193.5
-offset_bottom = 61.0
+offset_bottom = 52.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_override_constants/line_spacing = -5
@@ -568,9 +572,9 @@ layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -75.0
-offset_top = -58.0
-offset_right = 75.0
+offset_left = -52.0
+offset_top = -40.0
+offset_right = 50.0
 offset_bottom = -14.0
 grow_horizontal = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_pdx0h")
@@ -584,10 +588,40 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/line_spacing = -5
 theme_override_constants/outline_size = 5
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 24
 text = "NEXT"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="Debuffs" type="HBoxContainer" parent="Panel"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 43.0
+offset_right = -118.0
+offset_bottom = 107.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 8
+
+[node name="Buffs" type="HBoxContainer" parent="Panel"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 111.0
+offset_top = 43.0
+offset_right = -7.0
+offset_bottom = 107.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 8
+alignment = 2
 
 [node name="Glyph" type="TextureRect" parent="."]
 visible = false

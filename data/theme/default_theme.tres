@@ -1,10 +1,11 @@
-[gd_resource type="Theme" load_steps=8 format=3 uid="uid://ccvulqeqoxd07"]
+[gd_resource type="Theme" load_steps=9 format=3 uid="uid://ccvulqeqoxd07"]
 
 [ext_resource type="StyleBox" uid="uid://gk8mwp5dy06c" path="res://data/theme/styleboxes/button_normal.tres" id="1_1rtxc"]
 [ext_resource type="StyleBox" uid="uid://b8kulx87fc6hp" path="res://data/theme/styleboxes/button_disabled.tres" id="1_3vshq"]
 [ext_resource type="StyleBox" uid="uid://b2v1ft2i0wg0u" path="res://data/theme/styleboxes/button_hover.tres" id="1_jik1c"]
 [ext_resource type="StyleBox" uid="uid://uc8el2l1ne33" path="res://data/theme/styleboxes/button_pressed.tres" id="1_vnit1"]
 [ext_resource type="StyleBox" uid="uid://c4ceted4k7fof" path="res://data/theme/styleboxes/panel.tres" id="5_dfs0r"]
+[ext_resource type="StyleBox" uid="uid://c8i85334pnaym" path="res://data/theme/styleboxes/tooltip_panel.tres" id="6_rukqk"]
 [ext_resource type="FontVariation" uid="uid://convptsodr4d5" path="res://data/theme/fonts/default_font.tres" id="6_tsa6w"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_smiq6"]
@@ -19,3 +20,8 @@ Button/styles/normal = ExtResource("1_1rtxc")
 Button/styles/pressed = ExtResource("1_vnit1")
 Panel/styles/panel = ExtResource("5_dfs0r")
 PanelContainer/styles/panel = ExtResource("5_dfs0r")
+TooltipLabel/colors/font_color = Color(1, 1, 1, 1)
+TooltipLabel/font_sizes/font_size = 24
+TooltipPanel/colors/title_color = Color(1, 1, 1, 1)
+TooltipPanel/font_sizes/title_font_size = 24
+TooltipPanel/styles/panel = ExtResource("6_rukqk")

@@ -1,0 +1,61 @@
+[gd_scene load_steps=4 format=3 uid="uid://dwpde7pjb1jds"]
+
+[ext_resource type="Script" uid="uid://cj5wd4g4agbsm" path="res://src/battle/condition.gd" id="1_3k6iw"]
+[ext_resource type="Texture2D" uid="uid://8p1vkux4ntf7" path="res://assets/graphics/icons/textures/play-black-triangle-interface-symbol-for-multimedia.png" id="1_4ffkd"]
+[ext_resource type="Texture2D" uid="uid://uxe1med2wsg8" path="res://assets/graphics/icons/skills/round-struck.png" id="2_3k6iw"]
+
+[node name="Debuff" type="Control"]
+modulate = Color(1, 0.16862746, 0.14901961, 1)
+custom_minimum_size = Vector2(50, 64)
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_3k6iw")
+
+[node name="Arrow" type="Control" parent="."]
+self_modulate = Color(1, 1, 1, 0.5882353)
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -24.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="Point" type="TextureRect" parent="Arrow"]
+self_modulate = Color(1, 1, 1, 0.5882353)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 6.9375
+offset_right = -8.0
+offset_bottom = -3.8223686
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(20, 20)
+texture = ExtResource("1_4ffkd")
+expand_mode = 1
+
+[node name="Panel" type="Panel" parent="."]
+self_modulate = Color(1, 1, 1, 0.5882353)
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 50.0
+grow_horizontal = 2
+
+[node name="Icon" type="TextureRect" parent="Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = -3.0
+offset_bottom = -3.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_3k6iw")
+expand_mode = 1

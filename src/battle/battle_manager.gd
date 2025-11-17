@@ -239,7 +239,6 @@ func _focus_button(button: ActionButton):
 func _finish_hero_turn():
 	var is_shift_action = current_action.is_shift_action
 	current_action = null
-	action_bar.update_button_costs()
 	if focused_button:
 		focused_button.focused(false)
 		focused_button = null

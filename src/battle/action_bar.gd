@@ -53,6 +53,8 @@ func hide_bar():
 		button.hide()
 		if button.pressed.is_connected(_on_action_button_pressed):
 			button.pressed.disconnect(_on_action_button_pressed)
+	if active_hero.focus_updated.is_connected(_on_hero_focus_updated):
+		active_hero.focus_updated.disconnect(_on_hero_focus_updated)
 
 	await slide_out()
 
@@ -64,6 +66,9 @@ func update_action_bar(hero_card: HeroCard, shifted: bool = false):
 	if not current_role:
 		push_error("Hero has no role!")
 		return
+	if hero_card.focus_updated.is_connected(_on_hero_focus_updated):
+		hero_card.focus_updated.disconnect(_on_hero_focus_updated)
+	hero_card.focus_updated.connect(_on_hero_focus_updated)
 
 	for i in range(4):
 		var button = actions_ui.get_child(i) as ActionButton
@@ -118,7 +123,8 @@ func update_action_bar(hero_card: HeroCard, shifted: bool = false):
 		right_shift_ui.modulate = next_role.color
 		$RightShift/Icon.texture = next_role.icon
 
-func update_button_costs():
+func _on_hero_focus_updated():
+	if not active_hero: return
 	for i in range(4):
 		var button = actions_ui.get_child(i) as ActionButton
 		button.update_cost(active_hero.current_focus)

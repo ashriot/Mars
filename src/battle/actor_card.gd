@@ -2,6 +2,8 @@ extends Control
 class_name ActorCard
 
 @export var damage_popup_scene: PackedScene
+@export var buff_scene: PackedScene
+@export var debuff_scene: PackedScene
 
 # --- Signals (Shared by both) ---
 signal actor_breached(actor)
@@ -55,6 +57,8 @@ const POPUP_SPACING_TIME: float = 1.0
 @onready var target_flash: Panel = $Panel/TargetFlash
 @onready var action_display: PanelContainer = $Panel/ActionName
 @onready var next_panel: Panel = $Panel/NextPanel
+@onready var debuffs_panel: Control = $Panel/Debuffs
+@onready var buffs_panel: Control = $Panel/Buffs
 
 
 func setup_base(stats: ActorStats):
@@ -183,6 +187,7 @@ func add_condition(condition_resource: Condition):
 
 	await _fire_condition_event(Trigger.TriggerType.ON_APPLIED)
 	actor_conditions_changed.emit(self, new_condition.retarget)
+	_update_conditions_ui()
 
 func has_condition(condition_name: String) -> bool:
 	for condition in active_conditions:
@@ -196,7 +201,7 @@ func remove_condition(condition_name: String):
 		if condition.condition_name == condition_name:
 			active_conditions.erase(condition)
 			print(actor_name, " is removing condition: ", condition.condition_name)
-
+			_update_conditions_ui()
 			return
 
 	push_error("[ERROR] Trying to remove an invalid condition: ", actor_name, " -> ", condition_name)
@@ -549,6 +554,26 @@ func get_damage_taken_scalar() -> float:
 	for condition in active_conditions:
 		scalar += condition.damage_taken_scalar
 	return scalar
+
+func _update_conditions_ui():
+	#for child in buffs_panel.get_children():
+		#child.queue_free()
+	for child in debuffs_panel.get_children():
+		child.queue_free()
+
+	# 2. Loop through our "real" data and respawn icons
+	for condition in active_conditions:
+		if condition.is_passive: continue
+		match condition.condition_type:
+			Condition.ConditionType.BUFF:
+				var buff = buff_scene.instantiate() as ConditionUI
+				buffs_panel.add_child(buff)
+				buff.setup(condition)
+			Condition.ConditionType.DEBUFF:
+				var debuff = debuff_scene.instantiate() as ConditionUI
+				debuffs_panel.add_child(debuff)
+				debuff.setup(condition)
+				pass
 
 func _spawn_damage_popup(amount: int, damage_type: Action.DamageType, is_crit: bool):
 	if not damage_popup_scene:

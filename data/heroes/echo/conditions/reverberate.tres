@@ -25,6 +25,7 @@ metadata/_custom_type_script = "uid://cdugd6pnm6py"
 script = ExtResource("1_dvsv7")
 condition_name = "Reverberate"
 icon = ExtResource("1_5yysf")
+condition_type = 1
 triggers = Array[ExtResource("2_im8ar")]([SubResource("Resource_hsppm")])
 remove_on_triggers = Array[int]([7])
 metadata/_custom_type_script = "uid://df30dm288ne1d"

@@ -6,6 +6,7 @@ signal role_shifted(hero_card)
 signal hero_clicked(hero_card)
 @warning_ignore("unused_signal")
 signal passive_fired
+signal focus_updated
 
 # --- NEW: Animation Vars ---
 @export var slide_offset_y: int = -30
@@ -96,6 +97,8 @@ func modify_focus(amount: int):
 	current_focus += amount
 	current_focus = clamp(current_focus, 0, 10)
 	update_focus_bar()
+	focus_updated.emit()
+
 	await _fire_condition_event(Trigger.TriggerType.ON_SPENDING_FOCUS)
 
 func update_focus_bar(animate: bool = true):
