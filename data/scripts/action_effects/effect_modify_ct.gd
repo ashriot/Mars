@@ -11,4 +11,4 @@ func execute(_attacker: ActorCard, parent_targets: Array, battle_manager: Battle
 		print(target.actor_name, " CT boosted by ", ct_to_add)
 
 	battle_manager.update_turn_order()
-	await battle_manager.wait(0.01)
+	await battle_manager.wait()

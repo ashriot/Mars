@@ -100,10 +100,10 @@ func on_turn_ended() -> void:
 	highlight(false)
 	await _fire_condition_event(Trigger.TriggerType.ON_TURN_END)
 
-func apply_one_hit(damage: int, damage_effect: Effect_Damage, attacker: ActorCard, is_crit: bool) -> void:
+func apply_one_hit(damage: int, damage_effect: Effect_Damage, attacker: ActorCard, damage_type: Action.DamageType, is_crit: bool) -> void:
 	if is_defeated: return
 
-	_spawn_damage_popup(damage, damage_effect.damage_type, is_crit)
+	_spawn_damage_popup(damage, damage_type, is_crit)
 
 	current_hp = max(0, current_hp - damage)
 	hp_bar_actual.value = current_hp

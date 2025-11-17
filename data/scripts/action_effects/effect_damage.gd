@@ -47,7 +47,11 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 			if target.is_defeated and not random:
 				break
 
-			if damage_type == Action.DamageType.PIERCING:
+			var final_damage_type = damage_type
+			if pre_hit_context.has("final_damage_type"):
+				final_damage_type = pre_hit_context.get("final_damage_type")
+
+			if final_damage_type == Action.DamageType.PIERCING:
 				target.shake_panel()
 			else:
 				if not target.is_breached and target.current_guard == 0:
@@ -79,16 +83,16 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 			var final_dmg_float = float(base_hit_damage)
 			var def_mod = 1.0 if not target.is_breached else 0.5
 
-			if damage_type == Action.DamageType.KINETIC:
+			if final_damage_type == Action.DamageType.KINETIC:
 				final_dmg_float *= (1.0 - float(target.current_stats.kinetic_defense * def_mod) / 100)
-			elif damage_type == Action.DamageType.ENERGY:
+			elif final_damage_type == Action.DamageType.ENERGY:
 				final_dmg_float *= (1.0 - float(target.current_stats.energy_defense * def_mod) / 100)
 
 			final_dmg_float *= attacker.get_damage_dealt_scalar()
 			final_dmg_float *= target.get_damage_taken_scalar()
 			var final_damage = max(0, int(final_dmg_float))
 
-			await target.apply_one_hit(final_damage, self, attacker, is_crit)
+			await target.apply_one_hit(final_damage, self, attacker, final_damage_type, is_crit)
 			await _process_on_hit_triggers(attacker, target, battle_manager)
 
 			if random and target.is_defeated:
@@ -142,6 +146,27 @@ func _get_pre_hit_triggers(attacker: ActorCard, target: ActorCard) -> Dictionary
 		if condition_met:
 			for effect in trigger.effects_to_run:
 				effect.execute(context, attacker, target)
+	var attacker_hero_type = Action.HeroType.ALL
+	if attacker is HeroCard:
+		var hero_name_key = attacker.actor_name.to_upper()
+		if Action.HeroType.has(hero_name_key):
+			attacker_hero_type = Action.HeroType[hero_name_key]
+
+	# Now, loop through *our* (the defender's) conditions
+	for i in range(target.active_conditions.size() - 1, -1, -1):
+		var condition = target.active_conditions[i]
+
+		if condition.force_damage_type != Action.DamageType.NONE:
+			if condition.triggered_by == Action.HeroType.ALL or condition.triggered_by == attacker_hero_type:
+
+				context.get_or_add("final_damage_type", condition.force_damage_type)
+				print(target.actor_name, "'s debuff changed incoming damage to PIERCING!")
+
+				for trigger in condition.remove_on_triggers:
+					if trigger == Trigger.TriggerType.ON_TRIGGERED:
+						target.remove_condition(condition.condition_name)
+				break
+
 	return context
 
 func _process_on_hit_triggers(attacker: ActorCard, target: ActorCard, battle_manager: BattleManager) -> void:

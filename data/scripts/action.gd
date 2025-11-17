@@ -1,8 +1,9 @@
 extends Resource
 class_name Action
 
+enum HeroType { ALL, ASHER, ECHO, SANDS }
 enum PowerType { ATTACK, PSYCHE }
-enum DamageType { KINETIC, ENERGY, PIERCING }
+enum DamageType { KINETIC, ENERGY, PIERCING, NONE }
 enum TargetType {
 	ONE_ENEMY,
 	ALL_ENEMIES,

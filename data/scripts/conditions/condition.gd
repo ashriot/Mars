@@ -7,8 +7,10 @@ enum ConditionType { BUFF, DEBUFF }
 @export var icon: Texture
 @export var condition_type: ConditionType = ConditionType.BUFF
 @export var is_passive: bool = false
+@export var triggered_by: Action.HeroType = Action.HeroType.ALL
 
 @export_group("Stat Modifiers")
+@export var force_damage_type: Action.DamageType = Action.DamageType.NONE
 @export var precision_mod: int = 0
 @export var incoming_precision_mod: int = 0
 @export var speed_scalar: float = 0.0
@@ -19,7 +21,6 @@ enum ConditionType { BUFF, DEBUFF }
 @export_group("Triggers & Effects")
 @export var update_turn_order: bool
 @export var retarget: bool = false
-@export var interception_triggers: Array[Trigger]
 @export var triggers: Array[Trigger]
 @export var remove_on_triggers: Array[Trigger.TriggerType]
 
