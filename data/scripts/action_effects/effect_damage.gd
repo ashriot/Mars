@@ -99,7 +99,7 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 				final_targets.remove_at(t)
 
 			if hit_count > 1 and i < hit_count - 1:
-				await battle_manager.wait(0.25)
+				await battle_manager.wait(0.15)
 		if random: break
 		var context = { "attacker": attacker, "targets": [self] }
 		await target._fire_condition_event(Trigger.TriggerType.AFTER_BEING_ATTACKED, context)

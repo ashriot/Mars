@@ -260,7 +260,7 @@ func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary 
 			if trigger.trigger_type != event_type: continue
 			if trigger.is_attack:
 				is_attack = true
-			await battle_manager.wait(0.1)
+				await battle_manager.wait(0.15)
 			print("Condition '", condition.condition_name, "' is firing effects for '", event_type, "'")
 			var targets = []
 			var attacker = null

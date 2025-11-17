@@ -1,13 +1,37 @@
-[gd_resource type="Resource" script_class="Condition" load_steps=6 format=3 uid="uid://b2tvfisdchylq"]
+[gd_resource type="Resource" script_class="Condition" load_steps=12 format=3 uid="uid://b2tvfisdchylq"]
 
 [ext_resource type="Texture2D" uid="uid://b1kc4ws08mv8m" path="res://assets/graphics/icons/skills/divert.png" id="1_ruy1o"]
 [ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://data/scripts/conditions/condition.gd" id="2_w8o6c"]
 [ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://data/scripts/conditions/trigger.gd" id="3_ddk4p"]
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="4_n0581"]
+[ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://data/scripts/conditions/hit_trigger.gd" id="5_w8o6c"]
+[ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://data/scripts/action_effects/pre_hit_trigger.gd" id="6_ddk4p"]
+[ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/action_effects/effect_damage.gd" id="7_n0581"]
+
+[sub_resource type="Resource" id="Resource_w8o6c"]
+script = ExtResource("7_n0581")
+potency = 0.5
+metadata/_custom_type_script = "uid://d0eibi4b735ay"
+
+[sub_resource type="Resource" id="Resource_ddk4p"]
+script = ExtResource("5_w8o6c")
+condition = 3
+context = "Overwatch"
+effects_to_run = Array[ExtResource("4_n0581")]([SubResource("Resource_w8o6c")])
+metadata/_custom_type_script = "uid://bhpiwhufv87v7"
+
+[sub_resource type="Resource" id="Resource_3ohqc"]
+script = ExtResource("7_n0581")
+potency = 0.5
+damage_type = 2
+on_hit_triggers = Array[ExtResource("5_w8o6c")]([SubResource("Resource_ddk4p")])
+target_type = 11
+metadata/_custom_type_script = "uid://d0eibi4b735ay"
 
 [sub_resource type="Resource" id="Resource_gc3t6"]
 script = ExtResource("3_ddk4p")
 trigger_type = 5
+effects_to_run = Array[ExtResource("4_n0581")]([SubResource("Resource_3ohqc")])
 metadata/_custom_type_script = "uid://cdugd6pnm6py"
 
 [resource]
