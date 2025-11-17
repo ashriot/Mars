@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="Condition" load_steps=8 format=3 uid="uid://buf6wk5w4nles"]
+
+[ext_resource type="Texture2D" uid="uid://cr7bfmkhg28ak" path="res://assets/graphics/icons/skills/overdose.png" id="1_55k66"]
+[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://data/scripts/conditions/condition.gd" id="2_pbq8h"]
+[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://data/scripts/conditions/trigger.gd" id="3_ouoby"]
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="4_ouoby"]
+[ext_resource type="Script" uid="uid://ddjg3oka0dtvg" path="res://data/scripts/action_effects/effect_remove_condition.gd" id="5_ihjf7"]
+
+[sub_resource type="Resource" id="Resource_2xlky"]
+script = ExtResource("5_ihjf7")
+condition_name = "Painkillers"
+target_type = 7
+metadata/_custom_type_script = "uid://ddjg3oka0dtvg"
+
+[sub_resource type="Resource" id="Resource_v5q7g"]
+script = ExtResource("3_ouoby")
+trigger_type = 12
+effects_to_run = Array[ExtResource("4_ouoby")]([SubResource("Resource_2xlky")])
+metadata/_custom_type_script = "uid://cdugd6pnm6py"
+
+[resource]
+script = ExtResource("2_pbq8h")
+condition_name = "Painkillers Passive"
+icon = ExtResource("1_55k66")
+is_passive = true
+triggers = Array[ExtResource("3_ouoby")]([SubResource("Resource_v5q7g")])
+remove_on_triggers = Array[int]([12])
+metadata/_custom_type_script = "uid://df30dm288ne1d"

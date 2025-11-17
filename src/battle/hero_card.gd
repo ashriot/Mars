@@ -26,16 +26,16 @@ func setup(data: HeroData):
 	setup_base(data.stats)
 	duration /= battle_manager.battle_speed
 	name_label.text = hero_data.stats.actor_name
-	panel.self_modulate.a = 0.7
 	if hero_data.portrait:
 		portrait_rect.texture = hero_data.portrait
-	current_focus = 3
+	current_focus = 5
 	update_focus_bar(false)
 	update_current_role()
+	panel.self_modulate.a = 0.85
 
 func on_turn_started() -> void:
-	if current_focus < 10:
-		modify_focus(1)
+	#if current_focus < 10:
+		#modify_focus(1)
 	await _slide_up()
 	await battle_manager.action_bar.load_actions(self, false)
 	await super.on_turn_started()
@@ -137,7 +137,7 @@ func _slide_down():
 		panel_home_position,
 		duration
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
-	tween.tween_property(panel, "self_modulate:a", 0.7, duration)
+	tween.tween_property(panel, "self_modulate:a", 0.85, duration)
 
 func _on_gui_input(event: InputEvent):
 	if event.is_action_pressed("ui_accept"):

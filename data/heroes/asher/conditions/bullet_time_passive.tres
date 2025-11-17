@@ -20,7 +20,7 @@ metadata/_custom_type_script = "uid://cdugd6pnm6py"
 
 [resource]
 script = ExtResource("2_gyljh")
-condition_name = "Bullet Time"
+condition_name = "Bullet Time Passive"
 icon = ExtResource("1_p4mhk")
 is_passive = true
 update_turn_order = true

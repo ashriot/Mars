@@ -16,7 +16,9 @@ enum TriggerType {
 	ON_HEALED,
 	ON_SHIFT,
 	ON_BREACHED,
-	ON_REMOVED
+	ON_REMOVED,
+	BEFORE_BUFF_RECEIVED,
+	BEFORE_DEBUFF_RECEIVED
 }
 @export var trigger_type: TriggerType
 @export var effects_to_run: Array[ActionEffect]

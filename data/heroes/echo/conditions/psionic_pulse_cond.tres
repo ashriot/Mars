@@ -10,10 +10,10 @@
 
 [sub_resource type="Resource" id="Resource_ru73y"]
 script = ExtResource("6_emvu4")
-potency = 0.25
+potency = 0.5
 shreds_guard = false
 power_type = 1
-damage_type = 2
+damage_type = 1
 target_type = 1
 metadata/_custom_type_script = "uid://d0eibi4b735ay"
 
@@ -30,5 +30,5 @@ icon = ExtResource("1_b1cra")
 condition_type = 2
 is_passive = true
 triggers = Array[ExtResource("3_63p5h")]([SubResource("Resource_1deto")])
-remove_on_triggers = Array[int]([11])
+remove_on_triggers = Array[int]([12])
 metadata/_custom_type_script = "uid://df30dm288ne1d"

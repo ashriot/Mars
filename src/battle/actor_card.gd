@@ -166,6 +166,16 @@ func add_condition(condition_resource: Condition):
 		print(actor_name, " already has ", condition_resource.condition_name)
 		return
 
+	var _is_buff = condition_resource.condition_type == Condition.ConditionType.BUFF
+	var is_debuff = condition_resource.condition_type == Condition.ConditionType.DEBUFF
+	for active_cond in active_conditions:
+			for trigger in active_cond.triggers:
+				if trigger.trigger_type == Trigger.TriggerType.BEFORE_DEBUFF_RECEIVED and is_debuff:
+					print("Condition '", active_cond.condition_name, "' is blocking the new condition: ", condition_resource.condition_name)
+					for effect in trigger.effects_to_run:
+						await battle_manager.execute_triggered_effect(self, effect, [self], null, {})
+					return
+
 	var new_condition = condition_resource.duplicate(true)
 	new_condition.attacker = condition_resource.attacker
 	active_conditions.append(new_condition)
@@ -241,23 +251,20 @@ func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary 
 	for i in range(active_conditions.size() - 1, -1, -1):
 		var condition = active_conditions[i] as Condition
 		var is_attack = false
-		var is_removing = condition.remove_on_triggers.has(event_type)
+		if condition.remove_on_triggers.has(event_type):
+			print(actor_name, "'s ", condition.condition_name, " needs to be removed.")
+			await _fire_condition_event(Trigger.TriggerType.ON_REMOVED)
+			remove_condition(condition.condition_name)
 		for trigger in condition.triggers:
 			trigger = trigger as Trigger
-			if is_removing:
-				print(actor_name, "'s ", condition.condition_name, " needs to be removed.")
-				await _fire_condition_event(Trigger.TriggerType.ON_REMOVED)
-				remove_condition(condition.condition_name)
 			if trigger.trigger_type != event_type: continue
 			if trigger.is_attack:
 				is_attack = true
-			await battle_manager.wait(0.15)
+			await battle_manager.wait(0.1)
 			print("Condition '", condition.condition_name, "' is firing effects for '", event_type, "'")
 			var targets = []
-			var source = self
 			var attacker = null
-			if condition.attacker:
-				source = condition.attacker
+			var source = condition.attacker
 			var action = context.get("action")
 			if context.has("targets"):
 				targets = context.targets
@@ -270,7 +277,7 @@ func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary 
 
 				if battle_manager.current_actor is HeroCard and condition.is_passive and effect is Effect_Damage:
 					self.passive_fired.emit()
-				await battle_manager.execute_triggered_effect(source, effect, targets, action)
+				await battle_manager.execute_triggered_effect(source, effect, targets, action, context)
 				if condition.update_turn_order:
 					battle_manager.update_turn_order()
 

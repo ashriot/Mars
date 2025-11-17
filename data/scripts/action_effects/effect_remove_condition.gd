@@ -4,7 +4,7 @@ class_name Effect_RemoveCondition
 @export var condition_name: String
 
 
-func execute(_attacker: ActorCard, targets: Array, _battle_manager: BattleManager, _action: Action = null) -> void:
+func execute(_attacker: ActorCard, targets: Array, _battle_manager: BattleManager, _action: Action = null, _context: Dictionary = {}) -> void:
 	for target in targets:
 		if not target.has_condition(condition_name):
 			continue

@@ -3,7 +3,7 @@ class_name Effect_ModifyFocus
 
 @export var focus_amount: int = 1
 
-func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleManager, _action: Action = null) -> void:
+func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleManager, _action: Action = null, _context: Dictionary = {}) -> void:
 	print("--- Executing Change Guard Effect ---")
 
 	var final_targets = battle_manager.get_targets(

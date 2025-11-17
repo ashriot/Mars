@@ -15,7 +15,7 @@ class_name Effect_Damage
 @export var on_hit_triggers: Array[HitTrigger]
 @export var pre_hit_triggers: Array[PreHitTrigger]
 
-func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleManager, action: Action = null) -> void:
+func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleManager, action: Action = null, _context: Dictionary = {}) -> void:
 	var final_targets: Array = parent_targets
 
 	print("\n--- Damage Effect for ", hit_count, " hit(s) ---")
@@ -39,6 +39,7 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 				target = final_targets[t]
 			var pre_hit_context = _get_pre_hit_triggers(attacker, target)
 			var dynamic_potency = get_dynamic_potency(attacker, target, focus_cost)
+			print("Final Potency: ", dynamic_potency)
 			if not target or not is_instance_valid(target):
 				continue
 
@@ -55,7 +56,6 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 					target.shake_panel()
 
 			if split_damage: dynamic_potency /= final_targets.size()
-			var is_piercing = damage_type == Action.DamageType.PIERCING
 			var is_crit: bool = false
 			var crit_chance: int = attacker.get_precision() + target.get_incoming_precision_mods()
 			if pre_hit_context.has("precision_bonus"):
@@ -96,6 +96,8 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 			if hit_count > 1 and i < hit_count - 1:
 				await battle_manager.wait(0.25)
 		if random: break
+		var context = { "attacker": attacker, "targets": [self] }
+		await target._fire_condition_event(Trigger.TriggerType.AFTER_BEING_ATTACKED, context)
 
 	return
 
@@ -104,7 +106,7 @@ func get_dynamic_potency(attacker: ActorCard, _target: ActorCard, focus_cost: in
 		var focus_pips = 0
 		if attacker is HeroCard:
 			focus_pips = attacker.current_focus
-		return potency_per_focus * focus_pips
+		return potency + potency_per_focus * focus_pips
 
 	if potency_scalar_per_focus > 0.0:
 		var remaining_focus = 0

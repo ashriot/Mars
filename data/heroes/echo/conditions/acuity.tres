@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="Condition" load_steps=8 format=3 uid="uid://d0ygnk0nwludm"]
+
+[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://data/scripts/conditions/condition.gd" id="1_h6qg1"]
+[ext_resource type="Texture2D" uid="uid://kopcr262prm3" path="res://assets/graphics/icons/skills/psychic-waves.png" id="1_loiex"]
+[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://data/scripts/conditions/trigger.gd" id="2_loiex"]
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="4_xhurg"]
+[ext_resource type="Script" uid="uid://bhblyd70hrd4m" path="res://data/scripts/action_effects/effect_modify_focus.gd" id="5_q1udx"]
+
+[sub_resource type="Resource" id="Resource_6u70n"]
+script = ExtResource("5_q1udx")
+focus_amount = 2
+target_type = 4
+metadata/_custom_type_script = "uid://bhblyd70hrd4m"
+
+[sub_resource type="Resource" id="Resource_nfas3"]
+script = ExtResource("2_loiex")
+trigger_type = 1
+effects_to_run = Array[ExtResource("4_xhurg")]([SubResource("Resource_6u70n")])
+metadata/_custom_type_script = "uid://cdugd6pnm6py"
+
+[resource]
+script = ExtResource("1_h6qg1")
+condition_name = "Acuity"
+icon = ExtResource("1_loiex")
+is_passive = true
+triggers = Array[ExtResource("2_loiex")]([SubResource("Resource_nfas3")])
+metadata/_custom_type_script = "uid://df30dm288ne1d"

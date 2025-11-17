@@ -1,15 +1,19 @@
-[gd_resource type="Resource" script_class="Role" load_steps=6 format=3 uid="uid://jqybnec33mi0"]
+[gd_resource type="Resource" script_class="Role" load_steps=8 format=3 uid="uid://jqybnec33mi0"]
 
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_krxnr"]
 [ext_resource type="Resource" uid="uid://bua2w6l1vluii" path="res://data/heroes/echo/actions/telekinesis.tres" id="2_procj"]
 [ext_resource type="Resource" uid="uid://dpuvmachojp84" path="res://data/heroes/echo/actions/reconstruct.tres" id="3_2q7x7"]
 [ext_resource type="Texture2D" uid="uid://dsriy3sccbg28" path="res://assets/graphics/icons/roles/bolt-spell-cast.png" id="4_mbt5s"]
+[ext_resource type="Resource" uid="uid://b1fo5o00eq2jj" path="res://data/heroes/echo/actions/apply_acuity.tres" id="5_etcsd"]
 [ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/role.gd" id="5_qoyy0"]
+[ext_resource type="Resource" uid="uid://cshuc85ms1gpq" path="res://data/heroes/echo/actions/kinetic_wall.tres" id="7_noufh"]
 
 [resource]
 script = ExtResource("5_qoyy0")
 role_name = "Kineticist"
 icon = ExtResource("4_mbt5s")
 color = Color(0.32999998, 0.8995001, 1, 1)
+shift_action = ExtResource("7_noufh")
+passive = ExtResource("5_etcsd")
 actions = Array[ExtResource("1_krxnr")]([ExtResource("2_procj"), ExtResource("3_2q7x7"), null, null])
 metadata/_custom_type_script = "uid://d3mhjutrnvwsp"

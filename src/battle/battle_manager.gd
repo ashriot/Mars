@@ -17,6 +17,7 @@ signal battle_state_changed(new_state)
 @export var hero_area: Control
 @export var enemy_area: Control
 @export var action_bar: ActionBar
+@export var current_action_panel: PanelContainer
 @export var fade_overlay: ColorRect
 
 # --- Encounter Data Links ---
@@ -41,9 +42,9 @@ func _ready():
 	await wait(0.1)
 	action_bar.action_selected.connect(_on_action_button_pressed)
 	action_bar.shift_button_pressed.connect(_on_shift_button_pressed)
+	current_action_panel.hide()
 
 	spawn_encounter()
-
 	change_state(State.LOADING)
 	await wait(0.5)
 	await _fade_in()
@@ -217,6 +218,11 @@ func _on_actor_revived(actor: ActorCard):
 
 func set_current_action(action: Action):
 	current_action = action
+	current_action_panel.get_node("MarginContainer/HBoxContainer/Icon").texture = current_action.icon
+	current_action_panel.get_node("MarginContainer/HBoxContainer/Label").text = _get_rich_description(current_action)
+	var hero = current_actor as HeroCard
+	current_action_panel.modulate = hero.get_current_role().color
+	current_action_panel.show()
 	var target_list = get_targets(action.target_type, true)
 
 	for target in target_list:
@@ -252,6 +258,7 @@ func _apply_role_passive(hero: HeroCard):
 func execute_action(actor: ActorCard, action: Action, targets: Array, display_name: bool = true):
 	var parent_targets = targets
 	if actor is HeroCard:
+		current_action_panel.hide()
 		actor.modify_focus(-action.focus_cost)
 		_clear_all_targeting_ui()
 		if display_name:
@@ -276,8 +283,8 @@ func execute_action(actor: ActorCard, action: Action, targets: Array, display_na
 	await _flush_all_health_animations()
 	return
 
-func execute_triggered_effect(actor: ActorCard, effect: ActionEffect, targets: Array, action: Action):
-	await effect.execute(actor, targets, self, action)
+func execute_triggered_effect(actor: ActorCard, effect: ActionEffect, targets: Array, action: Action, context: Dictionary = {}):
+	await effect.execute(actor, targets, self, action, context)
 	#await _flush_all_health_animations()
 
 func execute_enemy_turn(enemy: EnemyCard):
@@ -324,7 +331,7 @@ func _on_action_button_pressed(button: ActionButton):
 	if current_state in [State.LOADING, State.FORCED_TARGET]: return
 
 	var action = button.action
-	if current_actor.current_focus < action.focus_cost:
+	if current_actor.current_focus < button.focus_cost:
 		return
 
 	_focus_button(button)
@@ -489,3 +496,9 @@ func _fade_in(duration: float = 0.5):
 	)
 	await tween.finished
 	fade_overlay.hide()
+
+func _get_rich_description(action: Action) -> String:
+	var hero = current_actor as HeroCard
+	var description = action.get_rich_description(hero)
+
+	return description

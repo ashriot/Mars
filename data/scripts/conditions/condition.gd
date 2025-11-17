@@ -6,6 +6,7 @@ enum ConditionType { BUFF, DEBUFF }
 @export var condition_name: String
 @export var icon: Texture
 @export var condition_type: ConditionType = ConditionType.BUFF
+@export var is_passive: bool = false
 
 @export_group("Stat Modifiers")
 @export var precision_mod: int = 0
@@ -16,9 +17,9 @@ enum ConditionType { BUFF, DEBUFF }
 @export var focus_cost_reduction: float = 0.0
 
 @export_group("Triggers & Effects")
-@export var is_passive: bool = false
 @export var update_turn_order: bool
 @export var retarget: bool = false
+@export var interception_triggers: Array[Trigger]
 @export var triggers: Array[Trigger]
 @export var remove_on_triggers: Array[Trigger.TriggerType]
 

@@ -8,5 +8,5 @@
 script = ExtResource("2_ebwhd")
 condition_name = "Overwatch"
 icon = ExtResource("1_pp5jr")
-remove_on_triggers = Array[int]([1])
+remove_on_triggers = Array[int]([8])
 metadata/_custom_type_script = "uid://df30dm288ne1d"
