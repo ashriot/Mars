@@ -239,6 +239,7 @@ func _focus_button(button: ActionButton):
 func _finish_hero_turn():
 	var is_shift_action = current_action.is_shift_action
 	current_action = null
+	action_bar.update_button_costs()
 	if focused_button:
 		focused_button.focused(false)
 		focused_button = null
@@ -372,7 +373,7 @@ func _on_enemy_clicked(target_enemy: EnemyCard):
 			targets_array = enemy_area.get_children()
 
 	await execute_action(current_actor, current_action, targets_array)
-	_finish_hero_turn()
+	await _finish_hero_turn()
 
 func _on_shift_button_pressed(direction: String):
 	var current_hero = current_actor as HeroCard

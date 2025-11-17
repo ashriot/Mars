@@ -175,13 +175,6 @@ alignment = 1
 
 [node name="ActionBar" parent="UI" node_paths=PackedStringArray("battle_manager") instance=ExtResource("8_w6n6o")]
 layout_mode = 1
-anchors_preset = 12
-anchor_left = 0.0
-anchor_right = 1.0
-offset_left = 27.0
-offset_top = -285.0
-offset_right = -27.0
-offset_bottom = -29.0
 battle_manager = NodePath("../../BattleManager")
 
 [node name="TurnQueue" type="Control" parent="UI" node_paths=PackedStringArray("battle_manager")]

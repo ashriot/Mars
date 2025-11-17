@@ -28,7 +28,7 @@ func setup(_action: Action, cur_focus: int, scaled_focus: int, color: Color):
 	focus_cost = scaled_focus
 	label.text = action.action_name
 	icon.texture = action.icon
-	update_cost()
+	update_cost(user_focus)
 	button.modulate = color
 	icon.modulate = color
 	label.modulate = color
@@ -37,8 +37,8 @@ func setup(_action: Action, cur_focus: int, scaled_focus: int, color: Color):
 	$Glyph.modulate = color
 	highlight_panel.hide()
 
-func update_cost():
-	self.disabled = false
+func update_cost(current_focus: int):
+	user_focus = current_focus
 	var pips = focus_pips.get_children()
 	var unfilled_pips = max(0, focus_cost - user_focus)
 	for i in pips.size():
@@ -51,6 +51,7 @@ func update_cost():
 				pip_node.modulate.a = 1.0
 		else:
 			pip_node.visible = false
+	self.disabled = false
 
 func _on_button_pressed():
 	pressed.emit()

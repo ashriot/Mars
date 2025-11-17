@@ -118,6 +118,11 @@ func update_action_bar(hero_card: HeroCard, shifted: bool = false):
 		right_shift_ui.modulate = next_role.color
 		$RightShift/Icon.texture = next_role.icon
 
+func update_button_costs():
+	for i in range(4):
+		var button = actions_ui.get_child(i) as ActionButton
+		button.update_cost(active_hero.current_focus)
+
 func _on_shift_button_pressed(direction: String):
 	shift_button_pressed.emit(direction)
 

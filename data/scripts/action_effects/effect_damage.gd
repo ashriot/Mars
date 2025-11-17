@@ -69,7 +69,7 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 				is_crit = true
 
 			var power_for_hit = attacker.get_power(power_type)
-			if target.is_breached:
+			if target.is_breached and final_damage_type != Action.DamageType.PIERCING:
 				power_for_hit += attacker.current_stats.overload
 
 			var base_hit_damage: float = power_for_hit * dynamic_potency
