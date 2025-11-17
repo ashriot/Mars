@@ -3,14 +3,14 @@
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_ift6d"]
 [ext_resource type="Resource" uid="uid://dqhx55x1hr2tt" path="res://data/heroes/asher/actions/mark_target.tres" id="2_tot5t"]
 [ext_resource type="Resource" uid="uid://buxxjwyj6g68w" path="res://data/heroes/asher/actions/aimed_shot.tres" id="3_tot5t"]
-[ext_resource type="Texture2D" uid="uid://m4ffcp1dre36" path="res://assets/graphics/icons/roles/steyr-aug.png" id="4_ung8m"]
+[ext_resource type="Texture2D" uid="uid://c8qynvefg1hjf" path="res://assets/graphics/icons/skills/crosshair.png" id="4_tot5t"]
 [ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/role.gd" id="4_y6513"]
 [ext_resource type="Resource" uid="uid://c1tsuo00ej03r" path="res://data/heroes/asher/actions/charged_shot.tres" id="6_bnepl"]
 
 [resource]
 script = ExtResource("4_y6513")
 role_name = "Sniper"
-icon = ExtResource("4_ung8m")
+icon = ExtResource("4_tot5t")
 color = Color(0.706, 1, 0.37, 1)
 shift_action = ExtResource("6_bnepl")
 actions = Array[ExtResource("1_ift6d")]([ExtResource("2_tot5t"), ExtResource("3_tot5t"), null, null])

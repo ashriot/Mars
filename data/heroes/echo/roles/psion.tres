@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Role" load_steps=8 format=3 uid="uid://dl1i3sftsuywj"]
+[gd_resource type="Resource" script_class="Role" load_steps=10 format=3 uid="uid://dl1i3sftsuywj"]
 
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_qywa0"]
 [ext_resource type="Resource" uid="uid://dea3writltnu5" path="res://data/heroes/echo/actions/focused_bolt.tres" id="2_qywa0"]
@@ -7,12 +7,15 @@
 [ext_resource type="Texture2D" uid="uid://dve0tjghg88kw" path="res://assets/graphics/icons/roles/blindfold.png" id="3_ywyp5"]
 [ext_resource type="Resource" uid="uid://cyeb0bt4dei2" path="res://data/heroes/echo/actions/reverberate.tres" id="4_5w3kr"]
 [ext_resource type="Resource" uid="uid://c0engj2adit4x" path="res://data/heroes/echo/actions/psionic_pulse.tres" id="4_s6q47"]
+[ext_resource type="Resource" uid="uid://bnqntvgov7q51" path="res://data/heroes/echo/actions/mind_storm.tres" id="5_cahrg"]
+[ext_resource type="Resource" uid="uid://dk51rygyr5a1m" path="res://data/heroes/echo/actions/shatter.tres" id="8_6dhoi"]
 
 [resource]
 script = ExtResource("3_s6q47")
 role_name = "Psion"
 icon = ExtResource("3_ywyp5")
 color = Color(0.24000001, 0.62, 1, 1)
+shift_action = ExtResource("8_6dhoi")
 passive = ExtResource("4_s6q47")
-actions = Array[ExtResource("1_qywa0")]([ExtResource("2_qywa0"), ExtResource("3_vbe7v"), ExtResource("4_5w3kr"), null])
+actions = Array[ExtResource("1_qywa0")]([ExtResource("2_qywa0"), ExtResource("3_vbe7v"), ExtResource("4_5w3kr"), ExtResource("5_cahrg")])
 metadata/_custom_type_script = "uid://d3mhjutrnvwsp"

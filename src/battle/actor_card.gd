@@ -129,7 +129,7 @@ func apply_one_hit(damage: int, damage_effect: Effect_Damage, attacker: ActorCar
 
 func in_danger(value: bool):
 	is_in_danger = value
-	breached_label.text = "CAUTION"
+	breached_label.text = "VULNERABLE"
 	if value:
 		_start_breach_pulse()
 	else:
