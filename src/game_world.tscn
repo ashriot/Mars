@@ -3,7 +3,7 @@
 [ext_resource type="PackedScene" uid="uid://dc5du0o5phhma" path="res://src/battle/battle_scene.tscn" id="1_rnajw"]
 
 [sub_resource type="Environment" id="Environment_f0yx4"]
-background_mode = 3
+background_mode = 4
 tonemap_exposure = 0.5
 glow_intensity = 1.5
 glow_strength = 1.25

@@ -7,15 +7,18 @@
 
 [sub_resource type="Resource" id="Resource_a4hdi"]
 script = ExtResource("2_derss")
-potency = 0.5
 scales_with_missing_hp = true
+target_type = 7
 metadata/_custom_type_script = "uid://nqyc4vuadjr5"
 
 [resource]
 script = ExtResource("2_jl74c")
 action_name = "Triage"
 icon = ExtResource("3_fs4qb")
+description = "Heal the team, increased by their missing HP percent."
+focus_cost = null
 auto_target = true
+update_turn_order = null
 is_shift_action = true
 target_type = 7
 effects = Array[ExtResource("1_cmc6y")]([SubResource("Resource_a4hdi")])

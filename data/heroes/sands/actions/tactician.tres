@@ -1,0 +1,54 @@
+[gd_resource type="Resource" script_class="Action" load_steps=15 format=3 uid="uid://bkmsxk8n5s0gs"]
+
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_d53yd"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="2_7gunl"]
+[ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://data/scripts/action_effects/effect_apply_condition.gd" id="2_bml60"]
+[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://data/scripts/conditions/condition.gd" id="2_kfjm8"]
+[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://data/scripts/conditions/trigger.gd" id="3_tgwb5"]
+[ext_resource type="Resource" uid="uid://sf5lejiqw75x" path="res://data/heroes/sands/conditions/tactician_buff.tres" id="4_mkyrc"]
+[ext_resource type="Script" uid="uid://ddjg3oka0dtvg" path="res://data/scripts/action_effects/effect_remove_condition.gd" id="6_tgwb5"]
+[ext_resource type="Texture2D" uid="uid://csacfsxy81quq" path="res://assets/graphics/icons/skills/chess-knight.png" id="7_mkyrc"]
+
+[sub_resource type="Resource" id="Resource_2fah1"]
+script = ExtResource("2_bml60")
+condition = ExtResource("4_mkyrc")
+target_type = 7
+metadata/_custom_type_script = "uid://dggojfw8tmpnk"
+
+[sub_resource type="Resource" id="Resource_fwksw"]
+script = ExtResource("3_tgwb5")
+effects_to_run = Array[ExtResource("1_d53yd")]([SubResource("Resource_2fah1")])
+metadata/_custom_type_script = "uid://cdugd6pnm6py"
+
+[sub_resource type="Resource" id="Resource_mkyrc"]
+script = ExtResource("6_tgwb5")
+condition_name = "Tactician"
+target_type = 7
+metadata/_custom_type_script = "uid://ddjg3oka0dtvg"
+
+[sub_resource type="Resource" id="Resource_qgcmp"]
+script = ExtResource("3_tgwb5")
+trigger_type = 12
+effects_to_run = Array[ExtResource("1_d53yd")]([SubResource("Resource_mkyrc")])
+metadata/_custom_type_script = "uid://cdugd6pnm6py"
+
+[sub_resource type="Resource" id="Resource_jci70"]
+script = ExtResource("2_kfjm8")
+condition_name = "Tactician Self"
+is_passive = true
+triggers = Array[ExtResource("3_tgwb5")]([SubResource("Resource_fwksw"), SubResource("Resource_qgcmp")])
+remove_on_triggers = Array[int]([12])
+metadata/_custom_type_script = "uid://df30dm288ne1d"
+
+[sub_resource type="Resource" id="Resource_ciepr"]
+script = ExtResource("2_bml60")
+condition = SubResource("Resource_jci70")
+metadata/_custom_type_script = "uid://dggojfw8tmpnk"
+
+[resource]
+script = ExtResource("2_7gunl")
+action_name = "Tactician"
+icon = ExtResource("7_mkyrc")
+description = "Grants the party Buff: Speed increased by 15%."
+effects = Array[ExtResource("1_d53yd")]([SubResource("Resource_ciepr")])
+metadata/_custom_type_script = "uid://dm08rhkg3bai3"

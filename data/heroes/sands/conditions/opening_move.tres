@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="Condition" load_steps=4 format=3 uid="uid://bymh11pg5gyhb"]
+
+[ext_resource type="Texture2D" uid="uid://dfl2dq2etoe6e" path="res://assets/graphics/icons/skills/chess-pawn.png" id="1_jnwhi"]
+[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://data/scripts/conditions/condition.gd" id="2_sigmi"]
+[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://data/scripts/conditions/trigger.gd" id="3_7wmlt"]
+
+[resource]
+script = ExtResource("2_sigmi")
+condition_name = "Opening Move"
+description = "This hero's next attack deals +50% damage."
+icon = ExtResource("1_jnwhi")
+damage_dealt_scalar = 0.5
+remove_on_triggers = Array[int]([9])
+metadata/_custom_type_script = "uid://df30dm288ne1d"

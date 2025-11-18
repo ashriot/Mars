@@ -4,6 +4,7 @@ class_name Condition
 enum ConditionType { BUFF, DEBUFF }
 
 @export var condition_name: String
+@export_multiline var description: String = ""
 @export var icon: Texture
 @export var condition_type: ConditionType = ConditionType.BUFF
 @export var is_passive: bool = false

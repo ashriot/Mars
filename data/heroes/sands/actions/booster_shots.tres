@@ -1,0 +1,69 @@
+[gd_resource type="Resource" script_class="Action" load_steps=18 format=3 uid="uid://epar5pumnvm7"]
+
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_8xfps"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="2_7c2yf"]
+[ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://data/scripts/conditions/hit_trigger.gd" id="2_p26gk"]
+[ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://data/scripts/action_effects/pre_hit_trigger.gd" id="3_ywsrt"]
+[ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/action_effects/effect_damage.gd" id="4_hnok7"]
+[ext_resource type="Texture2D" uid="uid://butpmsk5hwx28" path="res://assets/graphics/icons/skills/miracle-medecine.png" id="5_g1mn7"]
+[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://data/scripts/conditions/condition.gd" id="6_lhcl4"]
+[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://data/scripts/conditions/trigger.gd" id="7_cthl6"]
+[ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://data/scripts/action_effects/effect_apply_condition.gd" id="8_001v7"]
+[ext_resource type="Script" uid="uid://ddjg3oka0dtvg" path="res://data/scripts/action_effects/effect_remove_condition.gd" id="8_ywsrt"]
+
+[sub_resource type="Resource" id="Resource_ku2wx"]
+script = ExtResource("4_hnok7")
+potency = 0.25
+hit_count = 2
+metadata/_custom_type_script = "uid://d0eibi4b735ay"
+
+[sub_resource type="Resource" id="Resource_hnok7"]
+script = ExtResource("8_ywsrt")
+condition_name = "Booster Shot"
+target_type = 7
+metadata/_custom_type_script = "uid://ddjg3oka0dtvg"
+
+[sub_resource type="Resource" id="Resource_g1mn7"]
+script = ExtResource("7_cthl6")
+trigger_type = 12
+effects_to_run = Array[ExtResource("1_8xfps")]([SubResource("Resource_hnok7")])
+metadata/_custom_type_script = "uid://cdugd6pnm6py"
+
+[sub_resource type="Resource" id="Resource_m24su"]
+script = ExtResource("6_lhcl4")
+condition_name = "Booster Shot Passive"
+description = "Double the effect of Painkillers until Sands Shifts."
+icon = ExtResource("5_g1mn7")
+is_passive = true
+triggers = Array[ExtResource("7_cthl6")]([SubResource("Resource_g1mn7")])
+remove_on_triggers = Array[int]([12])
+metadata/_custom_type_script = "uid://df30dm288ne1d"
+
+[sub_resource type="Resource" id="Resource_8mowb"]
+script = ExtResource("8_001v7")
+condition = SubResource("Resource_m24su")
+target_type = 4
+metadata/_custom_type_script = "uid://dggojfw8tmpnk"
+
+[sub_resource type="Resource" id="Resource_r4oiu"]
+script = ExtResource("6_lhcl4")
+condition_name = "Booster Shot"
+description = "Reduces damage taken by 15%."
+icon = ExtResource("5_g1mn7")
+damage_taken_scalar = -0.15
+metadata/_custom_type_script = "uid://df30dm288ne1d"
+
+[sub_resource type="Resource" id="Resource_8ss52"]
+script = ExtResource("8_001v7")
+condition = SubResource("Resource_r4oiu")
+target_type = 7
+metadata/_custom_type_script = "uid://dggojfw8tmpnk"
+
+[resource]
+script = ExtResource("2_7c2yf")
+action_name = "Booster Shots"
+icon = ExtResource("5_g1mn7")
+description = "Deal {dmg1} {kin} twice, and gain Buff: Painkillers' effect is doubled until Sands Shifts."
+focus_cost = 1
+effects = Array[ExtResource("1_8xfps")]([SubResource("Resource_ku2wx"), SubResource("Resource_8mowb"), SubResource("Resource_8ss52")])
+metadata/_custom_type_script = "uid://dm08rhkg3bai3"

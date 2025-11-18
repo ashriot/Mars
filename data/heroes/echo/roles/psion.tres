@@ -13,6 +13,7 @@
 [resource]
 script = ExtResource("3_s6q47")
 role_name = "Psion"
+description = "A multi-target Energy nuker."
 icon = ExtResource("3_ywyp5")
 color = Color(0.24000001, 0.62, 1, 1)
 shift_action = ExtResource("8_6dhoi")

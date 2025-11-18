@@ -7,6 +7,7 @@
 [resource]
 script = ExtResource("1_tef3d")
 condition_name = "Painkillers"
+description = "Reduces all damage taken by 15%."
 icon = ExtResource("1_0dxdg")
 damage_taken_scalar = -0.15
 metadata/_custom_type_script = "uid://df30dm288ne1d"

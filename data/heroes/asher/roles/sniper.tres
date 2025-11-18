@@ -12,6 +12,7 @@
 [resource]
 script = ExtResource("4_y6513")
 role_name = "Sniper"
+description = "A single-target Kinetic killing machine."
 icon = ExtResource("4_tot5t")
 color = Color(0.706, 1, 0.37, 1)
 shift_action = ExtResource("6_bnepl")

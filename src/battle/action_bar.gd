@@ -86,6 +86,7 @@ func update_action_bar(hero_card: HeroCard, shifted: bool = false):
 		$Actions/Passive/Icon.texture = current_role.passive.icon
 		passive_panel.modulate = current_role.color
 		passive_panel.modulate.a = 0.75
+		passive_panel.tooltip_text = current_role.passive.description
 		passive_panel.show()
 	else:
 		passive_panel.hide()
@@ -95,6 +96,7 @@ func update_action_bar(hero_card: HeroCard, shifted: bool = false):
 		$Actions/ShiftAction/Icon.texture = current_role.shift_action.icon
 		shift_action_panel.modulate = current_role.color
 		shift_action_panel.modulate.a = 0.75
+		shift_action_panel.tooltip_text = current_role.shift_action.description
 		shift_action_panel.show()
 		var pending = ! hero_card.get_current_role().shift_action.auto_target
 		if shifted:
@@ -114,14 +116,18 @@ func update_action_bar(hero_card: HeroCard, shifted: bool = false):
 	if prev_role:
 		$LeftShift/Title.text = prev_role.role_name
 		left_shift_button.disabled = prev_role == current_role or next_role == prev_role or left_shift_button.disabled
+		left_shift_button.tooltip_text = prev_role.description
 		left_shift_ui.modulate = prev_role.color
 		$LeftShift/Icon.texture = prev_role.icon
+		left_shift_button.disabled = active_hero.shifted_this_turn
 
 	if next_role:
 		$RightShift/Title.text = next_role.role_name
 		right_shift_button.disabled = next_role == current_role or next_role == prev_role or right_shift_button.disabled
+		right_shift_button.tooltip_text = next_role.description
 		right_shift_ui.modulate = next_role.color
 		$RightShift/Icon.texture = next_role.icon
+		right_shift_button.disabled = active_hero.shifted_this_turn
 
 func _on_hero_focus_updated():
 	if not active_hero: return
@@ -189,8 +195,8 @@ func _on_state_changed(state: BattleManager.State):
 	for button in actions_ui.get_children():
 		if button is ActionButton:
 			button.disabled = is_forced
-	left_shift_button.disabled = is_forced
-	right_shift_button.disabled = is_forced
+	left_shift_button.disabled = is_forced or active_hero.shifted_this_turn
+	right_shift_button.disabled = is_forced or active_hero.shifted_this_turn
 
 func slide_in(duration: float = 0.2):
 	sliding = true

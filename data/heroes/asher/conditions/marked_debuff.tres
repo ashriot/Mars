@@ -7,6 +7,7 @@
 [resource]
 script = ExtResource("1_qikp5")
 condition_name = "Marked"
+description = "Enemy is Marked: Heroes' attacks gain +25% Crit Chance. Lasts until Asher Shifts."
 icon = ExtResource("1_kuku1")
 condition_type = 1
 incoming_precision_mod = 25

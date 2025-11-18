@@ -13,6 +13,7 @@ metadata/_custom_type_script = "uid://cdugd6pnm6py"
 [resource]
 script = ExtResource("2_a7got")
 condition_name = "Targeting Laser"
+description = "Asher's next attack will cause Piercing damage."
 icon = ExtResource("1_uj00b")
 condition_type = 1
 triggered_by = 1

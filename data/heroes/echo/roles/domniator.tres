@@ -8,6 +8,7 @@
 [resource]
 script = ExtResource("4_gh0xr")
 role_name = "Domniator"
+description = "NOT YET IMPLEMENTED"
 icon = ExtResource("3_oj8d5")
 color = Color(0.6243334, 0.53999996, 1, 1)
 actions = Array[ExtResource("1_oj8d5")]([ExtResource("2_l3qo3"), null, null, null])

@@ -12,6 +12,7 @@
 [resource]
 script = ExtResource("4_5mtuo")
 role_name = "Vanguard"
+description = "A tough bruiser who can draw fire and give it right back."
 icon = ExtResource("4_0c62t")
 color = Color(1, 0.31, 0.31, 1)
 shift_action = ExtResource("8_ft23u")

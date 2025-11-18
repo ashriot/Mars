@@ -24,4 +24,5 @@ condition_name = "Acuity"
 icon = ExtResource("1_loiex")
 is_passive = true
 triggers = Array[ExtResource("2_loiex")]([SubResource("Resource_nfas3")])
+remove_on_triggers = Array[int]([12])
 metadata/_custom_type_script = "uid://df30dm288ne1d"

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="Condition" load_steps=4 format=3 uid="uid://sf5lejiqw75x"]
+
+[ext_resource type="Texture2D" uid="uid://csacfsxy81quq" path="res://assets/graphics/icons/skills/chess-knight.png" id="1_o5mei"]
+[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://data/scripts/conditions/condition.gd" id="2_bugkn"]
+[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://data/scripts/conditions/trigger.gd" id="3_dh3mi"]
+
+[resource]
+script = ExtResource("2_bugkn")
+condition_name = "Tactician"
+description = "Speed increased by 15%."
+icon = ExtResource("1_o5mei")
+speed_scalar = 0.15
+metadata/_custom_type_script = "uid://df30dm288ne1d"

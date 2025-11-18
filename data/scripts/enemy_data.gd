@@ -32,6 +32,5 @@ func _calculate_stats() -> ActorStats:
 
 func _calc_stat(rank: int) -> int:
 	var multiplier = 1.25 + ((stat_ranks.level + 5) ** 2) * 0.03
-	# =INT($A$1*10+(B13*POW(Heroes!$U$1,1.2)))
-	var value = stat_ranks.level * 10 + (rank * (multiplier * 2))
+	var value = stat_ranks.level * 5 + (rank * (multiplier) * 3)
 	return int(value)

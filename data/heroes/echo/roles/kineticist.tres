@@ -13,6 +13,7 @@
 [resource]
 script = ExtResource("5_qoyy0")
 role_name = "Kineticist"
+description = "A single-target Energy specialist."
 icon = ExtResource("4_mbt5s")
 color = Color(0.32999998, 0.8995001, 1, 1)
 shift_action = ExtResource("7_noufh")

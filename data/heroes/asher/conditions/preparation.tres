@@ -7,6 +7,7 @@
 [resource]
 script = ExtResource("1_c7rk8")
 condition_name = "Preparation"
+description = "This hero's next action costs half Focus."
 icon = ExtResource("1_w7xfi")
 focus_cost_reduction = 0.5
 remove_on_triggers = Array[int]([3])

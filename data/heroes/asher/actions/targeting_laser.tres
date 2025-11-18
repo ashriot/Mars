@@ -10,6 +10,7 @@
 [sub_resource type="Resource" id="Resource_8vh47"]
 script = ExtResource("2_2luar")
 ct_boost_percent = 0.25
+target_type = 4
 metadata/_custom_type_script = "uid://dgkss5d1axeag"
 
 [sub_resource type="Resource" id="Resource_ritsb"]
@@ -21,6 +22,11 @@ metadata/_custom_type_script = "uid://dggojfw8tmpnk"
 script = ExtResource("6_sdebn")
 action_name = "Targeting Laser"
 icon = ExtResource("5_dcxol")
+description = "Boosts Asher's next turn by 25% and applies Debuff: The next time Asher attacks this enemy, the damage is Piercing. "
 focus_cost = 1
+auto_target = null
+update_turn_order = null
+is_shift_action = null
+target_type = null
 effects = Array[ExtResource("1_d5422")]([SubResource("Resource_8vh47"), SubResource("Resource_ritsb")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

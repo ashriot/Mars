@@ -7,14 +7,17 @@
 
 [sub_resource type="Resource" id="Resource_76ybm"]
 script = ExtResource("2_vdk5u")
-guard_amount = 2
 metadata/_custom_type_script = "uid://cu12q7dfj3hfe"
 
 [resource]
 script = ExtResource("4_k0not")
 action_name = "Displace"
 icon = ExtResource("3_sgt3b")
-description = "Attack an enemy twice, each hit dealing X% damage."
+description = "Grant an ally 1 Guard."
+focus_cost = null
+auto_target = null
+update_turn_order = null
+is_shift_action = null
 target_type = 5
 effects = Array[ExtResource("1_gpnli")]([SubResource("Resource_76ybm")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

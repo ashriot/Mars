@@ -39,7 +39,7 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 			else:
 				target = final_targets[t]
 			var pre_hit_context = _get_pre_hit_triggers(attacker, target)
-			var dynamic_potency = get_dynamic_potency(attacker, target, focus_cost)
+			var dynamic_potency = get_dynamic_potency(attacker, target)
 			print("Final Potency: ", dynamic_potency)
 			if not target or not is_instance_valid(target):
 				continue
@@ -53,12 +53,14 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 
 			if final_damage_type == Action.DamageType.PIERCING:
 				target.shake_panel()
-			else:
+			elif shreds_guard:
 				if not target.is_breached and target.current_guard == 0:
 					target.breach()
 				else:
 					target.modify_guard(-1)
 					target.shake_panel()
+			else:
+				target.shake_panel()
 
 			if split_damage: dynamic_potency /= final_targets.size()
 			var is_crit: bool = false
@@ -106,7 +108,7 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 
 	return
 
-func get_dynamic_potency(attacker: ActorCard, _target: ActorCard, focus_cost: int) -> float:
+func get_dynamic_potency(attacker: ActorCard, _target: ActorCard) -> float:
 	if potency_per_guard > 0.0:
 		var guard = 0
 		guard = attacker.current_guard
@@ -121,7 +123,7 @@ func get_dynamic_potency(attacker: ActorCard, _target: ActorCard, focus_cost: in
 	if potency_scalar_per_focus > 0.0:
 		var remaining_focus = 0
 		if attacker is HeroCard:
-			remaining_focus = max(0, attacker.current_focus - focus_cost)
+			remaining_focus = max(0, attacker.current_focus)
 
 		return potency * (1.0 + (potency_scalar_per_focus * remaining_focus))
 

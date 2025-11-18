@@ -37,6 +37,7 @@ metadata/_custom_type_script = "uid://cdugd6pnm6py"
 [resource]
 script = ExtResource("2_w8o6c")
 condition_name = "Return Fire"
+description = "Sands counterattacks enemy hits with Piercing damage."
 icon = ExtResource("1_ruy1o")
 is_passive = true
 triggers = Array[ExtResource("3_ddk4p")]([SubResource("Resource_gc3t6")])

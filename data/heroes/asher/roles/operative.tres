@@ -9,6 +9,7 @@
 [resource]
 script = ExtResource("4_04tj5")
 role_name = "Operative"
+description = "A team-supporting specialist."
 icon = ExtResource("4_gbex6")
 color = Color(1, 0.79, 0.37, 1)
 actions = Array[ExtResource("1_6fell")]([ExtResource("2_gbex6"), ExtResource("3_gytd5"), null, null])

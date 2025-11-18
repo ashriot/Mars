@@ -7,6 +7,7 @@
 [resource]
 script = ExtResource("2_ebwhd")
 condition_name = "Overwatch"
+description = "Sands will deal an additional {kin} hit the next time he uses Return Fire."
 icon = ExtResource("1_pp5jr")
-remove_on_triggers = Array[int]([8])
+remove_on_triggers = Array[int]([8, 12])
 metadata/_custom_type_script = "uid://df30dm288ne1d"

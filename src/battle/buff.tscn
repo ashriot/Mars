@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://be3t7advgy14o"]
 
-[ext_resource type="Script" uid="uid://cj5wd4g4agbsm" path="res://src/battle/condition.gd" id="1_hohed"]
+[ext_resource type="Script" uid="uid://cj5wd4g4agbsm" path="res://src/battle/condition_ui.gd" id="1_hohed"]
 [ext_resource type="Texture2D" uid="uid://8p1vkux4ntf7" path="res://assets/graphics/icons/textures/play-black-triangle-interface-symbol-for-multimedia.png" id="2_e26l3"]
 [ext_resource type="Texture2D" uid="uid://uxe1med2wsg8" path="res://assets/graphics/icons/skills/round-struck.png" id="3_t7fls"]
 

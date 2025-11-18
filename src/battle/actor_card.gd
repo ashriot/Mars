@@ -145,6 +145,7 @@ func breach():
 	breached_label.text = "BREACHED"
 	guard_bar.modulate.a = 0.5
 	current_ct = 0
+	print("Breached: ", actor_name, " -> CT: ", current_ct)
 	actor_breached.emit()
 	_start_breach_pulse()
 	shake_panel(1.0)
@@ -556,12 +557,11 @@ func get_damage_taken_scalar() -> float:
 	return scalar
 
 func _update_conditions_ui():
-	#for child in buffs_panel.get_children():
-		#child.queue_free()
+	for child in buffs_panel.get_children():
+		child.queue_free()
 	for child in debuffs_panel.get_children():
 		child.queue_free()
 
-	# 2. Loop through our "real" data and respawn icons
 	for condition in active_conditions:
 		if condition.is_passive: continue
 		match condition.condition_type:

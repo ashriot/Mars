@@ -96,7 +96,7 @@ func get_rich_description(hero: ActorCard) -> String:
 	return final_desc
 
 func _get_damage_string(damage_effect: Effect_Damage, attacker: ActorCard) -> String:
-	var dynamic_potency = damage_effect.get_dynamic_potency(attacker, null, 0)
+	var dynamic_potency = damage_effect.get_dynamic_potency(attacker, null)
 
 	# 2. Get the base power
 	var base_power = attacker.get_power(damage_effect.power_type)

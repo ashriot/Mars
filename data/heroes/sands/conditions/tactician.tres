@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="Condition" load_steps=8 format=3 uid="uid://cc3q7t0seb754"]
+
+[ext_resource type="Texture2D" uid="uid://csacfsxy81quq" path="res://assets/graphics/icons/skills/chess-knight.png" id="1_o3x2v"]
+[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://data/scripts/conditions/condition.gd" id="1_t533f"]
+[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://data/scripts/conditions/trigger.gd" id="2_lensy"]
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="4_7gwpb"]
+[ext_resource type="Script" uid="uid://ddjg3oka0dtvg" path="res://data/scripts/action_effects/effect_remove_condition.gd" id="5_7gwpb"]
+
+[sub_resource type="Resource" id="Resource_o3x2v"]
+script = ExtResource("5_7gwpb")
+condition_name = "Tactician"
+target_type = 7
+metadata/_custom_type_script = "uid://ddjg3oka0dtvg"
+
+[sub_resource type="Resource" id="Resource_oxm0n"]
+script = ExtResource("2_lensy")
+trigger_type = 12
+effects_to_run = Array[ExtResource("4_7gwpb")]([SubResource("Resource_o3x2v")])
+metadata/_custom_type_script = "uid://cdugd6pnm6py"
+
+[resource]
+script = ExtResource("1_t533f")
+condition_name = "Tactician"
+icon = ExtResource("1_o3x2v")
+is_passive = true
+triggers = Array[ExtResource("2_lensy")]([SubResource("Resource_oxm0n")])
+remove_on_triggers = Array[int]([12])
+metadata/_custom_type_script = "uid://df30dm288ne1d"

@@ -238,14 +238,14 @@ func _focus_button(button: ActionButton):
 
 func _finish_hero_turn():
 	var is_shift_action = current_action.is_shift_action
-	current_action = null
 	if focused_button:
 		focused_button.focused(false)
 		focused_button = null
 	if not is_shift_action:
+		current_action = null
 		await current_actor.on_turn_ended()
 		find_and_start_next_turn()
-	await wait(0.01)
+	await wait()
 
 func _apply_role_passive(hero: HeroCard):
 	current_actor = hero
@@ -270,10 +270,13 @@ func execute_action(actor: ActorCard, action: Action, targets: Array, display_na
 	print(actor_name, " uses ", action.action_name)
 
 	for effect in action.effects:
-		if effect.target_type != Action.TargetType.PARENT:
+		if effect.target_type in [Action.TargetType.ALL_ALLIES, Action.TargetType.ALL_ENEMIES, Action.TargetType.ALLIES_ONLY, Action.TargetType.LEAST_GUARD_ALLY]:
 			targets = get_targets(effect.target_type, actor is HeroCard)
 		else:
-			targets = parent_targets
+			if effect.target_type == Action.TargetType.SELF:
+				targets = [current_actor]
+			else:
+				targets = parent_targets
 		await effect.execute(actor, targets, self, action)
 	if action.is_attack:
 		var context = { "targets": targets, "action": action }
@@ -346,9 +349,6 @@ func _on_hero_clicked(target_hero: HeroCard):
 		action_bar.hide_bar()
 
 	var target_list = [target_hero]
-	if current_action.target_type != Action.TargetType.ONE_ALLY:
-		target_list = get_targets(current_action.target_type, true, target_list)
-
 	await execute_action(current_actor, current_action, target_list)
 	await _finish_hero_turn()
 
@@ -364,6 +364,7 @@ func _on_enemy_clicked(target_enemy: EnemyCard):
 		action_bar.hide_bar()
 
 	var targets_array = []
+
 	match current_action.target_type:
 		Action.TargetType.ONE_ENEMY:
 			targets_array.append(target_enemy)
@@ -377,21 +378,19 @@ func _on_enemy_clicked(target_enemy: EnemyCard):
 func _on_shift_button_pressed(direction: String):
 	var current_hero = current_actor as HeroCard
 	if current_state in [State.LOADING, State.FORCED_TARGET]: return
-	current_action = null
 	_clear_all_targeting_ui()
-
-	if current_hero:
-		change_state(State.LOADING)
-		await action_bar.slide_out()
-		await current_actor.shift_role(direction)
-		await action_bar.slide_in()
-		_apply_role_passive(current_hero)
-		print("Shift complete. Returning to player's action.")
-		if current_hero.get_current_role().shift_action:
-			if current_hero.get_current_role().shift_action.auto_target:
-				change_state(State.PLAYER_ACTION)
-		else:
+	change_state(State.LOADING)
+	current_action = null
+	await action_bar.slide_out()
+	await current_actor.shift_role(direction)
+	await action_bar.slide_in()
+	_apply_role_passive(current_hero)
+	print("Shift complete. Returning to player's action.")
+	if current_hero.get_current_role().shift_action:
+		if current_hero.get_current_role().shift_action.auto_target:
 			change_state(State.PLAYER_ACTION)
+	else:
+		change_state(State.PLAYER_ACTION)
 
 func _on_hero_role_shifted(hero_card: HeroCard):
 	var new_role = hero_card.get_current_role()

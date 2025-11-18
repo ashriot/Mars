@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://dwpde7pjb1jds"]
 
-[ext_resource type="Script" uid="uid://cj5wd4g4agbsm" path="res://src/battle/condition.gd" id="1_3k6iw"]
+[ext_resource type="Script" uid="uid://cj5wd4g4agbsm" path="res://src/battle/condition_ui.gd" id="1_3k6iw"]
 [ext_resource type="Texture2D" uid="uid://8p1vkux4ntf7" path="res://assets/graphics/icons/textures/play-black-triangle-interface-symbol-for-multimedia.png" id="1_4ffkd"]
 [ext_resource type="Texture2D" uid="uid://uxe1med2wsg8" path="res://assets/graphics/icons/skills/round-struck.png" id="2_3k6iw"]
 
@@ -12,7 +12,6 @@ anchors_preset = 0
 script = ExtResource("1_3k6iw")
 
 [node name="Arrow" type="Control" parent="."]
-self_modulate = Color(1, 1, 1, 0.5882353)
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
@@ -23,7 +22,6 @@ grow_horizontal = 2
 grow_vertical = 0
 
 [node name="Point" type="TextureRect" parent="Arrow"]
-self_modulate = Color(1, 1, 1, 0.5882353)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -39,7 +37,6 @@ texture = ExtResource("1_4ffkd")
 expand_mode = 1
 
 [node name="Panel" type="Panel" parent="."]
-self_modulate = Color(1, 1, 1, 0.5882353)
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0

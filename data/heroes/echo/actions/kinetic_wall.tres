@@ -7,14 +7,16 @@
 
 [sub_resource type="Resource" id="Resource_b60yk"]
 script = ExtResource("2_b3y3o")
-guard_amount = 2
 metadata/_custom_type_script = "uid://cu12q7dfj3hfe"
 
 [resource]
 script = ExtResource("2_juyi0")
 action_name = "Kinetic Wall"
 icon = ExtResource("3_eytqw")
+description = "Grant the party 1 Guard."
+focus_cost = null
 auto_target = true
+update_turn_order = null
 is_shift_action = true
 target_type = 7
 effects = Array[ExtResource("1_e3grd")]([SubResource("Resource_b60yk")])

@@ -21,6 +21,7 @@ signal focus_updated
 var hero_data: HeroData
 var current_focus: int = 0
 var current_role_index: int = 0
+var shifted_this_turn: bool
 
 func setup(data: HeroData):
 	hero_data = data
@@ -29,7 +30,7 @@ func setup(data: HeroData):
 	name_label.text = hero_data.stats.actor_name
 	if hero_data.portrait:
 		portrait_rect.texture = hero_data.portrait
-	current_focus = 5
+	current_focus = 4
 	update_focus_bar(false)
 	update_current_role()
 	panel.self_modulate.a = 0.85
@@ -37,6 +38,7 @@ func setup(data: HeroData):
 func on_turn_started() -> void:
 	#if current_focus < 10:
 		#modify_focus(1)
+	shifted_this_turn = false
 	await _slide_up()
 	await battle_manager.action_bar.load_actions(self, false)
 	await super.on_turn_started()
@@ -77,6 +79,7 @@ func get_next_role() -> Role:
 	return hero_data.unlocked_roles[next_index]
 
 func shift_role(direction: String):
+	shifted_this_turn = true
 	var role_count = hero_data.unlocked_roles.size()
 	if role_count == 0: return
 

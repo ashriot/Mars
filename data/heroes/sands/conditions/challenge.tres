@@ -7,6 +7,7 @@
 [resource]
 script = ExtResource("2_4dfmi")
 condition_name = "Challenge"
+description = "Sands is drawing the attention of all enemies."
 icon = ExtResource("1_y037f")
 retarget = true
 remove_on_triggers = Array[int]([11, 12])

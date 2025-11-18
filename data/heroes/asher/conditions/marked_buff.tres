@@ -20,6 +20,7 @@ metadata/_custom_type_script = "uid://cdugd6pnm6py"
 [resource]
 script = ExtResource("2_n0a27")
 condition_name = "Marked"
+is_passive = true
 triggers = Array[ExtResource("3_i87cr")]([SubResource("Resource_7o7eh")])
 remove_on_triggers = Array[int]([12])
 metadata/_custom_type_script = "uid://df30dm288ne1d"
