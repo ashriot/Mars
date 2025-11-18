@@ -13,6 +13,7 @@ class_name Effect_Damage
 @export var potency_per_guard: float = 0.0
 @export var potency_per_focus: float = 0.0
 @export var potency_scalar_per_focus: float = 0.0
+@export var lifedrain_scalar: float = 0.0
 @export var on_hit_triggers: Array[HitTrigger]
 @export var pre_hit_triggers: Array[PreHitTrigger]
 
@@ -96,6 +97,9 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 
 			await target.apply_one_hit(final_damage, self, attacker, final_damage_type, is_crit)
 			await _process_on_hit_triggers(attacker, target, battle_manager)
+			if lifedrain_scalar > 0.0:
+				var healing = int(final_dmg_float * lifedrain_scalar)
+				attacker.take_healing(healing)
 
 			if random and target.is_defeated:
 				final_targets.remove_at(t)
@@ -135,6 +139,10 @@ func _get_pre_hit_triggers(attacker: ActorCard, target: ActorCard) -> Dictionary
 		var condition_met = false
 
 		match trigger.condition:
+			PreHitTrigger.PreHitCondition.IF_TARGET_IS_BREACHED:
+				if target.is_breached:
+					condition_met = true
+
 			PreHitTrigger.PreHitCondition.ALWAYS:
 				condition_met = true
 
@@ -154,7 +162,6 @@ func _get_pre_hit_triggers(attacker: ActorCard, target: ActorCard) -> Dictionary
 		if Action.HeroType.has(hero_name_key):
 			attacker_hero_type = Action.HeroType[hero_name_key]
 
-	# Now, loop through *our* (the defender's) conditions
 	for i in range(target.active_conditions.size() - 1, -1, -1):
 		var condition = target.active_conditions[i]
 
@@ -194,6 +201,7 @@ func _process_on_hit_triggers(attacker: ActorCard, target: ActorCard, battle_man
 		if condition_met:
 			print("On-hit trigger fired!")
 			for effect in hit_trigger.effects_to_run:
+				var targets = battle_manager.get_targets(effect.target_type, attacker is HeroCard, [target], target)
 				if effect is Effect_Damage:
 					await battle_manager.wait(0.25)
-				await battle_manager.execute_triggered_effect(attacker, effect, [target], null)
+				await battle_manager.execute_triggered_effect(attacker, effect, targets, null)

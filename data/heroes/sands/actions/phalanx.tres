@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="Action" load_steps=11 format=3 uid="uid://cp7b4dfv1j0ad"]
+
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_8wvin"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="2_574df"]
+[ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://data/scripts/conditions/hit_trigger.gd" id="2_8105k"]
+[ext_resource type="Script" uid="uid://cu12q7dfj3hfe" path="res://data/scripts/action_effects/effect_modify_guard.gd" id="3_mfwts"]
+[ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://data/scripts/action_effects/pre_hit_trigger.gd" id="4_15e11"]
+[ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/action_effects/effect_damage.gd" id="5_shujg"]
+[ext_resource type="Texture2D" uid="uid://bufjthejed1q6" path="res://assets/graphics/icons/skills/spartan-helmet.png" id="6_n5pr0"]
+
+[sub_resource type="Resource" id="Resource_tlk7x"]
+script = ExtResource("3_mfwts")
+target_type = 10
+metadata/_custom_type_script = "uid://cu12q7dfj3hfe"
+
+[sub_resource type="Resource" id="Resource_b4uay"]
+script = ExtResource("2_8105k")
+condition = 1
+effects_to_run = Array[ExtResource("1_8wvin")]([SubResource("Resource_tlk7x")])
+metadata/_custom_type_script = "uid://bhpiwhufv87v7"
+
+[sub_resource type="Resource" id="Resource_04o0x"]
+script = ExtResource("5_shujg")
+potency = 0.5
+hit_count = 4
+on_hit_triggers = Array[ExtResource("2_8105k")]([SubResource("Resource_b4uay")])
+metadata/_custom_type_script = "uid://d0eibi4b735ay"
+
+[resource]
+script = ExtResource("2_574df")
+action_name = "Phalanx"
+icon = ExtResource("6_n5pr0")
+description = "Deals {dmg1} {kin} four times. Each BREACHED hit grants 1 Guard to the teammate with the least Guard."
+focus_cost = 3
+effects = Array[ExtResource("1_8wvin")]([SubResource("Resource_04o0x")])
+metadata/_custom_type_script = "uid://dm08rhkg3bai3"

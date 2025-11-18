@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://be3t7advgy14o"]
+[gd_scene load_steps=5 format=3 uid="uid://be3t7advgy14o"]
 
 [ext_resource type="Script" uid="uid://cj5wd4g4agbsm" path="res://src/battle/condition_ui.gd" id="1_hohed"]
 [ext_resource type="Texture2D" uid="uid://8p1vkux4ntf7" path="res://assets/graphics/icons/textures/play-black-triangle-interface-symbol-for-multimedia.png" id="2_e26l3"]
-[ext_resource type="Texture2D" uid="uid://uxe1med2wsg8" path="res://assets/graphics/icons/skills/round-struck.png" id="3_t7fls"]
+[ext_resource type="StyleBox" uid="uid://ceuuychq76vmf" path="res://data/theme/styleboxes/condition_ui_panel.tres" id="3_e26l3"]
+[ext_resource type="Texture2D" uid="uid://b6ap6mcvctu84" path="res://assets/graphics/icons/skills/sonic-shout.png" id="3_hohed"]
 
 [node name="Buff" type="Control"]
 modulate = Color(0.5041666, 1, 0.14999998, 1)
@@ -12,15 +13,15 @@ anchors_preset = 0
 script = ExtResource("1_hohed")
 
 [node name="Arrow" type="Control" parent="."]
-custom_minimum_size = Vector2(50, 24)
+custom_minimum_size = Vector2(40, 20)
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -25.0
+offset_left = -22.0
 offset_top = -3.0
-offset_right = 25.0
-offset_bottom = 21.0
+offset_right = 22.0
+offset_bottom = 19.0
 grow_horizontal = 2
 
 [node name="Point" type="TextureRect" parent="Arrow"]
@@ -28,10 +29,6 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 8.0
-offset_top = 6.9375
-offset_right = -8.0
-offset_bottom = -3.8223686
 grow_horizontal = 2
 grow_vertical = 2
 pivot_offset = Vector2(20, 20)
@@ -52,6 +49,7 @@ offset_top = -50.0
 offset_right = 25.0
 grow_horizontal = 2
 grow_vertical = 0
+theme_override_styles/panel = ExtResource("3_e26l3")
 
 [node name="Icon" type="TextureRect" parent="Panel"]
 layout_mode = 1
@@ -60,5 +58,5 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-texture = ExtResource("3_t7fls")
+texture = ExtResource("3_hohed")
 expand_mode = 1

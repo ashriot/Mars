@@ -64,7 +64,7 @@ func get_a_target(hero_targets: Array[HeroCard]):
 				return
 			var taunting_hero = null
 			for hero in hero_targets:
-				if hero.has_condition("Challenge"):
+				if hero.has_condition("Draw Fire"):
 					taunting_hero = hero
 					break
 			if taunting_hero:

@@ -5,18 +5,18 @@ enum HeroType { ALL, ASHER, ECHO, SANDS }
 enum PowerType { ATTACK, PSYCHE }
 enum DamageType { KINETIC, ENERGY, PIERCING, NONE }
 enum TargetType {
-	ONE_ENEMY,
-	ALL_ENEMIES,
-	ENEMY_GROUP,
-	RANDOM_ENEMY,
-	SELF,
-	ONE_ALLY,
-	ALLY_ONLY,
-	ALL_ALLIES,
-	ALLIES_ONLY,
-	PARENT, # "Use the target(s) from the parent action"
-	LEAST_GUARD_ALLY,
-	ATTACKER
+	ONE_ENEMY,			#0
+	ALL_ENEMIES,		#1
+	ENEMY_GROUP,		#2
+	RANDOM_ENEMY,		#3
+	SELF,				#4
+	ONE_ALLY,			#5
+	ALLY_ONLY,			#6
+	ALL_ALLIES,			#7
+	ALLIES_ONLY,		#8
+	PARENT,				#9
+	LEAST_GUARD_ALLY,	#10
+	ATTACKER			#11
 }
 
 @export var action_name: String = "New Action"

@@ -1,12 +1,13 @@
-[gd_resource type="Resource" script_class="Role" load_steps=9 format=3 uid="uid://cd2xsqr4p5xyg"]
+[gd_resource type="Resource" script_class="Role" load_steps=10 format=3 uid="uid://cd2xsqr4p5xyg"]
 
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_umdty"]
-[ext_resource type="Resource" uid="uid://vk5px1abwyri" path="res://data/heroes/sands/actions/challenge.tres" id="2_1x5rg"]
+[ext_resource type="Resource" uid="uid://vk5px1abwyri" path="res://data/heroes/sands/actions/draw_fire.tres" id="2_wqeov"]
 [ext_resource type="Resource" uid="uid://bikya1n52nsow" path="res://data/heroes/sands/actions/overwatch.tres" id="3_n0xkg"]
 [ext_resource type="Texture2D" uid="uid://brxh73qv0bq0b" path="res://assets/graphics/icons/roles/winged-sword.png" id="4_0c62t"]
 [ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/role.gd" id="4_5mtuo"]
 [ext_resource type="Resource" uid="uid://g6ncue0rx5ej" path="res://data/heroes/sands/actions/focus_fire.tres" id="4_n0xkg"]
 [ext_resource type="Resource" uid="uid://dv4r7yc61o8e6" path="res://data/heroes/sands/actions/return_fire.tres" id="5_ft23u"]
+[ext_resource type="Resource" uid="uid://cp7b4dfv1j0ad" path="res://data/heroes/sands/actions/phalanx.tres" id="5_wtxb1"]
 [ext_resource type="Resource" uid="uid://bdv0soxiwb8dl" path="res://data/heroes/sands/actions/opening_salvo.tres" id="8_ft23u"]
 
 [resource]
@@ -17,5 +18,5 @@ icon = ExtResource("4_0c62t")
 color = Color(1, 0.31, 0.31, 1)
 shift_action = ExtResource("8_ft23u")
 passive = ExtResource("5_ft23u")
-actions = Array[ExtResource("1_umdty")]([ExtResource("2_1x5rg"), ExtResource("3_n0xkg"), ExtResource("4_n0xkg"), null])
+actions = Array[ExtResource("1_umdty")]([ExtResource("2_wqeov"), ExtResource("3_n0xkg"), ExtResource("4_n0xkg"), ExtResource("5_wtxb1")])
 metadata/_custom_type_script = "uid://d3mhjutrnvwsp"
