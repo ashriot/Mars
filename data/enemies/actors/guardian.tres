@@ -1,10 +1,11 @@
-[gd_resource type="Resource" script_class="EnemyData" load_steps=9 format=3 uid="uid://iofc48r1ubbm"]
+[gd_resource type="Resource" script_class="EnemyData" load_steps=10 format=3 uid="uid://iofc48r1ubbm"]
 
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_tpotm"]
 [ext_resource type="Resource" uid="uid://40l6j7e7d5e2" path="res://data/enemies/actions/double_shot.tres" id="2_5kvmr"]
 [ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://data/scripts/enemy_data.gd" id="2_y0noh"]
 [ext_resource type="Resource" uid="uid://m5wgycabl2ij" path="res://data/enemies/actions/fortify.tres" id="3_g7tkw"]
 [ext_resource type="Resource" uid="uid://bq2xo8jqdrnq" path="res://data/enemies/actions/brace.tres" id="3_gkke1"]
+[ext_resource type="Resource" uid="uid://1rrrrrgvw07f" path="res://data/enemies/actions/shrapnel.tres" id="4_8btd6"]
 [ext_resource type="Script" uid="uid://djm3iwmyexcia" path="res://data/scripts/enemy_stats.gd" id="4_e5ebm"]
 [ext_resource type="Resource" uid="uid://c0qexgdf5xce2" path="res://data/enemies/actions/mow_down.tres" id="5_gkke1"]
 
@@ -25,5 +26,5 @@ metadata/_custom_type_script = "uid://djm3iwmyexcia"
 [resource]
 script = ExtResource("2_y0noh")
 stat_ranks = SubResource("Resource_g7tkw")
-action_deck = Array[ExtResource("1_tpotm")]([ExtResource("3_g7tkw"), ExtResource("3_gkke1"), ExtResource("3_g7tkw"), ExtResource("2_5kvmr"), ExtResource("5_gkke1")])
+action_deck = Array[ExtResource("1_tpotm")]([ExtResource("3_g7tkw"), ExtResource("3_gkke1"), ExtResource("4_8btd6"), ExtResource("2_5kvmr"), ExtResource("5_gkke1")])
 metadata/_custom_type_script = "uid://b3t5esgv1d2ku"

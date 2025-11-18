@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="Condition" load_steps=10 format=3 uid="uid://cmkivbg7nlle6"]
+
+[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://data/scripts/conditions/condition.gd" id="1_0njqx"]
+[ext_resource type="Texture2D" uid="uid://b7uy6nk2wao6q" path="res://assets/graphics/icons/skills/blood.png" id="1_rkhse"]
+[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://data/scripts/conditions/trigger.gd" id="2_rkhse"]
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="4_0enxc"]
+[ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://data/scripts/conditions/hit_trigger.gd" id="5_f4gk7"]
+[ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://data/scripts/action_effects/pre_hit_trigger.gd" id="6_ap47w"]
+[ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/action_effects/effect_damage.gd" id="7_4fkk4"]
+
+[sub_resource type="Resource" id="Resource_deft0"]
+script = ExtResource("7_4fkk4")
+shreds_guard = false
+is_indirect = true
+damage_type = 2
+target_type = 4
+metadata/_custom_type_script = "uid://d0eibi4b735ay"
+
+[sub_resource type="Resource" id="Resource_ferbc"]
+script = ExtResource("2_rkhse")
+trigger_type = 1
+effects_to_run = Array[ExtResource("4_0enxc")]([SubResource("Resource_deft0")])
+metadata/_custom_type_script = "uid://cdugd6pnm6py"
+
+[resource]
+script = ExtResource("1_0njqx")
+condition_name = "Bleeding"
+icon = ExtResource("1_rkhse")
+description = "This hero takes Piercing damage at the start of their turn."
+condition_type = 1
+triggers = Array[ExtResource("2_rkhse")]([SubResource("Resource_ferbc")])
+metadata/_custom_type_script = "uid://df30dm288ne1d"

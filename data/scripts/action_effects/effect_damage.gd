@@ -4,9 +4,10 @@ class_name Effect_Damage
 
 # --- Base Damage Properties ---
 @export var potency: float = 1.0
-@export var split_damage: bool = false
 @export var hit_count: int = 1
 @export var shreds_guard: bool = true
+@export var split_damage: bool = false
+@export var is_indirect: bool = false
 @export var power_type: Action.PowerType = Action.PowerType.ATTACK
 @export var damage_type: Action.DamageType = Action.DamageType.KINETIC
 

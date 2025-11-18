@@ -124,9 +124,9 @@ func apply_one_hit(damage: int, damage_effect: Effect_Damage, attacker: ActorCar
 		await _fire_condition_event(Trigger.TriggerType.ON_TAKING_KINETIC_DAMAGE, context)
 	elif damage_effect.damage_type == Action.DamageType.ENERGY:
 		await _fire_condition_event(Trigger.TriggerType.ON_TAKING_ENERGY_DAMAGE, context)
-
-	context = { "attacker": attacker, "damage_dealt": damage }
-	await _fire_condition_event(Trigger.TriggerType.ON_BEING_HIT, context)
+	if not damage_effect.is_indirect:
+		context = { "attacker": attacker, "damage_dealt": damage }
+		await _fire_condition_event(Trigger.TriggerType.ON_BEING_HIT, context)
 
 	if current_hp == 0:
 		await defeated()
@@ -197,12 +197,8 @@ func has_condition(condition_name: String) -> bool:
 
 	return false
 
-func remove_condition(condition_name: String, is_debuff: bool = false):
-	if active_conditions.size() == 0: return
+func remove_condition(condition_name: String):
 	for condition in active_conditions:
-		if condition_name == "":
-			if is_debuff and condition.condition_type == Condition.ConditionType.DEBUFF:
-				condition_name = condition.condition_name
 		if condition.condition_name == condition_name:
 			active_conditions.erase(condition)
 			print(actor_name, " is removing condition: ", condition.condition_name)
@@ -211,6 +207,19 @@ func remove_condition(condition_name: String, is_debuff: bool = false):
 
 	push_error("[ERROR] Trying to remove an invalid condition: ", actor_name, " -> ", condition_name)
 	return
+
+func remove_debuffs(quantity: int):
+	var amount_removed = 0
+	if active_conditions.is_empty(): return
+	for i in range(active_conditions.size() - 1, -1, -1):
+		var condition = active_conditions[i]
+		if condition.condition_type == Condition.ConditionType.DEBUFF:
+			amount_removed += 1
+			active_conditions.erase(condition)
+			print(actor_name, " is removing condition: ", condition.condition_name)
+			_update_conditions_ui()
+			if amount_removed == quantity:
+				return
 
 func count_debuffs() -> int:
 	var count = 0
@@ -313,14 +322,14 @@ func recover_breach():
 	is_breached = false
 	guard_bar.modulate.a = 1
 	_stop_breach_pulse()
-	await modify_guard(current_stats.guard)
+	await modify_guard(current_stats.guard, true)
 
-func modify_guard(amount: int):
+func modify_guard(amount: int, is_recovering: bool = false):
 	current_guard = clamp(current_guard + amount, 0, MAX_GUARD)
 
 	print(actor_name, " gained ", amount, " guard. Total: ", current_guard)
 	var context = { "targets": [self], "guard_gained": amount}
-	if amount > 0:
+	if amount > 0 and not is_recovering:
 		await _fire_condition_event(Trigger.TriggerType.ON_GAINING_GUARD, context)
 	if current_guard == 0 and not is_breached:
 		in_danger(true)
@@ -403,31 +412,29 @@ func _stop_breach_pulse():
 	breached_label.self_modulate = Color.WHITE
 
 func shake_panel(intensity: float = 0.5):
-	if not panel or intensity == 0.0:
-		return
-
+	var home_position = position
 	# Kill old shake if it's running
 	if shake_tween and shake_tween.is_running():
 		shake_tween.kill()
 
 	# 1. Define shake properties
-	var shake_strength = 5.0 + (20.0 * intensity) # 5 px min, 25 px max
+	var shake_strength = 5.0 + (20.0 * intensity)
 	var duration = 0.05
 
 	# 2. Create the tween
 	shake_tween = create_tween().set_ease(Tween.EASE_OUT)
 
 	# 3. Add the shake sequence (back-and-forth)
-	shake_tween.tween_property(panel, "position",
-		panel_home_position + Vector2(0, shake_strength), duration)
-	shake_tween.tween_property(panel, "position",
-		panel_home_position + Vector2(0, -shake_strength), duration)
-	shake_tween.tween_property(panel, "position",
-		panel_home_position + Vector2(0, shake_strength / 2), duration)
+	shake_tween.tween_property(self, "position",
+		home_position + Vector2(0, shake_strength), duration)
+	shake_tween.tween_property(self, "position",
+		home_position + Vector2(0, -shake_strength), duration)
+	shake_tween.tween_property(self, "position",
+		home_position + Vector2(0, shake_strength / 2), duration)
 
 	# 4. Return to the home position
-	shake_tween.tween_property(panel, "position",
-		panel_home_position, duration)
+	shake_tween.tween_property(self, "position",
+		home_position, duration)
 
 func _animate_pip_gain(pip_node: Control, animate: bool = true):
 	if pip_tweens.has(pip_node):

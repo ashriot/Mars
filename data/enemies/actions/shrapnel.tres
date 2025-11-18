@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="Action" load_steps=11 format=3 uid="uid://1rrrrrgvw07f"]
+
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_p6eth"]
+[ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://data/scripts/conditions/hit_trigger.gd" id="2_bjy31"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="2_g1c07"]
+[ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://data/scripts/action_effects/pre_hit_trigger.gd" id="3_dag4p"]
+[ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/action_effects/effect_damage.gd" id="4_1m2cj"]
+[ext_resource type="Resource" uid="uid://cmkivbg7nlle6" path="res://data/enemies/conditions/bleed.tres" id="5_to7cp"]
+[ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://data/scripts/action_effects/effect_apply_condition.gd" id="6_3utat"]
+[ext_resource type="Texture2D" uid="uid://di17ig176vixo" path="res://assets/graphics/icons/skills/squib.png" id="7_56wyt"]
+
+[sub_resource type="Resource" id="Resource_htl3v"]
+script = ExtResource("4_1m2cj")
+damage_type = 2
+metadata/_custom_type_script = "uid://d0eibi4b735ay"
+
+[sub_resource type="Resource" id="Resource_6vwxq"]
+script = ExtResource("6_3utat")
+condition = ExtResource("5_to7cp")
+metadata/_custom_type_script = "uid://dggojfw8tmpnk"
+
+[resource]
+script = ExtResource("2_g1c07")
+action_name = "Shrapnel"
+icon = ExtResource("7_56wyt")
+effects = Array[ExtResource("1_p6eth")]([SubResource("Resource_htl3v"), SubResource("Resource_6vwxq")])
+metadata/_custom_type_script = "uid://dm08rhkg3bai3"
