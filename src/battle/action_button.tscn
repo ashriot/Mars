@@ -1,9 +1,15 @@
-[gd_scene load_steps=6 format=3 uid="uid://d0wglriavtij"]
+[gd_scene load_steps=7 format=3 uid="uid://d0wglriavtij"]
 
 [ext_resource type="Script" uid="uid://bs7vlao78wiht" path="res://src/battle/action_button.gd" id="1_juqvx"]
 [ext_resource type="Texture2D" uid="uid://bc14dpey83x0x" path="res://assets/graphics/icons/textures/bolt.png" id="1_sm4rn"]
-[ext_resource type="Texture2D" uid="uid://fs6u3e62xn0o" path="res://assets/graphics/icons/skills/striking-splinter.png" id="2_4g37w"]
+[ext_resource type="Texture2D" uid="uid://dldmpu0c4mvsl" path="res://assets/graphics/icons/skills/empty-chessboard.png" id="2_pk42m"]
 [ext_resource type="Texture2D" uid="uid://ebo48y7vo0tu" path="res://assets/graphics/glyphs/ps/Button - PS Circle White 1.png" id="4_pk42m"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mvr6q"]
+bg_color = Color(1, 1, 1, 1)
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 12
+corner_radius_bottom_left = 12
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pk42m"]
 bg_color = Color(0.6, 0.6, 0.6, 0)
@@ -32,7 +38,37 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_font_sizes/font_size = 30
 
+[node name="Mask" type="Panel" parent="."]
+clip_children = 1
+custom_minimum_size = Vector2(86, 86)
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_top = -35.0
+offset_right = 70.0
+offset_bottom = 35.0
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_mvr6q")
+
+[node name="Icon" type="TextureRect" parent="Mask"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -3.0
+offset_top = -3.0
+offset_right = 3.0
+offset_bottom = 3.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_pk42m")
+expand_mode = 1
+
 [node name="Highlight" type="Panel" parent="."]
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -41,19 +77,6 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_pk42m")
-
-[node name="Icon" type="TextureRect" parent="."]
-layout_mode = 1
-anchors_preset = 4
-anchor_top = 0.5
-anchor_bottom = 0.5
-offset_top = -42.5
-offset_right = 85.0
-offset_bottom = 42.5
-grow_vertical = 2
-mouse_filter = 2
-texture = ExtResource("2_4g37w")
-expand_mode = 1
 
 [node name="Title" type="Label" parent="."]
 layout_mode = 1

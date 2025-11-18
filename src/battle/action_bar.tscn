@@ -1,9 +1,21 @@
-[gd_scene load_steps=5 format=3 uid="uid://260uyw1v5su0"]
+[gd_scene load_steps=7 format=3 uid="uid://260uyw1v5su0"]
 
 [ext_resource type="Script" uid="uid://oximix62bbtr" path="res://src/battle/action_bar.gd" id="1_f8q7d"]
 [ext_resource type="PackedScene" uid="uid://d0wglriavtij" path="res://src/battle/action_button.tscn" id="2_664ah"]
 [ext_resource type="StyleBox" uid="uid://3o7lhriwwhfs" path="res://data/theme/styleboxes/shift_panel.tres" id="3_0s03y"]
-[ext_resource type="Texture2D" uid="uid://b1kc4ws08mv8m" path="res://assets/graphics/icons/skills/divert.png" id="3_yabx2"]
+[ext_resource type="Texture2D" uid="uid://dldmpu0c4mvsl" path="res://assets/graphics/icons/skills/empty-chessboard.png" id="4_g6dho"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_g6dho"]
+bg_color = Color(1, 1, 1, 1)
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0s03y"]
+bg_color = Color(1, 1, 1, 1)
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
 
 [node name="ActionBar" type="Control"]
 custom_minimum_size = Vector2(1610, 256)
@@ -81,87 +93,50 @@ offset_right = 160.0
 offset_bottom = 86.0
 grow_horizontal = 2
 
-[node name="Passive" type="Panel" parent="Actions"]
-modulate = Color(1, 1, 1, 0.5019608)
-custom_minimum_size = Vector2(320, 70)
-layout_mode = 1
-anchors_preset = 4
-anchor_top = 0.5
-anchor_bottom = 0.5
-offset_left = -346.0
-offset_top = -49.0
-offset_right = -26.0
-offset_bottom = 21.0
-grow_vertical = 2
-theme_override_styles/panel = ExtResource("3_0s03y")
-
-[node name="Icon" type="TextureRect" parent="Actions/Passive"]
-layout_mode = 1
-anchors_preset = 9
-anchor_bottom = 1.0
-offset_right = 70.0
-grow_vertical = 2
-mouse_filter = 2
-texture = ExtResource("3_yabx2")
-expand_mode = 1
-
-[node name="ShiftForm" type="Label" parent="Actions/Passive"]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_left = 25.0
-offset_top = 5.0
-offset_right = -35.0
-offset_bottom = 30.0
-grow_horizontal = 2
-theme_override_font_sizes/font_size = 20
-text = "PASSIVE"
-horizontal_alignment = 2
-vertical_alignment = 2
-
-[node name="Title" type="Label" parent="Actions/Passive"]
-layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 10.0
-offset_top = -44.0
-offset_right = -10.0
-offset_bottom = -6.0
-grow_horizontal = 2
-grow_vertical = 0
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 12
-theme_override_font_sizes/font_size = 30
-text = "Counterattack"
-horizontal_alignment = 2
-
 [node name="ShiftAction" type="Panel" parent="Actions"]
 modulate = Color(1, 1, 1, 0.5019608)
-custom_minimum_size = Vector2(320, 70)
+custom_minimum_size = Vector2(280, 70)
 layout_mode = 1
 anchors_preset = 6
 anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = 24.0
+offset_left = 38.0
 offset_top = -50.0
-offset_right = 344.0
+offset_right = 318.0
 offset_bottom = 20.0
 grow_horizontal = 0
 grow_vertical = 2
 theme_override_styles/panel = ExtResource("3_0s03y")
 
-[node name="Icon" type="TextureRect" parent="Actions/ShiftAction"]
+[node name="Mask" type="Panel" parent="Actions/ShiftAction"]
+clip_children = 1
+custom_minimum_size = Vector2(70, 70)
 layout_mode = 1
-anchors_preset = 9
-anchor_bottom = 1.0
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_top = -35.0
 offset_right = 70.0
+offset_bottom = 35.0
 grow_vertical = 2
 mouse_filter = 2
-texture = ExtResource("3_yabx2")
+theme_override_styles/panel = SubResource("StyleBoxFlat_g6dho")
+
+[node name="Icon" type="TextureRect" parent="Actions/ShiftAction/Mask"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -3.0
+offset_top = -3.0
+offset_right = 3.0
+offset_bottom = 3.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("4_g6dho")
 expand_mode = 1
 
 [node name="ShiftAction" type="Label" parent="Actions/ShiftAction"]
@@ -196,14 +171,90 @@ theme_override_font_sizes/font_size = 30
 text = "Opening Shot"
 horizontal_alignment = 2
 
+[node name="Passive" type="Panel" parent="Actions"]
+modulate = Color(1, 1, 1, 0.5019608)
+custom_minimum_size = Vector2(280, 70)
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = -320.0
+offset_top = -49.0
+offset_right = -40.0
+offset_bottom = 21.0
+grow_vertical = 2
+theme_override_styles/panel = ExtResource("3_0s03y")
+
+[node name="Mask" type="Panel" parent="Actions/Passive"]
+clip_children = 1
+custom_minimum_size = Vector2(70, 70)
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_top = -35.0
+offset_right = 70.0
+offset_bottom = 35.0
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_g6dho")
+
+[node name="Icon" type="TextureRect" parent="Actions/Passive/Mask"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -3.0
+offset_top = -3.0
+offset_right = 3.0
+offset_bottom = 3.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("4_g6dho")
+expand_mode = 1
+
+[node name="ShiftForm" type="Label" parent="Actions/Passive"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 25.0
+offset_top = 5.0
+offset_right = -35.0
+offset_bottom = 30.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 20
+text = "PASSIVE"
+horizontal_alignment = 2
+vertical_alignment = 2
+
+[node name="Title" type="Label" parent="Actions/Passive"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = -44.0
+offset_right = -10.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 12
+theme_override_font_sizes/font_size = 30
+text = "Counterattack"
+horizontal_alignment = 2
+
 [node name="LeftShift" type="Control" parent="."]
 custom_minimum_size = Vector2(280, 0)
 layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
+offset_left = -14.0
 offset_top = -70.0
-offset_right = 280.0
+offset_right = 266.0
 grow_vertical = 0
 
 [node name="ShiftForm" type="Label" parent="LeftShift"]
@@ -229,15 +280,6 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_font_sizes/font_size = 30
 
-[node name="Icon" type="TextureRect" parent="LeftShift"]
-layout_mode = 1
-anchors_preset = 9
-anchor_bottom = 1.0
-offset_right = 70.0
-grow_vertical = 2
-mouse_filter = 2
-expand_mode = 1
-
 [node name="Title" type="Label" parent="LeftShift"]
 layout_mode = 1
 anchors_preset = 12
@@ -256,6 +298,35 @@ theme_override_font_sizes/font_size = 30
 text = "Commander"
 horizontal_alignment = 2
 
+[node name="Mask" type="Panel" parent="LeftShift"]
+clip_children = 1
+custom_minimum_size = Vector2(70, 70)
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_top = -35.0
+offset_right = 70.0
+offset_bottom = 35.0
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_g6dho")
+
+[node name="Icon" type="TextureRect" parent="LeftShift/Mask"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -3.0
+offset_top = -3.0
+offset_right = 3.0
+offset_bottom = 3.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("4_g6dho")
+expand_mode = 1
+
 [node name="RightShift" type="Control" parent="."]
 custom_minimum_size = Vector2(280, 0)
 layout_mode = 1
@@ -264,8 +335,9 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -280.0
+offset_left = -266.0
 offset_top = -70.0
+offset_right = 14.0
 grow_horizontal = 0
 grow_vertical = 0
 
@@ -291,16 +363,36 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_font_sizes/font_size = 30
 
-[node name="Icon" type="TextureRect" parent="RightShift"]
+[node name="Mask" type="Panel" parent="RightShift"]
+clip_children = 1
+custom_minimum_size = Vector2(70, 70)
 layout_mode = 1
-anchors_preset = 11
+anchors_preset = 6
 anchor_left = 1.0
+anchor_top = 0.5
 anchor_right = 1.0
-anchor_bottom = 1.0
+anchor_bottom = 0.5
 offset_left = -70.0
+offset_top = -35.0
+offset_bottom = 35.0
 grow_horizontal = 0
 grow_vertical = 2
 mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_0s03y")
+
+[node name="Icon" type="TextureRect" parent="RightShift/Mask"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -3.0
+offset_top = -3.0
+offset_right = 3.0
+offset_bottom = 3.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("4_g6dho")
 expand_mode = 1
 
 [node name="Title" type="Label" parent="RightShift"]

@@ -2,7 +2,7 @@ extends Control
 class_name ActionButton
 
 @onready var label = $Title
-@onready var icon: TextureRect = $Icon
+@onready var icon: TextureRect = $Mask/Icon
 @onready var button : Button = $Button
 @onready var focus_pips = $FocusPips
 @onready var highlight_panel: Panel = $Highlight

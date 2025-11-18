@@ -1,9 +1,17 @@
-[gd_scene load_steps=5 format=3 uid="uid://be3t7advgy14o"]
+[gd_scene load_steps=6 format=3 uid="uid://be3t7advgy14o"]
 
 [ext_resource type="Script" uid="uid://cj5wd4g4agbsm" path="res://src/battle/condition_ui.gd" id="1_hohed"]
 [ext_resource type="Texture2D" uid="uid://8p1vkux4ntf7" path="res://assets/graphics/icons/textures/play-black-triangle-interface-symbol-for-multimedia.png" id="2_e26l3"]
 [ext_resource type="StyleBox" uid="uid://ceuuychq76vmf" path="res://data/theme/styleboxes/condition_ui_panel.tres" id="3_e26l3"]
-[ext_resource type="Texture2D" uid="uid://b6ap6mcvctu84" path="res://assets/graphics/icons/skills/sonic-shout.png" id="3_hohed"]
+[ext_resource type="Texture2D" uid="uid://dldmpu0c4mvsl" path="res://assets/graphics/icons/skills/empty-chessboard.png" id="5_t7fls"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_e26l3"]
+bg_color = Color(1, 1, 1, 1)
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
 
 [node name="Buff" type="Control"]
 modulate = Color(0.5041666, 1, 0.14999998, 1)
@@ -51,12 +59,32 @@ grow_horizontal = 2
 grow_vertical = 0
 theme_override_styles/panel = ExtResource("3_e26l3")
 
-[node name="Icon" type="TextureRect" parent="Panel"]
+[node name="Mask" type="Panel" parent="Panel"]
+clip_children = 1
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 1.0
+offset_top = 1.0
+offset_right = -1.0
+offset_bottom = -1.0
 grow_horizontal = 2
 grow_vertical = 2
-texture = ExtResource("3_hohed")
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_e26l3")
+
+[node name="Icon" type="TextureRect" parent="Panel/Mask"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -3.0
+offset_top = -3.0
+offset_right = 3.0
+offset_bottom = 3.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("5_t7fls")
 expand_mode = 1

@@ -288,7 +288,6 @@ func execute_action(actor: ActorCard, action: Action, targets: Array, display_na
 
 func execute_triggered_effect(actor: ActorCard, effect: ActionEffect, targets: Array, action: Action, context: Dictionary = {}):
 	await effect.execute(actor, targets, self, action, context)
-	#await _flush_all_health_animations()
 
 func execute_enemy_turn(enemy: EnemyCard):
 	change_state(State.EXECUTING_ACTION)

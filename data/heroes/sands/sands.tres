@@ -5,7 +5,7 @@
 [ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/role.gd" id="3_kqimu"]
 [ext_resource type="Resource" uid="uid://cd2xsqr4p5xyg" path="res://data/heroes/sands/roles/vanguard.tres" id="4_ni5va"]
 [ext_resource type="Resource" uid="uid://b6i4mvgiq1dkc" path="res://data/heroes/sands/roles/medic.tres" id="5_g537u"]
-[ext_resource type="Resource" uid="uid://bbkj0x4me6c7f" path="res://data/heroes/sands/roles/commander.tres" id="6_vy154"]
+[ext_resource type="Resource" uid="uid://bbkj0x4me6c7f" path="res://data/heroes/sands/roles/strategist.tres" id="6_vy154"]
 
 [sub_resource type="Resource" id="Resource_2uprg"]
 script = ExtResource("2_626k6")

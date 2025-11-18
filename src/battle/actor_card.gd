@@ -51,6 +51,7 @@ const POPUP_SPACING_TIME: float = 1.0
 @onready var panel: Panel = $Panel
 @onready var hp_value: Label = $Panel/HP/Value
 @onready var guard_bar: HBoxContainer = $Panel/GuardBar
+@onready var guard_label: Label = $Panel/GuardValue
 @onready var portrait_rect: TextureRect = $Panel/Portrait
 @onready var breached_label: Label = $Panel/BreachedLabel
 @onready var highlight_panel: Panel = $Panel/Highlight
@@ -339,6 +340,8 @@ func modify_guard(amount: int, is_recovering: bool = false):
 	update_guard_bar()
 
 func update_guard_bar(animate: bool = true):
+	guard_label.text = str(current_guard)
+	guard_label.visible = current_guard > 0
 	var pips = guard_bar.get_children()
 
 	if pips.is_empty() or pips[0].size.x == 0:

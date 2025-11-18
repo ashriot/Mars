@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="Condition" load_steps=8 format=3 uid="uid://cc3q7t0seb754"]
+
+[ext_resource type="Texture2D" uid="uid://bp52xqbdk6dfc" path="res://assets/graphics/icons/skills/chess-bishop.png" id="1_2nhl2"]
+[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://data/scripts/conditions/condition.gd" id="2_ms4qd"]
+[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://data/scripts/conditions/trigger.gd" id="3_leor8"]
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="4_v88ru"]
+[ext_resource type="Script" uid="uid://ddjg3oka0dtvg" path="res://data/scripts/action_effects/effect_remove_condition.gd" id="5_4jafe"]
+
+[sub_resource type="Resource" id="Resource_o3x2v"]
+script = ExtResource("5_4jafe")
+condition_name = "Tactician"
+target_type = 7
+metadata/_custom_type_script = "uid://ddjg3oka0dtvg"
+
+[sub_resource type="Resource" id="Resource_oxm0n"]
+script = ExtResource("3_leor8")
+trigger_type = 12
+effects_to_run = Array[ExtResource("4_v88ru")]([SubResource("Resource_o3x2v")])
+metadata/_custom_type_script = "uid://cdugd6pnm6py"
+
+[resource]
+script = ExtResource("2_ms4qd")
+condition_name = "Fianchetto"
+icon = ExtResource("1_2nhl2")
+is_passive = true
+triggers = Array[ExtResource("3_leor8")]([SubResource("Resource_oxm0n")])
+remove_on_triggers = Array[int]([12])
+metadata/_custom_type_script = "uid://df30dm288ne1d"

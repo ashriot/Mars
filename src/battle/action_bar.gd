@@ -83,7 +83,7 @@ func update_action_bar(hero_card: HeroCard, shifted: bool = false):
 
 	if current_role.passive:
 		$Actions/Passive/Title.text = current_role.passive.action_name
-		$Actions/Passive/Icon.texture = current_role.passive.icon
+		$Actions/Passive/Mask/Icon.texture = current_role.passive.icon
 		passive_panel.modulate = current_role.color
 		passive_panel.modulate.a = 0.75
 		passive_panel.tooltip_text = current_role.passive.description
@@ -93,7 +93,7 @@ func update_action_bar(hero_card: HeroCard, shifted: bool = false):
 
 	if current_role.shift_action:
 		$Actions/ShiftAction/Title.text = current_role.shift_action.action_name
-		$Actions/ShiftAction/Icon.texture = current_role.shift_action.icon
+		$Actions/ShiftAction/Mask/Icon.texture = current_role.shift_action.icon
 		shift_action_panel.modulate = current_role.color
 		shift_action_panel.modulate.a = 0.75
 		shift_action_panel.tooltip_text = current_role.shift_action.description
@@ -118,7 +118,7 @@ func update_action_bar(hero_card: HeroCard, shifted: bool = false):
 		left_shift_button.disabled = prev_role == current_role or next_role == prev_role or left_shift_button.disabled
 		left_shift_button.tooltip_text = prev_role.description
 		left_shift_ui.modulate = prev_role.color
-		$LeftShift/Icon.texture = prev_role.icon
+		$LeftShift/Mask/Icon.texture = prev_role.icon
 		left_shift_button.disabled = active_hero.shifted_this_turn
 
 	if next_role:
@@ -126,7 +126,7 @@ func update_action_bar(hero_card: HeroCard, shifted: bool = false):
 		right_shift_button.disabled = next_role == current_role or next_role == prev_role or right_shift_button.disabled
 		right_shift_button.tooltip_text = next_role.description
 		right_shift_ui.modulate = next_role.color
-		$RightShift/Icon.texture = next_role.icon
+		$RightShift/Mask/Icon.texture = next_role.icon
 		right_shift_button.disabled = active_hero.shifted_this_turn
 
 func _on_hero_focus_updated():

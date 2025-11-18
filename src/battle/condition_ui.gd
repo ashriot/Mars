@@ -1,7 +1,7 @@
 extends Control
 class_name ConditionUI
 
-@onready var icon: TextureRect = $Panel/Icon
+@onready var icon: TextureRect = $Panel/Mask/Icon
 
 var condition: Condition
 
