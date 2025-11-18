@@ -6,12 +6,12 @@
 [ext_resource type="StyleBox" uid="uid://uc8el2l1ne33" path="res://data/theme/styleboxes/button_pressed.tres" id="1_vnit1"]
 [ext_resource type="StyleBox" uid="uid://c4ceted4k7fof" path="res://data/theme/styleboxes/panel.tres" id="5_dfs0r"]
 [ext_resource type="StyleBox" uid="uid://c8i85334pnaym" path="res://data/theme/styleboxes/tooltip_panel.tres" id="6_rukqk"]
-[ext_resource type="FontVariation" uid="uid://convptsodr4d5" path="res://data/theme/fonts/default_font.tres" id="6_tsa6w"]
+[ext_resource type="FontVariation" uid="uid://da34kbi1ndel7" path="res://data/theme/fonts/archivo.tres" id="7_rukqk"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_smiq6"]
 
 [resource]
-default_font = ExtResource("6_tsa6w")
+default_font = ExtResource("7_rukqk")
 Button/colors/font_color = Color(1, 1, 1, 1)
 Button/styles/disabled = ExtResource("1_3vshq")
 Button/styles/focus = SubResource("StyleBoxEmpty_smiq6")

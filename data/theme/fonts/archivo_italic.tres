@@ -1,0 +1,6 @@
+[gd_resource type="FontVariation" load_steps=2 format=3 uid="uid://bk8iy3u13b88f"]
+
+[ext_resource type="FontFile" uid="uid://dp2d1ubplaoni" path="res://data/theme/fonts/base_fonts/Archivo-Italic-VariableFont_wdth,wght.ttf" id="1_16kdk"]
+
+[resource]
+base_font = ExtResource("1_16kdk")

@@ -1,9 +1,10 @@
-[gd_scene load_steps=7 format=3 uid="uid://260uyw1v5su0"]
+[gd_scene load_steps=8 format=3 uid="uid://260uyw1v5su0"]
 
 [ext_resource type="Script" uid="uid://oximix62bbtr" path="res://src/battle/action_bar.gd" id="1_f8q7d"]
 [ext_resource type="PackedScene" uid="uid://d0wglriavtij" path="res://src/battle/action_button.tscn" id="2_664ah"]
 [ext_resource type="StyleBox" uid="uid://3o7lhriwwhfs" path="res://data/theme/styleboxes/shift_panel.tres" id="3_0s03y"]
 [ext_resource type="Texture2D" uid="uid://dldmpu0c4mvsl" path="res://assets/graphics/icons/skills/empty-chessboard.png" id="4_g6dho"]
+[ext_resource type="FontVariation" uid="uid://bk8iy3u13b88f" path="res://data/theme/fonts/archivo_italic.tres" id="5_g6dho"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_g6dho"]
 bg_color = Color(1, 1, 1, 1)
@@ -148,6 +149,7 @@ offset_top = 5.0
 offset_right = -35.0
 offset_bottom = 30.0
 grow_horizontal = 2
+theme_override_fonts/font = ExtResource("5_g6dho")
 theme_override_font_sizes/font_size = 20
 text = "SHIFT ACTION"
 horizontal_alignment = 2
@@ -223,6 +225,7 @@ offset_top = 5.0
 offset_right = -35.0
 offset_bottom = 30.0
 grow_horizontal = 2
+theme_override_fonts/font = ExtResource("5_g6dho")
 theme_override_font_sizes/font_size = 20
 text = "PASSIVE"
 horizontal_alignment = 2
@@ -266,8 +269,9 @@ offset_top = 5.0
 offset_right = -35.0
 offset_bottom = 30.0
 grow_horizontal = 2
+theme_override_fonts/font = ExtResource("5_g6dho")
 theme_override_font_sizes/font_size = 20
-text = "<SHIFT"
+text = "SHIFT"
 horizontal_alignment = 2
 vertical_alignment = 2
 
@@ -350,8 +354,9 @@ offset_top = 5.0
 offset_right = -35.0
 offset_bottom = 30.0
 grow_horizontal = 2
+theme_override_fonts/font = ExtResource("5_g6dho")
 theme_override_font_sizes/font_size = 20
-text = "SHIFT>"
+text = "SHIFT"
 vertical_alignment = 2
 
 [node name="Button" type="Button" parent="RightShift"]

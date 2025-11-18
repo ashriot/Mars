@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://bngamonal1d40"
-path="res://.godot/imported/union_gothic-variable.ttf-c3d9cd9bdd2f5fa4b42ee21a2c908eb3.fontdata"
+uid="uid://dp2d1ubplaoni"
+path="res://.godot/imported/Archivo-Italic-VariableFont_wdth,wght.ttf-6724fbc86f0bd01adb0e6c27aa9dd003.fontdata"
 
 [deps]
 
-source_file="res://data/theme/fonts/union_gothic-variable.ttf"
-dest_files=["res://.godot/imported/union_gothic-variable.ttf-c3d9cd9bdd2f5fa4b42ee21a2c908eb3.fontdata"]
+source_file="res://data/theme/fonts/base_fonts/Archivo-Italic-VariableFont_wdth,wght.ttf"
+dest_files=["res://.godot/imported/Archivo-Italic-VariableFont_wdth,wght.ttf-6724fbc86f0bd01adb0e6c27aa9dd003.fontdata"]
 
 [params]
 
@@ -30,12 +30,7 @@ Fallbacks=null
 fallbacks=[]
 Compress=null
 compress=true
-preload=[{
-"chars": [],
-"glyphs": [],
-"name": "New Configuration",
-"size": Vector2i(16, 0)
-}]
+preload=[]
 language_support={}
 script_support={}
 opentype_features={}

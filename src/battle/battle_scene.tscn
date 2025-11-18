@@ -27,11 +27,11 @@ fill_from = Vector2(0.50934577, 0)
 fill_to = Vector2(0.51635516, 1)
 
 [sub_resource type="Gradient" id="Gradient_rvyyd"]
-colors = PackedColorArray(0, 0, 0, 0.92156863, 0, 0, 0, 0.18431373)
+colors = PackedColorArray(0, 0, 0, 0.9411765, 0, 0, 0, 0.18431373)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_t4gpb"]
 gradient = SubResource("Gradient_rvyyd")
-fill_from = Vector2(0.508547, 0.7008547)
+fill_from = Vector2(0.5192308, 0.6196581)
 fill_to = Vector2(0.49532712, 0)
 
 [node name="BattleScene" type="Control"]
