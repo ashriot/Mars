@@ -22,8 +22,8 @@ metadata/_custom_type_script = "uid://cdugd6pnm6py"
 [resource]
 script = ExtResource("2_chiau")
 condition_name = "Pain Transfer"
-description = "Heal HP for each hit on this enemy."
 icon = ExtResource("1_ynmux")
+description = "Heal HP for each hit on this enemy."
 condition_type = 1
 triggers = Array[ExtResource("1_cy2gg")]([SubResource("Resource_0fi4g")])
 metadata/_custom_type_script = "uid://df30dm288ne1d"

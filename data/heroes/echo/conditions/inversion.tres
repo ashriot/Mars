@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="Condition" load_steps=10 format=3 uid="uid://dxuxgbixi4snu"]
+
+[ext_resource type="Texture2D" uid="uid://cry2q1t6tv8rt" path="res://assets/graphics/icons/skills/spiked-armor.png" id="1_w0lcd"]
+[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://data/scripts/conditions/condition.gd" id="2_yw8cw"]
+[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://data/scripts/conditions/trigger.gd" id="3_krggw"]
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="4_if7vu"]
+[ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://data/scripts/conditions/hit_trigger.gd" id="5_iweif"]
+[ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://data/scripts/action_effects/pre_hit_trigger.gd" id="6_3kgnf"]
+[ext_resource type="Script" uid="uid://k1ufhpx1h6tg" path="res://data/scripts/action_effects/effect_damage_inversion.gd" id="7_w0lcd"]
+
+[sub_resource type="Resource" id="Resource_yw8cw"]
+script = ExtResource("7_w0lcd")
+remove_guard_gained = true
+shreds_guard = true
+power_type = 1
+damage_type = 2
+metadata/_custom_type_script = "uid://k1ufhpx1h6tg"
+
+[sub_resource type="Resource" id="Resource_xj1fw"]
+script = ExtResource("3_krggw")
+trigger_type = 10
+effects_to_run = Array[ExtResource("4_if7vu")]([SubResource("Resource_yw8cw")])
+metadata/_custom_type_script = "uid://cdugd6pnm6py"
+
+[resource]
+script = ExtResource("2_yw8cw")
+condition_name = "Inversion"
+icon = ExtResource("1_w0lcd")
+description = "The next time this enemy gains Guard, they take Piercing damage for each point of Guard."
+condition_type = 1
+triggers = Array[ExtResource("3_krggw")]([SubResource("Resource_xj1fw")])
+remove_on_triggers = Array[int]([10])
+metadata/_custom_type_script = "uid://df30dm288ne1d"

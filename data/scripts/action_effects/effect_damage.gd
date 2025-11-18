@@ -17,10 +17,9 @@ class_name Effect_Damage
 @export var on_hit_triggers: Array[HitTrigger]
 @export var pre_hit_triggers: Array[PreHitTrigger]
 
-func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleManager, action: Action = null, _context: Dictionary = {}) -> void:
+func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleManager, action: Action = null, context: Dictionary = {}) -> void:
 	var final_targets: Array = parent_targets
 
-	print("\n--- Damage Effect for ", hit_count, " hit(s) ---")
 	var random = false
 	var focus_cost = 0
 
@@ -31,16 +30,18 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 			if final_targets.is_empty():
 				print("RANDOM_ENEMY: No living enemies to target!")
 				return
-
 	var target: ActorCard = null
+	var hits = _get_dynamic_hit_count(attacker, target, context)
+
+	print("\n--- Damage Effect for ", hits, " hit(s) ---")
 	for t in final_targets.size():
-		for i in hit_count:
+		for i in hits:
 			if random:
 				target = final_targets.pick_random() as ActorCard
 			else:
 				target = final_targets[t]
 			var pre_hit_context = _get_pre_hit_triggers(attacker, target)
-			var dynamic_potency = get_dynamic_potency(attacker, target)
+			var dynamic_potency = _get_dynamic_potency(attacker, target, context)
 			print("Final Potency: ", dynamic_potency)
 			if not target or not is_instance_valid(target):
 				continue
@@ -52,13 +53,11 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 			if pre_hit_context.has("final_damage_type"):
 				final_damage_type = pre_hit_context.get("final_damage_type")
 
-			if final_damage_type == Action.DamageType.PIERCING:
-				target.shake_panel()
 			elif shreds_guard:
 				if not target.is_breached and target.current_guard == 0:
 					target.breach()
 				else:
-					target.modify_guard(-1)
+					await target.modify_guard(-1)
 					target.shake_panel()
 			else:
 				target.shake_panel()
@@ -74,6 +73,7 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 			var power_for_hit = attacker.get_power(power_type)
 			if target.is_breached and final_damage_type != Action.DamageType.PIERCING:
 				power_for_hit += attacker.current_stats.overload
+				print("added overload: ", power_for_hit)
 
 			var base_hit_damage: float = power_for_hit * dynamic_potency
 
@@ -97,6 +97,7 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 
 			await target.apply_one_hit(final_damage, self, attacker, final_damage_type, is_crit)
 			await _process_on_hit_triggers(attacker, target, battle_manager)
+			await attacker._fire_condition_event(Trigger.TriggerType.ON_HIT, context)
 			if lifedrain_scalar > 0.0:
 				var healing = int(final_dmg_float * lifedrain_scalar)
 				attacker.take_healing(healing)
@@ -104,15 +105,17 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 			if random and target.is_defeated:
 				final_targets.remove_at(t)
 
-			if hit_count > 1 and i < hit_count - 1:
+			if hits > 1 and i < hits - 1:
 				await battle_manager.wait(0.15)
 		if random: break
-		var context = { "attacker": attacker, "targets": [self] }
 		await target._fire_condition_event(Trigger.TriggerType.AFTER_BEING_ATTACKED, context)
 
 	return
 
-func get_dynamic_potency(attacker: ActorCard, _target: ActorCard) -> float:
+func _get_dynamic_hit_count(_attacker: ActorCard, _target: ActorCard, _context: Dictionary = {}) -> int:
+	return hit_count
+
+func _get_dynamic_potency(attacker: ActorCard, _target: ActorCard, _context: Dictionary = {}) -> float:
 	if potency_per_guard > 0.0:
 		var guard = 0
 		guard = attacker.current_guard

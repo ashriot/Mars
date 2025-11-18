@@ -24,6 +24,7 @@ metadata/_custom_type_script = "uid://bhpiwhufv87v7"
 [sub_resource type="Resource" id="Resource_3ohqc"]
 script = ExtResource("7_n0581")
 potency = 0.5
+shreds_guard = false
 damage_type = 2
 on_hit_triggers = Array[ExtResource("5_w8o6c")]([SubResource("Resource_ddk4p")])
 target_type = 11
@@ -38,8 +39,8 @@ metadata/_custom_type_script = "uid://cdugd6pnm6py"
 [resource]
 script = ExtResource("2_w8o6c")
 condition_name = "Return Fire"
-description = "Sands counterattacks enemy hits with Piercing damage."
 icon = ExtResource("1_ruy1o")
+description = "Sands counterattacks enemy hits with Piercing damage."
 is_passive = true
 triggers = Array[ExtResource("3_ddk4p")]([SubResource("Resource_gc3t6")])
 remove_on_triggers = Array[int]([12])

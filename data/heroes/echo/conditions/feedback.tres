@@ -1,0 +1,41 @@
+[gd_resource type="Resource" script_class="Condition" load_steps=12 format=3 uid="uid://cs14j80ix5lig"]
+
+[ext_resource type="Texture2D" uid="uid://bou6hl5kcyodt" path="res://assets/graphics/icons/skills/thunder-blade.png" id="1_wvs8m"]
+[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://data/scripts/conditions/condition.gd" id="2_wljsg"]
+[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://data/scripts/conditions/trigger.gd" id="3_gkf5h"]
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="4_x5spo"]
+[ext_resource type="Script" uid="uid://cu12q7dfj3hfe" path="res://data/scripts/action_effects/effect_modify_guard.gd" id="5_t4qak"]
+[ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://data/scripts/conditions/hit_trigger.gd" id="6_dnbwm"]
+[ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://data/scripts/action_effects/pre_hit_trigger.gd" id="7_02m7j"]
+[ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/action_effects/effect_damage.gd" id="8_skyyc"]
+
+[sub_resource type="Resource" id="Resource_1nke2"]
+script = ExtResource("5_t4qak")
+guard_amount = -1
+target_type = 4
+metadata/_custom_type_script = "uid://cu12q7dfj3hfe"
+
+[sub_resource type="Resource" id="Resource_v3try"]
+script = ExtResource("8_skyyc")
+potency = 0.5
+shreds_guard = false
+power_type = 1
+damage_type = 2
+target_type = 4
+metadata/_custom_type_script = "uid://d0eibi4b735ay"
+
+[sub_resource type="Resource" id="Resource_kfpj5"]
+script = ExtResource("3_gkf5h")
+trigger_type = 18
+effects_to_run = Array[ExtResource("4_x5spo")]([SubResource("Resource_1nke2"), SubResource("Resource_v3try")])
+metadata/_custom_type_script = "uid://cdugd6pnm6py"
+
+[resource]
+script = ExtResource("2_wljsg")
+condition_name = "Feedback"
+icon = ExtResource("1_wvs8m")
+description = "The next time this enemy attacks, it loses 1 Guard and take Piercing damage for each hit."
+condition_type = 1
+triggers = Array[ExtResource("3_gkf5h")]([SubResource("Resource_kfpj5")])
+remove_on_triggers = Array[int]([9])
+metadata/_custom_type_script = "uid://df30dm288ne1d"

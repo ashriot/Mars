@@ -32,8 +32,8 @@ func execute(_attacker: ActorCard, primary_targets: Array, battle_manager: Battl
 
 		# C. Call the "modify" functions
 		# (This assumes you have these functions)
-		hero_target.modify_guard(guard_to_add)
-		hero_target.modify_focus(focus_to_add)
+		await hero_target.modify_guard(guard_to_add)
+		await hero_target.modify_focus(focus_to_add)
 
 		print(hero_target.actor_name, " swapped Guard (", guard_val, ") with Focus (", focus_val, ")")
 

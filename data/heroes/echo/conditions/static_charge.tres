@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="Condition" load_steps=10 format=3 uid="uid://decnbaqs2ejg3"]
+
+[ext_resource type="Texture2D" uid="uid://c6pwdwqts3bd3" path="res://assets/graphics/icons/skills/thunder-skull.png" id="1_q8ka4"]
+[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://data/scripts/conditions/condition.gd" id="2_vqlpy"]
+[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://data/scripts/conditions/trigger.gd" id="3_q1na2"]
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="4_3xoob"]
+[ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://data/scripts/conditions/hit_trigger.gd" id="5_ybnls"]
+[ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://data/scripts/action_effects/pre_hit_trigger.gd" id="6_brs45"]
+[ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/action_effects/effect_damage.gd" id="7_hi87s"]
+
+[sub_resource type="Resource" id="Resource_mi1vq"]
+script = ExtResource("7_hi87s")
+potency = 2.0
+shreds_guard = false
+power_type = 1
+damage_type = 2
+target_type = 4
+metadata/_custom_type_script = "uid://d0eibi4b735ay"
+
+[sub_resource type="Resource" id="Resource_6r8sd"]
+script = ExtResource("3_q1na2")
+trigger_type = 1
+effects_to_run = Array[ExtResource("4_3xoob")]([SubResource("Resource_mi1vq")])
+metadata/_custom_type_script = "uid://cdugd6pnm6py"
+
+[resource]
+script = ExtResource("2_vqlpy")
+condition_name = "Static Charge"
+icon = ExtResource("1_q8ka4")
+description = "This enemy is slowed and at the start of their next turn will take Energy damage."
+speed_scalar = -0.25
+triggers = Array[ExtResource("3_q1na2")]([SubResource("Resource_6r8sd")])
+remove_on_triggers = Array[int]([1])
+metadata/_custom_type_script = "uid://df30dm288ne1d"

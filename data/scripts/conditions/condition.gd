@@ -4,8 +4,8 @@ class_name Condition
 enum ConditionType { BUFF, DEBUFF }
 
 @export var condition_name: String
-@export_multiline var description: String = ""
 @export var icon: Texture
+@export_multiline var description: String = ""
 @export var condition_type: ConditionType = ConditionType.BUFF
 @export var is_passive: bool = false
 @export var triggered_by: Action.HeroType = Action.HeroType.ALL

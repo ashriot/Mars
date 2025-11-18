@@ -32,8 +32,8 @@ metadata/_custom_type_script = "uid://cdugd6pnm6py"
 [sub_resource type="Resource" id="Resource_m24su"]
 script = ExtResource("6_lhcl4")
 condition_name = "Booster Shot Passive"
-description = "Double the effect of Painkillers until Sands Shifts."
 icon = ExtResource("5_g1mn7")
+description = "Double the effect of Painkillers until Sands Shifts."
 is_passive = true
 triggers = Array[ExtResource("7_cthl6")]([SubResource("Resource_g1mn7")])
 remove_on_triggers = Array[int]([12])
@@ -48,8 +48,8 @@ metadata/_custom_type_script = "uid://dggojfw8tmpnk"
 [sub_resource type="Resource" id="Resource_r4oiu"]
 script = ExtResource("6_lhcl4")
 condition_name = "Booster Shot"
-description = "Reduces damage taken by 15%."
 icon = ExtResource("5_g1mn7")
+description = "Reduces damage taken by 15%."
 damage_taken_scalar = -0.15
 metadata/_custom_type_script = "uid://df30dm288ne1d"
 

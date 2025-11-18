@@ -3,10 +3,11 @@
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_cmc6y"]
 [ext_resource type="Script" uid="uid://nqyc4vuadjr5" path="res://data/scripts/action_effects/effect_healing.gd" id="2_derss"]
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="2_jl74c"]
-[ext_resource type="Texture2D" uid="uid://cdkfqny0fquae" path="res://assets/graphics/icons/skills/arm-sling.png" id="3_fs4qb"]
+[ext_resource type="Texture2D" uid="uid://btapt46g27pyk" path="res://assets/graphics/icons/skills/sticking-plaster.png" id="3_derss"]
 
 [sub_resource type="Resource" id="Resource_a4hdi"]
 script = ExtResource("2_derss")
+potency = 0.75
 scales_with_missing_hp = true
 target_type = 7
 metadata/_custom_type_script = "uid://nqyc4vuadjr5"
@@ -14,11 +15,9 @@ metadata/_custom_type_script = "uid://nqyc4vuadjr5"
 [resource]
 script = ExtResource("2_jl74c")
 action_name = "Triage"
-icon = ExtResource("3_fs4qb")
+icon = ExtResource("3_derss")
 description = "Heal the team, increased by their missing HP percent."
-focus_cost = null
 auto_target = true
-update_turn_order = null
 is_shift_action = true
 target_type = 7
 effects = Array[ExtResource("1_cmc6y")]([SubResource("Resource_a4hdi")])

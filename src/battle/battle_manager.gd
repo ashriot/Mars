@@ -304,6 +304,7 @@ func execute_enemy_turn(enemy: EnemyCard):
 		return
 
 	await execute_action(enemy, action, targets)
+	await wait(0.15)
 	enemy.decide_intent(get_living_heroes())
 	return
 

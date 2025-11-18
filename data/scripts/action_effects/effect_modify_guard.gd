@@ -8,7 +8,7 @@ func execute(_attacker: ActorCard, parent_targets: Array, battle_manager: Battle
 	for target_actor in parent_targets:
 		if target_actor and is_instance_valid(target_actor) and not target_actor.is_defeated:
 			print(target_actor.actor_name, " gains ", guard_amount, " Guard.")
-			target_actor.modify_guard(guard_amount)
+			await target_actor.modify_guard(guard_amount)
 
 	await battle_manager.wait(0.1)
 	return

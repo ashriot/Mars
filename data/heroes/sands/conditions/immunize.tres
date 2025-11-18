@@ -34,7 +34,7 @@ metadata/_custom_type_script = "uid://cdugd6pnm6py"
 [resource]
 script = ExtResource("1_lgweh")
 condition_name = "Immunize"
-description = "Prevents the next incoming Debuff, then heals this hero."
 icon = ExtResource("1_53k5o")
+description = "Prevents the next incoming Debuff, then heals this hero."
 triggers = Array[ExtResource("2_n5rq4")]([SubResource("Resource_c5bn0"), SubResource("Resource_w7atk")])
 metadata/_custom_type_script = "uid://df30dm288ne1d"

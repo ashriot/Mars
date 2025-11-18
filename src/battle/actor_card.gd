@@ -197,8 +197,12 @@ func has_condition(condition_name: String) -> bool:
 
 	return false
 
-func remove_condition(condition_name: String):
+func remove_condition(condition_name: String, is_debuff: bool = false):
+	if active_conditions.size() == 0: return
 	for condition in active_conditions:
+		if condition_name == "":
+			if is_debuff and condition.condition_type == Condition.ConditionType.DEBUFF:
+				condition_name = condition.condition_name
 		if condition.condition_name == condition_name:
 			active_conditions.erase(condition)
 			print(actor_name, " is removing condition: ", condition.condition_name)
@@ -266,7 +270,7 @@ func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary 
 			if trigger.trigger_type != event_type: continue
 			if trigger.is_attack:
 				is_attack = true
-				await battle_manager.wait(0.15)
+				await battle_manager.wait(0.25)
 			print("Condition '", condition.condition_name, "' is firing effects for '", event_type, "'")
 			var targets = []
 			var attacker = null
@@ -280,8 +284,7 @@ func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary 
 				var is_hero = self is HeroCard
 				effect = effect as ActionEffect
 				targets = battle_manager.get_targets(effect.target_type, is_hero, targets, attacker)
-
-				if battle_manager.current_actor is HeroCard and condition.is_passive and effect is Effect_Damage:
+				if battle_manager.current_actor is HeroCard and condition.is_passive and trigger.trigger_type == Trigger.TriggerType.ON_TURN_START:
 					self.passive_fired.emit()
 				await battle_manager.execute_triggered_effect(source, effect, targets, action, context)
 				if condition.update_turn_order:
@@ -310,14 +313,15 @@ func recover_breach():
 	is_breached = false
 	guard_bar.modulate.a = 1
 	_stop_breach_pulse()
-	modify_guard(current_stats.guard)
+	await modify_guard(current_stats.guard)
 
 func modify_guard(amount: int):
 	current_guard = clamp(current_guard + amount, 0, MAX_GUARD)
 
 	print(actor_name, " gained ", amount, " guard. Total: ", current_guard)
+	var context = { "targets": [self], "guard_gained": amount}
 	if amount > 0:
-		await _fire_condition_event(Trigger.TriggerType.ON_GAINING_GUARD)
+		await _fire_condition_event(Trigger.TriggerType.ON_GAINING_GUARD, context)
 	if current_guard == 0 and not is_breached:
 		in_danger(true)
 	elif is_in_danger:
@@ -516,10 +520,11 @@ func _on_gui_input(_event: InputEvent):
 	pass
 
 func get_power(power_type: Action.PowerType) -> int:
-	print(actor_name, "'s ATK is: ", current_stats.attack)
 	if power_type == Action.PowerType.ATTACK:
+		print(actor_name, "'s ATK is: ", current_stats.attack)
 		return current_stats.attack
 	elif power_type == Action.PowerType.PSYCHE:
+		print(actor_name, "'s PSY is: ", current_stats.psyche)
 		return current_stats.psyche
 	return 0
 

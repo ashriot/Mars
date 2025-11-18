@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="Action" load_steps=12 format=3 uid="uid://bm4jlai25snkq"]
+
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_mt3hu"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="2_a2tm3"]
+[ext_resource type="Texture2D" uid="uid://cbmlvl7d52lei" path="res://assets/graphics/icons/skills/lightning-shadow.png" id="2_ukyyv"]
+[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://data/scripts/conditions/condition.gd" id="3_13tjn"]
+[ext_resource type="Script" uid="uid://cu12q7dfj3hfe" path="res://data/scripts/action_effects/effect_modify_guard.gd" id="4_21bcf"]
+[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://data/scripts/conditions/trigger.gd" id="4_242dt"]
+[ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://data/scripts/action_effects/effect_apply_condition.gd" id="5_21bcf"]
+
+[sub_resource type="Resource" id="Resource_05jmf"]
+script = ExtResource("4_21bcf")
+target_type = 8
+metadata/_custom_type_script = "uid://cu12q7dfj3hfe"
+
+[sub_resource type="Resource" id="Resource_k27df"]
+script = ExtResource("4_242dt")
+trigger_type = 1
+effects_to_run = Array[ExtResource("1_mt3hu")]([SubResource("Resource_05jmf")])
+metadata/_custom_type_script = "uid://cdugd6pnm6py"
+
+[sub_resource type="Resource" id="Resource_bx1vt"]
+script = ExtResource("3_13tjn")
+condition_name = "Force Field"
+is_passive = true
+triggers = Array[ExtResource("4_242dt")]([SubResource("Resource_k27df")])
+remove_on_triggers = Array[int]([12])
+metadata/_custom_type_script = "uid://df30dm288ne1d"
+
+[sub_resource type="Resource" id="Resource_emjpa"]
+script = ExtResource("5_21bcf")
+condition = SubResource("Resource_bx1vt")
+metadata/_custom_type_script = "uid://dggojfw8tmpnk"
+
+[resource]
+script = ExtResource("2_a2tm3")
+action_name = "Force Field"
+icon = ExtResource("2_ukyyv")
+description = "At the start of each turn, Echo grants her allies 1 Guard."
+auto_target = true
+target_type = 4
+effects = Array[ExtResource("1_mt3hu")]([SubResource("Resource_emjpa")])
+metadata/_custom_type_script = "uid://dm08rhkg3bai3"

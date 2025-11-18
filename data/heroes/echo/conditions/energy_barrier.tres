@@ -25,8 +25,8 @@ metadata/_custom_type_script = "uid://cdugd6pnm6py"
 [resource]
 script = ExtResource("1_cdnbj")
 condition_name = "Energy Barrier"
-description = "Deal Energy damage to the next attacker."
 icon = ExtResource("1_akr7n")
+description = "Deal Energy damage to the next attacker."
 triggers = Array[ExtResource("2_akr7n")]([SubResource("Resource_wrkjx")])
 remove_on_triggers = Array[int]([5])
 metadata/_custom_type_script = "uid://df30dm288ne1d"
