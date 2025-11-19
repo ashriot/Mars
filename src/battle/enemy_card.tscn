@@ -6,7 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://ckw8rm3jl32bx" path="res://src/battle/damage_popup.tscn" id="2_xkcvw"]
 [ext_resource type="PackedScene" uid="uid://dwpde7pjb1jds" path="res://src/battle/debuff.tscn" id="3_1mnyd"]
 [ext_resource type="PackedScene" uid="uid://be3t7advgy14o" path="res://src/battle/buff.tscn" id="3_pdx0h"]
-[ext_resource type="Texture2D" uid="uid://bhk28mg1reyry" path="res://assets/graphics/glyphs/ps/Button - PS Directional Arrow Down.png" id="4_e8ixv"]
+[ext_resource type="Texture2D" uid="uid://bhk28mg1reyry" path="res://assets/graphics/glyphs/ps/ps_dpad_down_normal.png" id="4_e8ixv"]
 [ext_resource type="Texture2D" uid="uid://05lare8hgtys" path="res://assets/graphics/icons/textures/bullet.png" id="4_l4hbp"]
 [ext_resource type="Texture2D" uid="uid://0v6k85gfryip" path="res://assets/graphics/icons/textures/atom.png" id="5_l4hbp"]
 
@@ -504,7 +504,7 @@ anchor_bottom = 0.5
 offset_left = 181.0
 offset_top = -41.440857
 offset_right = 360.0
-offset_bottom = 10.559143
+offset_bottom = 13.559143
 grow_vertical = 2
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.78431374)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -512,7 +512,7 @@ theme_override_constants/shadow_offset_x = 0
 theme_override_constants/shadow_offset_y = 0
 theme_override_constants/outline_size = 4
 theme_override_constants/shadow_outline_size = 20
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 50
 text = "99999"
 horizontal_alignment = 2
 

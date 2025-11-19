@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cc46r876nimhd"
-path="res://.godot/imported/Button - PS Triangle White 1.png-765811bc201fcda6bba119893eee9ca3.ctex"
+uid="uid://u0qcn0gbiul5"
+path="res://.godot/imported/ps_cross_pressed.png-d3ae62afd57e41c15ea490ba1e97c67e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/glyphs/ps/Button - PS Triangle White 1.png"
-dest_files=["res://.godot/imported/Button - PS Triangle White 1.png-765811bc201fcda6bba119893eee9ca3.ctex"]
+source_file="res://assets/graphics/glyphs/ps/ps_cross_pressed.png"
+dest_files=["res://.godot/imported/ps_cross_pressed.png-d3ae62afd57e41c15ea490ba1e97c67e.ctex"]
 
 [params]
 

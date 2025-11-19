@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dqc1is8bi5oak"
-path="res://.godot/imported/Button - PS R2.png-859a19148f41b8a60e358adae2799bd8.ctex"
+uid="uid://ebo48y7vo0tu"
+path="res://.godot/imported/ps_circle_normal.png-10895765f990c65d31e9a654308b5579.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/glyphs/ps/Button - PS R2.png"
-dest_files=["res://.godot/imported/Button - PS R2.png-859a19148f41b8a60e358adae2799bd8.ctex"]
+source_file="res://assets/graphics/glyphs/ps/ps_circle_normal.png"
+dest_files=["res://.godot/imported/ps_circle_normal.png-10895765f990c65d31e9a654308b5579.ctex"]
 
 [params]
 

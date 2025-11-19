@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bbps27gfxkpcb"
-path="res://.godot/imported/Button - PS L2.png-4b262bd1dceafc916d75338706030cea.ctex"
+uid="uid://ws8eq5kq70ri"
+path="res://.godot/imported/ps_square_normal.png-ef028421d1720757991500e02e93f83f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/glyphs/ps/Button - PS L2.png"
-dest_files=["res://.godot/imported/Button - PS L2.png-4b262bd1dceafc916d75338706030cea.ctex"]
+source_file="res://assets/graphics/glyphs/ps/ps_square_normal.png"
+dest_files=["res://.godot/imported/ps_square_normal.png-ef028421d1720757991500e02e93f83f.ctex"]
 
 [params]
 

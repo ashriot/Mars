@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://duwjlx1d2xiw7"
-path="res://.godot/imported/Button - PS R1 – 2.png-a00cf0ec62d75c0fc88d9caa893f8066.ctex"
+uid="uid://bgog2jdlmpmvb"
+path="res://.godot/imported/ps_dpad_left_pressed.png-79160118ba71d5e1660b24f19aeb64c3.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/glyphs/ps/Button - PS R1 – 2.png"
-dest_files=["res://.godot/imported/Button - PS R1 – 2.png-a00cf0ec62d75c0fc88d9caa893f8066.ctex"]
+source_file="res://assets/graphics/glyphs/ps/ps_dpad_left_pressed.png"
+dest_files=["res://.godot/imported/ps_dpad_left_pressed.png-79160118ba71d5e1660b24f19aeb64c3.ctex"]
 
 [params]
 

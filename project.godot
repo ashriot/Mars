@@ -15,6 +15,11 @@ run/main_scene="uid://cl5f5vup72n32"
 config/features=PackedStringArray("4.5", "Mobile")
 config/icon="res://icon.svg"
 
+[autoload]
+
+InputIconMap="*res://src/scripts/input_map.gd"
+InputManager="*res://src/scripts/input_manager.gd"
+
 [debug]
 
 gdscript/warnings/integer_division=0

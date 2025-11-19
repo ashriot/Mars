@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ws8eq5kq70ri"
-path="res://.godot/imported/Button - PS Square White 1.png-5b02bba5c25af6880b9caced20ac69bd.ctex"
+uid="uid://p50r7el4q3tc"
+path="res://.godot/imported/ps_L1_normal.png-09d6b596c427f1af3dd2bb2248957723.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/glyphs/ps/Button - PS Square White 1.png"
-dest_files=["res://.godot/imported/Button - PS Square White 1.png-5b02bba5c25af6880b9caced20ac69bd.ctex"]
+source_file="res://assets/graphics/glyphs/ps/ps_L1_normal.png"
+dest_files=["res://.godot/imported/ps_L1_normal.png-09d6b596c427f1af3dd2bb2248957723.ctex"]
 
 [params]
 

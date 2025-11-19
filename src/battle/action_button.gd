@@ -1,13 +1,16 @@
 extends Control
 class_name ActionButton
 
+signal pressed(action_button: ActionButton)
+
 @onready var label = $Title
 @onready var icon: TextureRect = $Mask/Icon
 @onready var button : Button = $Button
 @onready var focus_pips = $FocusPips
 @onready var highlight_panel: Panel = $Highlight
+@onready var dynamic_glyph: DynamicGlyph = $DynamicGlyph
 
-signal pressed(action_button: ActionButton)
+@export_enum("SHIFT_LEFT", "SHIFT_RIGHT", "ACTION_1", "ACTION_2", "ACTION_3", "ACTION_4", "TARGET_UP", "TARGET_DOWN", "TARGET_LEFT", "TARGET_RIGHT") var associated_action: int = InputIconMap.Action.ACTION_1
 
 var action : Action
 var user_focus: int
@@ -34,7 +37,7 @@ func setup(_action: Action, cur_focus: int, scaled_focus: int, color: Color):
 	label.modulate = color
 	focus_pips.modulate = color
 	highlight_panel.modulate = color
-	$Glyph.modulate = color
+	dynamic_glyph.modulate = color
 	highlight_panel.hide()
 
 func update_cost(current_focus: int):

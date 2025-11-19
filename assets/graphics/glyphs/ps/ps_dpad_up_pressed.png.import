@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://imbxmixlr2e2"
-path="res://.godot/imported/Button - PS Cross White 1.png-3f22879b08f5b0a245b42077c5684e8f.ctex"
+uid="uid://c328u8xd2udxx"
+path="res://.godot/imported/ps_dpad_up_pressed.png-2954d87924b771a6c8ce02a4c09a7159.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/glyphs/ps/Button - PS Cross White 1.png"
-dest_files=["res://.godot/imported/Button - PS Cross White 1.png-3f22879b08f5b0a245b42077c5684e8f.ctex"]
+source_file="res://assets/graphics/glyphs/ps/ps_dpad_up_pressed.png"
+dest_files=["res://.godot/imported/ps_dpad_up_pressed.png-2954d87924b771a6c8ce02a4c09a7159.ctex"]
 
 [params]
 

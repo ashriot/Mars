@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ebo48y7vo0tu"
-path="res://.godot/imported/Button - PS Circle White 1.png-d16f3e3dd457532b87a3b3fdb382f446.ctex"
+uid="uid://udmsctcer44v"
+path="res://.godot/imported/ps_R2_pressed.png-fbcc20ac1470ee5aabac83157c020ff0.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/glyphs/ps/Button - PS Circle White 1.png"
-dest_files=["res://.godot/imported/Button - PS Circle White 1.png-d16f3e3dd457532b87a3b3fdb382f446.ctex"]
+source_file="res://assets/graphics/glyphs/ps/ps_R2_pressed.png"
+dest_files=["res://.godot/imported/ps_R2_pressed.png-fbcc20ac1470ee5aabac83157c020ff0.ctex"]
 
 [params]
 
