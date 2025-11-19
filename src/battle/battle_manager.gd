@@ -270,7 +270,7 @@ func execute_action(actor: ActorCard, action: Action, targets: Array, display_na
 	print(actor_name, " uses ", action.action_name)
 
 	for effect in action.effects:
-		if effect.target_type in [Action.TargetType.ALL_ALLIES, Action.TargetType.ALL_ENEMIES, Action.TargetType.ALLIES_ONLY, Action.TargetType.LEAST_GUARD_ALLY]:
+		if effect.target_type in [Action.TargetType.ALL_ALLIES, Action.TargetType.ALL_ENEMIES, Action.TargetType.ALLIES_ONLY, Action.TargetType.LEAST_GUARD_ALLY, Action.TargetType.LEAST_FOCUS_ALLY]:
 			targets = get_targets(effect.target_type, actor is HeroCard)
 		else:
 			if effect.target_type == Action.TargetType.SELF:
@@ -370,7 +370,7 @@ func _on_enemy_clicked(target_enemy: EnemyCard):
 			targets_array.append(target_enemy)
 
 		Action.TargetType.ALL_ENEMIES, Action.TargetType.RANDOM_ENEMY:
-			targets_array = enemy_area.get_children()
+			targets_array = get_living_enemies()
 
 	await execute_action(current_actor, current_action, targets_array)
 	await _finish_hero_turn()
@@ -455,6 +455,20 @@ func get_targets(target_type: Action.TargetType, friendly: bool, parent_targets:
 			var target_ally: ActorCard = allies[0]
 			for ally in allies:
 				if ally.current_guard < target_ally.current_guard:
+					target_ally = ally
+			target_list.append(target_ally)
+		Action.TargetType.LEAST_FOCUS_ALLY:
+			var allies = []
+			if friendly:
+				allies = heroes
+			else:
+				allies = enemies
+			if allies.is_empty():
+				push_error("No allies found!")
+				return []
+			var target_ally: ActorCard = allies[0]
+			for ally in allies:
+				if ally.current_focus < target_ally.current_focus:
 					target_ally = ally
 			target_list.append(target_ally)
 		_:

@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3 uid="uid://dc5du0o5phhma"]
+[gd_scene load_steps=19 format=3 uid="uid://dc5du0o5phhma"]
 
 [ext_resource type="Script" uid="uid://dssm7j7rbyew6" path="res://src/battle/battle_scene.gd" id="1_1pykk"]
 [ext_resource type="Script" uid="uid://deoohlwp7dcfm" path="res://src/battle/battle_manager.gd" id="1_6cbqe"]
@@ -8,11 +8,9 @@
 [ext_resource type="Resource" uid="uid://ctg8csrcqdj57" path="res://data/heroes/asher/asher.tres" id="5_16l6v"]
 [ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://data/scripts/data/enemy_data.gd" id="6_6by3n"]
 [ext_resource type="Resource" uid="uid://b2bkd217htd2n" path="res://data/heroes/echo/echo.tres" id="6_vtpwn"]
-[ext_resource type="Resource" uid="uid://bycnj3e0g7w6x" path="res://data/heroes/sands/sands.tres" id="7_rvyyd"]
-[ext_resource type="Resource" uid="uid://cpdokr12lby8i" path="res://data/enemies/actors/trooper.tres" id="7_vtpwn"]
 [ext_resource type="PackedScene" uid="uid://260uyw1v5su0" path="res://src/battle/action_bar.tscn" id="8_w6n6o"]
 [ext_resource type="Script" uid="uid://bf5t2mtgtkbsn" path="res://src/battle/turn_queue.gd" id="9_16l6v"]
-[ext_resource type="Resource" uid="uid://iofc48r1ubbm" path="res://data/enemies/actors/guardian.tres" id="9_nbe2n"]
+[ext_resource type="Resource" uid="uid://s6fcg8egbavh" path="res://data/enemies/actors/scout_drone.tres" id="9_rvyyd"]
 [ext_resource type="PackedScene" uid="uid://diku73kk4tjv7" path="res://src/battle/actor_queue.tscn" id="10_6by3n"]
 [ext_resource type="Texture2D" uid="uid://blqlfsxmhvfac" path="res://assets/graphics/backgrounds/bg_pod-room.webp" id="10_u5vn3"]
 [ext_resource type="Texture2D" uid="uid://6j4nnmndm12j" path="res://assets/graphics/icons/skills/bullets.png" id="12_t4gpb"]
@@ -46,7 +44,7 @@ script = ExtResource("1_1pykk")
 [node name="BattleManager" type="Node" parent="." node_paths=PackedStringArray("hero_area", "enemy_area", "action_bar", "current_action_panel", "fade_overlay")]
 unique_name_in_owner = true
 script = ExtResource("1_6cbqe")
-battle_speed = 0.7999999999999999
+battle_speed = 2.0
 hero_card_scene = ExtResource("1_sft4c")
 enemy_card_scene = ExtResource("1_u5n4n")
 hero_area = NodePath("../UI/Heroes/HBox")
@@ -54,8 +52,8 @@ enemy_area = NodePath("../UI/Enemies/HBox")
 action_bar = NodePath("../UI/ActionBar")
 current_action_panel = NodePath("../UI/CurrentAction")
 fade_overlay = NodePath("../FadeOverlay")
-hero_data_files = Array[ExtResource("4_w6n6o")]([ExtResource("5_16l6v"), ExtResource("6_vtpwn"), ExtResource("7_rvyyd")])
-enemy_data_files = Array[ExtResource("6_6by3n")]([ExtResource("7_vtpwn"), ExtResource("9_nbe2n")])
+hero_data_files = Array[ExtResource("4_w6n6o")]([ExtResource("5_16l6v"), ExtResource("6_vtpwn")])
+enemy_data_files = Array[ExtResource("6_6by3n")]([ExtResource("9_rvyyd"), ExtResource("9_rvyyd")])
 
 [node name="UI" type="Control" parent="."]
 layout_mode = 1
@@ -95,7 +93,6 @@ grow_vertical = 0
 texture = SubResource("GradientTexture2D_t4gpb")
 
 [node name="CurrentAction" type="PanelContainer" parent="UI"]
-visible = false
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
@@ -132,15 +129,16 @@ theme_override_font_sizes/bold_font_size = 32
 bbcode_enabled = true
 text = "
 "
-autowrap_mode = 2
+fit_content = true
+autowrap_mode = 0
 vertical_alignment = 1
 
 [node name="Enemies" type="Control" parent="UI"]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_top = 72.0
-offset_bottom = 252.0
+offset_top = 159.0
+offset_bottom = 339.0
 grow_horizontal = 2
 
 [node name="HBox" type="HBoxContainer" parent="UI/Enemies"]
@@ -186,9 +184,9 @@ battle_manager = NodePath("../../BattleManager")
 custom_minimum_size = Vector2(300, 0)
 anchors_preset = 0
 offset_left = 25.0
-offset_top = 142.0
+offset_top = 503.0
 offset_right = 325.0
-offset_bottom = 182.0
+offset_bottom = 543.0
 script = ExtResource("9_16l6v")
 actor_queue_scene = ExtResource("10_6by3n")
 battle_manager = NodePath("../../BattleManager")

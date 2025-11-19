@@ -21,6 +21,7 @@ var intent_flash_tween: Tween
 
 func setup(data: EnemyData):
 	enemy_data = data
+	$Panel/Level.text = "Rk. " + str(data.level)
 	enemy_data.calculate_stats()
 	setup_base(enemy_data.stats)
 	update_defenses()
@@ -155,9 +156,6 @@ func recover_breach():
 func update_defenses():
 	var kin_def = enemy_data.stats.kinetic_defense
 	var nrg_def = enemy_data.stats.energy_defense
-	if is_breached:
-		kin_def /= 2
-		nrg_def /= 2
 	kin_def_value.text = str(kin_def) + "%"
 	nrg_def_value.text = str(nrg_def) + "%"
 	kin_def_gauge.value = kin_def

@@ -155,7 +155,7 @@ offset_bottom = 33.0
 grow_horizontal = 2
 theme_override_fonts/font = ExtResource("5_g6dho")
 theme_override_font_sizes/font_size = 20
-text = "SHIFT ACTION"
+text = "ROLE PASSIVE"
 horizontal_alignment = 2
 vertical_alignment = 2
 

@@ -47,7 +47,7 @@ func calculate_stats() -> ActorStats:
 	stats.attack = _calc_stat(attack_rank, multiplier) if attack_rank > 0 else 0
 	stats.psyche = _calc_stat(psyche_rank, multiplier) if psyche_rank > 0 else 0
 	stats.overload = _calc_stat(overload_rank, multiplier) if overload_rank > 0 else 0
-	stats.speed = _calc_stat(speed_rank, multiplier) if speed_rank > 0 else 0
+	stats.speed = _calc_stat(speed_rank, _get_multiplier(4)) if speed_rank > 0 else 0
 
 	# Guard formula: INT(level/10) + rank + 2
 	stats.starting_guard = int(level / 10) + guard_rank + 2 if guard_rank > 0 else 0
@@ -68,8 +68,8 @@ func calculate_stats() -> ActorStats:
 
 	return stats
 
-func _get_multiplier() -> float:
-	return 1.25 + pow((level + 5), 2) * 0.03
+func _get_multiplier(base: int = 5) -> float:
+	return int(pow((level + base), 2) * 0.048)
 
 func _calc_stat(rank: int, multiplier: float) -> int:
 	return int(((rank + 5) * multiplier))

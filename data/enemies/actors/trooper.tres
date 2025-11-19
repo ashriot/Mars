@@ -18,5 +18,5 @@ overload_rank = 4
 speed_rank = 3
 kinetic_defense_rank = 3
 energy_defense_rank = 2
-action_deck = Array[ExtResource("1_ih7pi")]([ExtResource("2_odqln"), ExtResource("3_n3t2y"), ExtResource("3_n3t2y"), ExtResource("3_ln7e3"), ExtResource("4_42ig1")])
+action_deck = Array[ExtResource("1_ih7pi")]([ExtResource("2_odqln"), ExtResource("3_n3t2y"), ExtResource("3_ln7e3"), ExtResource("3_ln7e3"), ExtResource("4_42ig1")])
 metadata/_custom_type_script = "uid://b3t5esgv1d2ku"

@@ -168,10 +168,6 @@ func add_condition(condition_resource: Condition):
 		push_error("add_condition was called with a null resource!")
 		return
 
-	if has_condition(condition_resource.condition_name):
-		print(actor_name, " already has ", condition_resource.condition_name)
-		return
-
 	var _is_buff = condition_resource.condition_type == Condition.ConditionType.BUFF
 	var is_debuff = condition_resource.condition_type == Condition.ConditionType.DEBUFF
 	for active_cond in active_conditions:
@@ -182,6 +178,8 @@ func add_condition(condition_resource: Condition):
 						await battle_manager.execute_triggered_effect(self, effect, [self], null, {})
 					return
 
+	if has_condition(condition_resource.condition_name):
+		return
 	var new_condition = condition_resource.duplicate(true)
 	new_condition.attacker = condition_resource.attacker
 	active_conditions.append(new_condition)
@@ -378,7 +376,8 @@ func hide_action():
 	await tween.finished.connect(func(): action_display.hide())
 
 func show_next():
-	next_panel.show()
+	#next_panel.show()
+	pass
 
 	#var tween = create_tween()
 	#tween.tween_property(next_panel, "modulate:a", 1.0, 0.1 / battle_manager.battle_speed)
@@ -559,10 +558,10 @@ func get_incoming_aim_mods() -> int:
 func get_crit_damage_bonus() -> float:
 	return 0.5
 
-func get_damage_dealt_scalar() -> float:
+func get_damage_dealt_scalar(target: ActorCard) -> float:
 	var scalar: float = 1.0
 	for condition in active_conditions:
-		scalar += condition.damage_dealt_scalar
+		scalar += condition.get_damage_dealt_scalar(self, target)
 	return scalar
 
 func get_damage_taken_scalar() -> float:

@@ -4,8 +4,8 @@
 [ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://data/scripts/conditions/hit_trigger.gd" id="2_hmhbj"]
 [ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/action_effects/effect_damage.gd" id="3_0kk3r"]
 [ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://data/scripts/action_effects/pre_hit_trigger.gd" id="3_hmhbj"]
-[ext_resource type="Script" uid="uid://cu12q7dfj3hfe" path="res://data/scripts/action_effects/effect_modify_guard.gd" id="4_2tyc1"]
-[ext_resource type="Texture2D" uid="uid://da0cmyog0oiqo" path="res://assets/graphics/icons/skills/bolt-shield.png" id="5_128qq"]
+[ext_resource type="Script" uid="uid://bhblyd70hrd4m" path="res://data/scripts/action_effects/effect_modify_focus.gd" id="5_hmhbj"]
+[ext_resource type="Texture2D" uid="uid://bcqvchpdmt0e2" path="res://assets/graphics/icons/skills/lightning-trio.png" id="6_0kk3r"]
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="6_vco1p"]
 
 [sub_resource type="Resource" id="Resource_hlc1a"]
@@ -14,20 +14,15 @@ potency = 0.75
 power_type = 1
 metadata/_custom_type_script = "uid://d0eibi4b735ay"
 
-[sub_resource type="Resource" id="Resource_6jgyu"]
-script = ExtResource("4_2tyc1")
-target_type = 10
-metadata/_custom_type_script = "uid://cu12q7dfj3hfe"
+[sub_resource type="Resource" id="Resource_2tyc1"]
+script = ExtResource("5_hmhbj")
+target_type = 8
+metadata/_custom_type_script = "uid://bhblyd70hrd4m"
 
 [resource]
 script = ExtResource("6_vco1p")
 action_name = "Telekinesis"
-icon = ExtResource("5_128qq")
-description = "Deals {dmg1} {nrg} granting the hero with the least Guard {guard1}."
-focus_cost = null
-auto_target = null
-update_turn_order = null
-is_shift_action = null
-target_type = null
-effects = Array[ExtResource("1_s0sfa")]([SubResource("Resource_hlc1a"), SubResource("Resource_6jgyu")])
+icon = ExtResource("6_0kk3r")
+description = "Deals {dmg1} {nrg} granting {foc} to Echo's allies."
+effects = Array[ExtResource("1_s0sfa")]([SubResource("Resource_hlc1a"), SubResource("Resource_2tyc1")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

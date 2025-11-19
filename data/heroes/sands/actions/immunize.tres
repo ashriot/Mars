@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Action" load_steps=9 format=3 uid="uid://bli3y5hj5i577"]
+[gd_resource type="Resource" script_class="Action" load_steps=11 format=3 uid="uid://bli3y5hj5i577"]
 
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_5njvh"]
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="2_sarsl"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://data/scripts/action_effects/effect_apply_condition.gd" id="3_5ueaq"]
 [ext_resource type="Resource" uid="uid://5ig0tj75p5ja" path="res://data/heroes/sands/conditions/immunize.tres" id="3_witea"]
 [ext_resource type="Texture2D" uid="uid://dcvk1kqm7v1x0" path="res://assets/graphics/icons/skills/syringe.png" id="4_witea"]
+[ext_resource type="Script" uid="uid://2sikxnb1cu2s" path="res://data/scripts/action_effects/effect_remove_debuffs.gd" id="5_witea"]
 
 [sub_resource type="Resource" id="Resource_nxx36"]
 script = ExtResource("2_udikg")
@@ -15,6 +16,10 @@ metadata/_custom_type_script = "uid://cu12q7dfj3hfe"
 script = ExtResource("3_5ueaq")
 condition = ExtResource("3_witea")
 metadata/_custom_type_script = "uid://dggojfw8tmpnk"
+
+[sub_resource type="Resource" id="Resource_jdada"]
+script = ExtResource("5_witea")
+metadata/_custom_type_script = "uid://2sikxnb1cu2s"
 
 [resource]
 script = ExtResource("2_sarsl")
@@ -26,5 +31,5 @@ auto_target = null
 update_turn_order = null
 is_shift_action = null
 target_type = 5
-effects = Array[ExtResource("1_5njvh")]([SubResource("Resource_nxx36"), SubResource("Resource_l5t2g")])
+effects = Array[ExtResource("1_5njvh")]([SubResource("Resource_nxx36"), SubResource("Resource_l5t2g"), SubResource("Resource_jdada")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

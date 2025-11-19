@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dvh0g48q5tgom"
-path="res://.godot/imported/shieldcomb.png-5ae70a049fd3a35f7ad065e9d586cfe6.ctex"
+uid="uid://vpgd70xn500s"
+path="res://.godot/imported/hexes.png-18e113870615bb01411caa21b2767641.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/icons/skills/shieldcomb.png"
-dest_files=["res://.godot/imported/shieldcomb.png-5ae70a049fd3a35f7ad065e9d586cfe6.ctex"]
+source_file="res://assets/graphics/icons/skills/hexes.png"
+dest_files=["res://.godot/imported/hexes.png-18e113870615bb01411caa21b2767641.ctex"]
 
 [params]
 

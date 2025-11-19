@@ -37,6 +37,8 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 	print("\n--- Damage Effect for ", hits, " hit(s) ---")
 	for t in final_targets.size():
 		for i in hits:
+			if attacker.is_defeated:
+				return
 			if random:
 				target = final_targets.pick_random() as ActorCard
 			else:
@@ -85,14 +87,14 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 				base_hit_damage *= (1.0 + crit_bonus)
 
 			var final_dmg_float = float(base_hit_damage)
-			var def_mod = 1.0 if not target.is_breached else 0.5
+			var def_mod = 1.0 if not target.is_breached else 1.0
 
 			if final_damage_type == Action.DamageType.KINETIC:
 				final_dmg_float *= (1.0 - float(target.current_stats.kinetic_defense * def_mod) / 100)
 			elif final_damage_type == Action.DamageType.ENERGY:
 				final_dmg_float *= (1.0 - float(target.current_stats.energy_defense * def_mod) / 100)
 
-			final_dmg_float *= attacker.get_damage_dealt_scalar()
+			final_dmg_float *= attacker.get_damage_dealt_scalar(target)
 			final_dmg_float *= target.get_damage_taken_scalar()
 			var final_damage = max(0, int(final_dmg_float))
 

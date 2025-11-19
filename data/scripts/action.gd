@@ -16,7 +16,9 @@ enum TargetType {
 	ALLIES_ONLY,		#8
 	PARENT,				#9
 	LEAST_GUARD_ALLY,	#10
-	ATTACKER			#11
+	ATTACKER,			#11
+	LEAST_FOCUS_ALLY,	#12
+
 }
 
 @export var action_name: String = "New Action"

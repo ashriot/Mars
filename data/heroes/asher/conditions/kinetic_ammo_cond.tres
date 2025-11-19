@@ -10,6 +10,7 @@
 
 [sub_resource type="Resource" id="Resource_tun3f"]
 script = ExtResource("7_4clrl")
+potency = 0.75
 power_type = 1
 damage_type = 1
 metadata/_custom_type_script = "uid://d0eibi4b735ay"
@@ -25,7 +26,7 @@ script = ExtResource("2_g8mco")
 condition_name = "Kinetic Ammo"
 icon = ExtResource("1_a1jqp")
 description = "Attacks deal an additional Energy hit. Lasts until Asher Shifts or is Breached."
-precision_mod = 25
+damage_dealt_scalar = 0.25
 triggers = Array[ExtResource("3_n2hhk")]([SubResource("Resource_be7d0")])
 remove_on_triggers = Array[int]([13, 12])
 metadata/_custom_type_script = "uid://df30dm288ne1d"

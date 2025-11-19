@@ -8,7 +8,7 @@
 [sub_resource type="Resource" id="Resource_bkx48"]
 script = ExtResource("2_j2ax5")
 potency = 1.5
-drain_focus_scalar = 0.5
+focus_scalar = 0.25
 metadata/_custom_type_script = "uid://nqyc4vuadjr5"
 
 [resource]

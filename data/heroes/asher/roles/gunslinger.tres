@@ -1,24 +1,18 @@
-[gd_resource type="Resource" script_class="RoleData" load_steps=12 format=3 uid="uid://c7bb8vuamp7ai"]
+[gd_resource type="Resource" script_class="RoleData" load_steps=8 format=3 uid="uid://c7bb8vuamp7ai"]
 
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_jujmt"]
 [ext_resource type="Resource" uid="uid://7dg4i7k6dya0" path="res://data/heroes/asher/actions/double_tap.tres" id="2_wo42u"]
 [ext_resource type="Resource" uid="uid://bbf5ij7wcomd4" path="res://data/heroes/asher/actions/kinetic_ammo.tres" id="3_auwyg"]
-[ext_resource type="Resource" uid="uid://cdiq4nrsnpwmk" path="res://data/heroes/asher/actions/bullet_storm.tres" id="4_j72us"]
-[ext_resource type="Resource" uid="uid://cg0jwg4m14vwn" path="res://data/heroes/asher/actions/siphon_shots.tres" id="4_ug8ui"]
 [ext_resource type="Resource" uid="uid://bmdof7bqrfmkb" path="res://data/heroes/asher/actions/bullet_time.tres" id="5_ixr3p"]
 [ext_resource type="Texture2D" uid="uid://cogus1wqw41g8" path="res://assets/graphics/icons/skills/chaingun.png" id="6_ovjho"]
 [ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/data/role_data.gd" id="6_qh3mc"]
-[ext_resource type="Resource" uid="uid://br0tqj3ba2itq" path="res://data/heroes/asher/actions/suppressive_fire.tres" id="7_wo42u"]
 [ext_resource type="Script" uid="uid://b3bjvoif3sdcn" path="res://data/scripts/data/rank_reward.gd" id="8_ovjho"]
-[ext_resource type="Resource" uid="uid://3vagtt0ve2ws" path="res://data/heroes/asher/roles/rewards/gun_1.tres" id="9_trqkm"]
 
 [resource]
 script = ExtResource("6_qh3mc")
 description = "A multi-hit, single-target Kinetic blitzer."
 icon = ExtResource("6_ovjho")
 color = Color(1, 1, 0.37, 1)
-rank_rewards = Array[ExtResource("8_ovjho")]([ExtResource("9_trqkm")])
-shift_action = ExtResource("7_wo42u")
 passive = ExtResource("5_ixr3p")
-actions = Array[ExtResource("1_jujmt")]([ExtResource("2_wo42u"), ExtResource("3_auwyg"), ExtResource("4_ug8ui"), ExtResource("4_j72us")])
+actions = Array[ExtResource("1_jujmt")]([ExtResource("2_wo42u"), ExtResource("3_auwyg"), null, null])
 metadata/_custom_type_script = "uid://d3mhjutrnvwsp"

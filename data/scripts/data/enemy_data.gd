@@ -27,22 +27,24 @@ var stats: ActorStats
 
 func calculate_stats() -> ActorStats:
 	stats = ActorStats.new()
-	var lv = level
 
 	stats.actor_name = enemy_name
-	stats.max_hp = _calc_stat(hp_rank, lv) * 5
-	stats.starting_guard = int(lv / 6) + guard_rank + 2
-	stats.attack = _calc_stat(attack_rank, lv)
-	stats.psyche = _calc_stat(psyche_rank, lv)
-	stats.overload = _calc_stat(overload_rank, lv)
-	stats.speed = _calc_stat(speed_rank, lv)
-	stats.aim = int(lv / 2) + aim_rank * 5
+	stats.max_hp = _calc_stat(hp_rank) * 5
+	stats.starting_guard = int(level / 5) + guard_rank + 1
+	stats.attack = _calc_stat(attack_rank)
+	stats.psyche = _calc_stat(psyche_rank)
+	stats.overload = _calc_stat(overload_rank)
+	stats.speed = _calc_stat(speed_rank)
+	stats.aim = int(level / 2) + aim_rank * 5
 	stats.kinetic_defense = kinetic_defense_rank * 20 - 10
 	stats.energy_defense = energy_defense_rank * 20 - 10
 
 	return stats
 
-func _calc_stat(rank: int, lv: int) -> int:
-	var multiplier = 1.25 + ((lv + 5) ** 2) * 0.03
-	var value = int((rank + 5) * multiplier * 2)
+func _calc_stat(rank: int) -> int:
+	var multiplier = _get_multiplier()
+	var value = int((rank + 5) * multiplier)
 	return int(value)
+
+func _get_multiplier() -> int:
+	return int(pow((level + 5), 2) * 0.048) * 2
