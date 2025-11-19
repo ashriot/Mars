@@ -62,7 +62,7 @@ func update_action_bar(hero_card: HeroCard, shifted: bool = false):
 	if not hero_card:
 		return
 
-	var current_role: Role = hero_card.get_current_role()
+	var current_role: RoleData = hero_card.get_current_role()
 	if not current_role:
 		push_error("Hero has no role!")
 		return
@@ -107,8 +107,8 @@ func update_action_bar(hero_card: HeroCard, shifted: bool = false):
 	else:
 		shift_action_panel.hide()
 
-	var prev_role: Role = hero_card.get_previous_role()
-	var next_role: Role = hero_card.get_next_role()
+	var prev_role: RoleData = hero_card.get_previous_role()
+	var next_role: RoleData = hero_card.get_next_role()
 
 	left_shift_ui.visible = prev_role != null
 	right_shift_ui.visible = next_role != null

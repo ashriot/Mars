@@ -1,0 +1,42 @@
+extends Resource
+class_name ActorStats
+
+enum Stats {
+	HP, GRD, ATK, PSY, OVR, SPD, PRC, KIN_DEF, NRG_DEF
+}
+
+var actor_name: String
+var max_hp: int = 20
+var starting_guard: int = 0
+var attack: int = 5
+var psyche: int = 5
+var overload: int = 5
+var speed: int = 5
+var aim: int = 5  # Percentage (0-75 base cap)
+var kinetic_defense: int = 10  # Percentage (0-90 cap)
+var energy_defense: int = 10  # Percentage (0-90 cap)
+
+func get_stat(stat: Stats) -> int:
+	match stat:
+		Stats.HP: return max_hp
+		Stats.GRD: return starting_guard
+		Stats.ATK: return attack
+		Stats.PSY: return psyche
+		Stats.OVR: return overload
+		Stats.SPD: return speed
+		Stats.PRC: return aim
+		Stats.KIN_DEF: return kinetic_defense
+		Stats.NRG_DEF: return energy_defense
+	return 0
+
+func add_stat(stat: Stats, value: int):
+	match stat:
+		Stats.HP: max_hp += value
+		Stats.GRD: starting_guard += value
+		Stats.ATK: attack += value
+		Stats.PSY: psyche += value
+		Stats.OVR: overload += value
+		Stats.SPD: speed += value
+		Stats.PRC: aim = clampi(aim + value, 0, 75)
+		Stats.KIN_DEF: kinetic_defense = clampi(kinetic_defense + value, 0, 90)
+		Stats.NRG_DEF: energy_defense = clampi(energy_defense + value, 0, 90)

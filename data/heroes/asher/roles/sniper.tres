@@ -5,7 +5,7 @@
 [ext_resource type="Resource" uid="uid://buxxjwyj6g68w" path="res://data/heroes/asher/actions/aimed_shot.tres" id="3_tot5t"]
 [ext_resource type="Resource" uid="uid://dfy2472a6qr71" path="res://data/heroes/asher/actions/targeting_laser.tres" id="4_onn4i"]
 [ext_resource type="Texture2D" uid="uid://c8qynvefg1hjf" path="res://assets/graphics/icons/skills/crosshair.png" id="4_tot5t"]
-[ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/role.gd" id="4_y6513"]
+[ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/data/role_data.gd" id="4_y6513"]
 [ext_resource type="Resource" uid="uid://dw87ti2u5xgay" path="res://data/heroes/asher/actions/concussive_shot.tres" id="5_3ogin"]
 [ext_resource type="Resource" uid="uid://c1tsuo00ej03r" path="res://data/heroes/asher/actions/charged_shot.tres" id="6_bnepl"]
 

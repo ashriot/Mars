@@ -67,13 +67,13 @@ func setup_base(stats: ActorStats):
 		push_error("ActorCard was given null stats!")
 		return
 	battle_manager = get_parent().get_node("%BattleManager")
-	current_stats = stats.duplicate()
+	current_stats = stats
 	actor_name = stats.actor_name
 	hp_bar_ghost.max_value = current_stats.max_hp
 	current_hp = current_stats.max_hp
 	hp_bar_actual.max_value = current_stats.max_hp
 	hp_bar_ghost.max_value = current_stats.max_hp
-	current_guard = current_stats.guard
+	current_guard = current_stats.starting_guard
 	panel_home_position = panel.position
 	breached_label.hide()
 	is_defeated = false
@@ -323,7 +323,7 @@ func recover_breach():
 	is_breached = false
 	guard_bar.modulate.a = 1
 	_stop_breach_pulse()
-	await modify_guard(current_stats.guard, true)
+	await modify_guard(current_stats.starting_guard, true)
 
 func modify_guard(amount: int, is_recovering: bool = false):
 	current_guard = clamp(current_guard + amount, 0, MAX_GUARD)
@@ -544,16 +544,16 @@ func get_speed() -> int:
 		scalar += condition.speed_scalar
 	return int(current_stats.speed * scalar)
 
-func get_precision() -> int:
+func get_aim() -> int:
 	var mod: int = 0
 	for condition in active_conditions:
-		mod += condition.precision_mod
-	return current_stats.precision + mod
+		mod += condition.aim_mod
+	return current_stats.aim + mod
 
-func get_incoming_precision_mods() -> int:
+func get_incoming_aim_mods() -> int:
 	var mod: int = 0
 	for condition in active_conditions:
-		mod += condition.incoming_precision_mod
+		mod += condition.incoming_aim_mod
 	return mod
 
 func get_crit_damage_bonus() -> float:

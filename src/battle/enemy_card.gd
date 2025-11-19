@@ -21,8 +21,8 @@ var intent_flash_tween: Tween
 
 func setup(data: EnemyData):
 	enemy_data = data
-	# --- Call the PARENT's setup function ---
-	setup_base(data.stats)
+	enemy_data.calculate_stats()
+	setup_base(enemy_data.stats)
 	update_defenses()
 
 	name_label.text = enemy_data.stats.actor_name

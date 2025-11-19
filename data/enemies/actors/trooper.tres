@@ -1,29 +1,22 @@
-[gd_resource type="Resource" script_class="EnemyData" load_steps=9 format=3 uid="uid://cpdokr12lby8i"]
+[gd_resource type="Resource" script_class="EnemyData" load_steps=7 format=3 uid="uid://cpdokr12lby8i"]
 
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_ih7pi"]
-[ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://data/scripts/enemy_data.gd" id="2_n3ati"]
+[ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://data/scripts/data/enemy_data.gd" id="2_n3ati"]
 [ext_resource type="Resource" uid="uid://d0m01fmh2ig2s" path="res://data/enemies/actions/gunshot.tres" id="2_odqln"]
 [ext_resource type="Resource" uid="uid://40l6j7e7d5e2" path="res://data/enemies/actions/double_shot.tres" id="3_ln7e3"]
 [ext_resource type="Resource" uid="uid://1rrrrrgvw07f" path="res://data/enemies/actions/shrapnel.tres" id="3_n3t2y"]
 [ext_resource type="Resource" uid="uid://5sx21pdqqpbi" path="res://data/enemies/actions/rapid_fire.tres" id="4_42ig1"]
-[ext_resource type="Script" uid="uid://djm3iwmyexcia" path="res://data/scripts/enemy_stats.gd" id="4_ooj02"]
-
-[sub_resource type="Resource" id="Resource_ooj02"]
-script = ExtResource("4_ooj02")
-actor_name = "Trooper"
-max_hp = 3
-guard = 3
-attack = 4
-psyche = 3
-overload = 4
-speed = 3
-precision = 3
-kinetic_defense = 3
-energy_defense = 2
-metadata/_custom_type_script = "uid://djm3iwmyexcia"
 
 [resource]
 script = ExtResource("2_n3ati")
-stat_ranks = SubResource("Resource_ooj02")
+level = 0
+hp_rank = 3
+guard_rank = 2
+attack_rank = 4
+psyche_rank = 3
+overload_rank = 4
+speed_rank = 3
+kinetic_defense_rank = 3
+energy_defense_rank = 2
 action_deck = Array[ExtResource("1_ih7pi")]([ExtResource("2_odqln"), ExtResource("3_n3t2y"), ExtResource("3_n3t2y"), ExtResource("3_ln7e3"), ExtResource("4_42ig1")])
 metadata/_custom_type_script = "uid://b3t5esgv1d2ku"

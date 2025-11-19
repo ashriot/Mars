@@ -7,7 +7,7 @@
 [ext_resource type="Resource" uid="uid://bxthusds0tx8p" path="res://data/heroes/sands/actions/checkmate.tres" id="5_1glld"]
 [ext_resource type="Texture2D" uid="uid://1pey5spsvbi" path="res://assets/graphics/icons/roles/crenulated-shield.png" id="6_fc7q3"]
 [ext_resource type="Resource" uid="uid://bkmsxk8n5s0gs" path="res://data/heroes/sands/actions/fianchetto.tres" id="7_yg2i6"]
-[ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/role.gd" id="8_xlynq"]
+[ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/data/role_data.gd" id="8_xlynq"]
 [ext_resource type="Resource" uid="uid://bskaup86urfso" path="res://data/heroes/sands/actions/opening_move.tres" id="9_4jflp"]
 
 [resource]

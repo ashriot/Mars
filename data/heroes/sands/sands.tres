@@ -1,27 +1,36 @@
-[gd_resource type="Resource" script_class="HeroData" load_steps=8 format=3 uid="uid://bycnj3e0g7w6x"]
+[gd_resource type="Resource" script_class="HeroData" load_steps=10 format=3 uid="uid://bycnj3e0g7w6x"]
 
-[ext_resource type="Script" uid="uid://dc5sk0b0jubvj" path="res://data/scripts/hero_data.gd" id="1_ng8ip"]
-[ext_resource type="Script" uid="uid://b70gwt4gd4cun" path="res://data/scripts/actor_stats.gd" id="2_626k6"]
-[ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/role.gd" id="3_kqimu"]
+[ext_resource type="Script" uid="uid://i4rsbsrmba0c" path="res://data/scripts/data/role_progression.gd" id="1_hn6ea"]
+[ext_resource type="Script" uid="uid://dc5sk0b0jubvj" path="res://data/scripts/data/hero_data.gd" id="1_ng8ip"]
+[ext_resource type="Script" uid="uid://djmsh5w0dbytx" path="res://data/scripts/data/equipment.gd" id="1_y8jbk"]
+[ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/data/role_data.gd" id="3_kqimu"]
 [ext_resource type="Resource" uid="uid://cd2xsqr4p5xyg" path="res://data/heroes/sands/roles/vanguard.tres" id="4_ni5va"]
 [ext_resource type="Resource" uid="uid://b6i4mvgiq1dkc" path="res://data/heroes/sands/roles/medic.tres" id="5_g537u"]
 [ext_resource type="Resource" uid="uid://bbkj0x4me6c7f" path="res://data/heroes/sands/roles/strategist.tres" id="6_vy154"]
 
-[sub_resource type="Resource" id="Resource_2uprg"]
-script = ExtResource("2_626k6")
-actor_name = "Sands"
-max_hp = 190
-attack = 19
-psyche = 16
-overload = 11
-speed = 27
-precision = 5
-kinetic_defense = 51
-energy_defense = 36
-metadata/_custom_type_script = "uid://b70gwt4gd4cun"
+[sub_resource type="Resource" id="Resource_r0kvp"]
+script = ExtResource("1_y8jbk")
+hp_rank = 4
+guard_rank = 3
+speed_rank = 2
+kinetic_defense_rank = 4
+energy_defense_rank = 3
+metadata/_custom_type_script = "uid://djmsh5w0dbytx"
+
+[sub_resource type="Resource" id="Resource_70kmf"]
+script = ExtResource("1_y8jbk")
+attack_rank = 4
+psyche_rank = 3
+overload_rank = 1
+speed_rank = 3
+precision_rank = 1
+metadata/_custom_type_script = "uid://djmsh5w0dbytx"
 
 [resource]
 script = ExtResource("1_ng8ip")
-stats = SubResource("Resource_2uprg")
+hero_id = "sands"
+hero_name = "Sands"
+weapon = SubResource("Resource_70kmf")
+armor = SubResource("Resource_r0kvp")
 unlocked_roles = Array[ExtResource("3_kqimu")]([ExtResource("4_ni5va"), ExtResource("5_g537u"), ExtResource("6_vy154")])
 metadata/_custom_type_script = "uid://dc5sk0b0jubvj"

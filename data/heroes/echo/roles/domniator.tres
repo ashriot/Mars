@@ -6,7 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://r6a5eh2mlkyk" path="res://assets/graphics/icons/roles/bolt-eye.png" id="3_oj8d5"]
 [ext_resource type="Resource" uid="uid://bhe5ab7bd2gbq" path="res://data/heroes/echo/actions/static_charge.tres" id="4_212st"]
 [ext_resource type="Resource" uid="uid://bm4jlai25snkq" path="res://data/heroes/echo/actions/force_field.tres" id="4_fptll"]
-[ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/role.gd" id="4_gh0xr"]
+[ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/data/role_data.gd" id="4_gh0xr"]
 [ext_resource type="Resource" uid="uid://bfalay3c0jkmr" path="res://data/heroes/echo/actions/inversion.tres" id="5_detj6"]
 
 [resource]

@@ -8,7 +8,6 @@
 [ext_resource type="PackedScene" uid="uid://be3t7advgy14o" path="res://src/battle/buff.tscn" id="3_pdx0h"]
 [ext_resource type="Texture2D" uid="uid://bhk28mg1reyry" path="res://assets/graphics/glyphs/ps/ps_dpad_down_normal.png" id="4_e8ixv"]
 [ext_resource type="Texture2D" uid="uid://05lare8hgtys" path="res://assets/graphics/icons/textures/bullet.png" id="4_l4hbp"]
-[ext_resource type="Texture2D" uid="uid://0v6k85gfryip" path="res://assets/graphics/icons/textures/atom.png" id="5_l4hbp"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8i7ma"]
 bg_color = Color(0.6, 0.6, 0.6, 0)
@@ -28,6 +27,9 @@ corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
+
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_1mnyd"]
+load_path = "res://.godot/imported/fire.png-e3c6a18f95f298d30e62adcd9e812c8b.ctex"
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_e8ixv"]
 bg_color = Color(0, 0, 0, 0.78431374)
@@ -393,8 +395,8 @@ grow_horizontal = 0
 value = 65.0
 fill_mode = 3
 nine_patch_stretch = true
-texture_under = ExtResource("5_l4hbp")
-texture_progress = ExtResource("5_l4hbp")
+texture_under = SubResource("CompressedTexture2D_1mnyd")
+texture_progress = SubResource("CompressedTexture2D_1mnyd")
 tint_under = Color(0, 0, 0, 0.5019608)
 tint_progress = Color(0.7490196, 0.5882353, 1, 1)
 

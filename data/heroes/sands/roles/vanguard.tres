@@ -4,7 +4,7 @@
 [ext_resource type="Resource" uid="uid://vk5px1abwyri" path="res://data/heroes/sands/actions/draw_fire.tres" id="2_wqeov"]
 [ext_resource type="Resource" uid="uid://bikya1n52nsow" path="res://data/heroes/sands/actions/overwatch.tres" id="3_n0xkg"]
 [ext_resource type="Texture2D" uid="uid://brxh73qv0bq0b" path="res://assets/graphics/icons/roles/winged-sword.png" id="4_0c62t"]
-[ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/role.gd" id="4_5mtuo"]
+[ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/data/role_data.gd" id="4_5mtuo"]
 [ext_resource type="Resource" uid="uid://g6ncue0rx5ej" path="res://data/heroes/sands/actions/focus_fire.tres" id="4_n0xkg"]
 [ext_resource type="Resource" uid="uid://dv4r7yc61o8e6" path="res://data/heroes/sands/actions/return_fire.tres" id="5_ft23u"]
 [ext_resource type="Resource" uid="uid://cp7b4dfv1j0ad" path="res://data/heroes/sands/actions/phalanx.tres" id="5_wtxb1"]

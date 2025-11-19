@@ -5,7 +5,7 @@
 [ext_resource type="Resource" uid="uid://cp3da2e23258p" path="res://data/heroes/sands/actions/bastion.tres" id="3_myb2p"]
 [ext_resource type="Resource" uid="uid://epar5pumnvm7" path="res://data/heroes/sands/actions/booster_shots.tres" id="3_n73s0"]
 [ext_resource type="Texture2D" uid="uid://dtwo50io0wj1u" path="res://assets/graphics/icons/roles/caduceus.png" id="4_4iivs"]
-[ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/role.gd" id="4_i3urm"]
+[ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/data/role_data.gd" id="4_i3urm"]
 [ext_resource type="Resource" uid="uid://dc2781k2lc1ma" path="res://data/heroes/sands/actions/auto_shields.tres" id="4_md3ds"]
 [ext_resource type="Resource" uid="uid://dbkrqjitp8c02" path="res://data/heroes/sands/actions/apply_painkillers.tres" id="5_myb2p"]
 [ext_resource type="Resource" uid="uid://dax8kpkfwgv5l" path="res://data/heroes/sands/actions/triage.tres" id="6_ag7t5"]

@@ -1,27 +1,40 @@
-[gd_resource type="Resource" script_class="HeroData" load_steps=8 format=3 uid="uid://ctg8csrcqdj57"]
+[gd_resource type="Resource" script_class="HeroData" load_steps=11 format=3 uid="uid://ctg8csrcqdj57"]
 
-[ext_resource type="Script" uid="uid://dc5sk0b0jubvj" path="res://data/scripts/hero_data.gd" id="1_avsjj"]
-[ext_resource type="Script" uid="uid://b70gwt4gd4cun" path="res://data/scripts/actor_stats.gd" id="1_s0m5y"]
-[ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/role.gd" id="2_s0m5y"]
+[ext_resource type="Script" uid="uid://dc5sk0b0jubvj" path="res://data/scripts/data/hero_data.gd" id="1_avsjj"]
+[ext_resource type="Script" uid="uid://djmsh5w0dbytx" path="res://data/scripts/data/equipment.gd" id="1_g3hqy"]
+[ext_resource type="Script" uid="uid://i4rsbsrmba0c" path="res://data/scripts/data/role_progression.gd" id="1_u2x8i"]
+[ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/data/role_data.gd" id="2_s0m5y"]
 [ext_resource type="Resource" uid="uid://c7bb8vuamp7ai" path="res://data/heroes/asher/roles/gunslinger.tres" id="4_cgx8j"]
 [ext_resource type="Resource" uid="uid://cny303enqave" path="res://data/heroes/asher/roles/operative.tres" id="5_i72s2"]
 [ext_resource type="Resource" uid="uid://c03acvaovbpqc" path="res://data/heroes/asher/roles/sniper.tres" id="5_me7og"]
 
-[sub_resource type="Resource" id="Resource_tqnt4"]
-script = ExtResource("1_s0m5y")
-actor_name = "Asher"
-max_hp = 150
-guard = 4
-psyche = 11
-overload = 12
-speed = 16
-precision = 15
-kinetic_defense = 36
-energy_defense = 36
-metadata/_custom_type_script = "uid://b70gwt4gd4cun"
+[sub_resource type="Resource" id="Resource_i72s2"]
+script = ExtResource("1_g3hqy")
+slot = 1
+hp_rank = 3
+guard_rank = 2
+speed_rank = 3
+kinetic_defense_rank = 3
+energy_defense_rank = 3
+metadata/_custom_type_script = "uid://djmsh5w0dbytx"
+
+[sub_resource type="Resource" id="Resource_sydmp"]
+script = ExtResource("1_u2x8i")
+metadata/_custom_type_script = "uid://i4rsbsrmba0c"
+
+[sub_resource type="Resource" id="Resource_c1wl5"]
+script = ExtResource("1_g3hqy")
+attack_rank = 4
+psyche_rank = 1
+overload_rank = 2
+speed_rank = 2
+metadata/_custom_type_script = "uid://djmsh5w0dbytx"
 
 [resource]
 script = ExtResource("1_avsjj")
-stats = SubResource("Resource_tqnt4")
-unlocked_roles = Array[ExtResource("2_s0m5y")]([ExtResource("5_me7og"), ExtResource("5_i72s2"), ExtResource("4_cgx8j")])
+hero_name = "Asher"
+weapon = SubResource("Resource_c1wl5")
+armor = SubResource("Resource_i72s2")
+unlocked_roles = Array[ExtResource("2_s0m5y")]([ExtResource("4_cgx8j"), ExtResource("5_me7og"), ExtResource("5_i72s2")])
+role_progressions = Array[ExtResource("1_u2x8i")]([SubResource("Resource_sydmp")])
 metadata/_custom_type_script = "uid://dc5sk0b0jubvj"

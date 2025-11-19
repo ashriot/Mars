@@ -12,8 +12,8 @@ enum ConditionType { BUFF, DEBUFF }
 
 @export_group("Stat Modifiers")
 @export var force_damage_type: Action.DamageType = Action.DamageType.NONE
-@export var precision_mod: int = 0
-@export var incoming_precision_mod: int = 0
+@export var aim_mod: int = 0
+@export var incoming_aim_mod: int = 0
 @export var speed_scalar: float = 0.0
 @export var damage_dealt_scalar: float = 0.0
 @export var damage_taken_scalar: float = 0.0

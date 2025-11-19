@@ -25,7 +25,8 @@ var shifted_this_turn: bool
 
 func setup(data: HeroData):
 	hero_data = data
-	setup_base(data.stats)
+	hero_data.calculate_stats()
+	setup_base(hero_data.stats)
 	duration /= battle_manager.battle_speed
 	name_label.text = hero_data.stats.actor_name
 	if hero_data.portrait:
@@ -61,18 +62,18 @@ func defeated():
 	super.defeated()
 	self_modulate.a = 0.25
 
-func get_current_role() -> Role:
+func get_current_role() -> RoleData:
 	if hero_data.unlocked_roles.size() > 0:
 		return hero_data.unlocked_roles[current_role_index]
 	return null
 
-func get_previous_role() -> Role:
+func get_previous_role() -> RoleData:
 	var role_count = hero_data.unlocked_roles.size()
 	if role_count == 0: return null
 	var prev_index = (current_role_index - 1 + role_count) % role_count
 	return hero_data.unlocked_roles[prev_index]
 
-func get_next_role() -> Role:
+func get_next_role() -> RoleData:
 	var role_count = hero_data.unlocked_roles.size()
 	if role_count == 0: return null
 	var next_index = (current_role_index + 1) % role_count
