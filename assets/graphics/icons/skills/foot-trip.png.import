@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c3sqopfs5c23i"
-path="res://.godot/imported/rally-the-troops.png-1c0c995decbeb80b6a69e3c79629e5c8.ctex"
+uid="uid://ji44fbhjc8o2"
+path="res://.godot/imported/foot-trip.png-5e946ebdc6a52cd0f8fd77400cc6f193.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/icons/skills/rally-the-troops.png"
-dest_files=["res://.godot/imported/rally-the-troops.png-1c0c995decbeb80b6a69e3c79629e5c8.ctex"]
+source_file="res://assets/graphics/icons/skills/foot-trip.png"
+dest_files=["res://.godot/imported/foot-trip.png-5e946ebdc6a52cd0f8fd77400cc6f193.ctex"]
 
 [params]
 

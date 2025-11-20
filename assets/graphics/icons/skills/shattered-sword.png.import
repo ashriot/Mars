@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dxg32x5c2hve"
-path="res://.godot/imported/targeted.png-90d0887a173066708d0dbeb9ef7f4879.ctex"
+uid="uid://qrcub5ebfirt"
+path="res://.godot/imported/shattered-sword.png-f92a776b78ac77944073f6d1047b468d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/icons/skills/targeted.png"
-dest_files=["res://.godot/imported/targeted.png-90d0887a173066708d0dbeb9ef7f4879.ctex"]
+source_file="res://assets/graphics/icons/skills/shattered-sword.png"
+dest_files=["res://.godot/imported/shattered-sword.png-f92a776b78ac77944073f6d1047b468d.ctex"]
 
 [params]
 

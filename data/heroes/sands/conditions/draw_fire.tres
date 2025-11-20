@@ -7,8 +7,9 @@
 [resource]
 script = ExtResource("2_5hi7n")
 condition_name = "Draw Fire"
-description = "Sands is drawing the attention of all enemies."
 icon = ExtResource("1_ncmxn")
+description = "Sands is drawing the attention of all enemies."
+is_untargetable = true
 retarget = true
 remove_on_triggers = Array[int]([11, 12])
 metadata/_custom_type_script = "uid://df30dm288ne1d"

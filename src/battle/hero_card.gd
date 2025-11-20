@@ -90,7 +90,6 @@ func shift_role(direction: String):
 		current_role_index = (current_role_index + 1) % role_count
 	update_current_role()
 	await _fire_condition_event(Trigger.TriggerType.ON_SHIFT)
-	role_shifted.emit(self)
 
 func update_current_role():
 	role_label.text = get_current_role().role_name.to_upper()

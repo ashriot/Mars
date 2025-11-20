@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dshfpayygyo2q"
-path="res://.godot/imported/surrounded-shield.png-1601db0814f2f81a051ca9873baac7cc.ctex"
+uid="uid://2w4bw8peb3st"
+path="res://.godot/imported/inspiration.png-0070e80cdbac724a72e8c7328105e9d0.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/icons/skills/surrounded-shield.png"
-dest_files=["res://.godot/imported/surrounded-shield.png-1601db0814f2f81a051ca9873baac7cc.ctex"]
+source_file="res://assets/graphics/icons/skills/inspiration.png"
+dest_files=["res://.godot/imported/inspiration.png-0070e80cdbac724a72e8c7328105e9d0.ctex"]
 
 [params]
 

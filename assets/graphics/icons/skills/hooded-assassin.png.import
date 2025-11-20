@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://fs6u3e62xn0o"
-path="res://.godot/imported/striking-splinter.png-da66f16e4d83623741c2ebb8b0e9300c.ctex"
+uid="uid://demyhyp5qy2hh"
+path="res://.godot/imported/hooded-assassin.png-9efb35e7559f14a57e6d96659781a629.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/icons/skills/striking-splinter.png"
-dest_files=["res://.godot/imported/striking-splinter.png-da66f16e4d83623741c2ebb8b0e9300c.ctex"]
+source_file="res://assets/graphics/icons/skills/hooded-assassin.png"
+dest_files=["res://.godot/imported/hooded-assassin.png-9efb35e7559f14a57e6d96659781a629.ctex"]
 
 [params]
 

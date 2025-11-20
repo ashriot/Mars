@@ -69,17 +69,6 @@ mouse_filter = 2
 texture = ExtResource("2_pk42m")
 expand_mode = 1
 
-[node name="Highlight" type="Panel" parent="."]
-visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_pk42m")
-
 [node name="Title" type="Label" parent="."]
 layout_mode = 1
 anchors_preset = 3
@@ -103,6 +92,21 @@ theme_override_constants/shadow_outline_size = 20
 theme_override_font_sizes/font_size = 36
 text = "Action Name"
 horizontal_alignment = 2
+
+[node name="Highlight" type="Panel" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -5.0
+offset_top = -5.0
+offset_right = 5.0
+offset_bottom = 5.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_pk42m")
 
 [node name="FocusPips" type="HBoxContainer" parent="."]
 layout_mode = 1

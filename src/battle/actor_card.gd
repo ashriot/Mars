@@ -337,6 +337,18 @@ func modify_guard(amount: int, is_recovering: bool = false):
 
 	update_guard_bar()
 
+func is_taunting() -> bool:
+	for c in active_conditions:
+		if c.is_taunting:
+			return true
+	return false
+
+func is_untargetable() -> bool:
+	for c in active_conditions:
+		if c.is_untargetable:
+			return true
+	return false
+
 func update_guard_bar(animate: bool = true):
 	guard_label.text = str(current_guard)
 	guard_label.visible = current_guard > 0

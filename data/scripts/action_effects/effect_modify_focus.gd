@@ -13,7 +13,7 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 	)
 
 	for target_actor in final_targets:
-		if target_actor and is_instance_valid(target_actor) and not target_actor.is_defeated:
+		if target_actor and not target_actor.is_defeated:
 			print(target_actor.actor_name, " gains ", focus_amount, " Focus.")
 			target_actor.modify_focus(focus_amount)
 

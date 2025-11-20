@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3 uid="uid://dc5du0o5phhma"]
+[gd_scene load_steps=20 format=3 uid="uid://dc5du0o5phhma"]
 
 [ext_resource type="Script" uid="uid://dssm7j7rbyew6" path="res://src/battle/battle_scene.gd" id="1_1pykk"]
 [ext_resource type="Script" uid="uid://deoohlwp7dcfm" path="res://src/battle/battle_manager.gd" id="1_6cbqe"]
@@ -14,6 +14,7 @@
 [ext_resource type="PackedScene" uid="uid://diku73kk4tjv7" path="res://src/battle/actor_queue.tscn" id="10_6by3n"]
 [ext_resource type="Texture2D" uid="uid://blqlfsxmhvfac" path="res://assets/graphics/backgrounds/bg_pod-room.webp" id="10_u5vn3"]
 [ext_resource type="Texture2D" uid="uid://6j4nnmndm12j" path="res://assets/graphics/icons/skills/bullets.png" id="12_t4gpb"]
+[ext_resource type="Resource" uid="uid://xwe3skgcbr7x" path="res://data/enemies/actors/attack_drone.tres" id="12_tx5gf"]
 
 [sub_resource type="Gradient" id="Gradient_t4gpb"]
 offsets = PackedFloat32Array(0.51, 1)
@@ -44,7 +45,6 @@ script = ExtResource("1_1pykk")
 [node name="BattleManager" type="Node" parent="." node_paths=PackedStringArray("hero_area", "enemy_area", "action_bar", "current_action_panel", "fade_overlay")]
 unique_name_in_owner = true
 script = ExtResource("1_6cbqe")
-battle_speed = 2.0
 hero_card_scene = ExtResource("1_sft4c")
 enemy_card_scene = ExtResource("1_u5n4n")
 hero_area = NodePath("../UI/Heroes/HBox")
@@ -53,7 +53,7 @@ action_bar = NodePath("../UI/ActionBar")
 current_action_panel = NodePath("../UI/CurrentAction")
 fade_overlay = NodePath("../FadeOverlay")
 hero_data_files = Array[ExtResource("4_w6n6o")]([ExtResource("5_16l6v"), ExtResource("6_vtpwn")])
-enemy_data_files = Array[ExtResource("6_6by3n")]([ExtResource("9_rvyyd"), ExtResource("9_rvyyd")])
+enemy_data_files = Array[ExtResource("6_6by3n")]([ExtResource("9_rvyyd"), ExtResource("12_tx5gf")])
 
 [node name="UI" type="Control" parent="."]
 layout_mode = 1
@@ -187,6 +187,7 @@ offset_left = 25.0
 offset_top = 503.0
 offset_right = 325.0
 offset_bottom = 543.0
+mouse_filter = 2
 script = ExtResource("9_16l6v")
 actor_queue_scene = ExtResource("10_6by3n")
 battle_manager = NodePath("../../BattleManager")
@@ -195,6 +196,7 @@ battle_manager = NodePath("../../BattleManager")
 layout_mode = 0
 offset_right = 282.0
 offset_bottom = 440.0
+mouse_filter = 2
 
 [node name="FadeOverlay" type="ColorRect" parent="."]
 visible = false

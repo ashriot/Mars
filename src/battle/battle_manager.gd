@@ -383,12 +383,23 @@ func _on_shift_button_pressed(direction: String):
 	current_action = null
 	await action_bar.slide_out()
 	await current_actor.shift_role(direction)
+	action_bar.update_action_bar(current_hero, true)
 	await action_bar.slide_in()
-	_apply_role_passive(current_hero)
+	await _apply_role_passive(current_hero)
 	print("Shift complete. Returning to player's action.")
 	if current_hero.get_current_role().shift_action:
-		if current_hero.get_current_role().shift_action.auto_target:
+		var action = current_hero.get_current_role().shift_action
+		if action.auto_target:
+			print("Auto-executing shift action...")
+			var target_list = get_targets(action.target_type, true)
+
+			await execute_action(current_actor, action, target_list)
 			change_state(State.PLAYER_ACTION)
+			return
+
+		change_state(State.FORCED_TARGET)
+		print("Action requires a target. Waiting for click...")
+		set_current_action(action)
 	else:
 		change_state(State.PLAYER_ACTION)
 

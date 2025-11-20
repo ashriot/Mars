@@ -61,17 +61,19 @@ func get_a_target(hero_targets: Array[HeroCard]):
 
 	match intended_action.target_type:
 		Action.TargetType.ONE_ENEMY:
-			if hero_targets.is_empty():
-				return
-			var taunting_hero = null
+			var valid_targets = []
 			for hero in hero_targets:
-				if hero.has_condition("Draw Fire"):
-					taunting_hero = hero
-					break
-			if taunting_hero:
-				new_targets = [taunting_hero]
-			else:
-				new_targets = [hero_targets.pick_random()]
+				if not hero.is_untargetable():
+					valid_targets.append(hero)
+			if valid_targets.is_empty():
+				valid_targets = hero_targets
+			var taunting_targets = []
+			for hero in valid_targets:
+				if hero.is_taunting():
+					taunting_targets.append(hero)
+			if not taunting_targets.is_empty():
+				valid_targets = taunting_targets
+			new_targets = [valid_targets.pick_random()]
 
 		Action.TargetType.SELF:
 			new_targets = [self]

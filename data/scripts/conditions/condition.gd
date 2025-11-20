@@ -8,6 +8,8 @@ enum ConditionType { BUFF, DEBUFF }
 @export_multiline var description: String = ""
 @export var condition_type: ConditionType = ConditionType.BUFF
 @export var is_passive: bool = false
+@export var is_untargetable: bool = false
+@export var is_taunting: bool = false
 @export var triggered_by: Action.HeroType = Action.HeroType.ALL
 
 @export_group("Stat Modifiers")
