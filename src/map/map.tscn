@@ -5,5 +5,4 @@
 
 [node name="Map" type="Node2D"]
 script = ExtResource("1_5o7fj")
-vision_range = null
 map_node_scene = ExtResource("2_vfn15")
