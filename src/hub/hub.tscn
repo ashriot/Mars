@@ -1,0 +1,160 @@
+[gd_scene load_steps=11 format=3 uid="uid://ckajtcj4403sy"]
+
+[ext_resource type="Script" uid="uid://dff0o6ejveewn" path="res://src/hub/hub.gd" id="1_8xbvn"]
+[ext_resource type="Texture2D" uid="uid://5g78sj1okle7" path="res://assets/graphics/backgrounds/apartment.webp" id="2_n1oa3"]
+[ext_resource type="Texture2D" uid="uid://b0a4ghiukj8yg" path="res://src/effects/Flare_small.PNG" id="3_c3p1t"]
+
+[sub_resource type="Gradient" id="Gradient_ivd5l"]
+offsets = PackedFloat32Array(0, 0.15121952, 0.88536584, 1)
+colors = PackedColorArray(0, 1, 1, 0, 0, 1, 1, 1, 1, 0.2, 0, 1, 1, 0, 1, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_nlyk2"]
+gradient = SubResource("Gradient_ivd5l")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_vmamr"]
+particle_flag_disable_z = true
+emission_shape_offset = Vector3(0, 100, 0)
+emission_shape = 3
+emission_box_extents = Vector3(400, 440, 1)
+linear_accel_min = -5.000002
+linear_accel_max = 4.9999976
+scale_min = 0.099999994
+scale_max = 0.5
+color_ramp = SubResource("GradientTexture1D_nlyk2")
+turbulence_enabled = true
+turbulence_noise_speed_random = 0.5
+
+[sub_resource type="Gradient" id="Gradient_t4gpb"]
+offsets = PackedFloat32Array(0, 0.3125, 0.42067307, 0.74038464, 1)
+colors = PackedColorArray(0, 0, 0, 0.92156863, 0, 0, 0, 0.9254902, 0.63, 0.5229, 0.617505, 0.1882353, 0.73, 0.59860003, 0.67963004, 0.21176471, 0, 0, 0, 0.8901961)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_c3p1t"]
+gradient = SubResource("Gradient_t4gpb")
+fill_from = Vector2(0.18589744, 0.17735043)
+fill_to = Vector2(0.6666667, 0.21581197)
+
+[sub_resource type="Gradient" id="Gradient_vmamr"]
+offsets = PackedFloat32Array(0.44951922, 1)
+colors = PackedColorArray(0, 0, 0, 1, 0, 0, 0, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_bfsw3"]
+gradient = SubResource("Gradient_vmamr")
+fill_from = Vector2(0.50934577, 0)
+fill_to = Vector2(0.51635516, 1)
+
+[node name="Hub" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_8xbvn")
+
+[node name="Background" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_n1oa3")
+
+[node name="Background" type="GPUParticles2D" parent="Background"]
+modulate = Color(1, 1, 1, 0.6313726)
+position = Vector2(962, 459)
+amount = 300
+texture = ExtResource("3_c3p1t")
+lifetime = 30.0
+preprocess = 20.0
+process_material = SubResource("ParticleProcessMaterial_vmamr")
+
+[node name="Top" type="TextureRect" parent="Background"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = SubResource("GradientTexture2D_c3p1t")
+
+[node name="Top" type="TextureRect" parent="Background/Top"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 207.0
+grow_horizontal = 2
+texture = SubResource("GradientTexture2D_bfsw3")
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -770.0
+offset_top = 50.0
+offset_right = -50.0
+offset_bottom = 193.0
+grow_horizontal = 0
+
+[node name="Label" type="Label" parent="Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 60
+text = "Echo's Apartment"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+offset_left = 50.0
+offset_top = 50.0
+offset_right = 669.0
+offset_bottom = 90.0
+theme_override_constants/separation = 20
+
+[node name="Button" type="Button" parent="VBoxContainer"]
+modulate = Color(1, 0.6666667, 0, 1)
+custom_minimum_size = Vector2(200, 100)
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "Terminal Access"
+
+[node name="Button2" type="Button" parent="VBoxContainer"]
+modulate = Color(1, 0.4392157, 0, 1)
+custom_minimum_size = Vector2(200, 100)
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "Check Gear"
+
+[node name="Button3" type="Button" parent="VBoxContainer"]
+modulate = Color(1, 0.4392157, 0, 1)
+custom_minimum_size = Vector2(200, 100)
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "Training Program"
+
+[node name="Button4" type="Button" parent="VBoxContainer"]
+modulate = Color(1, 0.4392157, 0, 1)
+custom_minimum_size = Vector2(200, 100)
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "Access Banking"
+
+[node name="Button5" type="Button" parent="VBoxContainer"]
+modulate = Color(1, 0.4392157, 0, 1)
+custom_minimum_size = Vector2(200, 100)
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "Contact Milo"
+
+[node name="Button6" type="Button" parent="VBoxContainer"]
+modulate = Color(1, 0.4392157, 0, 1)
+custom_minimum_size = Vector2(200, 100)
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "Leave Apartment"

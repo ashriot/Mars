@@ -32,12 +32,12 @@ shader = ExtResource("13_w2kg5")
 shader_parameter/aberration_x = 0.10000005224999996
 shader_parameter/aberration_y = 0.10000005224999996
 
-[sub_resource type="Gradient" id="Gradient_t4gpb"]
+[sub_resource type="Gradient" id="Gradient_7up2b"]
 offsets = PackedFloat32Array(0.51, 1)
 colors = PackedColorArray(0, 0, 0, 0.7058824, 0, 0, 0, 0)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_1pykk"]
-gradient = SubResource("Gradient_t4gpb")
+gradient = SubResource("Gradient_7up2b")
 fill_from = Vector2(0.50934577, 0)
 fill_to = Vector2(0.51635516, 1)
 

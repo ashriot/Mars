@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3 uid="uid://cqo38uie6gkdu"]
+
+[ext_resource type="Script" uid="uid://c0tmi3fc3fega" path="res://src/map/map.gd" id="1_5o7fj"]
+[ext_resource type="PackedScene" uid="uid://cqdl6q7d2hmox" path="res://src/map/map_node.tscn" id="2_vfn15"]
+
+[node name="Map" type="Node2D"]
+script = ExtResource("1_5o7fj")
+vision_range = null
+map_node_scene = ExtResource("2_vfn15")
