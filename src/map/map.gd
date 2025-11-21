@@ -1,6 +1,7 @@
 extends Node2D
 
 @onready var alert_gauge: ProgressBar = $CanvasLayer/AlertGauge
+@onready var alert_label: Label = $CanvasLayer/AlertGauge/Label
 @onready var parallax_bg: Parallax2D = $Parallax2D
 @onready var bg_sprite: Sprite2D = $Parallax2D/Sprite2D
 
@@ -32,8 +33,9 @@ var current_node: MapNode = null
 
 # --- Visuals ---
 @export_group("Visuals")
-@export var background_texture: Texture2D
 @export var map_node_scene: PackedScene
+@export var background_texture: Texture2D
+@export_range(0.0, 5.0) var background_blur: float = 0.0 # NEW: Controls blur amount
 
 # --- Internal Data ---
 var hex_width: float
@@ -41,16 +43,47 @@ var hex_height: float
 var grid_nodes = {}
 var camera: Camera2D
 
+# --- SHADER CODE ---
+# A simple 9-sample blur shader we can inject dynamically
+const BLUR_SHADER_CODE = """
+shader_type canvas_item;
+uniform float blur_amount : hint_range(0, 10) = 0.0;
+
+void fragment() {
+	if (blur_amount <= 0.0) {
+		COLOR = texture(TEXTURE, UV);
+	} else {
+		vec4 col = vec4(0.0);
+		vec2 ps = TEXTURE_PIXEL_SIZE * blur_amount;
+
+		// Sample center and surrounding 8 points for a smooth average
+		col += texture(TEXTURE, UV);
+		col += texture(TEXTURE, UV + vec2(0.0, -1.0) * ps);
+		col += texture(TEXTURE, UV + vec2(0.0, 1.0) * ps);
+		col += texture(TEXTURE, UV + vec2(-1.0, 0.0) * ps);
+		col += texture(TEXTURE, UV + vec2(1.0, 0.0) * ps);
+		col += texture(TEXTURE, UV + vec2(-0.7, -0.7) * ps);
+		col += texture(TEXTURE, UV + vec2(0.7, -0.7) * ps);
+		col += texture(TEXTURE, UV + vec2(-0.7, 0.7) * ps);
+		col += texture(TEXTURE, UV + vec2(0.7, 0.7) * ps);
+
+		COLOR = col / 9.0;
+	}
+}
+"""
+
 func _ready():
 	randomize()
 	hex_width = sqrt(3.0) * hex_size
 	hex_height = hex_size * 2.0
 	vision_range = 2
 
-	alert_gauge.modulate = Color.LAWN_GREEN
+	alert_gauge.self_modulate = Color.LAWN_GREEN
+	alert_gauge.value = 0
+	alert_label.text = str(int(alert_gauge.value)) + "%"
 
 	_setup_camera()
-	#_setup_background() # Initialize the parallax nodes
+	_setup_background() # Initialize the parallax nodes
 	generate_hex_grid()
 
 func _setup_camera():
@@ -61,6 +94,13 @@ func _setup_camera():
 		camera.name = "Camera2D"
 		add_child(camera)
 	camera.make_current()
+
+func _setup_background():
+	var shader_material = ShaderMaterial.new()
+	var shader = Shader.new()
+	shader.code = BLUR_SHADER_CODE
+	shader_material.shader = shader
+	bg_sprite.material = shader_material
 
 func _input(event):
 	if event is InputEventKey and event.pressed and event.keycode == KEY_R:
@@ -164,43 +204,26 @@ func generate_hex_grid():
 func _update_background_transform(min_b: Vector2, max_b: Vector2):
 	bg_sprite.texture = background_texture
 
-	# 1. Calculate Grid Size
-	# Add padding so nodes don't touch the edge of the image
+	(bg_sprite.material as ShaderMaterial).set_shader_parameter("blur_amount", background_blur)
+
 	var padding = Vector2(hex_width * 4, hex_height * 4)
 	var grid_center = (min_b + max_b) / 2.0
 	var grid_size = (max_b - min_b) + padding
 
-	# 2. Determine Parallax Factor
-	# Logic: The larger the map, the lower the motion scale (moves slower/looks deeper)
-	# Example:
-	# Small map (1000px) -> factor 0.8 (Close)
-	# Huge map (5000px) -> factor 0.2 (Far)
 	var max_dimension = max(grid_size.x, grid_size.y)
 	var depth_factor = clamp(1.0 - (max_dimension / 5000.0), 0.1, 0.9)
 
 	parallax_bg.scroll_scale = Vector2(depth_factor, depth_factor)
 
-	# 3. Scale the Sprite
-	# Since the background moves slower than the camera, the image actually needs
-	# to be *larger* than the grid to ensure the camera doesn't see the edge.
-	# Formula: Required_Size = Grid_Size + (Grid_Size * (1 - motion_scale))
-	# We simplify by scaling it comfortably up based on the inverse of motion scale.
-
 	var tex_size = background_texture.get_size()
 	var required_scale = Vector2.ONE
-
-	# Calculate required world size to cover the parallax movement
 	var world_coverage = grid_size * (1.0 + (1.0 - depth_factor))
 
 	required_scale.x = world_coverage.x / tex_size.x
 	required_scale.y = world_coverage.y / tex_size.y
 
-	# Pick the larger scale to maintain aspect ratio if desired, or stretch
 	var final_scale = max(required_scale.x, required_scale.y)
 	bg_sprite.scale = Vector2(final_scale, final_scale)
-
-	# 4. Center it
-	# ParallaxLayer creates an offset, so we offset the sprite to center on the grid
 	parallax_bg.scroll_offset = grid_center
 
 func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
@@ -235,7 +258,14 @@ func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 	var good_candidates = []
 	for c in all_coords:
 		if c == start_node or c == boss_node: continue
+
+		# NEW: Banned Zone (Distance > 1 from start)
+		# Prevents good nodes from spawning adjacent to start
+		if _get_hex_distance(start_node, c) <= 1:
+			continue
+
 		good_candidates.append(c)
+
 	good_candidates.shuffle()
 
 	var _assign_good = func(type, count):
@@ -291,17 +321,19 @@ func _move_player_to(target_node: MapNode, is_start: bool = false):
 	if not is_start:
 		total_moves += 1
 		if alert_gauge.value < 19:
-			alert_gauge.modulate = Color.LAWN_GREEN
+			alert_gauge.self_modulate = Color.LAWN_GREEN
 			alert_gauge.value += 4
 			vision_range = 2
 		elif alert_gauge.value < 69:
-			alert_gauge.modulate = Color.GOLD
+			alert_gauge.self_modulate = Color.GOLD
 			alert_gauge.value += 5
 			vision_range = 1
 		else:
-			alert_gauge.modulate = Color.RED
+			alert_gauge.self_modulate = Color.RED
 			alert_gauge.value += 6
 			vision_range = 0
+
+		alert_label.text = str(int(alert_gauge.value)) + "%"
 
 		print("Moved to ", target_node.grid_coords, ". Total Moves: ", total_moves)
 

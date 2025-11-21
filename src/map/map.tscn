@@ -9,7 +9,7 @@ content_margin_left = 2.0
 content_margin_top = 2.0
 content_margin_right = 2.0
 content_margin_bottom = 2.0
-bg_color = Color(1, 1, 1, 0.10980392)
+bg_color = Color(0, 0, 0, 0.88235295)
 border_width_left = 6
 border_width_top = 6
 border_width_right = 6
@@ -38,8 +38,9 @@ num_combats = 6
 num_elites = 2
 num_events = 3
 num_rewards = 2
-background_texture = ExtResource("2_1a5qu")
 map_node_scene = ExtResource("2_vfn15")
+background_texture = ExtResource("2_1a5qu")
+background_blur = 3.0
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
@@ -52,11 +53,30 @@ offset_top = 27.0
 offset_right = 562.0
 offset_bottom = 97.0
 grow_horizontal = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 60
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_styles/background = SubResource("StyleBoxFlat_1a5qu")
 theme_override_styles/fill = SubResource("StyleBoxFlat_vfn15")
-value = 50.0
+step = 1.0
+rounded = true
+show_percentage = false
+
+[node name="Label" type="Label" parent="CanvasLayer/AlertGauge"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -9.5
+offset_right = 20.0
+offset_bottom = 9.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 20
+theme_override_font_sizes/font_size = 60
+text = "50%"
 
 [node name="Parallax2D" type="Parallax2D" parent="."]
 

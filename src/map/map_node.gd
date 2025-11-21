@@ -56,20 +56,19 @@ func set_state(new_state: NodeState):
 
 	match state:
 		NodeState.HIDDEN:
-			hex_sprite.modulate = Color.SLATE_GRAY
+			hex_sprite.self_modulate = Color.BLACK
 			if icon_sprite: icon_sprite.visible = false
 			hex_sprite.modulate.a = 0.5
 
 		NodeState.REVEALED:
 			if icon_sprite: icon_sprite.visible = true
-			_set_type_color()
-			# Darken slightly to show it's not visited yet
 			hex_sprite.modulate.a = 1.0
+			_set_type_color()
 
 		NodeState.COMPLETED:
 			if icon_sprite: icon_sprite.visible = true
 			_set_type_color()
-			# Full brightness
+			hex_sprite.modulate.a = 1.0
 			hex_sprite.modulate = hex_sprite.modulate.lightened(0.75)
 
 func set_is_current(is_current: bool):
@@ -80,9 +79,9 @@ func _set_type_color():
 		NodeType.COMBAT: hex_sprite.self_modulate = Color.GOLD
 		NodeType.ELITE: hex_sprite.self_modulate = Color.ORANGE_RED
 		NodeType.BOSS: hex_sprite.self_modulate = Color.MAGENTA
-		NodeType.REWARD: hex_sprite.self_modulate = Color.CYAN
+		NodeType.REWARD: hex_sprite.self_modulate = Color.LIGHT_SEA_GREEN
 		NodeType.EVENT: hex_sprite.self_modulate = Color.LAWN_GREEN
-		NodeType.UNKNOWN: hex_sprite.self_modulate = Color.WHITE
+		NodeType.UNKNOWN: hex_sprite.self_modulate = Color.DIM_GRAY
 
 func _get_my_texture() -> Texture2D:
 	match type:

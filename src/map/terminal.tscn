@@ -1,0 +1,104 @@
+[gd_scene load_steps=3 format=3 uid="uid://brd70upq3tjwu"]
+
+[ext_resource type="Shader" uid="uid://dg4j3qt72ayqd" path="res://src/map/crt.gdshader" id="1_ofi5q"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_rwyeu"]
+shader = ExtResource("1_ofi5q")
+shader_parameter/overlay = true
+shader_parameter/scanlines_opacity = 0.4
+shader_parameter/scanlines_width = 0.25
+shader_parameter/grille_opacity = 0.3
+shader_parameter/resolution = Vector2(640, 480)
+shader_parameter/pixelate = true
+shader_parameter/roll = false
+shader_parameter/roll_speed = 0.4
+shader_parameter/roll_size = 0.0
+shader_parameter/roll_variation = 2.00000009174012
+shader_parameter/distort_intensity = 0.02000000095
+shader_parameter/noise_opacity = 0.4
+shader_parameter/noise_speed = 5.0
+shader_parameter/static_noise_intensity = 0.0400000019
+shader_parameter/aberration = 0.02000004845000003
+shader_parameter/brightness = 1.4
+shader_parameter/discolor = true
+shader_parameter/warp_amount = 1.0
+shader_parameter/clip_warp = false
+shader_parameter/vignette_intensity = 0.0
+shader_parameter/vignette_opacity = 0.0
+
+[node name="Terminal" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 1)
+metadata/_edit_lock_ = true
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -449.7224
+offset_top = -311.0
+offset_right = 449.7224
+offset_bottom = 311.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="Panel"]
+modulate = Color(0, 1, 0, 1)
+custom_minimum_size = Vector2(800, 100)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -400.0
+offset_top = -280.5
+offset_right = 400.0
+offset_bottom = 280.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 40
+text = "YOU HAVE BEEN GRANTED ACCESS
+PLEASE MAKE YOUR SELECTION...
+
+
+1] RECEIVE 9.5 BITS
+
+2] REDUCE ALERT BY 25%
+
+(SCRAP FOR PARTS)"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TerminalFilter" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_rwyeu")
+custom_minimum_size = Vector2(1280, 960)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -640.0
+offset_top = -480.0
+offset_right = 640.0
+offset_bottom = 480.0
+grow_horizontal = 2
+grow_vertical = 2
+metadata/_edit_lock_ = true
