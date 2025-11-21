@@ -1,4 +1,7 @@
 extends Node2D
+class_name DungeonMap
+
+signal interaction_requested(node: MapNode)
 
 @onready var alert_gauge: ProgressBar = $CanvasLayer/AlertGauge
 @onready var alert_label: Label = $CanvasLayer/AlertGauge/Label
@@ -208,6 +211,12 @@ func generate_hex_grid():
 		if grid_nodes.size() > 0:
 			_move_player_to(grid_nodes.values()[0], true)
 
+func complete_current_node():
+	if current_node:
+		current_node.set_state(MapNode.NodeState.COMPLETED)
+		_update_vision()
+		# Add rewards, xp, etc here
+
 func _update_background_transform(min_b: Vector2, max_b: Vector2):
 	bg_sprite.texture = background_texture
 
@@ -324,10 +333,14 @@ func _on_node_clicked(target_node: MapNode):
 func _move_player_to(target_node: MapNode, is_start: bool = false):
 	if current_node:
 		current_node.set_is_current(false)
+
 	current_node = target_node
-	var been = target_node.state == MapNode.NodeState.COMPLETED
-	if not been: target_node.set_state(MapNode.NodeState.COMPLETED)
 	target_node.set_is_current(true)
+
+	var been = target_node.state == MapNode.NodeState.COMPLETED
+
+	_update_vision()
+	_move_camera_to_player(is_start)
 
 	if not is_start:
 		total_moves += 1
@@ -344,11 +357,11 @@ func _move_player_to(target_node: MapNode, is_start: bool = false):
 			alert_gauge.value += 6 if not been else 3
 			vision_range = 0
 		alert_label.text = str(int(alert_gauge.value)) + "%"
-
-		#print("Moved to ", target_node.grid_coords, ". Total Moves: ", total_moves)
-
-	_update_vision()
-	_move_camera_to_player(is_start)
+		if current_node.type != MapNode.NodeType.UNKNOWN:
+			await get_tree().create_timer(0.3).timeout
+			interaction_requested.emit(target_node)
+	else:
+		target_node.set_state(MapNode.NodeState.COMPLETED)
 
 func _move_camera_to_player(force_center: bool):
 	if not camera: return

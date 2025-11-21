@@ -1,5 +1,7 @@
 extends Control
 
+@export var manager: BattleManager
+
 func _ready():
 	get_tree().root.size_changed.connect(_on_viewport_resized)
 	_on_viewport_resized()

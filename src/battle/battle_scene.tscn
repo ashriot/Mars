@@ -55,7 +55,7 @@ border_color = Color(1, 1, 1, 1)
 corner_radius_top_left = 10
 corner_radius_bottom_left = 10
 
-[node name="BattleScene" type="Control"]
+[node name="BattleScene" type="Control" node_paths=PackedStringArray("manager")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -63,6 +63,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_1pykk")
+manager = NodePath("BattleManager")
 
 [node name="BattleManager" type="Node" parent="." node_paths=PackedStringArray("fx_manager", "hero_area", "enemy_area", "action_bar", "current_action_panel", "fade_overlay")]
 unique_name_in_owner = true

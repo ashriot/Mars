@@ -39,8 +39,8 @@ const GLYPHS = {
 
 # --- HELPER FUNCTION ---
 
-func get_controller_type_from_name(name: String) -> ControllerType:
-	var lower_name = name.to_lower()
+func get_controller_type_from_name(controller_name: String) -> ControllerType:
+	var lower_name = controller_name.to_lower()
 	if "xbox" in lower_name:
 		return ControllerType.XBOX
 	if "playstation" in lower_name or "dualshock" in lower_name or "dualsense" in lower_name:

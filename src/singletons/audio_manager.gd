@@ -102,5 +102,5 @@ func _get_available_sfx_player() -> AudioStreamPlayer:
 	_next_sfx_idx = (_next_sfx_idx + 1) % NUM_SFX_PLAYERS
 	return player
 
-func _on_sfx_finished(player: AudioStreamPlayer):
+func _on_sfx_finished(_player: AudioStreamPlayer):
 	pass

@@ -2,12 +2,13 @@ extends Node
 class_name BattleManager
 
 # --- State Machine ---
-enum State { LOADING, PLAYER_ACTION, ENEMY_ACTION, EXECUTING_ACTION, FORCED_TARGET }
+enum State { LOADING, PLAYER_ACTION, ENEMY_ACTION, EXECUTING_ACTION, FORCED_TARGET, BATTLE_OVER }
 var current_state = State.LOADING
 
 # --- Signals ---
 signal turn_order_updated(turn_queue_data)
 signal battle_state_changed(new_state)
+signal battle_ended()
 
 @export_range(0.1, 5.0) var battle_speed: float = 1.0
 
@@ -66,7 +67,6 @@ func spawn_encounter():
 		hero_card.spawn_particles.connect(_on_spawn_particles)
 		hero_card.actor_conditions_changed.connect(_on_actor_conditions_changed)
 		hero_card.current_ct = randi_range(0, hero_data.stats.speed * 5)
-		hero_card.role_shifted.connect(_on_hero_role_shifted)
 		actor_list.append(hero_card)
 
 	for enemy_data in enemy_data_files:
@@ -191,21 +191,11 @@ func update_turn_order():
 func _on_actor_died(actor: ActorCard):
 	print(actor.actor_name, " has died. Removing from actor_list.")
 
-	# 1. Remove from the "master list"
-	if actor_list.has(actor):
-		actor_list.erase(actor)
-	else:
-		print("Error: Actor was not in actor_list.")
+	actor_list.erase(actor)
+	if _check_if_battle_ended():
+		return
 
 	update_turn_order()
-
-	# 3. Check for victory/defeat
-	if get_living_heroes().is_empty():
-		print("--- GAME OVER ---")
-		change_state(State.EXECUTING_ACTION) # (Or a new DEFEAT state)
-	elif get_living_enemies().is_empty():
-		print("--- VICTORY ---")
-		change_state(State.EXECUTING_ACTION) # (Or a new VICTORY state)
 
 func _on_actor_revived(actor: ActorCard):
 	print(actor.name, " has revived! Adding back to actor_list.")
@@ -409,24 +399,6 @@ func _on_shift_button_pressed(direction: String):
 	else:
 		change_state(State.PLAYER_ACTION)
 
-func _on_hero_role_shifted(hero_card: HeroCard):
-	var new_role = hero_card.get_current_role()
-	action_bar.update_action_bar(hero_card, true)
-	var action: Action = new_role.shift_action
-	if not action: return
-
-	if action.auto_target:
-		print("Auto-executing shift action...")
-		var target_list = get_targets(action.target_type, true)
-
-		await execute_action(current_actor, action, target_list)
-		change_state(State.PLAYER_ACTION)
-		return
-
-	change_state(State.FORCED_TARGET)
-	print("Action requires a target. Waiting for click...")
-	set_current_action(action)
-
 func get_targets(target_type: Action.TargetType, friendly: bool, parent_targets: Array = [], attacker: ActorCard = null) -> Array:
 	var enemies = []
 	var heroes = []
@@ -535,3 +507,21 @@ func _get_rich_description(action: Action) -> String:
 	var description = action.get_rich_description(hero)
 
 	return description
+
+func _check_if_battle_ended() -> bool:
+	var heroes_alive = not get_living_heroes().is_empty()
+	var enemies_alive = not get_living_enemies().is_empty()
+
+	if not enemies_alive:
+		print("--- VICTORY ---")
+		change_state(State.BATTLE_OVER)
+		battle_ended.emit() # Player Won
+		return true
+
+	if not heroes_alive:
+		print("--- DEFEAT ---")
+		change_state(State.BATTLE_OVER)
+		battle_ended.emit() # Player Lost
+		return true
+
+	return false

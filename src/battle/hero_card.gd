@@ -2,7 +2,6 @@ extends ActorCard
 class_name HeroCard
 
 # --- UNIQUE Signals ---
-signal role_shifted(hero_card)
 signal hero_clicked(hero_card)
 @warning_ignore("unused_signal")
 signal passive_fired

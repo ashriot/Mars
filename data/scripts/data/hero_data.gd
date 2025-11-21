@@ -71,7 +71,7 @@ func _add_stats(base: ActorStats, additional: ActorStats):
 	base.kinetic_defense = clampi(base.kinetic_defense + additional.kinetic_defense, 0, 90)
 	base.energy_defense = clampi(base.energy_defense + additional.energy_defense, 0, 90)
 
-func _apply_special_effect(stats: ActorStats, equipment: Equipment):
+func _apply_special_effect(actor_stats: ActorStats, equipment: Equipment):
 	match equipment.special_effect:
 		"advantage_1", "advantage_2", "advantage_3":
 			# Starting Focus bonus handled in combat initialization
@@ -81,8 +81,8 @@ func _apply_special_effect(stats: ActorStats, equipment: Equipment):
 			pass
 		"glass_cannon":
 			# Apply HP penalty (-20% HP)
-			var penalty = int(stats.max_hp * abs(equipment.special_effect_value) / 100.0)
-			stats.max_hp = max(1, stats.max_hp - penalty)
+			var penalty = int(actor_stats.max_hp * abs(equipment.special_effect_value) / 100.0)
+			actor_stats.max_hp = max(1, actor_stats.max_hp - penalty)
 		"paladin":
 			# Damage reduction handled in combat
 			pass
