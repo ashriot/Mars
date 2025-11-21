@@ -1,6 +1,8 @@
 extends Node2D
 
 @onready var alert_gauge: ProgressBar = $CanvasLayer/AlertGauge
+@onready var parallax_bg: Parallax2D = $Parallax2D
+@onready var bg_sprite: Sprite2D = $Parallax2D/Sprite2D
 
 # --- Configuration ---
 @export var map_length: int = 12
@@ -38,11 +40,9 @@ var hex_width: float
 var hex_height: float
 var grid_nodes = {}
 var camera: Camera2D
-var parallax_bg: ParallaxBackground
-var parallax_layer: ParallaxLayer
-var bg_sprite: Sprite2D
 
 func _ready():
+	randomize()
 	hex_width = sqrt(3.0) * hex_size
 	hex_height = hex_size * 2.0
 	vision_range = 2
@@ -50,7 +50,7 @@ func _ready():
 	alert_gauge.modulate = Color.LAWN_GREEN
 
 	_setup_camera()
-	_setup_background() # Initialize the parallax nodes
+	#_setup_background() # Initialize the parallax nodes
 	generate_hex_grid()
 
 func _setup_camera():
@@ -61,25 +61,6 @@ func _setup_camera():
 		camera.name = "Camera2D"
 		add_child(camera)
 	camera.make_current()
-
-func _setup_background():
-	# Create the Parallax stack if it doesn't exist
-	if has_node("ParallaxBackground"):
-		parallax_bg = $ParallaxBackground
-		parallax_layer = parallax_bg.get_node("ParallaxLayer")
-		bg_sprite = parallax_layer.get_node("Sprite2D")
-	else:
-		parallax_bg = ParallaxBackground.new()
-		parallax_bg.name = "ParallaxBackground"
-		add_child(parallax_bg)
-
-		parallax_layer = ParallaxLayer.new()
-		parallax_layer.name = "ParallaxLayer"
-		parallax_bg.add_child(parallax_layer)
-
-		bg_sprite = Sprite2D.new()
-		bg_sprite.name = "Sprite2D"
-		parallax_layer.add_child(bg_sprite)
 
 func _input(event):
 	if event is InputEventKey and event.pressed and event.keycode == KEY_R:
@@ -181,8 +162,6 @@ func generate_hex_grid():
 			_move_player_to(grid_nodes.values()[0], true)
 
 func _update_background_transform(min_b: Vector2, max_b: Vector2):
-	if not background_texture or not parallax_layer: return
-
 	bg_sprite.texture = background_texture
 
 	# 1. Calculate Grid Size
@@ -199,7 +178,7 @@ func _update_background_transform(min_b: Vector2, max_b: Vector2):
 	var max_dimension = max(grid_size.x, grid_size.y)
 	var depth_factor = clamp(1.0 - (max_dimension / 5000.0), 0.1, 0.9)
 
-	parallax_layer.motion_scale = Vector2(depth_factor, depth_factor)
+	parallax_bg.scroll_scale = Vector2(depth_factor, depth_factor)
 
 	# 3. Scale the Sprite
 	# Since the background moves slower than the camera, the image actually needs
@@ -222,23 +201,37 @@ func _update_background_transform(min_b: Vector2, max_b: Vector2):
 
 	# 4. Center it
 	# ParallaxLayer creates an offset, so we offset the sprite to center on the grid
-	parallax_layer.motion_offset = grid_center
+	parallax_bg.scroll_offset = grid_center
 
 func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 	var type_map = {}
 	for c in all_coords: type_map[c] = MapNode.NodeType.UNKNOWN
 
+	# 1. FIND START (Entrance)
+	# Absolute Leftmost node on the center row (or just absolute leftmost)
 	var min_x = 9999
-	var max_x = -9999
 	for c in all_coords:
-		if c.y == center_y:
-			if c.x < min_x: min_x = c.x
-			if c.x > max_x: max_x = c.x
-
+		if c.y == center_y and c.x < min_x:
+			min_x = c.x
 	var start_node = Vector2i(min_x, center_y)
-	var boss_node = Vector2i(max_x, center_y)
+
+	# 2. FIND BOSS (Exit)
+	# Sort all nodes by X position (Descending / Right-to-Left)
+	var sorted_by_x = all_coords.duplicate()
+	sorted_by_x.sort_custom(func(a, b): return a.x > b.x)
+
+	# Take the top 7 right-most nodes as candidates
+	var boss_candidates_count = min(7, sorted_by_x.size())
+	var boss_pool = sorted_by_x.slice(0, boss_candidates_count)
+
+	# Pick one, but ensure it's not the start node (sanity check)
+	var boss_node = boss_pool.pick_random()
+	while boss_node == start_node and boss_pool.size() > 1:
+		boss_node = boss_pool.pick_random()
+
 	type_map[boss_node] = MapNode.NodeType.BOSS
 
+	# 3. DISTRIBUTE GOOD NODES
 	var good_candidates = []
 	for c in all_coords:
 		if c == start_node or c == boss_node: continue
@@ -255,6 +248,7 @@ func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 	_assign_good.call(MapNode.NodeType.REWARD, num_rewards)
 	_assign_good.call(MapNode.NodeType.EVENT, num_events)
 
+	# 4. FILL COMBAT
 	var empty_spots = []
 	for c in all_coords:
 		if c == start_node or c == boss_node: continue
@@ -267,7 +261,6 @@ func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 		type_map[c] = MapNode.NodeType.COMBAT
 
 	return type_map
-
 func _create_map_node(grid_x, grid_y, screen_pos, points, type):
 	var node = map_node_scene.instantiate()
 	node.position = screen_pos
@@ -297,11 +290,11 @@ func _move_player_to(target_node: MapNode, is_start: bool = false):
 
 	if not is_start:
 		total_moves += 1
-		if alert_gauge.value < 33:
+		if alert_gauge.value < 19:
 			alert_gauge.modulate = Color.LAWN_GREEN
 			alert_gauge.value += 4
 			vision_range = 2
-		elif alert_gauge.value < 66:
+		elif alert_gauge.value < 69:
 			alert_gauge.modulate = Color.GOLD
 			alert_gauge.value += 5
 			vision_range = 1
