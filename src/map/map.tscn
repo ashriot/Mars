@@ -1,8 +1,61 @@
-[gd_scene load_steps=3 format=3 uid="uid://cqo38uie6gkdu"]
+[gd_scene load_steps=5 format=3 uid="uid://cqo38uie6gkdu"]
 
 [ext_resource type="Script" uid="uid://c0tmi3fc3fega" path="res://src/map/map.gd" id="1_5o7fj"]
 [ext_resource type="PackedScene" uid="uid://cqdl6q7d2hmox" path="res://src/map/map_node.tscn" id="2_vfn15"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1a5qu"]
+content_margin_left = 2.0
+content_margin_top = 2.0
+content_margin_right = 2.0
+content_margin_bottom = 2.0
+bg_color = Color(1, 1, 1, 0.10980392)
+border_width_left = 6
+border_width_top = 6
+border_width_right = 6
+border_width_bottom = 6
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+corner_detail = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vfn15"]
+content_margin_left = 2.0
+content_margin_top = 2.0
+content_margin_right = 2.0
+content_margin_bottom = 2.0
+bg_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+corner_detail = 6
+
 [node name="Map" type="Node2D"]
 script = ExtResource("1_5o7fj")
+num_combats = 6
+num_elites = 2
+num_events = 3
+num_rewards = 2
 map_node_scene = ExtResource("2_vfn15")
+
+[node name="Background" type="ColorRect" parent="."]
+offset_right = 1920.0
+offset_bottom = 1080.0
+mouse_filter = 2
+color = Color(0, 0.29, 0.2658333, 1)
+
+[node name="AlertGauge" type="ProgressBar" parent="."]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = 398.0
+offset_top = 27.0
+offset_right = 1522.0
+offset_bottom = 97.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 60
+theme_override_styles/background = SubResource("StyleBoxFlat_1a5qu")
+theme_override_styles/fill = SubResource("StyleBoxFlat_vfn15")
+value = 50.0

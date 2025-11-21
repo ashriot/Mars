@@ -1,16 +1,30 @@
-[gd_scene load_steps=7 format=3 uid="uid://cqdl6q7d2hmox"]
+[gd_scene load_steps=9 format=3 uid="uid://cqdl6q7d2hmox"]
 
 [ext_resource type="Script" uid="uid://dxr2orrn2qdfl" path="res://src/map/map_node.gd" id="1_4vxbe"]
-[ext_resource type="Texture2D" uid="uid://fptqehalo870" path="res://assets/graphics/icons/map/delivery-drone.png" id="2_x0s18"]
-[ext_resource type="Texture2D" uid="uid://dl0jy1bkukgih" path="res://assets/graphics/icons/map/warning-sign.png" id="3_u4cy1"]
-[ext_resource type="Texture2D" uid="uid://bvemv0508xlmy" path="res://assets/graphics/icons/map/biohazard.png" id="4_sr7yi"]
+[ext_resource type="Texture2D" uid="uid://mnou58qeo8yu" path="res://assets/graphics/icons/map/hexagon.png" id="2_sr7yi"]
+[ext_resource type="Texture2D" uid="uid://yhyvn3s1ypck" path="res://assets/graphics/icons/map/military_rank1.png" id="2_w16p8"]
+[ext_resource type="Texture2D" uid="uid://catmya1gaerlj" path="res://assets/graphics/icons/map/military_rank2.png" id="3_6jefm"]
+[ext_resource type="Texture2D" uid="uid://cvm864osuvl67" path="res://assets/graphics/icons/map/hexagon_outline.png" id="3_w16p8"]
+[ext_resource type="Texture2D" uid="uid://chtkwuxc3x00k" path="res://assets/graphics/icons/map/military_rank3.png" id="4_oc3lw"]
 [ext_resource type="Texture2D" uid="uid://lbnoepsf1vqi" path="res://assets/graphics/icons/map/circuit.png" id="5_w16p8"]
 [ext_resource type="Texture2D" uid="uid://blngjxr3psmpu" path="res://assets/graphics/icons/map/terminal.png" id="6_6jefm"]
 
 [node name="MapNode" type="Area2D"]
 script = ExtResource("1_4vxbe")
-icon_combat = ExtResource("2_x0s18")
-icon_elite = ExtResource("3_u4cy1")
-icon_boss = ExtResource("4_sr7yi")
+icon_combat = ExtResource("2_w16p8")
+icon_elite = ExtResource("3_6jefm")
+icon_boss = ExtResource("4_oc3lw")
 icon_reward = ExtResource("5_w16p8")
 icon_event = ExtResource("6_6jefm")
+
+[node name="HexSprite" type="Sprite2D" parent="."]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2_sr7yi")
+
+[node name="IconSprite" type="Sprite2D" parent="HexSprite"]
+scale = Vector2(2, 2)
+
+[node name="SelectionSprite" type="Sprite2D" parent="."]
+visible = false
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("3_w16p8")
