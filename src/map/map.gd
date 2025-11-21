@@ -6,22 +6,25 @@ extends Node2D
 @onready var bg_sprite: Sprite2D = $Parallax2D/Sprite2D
 
 # --- Configuration ---
+@export_group("Map Dimensions")
 @export var map_length: int = 12
 @export var map_height: int = 12
-@export var hex_size: float = 50.0
-@export var gap: float = 40.0
-
-# --- Node Distribution Settings ---
-@export_group("Node Counts")
-@export var num_combats: int = 10
-@export var num_elites: int = 3
-@export var num_events: int = 4
-@export var num_rewards: int = 3
 
 # --- Game Rules ---
+@export_group("Map Rules")
 @export var vision_range: int = 1
 var total_moves: int = 0
 var current_node: MapNode = null
+
+# --- Node Distribution Settings ---
+@export_group("Node Counts")
+@export var num_combats: int = 7
+@export var num_elites: int = 2
+@export var num_events: int = 2
+@export var num_terminals: int = 4
+@export var num_rewards: int = 3
+@export var num_uncommon_rewards: int = 2
+@export var num_rare_rewards: int = 1
 
 # --- Camera Settings ---
 @export_group("Camera")
@@ -42,6 +45,10 @@ var hex_width: float
 var hex_height: float
 var grid_nodes = {}
 var camera: Camera2D
+
+# --- Hex Values ---
+var hex_size: float = 50.0
+var gap: float = 40.0
 
 # --- SHADER CODE ---
 # A simple 9-sample blur shader we can inject dynamically
@@ -78,7 +85,7 @@ func _ready():
 	hex_height = hex_size * 2.0
 	vision_range = 2
 
-	alert_gauge.self_modulate = Color.LAWN_GREEN
+	alert_gauge.self_modulate = Color.MEDIUM_SEA_GREEN
 	alert_gauge.value = 0
 	alert_label.text = str(int(alert_gauge.value)) + "%"
 
@@ -276,6 +283,9 @@ func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 
 	_assign_good.call(MapNode.NodeType.ELITE, num_elites)
 	_assign_good.call(MapNode.NodeType.REWARD, num_rewards)
+	_assign_good.call(MapNode.NodeType.REWARD_2, num_uncommon_rewards)
+	_assign_good.call(MapNode.NodeType.REWARD_3, num_rare_rewards)
+	_assign_good.call(MapNode.NodeType.TERMINAL, num_terminals)
 	_assign_good.call(MapNode.NodeType.EVENT, num_events)
 
 	# 4. FILL COMBAT
@@ -312,30 +322,30 @@ func _on_node_clicked(target_node: MapNode):
 	_move_player_to(target_node)
 
 func _move_player_to(target_node: MapNode, is_start: bool = false):
-	if current_node != null: current_node.set_is_current(false)
-
+	if current_node:
+		current_node.set_is_current(false)
 	current_node = target_node
-	target_node.set_state(MapNode.NodeState.COMPLETED)
+	var been = target_node.state == MapNode.NodeState.COMPLETED
+	if not been: target_node.set_state(MapNode.NodeState.COMPLETED)
 	target_node.set_is_current(true)
 
 	if not is_start:
 		total_moves += 1
 		if alert_gauge.value < 19:
-			alert_gauge.self_modulate = Color.LAWN_GREEN
-			alert_gauge.value += 4
+			alert_gauge.self_modulate = Color.MEDIUM_SEA_GREEN
+			alert_gauge.value += 4 if not been else 1
 			vision_range = 2
 		elif alert_gauge.value < 69:
-			alert_gauge.self_modulate = Color.GOLD
-			alert_gauge.value += 5
+			alert_gauge.self_modulate = Color.GOLDENROD
+			alert_gauge.value += 5 if not been else 2
 			vision_range = 1
 		else:
-			alert_gauge.self_modulate = Color.RED
-			alert_gauge.value += 6
+			alert_gauge.self_modulate = Color.ORANGE_RED
+			alert_gauge.value += 6 if not been else 3
 			vision_range = 0
-
 		alert_label.text = str(int(alert_gauge.value)) + "%"
 
-		print("Moved to ", target_node.grid_coords, ". Total Moves: ", total_moves)
+		#print("Moved to ", target_node.grid_coords, ". Total Moves: ", total_moves)
 
 	_update_vision()
 	_move_camera_to_player(is_start)

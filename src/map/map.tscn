@@ -35,9 +35,6 @@ corner_detail = 6
 [node name="Map" type="Node2D"]
 script = ExtResource("1_5o7fj")
 num_combats = 6
-num_elites = 2
-num_events = 3
-num_rewards = 2
 map_node_scene = ExtResource("2_vfn15")
 background_texture = ExtResource("2_1a5qu")
 background_blur = 3.0

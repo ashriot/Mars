@@ -1,9 +1,10 @@
-[gd_scene load_steps=10 format=3 uid="uid://cqdl6q7d2hmox"]
+[gd_scene load_steps=11 format=3 uid="uid://cqdl6q7d2hmox"]
 
 [ext_resource type="Script" uid="uid://dxr2orrn2qdfl" path="res://src/map/map_node.gd" id="1_4vxbe"]
 [ext_resource type="Texture2D" uid="uid://mnou58qeo8yu" path="res://assets/graphics/icons/map/hexagon.png" id="2_sr7yi"]
 [ext_resource type="Texture2D" uid="uid://yhyvn3s1ypck" path="res://assets/graphics/icons/map/military_rank1.png" id="2_w16p8"]
 [ext_resource type="Texture2D" uid="uid://catmya1gaerlj" path="res://assets/graphics/icons/map/military_rank2.png" id="3_6jefm"]
+[ext_resource type="Texture2D" uid="uid://dl0jy1bkukgih" path="res://assets/graphics/icons/map/warning-sign.png" id="3_u4cy1"]
 [ext_resource type="Texture2D" uid="uid://cvm864osuvl67" path="res://assets/graphics/icons/map/hexagon_outline.png" id="3_w16p8"]
 [ext_resource type="Texture2D" uid="uid://chtkwuxc3x00k" path="res://assets/graphics/icons/map/military_rank3.png" id="4_oc3lw"]
 [ext_resource type="Texture2D" uid="uid://bvemv0508xlmy" path="res://assets/graphics/icons/map/biohazard.png" id="4_sr7yi"]
@@ -16,7 +17,8 @@ icon_combat = ExtResource("2_w16p8")
 icon_elite = ExtResource("3_6jefm")
 icon_boss = ExtResource("4_oc3lw")
 icon_reward = ExtResource("5_w16p8")
-icon_event = ExtResource("6_6jefm")
+icon_event = ExtResource("3_u4cy1")
+icon_terminal = ExtResource("6_6jefm")
 
 [node name="HexSprite" type="Sprite2D" parent="."]
 self_modulate = Color(1, 0.110000014, 0.110000014, 1)

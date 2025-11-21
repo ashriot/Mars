@@ -3,7 +3,7 @@ extends Area2D
 
 signal node_clicked(node: MapNode)
 
-enum NodeType { COMBAT, ELITE, BOSS, REWARD, EVENT, UNKNOWN }
+enum NodeType { COMBAT, ELITE, BOSS, REWARD, REWARD_2, REWARD_3, EVENT, TERMINAL, UNKNOWN }
 enum NodeState { HIDDEN, REVEALED, COMPLETED }
 
 @onready var hex_sprite = $HexSprite
@@ -18,6 +18,7 @@ enum NodeState { HIDDEN, REVEALED, COMPLETED }
 @export var icon_boss: Texture2D
 @export var icon_reward: Texture2D
 @export var icon_event: Texture2D
+@export var icon_terminal: Texture2D
 
 # --- State ---
 var type: NodeType = NodeType.UNKNOWN
@@ -62,25 +63,29 @@ func set_state(new_state: NodeState):
 
 		NodeState.REVEALED:
 			if icon_sprite: icon_sprite.visible = true
-			hex_sprite.modulate.a = 1.0
 			_set_type_color()
+			hex_sprite.modulate.a = 1.0
 
 		NodeState.COMPLETED:
 			if icon_sprite: icon_sprite.visible = true
 			_set_type_color()
 			hex_sprite.modulate.a = 1.0
-			hex_sprite.modulate = hex_sprite.modulate.lightened(0.75)
+			hex_sprite.modulate = hex_sprite.modulate.darkened(0.4)
+			icon_sprite.modulate = Color.DIM_GRAY
 
 func set_is_current(is_current: bool):
 	$SelectionSprite.visible = is_current
 
 func _set_type_color():
 	match type:
-		NodeType.COMBAT: hex_sprite.self_modulate = Color.GOLD
-		NodeType.ELITE: hex_sprite.self_modulate = Color.ORANGE_RED
+		NodeType.COMBAT: hex_sprite.self_modulate = Color.GOLDENROD
+		NodeType.ELITE: hex_sprite.self_modulate = Color.INDIAN_RED
 		NodeType.BOSS: hex_sprite.self_modulate = Color.MAGENTA
-		NodeType.REWARD: hex_sprite.self_modulate = Color.LIGHT_SEA_GREEN
-		NodeType.EVENT: hex_sprite.self_modulate = Color.LAWN_GREEN
+		NodeType.REWARD: hex_sprite.self_modulate = Color.YELLOW_GREEN
+		NodeType.REWARD_2: hex_sprite.self_modulate = Color.CADET_BLUE
+		NodeType.REWARD_3: hex_sprite.self_modulate = Color.REBECCA_PURPLE
+		NodeType.EVENT: hex_sprite.self_modulate = Color.LIGHT_PINK
+		NodeType.TERMINAL: hex_sprite.self_modulate = Color.DARK_ORANGE
 		NodeType.UNKNOWN: hex_sprite.self_modulate = Color.DIM_GRAY
 
 func _get_my_texture() -> Texture2D:
@@ -88,6 +93,7 @@ func _get_my_texture() -> Texture2D:
 		NodeType.COMBAT: return icon_combat
 		NodeType.ELITE: return icon_elite
 		NodeType.BOSS: return icon_boss
-		NodeType.REWARD: return icon_reward
+		NodeType.REWARD, NodeType.REWARD_2, NodeType.REWARD_3: return icon_reward
 		NodeType.EVENT: return icon_event
+		NodeType.TERMINAL: return icon_terminal
 	return null
