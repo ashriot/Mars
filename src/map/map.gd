@@ -1,8 +1,10 @@
 extends Node2D
 
+@onready var alert_gauge: ProgressBar = $CanvasLayer/AlertGauge
+
 # --- Configuration ---
-@export var map_length: int = 15
-@export var map_height: int = 7
+@export var map_length: int = 12
+@export var map_height: int = 12
 @export var hex_size: float = 50.0
 @export var gap: float = 40.0
 
@@ -12,39 +14,93 @@ extends Node2D
 @export var num_elites: int = 3
 @export var num_events: int = 4
 @export var num_rewards: int = 3
-# "Unknown" nodes will fill any empty space remaining
 
 # --- Game Rules ---
 @export var vision_range: int = 1
 var total_moves: int = 0
 var current_node: MapNode = null
 
-# --- Assets ---
+# --- Camera Settings ---
+@export_group("Camera")
+@export var zoom_step: float = 0.1
+@export var min_zoom: float = 0.5
+@export var max_zoom: float = 2.5
+@export var camera_smooth_speed: float = 0.3
+@export var camera_edge_margin: float = 850.0
+
+# --- Visuals ---
+@export_group("Visuals")
+@export var background_texture: Texture2D
 @export var map_node_scene: PackedScene
 
 # --- Internal Data ---
 var hex_width: float
 var hex_height: float
 var grid_nodes = {}
+var camera: Camera2D
+var parallax_bg: ParallaxBackground
+var parallax_layer: ParallaxLayer
+var bg_sprite: Sprite2D
 
 func _ready():
 	hex_width = sqrt(3.0) * hex_size
 	hex_height = hex_size * 2.0
 	vision_range = 2
 
-	if has_node("AlertGauge"):
-		$AlertGauge.modulate = Color.LAWN_GREEN
+	alert_gauge.modulate = Color.LAWN_GREEN
 
+	_setup_camera()
+	_setup_background() # Initialize the parallax nodes
 	generate_hex_grid()
+
+func _setup_camera():
+	if has_node("Camera2D"):
+		camera = $Camera2D
+	else:
+		camera = Camera2D.new()
+		camera.name = "Camera2D"
+		add_child(camera)
+	camera.make_current()
+
+func _setup_background():
+	# Create the Parallax stack if it doesn't exist
+	if has_node("ParallaxBackground"):
+		parallax_bg = $ParallaxBackground
+		parallax_layer = parallax_bg.get_node("ParallaxLayer")
+		bg_sprite = parallax_layer.get_node("Sprite2D")
+	else:
+		parallax_bg = ParallaxBackground.new()
+		parallax_bg.name = "ParallaxBackground"
+		add_child(parallax_bg)
+
+		parallax_layer = ParallaxLayer.new()
+		parallax_layer.name = "ParallaxLayer"
+		parallax_bg.add_child(parallax_layer)
+
+		bg_sprite = Sprite2D.new()
+		bg_sprite.name = "Sprite2D"
+		parallax_layer.add_child(bg_sprite)
 
 func _input(event):
 	if event is InputEventKey and event.pressed and event.keycode == KEY_R:
 		generate_hex_grid()
 
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			_zoom_camera(zoom_step)
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			_zoom_camera(-zoom_step)
+
+func _zoom_camera(step: float):
+	if not camera: return
+	var target_zoom = camera.zoom + Vector2(step, step)
+	target_zoom.x = clamp(target_zoom.x, min_zoom, max_zoom)
+	target_zoom.y = clamp(target_zoom.y, min_zoom, max_zoom)
+	camera.zoom = target_zoom
+
 func generate_hex_grid():
 	print("Generating Map | Length: %d | Height: %d" % [map_length, map_height])
 
-	# 1. Cleanup
 	total_moves = 0
 	current_node = null
 	hex_width = sqrt(3.0) * hex_size
@@ -54,24 +110,28 @@ func generate_hex_grid():
 		print("Error: Please assign 'Map Node Scene' in the Inspector!")
 		return
 
-	if has_node("Background"):
-		for child in $Background.get_children():
-			child.queue_free()
-	else:
-		print("Error: Missing 'Background' node.")
-		return
+	# Use explicit Background container for nodes so they sit ON TOP of parallax
+	if not has_node("Background"):
+		var bg_node = Node2D.new()
+		bg_node.name = "Background"
+		add_child(bg_node)
 
+	for child in $Background.get_children():
+		child.queue_free()
 	grid_nodes.clear()
-	if has_node("AlertGauge"): $AlertGauge.value = 0
+	alert_gauge.value = 0
 
-	# 2. Calculate Coordinates & Visual Positions
 	var valid_coords = {}
 
-	var start_pos = Vector2(80, 200)
+	var start_pos = Vector2(100, 200)
 	var center_y = floor(map_height / 2.0)
 	var center_row_is_even = (int(center_y) % 2 == 0)
 	var center_shift = 0.5 if center_row_is_even else 0.0
 	var visual_center_x = (map_length - 1) / 2.0 + center_shift
+
+	# We need to track bounds to size the background later
+	var min_bounds = Vector2(99999, 99999)
+	var max_bounds = Vector2(-99999, -99999)
 
 	for y in range(map_height):
 		var dist_y = abs(y - center_y)
@@ -87,18 +147,20 @@ func generate_hex_grid():
 			var x = x_start + i
 			var grid_pos = Vector2i(x, y)
 
-			# Visual Math
 			var x_pos = x * (hex_width + gap)
-			var y_pos = y * (hex_height * 0.75 + gap)
+			var y_pos = y * (hex_height * 0.67 + gap)
 			if y % 2 == 0: x_pos += (hex_width + gap) / 2.0
 			var final_pos = start_pos + Vector2(x_pos, y_pos)
 
 			valid_coords[grid_pos] = final_pos
 
-	# 3. DISTRIBUTE TYPES
-	var node_types = _distribute_node_types(valid_coords.keys(), center_y)
+			# Track bounds
+			min_bounds.x = min(min_bounds.x, final_pos.x)
+			min_bounds.y = min(min_bounds.y, final_pos.y)
+			max_bounds.x = max(max_bounds.x, final_pos.x)
+			max_bounds.y = max(max_bounds.y, final_pos.y)
 
-	# 4. INSTANTIATE NODES
+	var node_types = _distribute_node_types(valid_coords.keys(), center_y)
 	var hex_points = _get_pointy_top_hex_points(hex_size)
 
 	for coords in valid_coords.keys():
@@ -106,7 +168,9 @@ func generate_hex_grid():
 		var assigned_type = node_types[coords]
 		_create_map_node(coords.x, coords.y, screen_pos, hex_points, assigned_type)
 
-	# 5. Start Game
+	# --- UPDATE BACKGROUND ---
+	_update_background_transform(min_bounds, max_bounds)
+
 	var center_start_x = round(visual_center_x - center_shift - (map_length - 1) / 2.0)
 	var start_coords = Vector2i(center_start_x, center_y)
 
@@ -116,19 +180,56 @@ func generate_hex_grid():
 		if grid_nodes.size() > 0:
 			_move_player_to(grid_nodes.values()[0], true)
 
-# --- TYPE DISTRIBUTION ALGORITHM ---
+func _update_background_transform(min_b: Vector2, max_b: Vector2):
+	if not background_texture or not parallax_layer: return
+
+	bg_sprite.texture = background_texture
+
+	# 1. Calculate Grid Size
+	# Add padding so nodes don't touch the edge of the image
+	var padding = Vector2(hex_width * 4, hex_height * 4)
+	var grid_center = (min_b + max_b) / 2.0
+	var grid_size = (max_b - min_b) + padding
+
+	# 2. Determine Parallax Factor
+	# Logic: The larger the map, the lower the motion scale (moves slower/looks deeper)
+	# Example:
+	# Small map (1000px) -> factor 0.8 (Close)
+	# Huge map (5000px) -> factor 0.2 (Far)
+	var max_dimension = max(grid_size.x, grid_size.y)
+	var depth_factor = clamp(1.0 - (max_dimension / 5000.0), 0.1, 0.9)
+
+	parallax_layer.motion_scale = Vector2(depth_factor, depth_factor)
+
+	# 3. Scale the Sprite
+	# Since the background moves slower than the camera, the image actually needs
+	# to be *larger* than the grid to ensure the camera doesn't see the edge.
+	# Formula: Required_Size = Grid_Size + (Grid_Size * (1 - motion_scale))
+	# We simplify by scaling it comfortably up based on the inverse of motion scale.
+
+	var tex_size = background_texture.get_size()
+	var required_scale = Vector2.ONE
+
+	# Calculate required world size to cover the parallax movement
+	var world_coverage = grid_size * (1.0 + (1.0 - depth_factor))
+
+	required_scale.x = world_coverage.x / tex_size.x
+	required_scale.y = world_coverage.y / tex_size.y
+
+	# Pick the larger scale to maintain aspect ratio if desired, or stretch
+	var final_scale = max(required_scale.x, required_scale.y)
+	bg_sprite.scale = Vector2(final_scale, final_scale)
+
+	# 4. Center it
+	# ParallaxLayer creates an offset, so we offset the sprite to center on the grid
+	parallax_layer.motion_offset = grid_center
+
 func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 	var type_map = {}
+	for c in all_coords: type_map[c] = MapNode.NodeType.UNKNOWN
 
-	# A. Initialize Everything to UNKNOWN
-	for c in all_coords:
-		type_map[c] = MapNode.NodeType.UNKNOWN
-
-	# B. Identify Key Locations (Start / Boss)
 	var min_x = 9999
 	var max_x = -9999
-
-	# Find limits of center row
 	for c in all_coords:
 		if c.y == center_y:
 			if c.x < min_x: min_x = c.x
@@ -136,23 +237,14 @@ func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 
 	var start_node = Vector2i(min_x, center_y)
 	var boss_node = Vector2i(max_x, center_y)
-
-	# Set Fixed Nodes
-	# We keep start as UNKNOWN or you can make it EVENT if you want a freebie
 	type_map[boss_node] = MapNode.NodeType.BOSS
 
-	# D. Gather Candidates for "Good" Nodes
 	var good_candidates = []
-
 	for c in all_coords:
 		if c == start_node or c == boss_node: continue
-
 		good_candidates.append(c)
-
-	# E. Randomly Distribute "Good" Nodes (Uniform Distribution)
 	good_candidates.shuffle()
 
-	# Helper to assign from the shuffled deck
 	var _assign_good = func(type, count):
 		for i in range(count):
 			if good_candidates.is_empty(): break
@@ -163,14 +255,11 @@ func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 	_assign_good.call(MapNode.NodeType.REWARD, num_rewards)
 	_assign_good.call(MapNode.NodeType.EVENT, num_events)
 
-	# F. Fill Remaining Spots with Combat
-	# Combat can go ANYWHERE that is currently UNKNOWN (including the main road)
 	var empty_spots = []
 	for c in all_coords:
 		if c == start_node or c == boss_node: continue
 		if type_map[c] == MapNode.NodeType.UNKNOWN:
 			empty_spots.append(c)
-
 	empty_spots.shuffle()
 
 	for i in range(min(num_combats, empty_spots.size())):
@@ -179,7 +268,6 @@ func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 
 	return type_map
 
-# --- NODE CREATION ---
 func _create_map_node(grid_x, grid_y, screen_pos, points, type):
 	var node = map_node_scene.instantiate()
 	node.position = screen_pos
@@ -191,21 +279,17 @@ func _create_map_node(grid_x, grid_y, screen_pos, points, type):
 	node.node_clicked.connect(_on_node_clicked)
 	grid_nodes[Vector2i(grid_x, grid_y)] = node
 
-# --- GAMEPLAY LOGIC ---
 func _on_node_clicked(target_node: MapNode):
 	if target_node == current_node: return
-
 	if current_node != null:
 		var dist = _get_hex_distance(current_node.grid_coords, target_node.grid_coords)
 		if dist > 1:
 			print("Too far! Dist: ", dist)
 			return
-
 	_move_player_to(target_node)
 
 func _move_player_to(target_node: MapNode, is_start: bool = false):
-	if current_node != null:
-		current_node.set_is_current(false)
+	if current_node != null: current_node.set_is_current(false)
 
 	current_node = target_node
 	target_node.set_state(MapNode.NodeState.COMPLETED)
@@ -213,36 +297,59 @@ func _move_player_to(target_node: MapNode, is_start: bool = false):
 
 	if not is_start:
 		total_moves += 1
-		if has_node("AlertGauge"):
-			if $AlertGauge.value < 33:
-				$AlertGauge.modulate = Color.LAWN_GREEN
-				$AlertGauge.value += 4
-				vision_range = 2
-			elif $AlertGauge.value < 66:
-				$AlertGauge.modulate = Color.GOLD
-				$AlertGauge.value += 5
-				vision_range = 1
-			else:
-				$AlertGauge.modulate = Color.RED
-				$AlertGauge.value += 6
-				vision_range = 0
+		if alert_gauge.value < 33:
+			alert_gauge.modulate = Color.LAWN_GREEN
+			alert_gauge.value += 4
+			vision_range = 2
+		elif alert_gauge.value < 66:
+			alert_gauge.modulate = Color.GOLD
+			alert_gauge.value += 5
+			vision_range = 1
+		else:
+			alert_gauge.modulate = Color.RED
+			alert_gauge.value += 6
+			vision_range = 0
 
 		print("Moved to ", target_node.grid_coords, ". Total Moves: ", total_moves)
 
 	_update_vision()
+	_move_camera_to_player(is_start)
+
+func _move_camera_to_player(force_center: bool):
+	if not camera: return
+	var target_pos = current_node.position
+
+	if force_center:
+		camera.position = target_pos
+		return
+
+	var vp_size = get_viewport_rect().size / camera.zoom
+	var half_vp = vp_size / 2.0
+	var deadzone_x = max(0.0, half_vp.x - camera_edge_margin)
+	var deadzone_y = max(0.0, half_vp.y - camera_edge_margin * 0.56)
+	var diff = target_pos - camera.position
+	var desired_shift = Vector2.ZERO
+
+	if diff.x > deadzone_x: desired_shift.x = diff.x - deadzone_x
+	elif diff.x < -deadzone_x: desired_shift.x = diff.x + deadzone_x
+	if diff.y > deadzone_y: desired_shift.y = diff.y - deadzone_y
+	elif diff.y < -deadzone_y: desired_shift.y = diff.y + deadzone_y
+
+	if desired_shift != Vector2.ZERO:
+		var new_cam_pos = camera.position + desired_shift
+		var tween = create_tween()
+		tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		tween.tween_property(camera, "position", new_cam_pos, camera_smooth_speed)
 
 func _update_vision():
 	if vision_range <= 0: return
 	var center_coords = current_node.grid_coords
 	for node in grid_nodes.values():
 		if node.state == MapNode.NodeState.COMPLETED: continue
-
 		var dist = _get_hex_distance(center_coords, node.grid_coords)
-
 		if dist <= vision_range and node.state == MapNode.NodeState.HIDDEN:
 			node.set_state(MapNode.NodeState.REVEALED)
 
-# --- UTILITIES ---
 func _get_hex_distance(a: Vector2i, b: Vector2i) -> int:
 	var ac = _offset_to_cube(a)
 	var bc = _offset_to_cube(b)

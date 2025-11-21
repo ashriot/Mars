@@ -6,7 +6,7 @@ signal node_clicked(node: MapNode)
 enum NodeType { COMBAT, ELITE, BOSS, REWARD, EVENT, UNKNOWN }
 enum NodeState { HIDDEN, REVEALED, COMPLETED }
 
-@onready var base_sprite = $HexSprite
+@onready var hex_sprite = $HexSprite
 @onready var icon_sprite = $HexSprite/IconSprite
 
 # --- VISUAL ASSETS ---
@@ -56,32 +56,33 @@ func set_state(new_state: NodeState):
 
 	match state:
 		NodeState.HIDDEN:
-			base_sprite.modulate = Color.SLATE_GRAY
+			hex_sprite.modulate = Color.SLATE_GRAY
 			if icon_sprite: icon_sprite.visible = false
+			hex_sprite.modulate.a = 0.5
 
 		NodeState.REVEALED:
 			if icon_sprite: icon_sprite.visible = true
 			_set_type_color()
 			# Darken slightly to show it's not visited yet
-			base_sprite.modulate = base_sprite.modulate.darkened(0.5)
+			hex_sprite.modulate.a = 1.0
 
 		NodeState.COMPLETED:
 			if icon_sprite: icon_sprite.visible = true
 			_set_type_color()
 			# Full brightness
-			base_sprite.modulate = base_sprite.modulate.lightened(0.5)
+			hex_sprite.modulate = hex_sprite.modulate.lightened(0.75)
 
 func set_is_current(is_current: bool):
 	$SelectionSprite.visible = is_current
 
 func _set_type_color():
 	match type:
-		NodeType.COMBAT: base_sprite.self_modulate = Color.INDIAN_RED
-		NodeType.ELITE: base_sprite.self_modulate = Color.DARK_RED
-		NodeType.BOSS: base_sprite.self_modulate = Color.MAGENTA
-		NodeType.REWARD: base_sprite.self_modulate = Color.GOLDENROD
-		NodeType.EVENT: base_sprite.self_modulate = Color.CORNFLOWER_BLUE
-		NodeType.UNKNOWN: base_sprite.self_modulate = Color.WHITE
+		NodeType.COMBAT: hex_sprite.self_modulate = Color.GOLD
+		NodeType.ELITE: hex_sprite.self_modulate = Color.ORANGE_RED
+		NodeType.BOSS: hex_sprite.self_modulate = Color.MAGENTA
+		NodeType.REWARD: hex_sprite.self_modulate = Color.CYAN
+		NodeType.EVENT: hex_sprite.self_modulate = Color.LAWN_GREEN
+		NodeType.UNKNOWN: hex_sprite.self_modulate = Color.WHITE
 
 func _get_my_texture() -> Texture2D:
 	match type:
