@@ -5,7 +5,7 @@
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_gqsil"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gqsil"]
-bg_color = Color(1, 0.47433335, 0.17000002, 1)
+bg_color = Color(1, 0.7, 0, 1)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
@@ -14,7 +14,7 @@ corner_radius_bottom_left = 6
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_xrck3"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wvepw"]
-bg_color = Color(0.72, 0.34152, 0.122400016, 1)
+bg_color = Color(1, 0.45000005, 0, 1)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
@@ -23,7 +23,7 @@ corner_radius_bottom_left = 6
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_wvepw"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xrck3"]
-bg_color = Color(0.43, 0.20396334, 0.07310001, 1)
+bg_color = Color(0.71, 0.22483332, 0, 1)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
@@ -100,11 +100,10 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/background = SubResource("StyleBoxEmpty_xrck3")
 theme_override_styles/fill = SubResource("StyleBoxFlat_wvepw")
-value = 50.0
+value = 60.0
 show_percentage = false
 
 [node name="Bar3" type="ProgressBar" parent="CT"]
-visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0

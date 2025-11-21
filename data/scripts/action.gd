@@ -110,14 +110,14 @@ func _get_damage_string(damage_effect: Effect_Damage, attacker: ActorCard) -> St
 	return str(final_damage)
 
 
-var ICON_PATHS = {
+static var ICON_PATHS = {
 	"focus": "res://assets/graphics/icons/textures/bolt.png",
 	"kinetic": "res://assets/graphics/icons/textures/bullet.png",
 	"energy": "res://assets/graphics/icons/textures/fire.png",
 	"piercing": "res://assets/graphics/icons/textures/pierce.png",
 }
 
-func _get_bbcode_icon(icon_name: String, size: int = 24) -> String:
+static func _get_bbcode_icon(icon_name: String, size: int = 24) -> String:
 	if ICON_PATHS.has(icon_name):
 		return "[img width=%d height=%d]%s[/img]" % [size, size, ICON_PATHS[icon_name]]
 	return ""

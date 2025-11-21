@@ -1,0 +1,55 @@
+[gd_scene load_steps=9 format=3 uid="uid://dldr8pduy83ir"]
+
+[ext_resource type="Texture2D" uid="uid://b0a4ghiukj8yg" path="res://src/effects/Flare_small.PNG" id="1_nlyk2"]
+[ext_resource type="Shader" uid="uid://wojew4khw42x" path="res://src/effects/fog.gdshader" id="2_800v0"]
+
+[sub_resource type="Gradient" id="Gradient_ivd5l"]
+offsets = PackedFloat32Array(0, 0.15121952, 0.88536584, 1)
+colors = PackedColorArray(0, 1, 1, 0, 0, 1, 1, 1, 1, 0.2, 0, 1, 1, 0, 1, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_nlyk2"]
+gradient = SubResource("Gradient_ivd5l")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_ivd5l"]
+particle_flag_disable_z = true
+emission_shape = 3
+emission_box_extents = Vector3(800, 540, 1)
+linear_accel_min = -5.000002
+linear_accel_max = 4.9999976
+scale_min = 0.099999994
+scale_max = 0.5
+color_ramp = SubResource("GradientTexture1D_nlyk2")
+turbulence_enabled = true
+turbulence_noise_speed_random = 0.5
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_800v0"]
+frequency = 0.0025
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_7yoso"]
+width = 320
+height = 180
+noise = SubResource("FastNoiseLite_800v0")
+seamless = true
+seamless_blend_skirt = 0.75
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_7yoso"]
+shader = ExtResource("2_800v0")
+shader_parameter/noise_texture = SubResource("NoiseTexture2D_7yoso")
+shader_parameter/density = 0.25
+shader_parameter/speed = Vector2(0.02, 0.01)
+
+[node name="Background" type="GPUParticles2D"]
+amount = 300
+texture = ExtResource("1_nlyk2")
+lifetime = 30.0
+preprocess = 20.0
+process_material = SubResource("ParticleProcessMaterial_ivd5l")
+
+[node name="Parallax2D" type="Parallax2D" parent="."]
+
+[node name="ColorRect" type="ColorRect" parent="Parallax2D"]
+material = SubResource("ShaderMaterial_7yoso")
+offset_left = -960.0
+offset_top = -540.0
+offset_right = 960.0
+offset_bottom = 540.0

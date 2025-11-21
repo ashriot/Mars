@@ -12,6 +12,7 @@ signal actor_revived(actor)
 signal hp_changed(new_hp, max_hp)
 signal armor_changed(new_pips)
 signal actor_conditions_changed(actor, retarget)
+signal spawn_particles(pos, type)
 
 const MAX_GUARD = 10
 
@@ -105,11 +106,12 @@ func on_turn_ended() -> void:
 	highlight(false)
 	await _fire_condition_event(Trigger.TriggerType.ON_TURN_END)
 
-func apply_one_hit(damage: int, damage_effect: Effect_Damage, attacker: ActorCard, damage_type: Action.DamageType, is_crit: bool) -> void:
+func take_one_hit(damage: int, damage_effect: Effect_Damage, attacker: ActorCard, damage_type: Action.DamageType, is_crit: bool) -> void:
 	if is_defeated: return
 
 	_spawn_damage_popup(damage, damage_type, is_crit)
-
+	var pos = get_global_rect().get_center()
+	spawn_particles.emit(pos, "gunshot")
 	current_hp = max(0, current_hp - damage)
 	hp_bar_actual.value = current_hp
 	hp_value.text = str(current_hp)
@@ -609,22 +611,17 @@ func _spawn_damage_popup(amount: int, damage_type: Action.DamageType, is_crit: b
 	# 1. Create the instance
 	var popup = damage_popup_scene.instantiate() as DamagePopup
 
-	# 2. Add it to the main scene tree
 	battle_manager.add_child(popup)
 
-	# 3. Calculate position - center by default
 	var target_position = global_position - Vector2(100, 0)
 
-	# Check if we spawned a popup recently
 	var current_time = Time.get_ticks_msec() / 1000.0
 	if current_time - last_popup_time < POPUP_SPACING_TIME:
-		# Stack them with alternating offsets
 		popup_stack_offset += 1
 		var side = 1 if popup_stack_offset % 2 == 0 else -1
 		target_position.x += side * 60  # Offset horizontally
 		target_position.y -= popup_stack_offset * 30  # Stack upward
 	else:
-		# Reset stack if enough time has passed
 		popup_stack_offset = 0
 
 	popup.global_position = target_position

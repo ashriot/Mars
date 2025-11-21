@@ -17,8 +17,9 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-InputIconMap="*res://src/scripts/input_map.gd"
-InputManager="*res://src/scripts/input_manager.gd"
+InputIconMap="*res://src/singletons/input_map.gd"
+InputManager="*res://src/singletons/input_manager.gd"
+AudioManager="*res://src/singletons/audio_manager.gd"
 
 [debug]
 

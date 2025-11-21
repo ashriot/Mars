@@ -12,7 +12,7 @@
 script = ExtResource("6_qh3mc")
 description = "A multi-hit, single-target Kinetic blitzer."
 icon = ExtResource("6_ovjho")
-color = Color(1, 1, 0.37, 1)
+color = Color(1, 1, 0.18039216, 1)
 passive = ExtResource("5_ixr3p")
 actions = Array[ExtResource("1_jujmt")]([ExtResource("2_wo42u"), ExtResource("3_auwyg"), null, null])
 metadata/_custom_type_script = "uid://d3mhjutrnvwsp"

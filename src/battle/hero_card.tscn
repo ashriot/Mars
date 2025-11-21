@@ -30,28 +30,32 @@ corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_d6207"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0mfya"]
 bg_color = Color(0, 0, 0, 0.78431374)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_53q4u"]
-bg_color = Color(0.98, 0.7995167, 0.14699998, 1)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tvdfu"]
+bg_color = Color(0.98, 0.76766664, 0, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_xoft7"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_t7qsg"]
+bg_color = Color(1, 0.120000005, 0.32533312, 1)
+border_color = Color(1, 0.120000005, 0.32533312, 1)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_nheih"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wyvcu"]
-bg_color = Color(1, 0.30980393, 0.4117647, 1)
-corner_radius_top_left = 6
-corner_radius_top_right = 6
-corner_radius_bottom_right = 6
-corner_radius_bottom_left = 6
+expand_margin_left = 1.0
+expand_margin_top = 1.0
+expand_margin_bottom = 1.0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ha0bt"]
 bg_color = Color(1, 0.4745098, 0.16862746, 1)
@@ -116,7 +120,7 @@ mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_fh56t")
 
 [node name="RoleIcon" type="TextureRect" parent="Panel"]
-modulate = Color(1, 1, 1, 0.5882353)
+modulate = Color(1, 1, 1, 0.29411766)
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -146,7 +150,7 @@ theme_override_constants/shadow_offset_x = 0
 theme_override_constants/shadow_offset_y = 0
 theme_override_constants/shadow_outline_size = 8
 theme_override_font_sizes/font_size = 24
-text = "Enforcer"
+text = "Role Name"
 
 [node name="Title" type="Label" parent="Panel"]
 layout_mode = 1
@@ -375,9 +379,9 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 13.0
-offset_top = -58.0
+offset_top = -62.0
 offset_right = -13.0
-offset_bottom = -29.118286
+offset_bottom = -32.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
@@ -387,12 +391,13 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_right = -1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-theme_override_styles/background = SubResource("StyleBoxFlat_d6207")
-theme_override_styles/fill = SubResource("StyleBoxFlat_53q4u")
-value = 85.0
+theme_override_styles/background = SubResource("StyleBoxFlat_0mfya")
+theme_override_styles/fill = SubResource("StyleBoxFlat_tvdfu")
+value = 16.0
 show_percentage = false
 
 [node name="BarActual" type="ProgressBar" parent="Panel/HP"]
@@ -403,19 +408,19 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-theme_override_styles/background = SubResource("StyleBoxEmpty_nheih")
-theme_override_styles/fill = SubResource("StyleBoxFlat_wyvcu")
-value = 50.0
+theme_override_styles/background = SubResource("StyleBoxEmpty_xoft7")
+theme_override_styles/fill = SubResource("StyleBoxFlat_t7qsg")
+value = 12.0
 show_percentage = false
 
 [node name="HeartIcon" type="TextureRect" parent="Panel/HP"]
-modulate = Color(1, 1, 1, 0.5882353)
+modulate = Color(0.21176471, 0.21176471, 0.21176471, 1)
 layout_mode = 1
 anchors_preset = 9
 anchor_bottom = 1.0
-offset_left = 2.0
+offset_left = 3.0
 offset_top = 2.0
-offset_right = 26.0
+offset_right = 27.0
 offset_bottom = -2.8817139
 grow_vertical = 2
 mouse_filter = 2
@@ -429,16 +434,12 @@ anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
 offset_left = 181.0
-offset_top = -40.440857
+offset_top = -41.440857
 offset_right = 360.0
-offset_bottom = 14.559143
+offset_bottom = 13.559143
 grow_vertical = 2
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.78431374)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/shadow_offset_x = 0
-theme_override_constants/shadow_offset_y = 0
-theme_override_constants/outline_size = 4
-theme_override_constants/shadow_outline_size = 20
+theme_override_constants/outline_size = 20
 theme_override_font_sizes/font_size = 50
 text = "99999"
 horizontal_alignment = 2
@@ -620,14 +621,14 @@ offset_right = 40.0
 offset_bottom = 11.0
 grow_vertical = 0
 theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
 theme_override_font_sizes/font_size = 28
 text = "10"
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="BreachedLabel" type="Label" parent="Panel"]
-visible = false
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
@@ -637,7 +638,7 @@ offset_top = -23.0
 offset_bottom = 29.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.32941177)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.88235295)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/shadow_offset_x = 0
 theme_override_constants/shadow_offset_y = 0

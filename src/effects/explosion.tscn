@@ -1,0 +1,30 @@
+[gd_scene load_steps=5 format=3 uid="uid://d2t7mp0iinjk"]
+
+[ext_resource type="Script" uid="uid://b7q8b33whk5gv" path="res://src/effects/explosion.gd" id="1_g7pq8"]
+[ext_resource type="Texture2D" uid="uid://bxod66ii8njm0" path="res://assets/graphics/textures/diamond.png" id="2_feiq3"]
+
+[sub_resource type="Curve" id="Curve_pd4ri"]
+_data = [Vector2(0, 0.990472), 0.0, 0.0, 0, 0, Vector2(1, 0.08531225), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="Gradient" id="Gradient_g7pq8"]
+offsets = PackedFloat32Array(0, 0.12643678, 0.3218391, 0.3678161, 0.6455939, 0.67241377, 1)
+colors = PackedColorArray(4.415934, 4.415934, 4.415934, 1, 0.20697477, 1.3114605, 2.1560674, 1, 0.20697477, 1.3114605, 2.1560674, 1, 1.753959, 0.34189174, 1.3639594, 1, 1.753959, 0.34189174, 1.3639594, 1, 0.2367799, 0.13034195, 0.003157269, 1, 0, 0, 0, 0.2509804)
+
+[node name="Explosion" type="CPUParticles2D"]
+emitting = false
+amount = 30
+texture = ExtResource("2_feiq3")
+lifetime = 0.5
+one_shot = true
+explosiveness = 0.7
+spread = 180.0
+gravity = Vector2(0, 2000)
+initial_velocity_min = 300.0
+initial_velocity_max = 600.0
+angle_max = 180.0
+scale_amount_min = 0.1
+scale_amount_max = 0.3
+scale_amount_curve = SubResource("Curve_pd4ri")
+color_ramp = SubResource("Gradient_g7pq8")
+script = ExtResource("1_g7pq8")

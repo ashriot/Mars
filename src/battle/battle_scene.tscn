@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://dc5du0o5phhma"]
+[gd_scene load_steps=28 format=3 uid="uid://dc5du0o5phhma"]
 
 [ext_resource type="Script" uid="uid://dssm7j7rbyew6" path="res://src/battle/battle_scene.gd" id="1_1pykk"]
 [ext_resource type="Script" uid="uid://deoohlwp7dcfm" path="res://src/battle/battle_manager.gd" id="1_6cbqe"]
@@ -12,9 +12,25 @@
 [ext_resource type="Script" uid="uid://bf5t2mtgtkbsn" path="res://src/battle/turn_queue.gd" id="9_16l6v"]
 [ext_resource type="Resource" uid="uid://s6fcg8egbavh" path="res://data/enemies/actors/scout_drone.tres" id="9_rvyyd"]
 [ext_resource type="PackedScene" uid="uid://diku73kk4tjv7" path="res://src/battle/actor_queue.tscn" id="10_6by3n"]
-[ext_resource type="Texture2D" uid="uid://blqlfsxmhvfac" path="res://assets/graphics/backgrounds/bg_pod-room.webp" id="10_u5vn3"]
-[ext_resource type="Texture2D" uid="uid://6j4nnmndm12j" path="res://assets/graphics/icons/skills/bullets.png" id="12_t4gpb"]
+[ext_resource type="Texture2D" uid="uid://bwqcku6nvr4ff" path="res://assets/graphics/backgrounds/street.webp" id="11_t4gpb"]
+[ext_resource type="Shader" uid="uid://dyioxf64d4fgd" path="res://src/battle/blur.gdshader" id="11_w2kg5"]
 [ext_resource type="Resource" uid="uid://xwe3skgcbr7x" path="res://data/enemies/actors/attack_drone.tres" id="12_tx5gf"]
+[ext_resource type="Texture2D" uid="uid://dldmpu0c4mvsl" path="res://assets/graphics/icons/skills/empty-chessboard.png" id="13_6rrcq"]
+[ext_resource type="Shader" uid="uid://cg8j5a78td0ei" path="res://src/battle/chroma.gdshader" id="13_w2kg5"]
+[ext_resource type="Script" uid="uid://cnb6qyk7u80ko" path="res://src/battle/fx_manager.gd" id="16_1pykk"]
+[ext_resource type="PackedScene" uid="uid://d2t7mp0iinjk" path="res://src/effects/explosion.tscn" id="17_tx5gf"]
+[ext_resource type="PackedScene" uid="uid://dldr8pduy83ir" path="res://src/effects/background.tscn" id="18_6rrcq"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_w2kg5"]
+shader = ExtResource("11_w2kg5")
+shader_parameter/blur_amount = 2.50000021375
+shader_parameter/mix_amount = 0.0
+shader_parameter/color_over = Color(0, 0, 0, 1)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_7up2b"]
+shader = ExtResource("13_w2kg5")
+shader_parameter/aberration_x = 0.10000005224999996
+shader_parameter/aberration_y = 0.10000005224999996
 
 [sub_resource type="Gradient" id="Gradient_t4gpb"]
 offsets = PackedFloat32Array(0.51, 1)
@@ -26,12 +42,18 @@ fill_from = Vector2(0.50934577, 0)
 fill_to = Vector2(0.51635516, 1)
 
 [sub_resource type="Gradient" id="Gradient_rvyyd"]
-colors = PackedColorArray(0, 0, 0, 0.9411765, 0, 0, 0, 0.18431373)
+colors = PackedColorArray(0, 0, 0, 0.9411765, 0, 0, 0, 0)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_t4gpb"]
 gradient = SubResource("Gradient_rvyyd")
 fill_from = Vector2(0.5192308, 0.6196581)
 fill_to = Vector2(0.49532712, 0)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6rrcq"]
+bg_color = Color(1, 1, 1, 1)
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 10
+corner_radius_bottom_left = 10
 
 [node name="BattleScene" type="Control"]
 layout_mode = 3
@@ -42,9 +64,10 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_1pykk")
 
-[node name="BattleManager" type="Node" parent="." node_paths=PackedStringArray("hero_area", "enemy_area", "action_bar", "current_action_panel", "fade_overlay")]
+[node name="BattleManager" type="Node" parent="." node_paths=PackedStringArray("fx_manager", "hero_area", "enemy_area", "action_bar", "current_action_panel", "fade_overlay")]
 unique_name_in_owner = true
 script = ExtResource("1_6cbqe")
+fx_manager = NodePath("../FXManager")
 hero_card_scene = ExtResource("1_sft4c")
 enemy_card_scene = ExtResource("1_u5n4n")
 hero_area = NodePath("../UI/Heroes/HBox")
@@ -55,25 +78,42 @@ fade_overlay = NodePath("../FadeOverlay")
 hero_data_files = Array[ExtResource("4_w6n6o")]([ExtResource("5_16l6v"), ExtResource("6_vtpwn")])
 enemy_data_files = Array[ExtResource("6_6by3n")]([ExtResource("9_rvyyd"), ExtResource("12_tx5gf")])
 
-[node name="UI" type="Control" parent="."]
+[node name="Backdrop" type="TextureRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-
-[node name="Backdrop" type="TextureRect" parent="UI"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-texture = ExtResource("10_u5vn3")
+texture = ExtResource("11_t4gpb")
 expand_mode = 1
 
-[node name="Top" type="TextureRect" parent="UI/Backdrop"]
+[node name="ColorRectBlur" type="ColorRect" parent="Backdrop"]
+visible = false
+material = SubResource("ShaderMaterial_w2kg5")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Chroma" type="ColorRect" parent="Backdrop"]
+visible = false
+material = SubResource("ShaderMaterial_7up2b")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Background" parent="Backdrop" instance=ExtResource("18_6rrcq")]
+modulate = Color(1, 1, 1, 0.56078434)
+position = Vector2(960, 540)
+
+[node name="Top" type="TextureRect" parent="Backdrop"]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
@@ -81,7 +121,7 @@ offset_bottom = 454.0
 grow_horizontal = 2
 texture = SubResource("GradientTexture2D_1pykk")
 
-[node name="Bottom" type="TextureRect" parent="UI/Backdrop"]
+[node name="Bottom" type="TextureRect" parent="Backdrop"]
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
@@ -91,6 +131,14 @@ offset_top = -475.0
 grow_horizontal = 2
 grow_vertical = 0
 texture = SubResource("GradientTexture2D_t4gpb")
+
+[node name="UI" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="CurrentAction" type="PanelContainer" parent="UI"]
 layout_mode = 1
@@ -103,24 +151,32 @@ offset_bottom = 123.0
 grow_horizontal = 2
 mouse_filter = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="UI/CurrentAction"]
-layout_mode = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 50
-theme_override_constants/margin_bottom = 10
-
-[node name="HBoxContainer" type="HBoxContainer" parent="UI/CurrentAction/MarginContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="UI/CurrentAction"]
 layout_mode = 2
 theme_override_constants/separation = 20
 
-[node name="Icon" type="TextureRect" parent="UI/CurrentAction/MarginContainer/HBoxContainer"]
-custom_minimum_size = Vector2(80, 80)
+[node name="Mask" type="Panel" parent="UI/CurrentAction/HBoxContainer"]
+clip_children = 1
+custom_minimum_size = Vector2(100, 100)
 layout_mode = 2
-texture = ExtResource("12_t4gpb")
+mouse_filter = 1
+theme_override_styles/panel = SubResource("StyleBoxFlat_6rrcq")
+
+[node name="Icon" type="TextureRect" parent="UI/CurrentAction/HBoxContainer/Mask"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -5.0
+offset_top = -5.0
+offset_right = 5.0
+offset_bottom = 5.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("13_6rrcq")
 expand_mode = 1
 
-[node name="Label" type="RichTextLabel" parent="UI/CurrentAction/MarginContainer/HBoxContainer"]
+[node name="Label" type="RichTextLabel" parent="UI/CurrentAction/HBoxContainer"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/outline_size = 5
@@ -197,6 +253,10 @@ layout_mode = 0
 offset_right = 282.0
 offset_bottom = 440.0
 mouse_filter = 2
+
+[node name="FXManager" type="Node2D" parent="."]
+script = ExtResource("16_1pykk")
+impact_sparks = ExtResource("17_tx5gf")
 
 [node name="FadeOverlay" type="ColorRect" parent="."]
 visible = false

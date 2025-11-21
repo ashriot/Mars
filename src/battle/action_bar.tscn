@@ -268,7 +268,7 @@ theme_override_constants/shadow_offset_y = 0
 theme_override_constants/outline_size = 2
 theme_override_constants/shadow_outline_size = 20
 theme_override_font_sizes/font_size = 36
-text = "Passive Name"
+text = "Shift Action"
 
 [node name="LeftShift" type="Control" parent="."]
 custom_minimum_size = Vector2(320, 86)

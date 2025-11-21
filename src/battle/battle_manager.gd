@@ -12,6 +12,7 @@ signal battle_state_changed(new_state)
 @export_range(0.1, 5.0) var battle_speed: float = 1.0
 
 # --- Scene Links ---
+@export var fx_manager: FXManager
 @export var hero_card_scene: PackedScene
 @export var enemy_card_scene: PackedScene
 @export var hero_area: Control
@@ -48,6 +49,7 @@ func _ready():
 	change_state(State.LOADING)
 	await wait(0.5)
 	await _fade_in()
+	AudioManager.play_music("battle", 0.0)
 	await _apply_starting_passives()
 	find_and_start_next_turn()
 
@@ -61,6 +63,7 @@ func spawn_encounter():
 		hero_card.actor_breached.connect(_on_actor_breached)
 		hero_card.actor_defeated.connect(_on_actor_died)
 		hero_card.actor_revived.connect(_on_actor_revived)
+		hero_card.spawn_particles.connect(_on_spawn_particles)
 		hero_card.actor_conditions_changed.connect(_on_actor_conditions_changed)
 		hero_card.current_ct = randi_range(0, hero_data.stats.speed * 5)
 		hero_card.role_shifted.connect(_on_hero_role_shifted)
@@ -74,6 +77,7 @@ func spawn_encounter():
 		enemy_card.actor_breached.connect(_on_actor_breached)
 		enemy_card.actor_defeated.connect(_on_actor_died)
 		enemy_card.actor_revived.connect(_on_actor_revived)
+		enemy_card.spawn_particles.connect(_on_spawn_particles)
 		enemy_card.actor_conditions_changed.connect(_on_actor_conditions_changed)
 		enemy_card.current_ct = randi_range(0, enemy_data.stats.speed * 5)
 		actor_list.append(enemy_card)
@@ -218,8 +222,8 @@ func _on_actor_revived(actor: ActorCard):
 
 func set_current_action(action: Action):
 	current_action = action
-	current_action_panel.get_node("MarginContainer/HBoxContainer/Icon").texture = current_action.icon
-	current_action_panel.get_node("MarginContainer/HBoxContainer/Label").text = _get_rich_description(current_action)
+	current_action_panel.get_node("HBoxContainer/Mask/Icon").texture = current_action.icon
+	current_action_panel.get_node("HBoxContainer/Label").text = _get_rich_description(current_action)
 	var hero = current_actor as HeroCard
 	current_action_panel.modulate = hero.get_current_role().color
 	current_action_panel.show()
@@ -337,6 +341,7 @@ func _on_action_button_pressed(button: ActionButton):
 	if current_actor.current_focus < button.focus_cost:
 		return
 
+	AudioManager.play_sfx("terminal")
 	_focus_button(button)
 	set_current_action(action)
 
@@ -381,6 +386,7 @@ func _on_shift_button_pressed(direction: String):
 	_clear_all_targeting_ui()
 	change_state(State.LOADING)
 	current_action = null
+	AudioManager.play_sfx("radiate")
 	await action_bar.slide_out()
 	await current_actor.shift_role(direction)
 	action_bar.update_action_bar(current_hero, true)
@@ -502,6 +508,9 @@ func _flush_all_health_animations() -> void:
 func _clear_all_targeting_ui():
 	for actor in actor_list:
 		actor.stop_flashing()
+
+func _on_spawn_particles(pos: Vector2, _type: String):
+	fx_manager.play_hit_effect(pos, false)
 
 func wait(duration: float = 0.01) -> void:
 	var scaled_duration = duration / battle_speed

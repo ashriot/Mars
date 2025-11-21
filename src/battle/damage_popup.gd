@@ -27,11 +27,11 @@ func show_damage(amount: int, damage_type: Action.DamageType, speed: float, is_c
 	var base_color = Color.WHITE
 	match damage_type:
 		Action.DamageType.KINETIC:
-			base_color = Color("ffc06e")
+			base_color = Color("ff792bff")
 		Action.DamageType.ENERGY:
-			base_color = Color("bf96ff")
+			base_color = Color("9654ffff")
 		Action.DamageType.PIERCING:
-			base_color = Color("ff96cb")
+			base_color = Color("ff0080ff")
 
 	if is_crit:
 		pop_scale = CRIT_POP_SCALE

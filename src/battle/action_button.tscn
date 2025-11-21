@@ -26,6 +26,7 @@ corner_radius_bottom_right = 17
 corner_radius_bottom_left = 17
 
 [node name="ActionButton" type="Control"]
+self_modulate = Color(1.5720325, 1.5720325, 1.5720325, 1)
 custom_minimum_size = Vector2(320, 86)
 layout_mode = 3
 anchors_preset = 0

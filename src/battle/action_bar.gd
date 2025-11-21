@@ -200,6 +200,7 @@ func _on_state_changed(state: BattleManager.State):
 
 func slide_in(duration: float = 0.2):
 	sliding = true
+	AudioManager.play_sfx("press")
 	duration = duration / battle_manager.battle_speed
 
 	var tween = create_tween().set_parallel()

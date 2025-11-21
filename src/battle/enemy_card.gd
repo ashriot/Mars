@@ -12,7 +12,7 @@ var intended_targets: Array[ActorCard]
 var intent_flash_tween: Tween
 
 # --- UNIQUE UI Node References ---
-@onready var intent_text: Label = $Panel/IntentText
+@onready var intent_text: RichTextLabel = $Panel/IntentText
 @onready var kin_def_gauge: TextureProgressBar = $Panel/KinDef
 @onready var kin_def_value: Label = $Panel/KinDef/Value
 @onready var nrg_def_gauge: TextureProgressBar = $Panel/NrgDef
@@ -115,7 +115,7 @@ func update_intent_ui():
 		var dmg_type = ""
 		match damage_effect.damage_type:
 			Action.DamageType.KINETIC:
-				dmg_type = "KIN"
+				dmg_type = Action._get_bbcode_icon("kinetic")
 			Action.DamageType.ENERGY:
 				dmg_type = "NRG"
 			Action.DamageType.PIERCING:

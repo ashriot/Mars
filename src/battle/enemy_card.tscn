@@ -28,31 +28,35 @@ corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
 
-[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_1mnyd"]
-load_path = "res://.godot/imported/fire.png-e3c6a18f95f298d30e62adcd9e812c8b.ctex"
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_e8ixv"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_puinb"]
 bg_color = Color(0, 0, 0, 0.78431374)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xkcvw"]
-bg_color = Color(0.98, 0.7995167, 0.14699998, 1)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_g4dne"]
+bg_color = Color(0.98, 0.76766664, 0, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_hupy2"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mu8yp"]
+bg_color = Color(1, 0.120000005, 0.32533312, 1)
+border_color = Color(1, 0.120000005, 0.32533312, 1)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
+expand_margin_left = 1.0
+expand_margin_top = 1.0
+expand_margin_bottom = 1.0
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_8i7ma"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_l4hbp"]
-bg_color = Color(1, 0.30980393, 0.4117647, 1)
-corner_radius_top_left = 6
-corner_radius_top_right = 6
-corner_radius_bottom_right = 6
-corner_radius_bottom_left = 6
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_1mnyd"]
+load_path = "res://.godot/imported/fire.png-e3c6a18f95f298d30e62adcd9e812c8b.ctex"
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pdx0h"]
 bg_color = Color(1, 0.4745098, 0.16862746, 1)
@@ -153,6 +157,78 @@ theme_override_constants/shadow_outline_size = 16
 theme_override_font_sizes/font_size = 32
 text = "Example Enemy Name"
 horizontal_alignment = 1
+
+[node name="HP" type="Control" parent="Panel"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 13.0
+offset_top = -62.0
+offset_right = -13.0
+offset_bottom = -32.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="BarGhost" type="ProgressBar" parent="Panel/HP"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_puinb")
+theme_override_styles/fill = SubResource("StyleBoxFlat_g4dne")
+value = 16.0
+show_percentage = false
+
+[node name="BarActual" type="ProgressBar" parent="Panel/HP"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxEmpty_hupy2")
+theme_override_styles/fill = SubResource("StyleBoxFlat_mu8yp")
+value = 12.0
+show_percentage = false
+
+[node name="HeartIcon" type="TextureRect" parent="Panel/HP"]
+modulate = Color(0.21176471, 0.21176471, 0.21176471, 1)
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 27.0
+offset_bottom = -2.8817139
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_e8ixv")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Value" type="Label" parent="Panel/HP"]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 181.0
+offset_top = -41.440857
+offset_right = 360.0
+offset_bottom = 13.559143
+grow_vertical = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 20
+theme_override_font_sizes/font_size = 50
+text = "99999"
+horizontal_alignment = 2
 
 [node name="GuardBar" type="HBoxContainer" parent="Panel"]
 layout_mode = 1
@@ -358,10 +434,10 @@ nine_patch_stretch = true
 texture_under = ExtResource("4_l4hbp")
 texture_progress = ExtResource("4_l4hbp")
 tint_under = Color(0, 0, 0, 0.5019608)
-tint_progress = Color(1, 0.7529412, 0.43137255, 1)
+tint_progress = Color(1, 0.4745098, 0.16862746, 1)
 
 [node name="Value" type="Label" parent="Panel/KinDef"]
-modulate = Color(1, 0.7529412, 0.43137255, 1)
+modulate = Color(1, 0.4745098, 0.16862746, 1)
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
@@ -371,11 +447,7 @@ offset_top = -15.0
 offset_right = 89.0
 offset_bottom = 15.0
 grow_vertical = 2
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.5019608)
-theme_override_constants/shadow_offset_x = 0
-theme_override_constants/shadow_offset_y = 0
-theme_override_constants/outline_size = 8
-theme_override_constants/shadow_outline_size = 20
+theme_override_constants/outline_size = 12
 theme_override_font_sizes/font_size = 30
 text = "40%"
 horizontal_alignment = 1
@@ -398,10 +470,10 @@ nine_patch_stretch = true
 texture_under = SubResource("CompressedTexture2D_1mnyd")
 texture_progress = SubResource("CompressedTexture2D_1mnyd")
 tint_under = Color(0, 0, 0, 0.5019608)
-tint_progress = Color(0.7490196, 0.5882353, 1, 1)
+tint_progress = Color(0.5882353, 0.32941177, 1, 1)
 
 [node name="Value" type="Label" parent="Panel/NrgDef"]
-modulate = Color(0.7490196, 0.5882353, 1, 1)
+modulate = Color(0.5882353, 0.32941177, 1, 1)
 layout_mode = 1
 anchors_preset = 6
 anchor_left = 1.0
@@ -414,17 +486,13 @@ offset_right = -27.0
 offset_bottom = 15.0
 grow_horizontal = 0
 grow_vertical = 2
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.5019608)
-theme_override_constants/shadow_offset_x = 0
-theme_override_constants/shadow_offset_y = 0
-theme_override_constants/outline_size = 8
-theme_override_constants/shadow_outline_size = 20
+theme_override_constants/outline_size = 12
 theme_override_font_sizes/font_size = 30
 text = "40%"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="IntentText" type="Label" parent="Panel"]
+[node name="IntentText" type="RichTextLabel" parent="Panel"]
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -437,86 +505,13 @@ offset_right = 193.5
 offset_bottom = 56.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_constants/line_spacing = -5
-theme_override_constants/outline_size = 5
-theme_override_font_sizes/font_size = 30
-text = "22x5 KIN > Asher"
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.49019608)
+theme_override_constants/outline_size = 20
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "22x5  >  Asher"
+scroll_active = false
 horizontal_alignment = 1
-
-[node name="HP" type="Control" parent="Panel"]
-layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 13.0
-offset_top = -62.0
-offset_right = -13.0
-offset_bottom = -33.118286
-grow_horizontal = 2
-grow_vertical = 0
-mouse_filter = 2
-
-[node name="BarGhost" type="ProgressBar" parent="Panel/HP"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-theme_override_styles/background = SubResource("StyleBoxFlat_e8ixv")
-theme_override_styles/fill = SubResource("StyleBoxFlat_xkcvw")
-value = 85.0
-show_percentage = false
-
-[node name="BarActual" type="ProgressBar" parent="Panel/HP"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-theme_override_styles/background = SubResource("StyleBoxEmpty_8i7ma")
-theme_override_styles/fill = SubResource("StyleBoxFlat_l4hbp")
-value = 50.0
-show_percentage = false
-
-[node name="HeartIcon" type="TextureRect" parent="Panel/HP"]
-modulate = Color(1, 1, 1, 0.5882353)
-layout_mode = 1
-anchors_preset = 9
-anchor_bottom = 1.0
-offset_left = 2.0
-offset_top = 2.0
-offset_right = 26.0
-offset_bottom = -2.8817139
-grow_vertical = 2
-mouse_filter = 2
-texture = ExtResource("2_e8ixv")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Value" type="Label" parent="Panel/HP"]
-layout_mode = 1
-anchors_preset = 4
-anchor_top = 0.5
-anchor_bottom = 0.5
-offset_left = 181.0
-offset_top = -41.440857
-offset_right = 360.0
-offset_bottom = 13.559143
-grow_vertical = 2
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.78431374)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/shadow_offset_x = 0
-theme_override_constants/shadow_offset_y = 0
-theme_override_constants/outline_size = 4
-theme_override_constants/shadow_outline_size = 20
-theme_override_font_sizes/font_size = 50
-text = "99999"
-horizontal_alignment = 2
 
 [node name="ActionName" type="PanelContainer" parent="Panel"]
 layout_mode = 1
@@ -544,7 +539,6 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="BreachedLabel" type="Label" parent="Panel"]
-visible = false
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
@@ -554,7 +548,7 @@ offset_top = -23.0
 offset_bottom = 29.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.32941177)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.88235295)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/shadow_offset_x = 0
 theme_override_constants/shadow_offset_y = 0

@@ -2,17 +2,21 @@
 
 [ext_resource type="PackedScene" uid="uid://dc5du0o5phhma" path="res://src/battle/battle_scene.tscn" id="1_rnajw"]
 
-[sub_resource type="Environment" id="Environment_f0yx4"]
-background_mode = 4
+[sub_resource type="Environment" id="Environment_rnajw"]
+background_mode = 3
+tonemap_mode = 2
 tonemap_exposure = 0.5
-glow_intensity = 1.5
-glow_strength = 1.25
+glow_enabled = true
 glow_blend_mode = 1
+glow_hdr_threshold = 0.6
+fog_mode = 1
+fog_light_energy = 4.0
+fog_density = 1.0
 
 [node name="GameWorld" type="Node2D"]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = SubResource("Environment_f0yx4")
+environment = SubResource("Environment_rnajw")
 
 [node name="BattleScene" parent="." instance=ExtResource("1_rnajw")]
 anchors_preset = 8

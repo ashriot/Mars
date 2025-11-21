@@ -98,7 +98,8 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 			final_dmg_float *= target.get_damage_taken_scalar()
 			var final_damage = max(0, int(final_dmg_float))
 
-			await target.apply_one_hit(final_damage, self, attacker, final_damage_type, is_crit)
+			AudioManager.play_sfx("pistol", 0.5)
+			await target.take_one_hit(final_damage, self, attacker, final_damage_type, is_crit)
 			await _process_on_hit_triggers(attacker, target, battle_manager)
 			await attacker._fire_condition_event(Trigger.TriggerType.ON_HIT, context)
 			if lifedrain_scalar > 0.0:
