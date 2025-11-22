@@ -25,7 +25,7 @@ var type: NodeType = NodeType.UNKNOWN
 var state: NodeState = NodeState.HIDDEN
 var grid_coords: Vector2i
 
-func setup(coords: Vector2i, hex_points: PackedVector2Array, assigned_type: NodeType):
+func setup(coords: Vector2i, assigned_type: NodeType):
 	grid_coords = coords
 	type = assigned_type
 
@@ -33,13 +33,6 @@ func setup(coords: Vector2i, hex_points: PackedVector2Array, assigned_type: Node
 	icon_sprite.texture = tex
 	icon_sprite.visible = false
 	icon_sprite.modulate = Color(0.196, 0.196, 0.196, 1.0)
-
-	# 2. Create Hitbox (Calculated by Code)
-	# We still create this in code to ensure the click area matches
-	# the mathematical grid spacing exactly, regardless of sprite size.
-	var coll = CollisionPolygon2D.new()
-	coll.polygon = hex_points
-	add_child(coll)
 
 	# 3. Label (Optional)
 	if has_node("Label"):

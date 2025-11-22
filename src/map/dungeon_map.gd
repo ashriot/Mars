@@ -201,7 +201,6 @@ func generate_hex_grid():
 
 	# --- 2. Create Nodes (Invisible) ---
 	var node_types = _distribute_node_types(valid_coords.keys(), center_y)
-	var hex_points = _get_pointy_top_hex_points(hex_size)
 
 	# We keep a list so we can sort them for the animation
 	var nodes_to_animate: Array[MapNode] = []
@@ -210,7 +209,7 @@ func generate_hex_grid():
 		var screen_pos = valid_coords[coords]
 		var assigned_type = node_types[coords]
 		# Create the node (it defaults to alpha 0.0 now)
-		var new_node = _create_map_node(coords.x, coords.y, screen_pos, hex_points, assigned_type)
+		var new_node = _create_map_node(coords.x, coords.y, screen_pos, assigned_type)
 		nodes_to_animate.append(new_node)
 
 	await _update_background_transform(min_bounds, max_bounds)
@@ -451,14 +450,14 @@ func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 
 	return type_map
 
-func _create_map_node(grid_x, grid_y, screen_pos, points, type) -> MapNode:
+func _create_map_node(grid_x, grid_y, screen_pos, type) -> MapNode:
 	var node = map_node_scene.instantiate()
 	node.position = screen_pos
 	node.name = "Hex_%d_%d" % [grid_x, grid_y]
 	node.modulate.a = 0.0
 
 	$Background.add_child(node)
-	node.setup(Vector2i(grid_x, grid_y), points, type)
+	node.setup(Vector2i(grid_x, grid_y), type)
 
 	node.node_clicked.connect(_on_node_clicked)
 	grid_nodes[Vector2i(grid_x, grid_y)] = node

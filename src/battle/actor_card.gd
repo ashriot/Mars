@@ -82,6 +82,7 @@ func setup_base(stats: ActorStats):
 	highlight_panel.hide()
 	target_flash.hide()
 	target_flash.modulate.a = 0.2
+	hp_bar_ghost.hide()
 	update_health_bar()
 	hp_bar_actual.value = 0
 	action_display.hide()
@@ -253,7 +254,6 @@ func sync_visual_health() -> Tween:
 
 	if actual_hp < real_hp:
 		print(actor_name, " animating heal from ", actual_hp, " to ", real_hp)
-
 		health_tween.tween_property(hp_bar_actual, "value", real_hp, DURATION)
 		health_tween.parallel().tween_method(
 			_update_health_display,
@@ -261,12 +261,9 @@ func sync_visual_health() -> Tween:
 			real_hp,
 			DURATION
 		)
-
 	elif ghost_hp > real_hp:
 		print(actor_name, " animating damage from ", ghost_hp, " to ", real_hp)
-
 		health_tween.tween_property(hp_bar_ghost, "value", real_hp, DURATION)
-
 	return health_tween
 
 func _update_health_display(value_from_tween: float):
