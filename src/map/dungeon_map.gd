@@ -6,6 +6,7 @@ signal interaction_requested(node: MapNode)
 const ALERT_LOW_THRESHOLD = 25
 const ALERT_MED_THRESHOLD = 76
 
+@onready var camera: Camera2D = $Camera2D
 @onready var hud: Control = $CanvasLayer/HUD
 @onready var alert_gauge: ProgressBar = $CanvasLayer/HUD/AlertGauge
 @onready var alert_label: Label = $CanvasLayer/HUD/AlertGauge/Label
@@ -50,10 +51,10 @@ const ALERT_MED_THRESHOLD = 76
 var hex_width: float
 var hex_height: float
 var grid_nodes = {}
-var camera: Camera2D
 var _map_center_pos: Vector2 = Vector2.ZERO
 var _pre_battle_zoom: Vector2 = Vector2.ONE
 var _pre_battle_camera_pos: Vector2 = Vector2.ZERO
+var alert_tween: Tween
 
 # --- Hex Values ---
 var hex_size: float = 50.0
@@ -93,27 +94,35 @@ void fragment() {
 }
 """
 
+enum MapState { LOADING, PLAYING, LOCKED }
+var current_map_state: MapState = MapState.LOADING
+
+
 func _ready():
 	randomize()
 	hex_width = sqrt(3.0) * hex_size
 	hex_height = hex_size * 2.0
-	vision_range = 2
 
 	alert_gauge.self_modulate = Color.MEDIUM_SEA_GREEN
+	alert_gauge.modulate.a = 0.0
 	alert_gauge.value = current_alert
 	alert_label.text = str(int(alert_gauge.value)) + "%"
 
 	_setup_camera()
-	_setup_background() # Initialize the parallax nodes
-	generate_hex_grid()
+	_setup_background()
+	await generate_hex_grid()
+
+	var tween = create_tween()
+	tween.tween_property(alert_gauge, "modulate:a", 1.0, 0.75)\
+		.set_delay(0.5)\
+		.set_trans(Tween.TRANS_SINE)\
+		.set_ease(Tween.EASE_OUT)
+	await tween.finished
+
+	current_map_state = MapState.PLAYING
+	print("Map loaded and input enabled.")
 
 func _setup_camera():
-	if has_node("Camera2D"):
-		camera = $Camera2D
-	else:
-		camera = Camera2D.new()
-		camera.name = "Camera2D"
-		add_child(camera)
 	camera.make_current()
 
 func _setup_background():
@@ -142,7 +151,6 @@ func _zoom_camera(step: float):
 
 func generate_hex_grid():
 	print("Generating Map | Length: %d | Height: %d" % [map_length, map_height])
-
 	total_moves = 0
 	current_node = null
 	hex_width = sqrt(3.0) * hex_size
@@ -152,20 +160,18 @@ func generate_hex_grid():
 		print("Error: Please assign 'Map Node Scene' in the Inspector!")
 		return
 
-	for child in background.get_children():
+	for child in $Background.get_children():
 		child.queue_free()
 	grid_nodes.clear()
 	alert_gauge.value = 0
 
+	# --- 1. Generate Logic (Same as before) ---
 	var valid_coords = {}
-
 	var start_pos = Vector2(100, 200)
 	var center_y = floor(map_height / 2.0)
 	var center_row_is_even = (int(center_y) % 2 == 0)
 	var center_shift = 0.5 if center_row_is_even else 0.0
 	var visual_center_x = (map_length - 1) / 2.0 + center_shift
-
-	# We need to track bounds to size the background later
 	var min_bounds = Vector2(99999, 99999)
 	var max_bounds = Vector2(-99999, -99999)
 
@@ -182,47 +188,93 @@ func generate_hex_grid():
 		for i in range(x_count):
 			var x = x_start + i
 			var grid_pos = Vector2i(x, y)
-
 			var x_pos = x * (hex_width + gap)
 			var y_pos = y * (hex_height * 0.67 + gap)
 			if y % 2 == 0: x_pos += (hex_width + gap) / 2.0
 			var final_pos = start_pos + Vector2(x_pos, y_pos)
-
 			valid_coords[grid_pos] = final_pos
-
-			# Track bounds
 			min_bounds.x = min(min_bounds.x, final_pos.x)
 			min_bounds.y = min(min_bounds.y, final_pos.y)
 			max_bounds.x = max(max_bounds.x, final_pos.x)
 			max_bounds.y = max(max_bounds.y, final_pos.y)
 
+	# --- 2. Create Nodes (Invisible) ---
 	var node_types = _distribute_node_types(valid_coords.keys(), center_y)
 	var hex_points = _get_pointy_top_hex_points(hex_size)
+
+	# We keep a list so we can sort them for the animation
+	var nodes_to_animate: Array[MapNode] = []
 
 	for coords in valid_coords.keys():
 		var screen_pos = valid_coords[coords]
 		var assigned_type = node_types[coords]
-		_create_map_node(coords.x, coords.y, screen_pos, hex_points, assigned_type)
+		# Create the node (it defaults to alpha 0.0 now)
+		var new_node = _create_map_node(coords.x, coords.y, screen_pos, hex_points, assigned_type)
+		nodes_to_animate.append(new_node)
 
-	# --- UPDATE BACKGROUND ---
-	_update_background_transform(min_bounds, max_bounds)
+	await _update_background_transform(min_bounds, max_bounds)
 
+	# --- 3. Identify Start Node ---
 	var center_start_x = round(visual_center_x - center_shift - (map_length - 1) / 2.0)
 	var start_coords = Vector2i(center_start_x, center_y)
+	var start_node = null
 
 	if grid_nodes.has(start_coords):
-		_move_player_to(grid_nodes[start_coords], true)
-	else:
-		if grid_nodes.size() > 0:
-			_move_player_to(grid_nodes.values()[0], true)
+		start_node = grid_nodes[start_coords]
+	elif grid_nodes.size() > 0:
+		start_node = grid_nodes.values()[0]
+
+	if start_node and camera:
+		camera.position = start_node.position
+		camera.zoom = Vector2(1.0, 1.0)
+
+	# --- 4. The Animation Sequence ---
+	await get_tree().create_timer(0.5).timeout
+	var start_tween = create_tween()
+	start_tween.tween_property(start_node, "modulate:a", 1.0, 1.0).set_ease(Tween.EASE_OUT)
+	await start_tween.finished
+	AudioManager.play_sfx("terminal")
+
+	# B. Sort the rest Left-to-Right
+	nodes_to_animate.sort_custom(func(a, b):
+		# Sort by X first
+		if a.grid_coords.x != b.grid_coords.x:
+			return a.grid_coords.x < b.grid_coords.x
+		# Then by Y (top to bottom) for clean columns
+		return a.grid_coords.y < b.grid_coords.y
+	)
+
+	# C. The "Wave" Tween
+	var wave_tween = create_tween().set_parallel(true)
+	var current_col_x = -9999
+	var delay_timer = 0.0
+	var col_delay_step = 0.1
+
+	for node in nodes_to_animate:
+		if node == start_node: continue # Don't animate start node again
+
+		# If we moved to a new column X, increase the delay
+		if node.grid_coords.x != current_col_x:
+			current_col_x = node.grid_coords.x
+			delay_timer += col_delay_step
+
+		# Animate alpha to 1.0 with the calculated delay
+		wave_tween.tween_property(node, "modulate:a", 1.0, 0.3)\
+			.set_delay(delay_timer)\
+			.set_trans(Tween.TRANS_SINE)\
+			.set_ease(Tween.EASE_OUT)
+
+	# D. Wait for the whole map to finish appearing
+	await wave_tween.finished
+
+	if start_node:
+		_move_player_to(start_node, true)
 
 func complete_current_node():
 	if current_node:
 		current_node.set_state(MapNode.NodeState.COMPLETED)
-		_update_vision()
+		await _update_vision()
 		# Add rewards, xp, etc here
-
-# In DungeonMap.gd
 
 func enter_battle_visuals(duration: float = 1.5):
 	# 1. Save state
@@ -380,24 +432,28 @@ func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 
 	return type_map
 
-func _create_map_node(grid_x, grid_y, screen_pos, points, type):
+func _create_map_node(grid_x, grid_y, screen_pos, points, type) -> MapNode:
 	var node = map_node_scene.instantiate()
 	node.position = screen_pos
 	node.name = "Hex_%d_%d" % [grid_x, grid_y]
+	node.modulate.a = 0.0
 
-	background.add_child(node)
+	$Background.add_child(node)
 	node.setup(Vector2i(grid_x, grid_y), points, type)
 
 	node.node_clicked.connect(_on_node_clicked)
 	grid_nodes[Vector2i(grid_x, grid_y)] = node
 
+	return node
+
 func _on_node_clicked(target_node: MapNode):
 	if target_node == current_node: return
-	if current_node != null:
-		var dist = _get_hex_distance(current_node.grid_coords, target_node.grid_coords)
-		if dist > 1:
-			print("Too far! Dist: ", dist)
-			return
+	if current_map_state != MapState.PLAYING: return
+
+	var dist = _get_hex_distance(current_node.grid_coords, target_node.grid_coords)
+	if dist > 1:
+		print("Too far! Dist: ", dist)
+		return
 	_move_player_to(target_node)
 
 func _move_player_to(target_node: MapNode, is_start: bool = false):
@@ -432,7 +488,7 @@ func _move_player_to(target_node: MapNode, is_start: bool = false):
 
 	if not is_revisit:
 		if target_node.type == MapNode.NodeType.TERMINAL:
-			modify_alert(-33)
+			modify_alert(-25)
 			complete_current_node()
 		else:
 			interaction_requested.emit(target_node)
@@ -454,19 +510,45 @@ func modify_alert(amount: int):
 
 # --- NEW: Handles all UI and State changes based on the value ---
 func _update_alert_visuals():
-	alert_gauge.value = current_alert
-	alert_label.text = str(int(current_alert)) + "%"
+	# 1. Determine the Target State & Color
+	# We do this logic immediately so the game state is correct
+	var target_color: Color
 
-	# Determine State based on the NEW value
 	if current_alert < ALERT_LOW_THRESHOLD:
-		alert_gauge.self_modulate = Color.MEDIUM_SEA_GREEN
+		target_color = Color.MEDIUM_SEA_GREEN
 		vision_range = 2
 	elif current_alert < ALERT_MED_THRESHOLD:
-		alert_gauge.self_modulate = Color.GOLDENROD
+		target_color = Color.GOLDENROD
 		vision_range = 1
 	else:
-		alert_gauge.self_modulate = Color.ORANGE_RED
+		target_color = Color.ORANGE_RED
 		vision_range = 0
+
+	# 2. Setup the Tween
+	if alert_tween and alert_tween.is_running():
+		alert_tween.kill() # Stop any previous movement
+
+	alert_tween = create_tween().set_parallel(true)
+	alert_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
+	var duration = 0.5 # Tweak this for speed
+
+	# 3. Animate the Value (Bar + Text)
+	# We tween a method so we can update both the bar and label in sync
+	alert_tween.tween_method(
+		_set_alert_display_value, # The function to call
+		alert_gauge.value,        # Start value (current visual state)
+		float(current_alert),     # End value (target state)
+		duration
+	)
+
+	# 4. Animate the Color
+	alert_tween.tween_property(alert_gauge, "self_modulate", target_color, duration)
+
+# --- Helper Function called by the Tween ---
+func _set_alert_display_value(val: float):
+	alert_gauge.value = val
+	alert_label.text = str(roundi(val)) + "%"
 
 func _move_camera_to_player(force_center: bool):
 	if not camera: return
@@ -497,11 +579,42 @@ func _move_camera_to_player(force_center: bool):
 func _update_vision():
 	if vision_range <= 0: return
 	var center_coords = current_node.grid_coords
+
+	# 1. Collect nodes that actually need revealing
+	var nodes_to_reveal: Array[MapNode] = []
+
 	for node in grid_nodes.values():
-		if node.state == MapNode.NodeState.COMPLETED: continue
+		# Skip nodes that don't need updates
+		if node.state != MapNode.NodeState.HIDDEN: continue
+
 		var dist = _get_hex_distance(center_coords, node.grid_coords)
-		if dist <= vision_range and node.state == MapNode.NodeState.HIDDEN:
-			node.set_state(MapNode.NodeState.REVEALED)
+		if dist <= vision_range:
+			nodes_to_reveal.append(node)
+
+	# 2. The Fix: If nobody needs revealing, stop here.
+	# This prevents the "started with no Tweeners" error.
+	if nodes_to_reveal.is_empty():
+		return
+
+	# 3. NOW it is safe to create the tween
+	var tween = create_tween().set_parallel(true)
+
+	for node in nodes_to_reveal:
+		# Update logical state
+		node.set_state(MapNode.NodeState.REVEALED)
+
+		# Set initial visual state
+		node.modulate.a = 0.0
+
+		# Calculate delay
+		var dist = _get_hex_distance(center_coords, node.grid_coords)
+		var delay = max(0, (dist - 1) * 0.1) # Ensure delay isn't negative
+
+		# Add to tween
+		tween.tween_property(node, "modulate:a", 1.0, 0.5)\
+			.set_delay(delay)\
+			.set_trans(Tween.TRANS_SINE)\
+			.set_ease(Tween.EASE_OUT)
 
 func _get_hex_distance(a: Vector2i, b: Vector2i) -> int:
 	var ac = _offset_to_cube(a)

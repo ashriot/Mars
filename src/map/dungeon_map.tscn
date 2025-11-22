@@ -34,6 +34,7 @@ corner_detail = 6
 
 [node name="DungeonMap" type="Node2D"]
 script = ExtResource("1_5o7fj")
+vision_range = 2
 num_combats = 6
 num_terminals = 5
 map_node_scene = ExtResource("2_vfn15")
@@ -71,7 +72,6 @@ grow_horizontal = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_styles/background = SubResource("StyleBoxFlat_1a5qu")
 theme_override_styles/fill = SubResource("StyleBoxFlat_vfn15")
-step = 1.0
 rounded = true
 show_percentage = false
 
@@ -92,3 +92,5 @@ theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 20
 theme_override_font_sizes/font_size = 60
 text = "50%"
+
+[node name="Camera2D" type="Camera2D" parent="."]
