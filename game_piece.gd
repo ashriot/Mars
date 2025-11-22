@@ -16,13 +16,15 @@ var protocol: int = 0
 # 0:U, 1:UR, 2:DR, 3:D, 4:DL, 5:UL
 var walls = [false, false, false, false, false, false]
 var owner_id: int = 0
+var original_owner_id: int = 0
 var is_face_down: bool = false
 
 # --- VISUALS ---
 @onready var icon = $Icon
-@onready var kernel_label = $KernelLabel
-@onready var rarity_label = $RarityLabel
-@onready var protocol_label = $ProtocolLabel
+@onready var face = $Face
+@onready var kernel_label = $Face/KernelLabel
+@onready var rarity_label = $Face/RarityLabel
+@onready var protocol_label = $Face/ProtocolLabel
 @onready var background = $Background
 @onready var wall_nodes = [
 	$Wall_U,  $Wall_UR, $Wall_DR,
@@ -34,6 +36,7 @@ func setup(data: Dictionary, player: int, size_px: Vector2):
 	size = size_px
 	pivot_offset = size / 2.0
 	owner_id = player
+	original_owner_id = player
 
 	# 1. Load Data
 	unit_name = data.get("name", "Unknown")
@@ -96,8 +99,7 @@ func set_selected(is_selected: bool):
 
 func set_face_down(face_down: bool):
 	is_face_down = face_down
-	#icon.visible = !is_face_down
-	kernel_label.visible = !is_face_down
+	face.visible = !is_face_down
 
 	for i in range(6):
 		if wall_nodes[i]:
@@ -120,6 +122,9 @@ func _update_ui():
 	# Display Hex if > 9
 	kernel_label.text = "%X" % kernel_value
 	rarity_label.text = Abbr.keys()[rarity]
-	protocol_label.text = ChipLibrary.Protocol.keys()[protocol]
+	if ChipLibrary.Protocol.keys()[protocol] != "NONE":
+		protocol_label.text = ChipLibrary.Protocol.keys()[protocol]
+	else:
+		protocol_label.text = ""
 	tooltip_text = ChipLibrary.PROTO_DESC.get(protocol, "No Effect")
 	set_face_down(is_face_down)

@@ -4,6 +4,12 @@ const OFFENSE_WEIGHT = 10.0 # Points per enemy flipped
 const DEFENSE_WALL_BONUS = 2.0 # Points for having a wall facing an enemy
 const VULNERABILITY_PENALTY = 5.0 # Penalty for exposing a no-wall side to an empty slot
 
+# Protocol Specific Weights
+const PROTO_BONUS_KILL = 3.0 # Bonus for flipping if we have Virus/Transfer/Cascade
+const PROTO_BONUS_ADJACENT_FRIEND = 3.0 # Bonus per friend for Amplify/Flanking
+const PROTO_BONUS_ADJACENT_ENEMY = 2.0 # Bonus per enemy for Decrement
+const PROTO_BONUS_OPEN_SPACE = 1.5 # Bonus per empty neighbor for Malloc
+
 # Returns a Dictionary: { "chip": HexChip, "piece_index": int }
 static func get_best_move(board_manager: Control, ai_player_id: int, difficulty: int) -> Dictionary:
 	var grid = board_manager.grid_chips
@@ -33,26 +39,29 @@ static func get_best_move(board_manager: Control, ai_player_id: int, difficulty:
 	possible_moves.sort_custom(func(a, b): return a.score > b.score)
 
 	# 3. Select based on Difficulty
-	# 0 = Easy, 1 = Medium, 2 = Hard
-
 	if difficulty >= 2:
-		# HARD: Always pick the best
+		# HARD: Best move
 		return possible_moves[0]
-
 	elif difficulty == 1:
-		# MEDIUM: Pick random from top 3 (Human-like error)
+		# MEDIUM: Random top 3
 		var pool_size = min(3, possible_moves.size())
-		var pool = possible_moves.slice(0, pool_size)
-		return pool.pick_random()
-
+		return possible_moves.slice(0, pool_size).pick_random()
 	else:
-		# EASY: Pick random from the top 50% (Chaos)
+		# EASY: Random top 50%
 		var pool_size = max(1, int(possible_moves.size() / 2.0))
-		var pool = possible_moves.slice(0, pool_size)
-		return pool.pick_random()
+		return possible_moves.slice(0, pool_size).pick_random()
 
 static func _evaluate_move(target_chip: HexChip, piece: GamePiece, grid: Dictionary, my_id: int, manager) -> float:
 	var score = 0.0
+	var proto = piece.protocol
+	var P = ChipLibrary.Protocol
+
+	# Create Data Packet for Protocol Logic (Simulation)
+	var my_data = {
+		"kernel": piece.kernel_value,
+		"rank": piece.rank,
+		"protocol": piece.protocol
+	}
 
 	# Get neighbors and their relative directions
 	var neighbors = manager._get_neighbors_with_direction(target_chip.grid_coords)
@@ -65,30 +74,69 @@ static func _evaluate_move(target_chip: HexChip, piece: GamePiece, grid: Diction
 		if neighbor_chip.state == HexChip.ChipState.OCCUPIED:
 			var neighbor_piece = neighbor_chip.current_piece
 
-			# If Enemy...
+			# --- ENEMY NEIGHBOR ---
 			if neighbor_piece.owner_id != my_id:
-				# Can we flip it?
-				# 1. Do we have a wall?
+
+				# 1. Protocol: Decrement likes enemies
+				if proto == P.DECREMENT:
+					score += PROTO_BONUS_ADJACENT_ENEMY
+
+				# 2. Can we flip it?
 				if piece.walls[dir]:
 					var opp_dir = (dir + 3) % 6
 					var enemy_has_wall = neighbor_piece.walls[opp_dir]
+					var flip_success = false
 
-					# 2. Resolution
 					if not enemy_has_wall:
-						score += OFFENSE_WEIGHT # Auto-win
-					elif piece.kernel_value > neighbor_piece.kernel_value:
-						score += OFFENSE_WEIGHT # Kernel win
-					# (Tie or Loss gives 0 points)
+						flip_success = true # Auto-win
+					else:
+						# SIMULATE COMBAT MATH (Including Backdoor/Firewall/Rootkit)
+						var enemy_data = {
+							"kernel": neighbor_piece.kernel_value,
+							"rank": neighbor_piece.rank,
+							"protocol": neighbor_piece.protocol
+						}
 
-			# If Friendly...
+						var att_bonus = ProtocolLogic.get_attack_bonus(my_data, enemy_data)
+						var def_bonus = ProtocolLogic.get_defense_bonus(enemy_data, my_data)
+
+						var my_power = piece.kernel_value + att_bonus
+						var enemy_power = neighbor_piece.kernel_value + def_bonus
+
+						if my_power > enemy_power:
+							flip_success = true
+
+					if flip_success:
+						score += OFFENSE_WEIGHT
+
+						# Protocol: On-Flip Bonuses
+						if proto == P.VIRUS or proto == P.TRANSFER or proto == P.CASCADE:
+							score += PROTO_BONUS_KILL
+				else:
+					# No wall facing enemy? That's slightly risky (they might flip us back next turn)
+					score -= 1.0
+
+			# --- FRIENDLY NEIGHBOR ---
 			else:
-				# Tiny bonus for clustering (optional)
+				# Standard clustering bonus
 				score += 0.5
+
+				# Protocol: Buffers like friends
+				if proto == P.AMPLIFY or proto == P.FLANKING:
+					score += PROTO_BONUS_ADJACENT_FRIEND
 
 		# CASE B: Neighbor is Empty
 		else:
+			# Protocol: Malloc likes empty space
+			if proto == P.MALLOC:
+				score += PROTO_BONUS_OPEN_SPACE
+
 			# Defense Check: Are we exposing a weak side?
 			if not piece.walls[dir]:
-				score -= VULNERABILITY_PENALTY
+				# If we are Deadlocked, we don't care about vulnerability as much (can't be flipped)
+				if proto == P.DEADLOCK:
+					score -= (VULNERABILITY_PENALTY * 0.2) # Reduced penalty
+				else:
+					score -= VULNERABILITY_PENALTY
 
 	return score

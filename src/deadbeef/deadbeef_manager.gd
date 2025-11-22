@@ -166,22 +166,28 @@ func _play_turn(target_chip: HexChip, piece_to_play: GamePiece):
 	target_chip.add_piece(piece_to_play)
 	print("Player %d placed on %s" % [current_player, target_chip.grid_coords])
 
-	# 1. TRIGGER ON PLACE PROTOCOLS
+	# 1. ON PLACE PROTOCOLS
 	ProtocolLogic.on_place(target_chip, self)
 
 	# 2. RESOLVE COMBAT
-	_resolve_combat_chain(target_chip)
+	await _resolve_combat_chain(target_chip)
 
 	var is_p2 = (current_player == 1)
 	_draw_card_to_hand(hand_container, current_player, is_p2)
 
+	# --- END OF TURN / START OF NEW TURN ---
 	current_player = 1 - current_player
 	_update_scores()
+
+	# 3. TRIGGER START OF TURN PROTOCOLS (REBOOT, etc.)
+	# Now that it's the new player's turn, process their start-of-turn effects
+	ProtocolLogic.on_turn_start(grid_chips, current_player)
+	_update_scores() # Update scores again in case Reboot flipped things back
+
 	is_processing_turn = false
 
 	if current_player == 1:
 		_start_enemy_turn()
-
 # --- AI LOGIC ---
 
 func _start_enemy_turn():
@@ -272,6 +278,7 @@ func _resolve_combat_chain(start_chip: HexChip):
 
 				if not processed_in_chain.has(defender_chip):
 					if max_chain_depth == -1 or current_depth < max_chain_depth:
+						await get_tree().create_timer(0.5).timeout
 						process_queue.append({ "chip": defender_chip, "depth": current_depth + 1 })
 
 func _update_scores():
@@ -281,8 +288,8 @@ func _update_scores():
 		if chip.state == HexChip.ChipState.OCCUPIED and chip.current_piece:
 			if chip.current_piece.owner_id == 0: p1_score += 1
 			else: p2_score += 1
-	score_p1_label.text = "P1: %d" % p1_score
-	score_p2_label.text = "P2: %d" % p2_score
+	score_p1_label.text = "%d" % p1_score
+	score_p2_label.text = "%d" % p2_score
 
 func _get_neighbors_with_direction(coords: Vector2i) -> Array:
 	var list = []
