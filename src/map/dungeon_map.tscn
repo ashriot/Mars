@@ -1,8 +1,9 @@
-[gd_scene load_steps=6 format=3 uid="uid://cqo38uie6gkdu"]
+[gd_scene load_steps=8 format=3 uid="uid://cqo38uie6gkdu"]
 
 [ext_resource type="Script" uid="uid://c0tmi3fc3fega" path="res://src/map/dungeon_map.gd" id="1_5o7fj"]
 [ext_resource type="Texture2D" uid="uid://bwqcku6nvr4ff" path="res://assets/graphics/backgrounds/street.webp" id="2_1a5qu"]
 [ext_resource type="PackedScene" uid="uid://cqdl6q7d2hmox" path="res://src/map/map_node.tscn" id="2_vfn15"]
+[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="4_pf175"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1a5qu"]
 content_margin_left = 2.0
@@ -14,10 +15,10 @@ border_width_left = 6
 border_width_top = 6
 border_width_right = 6
 border_width_bottom = 6
-corner_radius_top_left = 20
-corner_radius_top_right = 20
-corner_radius_bottom_right = 20
-corner_radius_bottom_left = 20
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
 corner_detail = 6
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vfn15"]
@@ -26,16 +27,24 @@ content_margin_top = 2.0
 content_margin_right = 2.0
 content_margin_bottom = 2.0
 bg_color = Color(1, 1, 1, 1)
-corner_radius_top_left = 20
-corner_radius_top_right = 20
-corner_radius_bottom_right = 20
-corner_radius_bottom_left = 20
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
 corner_detail = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bcccw"]
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 1, 1, 1)
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
 
 [node name="DungeonMap" type="Node2D"]
 script = ExtResource("1_5o7fj")
-map_length = 16
-map_height = 16
 vision_range = 2
 num_combats = 6
 num_terminals = 5
@@ -73,7 +82,7 @@ anchor_right = 0.5
 offset_left = -376.0
 offset_top = 13.0
 offset_right = 376.0
-offset_bottom = 65.0
+offset_bottom = 56.0
 grow_horizontal = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_styles/background = SubResource("StyleBoxFlat_1a5qu")
@@ -81,22 +90,52 @@ theme_override_styles/fill = SubResource("StyleBoxFlat_vfn15")
 rounded = true
 show_percentage = false
 
-[node name="Label" type="Label" parent="CanvasLayer/HUD/AlertGauge"]
+[node name="Panel" type="Panel" parent="CanvasLayer/HUD/AlertGauge"]
 layout_mode = 1
-anchors_preset = 8
+anchors_preset = 5
 anchor_left = 0.5
-anchor_top = 0.5
 anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -20.0
-offset_top = -9.5
-offset_right = 20.0
-offset_bottom = 9.5
+offset_left = -376.0
+offset_top = 39.0
+offset_right = -129.0
+offset_bottom = 79.0
 grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_bcccw")
+
+[node name="Alert" type="Label" parent="CanvasLayer/HUD/AlertGauge/Panel"]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 7.0
+offset_top = -20.0
+offset_right = 126.0
+offset_bottom = 20.0
 grow_vertical = 2
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 20
-theme_override_font_sizes/font_size = 40
-text = "50%"
+theme_override_colors/font_color = Color(0.126, 0.21, 0.126, 1)
+theme_override_fonts/font = ExtResource("4_pf175")
+theme_override_font_sizes/font_size = 36
+text = "ALERT"
+vertical_alignment = 1
+
+[node name="Value" type="Label" parent="CanvasLayer/HUD/AlertGauge/Panel"]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -105.0
+offset_top = -20.0
+offset_right = -7.0
+offset_bottom = 20.0
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.126, 0.21, 0.126, 1)
+theme_override_fonts/font = ExtResource("4_pf175")
+theme_override_font_sizes/font_size = 36
+text = "100%"
+horizontal_alignment = 2
+vertical_alignment = 1
 
 [node name="Camera2D" type="Camera2D" parent="."]

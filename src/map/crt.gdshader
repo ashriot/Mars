@@ -18,7 +18,7 @@ uniform sampler2D SCREEN_TEXTURE : hint_screen_texture, filter_linear_mipmap;
 // On Mac there is potentially a bug causing this to not work properly. If that is the case and you want to use the shader as an overlay
 // change all "overlay ? SCREEN_TEXTURE : TEXTURE" to only "SCREEN_TEXTURE" on lines 129-140, and "vec2 uv = overlay ? warp(SCREEN_UV) : warp(UV);"
 // to "vec2 uv = warp(SCREEN_UV);" on line 98.
-uniform bool overlay = false;
+uniform bool overlay = true;
 
 uniform float scanlines_opacity : hint_range(0.0, 1.0) = 0.4;
 uniform float scanlines_width : hint_range(0.0, 0.5) = 0.25;

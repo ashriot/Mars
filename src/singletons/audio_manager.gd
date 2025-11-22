@@ -1,19 +1,17 @@
 extends Node
 
+signal sfx_finished
+
 # --- Configuration ---
 const NUM_SFX_PLAYERS = 8
 const BUS_MUSIC = "Music"
 const BUS_SFX = "SFX"
 
 # --- Music Library ---
-# Preloading here means they are always ready in memory.
-# For an RPG of this size, this is totally fine and prevents stutter.
 var track_library = {
-	#"main_menu": preload("res://assets/music/main_menu.mp3"),
-	"battle": preload("res://assets/music/battle.mp3"),
-	#"boss": preload("res://assets/music/boss_theme.mp3"),
-	#"exploration": preload("res://assets/music/mars_ruins.mp3"),
-	#"victory": preload("res://assets/music/victory_fanfare.mp3")
+	"battle": preload("res://assets/music/battle.ogg"),
+	"map_1": preload("res://assets/music/map_1.ogg"),
+	# Add your other tracks here
 }
 
 var sfx_library = {
@@ -28,8 +26,12 @@ var _music_player_1: AudioStreamPlayer
 var _music_player_2: AudioStreamPlayer
 var _sfx_players: Array[AudioStreamPlayer] = []
 var _next_sfx_idx: int = 0
+
+# --- State Tracking ---
 var _current_music_player: AudioStreamPlayer = null
 var _current_track_key: String = ""
+# NEW: Dictionary to store the float position (seconds) of paused tracks
+var _saved_track_positions: Dictionary = {}
 
 func _ready():
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -51,7 +53,7 @@ func _ready():
 
 # --- MUSIC API ---
 
-func play_music(track_name: String, fade_duration: float = 1.0):
+func play_music(track_name: String, fade_duration: float = 1.0, save_current_pos: bool = false, resume_stored_pos: bool = false):
 	# 1. Validate track exists
 	if not track_library.has(track_name):
 		push_warning("AudioManager: Track not found in library: " + track_name)
@@ -59,51 +61,68 @@ func play_music(track_name: String, fade_duration: float = 1.0):
 
 	var stream = track_library[track_name]
 
-	# 2. Check if already playing (by key or stream)
+	# 2. Check if already playing
 	if _current_music_player and _current_music_player.playing and _current_track_key == track_name:
 		return
 
+	# 3. Identify Players
 	var new_player = _music_player_2 if _current_music_player == _music_player_1 else _music_player_1
 	var old_player = _current_music_player
 
+	# 4. Handle Old Player (Save Position Logic)
+	if old_player and old_player.playing:
+		if save_current_pos and _current_track_key != "":
+			# Save the exact timestamp where we left off
+			_saved_track_positions[_current_track_key] = old_player.get_playback_position()
+			print("Saved position for ", _current_track_key, ": ", _saved_track_positions[_current_track_key])
+
+		# Fade out old player
+		var tween_out = create_tween()
+		tween_out.tween_property(old_player, "volume_db", -80.0, fade_duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+		tween_out.tween_callback(old_player.stop)
+
+	# 5. Handle New Player (Resume Logic)
+	var start_time: float = 0.0
+	if resume_stored_pos and _saved_track_positions.has(track_name):
+		start_time = _saved_track_positions[track_name]
+		print("Resuming ", track_name, " from: ", start_time)
+
 	new_player.stream = stream
 	new_player.volume_db = -80.0
-	new_player.play()
+	# Play from the calculated start time
+	new_player.play(start_time)
 
+	# Update State
 	_current_music_player = new_player
 	_current_track_key = track_name
 
-	var tween = create_tween()
-	tween.set_parallel(true)
-	tween.tween_property(new_player, "volume_db", 0.0, fade_duration)
+	# Fade in new player
+	var tween_in = create_tween()
+	tween_in.tween_property(new_player, "volume_db", 0.0, fade_duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
-	if old_player and old_player.playing:
-		tween.tween_property(old_player, "volume_db", -80.0, fade_duration)
-		tween.chain().tween_callback(old_player.stop)
 
-# --- ADD THIS FUNCTION ---
-func stop_music(fade_duration: float = 1.0):
-	# 1. If nothing is playing, do nothing
+# UPDATED: Added logic to save position on manual stop if desired
+func stop_music(fade_duration: float = 1.0, save_pos: bool = false):
 	if not _current_music_player or not _current_music_player.playing:
 		return
 
+	# Save position if requested
+	if save_pos and _current_track_key != "":
+		_saved_track_positions[_current_track_key] = _current_music_player.get_playback_position()
+
 	var player_to_stop = _current_music_player
 
-	# 2. Create a tween to fade it out
 	var tween = create_tween()
 	tween.tween_property(player_to_stop, "volume_db", -80.0, fade_duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
-
-	# 3. Stop the player once the fade is done
 	tween.tween_callback(player_to_stop.stop)
 
-	# 4. Reset internal tracking immediately so the system knows we are "stopped"
 	_current_music_player = null
 	_current_track_key = ""
 
 # --- SFX API (Unchanged) ---
 func play_sfx(sfx_name: String, pitch_variance: float = 0.0, volume_db: float = 0.0):
 	if not sfx_library.has(sfx_name):
-		push_warning("AudioManager: SFX not found in library: " + sfx_name)
+		# push_warning("AudioManager: SFX not found: " + sfx_name) # Optional: comment out to reduce spam
 		return
 
 	var stream = sfx_library[sfx_name]
@@ -122,4 +141,4 @@ func _get_available_sfx_player() -> AudioStreamPlayer:
 	return player
 
 func _on_sfx_finished(_player: AudioStreamPlayer):
-	pass
+	sfx_finished.emit()

@@ -9,15 +9,15 @@ const ALERT_MED_THRESHOLD = 76
 @onready var camera: Camera2D = $Camera2D
 @onready var hud: Control = $CanvasLayer/HUD
 @onready var alert_gauge: ProgressBar = $CanvasLayer/HUD/AlertGauge
-@onready var alert_label: Label = $CanvasLayer/HUD/AlertGauge/Label
+@onready var alert_label: Label = $CanvasLayer/HUD/AlertGauge/Panel/Value
 @onready var parallax_bg: Parallax2D = $Parallax2D
 @onready var bg_sprite: Sprite2D = $Parallax2D/Sprite2D
 @onready var background: Control = $Background
 
 # --- Configuration ---
 @export_group("Map Dimensions")
-@export var map_length: int = 8
-@export var map_height: int = 8
+@export var map_length: int = 10
+@export var map_height: int = 9
 
 # --- Game Rules ---
 @export_group("Map Rules")
@@ -100,12 +100,13 @@ var current_map_state: MapState = MapState.LOADING
 
 
 func _ready():
+	AudioManager.play_music("map_1", 1.0, false, false)
 	randomize()
 	hex_width = sqrt(3.0) * hex_size
 	hex_height = hex_size * 2.0
 
-	alert_gauge.self_modulate = Color.MEDIUM_SEA_GREEN
-	alert_gauge.modulate.a = 0.0
+	alert_gauge.modulate = Color.MEDIUM_SEA_GREEN
+	hud.modulate.a = 0.0
 	alert_gauge.value = current_alert
 	alert_label.text = str(int(alert_gauge.value)) + "%"
 
@@ -116,8 +117,7 @@ func _ready():
 	AudioManager.play_sfx("radiate")
 
 	var tween = create_tween()
-	tween.tween_property(alert_gauge, "modulate:a", 1.0, 0.75)\
-		.set_delay(0.5)\
+	tween.tween_property(hud, "modulate:a", 1.0, 0.15)\
 		.set_trans(Tween.TRANS_SINE)\
 		.set_ease(Tween.EASE_OUT)
 	await tween.finished
@@ -235,6 +235,7 @@ func play_intro_sequence(map_data: Dictionary) -> void:
 	# --- 1. SETUP "WIDE SHOT" CAMERA ---
 	var grid_center = (map_data.min_bounds + map_data.max_bounds) / 2.0
 	camera.position = grid_center
+	parallax_bg.scroll_scale = Vector2.ONE
 
 	# Calculate Wide Zoom
 	var vp_size = get_viewport_rect().size
@@ -307,10 +308,7 @@ func enter_battle_visuals(duration: float = 1.5):
 
 	# 3. Move Camera to Center
 	tween.tween_property(camera, "position", _map_center_pos, duration)
-
-	# 4. --- THE FIX: REMOVE PARALLAX ---
 	tween.tween_property(parallax_bg, "scroll_scale", Vector2.ONE, duration)
-	# -----------------------------------
 
 	# 5. Calculate Zoom
 	var vp_size = get_viewport_rect().size
@@ -497,6 +495,7 @@ func _move_player_to(target_node: MapNode, is_start: bool = false):
 		current_node.set_is_current(false)
 
 	current_node = target_node
+	current_node.hex_sprite.modulate = Color.DARK_GRAY
 	target_node.set_is_current(true)
 
 	# 2. Handle Camera
@@ -510,25 +509,18 @@ func _move_player_to(target_node: MapNode, is_start: bool = false):
 
 	# 3. Handle Gameplay Logic
 	total_moves += 1
-	var is_revisit = target_node.state == MapNode.NodeState.COMPLETED
-
-	# Calculate how much alert to add based on current tier
+	var is_revisit = target_node.has_been_visited
+	target_node.has_been_visited = true
 	var alert_gain = _calculate_alert_gain(is_revisit)
 
-	# Apply the change (Visuals update automatically inside this function)
 	modify_alert(alert_gain)
 
 	# Update vision AFTER alert change (in case vision_range changed)
 	_update_vision()
 
-	if not is_revisit:
-		if target_node.type == MapNode.NodeType.TERMINAL:
-			modify_alert(-25)
-			complete_current_node()
-		else:
-			interaction_requested.emit(target_node)
+	if target_node.state != MapNode.NodeState.COMPLETED:
+		interaction_requested.emit(target_node)
 
-# --- NEW: Logic to determine cost ---
 func _calculate_alert_gain(is_revisit: bool) -> int:
 	if current_alert < ALERT_LOW_THRESHOLD:
 		return 1 if is_revisit else 4
@@ -537,26 +529,23 @@ func _calculate_alert_gain(is_revisit: bool) -> int:
 	else:
 		return 3 if is_revisit else 6
 
-# --- NEW: The Single Source of Truth ---
-# Call this function for adding OR removing alert (pass negative numbers to reduce)
 func modify_alert(amount: int):
 	current_alert = clamp(current_alert + amount, 0, 100)
 	_update_alert_visuals()
 
-# --- NEW: Handles all UI and State changes based on the value ---
 func _update_alert_visuals():
 	# 1. Determine the Target State & Color
 	# We do this logic immediately so the game state is correct
 	var target_color: Color
 
 	if current_alert < ALERT_LOW_THRESHOLD:
-		target_color = Color.MEDIUM_SEA_GREEN
+		target_color = Color(0.419, 1.063, 0.419)
 		vision_range = 2
 	elif current_alert < ALERT_MED_THRESHOLD:
-		target_color = Color.GOLDENROD
+		target_color = Color(1.437, 1.226, 0.0, 1.0)
 		vision_range = 1
 	else:
-		target_color = Color.ORANGE_RED
+		target_color = Color(1.437, 0.234, 0.0, 1.0)
 		vision_range = 0
 
 	# 2. Setup the Tween
@@ -578,9 +567,8 @@ func _update_alert_visuals():
 	)
 
 	# 4. Animate the Color
-	alert_tween.tween_property(alert_gauge, "self_modulate", target_color, duration)
+	alert_tween.tween_property(alert_gauge, "modulate", target_color, duration)
 
-# --- Helper Function called by the Tween ---
 func _set_alert_display_value(val: float):
 	alert_gauge.value = val
 	alert_label.text = str(roundi(val)) + "%"

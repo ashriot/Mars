@@ -1,6 +1,24 @@
-[gd_scene load_steps=3 format=3 uid="uid://brd70upq3tjwu"]
+[gd_scene load_steps=8 format=3 uid="uid://brd70upq3tjwu"]
 
+[ext_resource type="Script" uid="uid://cfc3x0j8xdanv" path="res://src/map/terminal.gd" id="1_0jfgh"]
 [ext_resource type="Shader" uid="uid://dg4j3qt72ayqd" path="res://src/map/crt.gdshader" id="1_ofi5q"]
+[ext_resource type="FontVariation" uid="uid://c0je4m574ytir" path="res://data/theme/fonts/suse_mono.tres" id="1_rwyeu"]
+[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="2_0jfgh"]
+[ext_resource type="Texture2D" uid="uid://16vp75vvyubh" path="res://assets/graphics/icons/map/cancel.png" id="2_5k758"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ofi5q"]
+bg_color = Color(0.18184729, 0.054765537, 0, 0.88235295)
+border_width_left = 12
+border_width_top = 12
+border_width_right = 12
+border_width_bottom = 12
+border_color = Color(1.164, 0.557, 0.205, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+shadow_color = Color(0, 0, 0, 0.84705883)
+shadow_size = 10
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_rwyeu"]
 shader = ExtResource("1_ofi5q")
@@ -9,32 +27,35 @@ shader_parameter/scanlines_opacity = 0.4
 shader_parameter/scanlines_width = 0.25
 shader_parameter/grille_opacity = 0.3
 shader_parameter/resolution = Vector2(640, 480)
-shader_parameter/pixelate = true
-shader_parameter/roll = false
-shader_parameter/roll_speed = 0.4
-shader_parameter/roll_size = 0.0
-shader_parameter/roll_variation = 2.00000009174012
-shader_parameter/distort_intensity = 0.02000000095
-shader_parameter/noise_opacity = 0.4
+shader_parameter/pixelate = false
+shader_parameter/roll = true
+shader_parameter/roll_speed = 3.0
+shader_parameter/roll_size = 15.0
+shader_parameter/roll_variation = 1.8
+shader_parameter/distort_intensity = 0.010000000475
+shader_parameter/noise_opacity = 0.0
 shader_parameter/noise_speed = 5.0
-shader_parameter/static_noise_intensity = 0.0400000019
-shader_parameter/aberration = 0.02000004845000003
+shader_parameter/static_noise_intensity = 0.02000000095
+shader_parameter/aberration = 0.030000048925000078
 shader_parameter/brightness = 1.4
 shader_parameter/discolor = true
 shader_parameter/warp_amount = 1.0
-shader_parameter/clip_warp = false
-shader_parameter/vignette_intensity = 0.0
-shader_parameter/vignette_opacity = 0.0
+shader_parameter/clip_warp = true
+shader_parameter/vignette_intensity = 0.4
+shader_parameter/vignette_opacity = 0.5
 
 [node name="Terminal" type="Control"]
+custom_minimum_size = Vector2(680, 640)
 layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+anchors_preset = 0
+offset_left = 634.0
+offset_top = 101.0
+offset_right = 1314.0
+offset_bottom = 741.0
+script = ExtResource("1_0jfgh")
 
 [node name="background" type="ColorRect" parent="."]
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -45,60 +66,90 @@ color = Color(0, 0, 0, 1)
 metadata/_edit_lock_ = true
 
 [node name="Panel" type="Panel" parent="."]
+custom_minimum_size = Vector2(680, 640)
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -449.7224
-offset_top = -311.0
-offset_right = 449.7224
-offset_bottom = 311.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_ofi5q")
 
-[node name="Label" type="Label" parent="Panel"]
-modulate = Color(0, 1, 0, 1)
-custom_minimum_size = Vector2(800, 100)
+[node name="Label" type="RichTextLabel" parent="Panel"]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -400.0
-offset_top = -280.5
-offset_right = 400.0
-offset_bottom = 280.5
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 22.760864
+offset_top = 86.0
+offset_right = -18.760864
+offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 40
-text = "YOU HAVE BEEN GRANTED ACCESS
-PLEASE MAKE YOUR SELECTION...
+theme_override_fonts/normal_font = ExtResource("1_rwyeu")
+theme_override_fonts/bold_font = ExtResource("2_0jfgh")
+theme_override_font_sizes/normal_font_size = 18
+theme_override_font_sizes/bold_font_size = 18
+bbcode_enabled = true
+scroll_active = false
 
+[node name="ColorRect" type="ColorRect" parent="Panel"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 11.0
+offset_top = 11.0
+offset_right = -12.0
+offset_bottom = 80.76754
+grow_horizontal = 2
+color = Color(1.164, 0.557, 0.205, 1)
 
-1] RECEIVE 9.5 BITS
-
-2] REDUCE ALERT BY 25%
-
-(SCRAP FOR PARTS)"
-horizontal_alignment = 1
+[node name="Header" type="Label" parent="Panel/ColorRect"]
+modulate = Color(0.126, 0.21, 0.126, 1)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_right = -12.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_fonts/font = ExtResource("1_rwyeu")
+theme_override_font_sizes/font_size = 24
+text = "/usr/local/paradigm/secops/term..."
 vertical_alignment = 1
 
-[node name="TerminalFilter" type="ColorRect" parent="."]
-material = SubResource("ShaderMaterial_rwyeu")
-custom_minimum_size = Vector2(1280, 960)
+[node name="CloseButton" type="TextureButton" parent="Panel/ColorRect"]
+modulate = Color(0.18039216, 0.05490196, 0, 0.88235295)
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
+anchors_preset = 6
+anchor_left = 1.0
 anchor_top = 0.5
-anchor_right = 0.5
+anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = -640.0
-offset_top = -480.0
-offset_right = 640.0
-offset_bottom = 480.0
+offset_left = -60.0
+offset_top = -30.000006
+offset_right = -10.0
+offset_bottom = 20.000004
+grow_horizontal = 0
+grow_vertical = 2
+texture_normal = ExtResource("2_5k758")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="TerminalFilter" type="ColorRect" parent="."]
+visible = false
+material = SubResource("ShaderMaterial_rwyeu")
+custom_minimum_size = Vector2(640, 480)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -44.0
+offset_top = -69.0
+offset_right = -39.0
+offset_bottom = -67.0
 grow_horizontal = 2
 grow_vertical = 2
-metadata/_edit_lock_ = true
+
+[connection signal="pressed" from="Panel/ColorRect/CloseButton" to="." method="_on_close_button_pressed"]

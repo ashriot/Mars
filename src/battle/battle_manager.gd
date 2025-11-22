@@ -52,6 +52,7 @@ func _ready():
 	spawn_encounter()
 	change_state(State.LOADING)
 	await _fade_in()
+	await wait(0.25)
 	await _flush_all_health_animations()
 	await wait(0.5)
 	await _apply_starting_passives()
