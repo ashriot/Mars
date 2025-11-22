@@ -45,7 +45,7 @@ const PROTOCOL_COSTS = {
 # --- UNIT DEFINITIONS ---
 # This is your "Deck" of defined units.
 const BLUEPRINTS = {
-	# COMMON
+	# COMMON (Rank 1 Base)
 	"Striker L": { "rarity": Rarity.COMMON, "walls": [U, UL], "proto": Protocol.NONE },
 	"Striker R": { "rarity": Rarity.COMMON, "walls": [U, UR], "proto": Protocol.NONE },
 	"Flanker L": { "rarity": Rarity.COMMON, "walls": [D, DL], "proto": Protocol.NONE },
@@ -54,32 +54,50 @@ const BLUEPRINTS = {
 	"Waller U":  { "rarity": Rarity.COMMON, "walls": [UL, U, UR], "proto": Protocol.NONE },
 	"Waller D":  { "rarity": Rarity.COMMON, "walls": [DR, D, DL], "proto": Protocol.NONE },
 
-	# UNCOMMON
-	"X-Strike":  { "rarity": Rarity.UNCOMMON, "walls": [UL, UR, DR, DL], "proto": Protocol.NONE },
-	"Arc L":     { "rarity": Rarity.UNCOMMON, "walls": [DL, UL, U], "proto": Protocol.NONE },
-	"Arc R":     { "rarity": Rarity.UNCOMMON, "walls": [U, UR, DR], "proto": Protocol.NONE },
-	"Railgun":   { "rarity": Rarity.UNCOMMON, "walls": [U], "proto": Protocol.NONE },
-	"Gunner U":  { "rarity": Rarity.UNCOMMON, "walls": [UL, UR], "proto": Protocol.NONE },
-	"Gunner D":  { "rarity": Rarity.UNCOMMON, "walls": [DR, DL], "proto": Protocol.NONE }
+	# UNCOMMON (Rank 2 Base)
+	"X-Strike":     { "rarity": Rarity.UNCOMMON, "walls": [UL, UR, DR, DL], "proto": Protocol.NONE },
+	"Arc L":        { "rarity": Rarity.UNCOMMON, "walls": [DL, UL, U], "proto": Protocol.NONE },
+	"Arc R":        { "rarity": Rarity.UNCOMMON, "walls": [U, UR, DR], "proto": Protocol.NONE },
+	"Railgun":      { "rarity": Rarity.UNCOMMON, "walls": [U], "proto": Protocol.NONE },
+	"Gunner U":     { "rarity": Rarity.UNCOMMON, "walls": [UL, UR], "proto": Protocol.NONE },
+	"Gunner D":     { "rarity": Rarity.UNCOMMON, "walls": [DR, DL], "proto": Protocol.NONE },
+	"Y-Fork":       { "rarity": Rarity.UNCOMMON, "walls": [UL, U, UR], "proto": Protocol.NONE },
+	"Inverse-Y":    { "rarity": Rarity.UNCOMMON, "walls": [DL, D, DR], "proto": Protocol.NONE },
+	"Piercer L":    { "rarity": Rarity.UNCOMMON, "walls": [UL, UR, D], "proto": Protocol.NONE },
+	"Piercer R":    { "rarity": Rarity.UNCOMMON, "walls": [U, DL, DR], "proto": Protocol.NONE },
+	"Bulwark Line": { "rarity": Rarity.UNCOMMON, "walls": [UL, UR], "proto": Protocol.NONE },
+	"Railgun U":   { "rarity": Rarity.UNCOMMON, "walls": [U], "proto": Protocol.NONE },
+	"Railgun D":   { "rarity": Rarity.UNCOMMON, "walls": [D], "proto": Protocol.NONE },
+	"Trident U":   { "rarity": Rarity.UNCOMMON, "walls": [U, UL, UR], "proto": Protocol.NONE },
+	"Splitter":    { "rarity": Rarity.UNCOMMON, "walls": [U, DR, DL], "proto": Protocol.NONE },
+	"Skew":        { "rarity": Rarity.UNCOMMON, "walls": [UL, U, DR], "proto": Protocol.NONE },
+	"Barricade":   { "rarity": Rarity.UNCOMMON, "walls": [UL, U, UR, D], "proto": Protocol.NONE },
+	"Downburst":   { "rarity": Rarity.UNCOMMON, "walls": [D, UL, UR], "proto": Protocol.NONE },
+
+
 }
 
 # --- GENERATOR ---
-static func create_chip_data(name: String, target_rank: int = -1) -> Dictionary:
+static func create_chip_data(name: String, requested_rank: int = -1) -> Dictionary:
 	if not BLUEPRINTS.has(name):
 		push_error("ChipLibrary: Unknown Blueprint '%s'" % name)
 		return {}
 
 	var bp = BLUEPRINTS[name]
 	var rarity_info = RARITY_DATA[bp.rarity]
+	var base_rank = rarity_info.base_rank
 
-	# 1. Determine Rank (Default to base rank if not specified)
-	var rank = target_rank
-	if rank < rarity_info.base_rank:
-		rank = rarity_info.base_rank
+	# 1. Determine Actual Rank
+	# If no rank requested (-1), use the base rank for that rarity.
+	# Otherwise, clamp the rank between Base Rank and 5 (Max Rank).
+	var actual_rank = base_rank
+	if requested_rank != -1:
+		actual_rank = clampi(requested_rank, base_rank, 5)
 
 	# 2. Calculate Total Budget
-	# Budget = Base + (RankIncreases)
-	var budget = rarity_info.base_budget + (rank - rarity_info.base_rank)
+	# Budget = BaseBudget + (Rankups * 1)
+	var rank_difference = actual_rank - base_rank
+	var budget = rarity_info.base_budget + rank_difference
 
 	# 3. Calculate Costs
 	var wall_count = bp.walls.size()
@@ -89,7 +107,7 @@ static func create_chip_data(name: String, target_rank: int = -1) -> Dictionary:
 	# 4. Calculate Kernel
 	var final_kernel = budget - wall_deduction - proto_deduction
 
-	# Ensure non-negative kernel (though your design generally prevents this)
+	# Ensure non-negative kernel
 	final_kernel = max(0, final_kernel)
 
 	# 5. Format Wall Array (Indices to Booleans)
@@ -101,7 +119,7 @@ static func create_chip_data(name: String, target_rank: int = -1) -> Dictionary:
 	return {
 		"name": name,
 		"rarity": bp.rarity,
-		"rank": rank,
+		"rank": actual_rank,
 		"kernel": final_kernel,
 		"walls": wall_bools,
 		"protocol": bp.proto
