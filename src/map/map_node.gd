@@ -32,6 +32,7 @@ func setup(coords: Vector2i, hex_points: PackedVector2Array, assigned_type: Node
 	var tex = _get_my_texture()
 	icon_sprite.texture = tex
 	icon_sprite.visible = false
+	icon_sprite.modulate = Color(0.196, 0.196, 0.196, 1.0)
 
 	# 2. Create Hitbox (Calculated by Code)
 	# We still create this in code to ensure the click area matches
@@ -71,20 +72,20 @@ func set_state(new_state: NodeState):
 			_set_type_color()
 			hex_sprite.modulate.a = 1.0
 			hex_sprite.modulate = hex_sprite.modulate.darkened(0.4)
-			icon_sprite.modulate = Color.DIM_GRAY
+			icon_sprite.modulate.a = 0.5
 
 func set_is_current(is_current: bool):
 	$SelectionSprite.visible = is_current
 
 func _set_type_color():
 	match type:
-		NodeType.COMBAT: hex_sprite.self_modulate = Color.GOLDENROD
+		NodeType.COMBAT: hex_sprite.self_modulate = Color.YELLOW
 		NodeType.ELITE: hex_sprite.self_modulate = Color.INDIAN_RED
 		NodeType.BOSS: hex_sprite.self_modulate = Color.MAGENTA
 		NodeType.REWARD: hex_sprite.self_modulate = Color.YELLOW_GREEN
 		NodeType.REWARD_2: hex_sprite.self_modulate = Color.CADET_BLUE
-		NodeType.REWARD_3: hex_sprite.self_modulate = Color.REBECCA_PURPLE
-		NodeType.EVENT: hex_sprite.self_modulate = Color.LIGHT_PINK
+		NodeType.REWARD_3: hex_sprite.self_modulate = Color.MEDIUM_PURPLE
+		NodeType.EVENT: hex_sprite.self_modulate = Color.HOT_PINK
 		NodeType.TERMINAL: hex_sprite.self_modulate = Color.DARK_ORANGE
 		NodeType.UNKNOWN: hex_sprite.self_modulate = Color.DIM_GRAY
 

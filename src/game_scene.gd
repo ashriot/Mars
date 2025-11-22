@@ -7,7 +7,7 @@ extends Node2D
 
 # --- REFERENCES ---
 @onready var dungeon_map: DungeonMap = $DungeonMap
-@onready var overlay_layer = $OverlayLayer
+@onready var overlay_layer = $DungeonMap/OverlayLayer
 
 var battle_scene: Node = null
 

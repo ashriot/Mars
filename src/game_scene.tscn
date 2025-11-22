@@ -4,24 +4,19 @@
 [ext_resource type="PackedScene" uid="uid://dc5du0o5phhma" path="res://src/battle/battle_scene.tscn" id="2_jr7q5"]
 [ext_resource type="PackedScene" uid="uid://cqo38uie6gkdu" path="res://src/map/dungeon_map.tscn" id="3_jr7q5"]
 
-[sub_resource type="Environment" id="Environment_rnajw"]
-background_mode = 5
-tonemap_mode = 2
-tonemap_exposure = 0.5
+[sub_resource type="Environment" id="Environment_jr7q5"]
+background_mode = 3
+background_canvas_max_layer = 2
 glow_enabled = true
-glow_blend_mode = 1
-glow_hdr_threshold = 0.6
-fog_mode = 1
-fog_light_energy = 4.0
-fog_density = 1.0
+glow_hdr_threshold = 0.8
 
 [node name="GameScene" type="Node2D"]
 script = ExtResource("1_p4js5")
 battle_scene_packed = ExtResource("2_jr7q5")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = SubResource("Environment_rnajw")
+environment = SubResource("Environment_jr7q5")
 
 [node name="DungeonMap" parent="." instance=ExtResource("3_jr7q5")]
 
-[node name="OverlayLayer" type="CanvasLayer" parent="."]
+[node name="OverlayLayer" type="CanvasLayer" parent="DungeonMap"]

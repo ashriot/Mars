@@ -34,7 +34,7 @@ func setup(data: HeroData):
 	current_focus = 4
 	update_focus_bar(false)
 	update_current_role()
-	panel.self_modulate.a = 0.85
+	panel.self_modulate.a = 1.0
 
 func on_turn_started() -> void:
 	#if current_focus < 10:
@@ -178,7 +178,7 @@ func _slide_down():
 		panel_home_position,
 		duration
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
-	tween.tween_property(panel, "self_modulate:a", 0.85, duration)
+	tween.tween_property(panel, "self_modulate:a", 1.0, duration)
 
 func _on_gui_input(event: InputEvent):
 	if event.is_action_pressed("ui_accept"):

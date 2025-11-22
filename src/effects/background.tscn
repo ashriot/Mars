@@ -48,6 +48,7 @@ process_material = SubResource("ParticleProcessMaterial_ivd5l")
 metadata/_edit_group_ = true
 
 [node name="ColorRect" type="ColorRect" parent="Parallax2D"]
+visible = false
 material = SubResource("ShaderMaterial_7yoso")
 offset_left = -960.0
 offset_top = -540.0
