@@ -6,8 +6,12 @@ extends Control
 @export var gap: float = 5.0
 
 # --- Rules Configuration ---
-@export var max_chain_depth: int = -1 # -1 = Infinite, 0 = No Chain, 1 = Chain Once, etc.
+@export var max_chain_depth: int = -1
 const MAX_CHIPS_PER_PLAYER = 10
+
+# --- AI Settings ---
+@export_enum("Easy", "Medium", "Hard") var ai_difficulty: int = 1
+@export var ai_delay: float = 1.0 # Seconds to wait before AI moves
 
 # --- Assets ---
 @export var chip_scene: PackedScene
@@ -24,9 +28,9 @@ const MAX_CHIPS_PER_PLAYER = 10
 var hex_width: float
 var hex_height: float
 var grid_chips = {}
-var current_player: int = 0
+var current_player: int = 0 # 0 = Human, 1 = AI
+var is_processing_turn: bool = false
 
-# Chip Budget Tracking
 var p1_chips_created: int = 0
 var p2_chips_created: int = 0
 
@@ -44,7 +48,6 @@ func _input(event):
 
 func generate_board():
 	print("Generating DEADBEEF Board...")
-
 	hex_width = hex_size
 	hex_height = hex_size
 
@@ -52,10 +55,8 @@ func generate_board():
 		print("Error: Assign Scenes!")
 		return
 
-	# Clear Board
 	for child in get_children():
-		if child is HexChip:
-			child.queue_free()
+		if child is HexChip: child.queue_free()
 	grid_chips.clear()
 
 	var screen_center = size / 2.0
@@ -90,26 +91,22 @@ func _create_chip(grid_x, grid_y, screen_pos, size_vec):
 
 func _start_game():
 	current_player = 0
-
-	# Reset Bag Counters
+	is_processing_turn = false
 	p1_chips_created = 0
 	p2_chips_created = 0
 
-	# Clear Hands
 	for child in chip_hand_p1.get_children(): child.queue_free()
 	for child in chip_hand_p2.get_children(): child.queue_free()
 
-	# Draw Initial Hands (5 Chips each)
 	for i in range(5):
-		_draw_card_to_hand(chip_hand_p1, 0, false) # P1, Face Up
-		_draw_card_to_hand(chip_hand_p2, 1, true)  # P2, Face Down
+		_draw_card_to_hand(chip_hand_p1, 0, false)
+		_draw_card_to_hand(chip_hand_p2, 1, true)
 
 	_update_scores()
 
 func _draw_card_to_hand(container: Container, owner_id: int, is_hidden: bool):
 	if not test_unit_texture: return
 
-	# BAG CHECK: Stop generating if limit reached
 	if owner_id == 0:
 		if p1_chips_created >= MAX_CHIPS_PER_PLAYER: return
 		p1_chips_created += 1
@@ -123,72 +120,93 @@ func _draw_card_to_hand(container: Container, owner_id: int, is_hidden: bool):
 
 	var piece = game_piece_scene.instantiate()
 	container.add_child(piece)
-
 	piece.setup(unit_data, owner_id, Vector2(200, 200))
 
 	if is_hidden:
 		piece.set_face_down(true)
 
 func _on_chip_clicked(chip: HexChip):
-	if chip.state == HexChip.ChipState.OCCUPIED:
+	# Prevent input during AI turn or if slot full
+	if chip.state == HexChip.ChipState.OCCUPIED or is_processing_turn or current_player == 1:
 		return
 
-	# Determine which hand is active
-	var active_hand = chip_hand_p1 if current_player == 0 else chip_hand_p2
-	var is_p2 = (current_player == 1)
+	_play_turn(chip, chip_hand_p1)
 
-	if active_hand.get_child_count() > 0:
-		# --- PLAY TOP CARD ---
-		var piece_to_play = active_hand.get_child(0)
+func _play_turn(target_chip: HexChip, hand_container: Container):
+	is_processing_turn = true
 
-		# 1. Remove from UI
-		active_hand.remove_child(piece_to_play)
+	if hand_container.get_child_count() > 0:
+		# 1. Logic to place chip (Use index 0 for human, specific index for AI)
+		var piece_to_play
 
-		# 2. Re-Setup for Board
-		piece_to_play.custom_minimum_size = chip.size
-		piece_to_play.size = chip.size
-		piece_to_play.pivot_offset = chip.size / 2.0
+		# For AI logic integration, we might pass a specific piece index later,
+		# but for now, Human always plays index 0 (Leftmost card)
+		piece_to_play = hand_container.get_child(0)
+
+		hand_container.remove_child(piece_to_play)
+
+		# 2. Setup on Board
+		piece_to_play.custom_minimum_size = target_chip.size
+		piece_to_play.size = target_chip.size
+		piece_to_play.pivot_offset = target_chip.size / 2.0
 		piece_to_play.owner_id = current_player
-
-		# IMPORTANT: Reveal the card if it was face down!
-		piece_to_play.set_face_down(false)
-
+		piece_to_play.set_face_down(false) # Reveal!
 		piece_to_play._update_owner_color()
 
-		# 3. Place on Board
-		chip.add_piece(piece_to_play)
-		print("Player %d playing on %s" % [current_player, chip.grid_coords])
+		target_chip.add_piece(piece_to_play)
 
-		# 4. Combat & Turn
-		_resolve_combat_chain(chip)
+		print("Player %d placed on %s" % [current_player, target_chip.grid_coords])
 
-		# 5. Refill Hand (Will do nothing if bag is empty)
-		_draw_card_to_hand(active_hand, current_player, is_p2)
+		_resolve_combat_chain(target_chip)
+
+		# Refill hand
+		var is_p2 = (current_player == 1)
+		_draw_card_to_hand(hand_container, current_player, is_p2)
 
 		current_player = 1 - current_player
 		_update_scores()
 
+		# End Turn Processing
+		is_processing_turn = false
+
+		# TRIGGER AI IF IT IS NOW PLAYER 1's TURN (ID 1)
+		if current_player == 1:
+			_start_enemy_turn()
+
 	else:
-		print("Player %d is out of chips!" % current_player)
+		print("Hand Empty. Game Over?")
+		is_processing_turn = false
 
-func _update_scores():
-	var p1_score = 0
-	var p2_score = 0
+# --- AI LOGIC ---
 
-	for chip in grid_chips.values():
-		if chip.state == HexChip.ChipState.OCCUPIED and chip.current_piece:
-			if chip.current_piece.owner_id == 0:
-				p1_score += 1
-			else:
-				p2_score += 1
+func _start_enemy_turn():
+	is_processing_turn = true
 
-	score_p1_label.text = "P1: %d" % p1_score
-	score_p2_label.text = "P2: %d" % p2_score
+	# Wait for visual delay (thinking time)
+	await get_tree().create_timer(ai_delay).timeout
+
+	# Ask the Brain for a move
+	var move = EnemyAI.get_best_move(self, 1, ai_difficulty)
+
+	if move.is_empty():
+		print("AI has no valid moves!")
+		is_processing_turn = false
+		return
+
+	# Execute the move
+	var target_chip = move.chip
+	var card_index = move.piece_index
+
+	# Move the specific card to the front so _play_turn picks it up
+	# (Or modify _play_turn to accept an index, but reordering is easier for now)
+	var piece = chip_hand_p2.get_child(card_index)
+	chip_hand_p2.move_child(piece, 0)
+
+	_play_turn(target_chip, chip_hand_p2)
 
 # --- COMBAT LOGIC ---
 
 func _resolve_combat_chain(start_chip: HexChip):
-	# Queue now stores Dictionary: { "chip": HexChip, "depth": int }
 	var process_queue = [{ "chip": start_chip, "depth": 0 }]
 	var processed_in_chain = {}
 
@@ -196,7 +214,6 @@ func _resolve_combat_chain(start_chip: HexChip):
 		var current_item = process_queue.pop_front()
 		var attacker_chip = current_item.chip
 		var current_depth = current_item.depth
-
 		processed_in_chain[attacker_chip] = true
 
 		var attacker_piece = attacker_chip.current_piece
@@ -210,7 +227,6 @@ func _resolve_combat_chain(start_chip: HexChip):
 			var defender_piece = defender_chip.current_piece
 			if defender_piece.owner_id == attacker_piece.owner_id: continue
 
-			# ATTACK RESOLUTION
 			if not attacker_piece.walls[dir_index]:
 				continue
 
@@ -220,25 +236,25 @@ func _resolve_combat_chain(start_chip: HexChip):
 
 			if not has_defender_wall:
 				flip_success = true
-				print("Auto-Win vs ", defender_chip.grid_coords)
 			else:
 				if attacker_piece.kernel_value > defender_piece.kernel_value:
 					flip_success = true
-					print("Kernel Win (%d vs %d)" % [attacker_piece.kernel_value, defender_piece.kernel_value])
-				elif attacker_piece.kernel_value == defender_piece.kernel_value:
-					print("Tie - No Flip")
-				else:
-					print("Attack Failed (Too weak)")
 
 			if flip_success:
 				defender_chip.flip_piece()
-
-				# CHAIN REACTION LOGIC
-				# Only add to queue if we haven't processed it AND we are within depth limit
 				if not processed_in_chain.has(defender_chip):
-					# Check Depth Limit (-1 is infinite)
 					if max_chain_depth == -1 or current_depth < max_chain_depth:
 						process_queue.append({ "chip": defender_chip, "depth": current_depth + 1 })
+
+func _update_scores():
+	var p1_score = 0
+	var p2_score = 0
+	for chip in grid_chips.values():
+		if chip.state == HexChip.ChipState.OCCUPIED and chip.current_piece:
+			if chip.current_piece.owner_id == 0: p1_score += 1
+			else: p2_score += 1
+	score_p1_label.text = "P1: %d" % p1_score
+	score_p2_label.text = "P2: %d" % p2_score
 
 func _get_neighbors_with_direction(coords: Vector2i) -> Array:
 	var list = []
