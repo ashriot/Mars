@@ -16,8 +16,8 @@ const ALERT_MED_THRESHOLD = 76
 
 # --- Configuration ---
 @export_group("Map Dimensions")
-@export var map_length: int = 12
-@export var map_height: int = 12
+@export var map_length: int = 8
+@export var map_height: int = 8
 
 # --- Game Rules ---
 @export_group("Map Rules")
@@ -54,6 +54,7 @@ var grid_nodes = {}
 var _map_center_pos: Vector2 = Vector2.ZERO
 var _pre_battle_zoom: Vector2 = Vector2.ONE
 var _pre_battle_camera_pos: Vector2 = Vector2.ZERO
+var _calculated_depth_scale: Vector2 = Vector2.ONE
 var alert_tween: Tween
 
 # --- Hex Values ---
@@ -284,27 +285,44 @@ func enter_battle_visuals(duration: float = 1.5):
 	var tween = create_tween().set_parallel(true)
 	tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
 
-	# 2. Fade OUT Map Elements (Hexes)
+	# 2. Fade Elements
 	tween.tween_property(background, "modulate:a", 0.0, duration / 2)
-
-# 3. Fade OUT Map HUD (Alert Gauge)
 	tween.tween_property(hud, "modulate:a", 0.0, duration / 2)
 
-	# 4. Move Camera to Center of Background
+	# 3. Move Camera to Center
 	tween.tween_property(camera, "position", _map_center_pos, duration)
 
-	# 5. Zoom OUT (to min_zoom, or a specific 'battle_zoom' if you prefer)
-	# (Remember in Godot 4: Lower values = Zoomed Out / Wider View)
-	var battle_zoom_vec = Vector2(min_zoom, min_zoom)
+	# 4. --- THE FIX: REMOVE PARALLAX ---
+	tween.tween_property(parallax_bg, "scroll_scale", Vector2.ONE, duration)
+	# -----------------------------------
+
+	# 5. Calculate Zoom
+	var vp_size = get_viewport_rect().size
+
+	# Note: We use the raw texture size * sprite scale.
+	# At scroll_scale 1.0, this is the exact world size we need to cover.
+	var bg_current_size = bg_sprite.texture.get_size() * bg_sprite.scale
+
+	var x_ratio = vp_size.x / bg_current_size.x
+	var y_ratio = vp_size.y / bg_current_size.y
+
+	# Use max() for "Cover" mode (fill screen, clip edges)
+	var target_zoom_val = max(x_ratio, y_ratio)
+
+	# Optional: Add a tiny padding (e.g. 1.05) to ensure no single-pixel gaps
+	target_zoom_val *= 1.02
+
+	var battle_zoom_vec = Vector2(target_zoom_val, target_zoom_val)
 	tween.tween_property(camera, "zoom", battle_zoom_vec, duration)
 
-	 #6. (Optional) Clear the blur so the background looks sharp for battle
+	# 6. Clear Blur
 	tween.tween_method(
 		func(val): (bg_sprite.material as ShaderMaterial).set_shader_parameter("blur_amount", val),
 		background_blur,
 		0.0,
 		duration
 	)
+
 	await tween.finished
 
 func battle_ended():
@@ -350,7 +368,8 @@ func _update_background_transform(min_b: Vector2, max_b: Vector2):
 	var max_dimension = max(grid_size.x, grid_size.y)
 	var depth_factor = clamp(1.0 - (max_dimension / 5000.0), 0.1, 0.9)
 
-	parallax_bg.scroll_scale = Vector2(depth_factor, depth_factor)
+	_calculated_depth_scale = Vector2(depth_factor, depth_factor)
+	parallax_bg.scroll_scale = _calculated_depth_scale
 
 	var tex_size = background_texture.get_size()
 	var required_scale = Vector2.ONE

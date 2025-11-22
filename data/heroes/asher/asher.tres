@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="HeroData" load_steps=10 format=3 uid="uid://ctg8csrcqdj57"]
+[gd_resource type="Resource" script_class="HeroData" load_steps=11 format=3 uid="uid://ctg8csrcqdj57"]
 
 [ext_resource type="Script" uid="uid://dc5sk0b0jubvj" path="res://data/scripts/data/hero_data.gd" id="1_avsjj"]
 [ext_resource type="Script" uid="uid://djmsh5w0dbytx" path="res://data/scripts/data/equipment.gd" id="1_g3hqy"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/data/role_data.gd" id="2_s0m5y"]
 [ext_resource type="Resource" uid="uid://c7bb8vuamp7ai" path="res://data/heroes/asher/roles/gunslinger.tres" id="4_cgx8j"]
 [ext_resource type="Resource" uid="uid://c03acvaovbpqc" path="res://data/heroes/asher/roles/sniper.tres" id="5_me7og"]
+[ext_resource type="Resource" uid="uid://cny303enqave" path="res://data/heroes/asher/roles/operative.tres" id="7_c1wl5"]
 
 [sub_resource type="Resource" id="Resource_i72s2"]
 script = ExtResource("1_g3hqy")
@@ -39,6 +40,6 @@ script = ExtResource("1_avsjj")
 hero_name = "Asher"
 weapon = SubResource("Resource_c1wl5")
 armor = SubResource("Resource_i72s2")
-unlocked_roles = Array[ExtResource("2_s0m5y")]([ExtResource("4_cgx8j"), ExtResource("5_me7og"), null])
+unlocked_roles = Array[ExtResource("2_s0m5y")]([ExtResource("4_cgx8j"), ExtResource("5_me7og"), ExtResource("7_c1wl5")])
 role_progressions = Array[ExtResource("1_u2x8i")]([SubResource("Resource_sydmp")])
 metadata/_custom_type_script = "uid://dc5sk0b0jubvj"

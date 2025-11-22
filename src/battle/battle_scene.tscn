@@ -32,20 +32,19 @@ shader_parameter/aberration_x = 0.10000005224999996
 shader_parameter/aberration_y = 0.10000005224999996
 
 [sub_resource type="Gradient" id="Gradient_7up2b"]
-offsets = PackedFloat32Array(0.51, 1)
 colors = PackedColorArray(0, 0, 0, 0.7058824, 0, 0, 0, 0)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_1pykk"]
 gradient = SubResource("Gradient_7up2b")
-fill_from = Vector2(0.50934577, 0)
+fill_from = Vector2(0.5106838, 0.491453)
 fill_to = Vector2(0.51635516, 1)
 
 [sub_resource type="Gradient" id="Gradient_rvyyd"]
-colors = PackedColorArray(0, 0, 0, 0.9411765, 0, 0, 0, 0)
+colors = PackedColorArray(0, 0, 0, 0.88235295, 0, 0, 0, 0)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_t4gpb"]
 gradient = SubResource("Gradient_rvyyd")
-fill_from = Vector2(0.5192308, 0.6196581)
+fill_from = Vector2(0.50427353, 0.5277778)
 fill_to = Vector2(0.49532712, 0)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6rrcq"]
@@ -107,7 +106,6 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Chroma" type="ColorRect" parent="UI/Backdrop"]
-visible = false
 material = SubResource("ShaderMaterial_7up2b")
 layout_mode = 1
 anchors_preset = 15
@@ -131,13 +129,12 @@ texture = SubResource("GradientTexture2D_1pykk")
 
 [node name="Bottom" type="TextureRect" parent="UI/Backdrop"]
 layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -475.0
+offset_top = 674.0
 grow_horizontal = 2
-grow_vertical = 0
+grow_vertical = 2
 texture = SubResource("GradientTexture2D_t4gpb")
 
 [node name="CurrentAction" type="PanelContainer" parent="UI"]
