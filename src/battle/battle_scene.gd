@@ -26,7 +26,6 @@ func fade_out():
 	await tween.finished
 	tween.kill()
 
-
 func _on_viewport_resized():
 	var base_size = Vector2(1920, 1080)
 	var window_size = get_viewport().get_visible_rect().size

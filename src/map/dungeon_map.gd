@@ -431,7 +431,11 @@ func _move_player_to(target_node: MapNode, is_start: bool = false):
 	_update_vision()
 
 	if not is_revisit:
-		interaction_requested.emit(target_node)
+		if target_node.type == MapNode.NodeType.TERMINAL:
+			modify_alert(-33)
+			complete_current_node()
+		else:
+			interaction_requested.emit(target_node)
 
 # --- NEW: Logic to determine cost ---
 func _calculate_alert_gain(is_revisit: bool) -> int:

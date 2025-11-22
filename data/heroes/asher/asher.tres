@@ -27,6 +27,7 @@ metadata/_custom_type_script = "uid://i4rsbsrmba0c"
 script = ExtResource("1_g3hqy")
 equipment_id = "smg"
 item_name = "SMG"
+level = 5
 attack_rank = 4
 psyche_rank = 1
 overload_rank = 2

@@ -1,0 +1,63 @@
+[gd_scene load_steps=5 format=3 uid="uid://c17ve5h6vhn7l"]
+
+[ext_resource type="Script" uid="uid://b0ylv0471fdxc" path="res://src/deadbeef/deadbeef_manager.gd" id="1_s2bdi"]
+[ext_resource type="PackedScene" uid="uid://cofotb1kj045s" path="res://src/deadbeef/hex_chip.tscn" id="2_e8ltb"]
+[ext_resource type="PackedScene" uid="uid://bmfik6nt4y0j0" path="res://src/deadbeef/game_piece.tscn" id="3_4i8lp"]
+[ext_resource type="Texture2D" uid="uid://fptqehalo870" path="res://assets/graphics/icons/map/delivery-drone.png" id="3_tp4km"]
+
+[node name="DeadbeefManager" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_s2bdi")
+max_chain_depth = 0
+chip_scene = ExtResource("2_e8ltb")
+game_piece_scene = ExtResource("3_4i8lp")
+test_unit_texture = ExtResource("3_tp4km")
+
+[node name="ChipHandP1" type="VBoxContainer" parent="."]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_right = 200.0
+grow_vertical = 2
+
+[node name="ChipHandP2" type="VBoxContainer" parent="."]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 1
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 0
+grow_vertical = 2
+
+[node name="ScoreP1" type="Label" parent="."]
+modulate = Color(0.09803922, 0.8862745, 1, 1)
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -260.0
+offset_right = -167.0
+offset_bottom = 88.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 80
+text = "12"
+
+[node name="ScoreP2" type="Label" parent="."]
+modulate = Color(1, 0.4745098, 0.16862746, 1)
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = 260.0
+offset_right = 353.0
+offset_bottom = 88.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 80
+text = "12"

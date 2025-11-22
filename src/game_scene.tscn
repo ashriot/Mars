@@ -5,7 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://cqo38uie6gkdu" path="res://src/map/dungeon_map.tscn" id="3_jr7q5"]
 
 [sub_resource type="Environment" id="Environment_rnajw"]
-background_mode = 3
+background_mode = 5
 tonemap_mode = 2
 tonemap_exposure = 0.5
 glow_enabled = true

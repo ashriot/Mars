@@ -1,6 +1,5 @@
 extends Node2D
 
-# --- LOAD YOUR SCENES HERE IN INSPECTOR ---
 @export_group("Packed Scenes")
 @export var battle_scene_packed: PackedScene
 @export var terminal_scene_packed: PackedScene
@@ -24,11 +23,6 @@ func _on_map_interaction_requested(node: MapNode):
 		MapNode.NodeType.COMBAT, MapNode.NodeType.ELITE, MapNode.NodeType.BOSS:
 			start_encounter()
 
-		MapNode.NodeType.TERMINAL:
-			dungeon_map.modify_alert(-33)
-			#instance = terminal_scene_packed.instantiate()
-			#instance.finished.connect(_on_content_finished)
-			_on_content_finished()
 		_:
 			print("No scene for this node type yet.")
 			_on_content_finished()
