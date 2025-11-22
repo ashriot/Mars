@@ -12,8 +12,8 @@ signal closed
 const TERMINAL_TEXT = """=========================================
 PARADIGM TERMINAL v4.2 - {facility}
 =========================================
-Neural Auth: [color=green][SUCCESS - GUEST OVERRIDE][/color]
-Firewall: [color=red]DISABLED [ADMIN BYPASS DETECTED][/color]
+Neural Auth: [SUCCESS - GUEST OVERRIDE]
+Firewall: DISABLED [ADMIN BYPASS DETECTED]
 Session ID: {session_id}
 
 $ pwd
@@ -26,13 +26,13 @@ $ clear
 PLEASE MAKE YOUR SELECTION:
 
 [url=opt_1]1 -> RECEIVE [{bits}] BITS (CREDIT TRANSFER)[/url]
-[url=opt_2]2 -> REDUCE ALERT LEVEL BY {alert}% (PATROL PURGE)[/url]
+[url=opt_2]2 -> REDUCE ALERT LEVEL BY {alert}% (PATROL PURGE)[/url][/b]
 
-ENTER CHOICE [1-2]: _[/b]
-
-[color=#666666][SECURITY LOG: Unauthorized access logged. Purge in T-30s.][/color]"""
+[SECURITY: Unauthorized access logged. Purge in T-30s.]"""
 
 var type_tween: Tween
+var cursor_tween: Tween
+var final_text_content: String = ""
 
 func _ready():
 	# Connect the RichTextLabel's "meta_clicked" signal
@@ -43,10 +43,9 @@ func _ready():
 	# setup("OMEGA WING", 100, 50)
 
 func setup(facility_name: String, bits_amount: int, alert_amount: int):
-	# 1. Generate a random fake session ID for flavor
+	# 1. Generate session (same as before)
 	var session = "0x%X-%d-KANECHO" % [randi() % 0xFFFF, randi() % 9999]
 
-	# 2. Create the data dictionary
 	var data = {
 		"facility": facility_name,
 		"session_id": session,
@@ -54,21 +53,23 @@ func setup(facility_name: String, bits_amount: int, alert_amount: int):
 		"alert": str(alert_amount)
 	}
 
-	# 3. Format the text
-	text_label.text = TERMINAL_TEXT.format(data)
+	# 2. Store the formatted text, but DON'T set the label yet
+	final_text_content = TERMINAL_TEXT.format(data)
 
-	# 4. Start the typing animation
+	# 3. Set the text to the label
+	text_label.text = final_text_content
+
+	# 4. Start typing
 	_start_typing_effect()
 
 func _start_typing_effect():
-	# Calculate duration based on text length (faster typing for longer text)
+	# Stop any existing cursor blinking
+	if cursor_tween: cursor_tween.kill()
+
 	var char_count = text_label.get_total_character_count()
-	var duration = float(char_count) * 0.001 # 0.01 seconds per character
+	var duration = float(char_count) * 0.001
 
 	text_label.visible_ratio = 0.0
-
-	# Play sound (optional loop handling would go here)
-	AudioManager.play_sfx("terminal")
 
 	if type_tween and type_tween.is_running():
 		type_tween.kill()
@@ -76,7 +77,35 @@ func _start_typing_effect():
 	type_tween = create_tween()
 	type_tween.tween_property(text_label, "visible_ratio", 1.0, duration)
 
-# This handles clicks on the text options "1 -> ..." and "2 -> ..."
+	# When typing is done, start the blink loop
+	type_tween.finished.connect(_start_cursor_blink)
+
+func _start_cursor_blink():
+	# 1. Ensure we are starting fresh
+	if cursor_tween and cursor_tween.is_running():
+		cursor_tween.kill()
+
+	cursor_tween = create_tween()
+	cursor_tween.set_loops() # Loop infinitely
+
+	var text_on = final_text_content + "_"
+	var text_off = final_text_content # or + " " to keep spacing
+
+	# 3. Toggle every 0.5 seconds
+	cursor_tween.tween_callback(func(): text_label.text = text_on)
+	cursor_tween.tween_interval(0.5)
+	cursor_tween.tween_callback(func(): text_label.text = text_off)
+	cursor_tween.tween_interval(0.5)
+
+func _animate_close():
+	if cursor_tween: cursor_tween.kill()
+	text_label.text = final_text_content
+	var tween = create_tween()
+	tween.tween_property(self, "modulate:a", 0.0, 0.25)
+	await tween.finished
+	hide()
+	closed.emit()
+
 func _on_text_link_clicked(meta):
 	if meta == "opt_1":
 		print("Selected Option 1: Bits")
@@ -89,12 +118,3 @@ func _on_text_link_clicked(meta):
 
 func _on_close_button_pressed() -> void:
 	_animate_close()
-
-func _animate_close():
-	var tween = create_tween()
-	tween.tween_property(self, "modulate:a", 0.0, 0.25)\
-		.set_trans(Tween.TRANS_SINE)\
-		.set_ease(Tween.EASE_OUT)
-	await tween.finished
-	hide()
-	closed.emit()

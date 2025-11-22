@@ -4,7 +4,6 @@
 [ext_resource type="Shader" uid="uid://dg4j3qt72ayqd" path="res://src/map/crt.gdshader" id="1_ofi5q"]
 [ext_resource type="FontVariation" uid="uid://c0je4m574ytir" path="res://data/theme/fonts/suse_mono.tres" id="1_rwyeu"]
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="2_0jfgh"]
-[ext_resource type="Texture2D" uid="uid://16vp75vvyubh" path="res://assets/graphics/icons/map/cancel.png" id="2_5k758"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ofi5q"]
 bg_color = Color(0.18184729, 0.054765537, 0, 0.88235295)
@@ -19,6 +18,9 @@ corner_radius_bottom_right = 20
 corner_radius_bottom_left = 20
 shadow_color = Color(0, 0, 0, 0.84705883)
 shadow_size = 10
+
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_0jfgh"]
+load_path = "res://.godot/imported/cancel.png-e827012282c9a1fe250bc953d191154d.ctex"
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_rwyeu"]
 shader = ExtResource("1_ofi5q")
@@ -76,6 +78,7 @@ grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_ofi5q")
 
 [node name="Label" type="RichTextLabel" parent="Panel"]
+modulate = Color(1.164, 0.557, 0.205, 1)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -133,7 +136,7 @@ offset_right = -10.0
 offset_bottom = 20.000004
 grow_horizontal = 0
 grow_vertical = 2
-texture_normal = ExtResource("2_5k758")
+texture_normal = SubResource("CompressedTexture2D_0jfgh")
 ignore_texture_size = true
 stretch_mode = 0
 
