@@ -81,6 +81,25 @@ func play_music(track_name: String, fade_duration: float = 1.0):
 		tween.tween_property(old_player, "volume_db", -80.0, fade_duration)
 		tween.chain().tween_callback(old_player.stop)
 
+# --- ADD THIS FUNCTION ---
+func stop_music(fade_duration: float = 1.0):
+	# 1. If nothing is playing, do nothing
+	if not _current_music_player or not _current_music_player.playing:
+		return
+
+	var player_to_stop = _current_music_player
+
+	# 2. Create a tween to fade it out
+	var tween = create_tween()
+	tween.tween_property(player_to_stop, "volume_db", -80.0, fade_duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+
+	# 3. Stop the player once the fade is done
+	tween.tween_callback(player_to_stop.stop)
+
+	# 4. Reset internal tracking immediately so the system knows we are "stopped"
+	_current_music_player = null
+	_current_track_key = ""
+
 # --- SFX API (Unchanged) ---
 func play_sfx(sfx_name: String, pitch_variance: float = 0.0, volume_db: float = 0.0):
 	if not sfx_library.has(sfx_name):

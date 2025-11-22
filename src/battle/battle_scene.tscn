@@ -1,4 +1,4 @@
-[gd_scene load_steps=28 format=3 uid="uid://dc5du0o5phhma"]
+[gd_scene load_steps=27 format=3 uid="uid://dc5du0o5phhma"]
 
 [ext_resource type="Script" uid="uid://dssm7j7rbyew6" path="res://src/battle/battle_scene.gd" id="1_1pykk"]
 [ext_resource type="Script" uid="uid://deoohlwp7dcfm" path="res://src/battle/battle_manager.gd" id="1_6cbqe"]
@@ -12,7 +12,6 @@
 [ext_resource type="Script" uid="uid://bf5t2mtgtkbsn" path="res://src/battle/turn_queue.gd" id="9_16l6v"]
 [ext_resource type="Resource" uid="uid://s6fcg8egbavh" path="res://data/enemies/actors/scout_drone.tres" id="9_rvyyd"]
 [ext_resource type="PackedScene" uid="uid://diku73kk4tjv7" path="res://src/battle/actor_queue.tscn" id="10_6by3n"]
-[ext_resource type="Texture2D" uid="uid://bwqcku6nvr4ff" path="res://assets/graphics/backgrounds/street.webp" id="11_t4gpb"]
 [ext_resource type="Shader" uid="uid://dyioxf64d4fgd" path="res://src/battle/blur.gdshader" id="11_w2kg5"]
 [ext_resource type="Resource" uid="uid://xwe3skgcbr7x" path="res://data/enemies/actors/attack_drone.tres" id="12_tx5gf"]
 [ext_resource type="Texture2D" uid="uid://dldmpu0c4mvsl" path="res://assets/graphics/icons/skills/empty-chessboard.png" id="13_6rrcq"]
@@ -56,6 +55,7 @@ corner_radius_top_left = 10
 corner_radius_bottom_left = 10
 
 [node name="BattleScene" type="Control" node_paths=PackedStringArray("manager")]
+custom_minimum_size = Vector2(1920, 1080)
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -65,31 +65,38 @@ grow_vertical = 2
 script = ExtResource("1_1pykk")
 manager = NodePath("BattleManager")
 
-[node name="BattleManager" type="Node" parent="." node_paths=PackedStringArray("fx_manager", "hero_area", "enemy_area", "action_bar", "current_action_panel", "fade_overlay")]
+[node name="BattleManager" type="Node" parent="." node_paths=PackedStringArray("UI", "fx_manager", "hero_area", "enemy_area", "action_bar", "current_action_panel")]
 unique_name_in_owner = true
 script = ExtResource("1_6cbqe")
+UI = NodePath("../UI")
 fx_manager = NodePath("../FXManager")
-hero_card_scene = ExtResource("1_sft4c")
-enemy_card_scene = ExtResource("1_u5n4n")
 hero_area = NodePath("../UI/Heroes/HBox")
 enemy_area = NodePath("../UI/Enemies/HBox")
 action_bar = NodePath("../UI/ActionBar")
 current_action_panel = NodePath("../UI/CurrentAction")
-fade_overlay = NodePath("../FadeOverlay")
+hero_card_scene = ExtResource("1_sft4c")
+enemy_card_scene = ExtResource("1_u5n4n")
 hero_data_files = Array[ExtResource("4_w6n6o")]([ExtResource("5_16l6v"), ExtResource("6_vtpwn")])
 enemy_data_files = Array[ExtResource("6_6by3n")]([ExtResource("9_rvyyd"), ExtResource("12_tx5gf")])
 
-[node name="Backdrop" type="TextureRect" parent="."]
+[node name="UI" type="Control" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-texture = ExtResource("11_t4gpb")
+
+[node name="Backdrop" type="TextureRect" parent="UI"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 expand_mode = 1
 
-[node name="ColorRectBlur" type="ColorRect" parent="Backdrop"]
+[node name="ColorRectBlur" type="ColorRect" parent="UI/Backdrop"]
 visible = false
 material = SubResource("ShaderMaterial_w2kg5")
 layout_mode = 1
@@ -99,7 +106,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Chroma" type="ColorRect" parent="Backdrop"]
+[node name="Chroma" type="ColorRect" parent="UI/Backdrop"]
 visible = false
 material = SubResource("ShaderMaterial_7up2b")
 layout_mode = 1
@@ -110,11 +117,11 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="Background" parent="Backdrop" instance=ExtResource("18_6rrcq")]
+[node name="Background" parent="UI/Backdrop" instance=ExtResource("18_6rrcq")]
 modulate = Color(1, 1, 1, 0.56078434)
 position = Vector2(960, 540)
 
-[node name="Top" type="TextureRect" parent="Backdrop"]
+[node name="Top" type="TextureRect" parent="UI/Backdrop"]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
@@ -122,7 +129,7 @@ offset_bottom = 454.0
 grow_horizontal = 2
 texture = SubResource("GradientTexture2D_1pykk")
 
-[node name="Bottom" type="TextureRect" parent="Backdrop"]
+[node name="Bottom" type="TextureRect" parent="UI/Backdrop"]
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
@@ -132,14 +139,6 @@ offset_top = -475.0
 grow_horizontal = 2
 grow_vertical = 0
 texture = SubResource("GradientTexture2D_t4gpb")
-
-[node name="UI" type="Control" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
 
 [node name="CurrentAction" type="PanelContainer" parent="UI"]
 layout_mode = 1
@@ -258,13 +257,3 @@ mouse_filter = 2
 [node name="FXManager" type="Node2D" parent="."]
 script = ExtResource("16_1pykk")
 impact_sparks = ExtResource("17_tx5gf")
-
-[node name="FadeOverlay" type="ColorRect" parent="."]
-visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0, 0, 0, 1)

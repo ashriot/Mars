@@ -1,10 +1,31 @@
 extends Control
 
+signal battle_ended
+
 @export var manager: BattleManager
 
 func _ready():
 	get_tree().root.size_changed.connect(_on_viewport_resized)
+	manager.battle_ended.connect(_on_battle_ended)
 	_on_viewport_resized()
+
+func fade_in():
+	pass
+
+func fade_out():
+	var tween = create_tween()
+	tween.set_trans(Tween.TRANS_SINE)
+	tween.set_ease(Tween.EASE_IN)
+
+	tween.tween_property(
+		self,
+		"modulate:a",
+		0.0,
+		0.5
+	)
+	await tween.finished
+	tween.kill()
+
 
 func _on_viewport_resized():
 	var base_size = Vector2(1920, 1080)
@@ -19,3 +40,7 @@ func _on_viewport_resized():
 
 	# Center the scaled content
 	position = (window_size - base_size * scale_factor) / 2
+
+func _on_battle_ended():
+	AudioManager.stop_music()
+	battle_ended.emit()

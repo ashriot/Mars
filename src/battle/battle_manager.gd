@@ -13,14 +13,17 @@ signal battle_ended()
 @export_range(0.1, 5.0) var battle_speed: float = 1.0
 
 # --- Scene Links ---
+@export_group("Scene Links")
+@export var UI: Control
 @export var fx_manager: FXManager
-@export var hero_card_scene: PackedScene
-@export var enemy_card_scene: PackedScene
 @export var hero_area: Control
 @export var enemy_area: Control
 @export var action_bar: ActionBar
 @export var current_action_panel: PanelContainer
-@export var fade_overlay: ColorRect
+
+@export_group("Packed Scenes")
+@export var hero_card_scene: PackedScene
+@export var enemy_card_scene: PackedScene
 
 # --- Encounter Data Links ---
 @export var hero_data_files: Array[HeroData] = []
@@ -39,7 +42,7 @@ func change_state(new_state):
 	battle_state_changed.emit(current_state)
 
 func _ready():
-	fade_overlay.show()
+	UI.modulate.a = 0.0
 	randomize() # For tie-breakers
 	await wait(0.1)
 	action_bar.action_selected.connect(_on_action_button_pressed)
@@ -48,9 +51,8 @@ func _ready():
 
 	spawn_encounter()
 	change_state(State.LOADING)
-	await wait(0.5)
 	await _fade_in()
-	AudioManager.play_music("battle", 0.0)
+	await wait(0.75)
 	await _apply_starting_passives()
 	find_and_start_next_turn()
 
@@ -137,6 +139,8 @@ func _run_ct_simulation(num_turns := 7) -> Array:
 	return projected_queue
 
 func find_and_start_next_turn():
+	if current_state == State.BATTLE_OVER:
+		return
 	if current_actor:
 		current_actor.highlight(false)
 
@@ -192,7 +196,7 @@ func _on_actor_died(actor: ActorCard):
 	print(actor.actor_name, " has died. Removing from actor_list.")
 
 	actor_list.erase(actor)
-	if _check_if_battle_ended():
+	if await _check_if_battle_ended():
 		return
 
 	update_turn_order()
@@ -494,13 +498,12 @@ func _fade_in(duration: float = 0.5):
 	tween.set_ease(Tween.EASE_IN)
 
 	tween.tween_property(
-		fade_overlay,
+		UI,
 		"modulate:a",
-		0.0,
+		1.0,
 		duration
 	)
 	await tween.finished
-	fade_overlay.hide()
 
 func _get_rich_description(action: Action) -> String:
 	var hero = current_actor as HeroCard
@@ -515,6 +518,8 @@ func _check_if_battle_ended() -> bool:
 	if not enemies_alive:
 		print("--- VICTORY ---")
 		change_state(State.BATTLE_OVER)
+		action_bar.slide_out()
+		await wait(1.0)
 		battle_ended.emit() # Player Won
 		return true
 

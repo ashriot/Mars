@@ -3,10 +3,15 @@ class_name DungeonMap
 
 signal interaction_requested(node: MapNode)
 
-@onready var alert_gauge: ProgressBar = $CanvasLayer/AlertGauge
-@onready var alert_label: Label = $CanvasLayer/AlertGauge/Label
+const ALERT_LOW_THRESHOLD = 25
+const ALERT_MED_THRESHOLD = 76
+
+@onready var hud: Control = $CanvasLayer/HUD
+@onready var alert_gauge: ProgressBar = $CanvasLayer/HUD/AlertGauge
+@onready var alert_label: Label = $CanvasLayer/HUD/AlertGauge/Label
 @onready var parallax_bg: Parallax2D = $Parallax2D
 @onready var bg_sprite: Sprite2D = $Parallax2D/Sprite2D
+@onready var background: Control = $Background
 
 # --- Configuration ---
 @export_group("Map Dimensions")
@@ -16,8 +21,6 @@ signal interaction_requested(node: MapNode)
 # --- Game Rules ---
 @export_group("Map Rules")
 @export var vision_range: int = 1
-var total_moves: int = 0
-var current_node: MapNode = null
 
 # --- Node Distribution Settings ---
 @export_group("Node Counts")
@@ -48,10 +51,18 @@ var hex_width: float
 var hex_height: float
 var grid_nodes = {}
 var camera: Camera2D
+var _map_center_pos: Vector2 = Vector2.ZERO
+var _pre_battle_zoom: Vector2 = Vector2.ONE
+var _pre_battle_camera_pos: Vector2 = Vector2.ZERO
 
 # --- Hex Values ---
 var hex_size: float = 50.0
 var gap: float = 40.0
+
+# --- Dungeon Stats ---
+var total_moves: int = 0
+var current_node: MapNode = null
+var current_alert: int = 0
 
 # --- SHADER CODE ---
 # A simple 9-sample blur shader we can inject dynamically
@@ -89,7 +100,7 @@ func _ready():
 	vision_range = 2
 
 	alert_gauge.self_modulate = Color.MEDIUM_SEA_GREEN
-	alert_gauge.value = 0
+	alert_gauge.value = current_alert
 	alert_label.text = str(int(alert_gauge.value)) + "%"
 
 	_setup_camera()
@@ -141,13 +152,7 @@ func generate_hex_grid():
 		print("Error: Please assign 'Map Node Scene' in the Inspector!")
 		return
 
-	# Use explicit Background container for nodes so they sit ON TOP of parallax
-	if not has_node("Background"):
-		var bg_node = Node2D.new()
-		bg_node.name = "Background"
-		add_child(bg_node)
-
-	for child in $Background.get_children():
+	for child in background.get_children():
 		child.queue_free()
 	grid_nodes.clear()
 	alert_gauge.value = 0
@@ -217,6 +222,69 @@ func complete_current_node():
 		_update_vision()
 		# Add rewards, xp, etc here
 
+# In DungeonMap.gd
+
+func enter_battle_visuals(duration: float = 1.5):
+	# 1. Save state
+	_pre_battle_zoom = camera.zoom
+	_pre_battle_camera_pos = camera.position
+
+	var tween = create_tween().set_parallel(true)
+	tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+
+	# 2. Fade OUT Map Elements (Hexes)
+	tween.tween_property(background, "modulate:a", 0.0, duration / 2)
+
+# 3. Fade OUT Map HUD (Alert Gauge)
+	tween.tween_property(hud, "modulate:a", 0.0, duration / 2)
+
+	# 4. Move Camera to Center of Background
+	tween.tween_property(camera, "position", _map_center_pos, duration)
+
+	# 5. Zoom OUT (to min_zoom, or a specific 'battle_zoom' if you prefer)
+	# (Remember in Godot 4: Lower values = Zoomed Out / Wider View)
+	var battle_zoom_vec = Vector2(min_zoom, min_zoom)
+	tween.tween_property(camera, "zoom", battle_zoom_vec, duration)
+
+	 #6. (Optional) Clear the blur so the background looks sharp for battle
+	tween.tween_method(
+		func(val): (bg_sprite.material as ShaderMaterial).set_shader_parameter("blur_amount", val),
+		background_blur,
+		0.0,
+		duration
+	)
+	await tween.finished
+
+func battle_ended():
+	exit_battle_visuals()
+
+func exit_battle_visuals(duration: float = 1.0):
+	var tween = create_tween().set_parallel(true)
+	tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+
+	# 1. Fade IN Map Elements
+	tween.tween_property(background, "modulate:a", 1.0, duration)
+
+	# 2. Fade IN Map HUD
+	tween.tween_property(hud, "modulate:a", 1.0, duration)
+
+	# 3. Restore Camera Position
+	# (If the player moved during battle, we might want to re-calculate this
+	# based on 'current_node.position' instead of the saved position, just to be safe)
+	var target_pos = current_node.position if current_node else _pre_battle_camera_pos
+	tween.tween_property(camera, "position", target_pos, duration)
+
+	# 4. Restore Camera Zoom
+	tween.tween_property(camera, "zoom", _pre_battle_zoom, duration)
+
+	# 5. (Optional) Restore Blur
+	tween.tween_method(
+		func(val): (bg_sprite.material as ShaderMaterial).set_shader_parameter("blur_amount", val),
+		0.0,
+		background_blur,
+		duration
+	)
+
 func _update_background_transform(min_b: Vector2, max_b: Vector2):
 	bg_sprite.texture = background_texture
 
@@ -224,6 +292,7 @@ func _update_background_transform(min_b: Vector2, max_b: Vector2):
 
 	var padding = Vector2(hex_width * 4, hex_height * 4)
 	var grid_center = (min_b + max_b) / 2.0
+	_map_center_pos = grid_center
 	var grid_size = (max_b - min_b) + padding
 
 	var max_dimension = max(grid_size.x, grid_size.y)
@@ -310,12 +379,13 @@ func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 		type_map[c] = MapNode.NodeType.COMBAT
 
 	return type_map
+
 func _create_map_node(grid_x, grid_y, screen_pos, points, type):
 	var node = map_node_scene.instantiate()
 	node.position = screen_pos
 	node.name = "Hex_%d_%d" % [grid_x, grid_y]
 
-	$Background.add_child(node)
+	background.add_child(node)
 	node.setup(Vector2i(grid_x, grid_y), points, type)
 
 	node.node_clicked.connect(_on_node_clicked)
@@ -331,37 +401,68 @@ func _on_node_clicked(target_node: MapNode):
 	_move_player_to(target_node)
 
 func _move_player_to(target_node: MapNode, is_start: bool = false):
+	# 1. Handle Node Logic
 	if current_node:
 		current_node.set_is_current(false)
 
 	current_node = target_node
 	target_node.set_is_current(true)
 
-	var been = target_node.state == MapNode.NodeState.COMPLETED
-
-	_update_vision()
+	# 2. Handle Camera
 	_move_camera_to_player(is_start)
 
-	if not is_start:
-		total_moves += 1
-		if alert_gauge.value < 19:
-			alert_gauge.self_modulate = Color.MEDIUM_SEA_GREEN
-			alert_gauge.value += 4 if not been else 1
-			vision_range = 2
-		elif alert_gauge.value < 69:
-			alert_gauge.self_modulate = Color.GOLDENROD
-			alert_gauge.value += 5 if not been else 2
-			vision_range = 1
-		else:
-			alert_gauge.self_modulate = Color.ORANGE_RED
-			alert_gauge.value += 6 if not been else 3
-			vision_range = 0
-		alert_label.text = str(int(alert_gauge.value)) + "%"
-		if current_node.type != MapNode.NodeType.UNKNOWN:
-			await get_tree().create_timer(0.3).timeout
-			interaction_requested.emit(target_node)
-	else:
+	if is_start:
 		target_node.set_state(MapNode.NodeState.COMPLETED)
+		_update_alert_visuals() # Ensure UI is correct on start
+		_update_vision()
+		return
+
+	# 3. Handle Gameplay Logic
+	total_moves += 1
+	var is_revisit = target_node.state == MapNode.NodeState.COMPLETED
+
+	# Calculate how much alert to add based on current tier
+	var alert_gain = _calculate_alert_gain(is_revisit)
+
+	# Apply the change (Visuals update automatically inside this function)
+	modify_alert(alert_gain)
+
+	# Update vision AFTER alert change (in case vision_range changed)
+	_update_vision()
+
+	if not is_revisit:
+		interaction_requested.emit(target_node)
+
+# --- NEW: Logic to determine cost ---
+func _calculate_alert_gain(is_revisit: bool) -> int:
+	if current_alert < ALERT_LOW_THRESHOLD:
+		return 1 if is_revisit else 4
+	elif current_alert < ALERT_MED_THRESHOLD:
+		return 2 if is_revisit else 5
+	else:
+		return 3 if is_revisit else 6
+
+# --- NEW: The Single Source of Truth ---
+# Call this function for adding OR removing alert (pass negative numbers to reduce)
+func modify_alert(amount: int):
+	current_alert = clamp(current_alert + amount, 0, 100)
+	_update_alert_visuals()
+
+# --- NEW: Handles all UI and State changes based on the value ---
+func _update_alert_visuals():
+	alert_gauge.value = current_alert
+	alert_label.text = str(int(current_alert)) + "%"
+
+	# Determine State based on the NEW value
+	if current_alert < ALERT_LOW_THRESHOLD:
+		alert_gauge.self_modulate = Color.MEDIUM_SEA_GREEN
+		vision_range = 2
+	elif current_alert < ALERT_MED_THRESHOLD:
+		alert_gauge.self_modulate = Color.GOLDENROD
+		vision_range = 1
+	else:
+		alert_gauge.self_modulate = Color.ORANGE_RED
+		vision_range = 0
 
 func _move_camera_to_player(force_center: bool):
 	if not camera: return

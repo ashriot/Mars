@@ -7,26 +7,28 @@ extends Node2D
 # @export var event_scene_packed: PackedScene
 
 # --- REFERENCES ---
-@onready var map = $DungeonMap
+@onready var dungeon_map: DungeonMap = $DungeonMap
 @onready var overlay_layer = $OverlayLayer
+
+var battle_scene: Node = null
+
 
 func _ready():
 	# Listen for when the player moves to a node
-	map.interaction_requested.connect(_on_map_interaction_requested)
+	dungeon_map.interaction_requested.connect(_on_map_interaction_requested)
 
 func _on_map_interaction_requested(node: MapNode):
-	map.process_mode = Node.PROCESS_MODE_DISABLED
 	var instance = null
 
 	match node.type:
 		MapNode.NodeType.COMBAT, MapNode.NodeType.ELITE, MapNode.NodeType.BOSS:
-			instance = battle_scene_packed.instantiate()
-			instance.manager.battle_ended.connect(_on_content_finished)
+			start_encounter()
 
-		#MapNode.NodeType.TERMINAL:
+		MapNode.NodeType.TERMINAL:
+			dungeon_map.modify_alert(-33)
 			#instance = terminal_scene_packed.instantiate()
 			#instance.finished.connect(_on_content_finished)
-
+			_on_content_finished()
 		_:
 			print("No scene for this node type yet.")
 			_on_content_finished()
@@ -41,14 +43,31 @@ func _on_map_interaction_requested(node: MapNode):
 			instance.setup(node)
 
 func _on_content_finished():
-	# 1. Unpause Map
-	map.process_mode = Node.PROCESS_MODE_INHERIT
-
-	# 2. Tell Map the node is fully done (mark visually as visited)
-	map.complete_current_node()
+	dungeon_map.complete_current_node()
 
 	# 3. Cleanup (The instance usually queue_free()s itself, but we can double check)
 	# If your BattleScene calls queue_free() on itself, this loop does nothing.
 	# If it doesn't, this cleans it up.
 	for child in overlay_layer.get_children():
 		child.queue_free()
+
+func start_encounter():
+	AudioManager.play_music("battle", 0.0)
+	# 1. Tell map to transition visuals
+	await dungeon_map.enter_battle_visuals()
+
+	# 3. Instantiate Battle UI on top (make sure its canvas layer is higher)
+	dungeon_map.process_mode = Node.PROCESS_MODE_DISABLED
+	battle_scene = battle_scene_packed.instantiate()
+	overlay_layer.add_child(battle_scene)
+	battle_scene.battle_ended.connect(end_encounter)
+
+	# 4. Tell Battle UI to fade itself in
+	await get_tree().create_timer(0.5).timeout
+	battle_scene.fade_in()
+
+func end_encounter():
+	await battle_scene.fade_out()
+	dungeon_map.process_mode = Node.PROCESS_MODE_ALWAYS
+	dungeon_map.exit_battle_visuals(1.0)
+	_on_content_finished()

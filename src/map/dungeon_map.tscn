@@ -1,6 +1,6 @@
 [gd_scene load_steps=6 format=3 uid="uid://cqo38uie6gkdu"]
 
-[ext_resource type="Script" uid="uid://c0tmi3fc3fega" path="res://src/map/map.gd" id="1_5o7fj"]
+[ext_resource type="Script" uid="uid://c0tmi3fc3fega" path="res://src/map/dungeon_map.gd" id="1_5o7fj"]
 [ext_resource type="Texture2D" uid="uid://bwqcku6nvr4ff" path="res://assets/graphics/backgrounds/street.webp" id="2_1a5qu"]
 [ext_resource type="PackedScene" uid="uid://cqdl6q7d2hmox" path="res://src/map/map_node.tscn" id="2_vfn15"]
 
@@ -32,22 +32,40 @@ corner_radius_bottom_right = 20
 corner_radius_bottom_left = 20
 corner_detail = 6
 
-[node name="Map" type="Node2D"]
+[node name="DungeonMap" type="Node2D"]
 script = ExtResource("1_5o7fj")
 num_combats = 6
+num_terminals = 5
 map_node_scene = ExtResource("2_vfn15")
 background_texture = ExtResource("2_1a5qu")
 background_blur = 3.0
 
+[node name="Parallax2D" type="Parallax2D" parent="."]
+
+[node name="Sprite2D" type="Sprite2D" parent="Parallax2D"]
+
+[node name="Background" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
-[node name="AlertGauge" type="ProgressBar" parent="CanvasLayer"]
+[node name="HUD" type="Control" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="AlertGauge" type="ProgressBar" parent="CanvasLayer/HUD"]
+layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -562.0
+offset_left = 378.0
 offset_top = 27.0
-offset_right = 562.0
+offset_right = 1502.0
 offset_bottom = 97.0
 grow_horizontal = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
@@ -57,7 +75,7 @@ step = 1.0
 rounded = true
 show_percentage = false
 
-[node name="Label" type="Label" parent="CanvasLayer/AlertGauge"]
+[node name="Label" type="Label" parent="CanvasLayer/HUD/AlertGauge"]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -74,7 +92,3 @@ theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 20
 theme_override_font_sizes/font_size = 60
 text = "50%"
-
-[node name="Parallax2D" type="Parallax2D" parent="."]
-
-[node name="Sprite2D" type="Sprite2D" parent="Parallax2D"]

@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://288nsmb7vfck" path="res://src/game_scene.gd" id="1_p4js5"]
 [ext_resource type="PackedScene" uid="uid://dc5du0o5phhma" path="res://src/battle/battle_scene.tscn" id="2_jr7q5"]
-[ext_resource type="PackedScene" uid="uid://cqo38uie6gkdu" path="res://src/map/map.tscn" id="3_jr7q5"]
+[ext_resource type="PackedScene" uid="uid://cqo38uie6gkdu" path="res://src/map/dungeon_map.tscn" id="3_jr7q5"]
 
 [sub_resource type="Environment" id="Environment_rnajw"]
 background_mode = 3
