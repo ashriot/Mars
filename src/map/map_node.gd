@@ -53,7 +53,7 @@ func set_state(new_state: NodeState):
 		NodeState.HIDDEN:
 			hex_sprite.self_modulate = Color.BLACK
 			if icon_sprite: icon_sprite.visible = false
-			hex_sprite.modulate.a = 0.5
+			hex_sprite.modulate.a = 0.75
 
 		NodeState.REVEALED:
 			if icon_sprite: icon_sprite.visible = true

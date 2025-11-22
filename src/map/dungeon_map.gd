@@ -111,7 +111,9 @@ func _ready():
 
 	_setup_camera()
 	_setup_background()
-	await generate_hex_grid()
+	var map = generate_hex_grid()
+	await play_intro_sequence(map)
+	AudioManager.play_sfx("radiate")
 
 	var tween = create_tween()
 	tween.tween_property(alert_gauge, "modulate:a", 1.0, 0.75)\
@@ -150,124 +152,139 @@ func _zoom_camera(step: float):
 	target_zoom.y = clamp(target_zoom.y, min_zoom, max_zoom)
 	camera.zoom = target_zoom
 
-func generate_hex_grid():
-	print("Generating Map | Length: %d | Height: %d" % [map_length, map_height])
+func generate_hex_grid() -> Dictionary:
+	print("Generating Map Logic...")
+
+	# --- Cleanup ---
 	total_moves = 0
 	current_node = null
 	hex_width = sqrt(3.0) * hex_size
 	hex_height = hex_size * 2.0
 
-	if not map_node_scene:
-		print("Error: Please assign 'Map Node Scene' in the Inspector!")
-		return
+	if not has_node("Background"):
+		var bg_node = Node2D.new()
+		bg_node.name = "Background"
+		add_child(bg_node)
 
 	for child in $Background.get_children():
 		child.queue_free()
 	grid_nodes.clear()
 	alert_gauge.value = 0
 
-	# --- 1. Generate Logic (Same as before) ---
+	# --- Grid Math ---
 	var valid_coords = {}
 	var start_pos = Vector2(100, 200)
 	var center_y = floor(map_height / 2.0)
-	var center_row_is_even = (int(center_y) % 2 == 0)
-	var center_shift = 0.5 if center_row_is_even else 0.0
-	var visual_center_x = (map_length - 1) / 2.0 + center_shift
-	var min_bounds = Vector2(99999, 99999)
-	var max_bounds = Vector2(-99999, -99999)
+	var visual_center_x = (map_length - 1) / 2.0 + (0.5 if int(center_y) % 2 == 0 else 0.0)
+	var min_bounds = Vector2(INF, INF)
+	var max_bounds = Vector2(-INF, -INF)
 
 	for y in range(map_height):
 		var dist_y = abs(y - center_y)
 		var x_count = map_length - dist_y
 		if x_count <= 0: continue
 
-		var current_row_is_even = (y % 2 == 0)
-		var current_shift = 0.5 if current_row_is_even else 0.0
-		var row_half_width = (x_count - 1) / 2.0
-		var x_start = round(visual_center_x - current_shift - row_half_width)
+		var current_shift = 0.5 if (y % 2 == 0) else 0.0
+		var x_start = round(visual_center_x - current_shift - ((x_count - 1) / 2.0))
 
 		for i in range(x_count):
 			var x = x_start + i
 			var grid_pos = Vector2i(x, y)
+
 			var x_pos = x * (hex_width + gap)
 			var y_pos = y * (hex_height * 0.67 + gap)
 			if y % 2 == 0: x_pos += (hex_width + gap) / 2.0
+
 			var final_pos = start_pos + Vector2(x_pos, y_pos)
 			valid_coords[grid_pos] = final_pos
-			min_bounds.x = min(min_bounds.x, final_pos.x)
-			min_bounds.y = min(min_bounds.y, final_pos.y)
-			max_bounds.x = max(max_bounds.x, final_pos.x)
-			max_bounds.y = max(max_bounds.y, final_pos.y)
 
-	# --- 2. Create Nodes (Invisible) ---
+			min_bounds = min_bounds.min(final_pos)
+			max_bounds = max_bounds.max(final_pos)
+
+	# --- Node Instantiation ---
 	var node_types = _distribute_node_types(valid_coords.keys(), center_y)
-
-	# We keep a list so we can sort them for the animation
-	var nodes_to_animate: Array[MapNode] = []
+	var nodes_list: Array[MapNode] = []
 
 	for coords in valid_coords.keys():
-		var screen_pos = valid_coords[coords]
-		var assigned_type = node_types[coords]
-		# Create the node (it defaults to alpha 0.0 now)
-		var new_node = _create_map_node(coords.x, coords.y, screen_pos, assigned_type)
-		nodes_to_animate.append(new_node)
+		# Create node (starts invisible alpha 0.0 via _create_map_node)
+		var new_node = _create_map_node(coords.x, coords.y, valid_coords[coords], node_types[coords])
+		nodes_list.append(new_node)
 
-	await _update_background_transform(min_bounds, max_bounds)
+	# --- Background Setup ---
+	_update_background_transform(min_bounds, max_bounds)
 
-	# --- 3. Identify Start Node ---
-	var center_start_x = round(visual_center_x - center_shift - (map_length - 1) / 2.0)
+	# --- Find Start Node ---
+	var center_start_x = round(visual_center_x - (0.5 if int(center_y) % 2 == 0 else 0.0) - (map_length - 1) / 2.0)
 	var start_coords = Vector2i(center_start_x, center_y)
-	var start_node = null
+	var start_node = grid_nodes.get(start_coords, grid_nodes.values()[0] if not grid_nodes.is_empty() else null)
 
-	if grid_nodes.has(start_coords):
-		start_node = grid_nodes[start_coords]
-	elif grid_nodes.size() > 0:
-		start_node = grid_nodes.values()[0]
+	# Return all the data needed for the animation
+	return {
+		"start_node": start_node,
+		"nodes": nodes_list,
+		"min_bounds": min_bounds,
+		"max_bounds": max_bounds
+	}
 
-	if start_node and camera:
-		camera.position = start_node.position
-		camera.zoom = Vector2(1.0, 1.0)
+func play_intro_sequence(map_data: Dictionary) -> void:
+	var start_node = map_data.start_node
+	var nodes_to_animate = map_data.nodes
 
-	# --- 4. The Animation Sequence ---
-	await get_tree().create_timer(0.5).timeout
+	if not camera: return
+
+	# --- 1. SETUP "WIDE SHOT" CAMERA ---
+	var grid_center = (map_data.min_bounds + map_data.max_bounds) / 2.0
+	camera.position = grid_center
+
+	# Calculate Wide Zoom
+	var vp_size = get_viewport_rect().size
+	var bg_current_size = bg_sprite.texture.get_size() * bg_sprite.scale
+	var wide_zoom = max(vp_size.x / bg_current_size.x, vp_size.y / bg_current_size.y)
+	camera.zoom = Vector2(wide_zoom, wide_zoom)
+
+	# --- 2. ANIMATE "WAVE" REVEAL ---
+
+	# Reveal Start Node immediately
 	var start_tween = create_tween()
-	start_tween.tween_property(start_node, "modulate:a", 1.0, 1.0).set_ease(Tween.EASE_OUT)
+	start_tween.tween_property(start_node, "modulate:a", 1.0, 0.5).set_ease(Tween.EASE_OUT)
 	await start_tween.finished
 	AudioManager.play_sfx("terminal")
 
-	# B. Sort the rest Left-to-Right
+	# Sort remaining nodes Left-to-Right
 	nodes_to_animate.sort_custom(func(a, b):
-		# Sort by X first
-		if a.grid_coords.x != b.grid_coords.x:
-			return a.grid_coords.x < b.grid_coords.x
-		# Then by Y (top to bottom) for clean columns
+		if a.grid_coords.x != b.grid_coords.x: return a.grid_coords.x < b.grid_coords.x
 		return a.grid_coords.y < b.grid_coords.y
 	)
 
-	# C. The "Wave" Tween
+	# Run Wave
 	var wave_tween = create_tween().set_parallel(true)
 	var current_col_x = -9999
 	var delay_timer = 0.0
-	var col_delay_step = 0.1
 
 	for node in nodes_to_animate:
-		if node == start_node: continue # Don't animate start node again
+		if node == start_node: continue
 
-		# If we moved to a new column X, increase the delay
 		if node.grid_coords.x != current_col_x:
 			current_col_x = node.grid_coords.x
-			delay_timer += col_delay_step
+			delay_timer += 0.05
 
-		# Animate alpha to 1.0 with the calculated delay
 		wave_tween.tween_property(node, "modulate:a", 1.0, 0.3)\
 			.set_delay(delay_timer)\
 			.set_trans(Tween.TRANS_SINE)\
 			.set_ease(Tween.EASE_OUT)
 
-	# D. Wait for the whole map to finish appearing
 	await wave_tween.finished
 
+	# --- 3. ZOOM IN TO PLAYER ---
 	if start_node:
+		var cam_tween = create_tween().set_parallel(true)
+		cam_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+		cam_tween.tween_property(camera, "position", start_node.position, 1.5)
+		cam_tween.tween_property(camera, "zoom", Vector2.ONE, 1.5)
+
+		await cam_tween.finished
+
+		# Hand over control
 		_move_player_to(start_node, true)
 
 func complete_current_node():
@@ -644,11 +661,3 @@ func _offset_to_cube(hex: Vector2i) -> Vector3i:
 	var r = hex.y
 	var s = -q - r
 	return Vector3i(q, r, s)
-
-func _get_pointy_top_hex_points(size: float) -> PackedVector2Array:
-	var pts = PackedVector2Array()
-	for i in range(6):
-		var angle_deg = 30 + (60 * i)
-		var angle_rad = deg_to_rad(angle_deg)
-		pts.append(Vector2(size * cos(angle_rad), size * sin(angle_rad)))
-	return pts
