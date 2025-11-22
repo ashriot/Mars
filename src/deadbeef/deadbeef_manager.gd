@@ -33,14 +33,11 @@ var is_processing_turn: bool = false
 
 var p1_chips_created: int = 0
 var p2_chips_created: int = 0
-
-# NEW: Track selected card in hand
 var selected_piece: GamePiece = null
 
 enum Dir { U=0, UR=1, DR=2, D=3, DL=4, UL=5 }
 
 func _ready():
-	# Allow mouse for drag/drop
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	generate_board()
 	_start_game()
@@ -88,10 +85,7 @@ func _create_chip(grid_x, grid_y, screen_pos, size_vec):
 	chip.position = screen_pos - (size_vec / 2.0)
 	chip.name = "Chip_%d_%d" % [grid_x, grid_y]
 	chip.setup(Vector2i(grid_x, grid_y), size_vec)
-
-	# NEW: Connect Unified Signal
 	chip.chip_interaction.connect(_on_chip_interaction)
-
 	grid_chips[Vector2i(grid_x, grid_y)] = chip
 
 # --- GAME LOOP ---
@@ -129,85 +123,60 @@ func _draw_card_to_hand(container: Container, owner_id: int, is_hidden: bool):
 	var piece = game_piece_scene.instantiate()
 	container.add_child(piece)
 	piece.setup(unit_data, owner_id, Vector2(200, 200))
-
-	# NEW: Connect selection signal
 	piece.piece_selected.connect(_on_piece_selected)
 
 	if is_hidden:
 		piece.set_face_down(true)
 
-# --- INTERACTION LOGIC ---
+# --- INTERACTION ---
 
 func _on_piece_selected(piece: GamePiece):
-	# Only allow selection if it's the correct player's turn
-	if is_processing_turn or piece.owner_id != current_player:
-		return
-
-	# Deselect previous
-	if selected_piece and selected_piece != piece:
-		selected_piece.set_selected(false)
-
-	# Select new
+	if is_processing_turn or piece.owner_id != current_player: return
+	if selected_piece and selected_piece != piece: selected_piece.set_selected(false)
 	selected_piece = piece
 	selected_piece.set_selected(true)
 
 func _on_chip_interaction(chip: HexChip, dropped_piece: GamePiece):
-	# Block interaction if AI turn or slot occupied
-	if chip.state == HexChip.ChipState.OCCUPIED or is_processing_turn or current_player == 1:
-		return
-
+	if chip.state == HexChip.ChipState.OCCUPIED or is_processing_turn or current_player == 1: return
 	var piece_to_play = null
-
-	# Case A: Drag & Drop (Piece passed directly)
 	if dropped_piece:
-		# Verify ownership
-		if dropped_piece.owner_id == current_player:
-			piece_to_play = dropped_piece
-
-	# Case B: Click (Use currently selected piece)
+		if dropped_piece.owner_id == current_player: piece_to_play = dropped_piece
 	elif selected_piece:
 		piece_to_play = selected_piece
 
-	# Execute Play if valid
 	if piece_to_play:
-		# If we played a selected piece via click, deselect it visually first
 		if selected_piece == piece_to_play:
 			selected_piece.set_selected(false)
 			selected_piece = null
-
 		_play_turn(chip, piece_to_play)
-	else:
-		print("Select or Drag a chip to place it!")
 
 func _play_turn(target_chip: HexChip, piece_to_play: GamePiece):
 	is_processing_turn = true
 
-	# 1. Remove from Hand UI
 	var hand_container = piece_to_play.get_parent()
 	hand_container.remove_child(piece_to_play)
 
-	# 2. Setup on Board
 	piece_to_play.custom_minimum_size = target_chip.size
 	piece_to_play.size = target_chip.size
 	piece_to_play.pivot_offset = target_chip.size / 2.0
-	# Ensure owner is correct (sanity check)
 	piece_to_play.owner_id = current_player
 	piece_to_play.set_face_down(false)
 	piece_to_play._update_owner_color()
 
 	target_chip.add_piece(piece_to_play)
-
 	print("Player %d placed on %s" % [current_player, target_chip.grid_coords])
 
+	# 1. TRIGGER ON PLACE PROTOCOLS
+	ProtocolLogic.on_place(target_chip, self)
+
+	# 2. RESOLVE COMBAT
 	_resolve_combat_chain(target_chip)
 
-	# Refill hand
 	var is_p2 = (current_player == 1)
 	_draw_card_to_hand(hand_container, current_player, is_p2)
 
 	current_player = 1 - current_player
 	_update_scores()
-
 	is_processing_turn = false
 
 	if current_player == 1:
@@ -218,18 +187,14 @@ func _play_turn(target_chip: HexChip, piece_to_play: GamePiece):
 func _start_enemy_turn():
 	is_processing_turn = true
 	await get_tree().create_timer(ai_delay).timeout
-
 	var move = EnemyAI.get_best_move(self, 1, ai_difficulty)
-
 	if move.is_empty():
 		print("AI has no valid moves!")
 		is_processing_turn = false
 		return
-
 	var target_chip = move.chip
 	var card_index = move.piece_index
 	var piece = chip_hand_p2.get_child(card_index)
-
 	_play_turn(target_chip, piece)
 
 # --- COMBAT LOGIC ---
@@ -247,6 +212,13 @@ func _resolve_combat_chain(start_chip: HexChip):
 		var attacker_piece = attacker_chip.current_piece
 		var neighbors = _get_neighbors_with_direction(attacker_chip.grid_coords)
 
+		# Data packet for Protocol Logic lookups
+		var att_data = {
+			"kernel": attacker_piece.kernel_value,
+			"rank": attacker_piece.rank,
+			"protocol": attacker_piece.protocol
+		}
+
 		for entry in neighbors:
 			var dir_index = entry.dir
 			var defender_chip = entry.chip
@@ -255,21 +227,49 @@ func _resolve_combat_chain(start_chip: HexChip):
 			var defender_piece = defender_chip.current_piece
 			if defender_piece.owner_id == attacker_piece.owner_id: continue
 
+			# ATTACK RESOLUTION
 			if not attacker_piece.walls[dir_index]:
 				continue
 
 			var opposite_dir = (dir_index + 3) % 6
 			var has_defender_wall = defender_piece.walls[opposite_dir]
+
+			# Check for Deadlock
+			if not ProtocolLogic.can_be_flipped(defender_chip):
+				print("Attack blocked by Deadlock")
+				continue
+
 			var flip_success = false
 
 			if not has_defender_wall:
 				flip_success = true
+				print("Auto-Win vs ", defender_chip.grid_coords)
 			else:
-				if attacker_piece.kernel_value > defender_piece.kernel_value:
+				# CLASH!
+				# Get Protocol Bonuses
+				var def_data = {
+					"kernel": defender_piece.kernel_value,
+					"rank": defender_piece.rank,
+					"protocol": defender_piece.protocol
+				}
+
+				var att_bonus = ProtocolLogic.get_attack_bonus(att_data, def_data)
+				var def_bonus = ProtocolLogic.get_defense_bonus(def_data, att_data)
+
+				var final_att = attacker_piece.kernel_value + att_bonus
+				var final_def = defender_piece.kernel_value + def_bonus
+
+				print("Clash! Att: %d vs Def: %d" % [final_att, final_def])
+
+				if final_att > final_def:
 					flip_success = true
 
 			if flip_success:
 				defender_chip.flip_piece()
+
+				# Trigger Flip Protocols (Transfer, Virus, etc)
+				ProtocolLogic.on_flip_success(attacker_chip, defender_chip)
+
 				if not processed_in_chain.has(defender_chip):
 					if max_chain_depth == -1 or current_depth < max_chain_depth:
 						process_queue.append({ "chip": defender_chip, "depth": current_depth + 1 })
@@ -281,8 +281,8 @@ func _update_scores():
 		if chip.state == HexChip.ChipState.OCCUPIED and chip.current_piece:
 			if chip.current_piece.owner_id == 0: p1_score += 1
 			else: p2_score += 1
-	score_p1_label.text = "%d" % p1_score
-	score_p2_label.text = "%d" % p2_score
+	score_p1_label.text = "P1: %d" % p1_score
+	score_p2_label.text = "P2: %d" % p2_score
 
 func _get_neighbors_with_direction(coords: Vector2i) -> Array:
 	var list = []
@@ -291,6 +291,14 @@ func _get_neighbors_with_direction(coords: Vector2i) -> Array:
 		var neighbor_coords = coords + offsets[dir_i]
 		if grid_chips.has(neighbor_coords):
 			list.append({ "chip": grid_chips[neighbor_coords], "dir": dir_i })
+	return list
+
+func _get_neighbors(coords: Vector2i) -> Array:
+	var list = []
+	var offsets = _get_flat_top_offsets(coords.x)
+	for off in offsets:
+		var n = coords + off
+		if grid_chips.has(n): list.append(grid_chips[n])
 	return list
 
 func _get_flat_top_offsets(col: int) -> Array:
