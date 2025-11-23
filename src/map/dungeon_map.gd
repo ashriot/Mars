@@ -103,30 +103,117 @@ var current_map_state: MapState = MapState.LOADING
 
 
 func _ready():
-	AudioManager.play_music("map_1", 1.0, false, false)
-	randomize()
+	# 1. Register Self
+	RunManager.active_dungeon_map = self
+
+	# 2. Setup Basics
 	hex_width = sqrt(3.0) * hex_size
 	hex_height = hex_size * 2.0
-
-	alert_gauge.modulate = Color.MEDIUM_SEA_GREEN
-	hud.modulate.a = 0.0
-	alert_gauge.value = current_alert
-	alert_label.text = str(int(alert_gauge.value)) + "%"
-
 	_setup_camera()
 	_setup_background()
-	var map = generate_hex_grid()
-	await play_intro_sequence(map)
-	AudioManager.play_sfx("radiate")
 
-	var tween = create_tween()
-	tween.tween_property(hud, "modulate:a", 1.0, 0.15)\
-		.set_trans(Tween.TRANS_SINE)\
-		.set_ease(Tween.EASE_OUT)
-	await tween.finished
+	# --- THE FORK IN THE ROAD ---
 
+	if RunManager.is_run_active:
+		# PATH A: CONTINUE RUN
+		print("Resuming active run...")
+
+		# 1. Let RunManager drive the restoration.
+		# It will set the seed and call 'load_from_save_data' for us.
+		await RunManager.restore_run()
+
+		# 2. Resume Audio (resume position)
+		AudioManager.play_music("map_1", 1.0, false, true)
+
+		# 3. Show UI instantly (No fade-in needed)
+		hud.modulate.a = 1.0
+
+	else:
+		# PATH B: NEW RUN
+		print("Starting fresh run...")
+
+		# 1. Generate New Seed & Data
+		randomize()
+		RunManager.current_run_seed = randi()
+		seed(RunManager.current_run_seed)
+
+		# 2. Set Default UI State
+		alert_gauge.value = 0
+		alert_label.text = "0%"
+		alert_gauge.modulate = Color.MEDIUM_SEA_GREEN
+		hud.modulate.a = 0.0 # Start hidden
+
+		# 3. Generate & Play Intro
+		var map_data = generate_hex_grid()
+		AudioManager.play_music("map_1", 1.0, false, false)
+		await play_intro_sequence(map_data)
+		AudioManager.play_sfx("radiate")
+
+		# 4. Fade in HUD
+		var tween = create_tween()
+		tween.tween_property(hud, "modulate:a", 1.0, 0.15)\
+			.set_trans(Tween.TRANS_SINE)\
+			.set_ease(Tween.EASE_OUT)
+		await tween.finished
+
+	# 4. Hand over control
 	current_map_state = MapState.PLAYING
-	print("Map loaded and input enabled.")
+	print("Map ready and input enabled.")
+
+func load_from_save_data(data: Dictionary):
+	# 1. REGENERATE GRID
+	# RunManager has already set the seed, so this rebuilds the exact layout.
+	generate_hex_grid()
+
+	# 2. RESTORE GLOBAL STATE
+	current_alert = data.current_alert
+	_update_alert_visuals() # Updates color/text immediately
+
+	# 3. RESTORE NODE STATES
+	for key_str in data.node_data.keys():
+		var coords = str_to_var(key_str)
+		var saved_info = data.node_data[key_str]
+
+		if grid_nodes.has(coords):
+			var node = grid_nodes[coords]
+
+			# Restore logical state
+			node.has_been_visited = saved_info.visited
+			node.set_state(int(saved_info.state))
+
+			# --- THE VISUAL FIX ---
+			# generate_hex_grid made them invisible (0.0) for the intro tween.
+			# Since we are loading, we skip the intro and force them visible.
+			node.modulate.a = 1.0
+			# ----------------------
+
+	# 4. RESTORE TERMINALS
+	terminal_memory.clear()
+	for key_str in data.terminal_memory.keys():
+		var coords = str_to_var(key_str)
+		terminal_memory[coords] = data.terminal_memory[key_str]
+
+	# 5. PLACE PLAYER & CAMERA
+	var player_coords = str_to_var(data.current_coords)
+	if grid_nodes.has(player_coords):
+		var target_node = grid_nodes[player_coords]
+
+		# Set logic tracking
+		if current_node: current_node.set_is_current(false)
+		current_node = target_node
+		target_node.set_is_current(true)
+
+		# Snap Camera Instantly (No tween)
+		if camera:
+			camera.position = target_node.position
+			camera.zoom = Vector2.ONE
+
+		# Restore Parallax Depth
+		if parallax_bg:
+			parallax_bg.scroll_scale = _calculated_depth_scale
+
+		# Reveal neighbors
+		_update_vision()
 
 func _setup_camera():
 	camera.make_current()
@@ -147,6 +234,36 @@ func _input(event):
 			_zoom_camera(zoom_step)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			_zoom_camera(-zoom_step)
+
+func _generate_static_terminal_data(coords: Vector2i):
+	# 1. BASE VALUES
+	var bits_val = 50
+	var alert_val = 50
+	var flavor_name = "ALPHA FACILITY" # You can randomize this too!
+
+	# 2. ROLL FOR "CRIT" / HIGH ROLL
+	var rng = randf()
+
+	if rng > 0.8:
+		alert_val *= 2
+		flavor_name = "COMMAND NODE" # Special flavor
+	elif rng > 0.7:
+		bits_val *= 2 # "Encrypted Cache"
+		flavor_name = "TREASURY LINK"
+
+	# 3. VARIANCE
+	bits_val = roundi(bits_val * randf_range(0.9, 1.1))
+
+	# 4. SESSION ID FLAVOR
+	var session = "0x%X-%d-KANECHO" % [randi() % 0xFFFF, randi() % 9999]
+
+	# 5. SAVE TO MEMORY
+	terminal_memory[coords] = {
+		"facility_name": flavor_name,
+		"session_id": session,
+		"bits": bits_val,
+		"alert": alert_val
+	}
 
 func _zoom_camera(step: float):
 	if not camera: return
@@ -229,38 +346,8 @@ func generate_hex_grid() -> Dictionary:
 		"max_bounds": max_bounds
 	}
 
-func _generate_static_terminal_data(coords: Vector2i):
-	# 1. BASE VALUES
-	var bits_val = 50
-	var alert_val = 50
-	var flavor_name = "ALPHA FACILITY" # You can randomize this too!
-
-	# 2. ROLL FOR "CRIT" / HIGH ROLL
-	var rng = randf()
-
-	if rng > 0.8:
-		alert_val *= 2
-		flavor_name = "COMMAND NODE" # Special flavor
-	elif rng > 0.7:
-		bits_val *= 2 # "Encrypted Cache"
-		flavor_name = "TREASURY LINK"
-
-	# 3. VARIANCE
-	bits_val = roundi(bits_val * randf_range(0.9, 1.1))
-
-	# 4. SESSION ID FLAVOR
-	var session = "0x%X-%d-KANECHO" % [randi() % 0xFFFF, randi() % 9999]
-
-	# 5. SAVE TO MEMORY
-	terminal_memory[coords] = {
-		"facility_name": flavor_name,
-		"session_id": session,
-		"bits": bits_val,
-		"alert": alert_val
-	}
-
 func play_intro_sequence(map_data: Dictionary) -> void:
-	var start_node = map_data.start_node
+	var start_node: MapNode = map_data.start_node
 	var nodes_to_animate = map_data.nodes
 
 	if not camera: return
@@ -268,10 +355,14 @@ func play_intro_sequence(map_data: Dictionary) -> void:
 	# --- 1. SETUP "WIDE SHOT" CAMERA ---
 	var grid_center = (map_data.min_bounds + map_data.max_bounds) / 2.0
 	camera.position = grid_center
+
+	# Disable parallax depth so the image centers perfectly
 	parallax_bg.scroll_scale = Vector2.ONE
 
 	# Calculate Wide Zoom
 	var vp_size = get_viewport_rect().size
+	# Note: Ensure bg_sprite is accessible here. If it's local to generate,
+	# you might need to store it or get it from 'self'.
 	var bg_current_size = bg_sprite.texture.get_size() * bg_sprite.scale
 	var wide_zoom = max(vp_size.x / bg_current_size.x, vp_size.y / bg_current_size.y)
 	camera.zoom = Vector2(wide_zoom, wide_zoom)
@@ -279,10 +370,12 @@ func play_intro_sequence(map_data: Dictionary) -> void:
 	# --- 2. ANIMATE "WAVE" REVEAL ---
 
 	# Reveal Start Node immediately
-	var start_tween = create_tween()
-	start_tween.tween_property(start_node, "modulate:a", 1.0, 0.5).set_ease(Tween.EASE_OUT)
-	await start_tween.finished
-	AudioManager.play_sfx("terminal")
+	# --- FIX 1: Safety Check ---
+	if start_node:
+		var start_tween = create_tween()
+		start_tween.tween_property(start_node, "modulate:a", 1.0, 0.5).set_ease(Tween.EASE_OUT)
+		await start_tween.finished
+		AudioManager.play_sfx("terminal") # Nice touch!
 
 	# Sort remaining nodes Left-to-Right
 	nodes_to_animate.sort_custom(func(a, b):
@@ -315,6 +408,8 @@ func play_intro_sequence(map_data: Dictionary) -> void:
 		cam_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
 		cam_tween.tween_property(camera, "position", start_node.position, 1.5)
 		cam_tween.tween_property(camera, "zoom", Vector2.ONE, 1.5)
+
+		cam_tween.tween_property(parallax_bg, "scroll_scale", _calculated_depth_scale, 1.5)
 
 		await cam_tween.finished
 
@@ -405,7 +500,11 @@ func exit_battle_visuals(duration: float = 1.0):
 func _update_background_transform(min_b: Vector2, max_b: Vector2):
 	bg_sprite.texture = background_texture
 
-	(bg_sprite.material as ShaderMaterial).set_shader_parameter("blur_amount", background_blur)
+	if not bg_sprite.material:
+		_setup_background()
+
+	if bg_sprite.material is ShaderMaterial:
+		(bg_sprite.material as ShaderMaterial).set_shader_parameter("blur_amount", background_blur)
 
 	var padding = Vector2(hex_width * 4, hex_height * 4)
 	var grid_center = (min_b + max_b) / 2.0
@@ -531,15 +630,15 @@ func _move_player_to(target_node: MapNode, is_start: bool = false):
 		current_node.set_is_current(false)
 
 	current_node = target_node
-	current_node.hex_sprite.modulate = Color.DARK_GRAY
 	target_node.set_is_current(true)
 
 	# 2. Handle Camera
 	_move_camera_to_player(is_start)
 
 	if is_start:
+		target_node.has_been_visited = true
 		target_node.set_state(MapNode.NodeState.COMPLETED)
-		_update_alert_visuals() # Ensure UI is correct on start
+		_update_alert_visuals()
 		_update_vision()
 		return
 
@@ -685,3 +784,44 @@ func _offset_to_cube(hex: Vector2i) -> Vector3i:
 	var r = hex.y
 	var s = -q - r
 	return Vector3i(q, r, s)
+
+func _on_save_quit_pressed():
+	RunManager.save_game()
+	get_tree().quit() # or return to menu
+
+func get_save_data() -> Dictionary:
+	var node_states = {}
+
+	# 1. Serialize Node States
+	for coords in grid_nodes:
+		var node = grid_nodes[coords]
+		# We key by String because JSON doesn't support Vector2i keys
+		var key = var_to_str(coords)
+		node_states[key] = {
+			"state": node.state,
+			"visited": node.has_been_visited
+		}
+
+	# 2. Serialize Terminal Memory
+	# We need to convert Vector2i keys to strings here too
+	var serializable_terminals = {}
+	for coords in terminal_memory:
+		var key = var_to_str(coords)
+		serializable_terminals[key] = terminal_memory[coords]
+
+	return {
+		"current_alert": current_alert,
+		"current_coords": var_to_str(current_node.grid_coords),
+		"node_data": node_states,
+		"terminal_memory": serializable_terminals
+	}
+
+func _force_player_position(target_node: MapNode):
+	if current_node: current_node.set_is_current(false)
+	current_node = target_node
+	target_node.set_is_current(true)
+	_update_alert_visuals()
+	_update_vision()
+
+	# Snap camera
+	if camera: camera.position = target_node.position

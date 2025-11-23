@@ -17,6 +17,8 @@ config/icon="res://icon.svg"
 
 [autoload]
 
+SaveSystem="*res://src/singletons/save_system.gd"
+RunManager="*res://src/singletons/run_manager.gd"
 InputIconMap="*res://src/singletons/input_map.gd"
 InputManager="*res://src/singletons/input_manager.gd"
 AudioManager="*res://src/singletons/audio_manager.gd"

@@ -1,0 +1,6 @@
+[gd_resource type="FontVariation" load_steps=2 format=3 uid="uid://busejf1art6n0"]
+
+[ext_resource type="FontFile" uid="uid://ba5uhd2mnxb6g" path="res://data/theme/fonts/base_fonts/Nebula-Hollow.otf" id="1_ts5ue"]
+
+[resource]
+base_font = ExtResource("1_ts5ue")

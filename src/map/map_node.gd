@@ -23,8 +23,21 @@ enum NodeState { HIDDEN, REVEALED, COMPLETED }
 # --- State ---
 var type: NodeType = NodeType.UNKNOWN
 var state: NodeState = NodeState.HIDDEN
-var has_been_visited: bool = false
 var grid_coords: Vector2i
+var has_been_visited: bool = false:
+	set(value):
+		has_been_visited = value
+		if value:
+			hex_sprite.modulate = Color.DARK_GRAY
+
+
+func _ready():
+	if not hex_sprite:
+		push_error("hex_sprite missing!")
+	if has_been_visited:
+		hex_sprite.modulate = Color.DARK_GRAY
+	else:
+		hex_sprite.modulate = Color.WHITE
 
 func setup(coords: Vector2i, assigned_type: NodeType):
 	grid_coords = coords
