@@ -1,10 +1,11 @@
-[gd_scene load_steps=10 format=3 uid="uid://bmfik6nt4y0j0"]
+[gd_scene load_steps=11 format=3 uid="uid://bmfik6nt4y0j0"]
 
 [ext_resource type="Script" uid="uid://ddpwtj3v0qma3" path="res://game_piece.gd" id="1_ctm52"]
 [ext_resource type="Texture2D" uid="uid://cu1y5p7k0pads" path="res://assets/graphics/icons/deadbeef/hex_chip.png" id="2_g4mr7"]
-[ext_resource type="Texture2D" uid="uid://0v6k85gfryip" path="res://assets/graphics/icons/textures/atom.png" id="3_dsx61"]
 [ext_resource type="Texture2D" uid="uid://bh8gr2oebe1w7" path="res://assets/graphics/icons/deadbeef/hex_chip_u.png" id="4_5erml"]
+[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="4_mnfa6"]
 [ext_resource type="Texture2D" uid="uid://dsbbxqbeqt3kc" path="res://assets/graphics/icons/deadbeef/hex_chip_ur.png" id="5_5acrq"]
+[ext_resource type="FontVariation" uid="uid://c0je4m574ytir" path="res://data/theme/fonts/suse_mono.tres" id="5_qmvho"]
 [ext_resource type="Texture2D" uid="uid://cyecdr5m82x8h" path="res://assets/graphics/icons/deadbeef/hex_chip_dr.png" id="6_mnfa6"]
 [ext_resource type="Texture2D" uid="uid://bv4lj30ij5kpr" path="res://assets/graphics/icons/deadbeef/hex_chip_d.png" id="7_qmvho"]
 [ext_resource type="Texture2D" uid="uid://dbkdf3xsltg2" path="res://assets/graphics/icons/deadbeef/hex_chip_dl.png" id="8_ijm18"]
@@ -29,25 +30,6 @@ mouse_filter = 2
 texture = ExtResource("2_g4mr7")
 expand_mode = 1
 
-[node name="Icon" type="TextureRect" parent="."]
-visible = false
-self_modulate = Color(0, 0, 0, 1)
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -37.0
-offset_top = -70.0
-offset_right = 37.0
-offset_bottom = 4.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-texture = ExtResource("3_dsx61")
-expand_mode = 1
-
 [node name="Face" type="Control" parent="."]
 layout_mode = 1
 anchors_preset = 15
@@ -65,12 +47,13 @@ anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -30.0
-offset_top = -95.0
+offset_top = -97.0
 offset_right = 30.0
-offset_bottom = -26.0
+offset_bottom = -21.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_override_colors/font_color = Color(0.19434929, 0.19434926, 0.19434926, 1)
+theme_override_fonts/font = ExtResource("4_mnfa6")
 theme_override_font_sizes/font_size = 60
 text = "9"
 horizontal_alignment = 1
@@ -83,13 +66,14 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -47.5
-offset_top = -14.0
-offset_right = 47.5
-offset_bottom = 14.0
+offset_left = -57.5
+offset_top = -20.0
+offset_right = 57.5
+offset_bottom = 11.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(0.19434929, 0.19434926, 0.19434926, 1)
+theme_override_fonts/font = ExtResource("4_mnfa6")
 theme_override_font_sizes/font_size = 24
 text = "Protocol"
 horizontal_alignment = 1
@@ -107,6 +91,7 @@ offset_right = 24.5
 offset_bottom = 68.0
 grow_horizontal = 2
 theme_override_colors/font_color = Color(0.19434929, 0.19434926, 0.19434926, 1)
+theme_override_fonts/font = ExtResource("5_qmvho")
 theme_override_font_sizes/font_size = 34
 text = "UC"
 horizontal_alignment = 1

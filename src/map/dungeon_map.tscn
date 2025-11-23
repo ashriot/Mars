@@ -45,6 +45,8 @@ corner_radius_bottom_left = 12
 
 [node name="DungeonMap" type="Node2D"]
 script = ExtResource("1_5o7fj")
+map_length = 20
+map_height = 21
 vision_range = 2
 num_combats = 6
 num_terminals = 5

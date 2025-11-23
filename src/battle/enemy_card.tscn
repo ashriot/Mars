@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://b4tt3yil85l7j"]
+[gd_scene load_steps=19 format=3 uid="uid://b4tt3yil85l7j"]
 
 [ext_resource type="Script" uid="uid://carvfoj4h04nm" path="res://src/battle/enemy_card.gd" id="1_cu1kv"]
 [ext_resource type="Texture2D" uid="uid://c0yr6bpij1f16" path="res://assets/graphics/icons/textures/shield.png" id="2_4kuvy"]
@@ -8,6 +8,8 @@
 [ext_resource type="PackedScene" uid="uid://be3t7advgy14o" path="res://src/battle/buff.tscn" id="3_pdx0h"]
 [ext_resource type="Texture2D" uid="uid://bhk28mg1reyry" path="res://assets/graphics/glyphs/ps/ps_dpad_down_normal.png" id="4_e8ixv"]
 [ext_resource type="Texture2D" uid="uid://05lare8hgtys" path="res://assets/graphics/icons/textures/bullet.png" id="4_l4hbp"]
+[ext_resource type="FontVariation" uid="uid://c0je4m574ytir" path="res://data/theme/fonts/suse_mono.tres" id="5_puinb"]
+[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="6_pdx0h"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8i7ma"]
 bg_color = Color(0.6, 0.6, 0.6, 0)
@@ -134,6 +136,7 @@ theme_override_constants/shadow_offset_x = 0
 theme_override_constants/shadow_offset_y = 0
 theme_override_constants/outline_size = 4
 theme_override_constants/shadow_outline_size = 16
+theme_override_fonts/font = ExtResource("5_puinb")
 theme_override_font_sizes/font_size = 24
 text = "Lv. 01"
 horizontal_alignment = 1
@@ -144,9 +147,9 @@ anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -196.5
-offset_top = 33.0
+offset_top = 38.0
 offset_right = 196.5
-offset_bottom = 73.0
+offset_bottom = 78.0
 grow_horizontal = 2
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.78431374)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -226,6 +229,7 @@ offset_bottom = 13.559143
 grow_vertical = 2
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 16
+theme_override_fonts/font = ExtResource("6_pdx0h")
 theme_override_font_sizes/font_size = 50
 text = "99999"
 horizontal_alignment = 2
@@ -448,6 +452,7 @@ offset_right = 89.0
 offset_bottom = 15.0
 grow_vertical = 2
 theme_override_constants/outline_size = 12
+theme_override_fonts/font = ExtResource("6_pdx0h")
 theme_override_font_sizes/font_size = 30
 text = "40%"
 horizontal_alignment = 1
@@ -487,6 +492,7 @@ offset_bottom = 15.0
 grow_horizontal = 0
 grow_vertical = 2
 theme_override_constants/outline_size = 12
+theme_override_fonts/font = ExtResource("6_pdx0h")
 theme_override_font_sizes/font_size = 30
 text = "40%"
 horizontal_alignment = 1
@@ -507,6 +513,7 @@ grow_horizontal = 2
 grow_vertical = 0
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.49019608)
 theme_override_constants/outline_size = 20
+theme_override_fonts/normal_font = ExtResource("6_pdx0h")
 theme_override_font_sizes/normal_font_size = 32
 bbcode_enabled = true
 text = "22x5  >  Asher"
@@ -533,6 +540,7 @@ theme_override_constants/margin_right = 50
 layout_mode = 2
 theme_override_constants/line_spacing = -5
 theme_override_constants/outline_size = 5
+theme_override_fonts/font = ExtResource("6_pdx0h")
 theme_override_font_sizes/font_size = 30
 text = "Attack!"
 horizontal_alignment = 1
@@ -554,6 +562,7 @@ theme_override_constants/shadow_offset_x = 0
 theme_override_constants/shadow_offset_y = 0
 theme_override_constants/outline_size = 5
 theme_override_constants/shadow_outline_size = 20
+theme_override_fonts/font = ExtResource("6_pdx0h")
 theme_override_font_sizes/font_size = 40
 text = "BREACHED"
 horizontal_alignment = 1
@@ -589,6 +598,7 @@ theme_override_constants/separation = 8
 alignment = 2
 
 [node name="NextPanel" type="Panel" parent="Panel"]
+visible = false
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5

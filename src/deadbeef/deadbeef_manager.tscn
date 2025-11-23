@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3 uid="uid://c17ve5h6vhn7l"]
+[gd_scene load_steps=6 format=3 uid="uid://c17ve5h6vhn7l"]
 
 [ext_resource type="Script" uid="uid://b0ylv0471fdxc" path="res://src/deadbeef/deadbeef_manager.gd" id="1_s2bdi"]
 [ext_resource type="PackedScene" uid="uid://cofotb1kj045s" path="res://src/deadbeef/hex_chip.tscn" id="2_e8ltb"]
 [ext_resource type="PackedScene" uid="uid://bmfik6nt4y0j0" path="res://src/deadbeef/game_piece.tscn" id="3_4i8lp"]
 [ext_resource type="Texture2D" uid="uid://fptqehalo870" path="res://assets/graphics/icons/map/delivery-drone.png" id="3_tp4km"]
+[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="5_4i8lp"]
 
 [node name="DeadbeefManager" type="Control"]
 layout_mode = 3
@@ -13,7 +14,8 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_s2bdi")
-max_chain_depth = 1
+deck_common_count = 1
+deck_rare_count = 6
 ai_difficulty = 2
 chip_scene = ExtResource("2_e8ltb")
 game_piece_scene = ExtResource("3_4i8lp")
@@ -47,6 +49,7 @@ offset_left = -260.0
 offset_right = -167.0
 offset_bottom = 88.0
 grow_horizontal = 2
+theme_override_fonts/font = ExtResource("5_4i8lp")
 theme_override_font_sizes/font_size = 80
 text = "12"
 
@@ -60,5 +63,6 @@ offset_left = 260.0
 offset_right = 353.0
 offset_bottom = 88.0
 grow_horizontal = 2
+theme_override_fonts/font = ExtResource("5_4i8lp")
 theme_override_font_sizes/font_size = 80
 text = "12"

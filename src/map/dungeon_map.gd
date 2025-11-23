@@ -3,8 +3,8 @@ class_name DungeonMap
 
 signal interaction_requested(node: MapNode)
 
-const ALERT_LOW_THRESHOLD = 25
-const ALERT_MED_THRESHOLD = 76
+const ALERT_LOW_THRESHOLD = 31
+const ALERT_MED_THRESHOLD = 81
 
 @onready var camera: Camera2D = $Camera2D
 @onready var hud: Control = $CanvasLayer/HUD
@@ -56,6 +56,9 @@ var _pre_battle_zoom: Vector2 = Vector2.ONE
 var _pre_battle_camera_pos: Vector2 = Vector2.ZERO
 var _calculated_depth_scale: Vector2 = Vector2.ONE
 var alert_tween: Tween
+
+# Key: Vector2i (Grid Coords), Value: Dictionary (The terminal data)
+var terminal_memory: Dictionary = {}
 
 # --- Hex Values ---
 var hex_size: float = 50.0
@@ -160,11 +163,7 @@ func generate_hex_grid() -> Dictionary:
 	current_node = null
 	hex_width = sqrt(3.0) * hex_size
 	hex_height = hex_size * 2.0
-
-	if not has_node("Background"):
-		var bg_node = Node2D.new()
-		bg_node.name = "Background"
-		add_child(bg_node)
+	terminal_memory.clear()
 
 	for child in $Background.get_children():
 		child.queue_free()
@@ -205,6 +204,10 @@ func generate_hex_grid() -> Dictionary:
 	var node_types = _distribute_node_types(valid_coords.keys(), center_y)
 	var nodes_list: Array[MapNode] = []
 
+	for coords in node_types.keys():
+		if node_types[coords] == MapNode.NodeType.TERMINAL:
+			_generate_static_terminal_data(coords)
+
 	for coords in valid_coords.keys():
 		# Create node (starts invisible alpha 0.0 via _create_map_node)
 		var new_node = _create_map_node(coords.x, coords.y, valid_coords[coords], node_types[coords])
@@ -224,6 +227,36 @@ func generate_hex_grid() -> Dictionary:
 		"nodes": nodes_list,
 		"min_bounds": min_bounds,
 		"max_bounds": max_bounds
+	}
+
+func _generate_static_terminal_data(coords: Vector2i):
+	# 1. BASE VALUES
+	var bits_val = 50
+	var alert_val = 50
+	var flavor_name = "ALPHA FACILITY" # You can randomize this too!
+
+	# 2. ROLL FOR "CRIT" / HIGH ROLL
+	var rng = randf()
+
+	if rng > 0.8:
+		alert_val *= 2
+		flavor_name = "COMMAND NODE" # Special flavor
+	elif rng > 0.7:
+		bits_val *= 2 # "Encrypted Cache"
+		flavor_name = "TREASURY LINK"
+
+	# 3. VARIANCE
+	bits_val = roundi(bits_val * randf_range(0.9, 1.1))
+
+	# 4. SESSION ID FLAVOR
+	var session = "0x%X-%d-KANECHO" % [randi() % 0xFFFF, randi() % 9999]
+
+	# 5. SAVE TO MEMORY
+	terminal_memory[coords] = {
+		"facility_name": flavor_name,
+		"session_id": session,
+		"bits": bits_val,
+		"alert": alert_val
 	}
 
 func play_intro_sequence(map_data: Dictionary) -> void:
@@ -444,6 +477,9 @@ func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 			var coord = good_candidates.pop_back()
 			type_map[coord] = type
 
+	num_terminals = int(map_height * map_length / 20) + 1
+	print("Num Terminals: ", num_terminals)
+
 	_assign_good.call(MapNode.NodeType.ELITE, num_elites)
 	_assign_good.call(MapNode.NodeType.REWARD, num_rewards)
 	_assign_good.call(MapNode.NodeType.REWARD_2, num_uncommon_rewards)
@@ -523,11 +559,11 @@ func _move_player_to(target_node: MapNode, is_start: bool = false):
 
 func _calculate_alert_gain(is_revisit: bool) -> int:
 	if current_alert < ALERT_LOW_THRESHOLD:
-		return 1 if is_revisit else 4
+		return 2 if is_revisit else 5
 	elif current_alert < ALERT_MED_THRESHOLD:
 		return 2 if is_revisit else 5
 	else:
-		return 3 if is_revisit else 6
+		return 2 if is_revisit else 5
 
 func modify_alert(amount: int):
 	current_alert = clamp(current_alert + amount, 0, 100)

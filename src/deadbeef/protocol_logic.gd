@@ -1,36 +1,30 @@
 class_name ProtocolLogic
 
-# Uses the Enum from ChipLibrary for clean comparisons
 const P = ChipLibrary.Protocol
 
-# --- COMBAT MODIFIERS ---
-static func get_attack_bonus(attacker_data: Dictionary, defender_data: Dictionary) -> int:
-	var bonus = 0
-	var rank = attacker_data.get("rank", 1)
-	var proto = attacker_data.get("protocol", P.NONE)
+# --- COMBAT RESOLUTION (Single Source of Truth) ---
+static func resolve_clash(att_data: Dictionary, def_data: Dictionary) -> bool:
 
-	match proto:
-		P.BACKDOOR:
-			bonus += (rank - 2) * 2
-		P.ROOTKIT:
-			pass
+	# 1. Determine Attacker's Power
+	var attack_power = att_data.atk
 
-	return bonus
+	# FIREWALL: "Attacks using your DEF stat instead of your ATK"
+	if att_data.protocol == P.FIREWALL:
+		attack_power = att_data.def
 
-static func get_defense_bonus(defender_data: Dictionary, attacker_data: Dictionary) -> int:
-	var bonus = 0
-	var rank = defender_data.get("rank", 1)
-	var proto = defender_data.get("protocol", P.NONE)
-	var attacker_proto = attacker_data.get("protocol", P.NONE)
+	# 2. Determine Defender's Resistance
+	var defense_power = def_data.def
 
-	if attacker_proto == P.ROOTKIT and proto == P.FIREWALL:
-		return 0
+	# BACKDOOR: "Attacks the enemy's ATK stat instead of their DEF"
+	if att_data.protocol == P.BACKDOOR:
+		defense_power = def_data.atk
 
-	match proto:
-		P.FIREWALL:
-			bonus += (rank - 2) * 2
+	# 3. Rootkit Handling
+	# If Attacker has Rootkit, they might ignore specific defense bonuses
+	# (Since we removed wall bonuses, this currently does nothing,
+	# but this is where you'd bypass buffs if you add them back).
 
-	return bonus
+	return attack_power > defense_power
 
 # --- EVENT TRIGGERS ---
 
@@ -45,25 +39,22 @@ static func on_place(chip: HexChip, board_manager: Control):
 				if n.state == HexChip.ChipState.OCCUPIED:
 					var piece = n.current_piece
 					if piece.owner_id != chip.current_piece.owner_id:
-						piece.modify_kernel(-1)
-
+						piece.modify_stats(-1)
 		P.AMPLIFY:
 			var neighbors = board_manager._get_neighbors(chip.grid_coords)
 			for n in neighbors:
 				if n.state == HexChip.ChipState.OCCUPIED:
 					var piece = n.current_piece
 					if piece.owner_id == chip.current_piece.owner_id:
-						piece.modify_kernel(1)
-
+						piece.modify_stats(1)
 		P.MALLOC:
 			var neighbors = board_manager._get_neighbors(chip.grid_coords)
 			var empty_count = 0
 			for n in neighbors:
 				if n.state == HexChip.ChipState.EMPTY:
 					empty_count += 1
-
 			if empty_count > 0:
-				chip.current_piece.modify_kernel(empty_count)
+				chip.current_piece.modify_stats(empty_count)
 
 static func on_flip_success(attacker_chip: HexChip, defender_chip: HexChip):
 	var att_piece = attacker_chip.current_piece
@@ -72,12 +63,12 @@ static func on_flip_success(attacker_chip: HexChip, defender_chip: HexChip):
 
 	match proto:
 		P.TRANSFER:
-			att_piece.modify_kernel(1)
-			def_piece.modify_kernel(-1)
+			att_piece.modify_stats(1)
+			def_piece.modify_stats(-1)
 		P.VIRUS:
-			def_piece.modify_kernel(-1)
+			def_piece.modify_stats(-1)
 		P.CASCADE:
-			att_piece.modify_kernel(1)
+			att_piece.modify_stats(1)
 
 static func can_be_flipped(defender_chip: HexChip) -> bool:
 	var piece = defender_chip.current_piece
@@ -85,24 +76,11 @@ static func can_be_flipped(defender_chip: HexChip) -> bool:
 		return false
 	return true
 
-# --- NEW: START OF TURN LOGIC ---
 static func on_turn_start(grid: Dictionary, current_player: int):
 	for chip in grid.values():
 		if chip.state == HexChip.ChipState.OCCUPIED:
 			var piece = chip.current_piece
 			if piece.protocol == P.REBOOT:
-				# If this chip ORIGINALLY belonged to the current player...
 				if piece.original_owner_id == current_player:
-					# ...but is currently owned by the enemy (was flipped)
 					if piece.owner_id != current_player:
-						# RECLAIM IT!
 						chip.flip_piece()
-						# Note: We generally don't trigger flip chains on passive effects
-						# to avoid infinite loops or confusion at start of turn.
-
-static func recalculate_dynamic_stats(grid: Dictionary):
-	for chip in grid.values():
-		if chip.state == HexChip.ChipState.OCCUPIED:
-			var piece = chip.current_piece
-			if piece.protocol == P.FLANKING:
-				pass

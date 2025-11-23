@@ -35,21 +35,20 @@ var cursor_tween: Tween
 var final_text_content: String = ""
 
 func _ready():
-	# Connect the RichTextLabel's "meta_clicked" signal
-	# This detects when you click the [url] text
 	text_label.meta_clicked.connect(_on_text_link_clicked)
 
 	# If testing alone, call setup manually:
 	# setup("OMEGA WING", 100, 50)
 
-func setup(facility_name: String, bits_amount: int, alert_amount: int):
-	# 1. Generate session (same as before)
-	var session = "0x%X-%d-KANECHO" % [randi() % 0xFFFF, randi() % 9999]
+func setup(facility_name: String, bits_amount: int, alert_amount: int, session_id: String = ""):
+	var session = session_id
+	if session == "":
+		session = "0x%X-%d-KANECHO" % [randi() % 0xFFFF, randi() % 9999]
 
 	var data = {
 		"facility": facility_name,
 		"session_id": session,
-		"bits": str(bits_amount),
+		"bits": str(float(bits_amount) / 10),
 		"alert": str(alert_amount)
 	}
 

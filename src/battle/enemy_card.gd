@@ -115,7 +115,7 @@ func update_intent_ui():
 		var dmg_type = ""
 		match damage_effect.damage_type:
 			Action.DamageType.KINETIC:
-				dmg_type = Action._get_bbcode_icon("kinetic")
+				dmg_type = "KIN"
 			Action.DamageType.ENERGY:
 				dmg_type = "NRG"
 			Action.DamageType.PIERCING:
@@ -129,11 +129,11 @@ func update_intent_ui():
 		if intended_targets:
 			if intended_targets.size() > 1:
 				if intended_action.target_type == Action.TargetType.RANDOM_ENEMY:
-					final_text += " > RANDOM"
+					final_text += ">RANDOM"
 				else:
-					final_text += " > EVERYONE"
+					final_text += ">EVERYONE"
 			else:
-				final_text += " > " + intended_targets[0].actor_name
+				final_text += ">" + intended_targets[0].actor_name
 
 		intent_text.text = final_text
 

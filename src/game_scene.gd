@@ -25,14 +25,31 @@ func _on_map_interaction_requested(node: MapNode):
 			start_encounter()
 
 		MapNode.NodeType.TERMINAL:
+			# --- 1. RETRIEVE SAVED DATA ---
+			# Use grid_coords as the key
+			var data = dungeon_map.terminal_memory.get(node.grid_coords)
+
+			if not data:
+				push_error("No terminal data found for node: ", node.grid_coords)
+				_on_content_finished(true) # Fail safe
+				return
+
+			# --- 2. USE THE DATA ---
 			var terminal = terminal_scene_packed.instantiate() as Control
 			overlay_layer.add_child(terminal)
-			terminal.setup("ALPHA FACILITY", 50, 25)
+
+			terminal.setup(
+				data.facility_name,
+				data.bits,
+				data.alert,
+				data.session_id
+			)
+
+			# Pass the specific alert value to the choice handler
 			terminal.option_selected.connect(_on_terminal_choice)
 			terminal.closed.connect(_on_terminal_closed)
 
 		_:
-			print("No scene for this node type yet.")
 			_on_content_finished()
 			return
 
@@ -81,7 +98,7 @@ func _on_terminal_choice(opt: int):
 	if opt == 1:
 		print("Gained Bits")
 	elif opt == 2:
-		dungeon_map.modify_alert(-25)
+		dungeon_map.modify_alert(-50)
 	_on_content_finished(true)
 
 func _on_terminal_closed():

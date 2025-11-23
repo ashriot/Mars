@@ -6,8 +6,14 @@ extends Control
 @export var gap: float = 5.0
 
 # --- Rules Configuration ---
-@export var max_chain_depth: int = -1
+@export var max_chain_depth: int = 1
 const MAX_CHIPS_PER_PLAYER = 10
+
+# --- Deck Composition (Adjustable) ---
+# How many of each rarity per player? Total should equal MAX_CHIPS_PER_PLAYER (10)
+@export var deck_common_count: int = 5
+@export var deck_uncommon_count: int = 3
+@export var deck_rare_count: int = 2
 
 # --- AI Settings ---
 @export_enum("Easy", "Medium", "Hard") var ai_difficulty: int = 1
@@ -31,8 +37,10 @@ var grid_chips = {}
 var current_player: int = 0
 var is_processing_turn: bool = false
 
-var p1_chips_created: int = 0
-var p2_chips_created: int = 0
+# Deck Arrays: List of Rarity Enums [0, 0, 1, 2...]
+var p1_deck_stack = []
+var p2_deck_stack = []
+
 var selected_piece: GamePiece = null
 
 enum Dir { U=0, UR=1, DR=2, D=3, DL=4, UL=5 }
@@ -71,7 +79,7 @@ func generate_board():
 			var row = r + (q - (q & 1)) / 2
 
 			var x_pos = col * (hex_width * 0.75 + gap)
-			var y_pos = row * (hex_height * 0.95 + gap)
+			var y_pos = row * (hex_height + gap)
 			if col % 2 != 0: y_pos += (hex_height + gap) / 2.0
 
 			var final_pos = screen_center + Vector2(x_pos, y_pos)
@@ -93,9 +101,9 @@ func _create_chip(grid_x, grid_y, screen_pos, size_vec):
 func _start_game():
 	current_player = 0
 	is_processing_turn = false
-	p1_chips_created = 0
-	p2_chips_created = 0
 	selected_piece = null
+
+	_generate_fair_decks()
 
 	for child in chip_hand_p1.get_children(): child.queue_free()
 	for child in chip_hand_p2.get_children(): child.queue_free()
@@ -106,17 +114,42 @@ func _start_game():
 
 	_update_scores()
 
+# NEW: Generate a balanced list of rarities for both players
+func _generate_fair_decks():
+	p1_deck_stack.clear()
+	p2_deck_stack.clear()
+
+	# Create the composition list
+	var composition = []
+	for i in range(deck_common_count): composition.append(ChipLibrary.Rarity.COMMON)
+	for i in range(deck_uncommon_count): composition.append(ChipLibrary.Rarity.UNCOMMON)
+	for i in range(deck_rare_count): composition.append(ChipLibrary.Rarity.RARE)
+
+	# Assign to P1 and Shuffle
+	p1_deck_stack = composition.duplicate()
+	p1_deck_stack.shuffle()
+
+	# Assign to P2 and Shuffle (Same ingredients, different order)
+	p2_deck_stack = composition.duplicate()
+	p2_deck_stack.shuffle()
+
+	print("Decks Generated. P1 Size: %d | P2 Size: %d" % [p1_deck_stack.size(), p2_deck_stack.size()])
+
 func _draw_card_to_hand(container: Container, owner_id: int, is_hidden: bool):
 	if not test_unit_texture: return
 
-	if owner_id == 0:
-		if p1_chips_created >= MAX_CHIPS_PER_PLAYER: return
-		p1_chips_created += 1
-	else:
-		if p2_chips_created >= MAX_CHIPS_PER_PLAYER: return
-		p2_chips_created += 1
+	# Get the correct deck stack
+	var current_deck = p1_deck_stack if owner_id == 0 else p2_deck_stack
 
-	var random_name = ChipLibrary.get_random_blueprint_name()
+	# CHECK EMPTY: If deck is empty, we stop drawing
+	if current_deck.is_empty():
+		return
+
+	# Pop the next rarity
+	var next_rarity = current_deck.pop_front()
+
+	# Generate card of that rarity
+	var random_name = ChipLibrary.get_random_blueprint_by_rarity(next_rarity)
 	var unit_data = ChipLibrary.create_chip_data(random_name)
 	unit_data["texture"] = test_unit_texture
 
@@ -164,30 +197,24 @@ func _play_turn(target_chip: HexChip, piece_to_play: GamePiece):
 	piece_to_play._update_owner_color()
 
 	target_chip.add_piece(piece_to_play)
-	print("Player %d placed on %s" % [current_player, target_chip.grid_coords])
+	print("\n--- Player %d Turn: Placed on %s ---" % [current_player, target_chip.grid_coords])
 
-	# 1. ON PLACE PROTOCOLS
 	ProtocolLogic.on_place(target_chip, self)
-
-	# 2. RESOLVE COMBAT
 	await _resolve_combat_chain(target_chip)
 
 	var is_p2 = (current_player == 1)
 	_draw_card_to_hand(hand_container, current_player, is_p2)
 
-	# --- END OF TURN / START OF NEW TURN ---
 	current_player = 1 - current_player
 	_update_scores()
-
-	# 3. TRIGGER START OF TURN PROTOCOLS (REBOOT, etc.)
-	# Now that it's the new player's turn, process their start-of-turn effects
 	ProtocolLogic.on_turn_start(grid_chips, current_player)
-	_update_scores() # Update scores again in case Reboot flipped things back
+	_update_scores()
 
 	is_processing_turn = false
 
 	if current_player == 1:
 		_start_enemy_turn()
+
 # --- AI LOGIC ---
 
 func _start_enemy_turn():
@@ -218,9 +245,9 @@ func _resolve_combat_chain(start_chip: HexChip):
 		var attacker_piece = attacker_chip.current_piece
 		var neighbors = _get_neighbors_with_direction(attacker_chip.grid_coords)
 
-		# Data packet for Protocol Logic lookups
 		var att_data = {
-			"kernel": attacker_piece.kernel_value,
+			"atk": attacker_piece.atk_value,
+			"def": attacker_piece.def_value,
 			"rank": attacker_piece.rank,
 			"protocol": attacker_piece.protocol
 		}
@@ -233,53 +260,44 @@ func _resolve_combat_chain(start_chip: HexChip):
 			var defender_piece = defender_chip.current_piece
 			if defender_piece.owner_id == attacker_piece.owner_id: continue
 
-			# ATTACK RESOLUTION
 			if not attacker_piece.walls[dir_index]:
 				continue
 
 			var opposite_dir = (dir_index + 3) % 6
 			var has_defender_wall = defender_piece.walls[opposite_dir]
 
-			# Check for Deadlock
 			if not ProtocolLogic.can_be_flipped(defender_chip):
-				print("Attack blocked by Deadlock")
 				continue
 
 			var flip_success = false
+			var triggered_new_chain = false
 
 			if not has_defender_wall:
 				flip_success = true
-				print("Auto-Win vs ", defender_chip.grid_coords)
 			else:
-				# CLASH!
-				# Get Protocol Bonuses
 				var def_data = {
-					"kernel": defender_piece.kernel_value,
+					"atk": defender_piece.atk_value,
+					"def": defender_piece.def_value,
 					"rank": defender_piece.rank,
 					"protocol": defender_piece.protocol
 				}
 
-				var att_bonus = ProtocolLogic.get_attack_bonus(att_data, def_data)
-				var def_bonus = ProtocolLogic.get_defense_bonus(def_data, att_data)
-
-				var final_att = attacker_piece.kernel_value + att_bonus
-				var final_def = defender_piece.kernel_value + def_bonus
-
-				print("Clash! Att: %d vs Def: %d" % [final_att, final_def])
-
-				if final_att > final_def:
+				if ProtocolLogic.resolve_clash(att_data, def_data):
 					flip_success = true
+					triggered_new_chain = true
+
+			if current_depth > 0:
+				flip_success = true
+				triggered_new_chain = true
 
 			if flip_success:
 				defender_chip.flip_piece()
-
-				# Trigger Flip Protocols (Transfer, Virus, etc)
 				ProtocolLogic.on_flip_success(attacker_chip, defender_chip)
 
 				if not processed_in_chain.has(defender_chip):
-					if max_chain_depth == -1 or current_depth < max_chain_depth:
-						await get_tree().create_timer(0.5).timeout
-						process_queue.append({ "chip": defender_chip, "depth": current_depth + 1 })
+					if triggered_new_chain:
+						if max_chain_depth == -1 or current_depth < max_chain_depth:
+							process_queue.append({ "chip": defender_chip, "depth": current_depth + 1 })
 
 func _update_scores():
 	var p1_score = 0
@@ -288,8 +306,8 @@ func _update_scores():
 		if chip.state == HexChip.ChipState.OCCUPIED and chip.current_piece:
 			if chip.current_piece.owner_id == 0: p1_score += 1
 			else: p2_score += 1
-	score_p1_label.text = "%d" % p1_score
-	score_p2_label.text = "%d" % p2_score
+	score_p1_label.text = "P1: %d" % p1_score
+	score_p2_label.text = "P2: %d" % p2_score
 
 func _get_neighbors_with_direction(coords: Vector2i) -> Array:
 	var list = []

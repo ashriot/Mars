@@ -1,14 +1,14 @@
 class_name GamePiece
 extends Control
 
-enum Abbr { C, UC, R, VR, U }
+enum Abbr {C, UC, R, VR, U}
 
 signal piece_selected(piece: GamePiece)
 
 # --- DATA ---
 var unit_name: String = "Unknown"
-var base_kernel: int = 0 # Store the original value
-var kernel_value: int = 0 # Current value
+var atk_value: int = 0
+var def_value: int = 0
 var rank: int = 1
 var rarity: int = 0
 var protocol: int = 0
@@ -20,11 +20,10 @@ var original_owner_id: int = 0
 var is_face_down: bool = false
 
 # --- VISUALS ---
-@onready var icon = $Icon
 @onready var face = $Face
 @onready var kernel_label = $Face/KernelLabel
-@onready var rarity_label = $Face/RarityLabel
 @onready var protocol_label = $Face/ProtocolLabel
+@onready var rarity_label = $Face/RarityLabel
 @onready var background = $Background
 @onready var wall_nodes = [
 	$Wall_U,  $Wall_UR, $Wall_DR,
@@ -35,13 +34,14 @@ func setup(data: Dictionary, player: int, size_px: Vector2):
 	custom_minimum_size = size_px
 	size = size_px
 	pivot_offset = size / 2.0
+
 	owner_id = player
 	original_owner_id = player
 
 	# 1. Load Data
 	unit_name = data.get("name", "Unknown")
-	base_kernel = data.get("kernel", 0)
-	kernel_value = base_kernel # Initialize current
+	atk_value = data.get("atk", 1)
+	def_value = data.get("def", 1)
 
 	rank = data.get("rank", 1)
 	rarity = data.get("rarity", 0)
@@ -51,23 +51,18 @@ func setup(data: Dictionary, player: int, size_px: Vector2):
 	if w_data.size() == 6:
 		walls = w_data
 
-	#icon.texture = data["texture"]
-
 	_update_owner_color()
 	_update_ui()
 
-# --- NEW: Modifier for Protocols ---
-func modify_kernel(amount: int):
-	kernel_value += amount
-	kernel_value = max(0, kernel_value) # Prevent negatives
+# --- Modifier for Protocols ---
+func modify_stats(amount: int):
+	# Simple implementation: Add to both for generic buffs
+	# Or split logic if needed. For now, we buff ATK/DEF equally for generic "buffs"
+	atk_value += amount
+	def_value += amount
+	atk_value = max(0, atk_value)
+	def_value = max(0, def_value)
 	_update_ui()
-
-	# Visual Pop for stat change
-	var tween = create_tween()
-	kernel_label.scale = Vector2(1.5, 1.5)
-	kernel_label.modulate = Color.GREEN if amount > 0 else Color.RED
-	tween.tween_property(kernel_label, "scale", Vector2.ONE, 0.3)
-	tween.parallel().tween_property(kernel_label, "modulate", Color.WHITE, 0.3)
 
 # --- INPUT HANDLING ---
 func _gui_input(event):
@@ -119,8 +114,8 @@ func _update_owner_color():
 		background.self_modulate = Color(1.0, 0.4, 0.2)
 
 func _update_ui():
-	# Display Hex if > 9
-	kernel_label.text = "%X" % kernel_value
+	# Display ATK and DEF
+	kernel_label.text = "%X%X" % [atk_value, def_value]
 	rarity_label.text = Abbr.keys()[rarity]
 	if ChipLibrary.Protocol.keys()[protocol] != "NONE":
 		protocol_label.text = ChipLibrary.Protocol.keys()[protocol]
