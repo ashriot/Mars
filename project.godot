@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Red Shift"
-run/main_scene="uid://cl5f5vup72n32"
+run/main_scene="uid://bj37bql2rx1om"
 config/features=PackedStringArray("4.5", "Mobile")
 config/icon="res://icon.svg"
 
@@ -56,3 +56,4 @@ ui_accept={
 
 renderer/rendering_method="mobile"
 viewport/hdr_2d=true
+environment/defaults/default_clear_color=Color(0, 0, 0, 1)

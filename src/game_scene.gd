@@ -1,4 +1,5 @@
 extends Node2D
+class_name GameScene
 
 @export_group("Packed Scenes")
 @export var battle_scene_packed: PackedScene
@@ -8,13 +9,22 @@ extends Node2D
 # --- REFERENCES ---
 @onready var dungeon_map: DungeonMap = $DungeonMap
 @onready var overlay_layer = $DungeonMap/OverlayLayer
+@onready var fader: ColorRect = $CanvasLayer/Fader
 
 var battle_scene: Node = null
 
 
 func _ready():
-	# Listen for when the player moves to a node
+	fader.modulate.a = 1.0
+
+	var tween = create_tween()
+	tween.tween_property(fader, "modulate:a", 0.0, 1.0)\
+		.set_delay(0.25)
+	await tween.finished
+	fader.hide()
+
 	dungeon_map.interaction_requested.connect(_on_map_interaction_requested)
+	dungeon_map.initialize_map()
 
 func _on_map_interaction_requested(node: MapNode):
 	dungeon_map.current_map_state = DungeonMap.MapState.LOCKED
@@ -61,10 +71,11 @@ func _on_map_interaction_requested(node: MapNode):
 		if instance.has_method("setup"):
 			instance.setup(node)
 
-# Default is true so existing calls (like battles) default to completing
 func _on_content_finished(should_complete_node: bool = true):
 	if should_complete_node:
 		await dungeon_map.complete_current_node()
+
+	RunManager.auto_save()
 
 	for child in overlay_layer.get_children():
 		child.queue_free()

@@ -30,7 +30,7 @@ func save_game(slot_index: int):
 	var path = _get_slot_path(slot_index)
 	var file = FileAccess.open(path, FileAccess.WRITE)
 	file.store_string(JSON.stringify(data))
-	print("Game saved to Slot ", slot_index)
+	#print("Game saved to Slot ", slot_index)
 
 func load_game(slot_index: int) -> bool:
 	var path = _get_slot_path(slot_index)

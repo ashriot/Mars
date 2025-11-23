@@ -1,4 +1,4 @@
-[gd_scene load_steps=27 format=3 uid="uid://dc5du0o5phhma"]
+[gd_scene load_steps=25 format=3 uid="uid://dc5du0o5phhma"]
 
 [ext_resource type="Script" uid="uid://dssm7j7rbyew6" path="res://src/battle/battle_scene.gd" id="1_1pykk"]
 [ext_resource type="Script" uid="uid://deoohlwp7dcfm" path="res://src/battle/battle_manager.gd" id="1_6cbqe"]
@@ -12,19 +12,12 @@
 [ext_resource type="Script" uid="uid://bf5t2mtgtkbsn" path="res://src/battle/turn_queue.gd" id="9_16l6v"]
 [ext_resource type="Resource" uid="uid://s6fcg8egbavh" path="res://data/enemies/actors/scout_drone.tres" id="9_rvyyd"]
 [ext_resource type="PackedScene" uid="uid://diku73kk4tjv7" path="res://src/battle/actor_queue.tscn" id="10_6by3n"]
-[ext_resource type="Shader" uid="uid://dyioxf64d4fgd" path="res://src/battle/blur.gdshader" id="11_w2kg5"]
 [ext_resource type="Resource" uid="uid://xwe3skgcbr7x" path="res://data/enemies/actors/attack_drone.tres" id="12_tx5gf"]
 [ext_resource type="Texture2D" uid="uid://dldmpu0c4mvsl" path="res://assets/graphics/icons/skills/empty-chessboard.png" id="13_6rrcq"]
 [ext_resource type="Shader" uid="uid://cg8j5a78td0ei" path="res://src/battle/chroma.gdshader" id="13_w2kg5"]
 [ext_resource type="Script" uid="uid://cnb6qyk7u80ko" path="res://src/battle/fx_manager.gd" id="16_1pykk"]
 [ext_resource type="PackedScene" uid="uid://d2t7mp0iinjk" path="res://src/effects/explosion.tscn" id="17_tx5gf"]
 [ext_resource type="PackedScene" uid="uid://dldr8pduy83ir" path="res://src/effects/background.tscn" id="18_6rrcq"]
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_w2kg5"]
-shader = ExtResource("11_w2kg5")
-shader_parameter/blur_amount = 2.50000021375
-shader_parameter/mix_amount = 0.0
-shader_parameter/color_over = Color(0, 0, 0, 1)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_7up2b"]
 shader = ExtResource("13_w2kg5")
@@ -94,16 +87,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 expand_mode = 1
-
-[node name="ColorRectBlur" type="ColorRect" parent="UI/Backdrop"]
-visible = false
-material = SubResource("ShaderMaterial_w2kg5")
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
 
 [node name="Chroma" type="ColorRect" parent="UI/Backdrop"]
 material = SubResource("ShaderMaterial_7up2b")

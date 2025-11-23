@@ -20,5 +20,20 @@ terminal_scene_packed = ExtResource("3_lhik4")
 environment = SubResource("Environment_jr7q5")
 
 [node name="DungeonMap" parent="." instance=ExtResource("3_jr7q5")]
+position = Vector2(960, 540)
 
 [node name="OverlayLayer" type="CanvasLayer" parent="DungeonMap"]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="Fader" type="ColorRect" parent="CanvasLayer"]
+custom_minimum_size = Vector2(1920, 1080)
+offset_right = 1920.0
+offset_bottom = 1080.0
+color = Color(0, 0, 0, 1)
+
+[node name="GameUI" type="Control" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0

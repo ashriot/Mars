@@ -6,7 +6,6 @@ var is_run_active: bool = false
 var current_run_seed: int = 0
 
 func auto_save():
-	# Only save if we are actually in a run
 	if is_run_active:
 		SaveSystem.save_current_slot()
 

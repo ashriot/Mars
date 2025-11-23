@@ -1,15 +1,17 @@
-[gd_scene load_steps=7 format=3 uid="uid://bj37bql2rx1om"]
+[gd_scene load_steps=9 format=3 uid="uid://bj37bql2rx1om"]
 
 [ext_resource type="Script" uid="uid://qkc7usulviqt" path="res://src/title_screen.gd" id="1_whxi8"]
 [ext_resource type="Texture2D" uid="uid://xtvo634hhmpf" path="res://assets/graphics/backgrounds/mars.png" id="2_616sk"]
+[ext_resource type="PackedScene" uid="uid://cl5f5vup72n32" path="res://src/game_scene.tscn" id="2_odwn3"]
 [ext_resource type="FontVariation" uid="uid://busejf1art6n0" path="res://data/theme/fonts/nebula_hollow.tres" id="2_vayli"]
 [ext_resource type="FontVariation" uid="uid://d0rv8u3y8y67d" path="res://data/theme/fonts/nebula.tres" id="3_616sk"]
 [ext_resource type="Shader" uid="uid://cg8j5a78td0ei" path="res://src/battle/chroma.gdshader" id="3_gc8o6"]
+[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="4_vedi7"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_odwn3"]
 shader = ExtResource("3_gc8o6")
 shader_parameter/aberration_x = 0.10000005224999997
-shader_parameter/aberration_y = 0.30000006175000005
+shader_parameter/aberration_y = 0.10000005224999997
 
 [node name="TitleScreen" type="Control"]
 layout_mode = 3
@@ -19,6 +21,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_whxi8")
+game_scene = ExtResource("2_odwn3")
 
 [node name="TextureRect" type="TextureRect" parent="."]
 modulate = Color(0.67275155, 0.67275155, 0.6727515, 1)
@@ -34,6 +37,50 @@ grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("2_616sk")
 
+[node name="Title" type="Control" parent="TextureRect"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -609.0
+offset_top = -886.0
+offset_right = 609.0
+offset_bottom = -643.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Red" type="Label" parent="TextureRect/Title"]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_top = -105.0
+offset_right = 506.0
+offset_bottom = 105.0
+grow_vertical = 2
+theme_override_fonts/font = ExtResource("3_616sk")
+theme_override_font_sizes/font_size = 200
+text = "RED"
+horizontal_alignment = 2
+
+[node name="Shift" type="Label" parent="TextureRect/Title"]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -719.0
+offset_top = -105.0
+offset_bottom = 105.0
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_fonts/font = ExtResource("2_vayli")
+theme_override_font_sizes/font_size = 200
+text = "SHIFT"
+
 [node name="ChromaRect" type="ColorRect" parent="TextureRect"]
 material = SubResource("ShaderMaterial_odwn3")
 layout_mode = 1
@@ -45,7 +92,51 @@ offset_bottom = 81.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
+[node name="Title" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -609.0
+offset_top = -286.0
+offset_right = 609.0
+offset_bottom = -43.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Red" type="Label" parent="Title"]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_top = -105.0
+offset_right = 506.0
+offset_bottom = 105.0
+grow_vertical = 2
+theme_override_fonts/font = ExtResource("3_616sk")
+theme_override_font_sizes/font_size = 200
+text = "RED"
+horizontal_alignment = 2
+
+[node name="Shift" type="Label" parent="Title"]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -719.0
+offset_top = -105.0
+offset_bottom = 105.0
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_fonts/font = ExtResource("2_vayli")
+theme_override_font_sizes/font_size = 200
+text = "SHIFT"
+
+[node name="MenuButtons" type="VBoxContainer" parent="."]
 custom_minimum_size = Vector2(300, 0)
 layout_mode = 1
 anchors_preset = 8
@@ -61,42 +152,26 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 20
 
-[node name="BtnNew" type="Button" parent="VBoxContainer"]
+[node name="BtnStart" type="Button" parent="MenuButtons"]
 custom_minimum_size = Vector2(0, 75)
 layout_mode = 2
+theme_override_fonts/font = ExtResource("4_vedi7")
+theme_override_font_sizes/font_size = 40
 text = "Start New Game"
 
-[node name="BtnContinue" type="Button" parent="VBoxContainer"]
+[node name="BtnContinue" type="Button" parent="MenuButtons"]
 custom_minimum_size = Vector2(0, 75)
 layout_mode = 2
+theme_override_fonts/font = ExtResource("4_vedi7")
+theme_override_font_sizes/font_size = 40
 text = "Continue Game"
 
-[node name="BtnLoad" type="Button" parent="VBoxContainer"]
+[node name="BtnLoad" type="Button" parent="MenuButtons"]
 custom_minimum_size = Vector2(0, 75)
 layout_mode = 2
+theme_override_fonts/font = ExtResource("4_vedi7")
+theme_override_font_sizes/font_size = 40
 text = "Load Game"
 
-[node name="Red" type="Label" parent="."]
-layout_mode = 1
-offset_left = 200.0
-offset_top = 294.0
-offset_right = 920.0
-offset_bottom = 504.0
-theme_override_fonts/font = ExtResource("3_616sk")
-theme_override_font_sizes/font_size = 200
-text = "RED"
-horizontal_alignment = 2
-
-[node name="Shift" type="Label" parent="."]
-layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -1005.0
-offset_top = 294.0
-offset_right = -285.0
-offset_bottom = 504.0
-grow_horizontal = 0
-theme_override_fonts/font = ExtResource("2_vayli")
-theme_override_font_sizes/font_size = 200
-text = "SHIFT"
+[connection signal="pressed" from="MenuButtons/BtnStart" to="." method="_on_new_game_pressed"]
+[connection signal="pressed" from="MenuButtons/BtnContinue" to="." method="_on_continue_pressed"]

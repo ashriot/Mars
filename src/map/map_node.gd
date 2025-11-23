@@ -9,9 +9,6 @@ enum NodeState { HIDDEN, REVEALED, COMPLETED }
 @onready var hex_sprite = $HexSprite
 @onready var icon_sprite = $HexSprite/IconSprite
 
-# --- VISUAL ASSETS ---
-# Note: Hex and Selection textures are now set directly on the Sprites in the Scene!
-
 @export_group("Event Icons")
 @export var icon_combat: Texture2D
 @export var icon_elite: Texture2D
@@ -54,7 +51,6 @@ func setup(coords: Vector2i, assigned_type: NodeType):
 
 	# 4. Initial State
 	set_state(NodeState.HIDDEN)
-	set_is_current(false)
 
 func _input_event(_viewport, event, _shape_idx):
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
@@ -78,9 +74,6 @@ func set_state(new_state: NodeState):
 			if icon_sprite: icon_sprite.visible = true
 			_set_type_color()
 			icon_sprite.modulate.a = 0.25
-
-func set_is_current(is_current: bool):
-	$SelectionSprite.visible = is_current
 
 func _set_type_color():
 	match type:

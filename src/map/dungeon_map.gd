@@ -3,7 +3,7 @@ class_name DungeonMap
 
 signal interaction_requested(node: MapNode)
 
-const ALERT_LOW_THRESHOLD = 31
+const ALERT_LOW_THRESHOLD = 36
 const ALERT_MED_THRESHOLD = 81
 
 @onready var camera: Camera2D = $Camera2D
@@ -13,6 +13,7 @@ const ALERT_MED_THRESHOLD = 81
 @onready var parallax_bg: Parallax2D = $Parallax2D
 @onready var bg_sprite: Sprite2D = $Parallax2D/Sprite2D
 @onready var background: Control = $Background
+@onready var player_cursor: Sprite2D = $Background/PlayerCursor
 
 # --- Configuration ---
 @export_group("Map Dimensions")
@@ -43,9 +44,10 @@ const ALERT_MED_THRESHOLD = 81
 
 # --- Visuals ---
 @export_group("Visuals")
+@export var selection_texture: Texture2D
 @export var map_node_scene: PackedScene
 @export var background_texture: Texture2D
-@export_range(0.0, 5.0) var background_blur: float = 0.0 # NEW: Controls blur amount
+@export_range(0.0, 5.0) var background_blur: float = 3.0
 
 # --- Internal Data ---
 var hex_width: float
@@ -69,96 +71,78 @@ var total_moves: int = 0
 var current_node: MapNode = null
 var current_alert: int = 0
 
-# --- SHADER CODE ---
-# A simple 9-sample blur shader we can inject dynamically
-const BLUR_SHADER_CODE = """
-shader_type canvas_item;
-uniform float blur_amount : hint_range(0, 10) = 0.0;
-
-void fragment() {
-	if (blur_amount <= 0.0) {
-		COLOR = texture(TEXTURE, UV);
-	} else {
-		vec4 col = vec4(0.0);
-		vec2 ps = TEXTURE_PIXEL_SIZE * blur_amount;
-
-		// Sample center and surrounding 8 points for a smooth average
-		col += texture(TEXTURE, UV);
-		col += texture(TEXTURE, UV + vec2(0.0, -1.0) * ps);
-		col += texture(TEXTURE, UV + vec2(0.0, 1.0) * ps);
-		col += texture(TEXTURE, UV + vec2(-1.0, 0.0) * ps);
-		col += texture(TEXTURE, UV + vec2(1.0, 0.0) * ps);
-		col += texture(TEXTURE, UV + vec2(-0.7, -0.7) * ps);
-		col += texture(TEXTURE, UV + vec2(0.7, -0.7) * ps);
-		col += texture(TEXTURE, UV + vec2(-0.7, 0.7) * ps);
-		col += texture(TEXTURE, UV + vec2(0.7, 0.7) * ps);
-
-		COLOR = col / 9.0;
-	}
-}
-"""
+# --- Player Cursor ---
+var cursor_pulse_tween: Tween
+var cursor_move_tween: Tween
 
 enum MapState { LOADING, PLAYING, LOCKED }
 var current_map_state: MapState = MapState.LOADING
 
 
 func _ready():
-	# 1. Register Self
 	RunManager.active_dungeon_map = self
-
-	# 2. Setup Basics
 	hex_width = sqrt(3.0) * hex_size
 	hex_height = hex_size * 2.0
 	_setup_camera()
-	_setup_background()
 
-	# --- THE FORK IN THE ROAD ---
+	# Visual defaults
+	alert_gauge.modulate = Color.MEDIUM_SEA_GREEN
+	alert_gauge.value = 0
+	alert_label.text = "0%"
+	if hud: hud.modulate.a = 0.0
+	_start_cursor_pulse()
 
+func _start_cursor_pulse():
+	if cursor_pulse_tween: cursor_pulse_tween.kill()
+
+	cursor_pulse_tween = create_tween()
+	cursor_pulse_tween.set_loops()
+	cursor_pulse_tween.set_trans(Tween.TRANS_SINE)
+	cursor_pulse_tween.set_ease(Tween.EASE_IN_OUT)
+
+	player_cursor.modulate.a = 0.2
+	cursor_pulse_tween.tween_property(player_cursor, "modulate:a", 1.0, 0.6)
+	cursor_pulse_tween.tween_property(player_cursor, "modulate:a", 0.2, 0.6)
+
+func initialize_map():
 	if RunManager.is_run_active:
-		# PATH A: CONTINUE RUN
 		print("Resuming active run...")
-
-		# 1. Let RunManager drive the restoration.
-		# It will set the seed and call 'load_from_save_data' for us.
 		await RunManager.restore_run()
 
-		# 2. Resume Audio (resume position)
 		AudioManager.play_music("map_1", 1.0, false, true)
-
-		# 3. Show UI instantly (No fade-in needed)
 		hud.modulate.a = 1.0
+
+		if current_node and current_node.state != MapNode.NodeState.COMPLETED:
+			print("Resuming interrupted event at ", current_node.grid_coords)
+			interaction_requested.emit(current_node)
+
+		player_cursor.visible = true
+		current_map_state = MapState.PLAYING
 
 	else:
 		# PATH B: NEW RUN
 		print("Starting fresh run...")
-
-		# 1. Generate New Seed & Data
 		randomize()
 		RunManager.current_run_seed = randi()
 		seed(RunManager.current_run_seed)
 
-		# 2. Set Default UI State
-		alert_gauge.value = 0
-		alert_label.text = "0%"
-		alert_gauge.modulate = Color.MEDIUM_SEA_GREEN
-		hud.modulate.a = 0.0 # Start hidden
-
-		# 3. Generate & Play Intro
 		var map_data = generate_hex_grid()
+
+		if map_data.start_node:
+			current_node = map_data.start_node
+
+		RunManager.is_run_active = true
+		RunManager.auto_save()
+
 		AudioManager.play_music("map_1", 1.0, false, false)
 		await play_intro_sequence(map_data)
 		AudioManager.play_sfx("radiate")
 
-		# 4. Fade in HUD
 		var tween = create_tween()
-		tween.tween_property(hud, "modulate:a", 1.0, 0.15)\
-			.set_trans(Tween.TRANS_SINE)\
-			.set_ease(Tween.EASE_OUT)
-		await tween.finished
+		tween.tween_property(hud, "modulate:a", 1.0, 0.15)
 
-	# 4. Hand over control
-	current_map_state = MapState.PLAYING
-	print("Map ready and input enabled.")
+		current_map_state = MapState.PLAYING
+		print("Map ready.")
 
 func load_from_save_data(data: Dictionary):
 	# 1. REGENERATE GRID
@@ -181,11 +165,7 @@ func load_from_save_data(data: Dictionary):
 			node.has_been_visited = saved_info.visited
 			node.set_state(int(saved_info.state))
 
-			# --- THE VISUAL FIX ---
-			# generate_hex_grid made them invisible (0.0) for the intro tween.
-			# Since we are loading, we skip the intro and force them visible.
 			node.modulate.a = 1.0
-			# ----------------------
 
 	# 4. RESTORE TERMINALS
 	terminal_memory.clear()
@@ -199,14 +179,11 @@ func load_from_save_data(data: Dictionary):
 		var target_node = grid_nodes[player_coords]
 
 		# Set logic tracking
-		if current_node: current_node.set_is_current(false)
 		current_node = target_node
-		target_node.set_is_current(true)
 
-		# Snap Camera Instantly (No tween)
-		if camera:
-			camera.position = target_node.position
-			camera.zoom = Vector2.ONE
+		player_cursor.position = target_node.position
+		camera.position = target_node.position
+		camera.zoom = Vector2.ONE
 
 		# Restore Parallax Depth
 		if parallax_bg:
@@ -217,13 +194,6 @@ func load_from_save_data(data: Dictionary):
 
 func _setup_camera():
 	camera.make_current()
-
-func _setup_background():
-	var shader_material = ShaderMaterial.new()
-	var shader = Shader.new()
-	shader.code = BLUR_SHADER_CODE
-	shader_material.shader = shader
-	bg_sprite.material = shader_material
 
 func _input(event):
 	if event is InputEventKey and event.pressed and event.keycode == KEY_R:
@@ -282,7 +252,9 @@ func generate_hex_grid() -> Dictionary:
 	hex_height = hex_size * 2.0
 	terminal_memory.clear()
 
-	for child in $Background.get_children():
+	for child in background.get_children():
+		if child.name == "PlayerCursor":
+			continue
 		child.queue_free()
 	grid_nodes.clear()
 	alert_gauge.value = 0
@@ -411,6 +383,15 @@ func play_intro_sequence(map_data: Dictionary) -> void:
 
 		cam_tween.tween_property(parallax_bg, "scroll_scale", _calculated_depth_scale, 1.5)
 
+		var shader: ShaderMaterial = bg_sprite.material
+
+		cam_tween.tween_method(
+			func(val): shader.set_shader_parameter("blur_amount", val),
+			0.0,
+			background_blur,
+			0.5
+		)
+
 		await cam_tween.finished
 
 		# Hand over control
@@ -500,12 +481,6 @@ func exit_battle_visuals(duration: float = 1.0):
 func _update_background_transform(min_b: Vector2, max_b: Vector2):
 	bg_sprite.texture = background_texture
 
-	if not bg_sprite.material:
-		_setup_background()
-
-	if bg_sprite.material is ShaderMaterial:
-		(bg_sprite.material as ShaderMaterial).set_shader_parameter("blur_amount", background_blur)
-
 	var padding = Vector2(hex_width * 4, hex_height * 4)
 	var grid_center = (min_b + max_b) / 2.0
 	_map_center_pos = grid_center
@@ -576,7 +551,7 @@ func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 			var coord = good_candidates.pop_back()
 			type_map[coord] = type
 
-	num_terminals = int(map_height * map_length / 20) + 1
+	num_terminals = int(map_height * map_length / 25) + 1
 	print("Num Terminals: ", num_terminals)
 
 	_assign_good.call(MapNode.NodeType.ELITE, num_elites)
@@ -625,22 +600,19 @@ func _on_node_clicked(target_node: MapNode):
 	_move_player_to(target_node)
 
 func _move_player_to(target_node: MapNode, is_start: bool = false):
-	# 1. Handle Node Logic
-	if current_node:
-		current_node.set_is_current(false)
-
 	current_node = target_node
-	target_node.set_is_current(true)
-
-	# 2. Handle Camera
 	_move_camera_to_player(is_start)
+	player_cursor.visible = true
 
 	if is_start:
+		player_cursor.position = target_node.position
 		target_node.has_been_visited = true
 		target_node.set_state(MapNode.NodeState.COMPLETED)
 		_update_alert_visuals()
 		_update_vision()
 		return
+	else:
+		_animate_cursor_slide(target_node.position)
 
 	# 3. Handle Gameplay Logic
 	total_moves += 1
@@ -649,12 +621,20 @@ func _move_player_to(target_node: MapNode, is_start: bool = false):
 	var alert_gain = _calculate_alert_gain(is_revisit)
 
 	modify_alert(alert_gain)
-
-	# Update vision AFTER alert change (in case vision_range changed)
 	_update_vision()
+
+	RunManager.auto_save()
 
 	if target_node.state != MapNode.NodeState.COMPLETED:
 		interaction_requested.emit(target_node)
+
+func _animate_cursor_slide(target_pos: Vector2):
+	if cursor_move_tween: cursor_move_tween.kill()
+
+	cursor_move_tween = create_tween()
+	cursor_move_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
+	cursor_move_tween.tween_property(player_cursor, "position", target_pos, 0.3)
 
 func _calculate_alert_gain(is_revisit: bool) -> int:
 	if current_alert < ALERT_LOW_THRESHOLD:
@@ -762,7 +742,7 @@ func _update_vision():
 		node.set_state(MapNode.NodeState.REVEALED)
 
 		# Set initial visual state
-		node.modulate.a = 0.0
+		node.modulate.a = 0.5
 
 		# Calculate delay
 		var dist = _get_hex_distance(center_coords, node.grid_coords)
@@ -786,8 +766,8 @@ func _offset_to_cube(hex: Vector2i) -> Vector3i:
 	return Vector3i(q, r, s)
 
 func _on_save_quit_pressed():
-	RunManager.save_game()
-	get_tree().quit() # or return to menu
+	RunManager.auto_save()
+	get_tree().change_scene_to_file("res://src/title_screen.tscn")
 
 func get_save_data() -> Dictionary:
 	var node_states = {}
@@ -815,13 +795,3 @@ func get_save_data() -> Dictionary:
 		"node_data": node_states,
 		"terminal_memory": serializable_terminals
 	}
-
-func _force_player_position(target_node: MapNode):
-	if current_node: current_node.set_is_current(false)
-	current_node = target_node
-	target_node.set_is_current(true)
-	_update_alert_visuals()
-	_update_vision()
-
-	# Snap camera
-	if camera: camera.position = target_node.position
