@@ -526,6 +526,8 @@ func _check_if_battle_ended() -> bool:
 		change_state(State.BATTLE_OVER)
 		action_bar.slide_out()
 		await wait(1.0)
+		var xp_reward = 150 # (Calculate this based on enemies killed)
+		SaveSystem.distribute_combat_xp(xp_reward)
 		battle_ended.emit() # Player Won
 		return true
 

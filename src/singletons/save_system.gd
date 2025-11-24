@@ -8,9 +8,9 @@ const SLOT_EXT = ".json"
 var current_slot_index: int = 1
 
 # --- GLOBAL DATA ---
-# We lift 'bits' out of the dictionary for easy access
 var bits: int = 0
 var party_roster: Array[HeroData] = []
+var total_lifetime_xp: int = 0
 
 # The Dictionary is just for serialization now
 var data: Dictionary = {}
@@ -37,8 +37,8 @@ func save_game(slot_index: int):
 		hero_dicts.append(hero.get_save_data())
 	data["heroes"] = hero_dicts
 
-	# Serialize Bits (THIS IS THE FIX)
 	data["bits"] = bits
+	data["total_lifetime_xp"] = total_lifetime_xp
 
 	# 2. Write to disk
 	var path = _get_slot_path(slot_index)
@@ -61,6 +61,7 @@ func load_game(slot_index: int) -> bool:
 
 		# Restore Bits (THIS IS THE FIX)
 		bits = int(data.get("bits", 0))
+		total_lifetime_xp = int(data.get("total_lifetime_xp", 0))
 
 		# Restore Party
 		party_roster.clear()
@@ -102,3 +103,20 @@ func _get_slot_path(index: int) -> String:
 
 func has_save(index: int) -> bool:
 	return FileAccess.file_exists(_get_slot_path(index))
+
+func distribute_combat_xp(amount: int):
+	print("Party gained ", amount, " XP.")
+
+	total_lifetime_xp += amount
+
+	for hero in party_roster:
+		hero.gain_xp(amount)
+
+# --- PARTY MANAGEMENT (The Catch-Up Mechanic) ---
+func unlock_hero(hero_id: String):
+	var path_to_base = "res://data/heroes/" + hero_id + "/" + hero_id + ".tres"
+	if ResourceLoader.exists(path_to_base):
+		var new_hero = load(path_to_base).duplicate()
+		new_hero.current_xp = total_lifetime_xp
+		party_roster.append(new_hero)
+		print(new_hero.hero_name, " joined the party with ", total_lifetime_xp, " XP!")

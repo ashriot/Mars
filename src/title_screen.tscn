@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://bj37bql2rx1om"]
+[gd_scene load_steps=11 format=3 uid="uid://bj37bql2rx1om"]
 
 [ext_resource type="Script" uid="uid://qkc7usulviqt" path="res://src/title_screen.gd" id="1_whxi8"]
 [ext_resource type="Texture2D" uid="uid://xtvo634hhmpf" path="res://assets/graphics/backgrounds/mars.png" id="2_616sk"]
@@ -7,11 +7,13 @@
 [ext_resource type="FontVariation" uid="uid://d0rv8u3y8y67d" path="res://data/theme/fonts/nebula.tres" id="3_616sk"]
 [ext_resource type="Shader" uid="uid://cg8j5a78td0ei" path="res://src/battle/chroma.gdshader" id="3_gc8o6"]
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="4_vedi7"]
+[ext_resource type="StyleBox" uid="uid://bhjtch4mfk4jc" path="res://data/theme/styleboxes/btn_opaque_normal.tres" id="8_tlpw0"]
+[ext_resource type="StyleBox" uid="uid://1p4tyofjick6" path="res://data/theme/styleboxes/btn_opaque_hover.tres" id="9_6ron6"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_odwn3"]
 shader = ExtResource("3_gc8o6")
-shader_parameter/aberration_x = 0.10000005224999997
-shader_parameter/aberration_y = 0.10000005224999997
+shader_parameter/aberration_x = 0.02000004845000003
+shader_parameter/aberration_y = 0.05000004987499995
 
 [node name="TitleScreen" type="Control"]
 layout_mode = 3
@@ -155,23 +157,32 @@ theme_override_constants/separation = 20
 [node name="BtnStart" type="Button" parent="MenuButtons"]
 custom_minimum_size = Vector2(0, 75)
 layout_mode = 2
+theme_override_colors/font_hover_color = Color(0.18039216, 0.18039216, 0.18039216, 1)
 theme_override_fonts/font = ExtResource("4_vedi7")
 theme_override_font_sizes/font_size = 40
-text = "Start New Game"
+theme_override_styles/normal = ExtResource("8_tlpw0")
+theme_override_styles/hover = ExtResource("9_6ron6")
+text = "START NEW GAME"
 
 [node name="BtnContinue" type="Button" parent="MenuButtons"]
 custom_minimum_size = Vector2(0, 75)
 layout_mode = 2
+theme_override_colors/font_hover_color = Color(0.18039216, 0.18039216, 0.18039216, 1)
 theme_override_fonts/font = ExtResource("4_vedi7")
 theme_override_font_sizes/font_size = 40
-text = "Continue Game"
+theme_override_styles/normal = ExtResource("8_tlpw0")
+theme_override_styles/hover = ExtResource("9_6ron6")
+text = "CONTINUE GAME"
 
 [node name="BtnLoad" type="Button" parent="MenuButtons"]
 custom_minimum_size = Vector2(0, 75)
 layout_mode = 2
+theme_override_colors/font_hover_color = Color(0.18039216, 0.18039216, 0.18039216, 1)
 theme_override_fonts/font = ExtResource("4_vedi7")
 theme_override_font_sizes/font_size = 40
-text = "Load Game"
+theme_override_styles/normal = ExtResource("8_tlpw0")
+theme_override_styles/hover = ExtResource("9_6ron6")
+text = "LOAD GAME"
 
 [connection signal="pressed" from="MenuButtons/BtnStart" to="." method="_on_new_game_pressed"]
 [connection signal="pressed" from="MenuButtons/BtnContinue" to="." method="_on_continue_pressed"]

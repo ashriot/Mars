@@ -154,7 +154,7 @@ theme_override_constants/shadow_offset_y = 0
 theme_override_constants/shadow_outline_size = 12
 theme_override_fonts/font = ExtResource("6_tvdfu")
 theme_override_font_sizes/font_size = 24
-text = "Role Name"
+text = "ROLE NAME"
 
 [node name="Title" type="Label" parent="Panel"]
 layout_mode = 1

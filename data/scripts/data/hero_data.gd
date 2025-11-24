@@ -19,6 +19,7 @@ class_name HeroData
 
 @export var active_role_index: int = 0
 @export var injuries: int = 0
+@export var current_xp: int = 0
 
 # --- Runtime Data (Not Saved) ---
 var stats: ActorStats
@@ -149,6 +150,7 @@ func get_save_data() -> Dictionary:
 	return {
 		"hero_id": hero_id,
 		"injuries": injuries,
+		"current_xp": current_xp,
 		"active_role": active_role_index,
 		"weapon": weapon.get_save_data() if weapon else {},
 		"armor": armor.get_save_data() if armor else {},
@@ -160,6 +162,7 @@ func get_save_data() -> Dictionary:
 
 func load_from_save_data(data: Dictionary):
 	injuries = data.get("injuries", 0)
+	current_xp = data.get("current_xp", 0)
 	active_role_index = data.get("active_role", 0)
 
 	var loaded_node_ids = data.get("unlocked_node_ids", [])
@@ -177,3 +180,16 @@ func load_from_save_data(data: Dictionary):
 	if data.get("armor"): armor = Equipment.create_from_save_data(data.armor)
 	if data.get("acc1"): accessory_1 = Equipment.create_from_save_data(data.acc1)
 	if data.get("acc2"): accessory_2 = Equipment.create_from_save_data(data.acc2)
+
+# --- XP LOGIC ---
+func gain_xp(amount: int):
+	current_xp += amount
+
+func can_afford_node(node: RoleNode) -> bool:
+	return current_xp >= node.calculated_xp_cost
+
+func spend_xp(amount: int):
+	if current_xp >= amount:
+		current_xp -= amount
+	else:
+		push_error("HeroData: Tried to spend more XP than available!")

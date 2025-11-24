@@ -1,13 +1,15 @@
 extends Resource
 class_name RoleNode
 
+const BASE_XP_COST: int = 10
+
 enum RewardType { STAT, ACTION, SHIFT_ACTION, PASSIVE, EMPTY }
 
 # --- REWARD DATA ---
 @export var type: RewardType = RewardType.STAT
 @export var stat_type: ActorStats.Stats
 @export var stat_value: int = 0
-@export var unlock_resource: Resource # Action or Condition
+@export var unlock_resource: Resource
 
 # --- MAPPING ---
 # 0=Bottom, 1=Right, 2=Left, 3=Top. -1 = Auto/Append
@@ -32,8 +34,7 @@ func initialize_tree(role_prefix: String, parent_suffix: String, current_rank: i
 	self.generated_id = "%s_%s" % [role_prefix, my_suffix]
 
 	# 2. Calculate Cost
-	# Base formula: 100 * Rank
-	var base_cost = 100 * current_rank
+	var base_cost = BASE_XP_COST * current_rank
 
 	# Side Node Tax: If we aren't on the spine, costs are 50% higher
 	if not is_spine_path:
