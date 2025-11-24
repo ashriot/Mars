@@ -1,0 +1,6 @@
+[gd_resource type="FontVariation" load_steps=2 format=3 uid="uid://d0rv8u3y8y67d"]
+
+[ext_resource type="FontFile" uid="uid://upil6d3ql4el" path="res://data/theme/fonts/base_fonts/Nebula-Regular.otf" id="1_xrh3d"]
+
+[resource]
+base_font = ExtResource("1_xrh3d")

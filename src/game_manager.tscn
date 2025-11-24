@@ -1,0 +1,65 @@
+[gd_scene load_steps=6 format=3 uid="uid://cl5f5vup72n32"]
+
+[ext_resource type="Script" uid="uid://288nsmb7vfck" path="res://src/game_manager.gd" id="1_p4js5"]
+[ext_resource type="PackedScene" uid="uid://dc5du0o5phhma" path="res://src/battle/battle_scene.tscn" id="2_jr7q5"]
+[ext_resource type="PackedScene" uid="uid://cqo38uie6gkdu" path="res://src/map/dungeon_map.tscn" id="3_jr7q5"]
+[ext_resource type="PackedScene" uid="uid://brd70upq3tjwu" path="res://src/map/terminal.tscn" id="3_lhik4"]
+
+[sub_resource type="Environment" id="Environment_jr7q5"]
+background_mode = 3
+background_canvas_max_layer = 2
+glow_enabled = true
+glow_hdr_threshold = 0.8
+
+[node name="GameManager" type="Node2D"]
+script = ExtResource("1_p4js5")
+battle_scene_packed = ExtResource("2_jr7q5")
+terminal_scene_packed = ExtResource("3_lhik4")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_jr7q5")
+
+[node name="DungeonMap" parent="." instance=ExtResource("3_jr7q5")]
+position = Vector2(960, 540)
+
+[node name="OverlayLayer" type="CanvasLayer" parent="DungeonMap"]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="GameUI" type="Control" parent="CanvasLayer"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ColorRect" type="ColorRect" parent="CanvasLayer/GameUI"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.98039216)
+metadata/_edit_lock_ = true
+
+[node name="Button" type="Button" parent="CanvasLayer/GameUI"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -169.0
+offset_top = 278.0
+offset_right = 169.0
+offset_bottom = 352.0
+grow_horizontal = 2
+text = "Exit Game"
+
+[node name="Fader" type="ColorRect" parent="CanvasLayer"]
+visible = false
+custom_minimum_size = Vector2(1920, 1080)
+offset_right = 1920.0
+offset_bottom = 1080.0
+color = Color(0, 0, 0, 1)

@@ -15,6 +15,11 @@ class_name SaveGame
 @export var inventory_armor: Array[Equipment] = []
 @export var inventory_accessories: Array[Equipment] = []
 
+# --- ACTIVE RUN DATA ---
+# This holds the DungeonMap data if a run is in progress.
+# If null or empty, the player is in the "Hub".
+@export var active_run_data: Dictionary = {}
+
 func save_to_file(slot: int):
 	timestamp = int(Time.get_unix_time_from_system())
 	var path = "user://save_%d.tres" % slot

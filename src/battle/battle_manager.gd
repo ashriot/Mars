@@ -60,7 +60,7 @@ func _ready():
 
 func spawn_encounter():
 	print("Spawning encounter...")
-	for hero_data in hero_data_files:
+	for hero_data in RunManager.party_roster:
 		var hero_card: HeroCard = hero_card_scene.instantiate()
 		hero_area.add_child(hero_card)
 		hero_card.setup(hero_data)
@@ -196,6 +196,10 @@ func update_turn_order():
 
 func _on_actor_died(actor: ActorCard):
 	print(actor.actor_name, " has died. Removing from actor_list.")
+
+	if actor is HeroCard:
+		actor.hero_data.injuries += 1
+		print("Hero gained an injury. Total: ", actor.hero_data.injuries)
 
 	actor_list.erase(actor)
 	if await _check_if_battle_ended():
@@ -522,6 +526,8 @@ func _check_if_battle_ended() -> bool:
 		change_state(State.BATTLE_OVER)
 		action_bar.slide_out()
 		await wait(1.0)
+		var xp_reward = 150 # (Calculate this based on enemies killed)
+		SaveSystem.distribute_combat_xp(xp_reward)
 		battle_ended.emit() # Player Won
 		return true
 

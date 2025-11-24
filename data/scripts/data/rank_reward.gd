@@ -16,5 +16,4 @@ enum RewardType {
 @export var stat_bonus_type: ActorStats.Stats  # If stat bonus
 @export var stat_bonus_amount: int = 0  # Amount to add
 @export var upgrade_options: Array[ActionUpgrade] = []  # If upgrade choice
-@export var perk_options: Array[RolePerk] = []  # If perk choice
 @export_multiline var display_text: String = ""  # e.g., "Choose an upgrade for Double Tap"

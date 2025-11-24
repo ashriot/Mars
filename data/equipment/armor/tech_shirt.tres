@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="Equipment" load_steps=2 format=3 uid="uid://byqjoch8ss1i6"]
+
+[ext_resource type="Script" uid="uid://djmsh5w0dbytx" path="res://data/scripts/data/equipment.gd" id="1_gs40i"]
+
+[resource]
+script = ExtResource("1_gs40i")
+equipment_id = "tech_shirt"
+item_name = "Tech Shirt"
+slot = 1
+level = 4
+hp_rank = 2
+guard_rank = 1
+speed_rank = 3
+kinetic_defense_rank = 3
+energy_defense_rank = 4
+metadata/_custom_type_script = "uid://djmsh5w0dbytx"

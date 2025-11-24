@@ -1,45 +1,18 @@
-[gd_resource type="Resource" script_class="HeroData" load_steps=11 format=3 uid="uid://ctg8csrcqdj57"]
+[gd_resource type="Resource" script_class="HeroData" load_steps=8 format=3 uid="uid://ctg8csrcqdj57"]
 
 [ext_resource type="Script" uid="uid://dc5sk0b0jubvj" path="res://data/scripts/data/hero_data.gd" id="1_avsjj"]
-[ext_resource type="Script" uid="uid://djmsh5w0dbytx" path="res://data/scripts/data/equipment.gd" id="1_g3hqy"]
-[ext_resource type="Script" uid="uid://i4rsbsrmba0c" path="res://data/scripts/data/role_progression.gd" id="1_u2x8i"]
-[ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/data/role_data.gd" id="2_s0m5y"]
-[ext_resource type="Resource" uid="uid://c7bb8vuamp7ai" path="res://data/heroes/asher/roles/gunslinger.tres" id="4_cgx8j"]
-[ext_resource type="Resource" uid="uid://c03acvaovbpqc" path="res://data/heroes/asher/roles/sniper.tres" id="5_me7og"]
-[ext_resource type="Resource" uid="uid://cny303enqave" path="res://data/heroes/asher/roles/operative.tres" id="7_c1wl5"]
-
-[sub_resource type="Resource" id="Resource_i72s2"]
-script = ExtResource("1_g3hqy")
-equipment_id = "leather_jacket"
-item_name = "Leather Jacket"
-slot = 1
-hp_rank = 3
-guard_rank = 2
-speed_rank = 3
-kinetic_defense_rank = 3
-energy_defense_rank = 3
-metadata/_custom_type_script = "uid://djmsh5w0dbytx"
-
-[sub_resource type="Resource" id="Resource_sydmp"]
-script = ExtResource("1_u2x8i")
-metadata/_custom_type_script = "uid://i4rsbsrmba0c"
-
-[sub_resource type="Resource" id="Resource_c1wl5"]
-script = ExtResource("1_g3hqy")
-equipment_id = "smg"
-item_name = "SMG"
-level = 5
-attack_rank = 4
-psyche_rank = 1
-overload_rank = 2
-speed_rank = 2
-metadata/_custom_type_script = "uid://djmsh5w0dbytx"
+[ext_resource type="Resource" uid="uid://d0p87alljgj7j" path="res://data/equipment/armor/leather_jacket.tres" id="1_sydmp"]
+[ext_resource type="Script" uid="uid://sy50n7nerbow" path="res://data/scripts/data/role_definition.gd" id="3_g3hqy"]
+[ext_resource type="Resource" uid="uid://df6wnpgvm1b44" path="res://data/heroes/asher/roles/gun.tres" id="4_c1wl5"]
+[ext_resource type="Resource" uid="uid://cedlk4sjfugeg" path="res://data/heroes/asher/roles/snp.tres" id="4_sydmp"]
+[ext_resource type="Resource" uid="uid://cq1s08aos0ely" path="res://data/heroes/asher/roles/opr.tres" id="5_xq1ki"]
+[ext_resource type="Resource" uid="uid://dl1qpi4irakxh" path="res://data/equipment/weapons/smg.tres" id="8_xq1ki"]
 
 [resource]
 script = ExtResource("1_avsjj")
-hero_name = "Asher"
-weapon = SubResource("Resource_c1wl5")
-armor = SubResource("Resource_i72s2")
-unlocked_roles = Array[ExtResource("2_s0m5y")]([ExtResource("4_cgx8j"), ExtResource("5_me7og"), ExtResource("7_c1wl5")])
-role_progressions = Array[ExtResource("1_u2x8i")]([SubResource("Resource_sydmp")])
+weapon = ExtResource("8_xq1ki")
+armor = ExtResource("1_sydmp")
+role_definitions = Array[ExtResource("3_g3hqy")]([ExtResource("4_c1wl5"), ExtResource("4_sydmp"), ExtResource("5_xq1ki")])
+unlocked_role_ids = Array[String](["gun", "snp"])
+unlocked_node_ids = Array[String](["gun_1", "snp_1", "gun_2", "snp_2"])
 metadata/_custom_type_script = "uid://dc5sk0b0jubvj"

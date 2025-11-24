@@ -11,15 +11,18 @@ config_version=5
 [application]
 
 config/name="Red Shift"
-run/main_scene="uid://cl5f5vup72n32"
+run/main_scene="uid://bj37bql2rx1om"
 config/features=PackedStringArray("4.5", "Mobile")
 config/icon="res://icon.svg"
 
 [autoload]
 
+SaveSystem="*res://src/singletons/save_system.gd"
+RunManager="*res://src/singletons/run_manager.gd"
 InputIconMap="*res://src/singletons/input_map.gd"
-InputManager="*res://src/singletons/input_manager.gd"
 AudioManager="*res://src/singletons/audio_manager.gd"
+InputManager="*res://src/singletons/input_manager.gd"
+ItemDatabase="*res://src/singletons/item_database.gd"
 
 [debug]
 
@@ -29,8 +32,8 @@ gdscript/warnings/integer_division=0
 
 window/size/viewport_width=1920
 window/size/viewport_height=1080
-window/size/window_width_override=3072
-window/size/window_height_override=1728
+window/size/window_width_override=1920
+window/size/window_height_override=1080
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
@@ -54,3 +57,4 @@ ui_accept={
 
 renderer/rendering_method="mobile"
 viewport/hdr_2d=true
+environment/defaults/default_clear_color=Color(0, 0, 0, 1)

@@ -18,13 +18,22 @@ signal focus_updated
 
 # --- UNIQUE Data ---
 var hero_data: HeroData
-var current_focus: int = 0
+var loaded_roles: Array[RoleData] = []
 var current_role_index: int = 0
+var current_focus: int = 0
 var shifted_this_turn: bool
 var blink_tween: Tween
 
 func setup(data: HeroData):
-	hero_data = data
+	hero_data = data as HeroData
+	hero_data.rebuild_battle_roles()
+
+	loaded_roles.clear()
+	for def in data.role_definitions:
+		var role = data.get_battle_role(def.role_id)
+		if role:
+			loaded_roles.append(role)
+
 	hero_data.calculate_stats()
 	setup_base(hero_data.stats)
 	duration /= battle_manager.battle_speed
@@ -32,6 +41,13 @@ func setup(data: HeroData):
 	if hero_data.portrait:
 		portrait_rect.texture = hero_data.portrait
 	current_focus = 4
+
+	if hero_data.injuries > 0:
+		var penalty_mult = 0.5
+		var injured_hp = int(current_stats.max_hp * penalty_mult)
+		current_hp = max(1, injured_hp)
+		print(hero_data.hero_name, " starts with Injury penalty!! HP: ", current_hp)
+
 	update_focus_bar(false)
 	update_current_role()
 	panel.self_modulate.a = 1.0
@@ -63,25 +79,22 @@ func defeated():
 	self_modulate.a = 0.25
 
 func get_current_role() -> RoleData:
-	if hero_data.unlocked_roles.size() > 0:
-		return hero_data.unlocked_roles[current_role_index]
-	return null
+	if loaded_roles.is_empty(): return null
+	return loaded_roles[current_role_index]
 
 func get_previous_role() -> RoleData:
-	var role_count = hero_data.unlocked_roles.size()
-	if role_count == 0: return null
-	var prev_index = (current_role_index - 1 + role_count) % role_count
-	return hero_data.unlocked_roles[prev_index]
+	if loaded_roles.is_empty(): return null
+	var prev_index = (current_role_index - 1 + loaded_roles.size()) % loaded_roles.size()
+	return loaded_roles[prev_index]
 
 func get_next_role() -> RoleData:
-	var role_count = hero_data.unlocked_roles.size()
-	if role_count == 0: return null
-	var next_index = (current_role_index + 1) % role_count
-	return hero_data.unlocked_roles[next_index]
+	if loaded_roles.is_empty(): return null
+	var next_index = (current_role_index + 1) % loaded_roles.size()
+	return loaded_roles[next_index]
 
 func shift_role(direction: String):
 	shifted_this_turn = true
-	var role_count = hero_data.unlocked_roles.size()
+	var role_count = hero_data.unlocked_role_ids.size()
 	if role_count == 0: return
 
 	if direction == "left":

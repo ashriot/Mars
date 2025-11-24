@@ -3,16 +3,18 @@ class_name DungeonMap
 
 signal interaction_requested(node: MapNode)
 
-const ALERT_LOW_THRESHOLD = 31
-const ALERT_MED_THRESHOLD = 81
+const ALERT_LOW_THRESHOLD = 26
+const ALERT_MED_THRESHOLD = 75
+const ALERT_PER_STEP = 2
 
 @onready var camera: Camera2D = $Camera2D
 @onready var hud: Control = $CanvasLayer/HUD
 @onready var alert_gauge: ProgressBar = $CanvasLayer/HUD/AlertGauge
-@onready var alert_label: Label = $CanvasLayer/HUD/AlertGauge/Panel/Value
+@onready var alert_label: Label = $CanvasLayer/HUD/AlertGauge/Panel2/Value
 @onready var parallax_bg: Parallax2D = $Parallax2D
 @onready var bg_sprite: Sprite2D = $Parallax2D/Sprite2D
 @onready var background: Control = $Background
+@onready var player_cursor: Sprite2D = $Background/PlayerCursor
 
 # --- Configuration ---
 @export_group("Map Dimensions")
@@ -43,9 +45,10 @@ const ALERT_MED_THRESHOLD = 81
 
 # --- Visuals ---
 @export_group("Visuals")
+@export var selection_texture: Texture2D
 @export var map_node_scene: PackedScene
 @export var background_texture: Texture2D
-@export_range(0.0, 5.0) var background_blur: float = 0.0 # NEW: Controls blur amount
+@export_range(0.0, 5.0) var background_blur: float = 3.0
 
 # --- Internal Data ---
 var hex_width: float
@@ -57,7 +60,6 @@ var _pre_battle_camera_pos: Vector2 = Vector2.ZERO
 var _calculated_depth_scale: Vector2 = Vector2.ONE
 var alert_tween: Tween
 
-# Key: Vector2i (Grid Coords), Value: Dictionary (The terminal data)
 var terminal_memory: Dictionary = {}
 
 # --- Hex Values ---
@@ -69,74 +71,129 @@ var total_moves: int = 0
 var current_node: MapNode = null
 var current_alert: int = 0
 
-# --- SHADER CODE ---
-# A simple 9-sample blur shader we can inject dynamically
-const BLUR_SHADER_CODE = """
-shader_type canvas_item;
-uniform float blur_amount : hint_range(0, 10) = 0.0;
-
-void fragment() {
-	if (blur_amount <= 0.0) {
-		COLOR = texture(TEXTURE, UV);
-	} else {
-		vec4 col = vec4(0.0);
-		vec2 ps = TEXTURE_PIXEL_SIZE * blur_amount;
-
-		// Sample center and surrounding 8 points for a smooth average
-		col += texture(TEXTURE, UV);
-		col += texture(TEXTURE, UV + vec2(0.0, -1.0) * ps);
-		col += texture(TEXTURE, UV + vec2(0.0, 1.0) * ps);
-		col += texture(TEXTURE, UV + vec2(-1.0, 0.0) * ps);
-		col += texture(TEXTURE, UV + vec2(1.0, 0.0) * ps);
-		col += texture(TEXTURE, UV + vec2(-0.7, -0.7) * ps);
-		col += texture(TEXTURE, UV + vec2(0.7, -0.7) * ps);
-		col += texture(TEXTURE, UV + vec2(-0.7, 0.7) * ps);
-		col += texture(TEXTURE, UV + vec2(0.7, 0.7) * ps);
-
-		COLOR = col / 9.0;
-	}
-}
-"""
+# --- Player Cursor ---
+var cursor_pulse_tween: Tween
+var cursor_move_tween: Tween
 
 enum MapState { LOADING, PLAYING, LOCKED }
 var current_map_state: MapState = MapState.LOADING
 
 
 func _ready():
-	AudioManager.play_music("map_1", 1.0, false, false)
-	randomize()
+	RunManager.active_dungeon_map = self
 	hex_width = sqrt(3.0) * hex_size
 	hex_height = hex_size * 2.0
-
-	alert_gauge.modulate = Color.MEDIUM_SEA_GREEN
-	hud.modulate.a = 0.0
-	alert_gauge.value = current_alert
-	alert_label.text = str(int(alert_gauge.value)) + "%"
-
 	_setup_camera()
-	_setup_background()
-	var map = generate_hex_grid()
-	await play_intro_sequence(map)
-	AudioManager.play_sfx("radiate")
 
-	var tween = create_tween()
-	tween.tween_property(hud, "modulate:a", 1.0, 0.15)\
-		.set_trans(Tween.TRANS_SINE)\
-		.set_ease(Tween.EASE_OUT)
-	await tween.finished
+	# Visual defaults
+	alert_gauge.modulate = Color.MEDIUM_SEA_GREEN
+	alert_gauge.value = 0
+	alert_label.text = "0%"
+	if hud: hud.modulate.a = 0.0
+	_start_cursor_pulse()
 
-	current_map_state = MapState.PLAYING
-	print("Map loaded and input enabled.")
+func _start_cursor_pulse():
+	if cursor_pulse_tween: cursor_pulse_tween.kill()
+
+	cursor_pulse_tween = create_tween()
+	cursor_pulse_tween.set_loops()
+	cursor_pulse_tween.set_trans(Tween.TRANS_SINE)
+	cursor_pulse_tween.set_ease(Tween.EASE_IN_OUT)
+
+	player_cursor.modulate.a = 0.2
+	cursor_pulse_tween.tween_property(player_cursor, "modulate:a", 1.0, 0.6)
+	cursor_pulse_tween.tween_property(player_cursor, "modulate:a", 0.2, 0.6)
+
+func initialize_map():
+	if RunManager.is_run_active:
+		print("Resuming active run...")
+		await RunManager.restore_run()
+
+		AudioManager.play_music("map_1", 1.0, false, true)
+		hud.modulate.a = 1.0
+
+		if current_node and current_node.state != MapNode.NodeState.COMPLETED:
+			print("Resuming interrupted event at ", current_node.grid_coords)
+			interaction_requested.emit(current_node)
+
+		player_cursor.visible = true
+		current_map_state = MapState.PLAYING
+
+	else:
+		# PATH B: NEW RUN
+		print("Starting fresh run...")
+		randomize()
+		RunManager.current_run_seed = randi()
+		seed(RunManager.current_run_seed)
+
+		var map_data = generate_hex_grid()
+
+		if map_data.start_node:
+			current_node = map_data.start_node
+
+		RunManager.is_run_active = true
+		RunManager.auto_save()
+
+		AudioManager.play_music("map_1", 1.0, false, false)
+		await play_intro_sequence(map_data)
+		AudioManager.play_sfx("radiate")
+
+		var tween = create_tween()
+		tween.tween_property(hud, "modulate:a", 1.0, 0.15)
+
+		current_map_state = MapState.PLAYING
+		print("Map ready.")
+
+func load_from_save_data(data: Dictionary):
+	# 1. REGENERATE GRID
+	# RunManager has already set the seed, so this rebuilds the exact layout.
+	generate_hex_grid()
+
+	# 2. RESTORE GLOBAL STATE
+	current_alert = data.current_alert
+	_update_alert_visuals() # Updates color/text immediately
+
+	# 3. RESTORE NODE STATES
+	for key_str in data.node_data.keys():
+		var coords = str_to_var(key_str)
+		var saved_info = data.node_data[key_str]
+
+		if grid_nodes.has(coords):
+			var node = grid_nodes[coords]
+
+			# Restore logical state
+			node.has_been_visited = saved_info.visited
+			node.set_state(int(saved_info.state))
+
+			node.modulate.a = 1.0
+
+	# 4. RESTORE TERMINALS
+	terminal_memory.clear()
+	for key_str in data.terminal_memory.keys():
+		var coords = str_to_var(key_str)
+		terminal_memory[coords] = data.terminal_memory[key_str]
+
+	# 5. PLACE PLAYER & CAMERA
+	var player_coords = str_to_var(data.current_coords)
+	if grid_nodes.has(player_coords):
+		var target_node = grid_nodes[player_coords]
+
+		# Set logic tracking
+		current_node = target_node
+
+		player_cursor.position = target_node.position
+		camera.position = target_node.position
+		camera.zoom = Vector2.ONE
+
+		# Restore Parallax Depth
+		if parallax_bg:
+			parallax_bg.scroll_scale = _calculated_depth_scale
+
+		# Reveal neighbors
+		_update_vision()
 
 func _setup_camera():
 	camera.make_current()
-
-func _setup_background():
-	var shader_material = ShaderMaterial.new()
-	var shader = Shader.new()
-	shader.code = BLUR_SHADER_CODE
-	shader_material.shader = shader
-	bg_sprite.material = shader_material
 
 func _input(event):
 	if event is InputEventKey and event.pressed and event.keycode == KEY_R:
@@ -147,6 +204,47 @@ func _input(event):
 			_zoom_camera(zoom_step)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			_zoom_camera(-zoom_step)
+
+func _generate_static_terminal_data(coords: Vector2i, index: int):
+	var scalar = RunManager.get_loot_scalar()
+	var session = "0x%X-%X-%X" % [randi() % 0xFFFF, randi() % 0xFFFF, randi() % 0xFFFF]
+
+	# 1. DEFINE BASE VALUES
+	var bits_val = int(50 * scalar)
+	var alert_val = 50 # Standard reduction
+	var upgrade_key = "" # "security", "medical", "finance"
+
+	# 2. APPLY ROTATION LOGIC
+	# Remainder 0 = Security (Indices 0, 3, 6...)
+	# Remainder 1 = Medical (Indices 1, 4, 7...)
+	# Remainder 2 = Finance (Indices 2, 5, 8...)
+	var rot = index % 3
+
+	if rot == 0:
+		upgrade_key = "security"
+		alert_val = 75 # Upgraded value
+
+	elif rot == 1:
+		upgrade_key = "medical"
+		# Medical reward is logic-based (Heal vs Buff),
+		# so we just flag it. Value stays 0 or standard.
+
+	elif rot == 2:
+		upgrade_key = "finance"
+		bits_val = int(bits_val * 2) # Upgraded value
+
+	# 3. APPLY VARIANCE (Final touch)
+	bits_val = roundi(bits_val * randf_range(0.9, 1.1))
+
+	# 4. SAVE FINAL DATA
+	terminal_memory[coords] = {
+		"facility_name": "ALPHA NODE " + str(index + 1),
+		"session_id": session,
+		"terminal_index": index,
+		"bits": bits_val,
+		"alert": alert_val,
+		"upgrade_key": upgrade_key
+	}
 
 func _zoom_camera(step: float):
 	if not camera: return
@@ -165,7 +263,9 @@ func generate_hex_grid() -> Dictionary:
 	hex_height = hex_size * 2.0
 	terminal_memory.clear()
 
-	for child in $Background.get_children():
+	for child in background.get_children():
+		if child.name == "PlayerCursor":
+			continue
 		child.queue_free()
 	grid_nodes.clear()
 	alert_gauge.value = 0
@@ -204,9 +304,19 @@ func generate_hex_grid() -> Dictionary:
 	var node_types = _distribute_node_types(valid_coords.keys(), center_y)
 	var nodes_list: Array[MapNode] = []
 
-	for coords in node_types.keys():
+	# --- TERMINAL GENERATION ---
+	# We need to sort the keys so the indices are deterministic (e.g. left-to-right)
+	var sorted_coords = node_types.keys()
+	sorted_coords.sort_custom(func(a, b):
+		if a.x != b.x: return a.x < b.x
+		return a.y < b.y
+	)
+
+	var terminal_counter = 0
+	for coords in sorted_coords:
 		if node_types[coords] == MapNode.NodeType.TERMINAL:
-			_generate_static_terminal_data(coords)
+			_generate_static_terminal_data(coords, terminal_counter)
+			terminal_counter += 1
 
 	for coords in valid_coords.keys():
 		# Create node (starts invisible alpha 0.0 via _create_map_node)
@@ -229,38 +339,8 @@ func generate_hex_grid() -> Dictionary:
 		"max_bounds": max_bounds
 	}
 
-func _generate_static_terminal_data(coords: Vector2i):
-	# 1. BASE VALUES
-	var bits_val = 50
-	var alert_val = 50
-	var flavor_name = "ALPHA FACILITY" # You can randomize this too!
-
-	# 2. ROLL FOR "CRIT" / HIGH ROLL
-	var rng = randf()
-
-	if rng > 0.8:
-		alert_val *= 2
-		flavor_name = "COMMAND NODE" # Special flavor
-	elif rng > 0.7:
-		bits_val *= 2 # "Encrypted Cache"
-		flavor_name = "TREASURY LINK"
-
-	# 3. VARIANCE
-	bits_val = roundi(bits_val * randf_range(0.9, 1.1))
-
-	# 4. SESSION ID FLAVOR
-	var session = "0x%X-%d-KANECHO" % [randi() % 0xFFFF, randi() % 9999]
-
-	# 5. SAVE TO MEMORY
-	terminal_memory[coords] = {
-		"facility_name": flavor_name,
-		"session_id": session,
-		"bits": bits_val,
-		"alert": alert_val
-	}
-
 func play_intro_sequence(map_data: Dictionary) -> void:
-	var start_node = map_data.start_node
+	var start_node: MapNode = map_data.start_node
 	var nodes_to_animate = map_data.nodes
 
 	if not camera: return
@@ -268,10 +348,14 @@ func play_intro_sequence(map_data: Dictionary) -> void:
 	# --- 1. SETUP "WIDE SHOT" CAMERA ---
 	var grid_center = (map_data.min_bounds + map_data.max_bounds) / 2.0
 	camera.position = grid_center
+
+	# Disable parallax depth so the image centers perfectly
 	parallax_bg.scroll_scale = Vector2.ONE
 
 	# Calculate Wide Zoom
 	var vp_size = get_viewport_rect().size
+	# Note: Ensure bg_sprite is accessible here. If it's local to generate,
+	# you might need to store it or get it from 'self'.
 	var bg_current_size = bg_sprite.texture.get_size() * bg_sprite.scale
 	var wide_zoom = max(vp_size.x / bg_current_size.x, vp_size.y / bg_current_size.y)
 	camera.zoom = Vector2(wide_zoom, wide_zoom)
@@ -279,10 +363,12 @@ func play_intro_sequence(map_data: Dictionary) -> void:
 	# --- 2. ANIMATE "WAVE" REVEAL ---
 
 	# Reveal Start Node immediately
-	var start_tween = create_tween()
-	start_tween.tween_property(start_node, "modulate:a", 1.0, 0.5).set_ease(Tween.EASE_OUT)
-	await start_tween.finished
-	AudioManager.play_sfx("terminal")
+	# --- FIX 1: Safety Check ---
+	if start_node:
+		var start_tween = create_tween()
+		start_tween.tween_property(start_node, "modulate:a", 1.0, 0.5).set_ease(Tween.EASE_OUT)
+		await start_tween.finished
+		AudioManager.play_sfx("terminal") # Nice touch!
 
 	# Sort remaining nodes Left-to-Right
 	nodes_to_animate.sort_custom(func(a, b):
@@ -315,6 +401,17 @@ func play_intro_sequence(map_data: Dictionary) -> void:
 		cam_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
 		cam_tween.tween_property(camera, "position", start_node.position, 1.5)
 		cam_tween.tween_property(camera, "zoom", Vector2.ONE, 1.5)
+
+		cam_tween.tween_property(parallax_bg, "scroll_scale", _calculated_depth_scale, 1.5)
+
+		var shader: ShaderMaterial = bg_sprite.material
+
+		cam_tween.tween_method(
+			func(val): shader.set_shader_parameter("blur_amount", val),
+			0.0,
+			background_blur,
+			0.5
+		)
 
 		await cam_tween.finished
 
@@ -405,8 +502,6 @@ func exit_battle_visuals(duration: float = 1.0):
 func _update_background_transform(min_b: Vector2, max_b: Vector2):
 	bg_sprite.texture = background_texture
 
-	(bg_sprite.material as ShaderMaterial).set_shader_parameter("blur_amount", background_blur)
-
 	var padding = Vector2(hex_width * 4, hex_height * 4)
 	var grid_center = (min_b + max_b) / 2.0
 	_map_center_pos = grid_center
@@ -428,78 +523,6 @@ func _update_background_transform(min_b: Vector2, max_b: Vector2):
 	var final_scale = max(required_scale.x, required_scale.y)
 	bg_sprite.scale = Vector2(final_scale, final_scale)
 	parallax_bg.scroll_offset = grid_center
-
-func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
-	var type_map = {}
-	for c in all_coords: type_map[c] = MapNode.NodeType.UNKNOWN
-
-	# 1. FIND START (Entrance)
-	# Absolute Leftmost node on the center row (or just absolute leftmost)
-	var min_x = 9999
-	for c in all_coords:
-		if c.y == center_y and c.x < min_x:
-			min_x = c.x
-	var start_node = Vector2i(min_x, center_y)
-
-	# 2. FIND BOSS (Exit)
-	# Sort all nodes by X position (Descending / Right-to-Left)
-	var sorted_by_x = all_coords.duplicate()
-	sorted_by_x.sort_custom(func(a, b): return a.x > b.x)
-
-	# Take the top 7 right-most nodes as candidates
-	var boss_candidates_count = min(7, sorted_by_x.size())
-	var boss_pool = sorted_by_x.slice(0, boss_candidates_count)
-
-	# Pick one, but ensure it's not the start node (sanity check)
-	var boss_node = boss_pool.pick_random()
-	while boss_node == start_node and boss_pool.size() > 1:
-		boss_node = boss_pool.pick_random()
-
-	type_map[boss_node] = MapNode.NodeType.BOSS
-
-	# 3. DISTRIBUTE GOOD NODES
-	var good_candidates = []
-	for c in all_coords:
-		if c == start_node or c == boss_node: continue
-
-		# NEW: Banned Zone (Distance > 1 from start)
-		# Prevents good nodes from spawning adjacent to start
-		if _get_hex_distance(start_node, c) <= 1:
-			continue
-
-		good_candidates.append(c)
-
-	good_candidates.shuffle()
-
-	var _assign_good = func(type, count):
-		for i in range(count):
-			if good_candidates.is_empty(): break
-			var coord = good_candidates.pop_back()
-			type_map[coord] = type
-
-	num_terminals = int(map_height * map_length / 20) + 1
-	print("Num Terminals: ", num_terminals)
-
-	_assign_good.call(MapNode.NodeType.ELITE, num_elites)
-	_assign_good.call(MapNode.NodeType.REWARD, num_rewards)
-	_assign_good.call(MapNode.NodeType.REWARD_2, num_uncommon_rewards)
-	_assign_good.call(MapNode.NodeType.REWARD_3, num_rare_rewards)
-	_assign_good.call(MapNode.NodeType.TERMINAL, num_terminals)
-	_assign_good.call(MapNode.NodeType.EVENT, num_events)
-
-	# 4. FILL COMBAT
-	var empty_spots = []
-	for c in all_coords:
-		if c == start_node or c == boss_node: continue
-		if type_map[c] == MapNode.NodeType.UNKNOWN:
-			empty_spots.append(c)
-	empty_spots.shuffle()
-
-	for i in range(min(num_combats, empty_spots.size())):
-		var c = empty_spots.pop_back()
-		type_map[c] = MapNode.NodeType.COMBAT
-
-	return type_map
 
 func _create_map_node(grid_x, grid_y, screen_pos, type) -> MapNode:
 	var node = map_node_scene.instantiate()
@@ -526,22 +549,19 @@ func _on_node_clicked(target_node: MapNode):
 	_move_player_to(target_node)
 
 func _move_player_to(target_node: MapNode, is_start: bool = false):
-	# 1. Handle Node Logic
-	if current_node:
-		current_node.set_is_current(false)
-
 	current_node = target_node
-	current_node.hex_sprite.modulate = Color.DARK_GRAY
-	target_node.set_is_current(true)
-
-	# 2. Handle Camera
 	_move_camera_to_player(is_start)
+	player_cursor.visible = true
 
 	if is_start:
+		player_cursor.position = target_node.position
+		target_node.has_been_visited = true
 		target_node.set_state(MapNode.NodeState.COMPLETED)
-		_update_alert_visuals() # Ensure UI is correct on start
+		_update_alert_visuals()
 		_update_vision()
 		return
+	else:
+		_animate_cursor_slide(target_node.position)
 
 	# 3. Handle Gameplay Logic
 	total_moves += 1
@@ -550,20 +570,23 @@ func _move_player_to(target_node: MapNode, is_start: bool = false):
 	var alert_gain = _calculate_alert_gain(is_revisit)
 
 	modify_alert(alert_gain)
-
-	# Update vision AFTER alert change (in case vision_range changed)
 	_update_vision()
+
+	RunManager.auto_save()
 
 	if target_node.state != MapNode.NodeState.COMPLETED:
 		interaction_requested.emit(target_node)
 
+func _animate_cursor_slide(target_pos: Vector2):
+	if cursor_move_tween: cursor_move_tween.kill()
+
+	cursor_move_tween = create_tween()
+	cursor_move_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
+	cursor_move_tween.tween_property(player_cursor, "position", target_pos, 0.3)
+
 func _calculate_alert_gain(is_revisit: bool) -> int:
-	if current_alert < ALERT_LOW_THRESHOLD:
-		return 2 if is_revisit else 5
-	elif current_alert < ALERT_MED_THRESHOLD:
-		return 2 if is_revisit else 5
-	else:
-		return 2 if is_revisit else 5
+	return int(ALERT_PER_STEP / 2) if is_revisit else ALERT_PER_STEP
 
 func modify_alert(amount: int):
 	current_alert = clamp(current_alert + amount, 0, 100)
@@ -663,7 +686,7 @@ func _update_vision():
 		node.set_state(MapNode.NodeState.REVEALED)
 
 		# Set initial visual state
-		node.modulate.a = 0.0
+		node.modulate.a = 0.5
 
 		# Calculate delay
 		var dist = _get_hex_distance(center_coords, node.grid_coords)
@@ -685,3 +708,160 @@ func _offset_to_cube(hex: Vector2i) -> Vector3i:
 	var r = hex.y
 	var s = -q - r
 	return Vector3i(q, r, s)
+
+func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
+	var type_map = {}
+	# Fill defaults
+	for c in all_coords: type_map[c] = MapNode.NodeType.UNKNOWN
+
+	# --- 1. SETUP POOLS ---
+	# Create a working pool of coordinates we can subtract from
+	var available_pool = all_coords.duplicate()
+
+	# --- 2. START & BOSS (Fixed Logic) ---
+	var min_x = 9999
+	for c in all_coords:
+		if c.y == center_y and c.x < min_x: min_x = c.x
+	var start_node = Vector2i(min_x, center_y)
+
+	available_pool.erase(start_node) # Remove from pool
+
+	# Boss Logic (Far right)
+	var sorted_by_x = all_coords.duplicate()
+	sorted_by_x.sort_custom(func(a, b): return a.x > b.x)
+	var boss_candidates = sorted_by_x.slice(0, min(7, sorted_by_x.size()))
+	var boss_node = boss_candidates.pick_random()
+	while boss_node == start_node: boss_node = boss_candidates.pick_random()
+
+	type_map[boss_node] = MapNode.NodeType.BOSS
+	available_pool.erase(boss_node)
+
+	# --- 3. DEFINE "SAFE ZONE" ---
+	# Remove nodes too close to start from the pool for "Good Stuff"
+	# (We will add them back later for "Combat" or "Empty")
+	var high_value_pool = []
+	var start_buffer_zone = []
+
+	for c in available_pool:
+		if _get_hex_distance(start_node, c) <= 2: # Increased buffer to 2
+			start_buffer_zone.append(c)
+		else:
+			high_value_pool.append(c)
+
+	# --- 4. DISTRIBUTE TERMINALS (Spaced Out) ---
+	# This is the new logic. We place Terminals first because they are crucial anchors.
+	var placed_terminals = []
+	# Calculate spacing dynamically based on map size.
+	var terminal_spacing = max(3, int(map_length / 3.0))
+
+	for i in range(num_terminals):
+		if high_value_pool.is_empty(): break
+
+		# Pick a spot far from other terminals
+		var coord = _pick_distant_coord(high_value_pool, placed_terminals, terminal_spacing)
+
+		type_map[coord] = MapNode.NodeType.TERMINAL
+		high_value_pool.erase(coord)
+		placed_terminals.append(coord)
+
+	# --- 5. DISTRIBUTE ELITES (Spaced Out) ---
+	# We want Elites spaced away from EACH OTHER, and ideally away from Start.
+	var placed_elites = []
+	var elite_spacing = 3
+
+	for i in range(num_elites):
+		if high_value_pool.is_empty(): break
+
+		var coord = _pick_distant_coord(high_value_pool, placed_elites, elite_spacing)
+
+		type_map[coord] = MapNode.NodeType.ELITE
+		high_value_pool.erase(coord)
+		placed_elites.append(coord)
+
+	# --- 6. DISTRIBUTE RANDOM REWARDS ---
+	# For rewards, simple shuffling is usually fine,
+	# but we use the remaining high_value_pool.
+	high_value_pool.shuffle()
+
+	var _assign_random = func(type, count):
+		for i in range(count):
+			if high_value_pool.is_empty(): break
+			var c = high_value_pool.pop_back()
+			type_map[c] = type
+
+	_assign_random.call(MapNode.NodeType.REWARD, num_rewards)
+	_assign_random.call(MapNode.NodeType.REWARD_2, num_uncommon_rewards)
+	_assign_random.call(MapNode.NodeType.REWARD_3, num_rare_rewards)
+	_assign_random.call(MapNode.NodeType.EVENT, num_events)
+
+	# --- 7. FILL COMBAT ---
+	# Now we recombine the buffer zone so enemies can spawn near start
+	var combat_pool = high_value_pool + start_buffer_zone
+	combat_pool.shuffle()
+
+	# Optional: Prevent combat on the literal adjacent nodes to start?
+	# For now, we just let them spawn anywhere remaining.
+
+	for i in range(min(num_combats, combat_pool.size())):
+		var c = combat_pool.pop_back()
+		type_map[c] = MapNode.NodeType.COMBAT
+
+	return type_map
+
+func _pick_distant_coord(candidate_pool: Array, existing_group: Array, min_dist: int) -> Vector2i:
+	# 1. If no existing group, just pick random
+	if existing_group.is_empty():
+		return candidate_pool.pick_random()
+
+	# 2. Attempt to find a valid spot, lowering standards if needed
+	var current_dist_check = min_dist
+
+	while current_dist_check >= 0:
+		var valid_subset = []
+
+		for candidate in candidate_pool:
+			var is_valid = true
+			for existing in existing_group:
+				if _get_hex_distance(candidate, existing) < current_dist_check:
+					is_valid = false
+					break
+
+			if is_valid:
+				valid_subset.append(candidate)
+
+		# Found valid spots? Pick one!
+		if not valid_subset.is_empty():
+			return valid_subset.pick_random()
+
+		# Map too crowded? Lower standards and try again.
+		current_dist_check -= 1
+
+	# Fallback (Should logically never reach here if dist reduces to 0)
+	return candidate_pool.pick_random()
+
+func get_save_data() -> Dictionary:
+	var node_states = {}
+
+	# 1. Serialize Node States
+	for coords in grid_nodes:
+		var node = grid_nodes[coords]
+		# We key by String because JSON doesn't support Vector2i keys
+		var key = var_to_str(coords)
+		node_states[key] = {
+			"state": node.state,
+			"visited": node.has_been_visited
+		}
+
+	# 2. Serialize Terminal Memory
+	# We need to convert Vector2i keys to strings here too
+	var serializable_terminals = {}
+	for coords in terminal_memory:
+		var key = var_to_str(coords)
+		serializable_terminals[key] = terminal_memory[coords]
+
+	return {
+		"current_alert": current_alert,
+		"current_coords": var_to_str(current_node.grid_coords),
+		"node_data": node_states,
+		"terminal_memory": serializable_terminals
+	}

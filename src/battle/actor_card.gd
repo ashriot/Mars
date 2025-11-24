@@ -73,7 +73,6 @@ func setup_base(stats: ActorStats):
 	hp_bar_ghost.max_value = current_stats.max_hp
 	current_hp = current_stats.max_hp
 	hp_bar_actual.max_value = current_stats.max_hp
-	hp_bar_ghost.max_value = current_stats.max_hp
 	current_guard = current_stats.starting_guard
 	panel_home_position = panel.position
 	breached_label.hide()
@@ -85,6 +84,7 @@ func setup_base(stats: ActorStats):
 	hp_bar_ghost.hide()
 	update_health_bar()
 	hp_bar_actual.value = 0
+	hp_value.text = str(0)
 	action_display.hide()
 	next_panel.hide()
 	await get_tree().process_frame
@@ -238,10 +238,7 @@ func sync_visual_health() -> Tween:
 
 	if actual_hp == real_hp and ghost_hp == real_hp:
 		return null
-	if ghost_hp == real_hp:
-		hp_bar_ghost.hide()
-	else:
-		hp_bar_ghost.show()
+	hp_bar_ghost.show()
 
 	var DURATION = 0.5 / battle_manager.battle_speed
 

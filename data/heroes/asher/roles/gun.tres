@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RoleDefinition" load_steps=4 format=3 uid="uid://df6wnpgvm1b44"]
+
+[ext_resource type="Texture2D" uid="uid://cogus1wqw41g8" path="res://assets/graphics/icons/roles/chaingun.png" id="1_pc4kf"]
+[ext_resource type="Resource" uid="uid://3eagsu7ser6b" path="res://data/heroes/asher/roles/gunslinger/gun_1.tres" id="2_pc4kf"]
+[ext_resource type="Script" uid="uid://sy50n7nerbow" path="res://data/scripts/data/role_definition.gd" id="3_ipvff"]
+
+[resource]
+script = ExtResource("3_ipvff")
+description = "A multi-hit, single-target Kinetic blitzer."
+icon = ExtResource("1_pc4kf")
+color = Color(1.128, 1.437, 0.277, 1)
+root_node = ExtResource("2_pc4kf")
+metadata/_custom_type_script = "uid://sy50n7nerbow"

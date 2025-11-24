@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RoleNode" load_steps=4 format=3 uid="uid://hyr5rifx4e6g"]
+
+[ext_resource type="Script" uid="uid://cuhoaxfyipk6s" path="res://data/scripts/data/role_node.gd" id="1_ysjrt"]
+[ext_resource type="Resource" uid="uid://cmi30c4pltcn" path="res://data/heroes/echo/roles/kineticist/kin_2.tres" id="2_prrrm"]
+[ext_resource type="Resource" uid="uid://bua2w6l1vluii" path="res://data/heroes/echo/actions/telekinesis.tres" id="3_u2lvt"]
+
+[resource]
+script = ExtResource("1_ysjrt")
+type = 1
+unlock_resource = ExtResource("3_u2lvt")
+action_slot_index = 0
+next_nodes = Array[ExtResource("1_ysjrt")]([ExtResource("2_prrrm")])
+metadata/_custom_type_script = "uid://cuhoaxfyipk6s"

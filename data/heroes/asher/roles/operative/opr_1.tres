@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="RoleNode" load_steps=3 format=3 uid="uid://ersfau78o3a7"]
+
+[ext_resource type="Script" uid="uid://cuhoaxfyipk6s" path="res://data/scripts/data/role_node.gd" id="1_5kfra"]
+[ext_resource type="Resource" uid="uid://dwd1ggnmfyj7t" path="res://data/heroes/asher/actions/inspire.tres" id="2_w1ciu"]
+
+[resource]
+script = ExtResource("1_5kfra")
+type = 1
+unlock_resource = ExtResource("2_w1ciu")
+action_slot_index = 0
+metadata/_custom_type_script = "uid://cuhoaxfyipk6s"

@@ -1,25 +1,29 @@
-[gd_scene load_steps=8 format=3 uid="uid://cqo38uie6gkdu"]
+[gd_scene load_steps=12 format=3 uid="uid://cqo38uie6gkdu"]
 
 [ext_resource type="Script" uid="uid://c0tmi3fc3fega" path="res://src/map/dungeon_map.gd" id="1_5o7fj"]
 [ext_resource type="Texture2D" uid="uid://bwqcku6nvr4ff" path="res://assets/graphics/backgrounds/street.webp" id="2_1a5qu"]
 [ext_resource type="PackedScene" uid="uid://cqdl6q7d2hmox" path="res://src/map/map_node.tscn" id="2_vfn15"]
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="4_pf175"]
+[ext_resource type="Shader" uid="uid://1klbdvl00vt2" path="res://src/map/blur.gdshader" id="5_gftom"]
+[ext_resource type="Texture2D" uid="uid://cvm864osuvl67" path="res://assets/graphics/icons/map/hexagon_outline.png" id="5_pf175"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_gftom"]
+shader = ExtResource("5_gftom")
+shader_parameter/blur_amount = 0.0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1a5qu"]
 content_margin_left = 2.0
 content_margin_top = 2.0
 content_margin_right = 2.0
 content_margin_bottom = 2.0
-bg_color = Color(0, 0, 0, 0.88235295)
+bg_color = Color(0, 0, 0, 0.6862745)
 border_width_left = 6
 border_width_top = 6
 border_width_right = 6
 border_width_bottom = 6
 border_color = Color(1, 1, 1, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
 corner_detail = 6
+shadow_size = 10
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vfn15"]
 content_margin_left = 2.0
@@ -27,10 +31,6 @@ content_margin_top = 2.0
 content_margin_right = 2.0
 content_margin_bottom = 2.0
 bg_color = Color(1, 1, 1, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
 corner_detail = 6
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bcccw"]
@@ -40,23 +40,38 @@ border_width_top = 3
 border_width_right = 3
 border_width_bottom = 3
 border_color = Color(1, 1, 1, 1)
-corner_radius_bottom_right = 12
+corner_radius_top_left = 12
 corner_radius_bottom_left = 12
+shadow_size = 5
+shadow_offset = Vector2(-5, 5)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gftom"]
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+shadow_size = 5
+shadow_offset = Vector2(5, 5)
 
 [node name="DungeonMap" type="Node2D"]
 script = ExtResource("1_5o7fj")
 map_length = 20
-map_height = 21
+map_height = 15
 vision_range = 2
 num_combats = 6
 num_terminals = 5
+selection_texture = ExtResource("5_pf175")
 map_node_scene = ExtResource("2_vfn15")
 background_texture = ExtResource("2_1a5qu")
-background_blur = 3.0
 
 [node name="Parallax2D" type="Parallax2D" parent="."]
 
 [node name="Sprite2D" type="Sprite2D" parent="Parallax2D"]
+material = SubResource("ShaderMaterial_gftom")
 texture = ExtResource("2_1a5qu")
 
 [node name="Background" type="Control" parent="."]
@@ -64,6 +79,12 @@ layout_mode = 3
 anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
+
+[node name="PlayerCursor" type="Sprite2D" parent="Background"]
+visible = false
+z_index = 10
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("5_pf175")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
@@ -94,14 +115,14 @@ show_percentage = false
 
 [node name="Panel" type="Panel" parent="CanvasLayer/HUD/AlertGauge"]
 layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -376.0
-offset_top = 39.0
-offset_right = -129.0
-offset_bottom = 79.0
-grow_horizontal = 2
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = -115.0
+offset_top = -21.5
+offset_right = 5.0
+offset_bottom = 21.5
+grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_bcccw")
 
 [node name="Alert" type="Label" parent="CanvasLayer/HUD/AlertGauge/Panel"]
@@ -114,26 +135,41 @@ offset_top = -20.0
 offset_right = 126.0
 offset_bottom = 20.0
 grow_vertical = 2
-theme_override_colors/font_color = Color(0.126, 0.21, 0.126, 1)
+theme_override_colors/font_color = Color(0.12041845, 0.12041845, 0.12041845, 1)
 theme_override_fonts/font = ExtResource("4_pf175")
 theme_override_font_sizes/font_size = 36
 text = "ALERT"
 vertical_alignment = 1
 
-[node name="Value" type="Label" parent="CanvasLayer/HUD/AlertGauge/Panel"]
+[node name="Panel2" type="Panel" parent="CanvasLayer/HUD/AlertGauge"]
 layout_mode = 1
 anchors_preset = 6
 anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = -105.0
-offset_top = -20.0
-offset_right = -7.0
-offset_bottom = 20.0
+offset_left = -6.0
+offset_top = -21.5
+offset_right = 91.0
+offset_bottom = 21.5
 grow_horizontal = 0
 grow_vertical = 2
-theme_override_colors/font_color = Color(0.126, 0.21, 0.126, 1)
+theme_override_styles/panel = SubResource("StyleBoxFlat_gftom")
+
+[node name="Value" type="Label" parent="CanvasLayer/HUD/AlertGauge/Panel2"]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -93.0
+offset_top = -23.5
+offset_right = -7.0
+offset_bottom = 23.5
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.12041845, 0.12041845, 0.12041845, 1)
 theme_override_fonts/font = ExtResource("4_pf175")
 theme_override_font_sizes/font_size = 36
 text = "100%"
