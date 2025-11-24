@@ -15,5 +15,5 @@ weapon = ExtResource("8_q53qh")
 armor = ExtResource("1_uk5hd")
 role_definitions = Array[ExtResource("3_7nq6b")]([ExtResource("4_8d0rb"), ExtResource("5_51sbu")])
 unlocked_role_ids = Array[String](["psi", "kin"])
-unlocked_node_ids = Array[String](["psi_act_1", "kin_act_1", "kin_act_2"])
+unlocked_node_ids = Array[String](["psi_1", "kin_1", "kin_2"])
 metadata/_custom_type_script = "uid://dc5sk0b0jubvj"

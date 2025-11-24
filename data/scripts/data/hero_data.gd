@@ -115,14 +115,12 @@ func _bake_tree_into_role(node: RoleNode, target_role: RoleData):
 	match node.type:
 		RoleNode.RewardType.ACTION:
 			if node.unlock_resource is Action:
+				if node.action_slot_index < 0:
+					push_error("Action slot cannot be less than 0!")
 				var action = node.unlock_resource
-				# Use the specific slot if defined
-				if node.action_slot_index >= 0:
-					if target_role.actions.size() < 4:
-						target_role.actions.resize(4)
-					target_role.actions[node.action_slot_index] = action
-				else:
-					target_role.actions.append(action)
+				if target_role.actions.size() < 4:
+					target_role.actions.resize(4)
+				target_role.actions[node.action_slot_index] = action
 
 		RoleNode.RewardType.PASSIVE:
 			if node.unlock_resource is Action:

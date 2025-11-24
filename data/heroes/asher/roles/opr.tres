@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="RoleDefinition" load_steps=4 format=3 uid="uid://cq1s08aos0ely"]
 
 [ext_resource type="Texture2D" uid="uid://m3oty7ssw1by" path="res://assets/graphics/icons/roles/walkie-talkie.png" id="1_67ry2"]
-[ext_resource type="Resource" uid="uid://ersfau78o3a7" path="res://data/heroes/asher/roles/operative/inspire.tres" id="2_bhdnr"]
+[ext_resource type="Resource" uid="uid://ersfau78o3a7" path="res://data/heroes/asher/roles/operative/opr_1.tres" id="2_bhdnr"]
 [ext_resource type="Script" uid="uid://sy50n7nerbow" path="res://data/scripts/data/role_definition.gd" id="3_wvcdv"]
 
 [resource]

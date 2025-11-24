@@ -94,7 +94,7 @@ func get_next_role() -> RoleData:
 
 func shift_role(direction: String):
 	shifted_this_turn = true
-	var role_count = hero_data.role_definitions.size()
+	var role_count = hero_data.unlocked_role_ids.size()
 	if role_count == 0: return
 
 	if direction == "left":

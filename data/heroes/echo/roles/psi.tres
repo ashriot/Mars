@@ -2,7 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://dve0tjghg88kw" path="res://assets/graphics/icons/roles/blindfold.png" id="1_2ckq0"]
 [ext_resource type="Script" uid="uid://sy50n7nerbow" path="res://data/scripts/data/role_definition.gd" id="1_a5jl1"]
-[ext_resource type="Resource" uid="uid://cmykqlixnc1rk" path="res://data/heroes/echo/roles/psion/psi_act_1.tres" id="2_6vi84"]
+[ext_resource type="Resource" uid="uid://cmykqlixnc1rk" path="res://data/heroes/echo/roles/psion/psi_1.tres" id="2_6vi84"]
 
 [resource]
 script = ExtResource("1_a5jl1")
