@@ -20,8 +20,9 @@ config/icon="res://icon.svg"
 SaveSystem="*res://src/singletons/save_system.gd"
 RunManager="*res://src/singletons/run_manager.gd"
 InputIconMap="*res://src/singletons/input_map.gd"
-InputManager="*res://src/singletons/input_manager.gd"
 AudioManager="*res://src/singletons/audio_manager.gd"
+InputManager="*res://src/singletons/input_manager.gd"
+ItemDatabase="*res://src/singletons/item_database.gd"
 
 [debug]
 
@@ -31,8 +32,8 @@ gdscript/warnings/integer_division=0
 
 window/size/viewport_width=1920
 window/size/viewport_height=1080
-window/size/window_width_override=3072
-window/size/window_height_override=1728
+window/size/window_width_override=1920
+window/size/window_height_override=1080
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 

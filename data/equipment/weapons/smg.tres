@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="Equipment" load_steps=2 format=3 uid="uid://dl1qpi4irakxh"]
+
+[ext_resource type="Script" uid="uid://djmsh5w0dbytx" path="res://data/scripts/data/equipment.gd" id="1_g6q1d"]
+
+[resource]
+script = ExtResource("1_g6q1d")
+equipment_id = "smg"
+item_name = "SMG"
+level = 5
+attack_rank = 4
+psyche_rank = 1
+overload_rank = 2
+speed_rank = 2
+metadata/_custom_type_script = "uid://djmsh5w0dbytx"

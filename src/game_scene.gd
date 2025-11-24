@@ -11,20 +11,20 @@ class_name GameScene
 @onready var overlay_layer = $DungeonMap/OverlayLayer
 @onready var fader: ColorRect = $CanvasLayer/Fader
 
-var battle_scene: Node = null
+var battle_scene: BattleScene = null
 
 
 func _ready():
 	fader.modulate.a = 1.0
+
+	dungeon_map.interaction_requested.connect(_on_map_interaction_requested)
+	dungeon_map.initialize_map()
 
 	var tween = create_tween()
 	tween.tween_property(fader, "modulate:a", 0.0, 1.0)\
 		.set_delay(0.25)
 	await tween.finished
 	fader.hide()
-
-	dungeon_map.interaction_requested.connect(_on_map_interaction_requested)
-	dungeon_map.initialize_map()
 
 func _on_map_interaction_requested(node: MapNode):
 	dungeon_map.current_map_state = DungeonMap.MapState.LOCKED
@@ -104,12 +104,13 @@ func end_encounter():
 	AudioManager.play_music("map_1", 1.0, false, true)
 	_on_content_finished()
 
-func _on_terminal_choice(opt: int):
+func _on_terminal_choice(opt: int, amount: int):
 	AudioManager.play_sfx("terminal")
 	if opt == 1:
-		print("Gained Bits")
+		print("Gained ", amount, " Bits")
+		RunManager.add_bits(amount)
 	elif opt == 2:
-		dungeon_map.modify_alert(-50)
+		dungeon_map.modify_alert(-amount)
 	_on_content_finished(true)
 
 func _on_terminal_closed():

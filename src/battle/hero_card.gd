@@ -32,6 +32,13 @@ func setup(data: HeroData):
 	if hero_data.portrait:
 		portrait_rect.texture = hero_data.portrait
 	current_focus = 4
+
+	if hero_data.injuries > 0:
+		var penalty_mult = 0.5
+		var injured_hp = int(current_stats.max_hp * penalty_mult)
+		current_hp = max(1, injured_hp)
+		print(hero_data.hero_name, " starts with Injury penalty!! HP: ", current_hp)
+
 	update_focus_bar(false)
 	update_current_role()
 	panel.self_modulate.a = 1.0

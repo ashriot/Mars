@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="Equipment" load_steps=2 format=3 uid="uid://d0p87alljgj7j"]
+
+[ext_resource type="Script" uid="uid://djmsh5w0dbytx" path="res://data/scripts/data/equipment.gd" id="1_vi8hw"]
+
+[resource]
+script = ExtResource("1_vi8hw")
+equipment_id = "leather_jacket"
+item_name = "Leather Jacket"
+slot = 1
+hp_rank = 3
+guard_rank = 2
+speed_rank = 3
+kinetic_defense_rank = 3
+energy_defense_rank = 3
+metadata/_custom_type_script = "uid://djmsh5w0dbytx"

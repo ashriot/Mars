@@ -68,12 +68,6 @@ func calculate_stats() -> ActorStats:
 
 	return stats
 
-func _get_multiplier(base: int = 5) -> float:
-	return int(pow((level + base), 2) * 0.048)
-
-func _calc_stat(rank: int, multiplier: float) -> int:
-	return int(((rank + 5) * multiplier))
-
 func get_upgrade_cost() -> int:
 	if level >= max_level:
 		return 0
@@ -110,3 +104,31 @@ func get_stat_gain_on_upgrade() -> Dictionary:
 		"kinetic_defense": next.kinetic_defense - current.kinetic_defense,
 		"energy_defense": next.energy_defense - current.energy_defense,
 	}
+
+func get_save_data() -> Dictionary:
+	return {
+		"id": equipment_id,
+		"lvl": level,
+		# If you implement random affixes later, save them here too
+		# "affixes": [...]
+	}
+
+func _get_multiplier(base: int = 5) -> float:
+	return int(pow((level + base), 2) * 0.048)
+
+func _calc_stat(rank: int, multiplier: float) -> int:
+	return int(((rank + 5) * multiplier))
+
+static func create_from_save_data(data: Dictionary) -> Equipment:
+	var id = data.get("id", "")
+	var lvl = data.get("lvl", 1)
+
+	# 1. Ask the Database for the base item
+	var instance = ItemDatabase.get_item_resource(id)
+
+	if instance:
+		# 2. Apply the saved state
+		instance.level = lvl
+		return instance
+
+	return null

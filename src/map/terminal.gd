@@ -1,7 +1,7 @@
 extends Control
 
 # Define a custom signal so the Manager knows when a choice is made
-signal option_selected(choice_index)
+signal option_selected(choice_index, amount)
 signal closed
 
 @onready var close_button: TextureButton = $Panel/ColorRect/CloseButton
@@ -33,6 +33,8 @@ PLEASE MAKE YOUR SELECTION:
 var type_tween: Tween
 var cursor_tween: Tween
 var final_text_content: String = ""
+var bits: int
+var alert: int
 
 func _ready():
 	text_label.meta_clicked.connect(_on_text_link_clicked)
@@ -44,6 +46,9 @@ func setup(facility_name: String, bits_amount: int, alert_amount: int, session_i
 	var session = session_id
 	if session == "":
 		session = "0x%X-%d-KANECHO" % [randi() % 0xFFFF, randi() % 9999]
+
+	bits = bits_amount
+	alert = alert_amount
 
 	var data = {
 		"facility": facility_name,
@@ -108,11 +113,11 @@ func _animate_close():
 func _on_text_link_clicked(meta):
 	if meta == "opt_1":
 		print("Selected Option 1: Bits")
-		option_selected.emit(1)
+		option_selected.emit(1, bits)
 		_animate_close()
 	elif meta == "opt_2":
 		print("Selected Option 2: Alert")
-		option_selected.emit(2)
+		option_selected.emit(2, alert)
 		_animate_close()
 
 func _on_close_button_pressed() -> void:

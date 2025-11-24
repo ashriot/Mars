@@ -12,12 +12,10 @@ class_name HeroData
 @export var accessory_2: Equipment
 
 @export var unlocked_roles: Array[RoleData]
-
-# Role progression (one entry per role)
 @export var role_progressions: Array[RoleProgression] = []
-
-# Currently active role index
 @export var active_role_index: int = 0
+
+@export var injuries: int = 0
 
 var stats: ActorStats
 
@@ -58,8 +56,6 @@ func calculate_stats():
 
 	return stats
 
-# HeroData.gd - Add these helper functions
-
 func _add_stats(base: ActorStats, additional: ActorStats):
 	base.max_hp += additional.max_hp
 	base.starting_guard += additional.starting_guard
@@ -89,3 +85,47 @@ func _apply_special_effect(actor_stats: ActorStats, equipment: Equipment):
 		_:
 			# Unknown special effect, ignore
 			pass
+
+func get_save_data() -> Dictionary:
+	var role_data = []
+	for prog in role_progressions:
+		# Assuming RoleProgression has a simple structure (id + rank)
+		role_data.append({
+			"id": prog.role_id,
+			"rank": prog.current_rank,
+			"xp": prog.current_xp
+		})
+
+	return {
+		"hero_id": hero_id,
+		"injuries": injuries,
+		# We save the Equipment ID and Level (using the helper in Equipment.gd)
+		"weapon": weapon.get_save_data() if weapon else {},
+		"armor": armor.get_save_data() if armor else {},
+		"acc1": accessory_1.get_save_data() if accessory_1 else {},
+		"acc2": accessory_2.get_save_data() if accessory_2 else {},
+		"roles": role_data,
+		"active_role": active_role_index
+	}
+
+# This function hydrates the HeroData from the JSON dictionary
+func load_from_save_data(data: Dictionary):
+	# 1. Restore Equipment (Using the static helper we discussed)
+	if data.get("weapon"): weapon = Equipment.create_from_save_data(data.weapon)
+	if data.get("armor"): armor = Equipment.create_from_save_data(data.armor)
+	if data.get("acc1"): accessory_1 = Equipment.create_from_save_data(data.acc1)
+	if data.get("acc2"): accessory_2 = Equipment.create_from_save_data(data.acc2)
+
+	# 2. Restore Active Role
+	active_role_index = data.get("active_role", 0)
+	injuries = data.get("injuries", 0)
+
+	# 3. Restore Role Progression
+	# (This logic depends on how you store RoleProgressions,
+	#  but usually you match IDs and update the values)
+	var saved_roles = data.get("roles", [])
+	#for saved_r in saved_roles:
+		#var existing = get_role_progression(saved_r.id)
+		#if existing:
+			#existing.rank = saved_r.rank
+			#existing.xp = saved_r.xp

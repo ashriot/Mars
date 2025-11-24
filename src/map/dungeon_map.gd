@@ -59,7 +59,6 @@ var _pre_battle_camera_pos: Vector2 = Vector2.ZERO
 var _calculated_depth_scale: Vector2 = Vector2.ONE
 var alert_tween: Tween
 
-# Key: Vector2i (Grid Coords), Value: Dictionary (The terminal data)
 var terminal_memory: Dictionary = {}
 
 # --- Hex Values ---
