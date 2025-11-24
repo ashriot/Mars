@@ -29,33 +29,39 @@ var battle_roles: Dictionary = {} # Key: role_id, Value: RoleData
 # 1. STAT CALCULATION
 # ===================================================================
 func calculate_stats():
-	var final_stats = ActorStats.new()
-	final_stats.actor_name = hero_name
+	stats = ActorStats.new()
+	stats.actor_name = hero_name
 
 	if weapon:
 		var weapon_stats = weapon.calculate_stats()
-		_add_stats(final_stats, weapon_stats)
-		_apply_special_effect(final_stats, weapon)
+		_add_stats(stats, weapon_stats)
+		_apply_special_effect(stats, weapon)
 	if armor:
 		var armor_stats = armor.calculate_stats()
-		_add_stats(final_stats, armor_stats)
-		_apply_special_effect(final_stats, armor)
+		_add_stats(stats, armor_stats)
+		_apply_special_effect(stats, armor)
 	if accessory_1:
 		var acc1_stats = accessory_1.calculate_stats()
-		_add_stats(final_stats, acc1_stats)
-		_apply_special_effect(final_stats, accessory_1)
+		_add_stats(stats, acc1_stats)
+		_apply_special_effect(stats, accessory_1)
 	if accessory_2:
 		var acc2_stats = accessory_2.calculate_stats()
-		_add_stats(final_stats, acc2_stats)
-		_apply_special_effect(final_stats, accessory_2)
+		_add_stats(stats, acc2_stats)
+		_apply_special_effect(stats, accessory_2)
 
 	# Apply Tree Stats
 	for role_def in role_definitions:
 		if role_def.root_node:
 			role_def.init_structure() # Ensure IDs exist
-			_process_node_stats(role_def.root_node, final_stats)
+			_process_node_stats(role_def.root_node, stats)
 
-	stats = final_stats
+	print("\n=== STATS FOR: ", stats.actor_name, " ===")
+	for prop in stats.get_property_list():
+		# This filter ensures we only print variables defined in the script
+		# (skips internal Godot stuff like 'reference', 'resource_path', etc.)
+		if prop.usage & PROPERTY_USAGE_SCRIPT_VARIABLE:
+			print(prop.name, ": ", stats.get(prop.name))
+	print("========================\n")
 
 func _add_stats(base: ActorStats, additional: ActorStats):
 	base.max_hp += additional.max_hp

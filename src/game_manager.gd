@@ -1,5 +1,5 @@
 extends Node2D
-class_name GameScene
+class_name GameManager
 
 @export_group("Packed Scenes")
 @export var battle_scene_packed: PackedScene
@@ -35,30 +35,17 @@ func _on_map_interaction_requested(node: MapNode):
 			start_encounter()
 
 		MapNode.NodeType.TERMINAL:
-			# --- 1. RETRIEVE SAVED DATA ---
-			# Use grid_coords as the key
 			var data = dungeon_map.terminal_memory.get(node.grid_coords)
-
 			if not data:
 				push_error("No terminal data found for node: ", node.grid_coords)
 				_on_content_finished(true) # Fail safe
 				return
 
-			# --- 2. USE THE DATA ---
-			var terminal = terminal_scene_packed.instantiate() as Control
+			var terminal = terminal_scene_packed.instantiate()
 			overlay_layer.add_child(terminal)
-
-			terminal.setup(
-				data.facility_name,
-				data.bits,
-				data.alert,
-				data.session_id
-			)
-
-			# Pass the specific alert value to the choice handler
-			terminal.option_selected.connect(_on_terminal_choice)
+			terminal.setup(data)
+			terminal.option_selected.connect(_on_terminal_choice.bind(data))
 			terminal.closed.connect(_on_terminal_closed)
-
 		_:
 			_on_content_finished()
 			return
@@ -104,14 +91,56 @@ func end_encounter():
 	AudioManager.play_music("map_1", 1.0, false, true)
 	_on_content_finished()
 
-func _on_terminal_choice(opt: int, amount: int):
-	AudioManager.play_sfx("terminal")
-	if opt == 1:
-		print("Gained ", amount, " Bits")
-		RunManager.add_bits(amount)
-	elif opt == 2:
-		dungeon_map.modify_alert(-amount)
+func _on_terminal_choice(choice_tag: String, data: Dictionary):
+	match choice_tag:
+		# SECURITY
+		"opt_sec", "opt_sec_up":
+			dungeon_map.modify_alert(-int(data.alert))
+
+		# MEDICAL
+		"opt_med", "opt_med_up":
+			var is_upgraded = (data.upgrade_key == "medical")
+			_handle_medical_logic(is_upgraded)
+
+		# FINANCE
+		"opt_fin", "opt_fin_up":
+			RunManager.add_run_bits(int(data.bits))
+
+		"opt_extract":
+			_handle_extraction()
+
 	_on_content_finished(true)
+
+func _handle_medical_logic(is_upgraded: bool):
+	# Logic:
+	# Iterate RunManager.party_roster (HeroData)
+	# If Injury > 0: Remove Injury.
+	# If Injury == 0: Grant "Overcharge" (Start next battle with Focus).
+	# If Upgraded: Do Both (or Mega Overcharge).
+
+	for hero_data in RunManager.party_roster:
+		if hero_data.injuries > 0:
+			hero_data.injuries = max(0, hero_data.injuries - 1)
+			print(hero_data.hero_name, " injury removed.")
+
+			if is_upgraded:
+				# Add "Overcharge" condition to HeroData for next battle
+				pass
+		else:
+			# Add "Overcharge" condition
+			pass
+
+func _handle_extraction():
+	# 1. Transfer Run Bits to Save Bits
+	SaveSystem.bits += RunManager.run_bits
+	RunManager.run_bits = 0
+
+	# 2. Save and Exit
+	RunManager.is_run_active = false
+	SaveSystem.save_current_slot() # Save the loot!
+
+	# 3. Return to Title (or Hub)
+	get_tree().change_scene_to_file("res://src/ui/TitleScreen.tscn")
 
 func _on_terminal_closed():
 	_on_content_finished(false)

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://catmya1gaerlj"
-path="res://.godot/imported/military_rank2.png-db76364467a9783b102c5cdf3dfacf80.ctex"
+uid="uid://bntyrcq7wacij"
+path="res://.godot/imported/coins_2.png-fb169c914f0073647c52093c0da1e0cc.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/icons/map/military_rank2.png"
-dest_files=["res://.godot/imported/military_rank2.png-db76364467a9783b102c5cdf3dfacf80.ctex"]
+source_file="res://assets/graphics/icons/map/coins_2.png"
+dest_files=["res://.godot/imported/coins_2.png-fb169c914f0073647c52093c0da1e0cc.ctex"]
 
 [params]
 

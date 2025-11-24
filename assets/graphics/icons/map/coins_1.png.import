@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bxyfgn8vll0gu"
-path="res://.godot/imported/drone.png-dac109c28354d4a91c2562261d41a02b.ctex"
+uid="uid://cax71ffsy8ue6"
+path="res://.godot/imported/coins_1.png-b7e6aece634d8d9e100c7a2c42ea63bc.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/icons/map/drone.png"
-dest_files=["res://.godot/imported/drone.png-dac109c28354d4a91c2562261d41a02b.ctex"]
+source_file="res://assets/graphics/icons/map/coins_1.png"
+dest_files=["res://.godot/imported/coins_1.png-b7e6aece634d8d9e100c7a2c42ea63bc.ctex"]
 
 [params]
 

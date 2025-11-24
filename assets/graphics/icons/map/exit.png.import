@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://corasddesecw0"
-path="res://.godot/imported/sword-clash.png-3b5596de3324f0d8ff32a6a461810e68.ctex"
+uid="uid://da8p41jpdeqcq"
+path="res://.godot/imported/exit.png-fec9cf5d2cd26d690e34dce7fdde0f6a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/icons/map/sword-clash.png"
-dest_files=["res://.godot/imported/sword-clash.png-3b5596de3324f0d8ff32a6a461810e68.ctex"]
+source_file="res://assets/graphics/icons/map/exit.png"
+dest_files=["res://.godot/imported/exit.png-fec9cf5d2cd26d690e34dce7fdde0f6a.ctex"]
 
 [params]
 

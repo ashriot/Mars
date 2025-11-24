@@ -3,17 +3,20 @@ extends Area2D
 
 signal node_clicked(node: MapNode)
 
-enum NodeType { COMBAT, ELITE, BOSS, REWARD, REWARD_2, REWARD_3, EVENT, TERMINAL, UNKNOWN }
+enum NodeType { EXIT, COMBAT, ELITE, BOSS, REWARD, REWARD_2, REWARD_3, EVENT, TERMINAL, UNKNOWN }
 enum NodeState { HIDDEN, REVEALED, COMPLETED }
 
 @onready var hex_sprite = $HexSprite
 @onready var icon_sprite = $HexSprite/IconSprite
 
 @export_group("Event Icons")
+@export var icon_exit: Texture2D
 @export var icon_combat: Texture2D
 @export var icon_elite: Texture2D
 @export var icon_boss: Texture2D
 @export var icon_reward: Texture2D
+@export var icon_reward_2: Texture2D
+@export var icon_reward_3: Texture2D
 @export var icon_event: Texture2D
 @export var icon_terminal: Texture2D
 
@@ -77,6 +80,7 @@ func set_state(new_state: NodeState):
 
 func _set_type_color():
 	match type:
+		NodeType.EXIT: hex_sprite.self_modulate = Color.WEB_GRAY
 		NodeType.COMBAT: hex_sprite.self_modulate = Color.YELLOW
 		NodeType.ELITE: hex_sprite.self_modulate = Color.INDIAN_RED
 		NodeType.BOSS: hex_sprite.self_modulate = Color.MAGENTA
@@ -92,7 +96,9 @@ func _get_my_texture() -> Texture2D:
 		NodeType.COMBAT: return icon_combat
 		NodeType.ELITE: return icon_elite
 		NodeType.BOSS: return icon_boss
-		NodeType.REWARD, NodeType.REWARD_2, NodeType.REWARD_3: return icon_reward
+		NodeType.REWARD: return icon_reward
+		NodeType.REWARD_2: return icon_reward_2
+		NodeType.REWARD_3: return icon_reward_3
 		NodeType.EVENT: return icon_event
 		NodeType.TERMINAL: return icon_terminal
 	return null

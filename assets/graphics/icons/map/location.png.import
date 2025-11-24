@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dl0jy1bkukgih"
-path="res://.godot/imported/warning-sign.png-0010779f642d1388733830cd48f5b9a2.ctex"
+uid="uid://cl1cbxhemmhr2"
+path="res://.godot/imported/location.png-19ae2209253b40b36079b24704f9ace1.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/icons/map/warning-sign.png"
-dest_files=["res://.godot/imported/warning-sign.png-0010779f642d1388733830cd48f5b9a2.ctex"]
+source_file="res://assets/graphics/icons/map/location.png"
+dest_files=["res://.godot/imported/location.png-19ae2209253b40b36079b24704f9ace1.ctex"]
 
 [params]
 

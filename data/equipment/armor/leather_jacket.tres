@@ -7,6 +7,7 @@ script = ExtResource("1_vi8hw")
 equipment_id = "leather_jacket"
 item_name = "Leather Jacket"
 slot = 1
+level = 4
 hp_rank = 3
 guard_rank = 2
 speed_rank = 3

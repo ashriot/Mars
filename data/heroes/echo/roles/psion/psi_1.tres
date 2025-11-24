@@ -1,11 +1,13 @@
-[gd_resource type="Resource" script_class="RoleNode" load_steps=3 format=3 uid="uid://cmykqlixnc1rk"]
+[gd_resource type="Resource" script_class="RoleNode" load_steps=4 format=3 uid="uid://cmykqlixnc1rk"]
 
 [ext_resource type="Script" uid="uid://cuhoaxfyipk6s" path="res://data/scripts/data/role_node.gd" id="1_plb0h"]
 [ext_resource type="Resource" uid="uid://dea3writltnu5" path="res://data/heroes/echo/actions/focused_bolt.tres" id="2_eiiw8"]
+[ext_resource type="Resource" uid="uid://dkokea1n188ux" path="res://data/heroes/echo/roles/psion/psi_2.tres" id="2_na3ql"]
 
 [resource]
 script = ExtResource("1_plb0h")
 type = 1
 unlock_resource = ExtResource("2_eiiw8")
 action_slot_index = 0
+next_nodes = Array[ExtResource("1_plb0h")]([ExtResource("2_na3ql")])
 metadata/_custom_type_script = "uid://cuhoaxfyipk6s"

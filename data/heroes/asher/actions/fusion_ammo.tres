@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="Action" load_steps=9 format=3 uid="uid://bbf5ij7wcomd4"]
 
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_bvxhh"]
-[ext_resource type="Resource" uid="uid://bfbdhof0hj83s" path="res://data/heroes/asher/conditions/kinetic_ammo_cond.tres" id="2_2d26r"]
+[ext_resource type="Resource" uid="uid://bfbdhof0hj83s" path="res://data/heroes/asher/conditions/fusion_ammo.tres" id="2_as8at"]
 [ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://data/scripts/action_effects/effect_apply_condition.gd" id="3_ayh5c"]
 [ext_resource type="Script" uid="uid://dgkss5d1axeag" path="res://data/scripts/action_effects/effect_modify_ct.gd" id="4_vy70s"]
 [ext_resource type="Texture2D" uid="uid://c2gwjo0dxv750" path="res://assets/graphics/icons/skills/supersonic-bullet.png" id="5_d1l2p"]
@@ -9,7 +9,7 @@
 
 [sub_resource type="Resource" id="Resource_ls38x"]
 script = ExtResource("3_ayh5c")
-condition = ExtResource("2_2d26r")
+condition = ExtResource("2_as8at")
 metadata/_custom_type_script = "uid://dggojfw8tmpnk"
 
 [sub_resource type="Resource" id="Resource_b28wf"]
@@ -19,7 +19,7 @@ metadata/_custom_type_script = "uid://dgkss5d1axeag"
 
 [resource]
 script = ExtResource("6_5qll6")
-action_name = "Kinetic Ammo"
+action_name = "Fusion Ammo"
 icon = ExtResource("5_d1l2p")
 description = "Boosts Asher's next turn by 15% and grants Buff: Attacks deal 1 additional {nrg} hit. Lasts until Asher Shifts or is Breached."
 focus_cost = 1

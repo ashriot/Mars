@@ -11,7 +11,7 @@
 script = ExtResource("7_n6qc5")
 enemy_id = "scout_drone"
 enemy_name = "Scout Drone"
-level = 0
+level = 2
 hp_rank = 3
 guard_rank = 2
 attack_rank = 4

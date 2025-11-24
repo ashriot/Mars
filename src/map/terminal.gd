@@ -1,70 +1,93 @@
 extends Control
 
-# Define a custom signal so the Manager knows when a choice is made
-signal option_selected(choice_index, amount)
+signal option_selected(choice_id, value) # Generic signal
 signal closed
 
 @onready var close_button: TextureButton = $Panel/ColorRect/CloseButton
 @onready var text_label: RichTextLabel = $Panel/Label
 
-# This is your template. Note the {keys} inside the text.
-# We use [url] tags to make the options clickable!
-const TERMINAL_TEXT = """=========================================
-PARADIGM TERMINAL v4.2 - {facility}
-=========================================
-Neural Auth: [SUCCESS - GUEST OVERRIDE]
-Firewall: DISABLED [ADMIN BYPASS DETECTED]
-Session ID: {session_id}
-
-$ pwd
-/usr/local/paradigm/secops/terminals/alpha_7
-
-$ /.bit-wallet: echo_virai_0x742f... [LINKED]
-$ clear
-
-[b]--- ACCESS GRANTED ---
-PLEASE MAKE YOUR SELECTION:
-
-[url=opt_1]1 -> RECEIVE [{bits}] BITS (CREDIT TRANSFER)[/url]
-[url=opt_2]2 -> REDUCE ALERT LEVEL BY {alert}% (PATROL PURGE)[/url][/b]
-
-[SECURITY: Unauthorized access logged. Purge in T-30s.]"""
-
 var type_tween: Tween
 var cursor_tween: Tween
 var final_text_content: String = ""
-var bits: int
-var alert: int
+
+# Data for the logic handler
+var current_terminal_index: int = 0
+var base_bits: int = 0
+var base_alert_reduction: int = 0
 
 func _ready():
 	text_label.meta_clicked.connect(_on_text_link_clicked)
 
-	# If testing alone, call setup manually:
-	# setup("OMEGA WING", 100, 50)
+func setup(data: Dictionary):
+	var upgrade_key = data.upgrade_key
+	var bits_val = data.bits
+	var alert_val = data.alert
+	var facility_name = data.facility_name
+	var session = data.session_id
+	if session == "": session = "0x%X-%d-KANECHO" % [randi() % 0xFFFF, randi() % 9999]
 
-func setup(facility_name: String, bits_amount: int, alert_amount: int, session_id: String = ""):
-	var session = session_id
-	if session == "":
-		session = "0x%X-%d-KANECHO" % [randi() % 0xFFFF, randi() % 9999]
+	# 2. CALCULATE UPGRADES (0=Security, 1=Medical, 2=Finance)
+	var opt_sec = _get_security_text(upgrade_key == "security", alert_val)
+	var opt_med = _get_medical_text(upgrade_key == "medical")
+	var opt_fin = _get_finance_text(upgrade_key == "finance", bits_val)
 
-	bits = bits_amount
-	alert = alert_amount
+	# --- 2. BUILD TEXT ---
+	var text_body = """=========================================
+PARADIGM TERMINAL v4.2 - {facility}
+=========================================
+Neural Auth: [color=#00ff00][SUCCESS][/color] | Firewall: [color=red][OFF][/color]
+Session ID: {session}
 
-	var data = {
+--- ACCESS GRANTED ---
+SELECT PROTOCOL:[b]
+
+{opt_1}
+{opt_2}
+{opt_3}
+{opt_4}
+
+ENTER CHOICE [1-4]: _[/b]
+[color=#666666][SECURITY: Trace detected. Purge in T-30s.][/color]"""
+
+	var format_data = {
 		"facility": facility_name,
-		"session_id": session,
-		"bits": str(float(bits_amount) / 10),
-		"alert": str(alert_amount)
+		"session": session,
+		"opt_1": opt_sec,
+		"opt_2": opt_med,
+		"opt_3": opt_fin,
+		"opt_4": "[url=opt_extract]4 -> SIGNAL EXTRACTION (TACTICAL RETREAT)[/url]"
 	}
 
-	# 2. Store the formatted text, but DON'T set the label yet
-	final_text_content = TERMINAL_TEXT.format(data)
-
-	# 3. Set the text to the label
+	final_text_content = text_body.format(format_data)
 	text_label.text = final_text_content
-
-	# 4. Start typing
 	_start_typing_effect()
+
+# --- HELPERS FOR TEXT GENERATION ---
+func _get_security_text(is_upgraded: bool, amount: int) -> String:
+	var suffix = " [color=gold][UPGRADED][/color]" if is_upgraded else ""
+	var label = "REBOOT SECURITY" if is_upgraded else "SCRAMBLE CAMERAS"
+	var tag = "opt_sec_up" if is_upgraded else "opt_sec"
+	return "[url=%s]1 -> %s (ALERT -%d%%)[/url]%s" % [tag, label, amount, suffix]
+
+func _get_finance_text(is_upgraded: bool, amount: int) -> String:
+	var suffix = " [color=gold][UPGRADED][/color]" if is_upgraded else ""
+	var label = "INTERCEPT PAYMENT" if is_upgraded else "BIT MINE"
+	var tag = "opt_fin_up" if is_upgraded else "opt_fin"
+	var display_val = float(amount) / 10.0
+	return "[url=%s]3 -> %s (+%.1f BITS)[/url]%s" % [tag, label, display_val, suffix]
+
+func _get_medical_text(is_upgraded: bool) -> String:
+	if is_upgraded:
+		return "[url=opt_med_up]2 -> DISPENSE ADRENALINE (HEAL + BOOST)[/url] [color=gold][UPGRADED][/color]"
+	else:
+		return "[url=opt_med]2 -> DISPENSE PAINKILLERS (HEAL INJURY)[/url]"
+
+func _on_text_link_clicked(meta):
+	var meta_str = str(meta)
+	AudioManager.play_sfx("terminal")
+
+	option_selected.emit(meta_str)
+	_animate_close()
 
 func _start_typing_effect():
 	# Stop any existing cursor blinking
@@ -81,26 +104,6 @@ func _start_typing_effect():
 	type_tween = create_tween()
 	type_tween.tween_property(text_label, "visible_ratio", 1.0, duration)
 
-	# When typing is done, start the blink loop
-	type_tween.finished.connect(_start_cursor_blink)
-
-func _start_cursor_blink():
-	# 1. Ensure we are starting fresh
-	if cursor_tween and cursor_tween.is_running():
-		cursor_tween.kill()
-
-	cursor_tween = create_tween()
-	cursor_tween.set_loops() # Loop infinitely
-
-	var text_on = final_text_content + "_"
-	var text_off = final_text_content # or + " " to keep spacing
-
-	# 3. Toggle every 0.5 seconds
-	cursor_tween.tween_callback(func(): text_label.text = text_on)
-	cursor_tween.tween_interval(0.5)
-	cursor_tween.tween_callback(func(): text_label.text = text_off)
-	cursor_tween.tween_interval(0.5)
-
 func _animate_close():
 	if cursor_tween: cursor_tween.kill()
 	text_label.text = final_text_content
@@ -109,16 +112,6 @@ func _animate_close():
 	await tween.finished
 	hide()
 	closed.emit()
-
-func _on_text_link_clicked(meta):
-	if meta == "opt_1":
-		print("Selected Option 1: Bits")
-		option_selected.emit(1, bits)
-		_animate_close()
-	elif meta == "opt_2":
-		print("Selected Option 2: Alert")
-		option_selected.emit(2, alert)
-		_animate_close()
 
 func _on_close_button_pressed() -> void:
 	_animate_close()

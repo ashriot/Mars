@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://qkc7usulviqt" path="res://src/title_screen.gd" id="1_whxi8"]
 [ext_resource type="Texture2D" uid="uid://xtvo634hhmpf" path="res://assets/graphics/backgrounds/mars.png" id="2_616sk"]
-[ext_resource type="PackedScene" uid="uid://cl5f5vup72n32" path="res://src/game_scene.tscn" id="2_odwn3"]
+[ext_resource type="PackedScene" uid="uid://cl5f5vup72n32" path="res://src/game_manager.tscn" id="2_odwn3"]
 [ext_resource type="FontVariation" uid="uid://busejf1art6n0" path="res://data/theme/fonts/nebula_hollow.tres" id="2_vayli"]
 [ext_resource type="FontVariation" uid="uid://d0rv8u3y8y67d" path="res://data/theme/fonts/nebula.tres" id="3_616sk"]
 [ext_resource type="Shader" uid="uid://cg8j5a78td0ei" path="res://src/battle/chroma.gdshader" id="3_gc8o6"]
