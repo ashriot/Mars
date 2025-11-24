@@ -22,9 +22,6 @@ border_width_top = 6
 border_width_right = 6
 border_width_bottom = 6
 border_color = Color(1, 1, 1, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
 corner_detail = 6
 shadow_size = 10
 
@@ -34,10 +31,6 @@ content_margin_top = 2.0
 content_margin_right = 2.0
 content_margin_bottom = 2.0
 bg_color = Color(1, 1, 1, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
 corner_detail = 6
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bcccw"]
@@ -47,22 +40,22 @@ border_width_top = 3
 border_width_right = 3
 border_width_bottom = 3
 border_color = Color(1, 1, 1, 1)
-corner_radius_bottom_right = 12
+corner_radius_top_left = 12
 corner_radius_bottom_left = 12
 shadow_size = 5
-shadow_offset = Vector2(0, 5)
+shadow_offset = Vector2(-5, 5)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7dsd2"]
-bg_color = Color(0.116740875, 0.116740905, 0.116740815, 0.6862745)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gftom"]
+bg_color = Color(1, 1, 1, 1)
 border_width_left = 3
 border_width_top = 3
 border_width_right = 3
 border_width_bottom = 3
 border_color = Color(1, 1, 1, 1)
-corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
+shadow_size = 5
+shadow_offset = Vector2(5, 5)
 
 [node name="DungeonMap" type="Node2D"]
 script = ExtResource("1_5o7fj")
@@ -122,14 +115,14 @@ show_percentage = false
 
 [node name="Panel" type="Panel" parent="CanvasLayer/HUD/AlertGauge"]
 layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -376.0
-offset_top = 42.0
-offset_right = -129.0
-offset_bottom = 82.0
-grow_horizontal = 2
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = -115.0
+offset_top = -21.5
+offset_right = 5.0
+offset_bottom = 21.5
+grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_bcccw")
 
 [node name="Alert" type="Label" parent="CanvasLayer/HUD/AlertGauge/Panel"]
@@ -148,17 +141,32 @@ theme_override_font_sizes/font_size = 36
 text = "ALERT"
 vertical_alignment = 1
 
-[node name="Value" type="Label" parent="CanvasLayer/HUD/AlertGauge/Panel"]
+[node name="Panel2" type="Panel" parent="CanvasLayer/HUD/AlertGauge"]
 layout_mode = 1
 anchors_preset = 6
 anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = -105.0
-offset_top = -20.0
+offset_left = -6.0
+offset_top = -21.5
+offset_right = 91.0
+offset_bottom = 21.5
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_gftom")
+
+[node name="Value" type="Label" parent="CanvasLayer/HUD/AlertGauge/Panel2"]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -93.0
+offset_top = -23.5
 offset_right = -7.0
-offset_bottom = 20.0
+offset_bottom = 23.5
 grow_horizontal = 0
 grow_vertical = 2
 theme_override_colors/font_color = Color(0.12041845, 0.12041845, 0.12041845, 1)
@@ -168,19 +176,4 @@ text = "100%"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="save_quit" type="Button" parent="CanvasLayer/HUD"]
-layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -301.0
-offset_top = 19.0
-offset_right = -29.0
-offset_bottom = 88.0
-grow_horizontal = 0
-theme_override_styles/normal = SubResource("StyleBoxFlat_7dsd2")
-text = "Save & Quit"
-
 [node name="Camera2D" type="Camera2D" parent="."]
-
-[connection signal="pressed" from="CanvasLayer/HUD/save_quit" to="." method="_on_save_quit_pressed"]
