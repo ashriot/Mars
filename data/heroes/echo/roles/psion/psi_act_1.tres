@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="RoleNode" load_steps=3 format=3 uid="uid://cmykqlixnc1rk"]
+
+[ext_resource type="Script" uid="uid://cuhoaxfyipk6s" path="res://data/scripts/data/role_node.gd" id="1_plb0h"]
+[ext_resource type="Resource" uid="uid://dea3writltnu5" path="res://data/heroes/echo/actions/focused_bolt.tres" id="2_eiiw8"]
+
+[resource]
+script = ExtResource("1_plb0h")
+type = 1
+unlock_resource = ExtResource("2_eiiw8")
+action_slot_index = 0
+metadata/_custom_type_script = "uid://cuhoaxfyipk6s"

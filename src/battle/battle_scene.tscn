@@ -21,8 +21,8 @@
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_7up2b"]
 shader = ExtResource("13_w2kg5")
-shader_parameter/aberration_x = 0.10000005224999996
-shader_parameter/aberration_y = 0.10000005224999996
+shader_parameter/aberration_x = 0.05000004987499995
+shader_parameter/aberration_y = 0.05000004987499995
 
 [sub_resource type="Gradient" id="Gradient_7up2b"]
 colors = PackedColorArray(0, 0, 0, 0.7058824, 0, 0, 0, 0)

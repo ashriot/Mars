@@ -238,10 +238,7 @@ func sync_visual_health() -> Tween:
 
 	if actual_hp == real_hp and ghost_hp == real_hp:
 		return null
-	if ghost_hp == real_hp:
-		hp_bar_ghost.hide()
-	else:
-		hp_bar_ghost.show()
+	hp_bar_ghost.show()
 
 	var DURATION = 0.5 / battle_manager.battle_speed
 

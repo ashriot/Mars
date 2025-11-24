@@ -2,59 +2,59 @@ extends Resource
 class_name HeroData
 
 @export var hero_id: String = "asher"
-@export var hero_name: String = "asher"
+@export var hero_name: String = "Asher"
 @export var portrait: Texture
 
-# Equipment slots
+# --- Equipment ---
 @export var weapon: Equipment
 @export var armor: Equipment
 @export var accessory_1: Equipment
 @export var accessory_2: Equipment
 
-@export var unlocked_roles: Array[RoleData]
-@export var role_progressions: Array[RoleProgression] = []
-@export var active_role_index: int = 0
+# --- Progression Data ---
+@export var role_definitions: Array[RoleDefinition] = []
 
+@export var unlocked_role_ids: Array[String] = []
+@export var unlocked_node_ids: Array[String] = []
+
+@export var active_role_index: int = 0
 @export var injuries: int = 0
 
+# --- Runtime Data (Not Saved) ---
 var stats: ActorStats
+var battle_roles: Dictionary = {} # Key: role_id, Value: RoleData
 
-func get_role_progression(role_id: String) -> RoleProgression:
-	for prog in role_progressions:
-		if prog.role_id == role_id:
-			return prog
-	return null
-
+# ===================================================================
+# 1. STAT CALCULATION
+# ===================================================================
 func calculate_stats():
-	stats = ActorStats.new()
-	stats.actor_name = hero_name
-	# Apply equipment (now calculated based on level)
+	var final_stats = ActorStats.new()
+	final_stats.actor_name = hero_name
+
 	if weapon:
 		var weapon_stats = weapon.calculate_stats()
-		_add_stats(stats, weapon_stats)
-		_apply_special_effect(stats, weapon)
-
+		_add_stats(final_stats, weapon_stats)
+		_apply_special_effect(final_stats, weapon)
 	if armor:
 		var armor_stats = armor.calculate_stats()
-		_add_stats(stats, armor_stats)
-		_apply_special_effect(stats, armor)
-
+		_add_stats(final_stats, armor_stats)
+		_apply_special_effect(final_stats, armor)
 	if accessory_1:
 		var acc1_stats = accessory_1.calculate_stats()
-		_add_stats(stats, acc1_stats)
-		_apply_special_effect(stats, accessory_1)
-
+		_add_stats(final_stats, acc1_stats)
+		_apply_special_effect(final_stats, accessory_1)
 	if accessory_2:
 		var acc2_stats = accessory_2.calculate_stats()
-		_add_stats(stats, acc2_stats)
-		_apply_special_effect(stats, accessory_2)
+		_add_stats(final_stats, acc2_stats)
+		_apply_special_effect(final_stats, accessory_2)
 
-	# Apply ALL role progression bonuses
-	for progression in role_progressions:
-		for stat_type in progression.stat_bonuses:
-			stats.add_stat(stat_type, progression.stat_bonuses[stat_type])
+	# Apply Tree Stats
+	for role_def in role_definitions:
+		if role_def.root_node:
+			role_def.init_structure() # Ensure IDs exist
+			_process_node_stats(role_def.root_node, final_stats)
 
-	return stats
+	stats = final_stats
 
 func _add_stats(base: ActorStats, additional: ActorStats):
 	base.max_hp += additional.max_hp
@@ -69,63 +69,113 @@ func _add_stats(base: ActorStats, additional: ActorStats):
 
 func _apply_special_effect(actor_stats: ActorStats, equipment: Equipment):
 	match equipment.special_effect:
-		"advantage_1", "advantage_2", "advantage_3":
-			# Starting Focus bonus handled in combat initialization
-			pass
-		"fortified":
-			# Critical hits don't shred extra Guard - handled in combat
-			pass
 		"glass_cannon":
-			# Apply HP penalty (-20% HP)
 			var penalty = int(actor_stats.max_hp * abs(equipment.special_effect_value) / 100.0)
 			actor_stats.max_hp = max(1, actor_stats.max_hp - penalty)
-		"paladin":
-			# Damage reduction handled in combat
-			pass
-		_:
-			# Unknown special effect, ignore
-			pass
+		_: pass
+
+func _process_node_stats(node: RoleNode, accum_stats: ActorStats):
+	# Check flat list
+	if not node.generated_id in unlocked_node_ids:
+		return
+
+	if node.type == RoleNode.RewardType.STAT:
+		accum_stats.add_stat(node.stat_type, node.stat_value)
+
+	for child in node.next_nodes:
+		_process_node_stats(child, accum_stats)
+
+# ===================================================================
+# 2. BATTLE ROLE GENERATION
+# ===================================================================
+
+func rebuild_battle_roles():
+	battle_roles.clear()
+
+	for def in role_definitions:
+		if def.role_id in unlocked_role_ids:
+			var role_data = RoleData.new()
+			role_data.role_id = def.role_id
+			role_data.role_name = def.role_name
+			role_data.icon = def.icon
+			role_data.color = def.color
+			battle_roles[def.role_id] = role_data
+			def.init_structure()
+			if def.root_node:
+				_bake_tree_into_role(def.root_node, role_data)
+
+func get_battle_role(role_id: String) -> RoleData:
+	return battle_roles.get(role_id)
+
+func _bake_tree_into_role(node: RoleNode, target_role: RoleData):
+	# Check flat list
+	if not node.generated_id in unlocked_node_ids:
+		return
+
+	match node.type:
+		RoleNode.RewardType.ACTION:
+			if node.unlock_resource is Action:
+				var action = node.unlock_resource
+				# Use the specific slot if defined
+				if node.action_slot_index >= 0:
+					if target_role.actions.size() < 4:
+						target_role.actions.resize(4)
+					target_role.actions[node.action_slot_index] = action
+				else:
+					target_role.actions.append(action)
+
+		RoleNode.RewardType.PASSIVE:
+			if node.unlock_resource is Action:
+				target_role.passive = node.unlock_resource
+
+		RoleNode.RewardType.SHIFT_ACTION:
+			if node.unlock_resource is Action:
+				target_role.passive = node.unlock_resource
+
+	for child in node.next_nodes:
+		_bake_tree_into_role(child, target_role)
+
+# ===================================================================
+# 3. SAVE / LOAD SYSTEM
+# ===================================================================
+
+func unlock_new_role(role_id: String):
+	if not role_id in unlocked_role_ids:
+		unlocked_role_ids.append(role_id)
+
+func unlock_node(node: RoleNode):
+	if not node.generated_id in unlocked_node_ids:
+		unlocked_node_ids.append(node.generated_id)
 
 func get_save_data() -> Dictionary:
-	var role_data = []
-	for prog in role_progressions:
-		# Assuming RoleProgression has a simple structure (id + rank)
-		role_data.append({
-			"id": prog.role_id,
-			"rank": prog.current_rank,
-			"xp": prog.current_xp
-		})
-
 	return {
 		"hero_id": hero_id,
 		"injuries": injuries,
-		# We save the Equipment ID and Level (using the helper in Equipment.gd)
+		"active_role": active_role_index,
 		"weapon": weapon.get_save_data() if weapon else {},
 		"armor": armor.get_save_data() if armor else {},
 		"acc1": accessory_1.get_save_data() if accessory_1 else {},
 		"acc2": accessory_2.get_save_data() if accessory_2 else {},
-		"roles": role_data,
-		"active_role": active_role_index
+		"unlocked_role_ids": unlocked_role_ids,
+		"unlocked_node_ids": unlocked_node_ids,
 	}
 
-# This function hydrates the HeroData from the JSON dictionary
 func load_from_save_data(data: Dictionary):
-	# 1. Restore Equipment (Using the static helper we discussed)
+	injuries = data.get("injuries", 0)
+	active_role_index = data.get("active_role", 0)
+
+	var loaded_node_ids = data.get("unlocked_node_ids", [])
+	unlocked_node_ids.clear()
+	for id in loaded_node_ids:
+		unlocked_node_ids.append(str(id))
+
+	# Load Role IDs
+	var loaded_role_ids = data.get("unlocked_role_ids", [])
+	unlocked_role_ids.clear()
+	for id in loaded_role_ids:
+		unlocked_role_ids.append(str(id))
+
 	if data.get("weapon"): weapon = Equipment.create_from_save_data(data.weapon)
 	if data.get("armor"): armor = Equipment.create_from_save_data(data.armor)
 	if data.get("acc1"): accessory_1 = Equipment.create_from_save_data(data.acc1)
 	if data.get("acc2"): accessory_2 = Equipment.create_from_save_data(data.acc2)
-
-	# 2. Restore Active Role
-	active_role_index = data.get("active_role", 0)
-	injuries = data.get("injuries", 0)
-
-	# 3. Restore Role Progression
-	# (This logic depends on how you store RoleProgressions,
-	#  but usually you match IDs and update the values)
-	var saved_roles = data.get("roles", [])
-	#for saved_r in saved_roles:
-		#var existing = get_role_progression(saved_r.id)
-		#if existing:
-			#existing.rank = saved_r.rank
-			#existing.xp = saved_r.xp

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="RoleData" load_steps=8 format=3 uid="uid://jqybnec33mi0"]
+[gd_resource type="Resource" script_class="RoleData" load_steps=7 format=3 uid="uid://jqybnec33mi0"]
 
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_krxnr"]
 [ext_resource type="Resource" uid="uid://bua2w6l1vluii" path="res://data/heroes/echo/actions/telekinesis.tres" id="2_procj"]
@@ -6,7 +6,6 @@
 [ext_resource type="Texture2D" uid="uid://dsriy3sccbg28" path="res://assets/graphics/icons/roles/bolt-spell-cast.png" id="4_mbt5s"]
 [ext_resource type="Resource" uid="uid://b1fo5o00eq2jj" path="res://data/heroes/echo/actions/apply_acuity.tres" id="5_etcsd"]
 [ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/data/role_data.gd" id="5_qoyy0"]
-[ext_resource type="Script" uid="uid://b3bjvoif3sdcn" path="res://data/scripts/data/rank_reward.gd" id="8_egj0i"]
 
 [resource]
 script = ExtResource("5_qoyy0")

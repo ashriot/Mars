@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="RoleDefinition" load_steps=4 format=3 uid="uid://ggyc3b3330o5"]
+
+[ext_resource type="Texture2D" uid="uid://dsriy3sccbg28" path="res://assets/graphics/icons/roles/bolt-spell-cast.png" id="1_e0p5n"]
+[ext_resource type="Resource" uid="uid://hyr5rifx4e6g" path="res://data/heroes/echo/roles/kineticist/kin_act_1.tres" id="2_e0p5n"]
+[ext_resource type="Script" uid="uid://sy50n7nerbow" path="res://data/scripts/data/role_definition.gd" id="3_r4q1p"]
+
+[resource]
+script = ExtResource("3_r4q1p")
+role_id = "kin"
+role_name = "Kineticist"
+description = "A multi-target Energy nuker."
+icon = ExtResource("1_e0p5n")
+color = Color(0, 1.437, 1.293, 1)
+root_node = ExtResource("2_e0p5n")
+metadata/_custom_type_script = "uid://sy50n7nerbow"

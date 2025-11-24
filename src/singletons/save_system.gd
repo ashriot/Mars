@@ -84,7 +84,7 @@ func start_new_campaign(slot_index: int):
 	party_roster.clear()
 	party_roster.append(load("res://data/heroes/asher/asher.tres").duplicate())
 	party_roster.append(load("res://data/heroes/echo/echo.tres").duplicate())
-	party_roster.append(load("res://data/heroes/sands/sands.tres").duplicate())
+	#party_roster.append(load("res://data/heroes/sands/sands.tres").duplicate())
 
 	# Default Bits
 	bits = 100

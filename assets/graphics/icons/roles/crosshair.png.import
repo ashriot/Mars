@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cogus1wqw41g8"
-path="res://.godot/imported/chaingun.png-2314d2ebcd6d7fe2d76aa43a3b7e6b2f.ctex"
+uid="uid://c8qynvefg1hjf"
+path="res://.godot/imported/crosshair.png-eb145660299ab1eb63a84a54e6fc3d52.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/icons/skills/chaingun.png"
-dest_files=["res://.godot/imported/chaingun.png-2314d2ebcd6d7fe2d76aa43a3b7e6b2f.ctex"]
+source_file="res://assets/graphics/icons/roles/crosshair.png"
+dest_files=["res://.godot/imported/crosshair.png-eb145660299ab1eb63a84a54e6fc3d52.ctex"]
 
 [params]
 
