@@ -155,6 +155,7 @@ grow_vertical = 2
 theme_override_constants/separation = 20
 
 [node name="BtnStart" type="Button" parent="MenuButtons"]
+self_modulate = Color(0.88, 0.42856, 0.1672, 1)
 custom_minimum_size = Vector2(0, 75)
 layout_mode = 2
 theme_override_colors/font_hover_color = Color(0.18039216, 0.18039216, 0.18039216, 1)
@@ -165,6 +166,7 @@ theme_override_styles/hover = ExtResource("9_6ron6")
 text = "START NEW GAME"
 
 [node name="BtnContinue" type="Button" parent="MenuButtons"]
+self_modulate = Color(0.88, 0.42856, 0.1672, 1)
 custom_minimum_size = Vector2(0, 75)
 layout_mode = 2
 theme_override_colors/font_hover_color = Color(0.18039216, 0.18039216, 0.18039216, 1)
@@ -175,6 +177,7 @@ theme_override_styles/hover = ExtResource("9_6ron6")
 text = "CONTINUE GAME"
 
 [node name="BtnLoad" type="Button" parent="MenuButtons"]
+self_modulate = Color(0.88, 0.42856, 0.1672, 1)
 custom_minimum_size = Vector2(0, 75)
 layout_mode = 2
 theme_override_colors/font_hover_color = Color(0.18039216, 0.18039216, 0.18039216, 1)

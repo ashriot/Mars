@@ -11,6 +11,8 @@ const BUS_SFX = "SFX"
 var track_library = {
 	"battle": preload("res://assets/music/battle.ogg"),
 	"map_1": preload("res://assets/music/map_1.ogg"),
+	"hub": preload("res://assets/music/hub.ogg"),
+	"title": preload("res://assets/music/title.ogg"),
 	# Add your other tracks here
 }
 

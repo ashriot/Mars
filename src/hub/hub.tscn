@@ -1,8 +1,12 @@
-[gd_scene load_steps=11 format=3 uid="uid://ckajtcj4403sy"]
+[gd_scene load_steps=17 format=3 uid="uid://ckajtcj4403sy"]
 
 [ext_resource type="Script" uid="uid://dff0o6ejveewn" path="res://src/hub/hub.gd" id="1_8xbvn"]
 [ext_resource type="Texture2D" uid="uid://5g78sj1okle7" path="res://assets/graphics/backgrounds/apartment.webp" id="2_n1oa3"]
 [ext_resource type="Texture2D" uid="uid://b0a4ghiukj8yg" path="res://src/effects/Flare_small.PNG" id="3_c3p1t"]
+[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="4_bfsw3"]
+[ext_resource type="StyleBox" uid="uid://bhjtch4mfk4jc" path="res://data/theme/styleboxes/btn_opaque_normal.tres" id="4_vmamr"]
+[ext_resource type="Texture2D" uid="uid://57er1ylqh81y" path="res://assets/graphics/icons/hub/home.png" id="5_gb5ag"]
+[ext_resource type="StyleBox" uid="uid://1p4tyofjick6" path="res://data/theme/styleboxes/btn_opaque_hover.tres" id="6_lgcv4"]
 
 [sub_resource type="Gradient" id="Gradient_ivd5l"]
 offsets = PackedFloat32Array(0, 0.15121952, 0.88536584, 1)
@@ -42,6 +46,32 @@ gradient = SubResource("Gradient_vmamr")
 fill_from = Vector2(0.50934577, 0)
 fill_to = Vector2(0.51635516, 1)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lgcv4"]
+bg_color = Color(1, 1, 1, 0.9607843)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+shadow_color = Color(0, 0, 0, 0.78431374)
+shadow_size = 1
+shadow_offset = Vector2(0, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gb5ag"]
+bg_color = Color(1, 1, 1, 0.9607843)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 12
+corner_radius_bottom_left = 12
+shadow_color = Color(0, 0, 0, 0.78431374)
+shadow_size = 1
+shadow_offset = Vector2(0, 1)
+
 [node name="Hub" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -59,9 +89,11 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("2_n1oa3")
+metadata/_edit_group_ = true
+metadata/_edit_lock_ = true
 
 [node name="Background" type="GPUParticles2D" parent="Background"]
-modulate = Color(1, 1, 1, 0.6313726)
+modulate = Color(1, 1, 1, 0.13725491)
 position = Vector2(962, 459)
 amount = 300
 texture = ExtResource("3_c3p1t")
@@ -87,74 +119,131 @@ grow_horizontal = 2
 texture = SubResource("GradientTexture2D_bfsw3")
 
 [node name="Panel" type="Panel" parent="."]
+self_modulate = Color(0.88, 0.42856, 0.1672, 1)
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -770.0
-offset_top = 50.0
-offset_right = -50.0
-offset_bottom = 193.0
+offset_left = -726.0
+offset_top = 43.0
+offset_right = -43.0
+offset_bottom = 113.0
 grow_horizontal = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_lgcv4")
 
 [node name="Label" type="Label" parent="Panel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 14.0
+offset_top = -3.0
+offset_bottom = 3.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_colors/font_color = Color(0.11764706, 0.11764706, 0.11764706, 1)
+theme_override_fonts/font = ExtResource("4_bfsw3")
 theme_override_font_sizes/font_size = 60
-text = "Echo's Apartment"
-horizontal_alignment = 1
+text = "ECHO'S APARTMENT"
 vertical_alignment = 1
 
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
+[node name="Margin" type="Panel" parent="Panel"]
+self_modulate = Color(0.11764706, 0.11764706, 0.11764706, 1)
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = -69.0
+offset_top = -35.0
+offset_right = 1.0
+offset_bottom = 35.0
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_gb5ag")
+
+[node name="TextureRect" type="TextureRect" parent="Panel/Margin"]
+modulate = Color(0.88, 0.42856, 0.1672, 1)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -25.0
+offset_top = -25.0
+offset_right = 25.0
+offset_bottom = 25.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("5_gb5ag")
+expand_mode = 1
+
+[node name="Actions" type="VBoxContainer" parent="."]
+modulate = Color(0.38, 0.8139999, 1, 1)
 layout_mode = 1
 offset_left = 50.0
-offset_top = 50.0
-offset_right = 669.0
-offset_bottom = 90.0
+offset_top = 47.0
+offset_right = 800.0
+offset_bottom = 567.0
 theme_override_constants/separation = 20
 
-[node name="Button" type="Button" parent="VBoxContainer"]
-modulate = Color(1, 0.6666667, 0, 1)
-custom_minimum_size = Vector2(200, 100)
+[node name="Button" type="Button" parent="Actions"]
+custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
+theme_override_colors/font_hover_color = Color(0.11764706, 0.11764706, 0.11764706, 1)
+theme_override_fonts/font = ExtResource("4_bfsw3")
 theme_override_font_sizes/font_size = 48
-text = "Terminal Access"
+theme_override_styles/normal = ExtResource("4_vmamr")
+theme_override_styles/hover = ExtResource("6_lgcv4")
+text = "TERMINAL ACCESS"
 
-[node name="Button2" type="Button" parent="VBoxContainer"]
-modulate = Color(1, 0.4392157, 0, 1)
-custom_minimum_size = Vector2(200, 100)
+[node name="Button2" type="Button" parent="Actions"]
+custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
+theme_override_colors/font_hover_color = Color(0.11764706, 0.11764706, 0.11764706, 1)
+theme_override_fonts/font = ExtResource("4_bfsw3")
 theme_override_font_sizes/font_size = 48
-text = "Check Gear"
+theme_override_styles/normal = ExtResource("4_vmamr")
+theme_override_styles/hover = ExtResource("6_lgcv4")
+text = "CHECK STATUS"
 
-[node name="Button3" type="Button" parent="VBoxContainer"]
-modulate = Color(1, 0.4392157, 0, 1)
-custom_minimum_size = Vector2(200, 100)
+[node name="Button3" type="Button" parent="Actions"]
+custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
+theme_override_colors/font_hover_color = Color(0.11764706, 0.11764706, 0.11764706, 1)
+theme_override_fonts/font = ExtResource("4_bfsw3")
 theme_override_font_sizes/font_size = 48
-text = "Training Program"
+theme_override_styles/normal = ExtResource("4_vmamr")
+theme_override_styles/hover = ExtResource("6_lgcv4")
+text = "RUN TRAINING EXE"
 
-[node name="Button4" type="Button" parent="VBoxContainer"]
-modulate = Color(1, 0.4392157, 0, 1)
-custom_minimum_size = Vector2(200, 100)
+[node name="Button4" type="Button" parent="Actions"]
+custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
+theme_override_colors/font_hover_color = Color(0.11764706, 0.11764706, 0.11764706, 1)
+theme_override_fonts/font = ExtResource("4_bfsw3")
 theme_override_font_sizes/font_size = 48
-text = "Access Banking"
+theme_override_styles/normal = ExtResource("4_vmamr")
+theme_override_styles/hover = ExtResource("6_lgcv4")
+text = "ACCESS BANKING"
 
-[node name="Button5" type="Button" parent="VBoxContainer"]
-modulate = Color(1, 0.4392157, 0, 1)
-custom_minimum_size = Vector2(200, 100)
+[node name="Button5" type="Button" parent="Actions"]
+custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
+theme_override_colors/font_hover_color = Color(0.11764706, 0.11764706, 0.11764706, 1)
+theme_override_fonts/font = ExtResource("4_bfsw3")
 theme_override_font_sizes/font_size = 48
-text = "Contact Milo"
+theme_override_styles/normal = ExtResource("4_vmamr")
+theme_override_styles/hover = ExtResource("6_lgcv4")
+text = "CONTACT MILO"
 
-[node name="Button6" type="Button" parent="VBoxContainer"]
-modulate = Color(1, 0.4392157, 0, 1)
-custom_minimum_size = Vector2(200, 100)
+[node name="HeadOut" type="Button" parent="Actions"]
+custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
+theme_override_colors/font_hover_color = Color(0.11764706, 0.11764706, 0.11764706, 1)
+theme_override_fonts/font = ExtResource("4_bfsw3")
 theme_override_font_sizes/font_size = 48
-text = "Leave Apartment"
+theme_override_styles/normal = ExtResource("4_vmamr")
+theme_override_styles/hover = ExtResource("6_lgcv4")
+text = "HEAD OUT"
+
+[connection signal="pressed" from="Actions/HeadOut" to="." method="_on_head_out_pressed"]

@@ -111,27 +111,26 @@ func get_battle_role(role_id: String) -> RoleData:
 	return battle_roles.get(role_id)
 
 func _bake_tree_into_role(node: RoleNode, target_role: RoleData):
-	# Check flat list
+
 	if not node.generated_id in unlocked_node_ids:
 		return
 
 	match node.type:
 		RoleNode.RewardType.ACTION:
-			if node.unlock_resource is Action:
-				if node.action_slot_index < 0:
-					push_error("Action slot cannot be less than 0!")
-				var action = node.unlock_resource
+			var slot = node.action_slot_index
+			if slot >= 0 and slot < target_role.source_definition.actions.size():
+				var action_ref = target_role.source_definition.actions[slot]
 				if target_role.actions.size() < 4:
 					target_role.actions.resize(4)
-				target_role.actions[node.action_slot_index] = action
+				target_role.actions[slot] = action_ref
 
 		RoleNode.RewardType.PASSIVE:
-			if node.unlock_resource is Action:
-				target_role.passive = node.unlock_resource
+			if target_role.source_definition.passive:
+				target_role.passive = target_role.source_definition.passive
 
 		RoleNode.RewardType.SHIFT_ACTION:
-			if node.unlock_resource is Action:
-				target_role.passive = node.unlock_resource
+			if target_role.source_definition.shift_action:
+				target_role.shift_action = target_role.source_definition.shift_action
 
 	for child in node.next_nodes:
 		_bake_tree_into_role(child, target_role)

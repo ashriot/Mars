@@ -1,8 +1,15 @@
-[gd_resource type="Resource" script_class="RoleDefinition" load_steps=4 format=3 uid="uid://8mpcdw2eyx0n"]
+[gd_resource type="Resource" script_class="RoleDefinition" load_steps=11 format=3 uid="uid://8mpcdw2eyx0n"]
 
 [ext_resource type="Texture2D" uid="uid://dve0tjghg88kw" path="res://assets/graphics/icons/roles/blindfold.png" id="1_2ckq0"]
 [ext_resource type="Script" uid="uid://sy50n7nerbow" path="res://data/scripts/data/role_definition.gd" id="1_a5jl1"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_msay0"]
+[ext_resource type="Resource" uid="uid://dea3writltnu5" path="res://data/heroes/echo/actions/focused_bolt.tres" id="2_2q84o"]
 [ext_resource type="Resource" uid="uid://cmykqlixnc1rk" path="res://data/heroes/echo/roles/psion/psi_1.tres" id="2_6vi84"]
+[ext_resource type="Resource" uid="uid://jwd4kedsv3hb" path="res://data/heroes/echo/actions/energy_barrier.tres" id="3_ot4lx"]
+[ext_resource type="Resource" uid="uid://cyeb0bt4dei2" path="res://data/heroes/echo/actions/reverberate.tres" id="4_my6un"]
+[ext_resource type="Resource" uid="uid://bnqntvgov7q51" path="res://data/heroes/echo/actions/mind_storm.tres" id="5_lnxfe"]
+[ext_resource type="Resource" uid="uid://c0engj2adit4x" path="res://data/heroes/echo/actions/psionic_pulse.tres" id="7_m0mu3"]
+[ext_resource type="Resource" uid="uid://dk51rygyr5a1m" path="res://data/heroes/echo/actions/shatter.tres" id="10_0ltas"]
 
 [resource]
 script = ExtResource("1_a5jl1")
@@ -11,5 +18,8 @@ role_name = "Psion"
 description = "A multi-target Energy nuker."
 icon = ExtResource("1_2ckq0")
 color = Color(0, 0.565, 1.437, 1)
+passive = ExtResource("7_m0mu3")
+shift_action = ExtResource("10_0ltas")
+actions = Array[ExtResource("1_msay0")]([ExtResource("2_2q84o"), ExtResource("3_ot4lx"), ExtResource("4_my6un"), ExtResource("5_lnxfe")])
 root_node = ExtResource("2_6vi84")
 metadata/_custom_type_script = "uid://sy50n7nerbow"

@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="Action" load_steps=7 format=3 uid="uid://b1fo5o00eq2jj"]
+
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_x4x4l"]
+[ext_resource type="Resource" uid="uid://d0ygnk0nwludm" path="res://data/heroes/echo/conditions/telepathy.tres" id="2_f4pic"]
+[ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://data/scripts/action_effects/effect_apply_condition.gd" id="3_h5t01"]
+[ext_resource type="Texture2D" uid="uid://kopcr262prm3" path="res://assets/graphics/icons/skills/psychic-waves.png" id="4_4iyy1"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="5_01vxm"]
+
+[sub_resource type="Resource" id="Resource_6yt7l"]
+script = ExtResource("3_h5t01")
+condition = ExtResource("2_f4pic")
+metadata/_custom_type_script = "uid://dggojfw8tmpnk"
+
+[resource]
+script = ExtResource("5_01vxm")
+action_name = "Telepathy"
+icon = ExtResource("4_4iyy1")
+description = "Echo gains {foc}{foc} per turn."
+focus_cost = null
+auto_target = null
+update_turn_order = null
+is_shift_action = null
+target_type = 4
+effects = Array[ExtResource("1_x4x4l")]([SubResource("Resource_6yt7l")])
+metadata/_custom_type_script = "uid://dm08rhkg3bai3"

@@ -7,12 +7,14 @@ enum RewardType { STAT, ACTION, SHIFT_ACTION, PASSIVE, EMPTY }
 
 # --- REWARD DATA ---
 @export var type: RewardType = RewardType.STAT
+
+# For STAT rewards:
 @export var stat_type: ActorStats.Stats
 @export var stat_value: int = 0
-@export var unlock_resource: Resource
 
-# --- MAPPING ---
-# 0=Bottom, 1=Right, 2=Left, 3=Top. -1 = Auto/Append
+# For ACTION rewards:
+# 0=Bottom, 1=Right, 2=Left, 3=Top
+# This now maps directly to RoleDefinition.actions[i]
 @export var action_slot_index: int = -1
 
 # --- CONNECTIONS ---

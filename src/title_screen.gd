@@ -10,6 +10,7 @@ extends Control
 @onready var menu_buttons: VBoxContainer = $MenuButtons
 
 func _ready():
+	AudioManager.play_music("title")
 	self.modulate.a = 0.0
 	for child in menu_buttons.get_children():
 		child = child as Button
