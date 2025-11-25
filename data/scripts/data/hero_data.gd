@@ -101,10 +101,7 @@ func rebuild_battle_roles():
 	for def in role_definitions:
 		if def.role_id in unlocked_role_ids:
 			var role_data = RoleData.new()
-			role_data.role_id = def.role_id
-			role_data.role_name = def.role_name
-			role_data.icon = def.icon
-			role_data.color = def.color
+			role_data.source_definition = def
 			battle_roles[def.role_id] = role_data
 			def.init_structure()
 			if def.root_node:

@@ -96,20 +96,17 @@ layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_bottom = -855.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
 [node name="AlertGauge" type="ProgressBar" parent="CanvasLayer/HUD"]
 layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -376.0
-offset_top = 13.0
-offset_right = 376.0
-offset_bottom = 56.0
-grow_horizontal = 2
+offset_left = 140.0
+offset_top = 20.0
+offset_right = 892.0
+offset_bottom = 63.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_styles/background = SubResource("StyleBoxFlat_1a5qu")
 theme_override_styles/fill = SubResource("StyleBoxFlat_vfn15")
@@ -181,10 +178,10 @@ vertical_alignment = 1
 
 [node name="TeamStatus" type="Control" parent="CanvasLayer/HUD"]
 anchors_preset = 0
-offset_left = 27.0
-offset_top = 12.0
-offset_right = 356.0
-offset_bottom = 52.0
+offset_left = 25.0
+offset_top = 72.0
+offset_right = 354.0
+offset_bottom = 112.0
 
 [node name="VBox" type="VBoxContainer" parent="CanvasLayer/HUD/TeamStatus"]
 layout_mode = 0

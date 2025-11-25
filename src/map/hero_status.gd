@@ -1,6 +1,7 @@
 extends Panel
 class_name HeroStatus
 
+@onready var role_name: Label = $RoleName
 @onready var hero_name: Label = $HeroName
 @onready var injuries: HBoxContainer = $Injuries
 @onready var focused_boon: TextureRect = $Boons/Focused
@@ -28,6 +29,7 @@ func setup(data: HeroData):
 func refresh_view():
 	if not linked_hero_data: return
 
+	role_name.text = linked_hero_data.current_role.role_id.to_upper()
 	hero_name.text = linked_hero_data.hero_name.to_upper()
 	self.self_modulate = linked_hero_data.current_role.color
 

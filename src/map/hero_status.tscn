@@ -4,7 +4,7 @@
 [ext_resource type="Script" uid="uid://cxkviuaghnjrw" path="res://src/map/hero_status.gd" id="1_hfba2"]
 [ext_resource type="Texture2D" uid="uid://c3vg1nlh2b7a0" path="res://assets/graphics/icons/map/blood-drop.png" id="2_hfba2"]
 [ext_resource type="Texture2D" uid="uid://dni1rovx6ciyq" path="res://assets/graphics/icons/textures/bolt_sm.png" id="3_huwb8"]
-[ext_resource type="Texture2D" uid="uid://ybrwd70w1dkb" path="res://assets/graphics/icons/textures/shield_sm.png" id="4_yqtn3"]
+[ext_resource type="Texture2D" uid="uid://bp4qm1fim7f6v" path="res://assets/graphics/icons/textures/shield.png" id="5_hfba2"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ssagv"]
 bg_color = Color(1, 1, 1, 1)
@@ -23,25 +23,74 @@ shadow_offset = Vector2(0, 2)
 
 [node name="HeroStatus" type="Panel"]
 self_modulate = Color(1.128, 1.437, 0.277, 1)
-custom_minimum_size = Vector2(300, 43)
+custom_minimum_size = Vector2(400, 43)
+offset_right = 400.0
+offset_bottom = 43.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_ssagv")
 script = ExtResource("1_hfba2")
+
+[node name="RoleName" type="Label" parent="."]
+modulate = Color(1, 1, 1, 0.78431374)
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 9.0
+offset_top = -23.5
+offset_right = 82.0
+offset_bottom = 23.5
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.12156863, 0.12156863, 0.12156863, 1)
+theme_override_fonts/font = ExtResource("1_53fmm")
+theme_override_font_sizes/font_size = 36
+text = "GUN"
+vertical_alignment = 1
 
 [node name="HeroName" type="Label" parent="."]
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_left = 7.0
-offset_top = -20.0
-offset_right = 126.0
-offset_bottom = 20.0
+offset_left = 91.0
+offset_top = -23.5
+offset_right = 210.0
+offset_bottom = 23.5
 grow_vertical = 2
 theme_override_colors/font_color = Color(0.12156863, 0.12156863, 0.12156863, 1)
 theme_override_fonts/font = ExtResource("1_53fmm")
 theme_override_font_sizes/font_size = 36
 text = "ASHER"
+horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="Boons" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -177.0
+offset_top = -14.5
+offset_right = -117.0
+offset_bottom = 13.5
+grow_horizontal = 0
+grow_vertical = 2
+alignment = 2
+
+[node name="Focused" type="TextureRect" parent="Boons"]
+modulate = Color(0.12156863, 0.12156863, 0.12156863, 1)
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+texture = ExtResource("3_huwb8")
+expand_mode = 1
+
+[node name="Armored" type="TextureRect" parent="Boons"]
+modulate = Color(0.12156863, 0.12156863, 0.12156863, 1)
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+texture = ExtResource("5_hfba2")
+expand_mode = 1
 
 [node name="Injuries" type="HBoxContainer" parent="."]
 layout_mode = 1
@@ -50,12 +99,13 @@ anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = -129.0
+offset_left = -96.0
 offset_top = -14.5
 offset_right = -4.0
 offset_bottom = 13.5
 grow_horizontal = 0
 grow_vertical = 2
+theme_override_constants/separation = 0
 alignment = 2
 
 [node name="Drop1" type="TextureRect" parent="Injuries"]
@@ -77,33 +127,4 @@ modulate = Color(0.12156863, 0.12156863, 0.12156863, 1)
 custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
 texture = ExtResource("2_hfba2")
-expand_mode = 1
-
-[node name="Boons" type="HBoxContainer" parent="."]
-layout_mode = 1
-anchors_preset = 6
-anchor_left = 1.0
-anchor_top = 0.5
-anchor_right = 1.0
-anchor_bottom = 0.5
-offset_left = -182.0
-offset_top = -14.5
-offset_right = -122.0
-offset_bottom = 13.5
-grow_horizontal = 0
-grow_vertical = 2
-alignment = 2
-
-[node name="Focused" type="TextureRect" parent="Boons"]
-modulate = Color(0.12156863, 0.12156863, 0.12156863, 1)
-custom_minimum_size = Vector2(28, 28)
-layout_mode = 2
-texture = ExtResource("3_huwb8")
-expand_mode = 1
-
-[node name="Armored" type="TextureRect" parent="Boons"]
-modulate = Color(0.12156863, 0.12156863, 0.12156863, 1)
-custom_minimum_size = Vector2(28, 28)
-layout_mode = 2
-texture = ExtResource("4_yqtn3")
 expand_mode = 1

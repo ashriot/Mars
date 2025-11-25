@@ -1,16 +1,22 @@
 extends Resource
 class_name RoleData
 
-@export var role_id: String = "gunslinger"
-@export var role_name: String = "Gunslinger"
-@export_multiline var description: String = ""
-@export var icon: Texture
-@export var color: Color
+var source_definition: RoleDefinition
+
+var role_name: String:
+	get: return source_definition.role_name
+var description: String:
+	get: return source_definition.description
+var icon: Texture:
+	get: return source_definition.icon
+var color: Color:
+	get: return source_definition.color
 
 # Base actions (unlocked at specific ranks)
 @export var shift_action: Action
 @export var passive: Action
 @export var actions: Array[Action]
+
 
 func clear_combat_data():
 	shift_action = null
