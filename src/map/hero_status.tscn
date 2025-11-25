@@ -1,0 +1,109 @@
+[gd_scene load_steps=7 format=3 uid="uid://1g2fulrngrw0"]
+
+[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="1_53fmm"]
+[ext_resource type="Script" uid="uid://cxkviuaghnjrw" path="res://src/map/hero_status.gd" id="1_hfba2"]
+[ext_resource type="Texture2D" uid="uid://c3vg1nlh2b7a0" path="res://assets/graphics/icons/map/blood-drop.png" id="2_hfba2"]
+[ext_resource type="Texture2D" uid="uid://dni1rovx6ciyq" path="res://assets/graphics/icons/textures/bolt_sm.png" id="3_huwb8"]
+[ext_resource type="Texture2D" uid="uid://ybrwd70w1dkb" path="res://assets/graphics/icons/textures/shield_sm.png" id="4_yqtn3"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ssagv"]
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+shadow_color = Color(0.12156863, 0.12156863, 0.12156863, 1)
+shadow_size = 5
+shadow_offset = Vector2(0, 2)
+
+[node name="HeroStatus" type="Panel"]
+self_modulate = Color(1.128, 1.437, 0.277, 1)
+custom_minimum_size = Vector2(300, 43)
+theme_override_styles/panel = SubResource("StyleBoxFlat_ssagv")
+script = ExtResource("1_hfba2")
+
+[node name="HeroName" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 7.0
+offset_top = -20.0
+offset_right = 126.0
+offset_bottom = 20.0
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.12156863, 0.12156863, 0.12156863, 1)
+theme_override_fonts/font = ExtResource("1_53fmm")
+theme_override_font_sizes/font_size = 36
+text = "ASHER"
+vertical_alignment = 1
+
+[node name="Injuries" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -129.0
+offset_top = -14.5
+offset_right = -4.0
+offset_bottom = 13.5
+grow_horizontal = 0
+grow_vertical = 2
+alignment = 2
+
+[node name="Drop1" type="TextureRect" parent="Injuries"]
+modulate = Color(0.12156863, 0.12156863, 0.12156863, 1)
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+texture = ExtResource("2_hfba2")
+expand_mode = 1
+
+[node name="Drop2" type="TextureRect" parent="Injuries"]
+modulate = Color(0.12156863, 0.12156863, 0.12156863, 1)
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+texture = ExtResource("2_hfba2")
+expand_mode = 1
+
+[node name="Drop3" type="TextureRect" parent="Injuries"]
+modulate = Color(0.12156863, 0.12156863, 0.12156863, 1)
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+texture = ExtResource("2_hfba2")
+expand_mode = 1
+
+[node name="Boons" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -182.0
+offset_top = -14.5
+offset_right = -122.0
+offset_bottom = 13.5
+grow_horizontal = 0
+grow_vertical = 2
+alignment = 2
+
+[node name="Focused" type="TextureRect" parent="Boons"]
+modulate = Color(0.12156863, 0.12156863, 0.12156863, 1)
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+texture = ExtResource("3_huwb8")
+expand_mode = 1
+
+[node name="Armored" type="TextureRect" parent="Boons"]
+modulate = Color(0.12156863, 0.12156863, 0.12156863, 1)
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+texture = ExtResource("4_yqtn3")
+expand_mode = 1

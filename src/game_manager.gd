@@ -90,6 +90,7 @@ func start_encounter():
 	battle_scene.fade_in()
 
 func end_encounter():
+	dungeon_map.refresh_team_status()
 	await battle_scene.fade_out()
 	dungeon_map.exit_battle_visuals(1.0)
 	AudioManager.play_music("map_1", 1.0, false, true)
@@ -116,23 +117,44 @@ func _on_terminal_choice(choice_tag: String, data: Dictionary):
 	_on_content_finished(true)
 
 func _handle_medical_logic(is_upgraded: bool):
-	# Logic:
-	# Iterate RunManager.party_roster (HeroData)
-	# If Injury > 0: Remove Injury.
-	# If Injury == 0: Grant "Overcharge" (Start next battle with Focus).
-	# If Upgraded: Do Both (or Mega Overcharge).
+	var rng = RandomNumberGenerator.new()
+	rng.randomize()
 
 	for hero_data in RunManager.party_roster:
+
+		# --- CASE 1: INJURED ---
 		if hero_data.injuries > 0:
-			hero_data.injuries = max(0, hero_data.injuries - 1)
-			print(hero_data.hero_name, " injury removed.")
+			# Action: Cure ALL injuries
+			hero_data.injuries = 0
+			print(hero_data.hero_name, ": Injuries cured.")
 
 			if is_upgraded:
-				# Add "Overcharge" condition to HeroData for next battle
-				pass
+				# Upgraded: ALSO give 1 random boon
+				if rng.randf() > 0.5:
+					hero_data.boon_focused = true
+					print(hero_data.hero_name, ": Gained Focused (Upgraded Cure)")
+				else:
+					hero_data.boon_armored = true
+					print(hero_data.hero_name, ": Gained Armored (Upgraded Cure)")
+
+		# --- CASE 2: HEALTHY ---
 		else:
-			# Add "Overcharge" condition
-			pass
+			# Action: Grant Boon
+			if is_upgraded:
+				# Upgraded: Grant BOTH
+				hero_data.boon_focused = true
+				hero_data.boon_armored = true
+				print(hero_data.hero_name, ": Gained Double Boons")
+			else:
+				# Standard: Grant 1 Random
+				if rng.randf() > 0.5:
+					hero_data.boon_focused = true
+					print(hero_data.hero_name, ": Gained Focused")
+				else:
+					hero_data.boon_armored = true
+					print(hero_data.hero_name, ": Gained Armored")
+
+	dungeon_map.refresh_team_status()
 
 func _handle_extraction():
 	# 1. Transfer Run Bits to Save Bits

@@ -5,7 +5,6 @@
 [ext_resource type="Texture2D" uid="uid://dve0tjghg88kw" path="res://assets/graphics/icons/roles/blindfold.png" id="2_53q4u"]
 [ext_resource type="Texture2D" uid="uid://jeiq1r6ke2t7" path="res://assets/graphics/icons/textures/plus.png" id="2_d6207"]
 [ext_resource type="PackedScene" uid="uid://ckw8rm3jl32bx" path="res://src/battle/damage_popup.tscn" id="2_nheih"]
-[ext_resource type="Texture2D" uid="uid://c0yr6bpij1f16" path="res://assets/graphics/icons/textures/shield.png" id="3_d6207"]
 [ext_resource type="PackedScene" uid="uid://be3t7advgy14o" path="res://src/battle/buff.tscn" id="3_wyvcu"]
 [ext_resource type="FontVariation" uid="uid://c0je4m574ytir" path="res://data/theme/fonts/suse_mono.tres" id="6_tvdfu"]
 [ext_resource type="PackedScene" uid="uid://dwpde7pjb1jds" path="res://src/battle/debuff.tscn" id="7_ha0bt"]
@@ -58,6 +57,9 @@ corner_radius_bottom_left = 6
 expand_margin_left = 1.0
 expand_margin_top = 1.0
 expand_margin_bottom = 1.0
+
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_0mfya"]
+load_path = "res://.godot/imported/shield.png-5835ec7391e048aacf00405733aee49e.ctex"
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ha0bt"]
 bg_color = Color(1, 0.4745098, 0.16862746, 1)
@@ -475,7 +477,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("3_d6207")
+texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
 [node name="Pip2" type="Control" parent="Panel/GuardBar"]
@@ -490,7 +492,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("3_d6207")
+texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
 [node name="Pip3" type="Control" parent="Panel/GuardBar"]
@@ -505,7 +507,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("3_d6207")
+texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
 [node name="Pip4" type="Control" parent="Panel/GuardBar"]
@@ -520,7 +522,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("3_d6207")
+texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
 [node name="Pip5" type="Control" parent="Panel/GuardBar"]
@@ -535,7 +537,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("3_d6207")
+texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
 [node name="Pip6" type="Control" parent="Panel/GuardBar"]
@@ -550,7 +552,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("3_d6207")
+texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
 [node name="Pip7" type="Control" parent="Panel/GuardBar"]
@@ -565,7 +567,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("3_d6207")
+texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
 [node name="Pip8" type="Control" parent="Panel/GuardBar"]
@@ -580,7 +582,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("3_d6207")
+texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
 [node name="Pip9" type="Control" parent="Panel/GuardBar"]
@@ -595,7 +597,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("3_d6207")
+texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
 [node name="Pip10" type="Control" parent="Panel/GuardBar"]
@@ -610,7 +612,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("3_d6207")
+texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
 [node name="GuardValue" type="Label" parent="Panel"]

@@ -43,14 +43,13 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 				target = final_targets.pick_random() as ActorCard
 			else:
 				target = final_targets[t]
-			var pre_hit_context = _get_pre_hit_triggers(attacker, target)
-			var dynamic_potency = _get_dynamic_potency(attacker, target, context)
-			print("Final Potency: ", dynamic_potency)
-			if not target or not is_instance_valid(target):
-				continue
 
 			if target.is_defeated and not random:
 				break
+
+			var pre_hit_context = _get_pre_hit_triggers(attacker, target)
+			var dynamic_potency = _get_dynamic_potency(attacker, target, context)
+			print("Final Potency: ", dynamic_potency)
 
 			var final_damage_type = damage_type
 			if pre_hit_context.has("final_damage_type"):

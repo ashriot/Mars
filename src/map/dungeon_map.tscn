@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://cqo38uie6gkdu"]
+[gd_scene load_steps=13 format=3 uid="uid://cqo38uie6gkdu"]
 
 [ext_resource type="Script" uid="uid://c0tmi3fc3fega" path="res://src/map/dungeon_map.gd" id="1_5o7fj"]
 [ext_resource type="Texture2D" uid="uid://bwqcku6nvr4ff" path="res://assets/graphics/backgrounds/street.webp" id="2_1a5qu"]
@@ -6,6 +6,7 @@
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="4_pf175"]
 [ext_resource type="Shader" uid="uid://1klbdvl00vt2" path="res://src/map/blur.gdshader" id="5_gftom"]
 [ext_resource type="Texture2D" uid="uid://cvm864osuvl67" path="res://assets/graphics/icons/map/hexagon_outline.png" id="5_pf175"]
+[ext_resource type="PackedScene" uid="uid://1g2fulrngrw0" path="res://src/map/hero_status.tscn" id="7_31sxc"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_gftom"]
 shader = ExtResource("5_gftom")
@@ -42,8 +43,9 @@ border_width_bottom = 3
 border_color = Color(1, 1, 1, 1)
 corner_radius_top_left = 12
 corner_radius_bottom_left = 12
+shadow_color = Color(0.12156863, 0.12156863, 0.12156863, 1)
 shadow_size = 5
-shadow_offset = Vector2(-5, 5)
+shadow_offset = Vector2(-5, 2)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gftom"]
 bg_color = Color(1, 1, 1, 1)
@@ -64,8 +66,9 @@ map_height = 15
 vision_range = 2
 num_combats = 6
 num_terminals = 5
-selection_texture = ExtResource("5_pf175")
+hero_status_scene = ExtResource("7_31sxc")
 map_node_scene = ExtResource("2_vfn15")
+selection_texture = ExtResource("5_pf175")
 background_texture = ExtResource("2_1a5qu")
 
 [node name="Parallax2D" type="Parallax2D" parent="."]
@@ -175,5 +178,18 @@ theme_override_font_sizes/font_size = 36
 text = "100%"
 horizontal_alignment = 2
 vertical_alignment = 1
+
+[node name="TeamStatus" type="Control" parent="CanvasLayer/HUD"]
+anchors_preset = 0
+offset_left = 27.0
+offset_top = 12.0
+offset_right = 356.0
+offset_bottom = 52.0
+
+[node name="VBox" type="VBoxContainer" parent="CanvasLayer/HUD/TeamStatus"]
+layout_mode = 0
+offset_right = 335.0
+offset_bottom = 43.0
+theme_override_constants/separation = 8
 
 [node name="Camera2D" type="Camera2D" parent="."]

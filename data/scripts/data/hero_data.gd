@@ -21,9 +21,14 @@ class_name HeroData
 @export var injuries: int = 0
 @export var current_xp: int = 0
 
+@export var boon_focused: bool = false
+@export var boon_armored: bool = false
+
 # --- Runtime Data (Not Saved) ---
 var stats: ActorStats
 var battle_roles: Dictionary = {} # Key: role_id, Value: RoleData
+var current_role: RoleDefinition :
+	get : return (role_definitions[active_role_index])
 
 # ===================================================================
 # 1. STAT CALCULATION
@@ -150,6 +155,8 @@ func get_save_data() -> Dictionary:
 	return {
 		"hero_id": hero_id,
 		"injuries": injuries,
+		"boon_focused": boon_focused,
+		"boon_armored": boon_armored,
 		"current_xp": current_xp,
 		"active_role": active_role_index,
 		"weapon": weapon.get_save_data() if weapon else {},
@@ -162,6 +169,8 @@ func get_save_data() -> Dictionary:
 
 func load_from_save_data(data: Dictionary):
 	injuries = data.get("injuries", 0)
+	boon_focused = data.get("boon_focused", false)
+	boon_armored = data.get("boon_armored", false)
 	current_xp = data.get("current_xp", 0)
 	active_role_index = data.get("active_role", 0)
 

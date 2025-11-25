@@ -24,9 +24,12 @@ var current_focus: int = 0
 var shifted_this_turn: bool
 var blink_tween: Tween
 
+
 func setup(data: HeroData):
 	hero_data = data as HeroData
 	hero_data.rebuild_battle_roles()
+	if hero_data.portrait:
+		portrait_rect.texture = hero_data.portrait
 
 	loaded_roles.clear()
 	for def in data.role_definitions:
@@ -35,18 +38,34 @@ func setup(data: HeroData):
 			loaded_roles.append(role)
 
 	hero_data.calculate_stats()
-	setup_base(hero_data.stats)
+	await super.setup_base(hero_data.stats)
+
 	duration /= battle_manager.battle_speed
 	name_label.text = hero_data.stats.actor_name
-	if hero_data.portrait:
-		portrait_rect.texture = hero_data.portrait
 	current_focus = 4
 
+	if hero_data.boon_focused:
+		current_focus = clamp(current_focus + 5, 0, 10)
+		print("Boon Applied: +5 Focus")
+		hero_data.boon_focused = false
+
+	if hero_data.boon_armored:
+		current_guard = clamp(current_guard + 5, 0, 10)
+		print("Boon Applied: +5 Guard")
+		hero_data.boon_armored = false
+		update_guard_bar(false)
+
+
 	if hero_data.injuries > 0:
-		var penalty_mult = 0.5
-		var injured_hp = int(current_stats.max_hp * penalty_mult)
-		current_hp = max(1, injured_hp)
+		var penalty_percent = 0.34 * hero_data.injuries
+		penalty_percent = min(penalty_percent, 1.0)
+		var penalty_amount = int(hero_data.stats.max_hp * penalty_percent)
+		#hero_data.stats.max_hp = max(0, hero_data.stats.max_hp - penalty_amount)
+		current_hp = max(0, hero_data.stats.max_hp - penalty_amount)
 		print(hero_data.hero_name, " starts with Injury penalty!! HP: ", current_hp)
+		if current_hp <= 0:
+			current_hp = 0
+			defeated()
 
 	update_focus_bar(false)
 	update_current_role()
@@ -115,8 +134,8 @@ func modify_focus(amount: int):
 	current_focus = clamp(current_focus, 0, 10)
 	update_focus_bar()
 	focus_updated.emit()
-
-	await _fire_condition_event(Trigger.TriggerType.ON_SPENDING_FOCUS)
+	if amount < 0:
+		await _fire_condition_event(Trigger.TriggerType.ON_SPENDING_FOCUS)
 
 func update_focus_bar(animate: bool = true):
 	var pips = focus_bar.get_children()

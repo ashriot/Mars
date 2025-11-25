@@ -16,6 +16,8 @@ const ALERT_PER_STEP = 2
 @onready var background: Control = $Background
 @onready var player_cursor: Sprite2D = $Background/PlayerCursor
 
+@onready var team_status: VBoxContainer = $CanvasLayer/HUD/TeamStatus/VBox
+
 # --- Configuration ---
 @export_group("Map Dimensions")
 @export var map_length: int = 10
@@ -46,8 +48,9 @@ const ALERT_PER_STEP = 2
 
 # --- Visuals ---
 @export_group("Visuals")
-@export var selection_texture: Texture2D
+@export var hero_status_scene: PackedScene
 @export var map_node_scene: PackedScene
+@export var selection_texture: Texture2D
 @export var background_texture: Texture2D
 @export_range(0.0, 5.0) var background_blur: float = 3.0
 
@@ -92,6 +95,10 @@ func _ready():
 	alert_gauge.value = 0
 	alert_label.text = "0%"
 	if hud: hud.modulate.a = 0.0
+	for hero_data in RunManager.party_roster:
+		var status_ui = hero_status_scene.instantiate()
+		team_status.add_child(status_ui)
+		status_ui.setup(hero_data)
 	_start_cursor_pulse()
 
 func _start_cursor_pulse():
@@ -420,6 +427,10 @@ func play_intro_sequence(map_data: Dictionary) -> void:
 
 		# Hand over control
 		_move_player_to(start_node, true)
+
+func refresh_team_status():
+	for hero_status in team_status.get_children():
+		hero_status.refresh_view()
 
 func complete_current_node():
 	if current_node:
