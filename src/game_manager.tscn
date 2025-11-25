@@ -22,18 +22,6 @@ environment = SubResource("Environment_jr7q5")
 
 [node name="DungeonMap" parent="." instance=ExtResource("3_jr7q5")]
 position = Vector2(960, 540)
-dungeon_has_boss = false
-num_elites = 2
-num_events = 2
-num_rewards = 3
-num_uncommon_rewards = 2
-num_rare_rewards = 1
-zoom_step = 0.1
-min_zoom = 0.5
-max_zoom = 2.5
-camera_smooth_speed = 0.3
-camera_edge_margin = 850.0
-background_blur = 3.0
 
 [node name="OverlayLayer" type="CanvasLayer" parent="DungeonMap"]
 

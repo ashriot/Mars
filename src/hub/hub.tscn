@@ -247,4 +247,29 @@ theme_override_styles/normal = ExtResource("4_vmamr")
 theme_override_styles/hover = ExtResource("6_lgcv4")
 text = "HEAD OUT"
 
+[node name="UI" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 40.0
+offset_top = -92.0
+offset_right = 499.0
+offset_bottom = -40.0
+grow_vertical = 0
+
+[node name="BitsLabel" type="Label" parent="UI"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 10
+theme_override_fonts/font = ExtResource("4_bfsw3")
+theme_override_font_sizes/font_size = 40
+text = "1,000 BITS"
+vertical_alignment = 1
+
 [connection signal="pressed" from="Actions/HeadOut" to="." method="_on_head_out_pressed"]
