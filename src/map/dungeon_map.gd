@@ -442,42 +442,28 @@ func refresh_team_status():
 	nodes_done_label.text = str(nodes_done)
 	total_nodes_label.text = str(total_nodes)
 
-func _start_warning_pulse():
-	var color = Color.RED
-
-	if current_alert == 100:
-		warning_label.text = "DANGER!"
-	elif current_alert > ALERT_MED_THRESHOLD:
-		warning_label.text = "WARNING"
-		color = Color.ORANGE_RED
-	elif current_alert < ALERT_MED_THRESHOLD:
-		warning_label.text = "CAUTION"
-		color = Color.GOLD
+func _start_warning_pulse(color: Color):
 	if warning_tween: warning_tween.kill()
 
-	warning_label.show()
+	if current_alert < ALERT_LOW_THRESHOLD:
+		warning_label.modulate = color
+		return
+
 	warning_tween = create_tween()
 	warning_tween.set_loops()
 	warning_tween.tween_property(
 		warning_label,
-		"self_modulate",
+		"modulate",
 		color,
 		0.5
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 	warning_tween.tween_property(
 		warning_label,
-		"self_modulate",
+		"modulate",
 		Color.WHITE,
 		0.5
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-
-func _stop_warning_pulse():
-	if warning_tween:
-		warning_tween.kill()
-		warning_tween = null
-
-	warning_label.hide()
 
 func complete_current_node():
 	if current_node:
@@ -657,21 +643,23 @@ func modify_alert(amount: int):
 
 func _update_alert_visuals():
 	var target_color: Color
-
 	if current_alert < ALERT_LOW_THRESHOLD:
+		warning_label.text = "OK"
 		target_color = Color(0.419, 1.063, 0.419)
 		vision_range = 2
 	elif current_alert < ALERT_MED_THRESHOLD:
+		warning_label.text = "CAUTION"
 		target_color = Color(1.437, 1.226, 0.0, 1.0)
 		vision_range = 1
 	else:
+		if current_alert == 100:
+			warning_label.text = "DANGER!"
+		else:
+			warning_label.text = "WARNING"
 		target_color = Color(1.437, 0.234, 0.0, 1.0)
 		vision_range = 0
 
-	if current_alert > ALERT_LOW_THRESHOLD:
-		_start_warning_pulse()
-	else:
-		_stop_warning_pulse()
+	_start_warning_pulse(target_color)
 
 	# 2. Setup the Tween
 	if alert_tween and alert_tween.is_running():
