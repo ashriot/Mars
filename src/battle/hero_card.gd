@@ -19,7 +19,7 @@ signal focus_updated
 # --- UNIQUE Data ---
 var hero_data: HeroData
 var loaded_roles: Array[RoleData] = []
-var current_role_index: int = 0
+var current_role_index: int
 var current_focus: int = 0
 var shifted_this_turn: bool
 var blink_tween: Tween
@@ -28,6 +28,7 @@ var blink_tween: Tween
 func setup(data: HeroData):
 	hero_data = data as HeroData
 	hero_data.rebuild_battle_roles()
+	current_role_index = hero_data.active_role_index
 	if hero_data.portrait:
 		portrait_rect.texture = hero_data.portrait
 

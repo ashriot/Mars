@@ -1,7 +1,8 @@
 extends Panel
 class_name HeroStatus
 
-@onready var role_name: Label = $RoleName
+@onready var role_ui: Control = $Role
+@onready var role_name: Label = $Role/Name
 @onready var hero_name: Label = $HeroName
 @onready var injuries: HBoxContainer = $Injuries
 @onready var focused_boon: TextureRect = $Boons/Focused
@@ -47,3 +48,12 @@ func refresh_view():
 			icon.modulate = active_color
 		else:
 			icon.modulate= inactive_color
+
+
+func _on_left_pressed() -> void:
+	linked_hero_data.active_role_index = (linked_hero_data.active_role_index - 1 + linked_hero_data.role_definitions.size()) % linked_hero_data.role_definitions.size()
+	refresh_view()
+
+func _on_right_pressed() -> void:
+	linked_hero_data.active_role_index = (linked_hero_data.active_role_index + 1) % linked_hero_data.role_definitions.size()
+	refresh_view()
