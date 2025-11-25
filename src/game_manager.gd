@@ -4,6 +4,7 @@ class_name GameManager
 @export_group("Packed Scenes")
 @export var battle_scene_packed: PackedScene
 @export var terminal_scene_packed: PackedScene
+@export var loading_screen_scene: PackedScene
 # @export var event_scene_packed: PackedScene
 
 # --- REFERENCES ---
@@ -15,8 +16,11 @@ var battle_scene: BattleScene = null
 
 
 func _ready():
+	var loader = loading_screen_scene.instantiate()
+	overlay_layer.add_child(loader)
 	fader.modulate.a = 1.0
 
+	dungeon_map.map_generation_progress.connect(loader.update_progress)
 	dungeon_map.interaction_requested.connect(_on_map_interaction_requested)
 	dungeon_map.initialize_map()
 

@@ -78,21 +78,19 @@ vertical_alignment = 1
 
 [node name="Stats" type="HBoxContainer" parent="Panel"]
 layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
+anchors_preset = 12
 anchor_top = 1.0
-anchor_right = 0.5
+anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -491.0
-offset_top = -136.0
-offset_right = 491.0
+offset_top = -130.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_constants/separation = 10
+theme_override_constants/separation = 16
+alignment = 1
 
 [node name="HP" type="Control" parent="Panel/Stats"]
 modulate = Color(0.5583334, 1, 0.5, 1)
-custom_minimum_size = Vector2(125, 0)
+custom_minimum_size = Vector2(102, 0)
 layout_mode = 2
 
 [node name="VBox" type="VBoxContainer" parent="Panel/Stats/HP"]
@@ -106,20 +104,47 @@ grow_vertical = 2
 [node name="Title" type="Label" parent="Panel/Stats/HP/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 50
+theme_override_font_sizes/font_size = 42
 text = "HP"
 horizontal_alignment = 1
 
 [node name="Value" type="Label" parent="Panel/Stats/HP/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 50
-text = "850"
+theme_override_font_sizes/font_size = 42
+text = "9999"
+horizontal_alignment = 1
+
+[node name="GRD" type="Control" parent="Panel/Stats"]
+modulate = Color(0.71, 0.71, 0.71, 1)
+custom_minimum_size = Vector2(102, 0)
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="Panel/Stats/GRD"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Title" type="Label" parent="Panel/Stats/GRD/VBox"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_em4mh")
+theme_override_font_sizes/font_size = 42
+text = "GRD"
+horizontal_alignment = 1
+
+[node name="Value" type="Label" parent="Panel/Stats/GRD/VBox"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_em4mh")
+theme_override_font_sizes/font_size = 42
+text = "10"
 horizontal_alignment = 1
 
 [node name="ATK" type="Control" parent="Panel/Stats"]
 modulate = Color(1, 0.55, 0.5, 1)
-custom_minimum_size = Vector2(125, 0)
+custom_minimum_size = Vector2(102, 0)
 layout_mode = 2
 
 [node name="VBox" type="VBoxContainer" parent="Panel/Stats/ATK"]
@@ -133,20 +158,20 @@ grow_vertical = 2
 [node name="Title" type="Label" parent="Panel/Stats/ATK/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 50
+theme_override_font_sizes/font_size = 42
 text = "ATK"
 horizontal_alignment = 1
 
 [node name="Value" type="Label" parent="Panel/Stats/ATK/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 50
+theme_override_font_sizes/font_size = 42
 text = "190"
 horizontal_alignment = 1
 
 [node name="PSY" type="Control" parent="Panel/Stats"]
 modulate = Color(0.5, 0.6999999, 1, 1)
-custom_minimum_size = Vector2(125, 0)
+custom_minimum_size = Vector2(102, 0)
 layout_mode = 2
 
 [node name="VBox" type="VBoxContainer" parent="Panel/Stats/PSY"]
@@ -160,20 +185,20 @@ grow_vertical = 2
 [node name="Title" type="Label" parent="Panel/Stats/PSY/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 50
+theme_override_font_sizes/font_size = 42
 text = "PSY"
 horizontal_alignment = 1
 
 [node name="Value" type="Label" parent="Panel/Stats/PSY/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 50
+theme_override_font_sizes/font_size = 42
 text = "165"
 horizontal_alignment = 1
 
 [node name="OVR" type="Control" parent="Panel/Stats"]
 modulate = Color(0.6666665, 0.5, 1, 1)
-custom_minimum_size = Vector2(125, 0)
+custom_minimum_size = Vector2(102, 0)
 layout_mode = 2
 
 [node name="VBox" type="VBoxContainer" parent="Panel/Stats/OVR"]
@@ -187,20 +212,20 @@ grow_vertical = 2
 [node name="Title" type="Label" parent="Panel/Stats/OVR/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 50
+theme_override_font_sizes/font_size = 42
 text = "OVR"
 horizontal_alignment = 1
 
 [node name="Value" type="Label" parent="Panel/Stats/OVR/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 50
+theme_override_font_sizes/font_size = 42
 text = "150"
 horizontal_alignment = 1
 
 [node name="SPD" type="Control" parent="Panel/Stats"]
 modulate = Color(1, 0.80833334, 0.5, 1)
-custom_minimum_size = Vector2(125, 0)
+custom_minimum_size = Vector2(102, 0)
 layout_mode = 2
 
 [node name="VBox" type="VBoxContainer" parent="Panel/Stats/SPD"]
@@ -214,20 +239,20 @@ grow_vertical = 2
 [node name="Title" type="Label" parent="Panel/Stats/SPD/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 50
+theme_override_font_sizes/font_size = 42
 text = "SPD"
 horizontal_alignment = 1
 
 [node name="Value" type="Label" parent="Panel/Stats/SPD/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 50
+theme_override_font_sizes/font_size = 42
 text = "180"
 horizontal_alignment = 1
 
 [node name="AIM" type="Control" parent="Panel/Stats"]
 modulate = Color(1, 0.5, 0.7249999, 1)
-custom_minimum_size = Vector2(125, 0)
+custom_minimum_size = Vector2(102, 0)
 layout_mode = 2
 
 [node name="VBox" type="VBoxContainer" parent="Panel/Stats/AIM"]
@@ -241,20 +266,20 @@ grow_vertical = 2
 [node name="Title" type="Label" parent="Panel/Stats/AIM/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 50
+theme_override_font_sizes/font_size = 42
 text = "AIM"
 horizontal_alignment = 1
 
 [node name="Value" type="Label" parent="Panel/Stats/AIM/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 50
+theme_override_font_sizes/font_size = 42
 text = "25%"
 horizontal_alignment = 1
 
 [node name="KIN" type="Control" parent="Panel/Stats"]
 modulate = Color(1, 0.545, 0.35000002, 1)
-custom_minimum_size = Vector2(125, 0)
+custom_minimum_size = Vector2(102, 0)
 layout_mode = 2
 
 [node name="VBox" type="VBoxContainer" parent="Panel/Stats/KIN"]
@@ -268,20 +293,20 @@ grow_vertical = 2
 [node name="Title" type="Label" parent="Panel/Stats/KIN/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 50
+theme_override_font_sizes/font_size = 42
 text = "KIN"
 horizontal_alignment = 1
 
 [node name="Value" type="Label" parent="Panel/Stats/KIN/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 50
+theme_override_font_sizes/font_size = 42
 text = "45%"
 horizontal_alignment = 1
 
 [node name="NRG" type="Control" parent="Panel/Stats"]
 modulate = Color(0.35000002, 0.9566665, 1, 1)
-custom_minimum_size = Vector2(125, 0)
+custom_minimum_size = Vector2(102, 0)
 layout_mode = 2
 
 [node name="VBox" type="VBoxContainer" parent="Panel/Stats/NRG"]
@@ -295,14 +320,14 @@ grow_vertical = 2
 [node name="Title" type="Label" parent="Panel/Stats/NRG/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 50
+theme_override_font_sizes/font_size = 42
 text = "NRG"
 horizontal_alignment = 1
 
 [node name="Value" type="Label" parent="Panel/Stats/NRG/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 50
+theme_override_font_sizes/font_size = 42
 text = "35%"
 horizontal_alignment = 1
 

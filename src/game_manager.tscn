@@ -1,9 +1,10 @@
-[gd_scene load_steps=6 format=3 uid="uid://cl5f5vup72n32"]
+[gd_scene load_steps=7 format=3 uid="uid://cl5f5vup72n32"]
 
 [ext_resource type="Script" uid="uid://288nsmb7vfck" path="res://src/game_manager.gd" id="1_p4js5"]
 [ext_resource type="PackedScene" uid="uid://dc5du0o5phhma" path="res://src/battle/battle_scene.tscn" id="2_jr7q5"]
 [ext_resource type="PackedScene" uid="uid://cqo38uie6gkdu" path="res://src/map/dungeon_map.tscn" id="3_jr7q5"]
 [ext_resource type="PackedScene" uid="uid://brd70upq3tjwu" path="res://src/map/terminal.tscn" id="3_lhik4"]
+[ext_resource type="PackedScene" uid="uid://cmk1udldhqk6p" path="res://src/loading_screen.tscn" id="4_vo8pw"]
 
 [sub_resource type="Environment" id="Environment_jr7q5"]
 background_mode = 3
@@ -14,12 +15,25 @@ glow_hdr_threshold = 0.8
 script = ExtResource("1_p4js5")
 battle_scene_packed = ExtResource("2_jr7q5")
 terminal_scene_packed = ExtResource("3_lhik4")
+loading_screen_scene = ExtResource("4_vo8pw")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_jr7q5")
 
 [node name="DungeonMap" parent="." instance=ExtResource("3_jr7q5")]
 position = Vector2(960, 540)
+dungeon_has_boss = false
+num_elites = 2
+num_events = 2
+num_rewards = 3
+num_uncommon_rewards = 2
+num_rare_rewards = 1
+zoom_step = 0.1
+min_zoom = 0.5
+max_zoom = 2.5
+camera_smooth_speed = 0.3
+camera_edge_margin = 850.0
+background_blur = 3.0
 
 [node name="OverlayLayer" type="CanvasLayer" parent="DungeonMap"]
 

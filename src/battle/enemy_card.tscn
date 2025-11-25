@@ -1,7 +1,6 @@
 [gd_scene load_steps=19 format=3 uid="uid://b4tt3yil85l7j"]
 
 [ext_resource type="Script" uid="uid://carvfoj4h04nm" path="res://src/battle/enemy_card.gd" id="1_cu1kv"]
-[ext_resource type="Texture2D" uid="uid://c0yr6bpij1f16" path="res://assets/graphics/icons/textures/shield.png" id="2_4kuvy"]
 [ext_resource type="Texture2D" uid="uid://jeiq1r6ke2t7" path="res://assets/graphics/icons/textures/plus.png" id="2_e8ixv"]
 [ext_resource type="PackedScene" uid="uid://ckw8rm3jl32bx" path="res://src/battle/damage_popup.tscn" id="2_xkcvw"]
 [ext_resource type="PackedScene" uid="uid://dwpde7pjb1jds" path="res://src/battle/debuff.tscn" id="3_1mnyd"]
@@ -10,6 +9,7 @@
 [ext_resource type="Texture2D" uid="uid://05lare8hgtys" path="res://assets/graphics/icons/textures/bullet.png" id="4_l4hbp"]
 [ext_resource type="FontVariation" uid="uid://c0je4m574ytir" path="res://data/theme/fonts/suse_mono.tres" id="5_puinb"]
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="6_pdx0h"]
+[ext_resource type="Texture2D" uid="uid://ybrwd70w1dkb" path="res://assets/graphics/icons/textures/shield_sm.png" id="8_puinb"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8i7ma"]
 bg_color = Color(0.6, 0.6, 0.6, 0)
@@ -262,7 +262,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("2_4kuvy")
+texture = ExtResource("8_puinb")
 expand_mode = 1
 
 [node name="Pip2" type="Control" parent="Panel/GuardBar"]
@@ -277,7 +277,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("2_4kuvy")
+texture = ExtResource("8_puinb")
 expand_mode = 1
 
 [node name="Pip3" type="Control" parent="Panel/GuardBar"]
@@ -292,7 +292,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("2_4kuvy")
+texture = ExtResource("8_puinb")
 expand_mode = 1
 
 [node name="Pip4" type="Control" parent="Panel/GuardBar"]
@@ -307,7 +307,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("2_4kuvy")
+texture = ExtResource("8_puinb")
 expand_mode = 1
 
 [node name="Pip5" type="Control" parent="Panel/GuardBar"]
@@ -322,7 +322,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("2_4kuvy")
+texture = ExtResource("8_puinb")
 expand_mode = 1
 
 [node name="Pip6" type="Control" parent="Panel/GuardBar"]
@@ -337,7 +337,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("2_4kuvy")
+texture = ExtResource("8_puinb")
 expand_mode = 1
 
 [node name="Pip7" type="Control" parent="Panel/GuardBar"]
@@ -352,7 +352,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("2_4kuvy")
+texture = ExtResource("8_puinb")
 expand_mode = 1
 
 [node name="Pip8" type="Control" parent="Panel/GuardBar"]
@@ -367,7 +367,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("2_4kuvy")
+texture = ExtResource("8_puinb")
 expand_mode = 1
 
 [node name="Pip9" type="Control" parent="Panel/GuardBar"]
@@ -382,7 +382,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("2_4kuvy")
+texture = ExtResource("8_puinb")
 expand_mode = 1
 
 [node name="Pip10" type="Control" parent="Panel/GuardBar"]
@@ -397,7 +397,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("2_4kuvy")
+texture = ExtResource("8_puinb")
 expand_mode = 1
 
 [node name="GuardValue" type="Label" parent="Panel"]

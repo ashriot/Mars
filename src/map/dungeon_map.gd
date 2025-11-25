@@ -2,6 +2,7 @@ extends Node2D
 class_name DungeonMap
 
 signal interaction_requested(node: MapNode)
+signal map_generation_progress(current, total)
 
 const ALERT_LOW_THRESHOLD = 26
 const ALERT_MED_THRESHOLD = 75
@@ -23,8 +24,8 @@ const ALERT_PER_STEP = 2
 
 # --- Configuration ---
 @export_group("Map Dimensions")
-@export var map_length: int = 10
-@export var map_height: int = 9
+@export var map_length: int = 20
+@export var map_height: int = 15
 
 # --- Game Rules ---
 @export_group("Map Rules")
@@ -139,10 +140,10 @@ func initialize_map():
 		randomize()
 		RunManager.current_run_seed = randi()
 		seed(RunManager.current_run_seed)
-
-		var map_data = generate_hex_grid()
-		total_nodes = num_combats + num_elites + num_events + num_uncommon_rewards + num_rare_rewards + num_rewards + num_terminals
+		var map_data = await generate_hex_grid()
 		current_node = map_data.start_node
+		total_nodes = num_combats + num_elites + num_events + \
+			num_uncommon_rewards + num_rare_rewards + num_rewards + num_terminals
 
 		RunManager.is_run_active = true
 		RunManager.auto_save()
@@ -159,13 +160,11 @@ func initialize_map():
 	refresh_team_status()
 
 func load_from_save_data(data: Dictionary):
-	# 1. REGENERATE GRID
-	# RunManager has already set the seed, so this rebuilds the exact layout.
-	generate_hex_grid()
+	await generate_hex_grid()
 
 	# 2. RESTORE GLOBAL STATE
 	current_alert = data.current_alert
-	_update_alert_visuals() # Updates color/text immediately
+	_update_alert_visuals()
 
 	# 3. RESTORE NODE STATES
 	for key_str in data.node_data.keys():
@@ -224,7 +223,8 @@ func _input(event):
 
 func _generate_static_terminal_data(coords: Vector2i, index: int):
 	var scalar = RunManager.get_loot_scalar()
-	var session = "0x%X-%X-%X" % [randi() % 0xFFFF, randi() % 0xFFFF, randi() % 0xFFFF]
+	var session = "0x%X-%X-%X" % [randi() % 0xFFFF, \
+	randi() % 0xFFFF, randi() % 0xFFFF]
 
 	# 1. DEFINE BASE VALUES
 	var bits_val = int(50 * scalar)
@@ -275,10 +275,15 @@ func generate_hex_grid() -> Dictionary:
 
 	# --- Cleanup ---
 	total_moves = 0
+	total_nodes = 0
+	nodes_done = 0
 	current_node = null
 	hex_width = sqrt(3.0) * hex_size
 	hex_height = hex_size * 2.0
 	terminal_memory.clear()
+
+	map_generation_progress.emit(0, 100)
+	await get_tree().process_frame
 
 	for child in background.get_children():
 		if child.name == "PlayerCursor":
@@ -289,10 +294,13 @@ func generate_hex_grid() -> Dictionary:
 
 	# --- Grid Math ---
 	map_size = map_height * map_length
+	num_terminals = int(map_size / 50) + 1
+	print("Terminals: ", num_terminals)
 	var valid_coords = {}
 	var start_pos = Vector2(100, 200)
 	var center_y = floor(map_height / 2.0)
-	var visual_center_x = (map_length - 1) / 2.0 + (0.5 if int(center_y) % 2 == 0 else 0.0)
+	var visual_center_x = (map_length - 1) / 2.0 + \
+		(0.5 if int(center_y) % 2 == 0 else 0.0)
 	var min_bounds = Vector2(INF, INF)
 	var max_bounds = Vector2(-INF, -INF)
 
@@ -319,17 +327,15 @@ func generate_hex_grid() -> Dictionary:
 			max_bounds = max_bounds.max(final_pos)
 
 	# --- Node Instantiation ---
-	var node_types = _distribute_node_types(valid_coords.keys(), center_y)
+	var node_types = await _distribute_node_types(valid_coords.keys(), center_y)
 	var nodes_list: Array[MapNode] = []
 
 	# --- TERMINAL GENERATION ---
-	# We need to sort the keys so the indices are deterministic (e.g. left-to-right)
 	var sorted_coords = node_types.keys()
 	sorted_coords.sort_custom(func(a, b):
 		if a.x != b.x: return a.x < b.x
 		return a.y < b.y
 	)
-
 	var terminal_counter = 0
 	for coords in sorted_coords:
 		if node_types[coords] == MapNode.NodeType.TERMINAL:
@@ -337,11 +343,9 @@ func generate_hex_grid() -> Dictionary:
 			terminal_counter += 1
 
 	for coords in valid_coords.keys():
-		# Create node (starts invisible alpha 0.0 via _create_map_node)
 		var new_node = _create_map_node(coords.x, coords.y, valid_coords[coords], node_types[coords])
 		nodes_list.append(new_node)
 
-	# --- Background Setup ---
 	_update_background_transform(min_bounds, max_bounds)
 
 	# --- Find Start Node ---
@@ -349,7 +353,8 @@ func generate_hex_grid() -> Dictionary:
 	var start_coords = Vector2i(center_start_x, center_y)
 	var start_node = grid_nodes.get(start_coords, grid_nodes.values()[0] if not grid_nodes.is_empty() else null)
 
-	# Return all the data needed for the animation
+	map_generation_progress.emit(100, 100)
+
 	return {
 		"start_node": start_node,
 		"nodes": nodes_list,
@@ -766,7 +771,6 @@ func _offset_to_cube(hex: Vector2i) -> Vector3i:
 func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 	var type_map = {}
 	for c in all_coords: type_map[c] = MapNode.NodeType.UNKNOWN
-
 	var available_pool = all_coords.duplicate()
 
 	# --- 1. FIND START (ENTRANCE) ---
@@ -810,8 +814,15 @@ func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 		else:
 			high_value_pool.append(c)
 
+	# --- SETUP PROGRESS TRACKING ---
+	var total_heavy_items = num_terminals + num_elites
+	var items_placed_count = 0
+
+	# Time Budget
+	var max_frame_time_ms = 8
+	var frame_start_time = Time.get_ticks_msec()
+
 	# --- 4. DISTRIBUTE TERMINALS (Spaced Out) ---
-	# This is the new logic. We place Terminals first because they are crucial anchors.
 	var placed_terminals = []
 	# Calculate spacing dynamically based on map size.
 	var terminal_spacing = max(3, int(map_length / 3.0))
@@ -819,23 +830,30 @@ func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 	for i in range(num_terminals):
 		if high_value_pool.is_empty(): break
 
-		# Pick a spot far from other terminals
 		var coord = _pick_distant_coord(high_value_pool, placed_terminals, terminal_spacing)
-
 		type_map[coord] = MapNode.NodeType.TERMINAL
 		high_value_pool.erase(coord)
 		placed_terminals.append(coord)
 
+		# Progress & Yield
+		items_placed_count += 1
+		if Time.get_ticks_msec() - frame_start_time > max_frame_time_ms:
+			# Calculate % within the 0-90 range
+			var percent = (float(items_placed_count) / total_heavy_items) * 99.0
+			map_generation_progress.emit(percent, 100.0)
+
+			await get_tree().process_frame
+			frame_start_time = Time.get_ticks_msec()
+
 	# --- 5. DISTRIBUTE ELITES (Spaced Out) ---
 	# We want Elites spaced away from EACH OTHER, and ideally away from Start.
 	var placed_elites = []
-	var elite_spacing = 3
+	var elite_spacing = 5
 
 	for i in range(num_elites):
 		if high_value_pool.is_empty(): break
 
 		var coord = _pick_distant_coord(high_value_pool, placed_elites, elite_spacing)
-
 		type_map[coord] = MapNode.NodeType.ELITE
 		high_value_pool.erase(coord)
 		placed_elites.append(coord)
