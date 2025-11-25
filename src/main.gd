@@ -82,28 +82,17 @@ func _fade_in():
 	await tween.finished
 	fader.hide()
 
-func return_to_hub_with_rewards(success: bool):
+func return_to_hub_with_rewards(_success: bool):
 	await _fade_out()
 
-	if success:
-		SaveSystem.bits += RunManager.run_bits
-		RunManager.run_bits = 0
-		SaveSystem.distribute_combat_xp(500)
-		for hero in SaveSystem.party_roster:
-			hero.injuries = 0
+	for hero in SaveSystem.party_roster:
+		hero.injuries = 0
 
-		print("Run Complete. Rewards Deposited.")
-	else:
-		print("Run Failed. Loot lost.")
-		RunManager.run_bits = 0
-
-	# 2. Close the Run
 	RunManager.is_run_active = false
 	SaveSystem.save_current_slot()
 
 	_clear_current_scene()
 
-	# 3. Reload Hub
 	load_hub()
 
 func _clear_current_scene():

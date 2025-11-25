@@ -1,22 +1,25 @@
 # RunManager.gd
 extends Node
 
+enum RunResult { SUCCESS, RETREAT, DEFEAT }
+
 @export var current_dungeon_tier: int = 1
 
 var active_dungeon_map: DungeonMap = null
 var is_run_active: bool = false
 var current_run_seed: int = 0
 var run_bits: int = 0
+var run_xp: int = 0
 
-# This allows other scripts to access the party without knowing about SaveSystem
 var party_roster: Array[HeroData]:
 	get:
 		return SaveSystem.party_roster
 
-# --- BITS LOGIC ---
+func add_run_xp(amount: int):
+	run_xp += amount
+
 func add_run_bits(amount: int):
 	run_bits += amount
-	# Update UI Signal here
 
 func get_loot_scalar() -> float:
 	var scalar = 1.0 + ((current_dungeon_tier - 1) * 0.25)
@@ -27,18 +30,17 @@ func get_loot_scalar() -> float:
 
 	return scalar
 
-# --- CAPTURE DATA ---
 func get_run_save_data() -> Dictionary:
 	if not active_dungeon_map: return {}
 
 	return {
 		"seed": current_run_seed,
 		"run_bits": run_bits,
+		"run_xp": run_xp,
 		"tier": current_dungeon_tier,
 		"map_data": active_dungeon_map.get_save_data()
 	}
 
-# --- RESTORE DATA ---
 func restore_run():
 	var run_data = SaveSystem.data.get("active_run")
 
@@ -48,6 +50,7 @@ func restore_run():
 
 	current_run_seed = int(run_data.seed)
 	run_bits = int(run_data.get("run_bits", 0))
+	run_xp = int(run_data.get("run_xp", 0))
 	current_dungeon_tier = int(run_data.get("tier", 1))
 	is_run_active = true
 
@@ -68,3 +71,30 @@ func auto_save():
 	# We only trigger the save if a run is happening.
 	if is_run_active:
 		SaveSystem.save_current_slot()
+
+func commit_rewards(result: RunResult):
+	var multiplier = 0.0
+
+	match result:
+		RunResult.SUCCESS: multiplier = 1.0
+		RunResult.RETREAT: multiplier = 0.5
+		RunResult.DEFEAT: multiplier = 0.0
+
+	# Calculate Finals
+	var final_bits = int(run_bits * multiplier)
+	var final_xp = int(run_xp * multiplier)
+
+	# Deposit
+	if final_bits > 0:
+		SaveSystem.bits += final_bits
+
+	if final_xp > 0:
+		SaveSystem.distribute_combat_xp(final_xp)
+
+	# Reset Run State
+	run_bits = 0
+	run_xp = 0
+	is_run_active = false
+
+	# Save immediately
+	SaveSystem.save_current_slot()

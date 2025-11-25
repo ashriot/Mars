@@ -1,7 +1,7 @@
 extends Control
 class_name BattleScene
 
-signal battle_ended
+signal battle_ended(won)
 
 @export var manager: BattleManager
 
@@ -41,6 +41,6 @@ func _on_viewport_resized():
 	# Center the scaled content
 	position = (window_size - base_size * scale_factor) / 2
 
-func _on_battle_ended():
+func _on_battle_ended(won: bool):
 	AudioManager.stop_music()
-	battle_ended.emit()
+	battle_ended.emit(won)

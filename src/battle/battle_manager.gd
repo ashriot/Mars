@@ -8,7 +8,7 @@ var current_state = State.LOADING
 # --- Signals ---
 signal turn_order_updated(turn_queue_data)
 signal battle_state_changed(new_state)
-signal battle_ended()
+signal battle_ended(won)
 
 @export_range(0.1, 5.0) var battle_speed: float = 1.0
 
@@ -526,15 +526,15 @@ func _check_if_battle_ended() -> bool:
 		change_state(State.BATTLE_OVER)
 		action_bar.slide_out()
 		await wait(1.0)
-		var xp_reward = 150 # (Calculate this based on enemies killed)
-		SaveSystem.distribute_combat_xp(xp_reward)
-		battle_ended.emit() # Player Won
+		var xp_reward = 150
+		RunManager.add_run_xp(xp_reward)
+		battle_ended.emit(true)
 		return true
 
 	if not heroes_alive:
 		print("--- DEFEAT ---")
 		change_state(State.BATTLE_OVER)
-		battle_ended.emit() # Player Lost
+		battle_ended.emit(false) # Player Lost
 		return true
 
 	return false

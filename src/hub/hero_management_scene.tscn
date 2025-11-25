@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://7u5vnerkwbn" path="res://src/hub/hero_management_scene.gd" id="1_m2kg4"]
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="2_em4mh"]
 [ext_resource type="Texture2D" uid="uid://bs7vv07inafvr" path="res://assets/graphics/icons/textures/chevron_h.png" id="3_je1un"]
-[ext_resource type="StyleBox" uid="uid://buhq36mq775hf" path="res://data/theme/styleboxes/button_toggled.tres" id="4_0j42s"]
+[ext_resource type="StyleBox" uid="uid://buhq36mq775hf" path="res://data/theme/styleboxes/btn_opaque_pressed.tres" id="4_0j42s"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5q2tr"]
 bg_color = Color(1, 1, 1, 0.9607843)

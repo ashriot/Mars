@@ -7,11 +7,11 @@ signal dungeon_exited(success: bool)
 @export var battle_scene_packed: PackedScene
 @export var terminal_scene_packed: PackedScene
 @export var loading_screen_scene: PackedScene
+@export var dungeon_end_screen_scene: PackedScene
 
 # --- REFERENCES ---
 @onready var dungeon_map: DungeonMap = $DungeonMap
 @onready var overlay_layer = $DungeonMap/OverlayLayer
-@onready var fader: ColorRect = $CanvasLayer/Fader
 
 var battle_scene: BattleScene = null
 
@@ -31,8 +31,6 @@ func _ready():
 	# We do NOT need to 'await' this. We let it run in the background.
 	# The Loading Screen will handle the UI feedback.
 	dungeon_map.initialize_map()
-
-	# (Removed all Fader tweening logic. Main.gd handles the transition.)
 
 func _on_map_interaction_requested(node: MapNode):
 	dungeon_map.current_map_state = DungeonMap.MapState.LOCKED
@@ -77,8 +75,6 @@ func _on_content_finished(should_complete_node: bool = true):
 
 	dungeon_map.current_map_state = DungeonMap.MapState.PLAYING
 
-# --- COMBAT HANDLING ---
-
 func start_encounter():
 	AudioManager.play_sfx("radiate")
 	# Small pause for impact
@@ -97,13 +93,24 @@ func start_encounter():
 	await get_tree().create_timer(0.5).timeout
 	battle_scene.fade_in()
 
-func end_encounter():
+func end_encounter(won: bool):
 	await battle_scene.fade_out()
-	dungeon_map.exit_battle_visuals(1.0)
-	AudioManager.play_music("map_1", 1.0, false, true)
-	_on_content_finished(true)
 
-# --- TERMINAL LOGIC ---
+	# 2. Visuals: Zoom back out to the map
+	# (This looks cool even on defeat—it shows you "where you died" on the map)
+	dungeon_map.exit_battle_visuals(1.0)
+
+	if won:
+		AudioManager.play_music("map_1", 1.0, false, true)
+		_on_content_finished(true)
+
+	else:
+		# --- CASE B: DEFEAT ---
+		# Do NOT resume map music (maybe play silence or a defeat sting?)
+		# Do NOT call _on_content_finished (we don't want to unlock map movement)
+
+		# Trigger the End Screen with the DEFEAT result
+		_show_end_screen(RunManager.RunResult.DEFEAT)
 
 func _on_terminal_choice(choice_tag: String, data: Dictionary):
 	match choice_tag:
@@ -147,12 +154,33 @@ func _handle_medical_logic(is_upgraded: bool):
 	# Refresh the Map UI (Hero Status Bars)
 	get_tree().call_group("hero_status_ui", "refresh_view")
 
-# --- END OF RUN LOGIC ---
-
 func _handle_extraction():
-	print("Extraction requested. Signaling Main...")
-	dungeon_exited.emit(true)
+	print("Extraction requested.")
+
+	# Determine if this is a Win or a Retreat
+	# If we are at the EXIT node or BOSS node, it's a Success.
+	# Otherwise (Entrance/Terminal), it's a Retreat.
+	var result = RunManager.RunResult.RETREAT
+
+	if dungeon_map.current_node.type == MapNode.NodeType.EXIT or \
+	   dungeon_map.current_node.type == MapNode.NodeType.BOSS:
+		result = RunManager.RunResult.SUCCESS
+
+	_show_end_screen(result)
 
 func _on_party_wipe():
-	print("Party wiped. Signaling Main...")
-	dungeon_exited.emit(false)
+	# This comes from the BattleManager signal "dungeon_exited(false)"
+	_show_end_screen(RunManager.RunResult.DEFEAT)
+
+func _show_end_screen(result: RunManager.RunResult):
+	# 1. Instantiate UI
+	var screen = dungeon_end_screen_scene.instantiate()
+	overlay_layer.add_child(screen)
+	screen.setup(result)
+	await screen.finished
+	screen.queue_free()
+
+	# 4. NOW signal Main to swap scenes
+	# We pass 'true' because the logic is done and saved.
+	# The boolean in 'dungeon_exited' is less important now that RunManager handles the math.
+	dungeon_exited.emit(true)
