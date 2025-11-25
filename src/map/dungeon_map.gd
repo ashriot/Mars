@@ -19,6 +19,7 @@ const ALERT_PER_STEP = 2
 @onready var team_status: VBoxContainer = $CanvasLayer/HUD/TeamStatus/VBox
 @onready var nodes_done_label: Label = $CanvasLayer/HUD/NodeGauge/Nodes
 @onready var total_nodes_label: Label = $CanvasLayer/HUD/NodeGauge/Panel/Total
+@onready var warning_label: Label = $CanvasLayer/HUD/Warning
 
 # --- Configuration ---
 @export_group("Map Dimensions")
@@ -67,6 +68,7 @@ var _pre_battle_zoom: Vector2 = Vector2.ONE
 var _pre_battle_camera_pos: Vector2 = Vector2.ZERO
 var _calculated_depth_scale: Vector2 = Vector2.ONE
 var alert_tween: Tween
+var warning_tween: Tween
 
 var terminal_memory: Dictionary = {}
 
@@ -440,6 +442,43 @@ func refresh_team_status():
 	nodes_done_label.text = str(nodes_done)
 	total_nodes_label.text = str(total_nodes)
 
+func _start_warning_pulse():
+	var color = Color.RED
+
+	if current_alert == 100:
+		warning_label.text = "DANGER!"
+	elif current_alert > ALERT_MED_THRESHOLD:
+		warning_label.text = "WARNING"
+		color = Color.ORANGE_RED
+	elif current_alert < ALERT_MED_THRESHOLD:
+		warning_label.text = "CAUTION"
+		color = Color.GOLD
+	if warning_tween: warning_tween.kill()
+
+	warning_label.show()
+	warning_tween = create_tween()
+	warning_tween.set_loops()
+	warning_tween.tween_property(
+		warning_label,
+		"self_modulate",
+		color,
+		0.5
+	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+	warning_tween.tween_property(
+		warning_label,
+		"self_modulate",
+		Color.WHITE,
+		0.5
+	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+func _stop_warning_pulse():
+	if warning_tween:
+		warning_tween.kill()
+		warning_tween = null
+
+	warning_label.hide()
+
 func complete_current_node():
 	if current_node:
 		if current_node.type != MapNode.NodeType.UNKNOWN:
@@ -617,8 +656,6 @@ func modify_alert(amount: int):
 	_update_alert_visuals()
 
 func _update_alert_visuals():
-	# 1. Determine the Target State & Color
-	# We do this logic immediately so the game state is correct
 	var target_color: Color
 
 	if current_alert < ALERT_LOW_THRESHOLD:
@@ -631,9 +668,14 @@ func _update_alert_visuals():
 		target_color = Color(1.437, 0.234, 0.0, 1.0)
 		vision_range = 0
 
+	if current_alert > ALERT_LOW_THRESHOLD:
+		_start_warning_pulse()
+	else:
+		_stop_warning_pulse()
+
 	# 2. Setup the Tween
 	if alert_tween and alert_tween.is_running():
-		alert_tween.kill() # Stop any previous movement
+		alert_tween.kill()
 
 	alert_tween = create_tween().set_parallel(true)
 	alert_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
