@@ -66,6 +66,7 @@ func _on_content_finished(should_complete_node: bool = true):
 	if should_complete_node:
 		await dungeon_map.complete_current_node()
 
+	dungeon_map.refresh_team_status()
 	RunManager.auto_save()
 
 	for child in overlay_layer.get_children():
@@ -90,7 +91,6 @@ func start_encounter():
 	battle_scene.fade_in()
 
 func end_encounter():
-	dungeon_map.refresh_team_status()
 	await battle_scene.fade_out()
 	dungeon_map.exit_battle_visuals(1.0)
 	AudioManager.play_music("map_1", 1.0, false, true)
@@ -153,8 +153,6 @@ func _handle_medical_logic(is_upgraded: bool):
 				else:
 					hero_data.boon_armored = true
 					print(hero_data.hero_name, ": Gained Armored")
-
-	dungeon_map.refresh_team_status()
 
 func _handle_extraction():
 	# 1. Transfer Run Bits to Save Bits

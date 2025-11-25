@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://d0wglriavtij" path="res://src/battle/action_button.tscn" id="2_664ah"]
 [ext_resource type="StyleBox" uid="uid://3o7lhriwwhfs" path="res://data/theme/styleboxes/shift_panel.tres" id="3_0s03y"]
 [ext_resource type="Texture2D" uid="uid://dldmpu0c4mvsl" path="res://assets/graphics/icons/skills/empty-chessboard.png" id="4_g6dho"]
-[ext_resource type="FontVariation" uid="uid://bk8iy3u13b88f" path="res://data/theme/fonts/archivo_italic.tres" id="5_g6dho"]
+[ext_resource type="FontVariation" uid="uid://c0je4m574ytir" path="res://data/theme/fonts/suse_mono.tres" id="5_d4ff0"]
 [ext_resource type="Texture2D" uid="uid://ebo48y7vo0tu" path="res://assets/graphics/glyphs/ps/ps_circle_normal.png" id="6_d4ff0"]
 [ext_resource type="Texture2D" uid="uid://bd33lt3i3y1f5" path="res://assets/graphics/glyphs/ps/ps_circle_pressed.png" id="7_txve6"]
 [ext_resource type="Script" uid="uid://b684sdqsvpn3p" path="res://src/battle/dynamic_glyph.gd" id="8_anymx"]
@@ -153,7 +153,7 @@ offset_top = 8.0
 offset_right = 130.0
 offset_bottom = 33.0
 grow_horizontal = 2
-theme_override_fonts/font = ExtResource("5_g6dho")
+theme_override_fonts/font = ExtResource("5_d4ff0")
 theme_override_font_sizes/font_size = 20
 text = "ROLE PASSIVE"
 horizontal_alignment = 2
@@ -242,7 +242,7 @@ offset_top = 8.0
 offset_right = 130.0
 offset_bottom = 33.0
 grow_horizontal = 2
-theme_override_fonts/font = ExtResource("5_g6dho")
+theme_override_fonts/font = ExtResource("5_d4ff0")
 theme_override_font_sizes/font_size = 20
 text = "SHIFT ACTION"
 vertical_alignment = 2
@@ -352,7 +352,7 @@ offset_top = 8.0
 offset_right = 130.0
 offset_bottom = 33.0
 grow_horizontal = 2
-theme_override_fonts/font = ExtResource("5_g6dho")
+theme_override_fonts/font = ExtResource("5_d4ff0")
 theme_override_font_sizes/font_size = 20
 text = "SHIFT"
 horizontal_alignment = 2
@@ -441,7 +441,7 @@ offset_top = 8.0
 offset_right = 130.0
 offset_bottom = 33.0
 grow_horizontal = 2
-theme_override_fonts/font = ExtResource("5_g6dho")
+theme_override_fonts/font = ExtResource("5_d4ff0")
 theme_override_font_sizes/font_size = 20
 text = "SHIFT"
 vertical_alignment = 2

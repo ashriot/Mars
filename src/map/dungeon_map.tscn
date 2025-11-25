@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://cqo38uie6gkdu"]
+[gd_scene load_steps=15 format=3 uid="uid://cqo38uie6gkdu"]
 
 [ext_resource type="Script" uid="uid://c0tmi3fc3fega" path="res://src/map/dungeon_map.gd" id="1_5o7fj"]
 [ext_resource type="Texture2D" uid="uid://bwqcku6nvr4ff" path="res://assets/graphics/backgrounds/street.webp" id="2_1a5qu"]
@@ -18,13 +18,10 @@ content_margin_top = 2.0
 content_margin_right = 2.0
 content_margin_bottom = 2.0
 bg_color = Color(0, 0, 0, 0.6862745)
-border_width_left = 6
-border_width_top = 6
-border_width_right = 6
-border_width_bottom = 6
 border_color = Color(1, 1, 1, 1)
 corner_detail = 6
-shadow_size = 10
+shadow_size = 1
+shadow_offset = Vector2(0, 2)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vfn15"]
 content_margin_left = 2.0
@@ -44,8 +41,8 @@ border_color = Color(1, 1, 1, 1)
 corner_radius_top_left = 12
 corner_radius_bottom_left = 12
 shadow_color = Color(0.12156863, 0.12156863, 0.12156863, 1)
-shadow_size = 5
-shadow_offset = Vector2(-5, 2)
+shadow_size = 1
+shadow_offset = Vector2(-1, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gftom"]
 bg_color = Color(1, 1, 1, 1)
@@ -56,8 +53,31 @@ border_width_bottom = 3
 border_color = Color(1, 1, 1, 1)
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
-shadow_size = 5
-shadow_offset = Vector2(5, 5)
+shadow_size = 1
+shadow_offset = Vector2(1, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ajvg2"]
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 12
+corner_radius_bottom_left = 12
+shadow_color = Color(0.12156863, 0.12156863, 0.12156863, 1)
+shadow_size = 1
+shadow_offset = Vector2(0, 2)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ssagv"]
+bg_color = Color(0.11764706, 0.11764706, 0.11764706, 1)
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+expand_margin_left = 1.0
+expand_margin_top = 1.0
+expand_margin_right = 2.0
+expand_margin_bottom = 1.0
 
 [node name="DungeonMap" type="Node2D"]
 script = ExtResource("1_5o7fj")
@@ -106,7 +126,7 @@ layout_mode = 1
 offset_left = 140.0
 offset_top = 20.0
 offset_right = 892.0
-offset_bottom = 63.0
+offset_bottom = 60.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_styles/background = SubResource("StyleBoxFlat_1a5qu")
 theme_override_styles/fill = SubResource("StyleBoxFlat_vfn15")
@@ -115,13 +135,10 @@ show_percentage = false
 
 [node name="Panel" type="Panel" parent="CanvasLayer/HUD/AlertGauge"]
 layout_mode = 1
-anchors_preset = 4
-anchor_top = 0.5
-anchor_bottom = 0.5
-offset_left = -115.0
-offset_top = -21.5
-offset_right = 5.0
-offset_bottom = 21.5
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_left = -119.0
+offset_right = 6.0
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_bcccw")
 
@@ -130,10 +147,10 @@ layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_left = 7.0
-offset_top = -20.0
-offset_right = 126.0
-offset_bottom = 20.0
+offset_left = 10.0
+offset_top = -23.5
+offset_right = 129.0
+offset_bottom = 23.5
 grow_vertical = 2
 theme_override_colors/font_color = Color(0.12041845, 0.12041845, 0.12041845, 1)
 theme_override_fonts/font = ExtResource("4_pf175")
@@ -143,15 +160,12 @@ vertical_alignment = 1
 
 [node name="Panel2" type="Panel" parent="CanvasLayer/HUD/AlertGauge"]
 layout_mode = 1
-anchors_preset = 6
+anchors_preset = 11
 anchor_left = 1.0
-anchor_top = 0.5
 anchor_right = 1.0
-anchor_bottom = 0.5
+anchor_bottom = 1.0
 offset_left = -6.0
-offset_top = -21.5
-offset_right = 91.0
-offset_bottom = 21.5
+offset_right = 94.0
 grow_horizontal = 0
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_gftom")
@@ -176,12 +190,85 @@ text = "100%"
 horizontal_alignment = 2
 vertical_alignment = 1
 
+[node name="NodeGauge" type="Panel" parent="CanvasLayer/HUD"]
+modulate = Color(0.88, 0.42856, 0.1672, 1)
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -273.0
+offset_top = 20.0
+offset_right = -79.0
+offset_bottom = 60.0
+grow_horizontal = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_ajvg2")
+
+[node name="Label" type="Label" parent="CanvasLayer/HUD/NodeGauge"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 13.0
+offset_top = -3.5
+offset_right = -68.0
+offset_bottom = 3.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.12041845, 0.12041845, 0.12041845, 1)
+theme_override_fonts/font = ExtResource("4_pf175")
+theme_override_font_sizes/font_size = 36
+text = "NODES"
+vertical_alignment = 1
+
+[node name="Nodes" type="Label" parent="CanvasLayer/HUD/NodeGauge"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 13.0
+offset_top = -3.5
+offset_right = -8.0
+offset_bottom = 3.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.12041845, 0.12041845, 0.12041845, 1)
+theme_override_fonts/font = ExtResource("4_pf175")
+theme_override_font_sizes/font_size = 36
+text = "99"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="Panel" type="Panel" parent="CanvasLayer/HUD/NodeGauge"]
+layout_mode = 1
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -2.0
+offset_right = 52.0
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_ssagv")
+
+[node name="Total" type="Label" parent="CanvasLayer/HUD/NodeGauge/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_fonts/font = ExtResource("4_pf175")
+theme_override_font_sizes/font_size = 36
+text = "99"
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="TeamStatus" type="Control" parent="CanvasLayer/HUD"]
 anchors_preset = 0
-offset_left = 25.0
-offset_top = 72.0
-offset_right = 354.0
-offset_bottom = 112.0
+offset_left = 20.0
+offset_top = 70.0
+offset_right = 349.0
+offset_bottom = 110.0
 
 [node name="VBox" type="VBoxContainer" parent="CanvasLayer/HUD/TeamStatus"]
 layout_mode = 0

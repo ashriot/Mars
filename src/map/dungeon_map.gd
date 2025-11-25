@@ -17,6 +17,8 @@ const ALERT_PER_STEP = 2
 @onready var player_cursor: Sprite2D = $Background/PlayerCursor
 
 @onready var team_status: VBoxContainer = $CanvasLayer/HUD/TeamStatus/VBox
+@onready var nodes_done_label: Label = $CanvasLayer/HUD/NodeGauge/Nodes
+@onready var total_nodes_label: Label = $CanvasLayer/HUD/NodeGauge/Panel/Total
 
 # --- Configuration ---
 @export_group("Map Dimensions")
@@ -58,6 +60,7 @@ const ALERT_PER_STEP = 2
 var map_size: int
 var hex_width: float
 var hex_height: float
+var total_nodes: int
 var grid_nodes = {}
 var _map_center_pos: Vector2 = Vector2.ZERO
 var _pre_battle_zoom: Vector2 = Vector2.ONE
@@ -73,6 +76,7 @@ var gap: float = 40.0
 
 # --- Dungeon Stats ---
 var total_moves: int = 0
+var nodes_done: int = 0
 var current_node: MapNode = null
 var current_alert: int = 0
 
@@ -94,7 +98,7 @@ func _ready():
 	alert_gauge.modulate = Color.MEDIUM_SEA_GREEN
 	alert_gauge.value = 0
 	alert_label.text = "0%"
-	if hud: hud.modulate.a = 0.0
+	hud.modulate.a = 0.0
 	for hero_data in RunManager.party_roster:
 		var status_ui = hero_status_scene.instantiate()
 		team_status.add_child(status_ui)
@@ -129,16 +133,14 @@ func initialize_map():
 		current_map_state = MapState.PLAYING
 
 	else:
-		# PATH B: NEW RUN
 		print("Starting fresh run...")
 		randomize()
 		RunManager.current_run_seed = randi()
 		seed(RunManager.current_run_seed)
 
 		var map_data = generate_hex_grid()
-
-		if map_data.start_node:
-			current_node = map_data.start_node
+		total_nodes = num_combats + num_elites + num_events + num_uncommon_rewards + num_rare_rewards + num_rewards + num_terminals
+		current_node = map_data.start_node
 
 		RunManager.is_run_active = true
 		RunManager.auto_save()
@@ -152,6 +154,7 @@ func initialize_map():
 
 		current_map_state = MapState.PLAYING
 		print("Map ready.")
+	refresh_team_status()
 
 func load_from_save_data(data: Dictionary):
 	# 1. REGENERATE GRID
@@ -181,6 +184,9 @@ func load_from_save_data(data: Dictionary):
 	for key_str in data.terminal_memory.keys():
 		var coords = str_to_var(key_str)
 		terminal_memory[coords] = data.terminal_memory[key_str]
+
+	total_nodes = data.total_nodes
+	nodes_done = data.nodes_done
 
 	# 5. PLACE PLAYER & CAMERA
 	var player_coords = str_to_var(data.current_coords)
@@ -431,9 +437,13 @@ func play_intro_sequence(map_data: Dictionary) -> void:
 func refresh_team_status():
 	for hero_status in team_status.get_children():
 		hero_status.refresh_view()
+	nodes_done_label.text = str(nodes_done)
+	total_nodes_label.text = str(total_nodes)
 
 func complete_current_node():
 	if current_node:
+		if current_node.type != MapNode.NodeType.UNKNOWN:
+			nodes_done += 1
 		current_node.set_state(MapNode.NodeState.COMPLETED)
 		await _update_vision()
 		# Add rewards, xp, etc here
@@ -883,6 +893,8 @@ func get_save_data() -> Dictionary:
 
 	return {
 		"current_alert": current_alert,
+		"total_nodes": total_nodes,
+		"nodes_done": nodes_done,
 		"current_coords": var_to_str(current_node.grid_coords),
 		"node_data": node_states,
 		"terminal_memory": serializable_terminals
