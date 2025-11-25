@@ -17,6 +17,7 @@ position = Vector2(960, 540)
 [node name="MenuLayer" type="CanvasLayer" parent="."]
 
 [node name="TransitionLayer" type="CanvasLayer" parent="."]
+layer = 99
 
 [node name="Fader" type="ColorRect" parent="TransitionLayer"]
 custom_minimum_size = Vector2(1920, 1080)

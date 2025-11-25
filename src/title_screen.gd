@@ -19,7 +19,7 @@ func _ready():
 	# 1. Setup Initial Visual State
 	self.modulate.a = 0.0
 	chroma_rect.modulate.a = 0.0
-	menu_buttons.modulate.a = 0.0
+	menu_buttons.modulate.a = 1.0
 
 	# 2. Check Save Status
 	if SaveSystem.has_save(1):
@@ -30,9 +30,9 @@ func _ready():
 		start_button.grab_focus()
 
 	# 3. Disable Input during Intro
-	for child in menu_buttons.get_children():
-		if child is Control:
-			child.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	#for child in menu_buttons.get_children():
+		#if child is Control:
+			#child.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	# 4. Intro Animation
 	var tween = create_tween().set_parallel()

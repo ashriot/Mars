@@ -111,6 +111,7 @@ func end_encounter(won: bool):
 
 		# Trigger the End Screen with the DEFEAT result
 		_show_end_screen(RunManager.RunResult.DEFEAT)
+	dungeon_map.refresh_team_status()
 
 func _on_terminal_choice(choice_tag: String, data: Dictionary):
 	match choice_tag:
@@ -151,8 +152,7 @@ func _handle_medical_logic(is_upgraded: bool):
 				if rng.randf() > 0.5: hero_data.boon_focused = true
 				else: hero_data.boon_armored = true
 
-	# Refresh the Map UI (Hero Status Bars)
-	get_tree().call_group("hero_status_ui", "refresh_view")
+	dungeon_map.refresh_team_status()
 
 func _handle_extraction():
 	print("Extraction requested.")
@@ -178,7 +178,6 @@ func _show_end_screen(result: RunManager.RunResult):
 	overlay_layer.add_child(screen)
 	screen.setup(result)
 	await screen.finished
-	screen.queue_free()
 
 	# 4. NOW signal Main to swap scenes
 	# We pass 'true' because the logic is done and saved.
