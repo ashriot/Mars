@@ -1,7 +1,7 @@
 extends Resource
 class_name EnemyData
 
-enum AIPattern { LOOP, RANDOM, SETUP }
+enum AIPattern { SEQUENCE, RANDOM }
 
 @export var enemy_id: String = "trooper"
 @export var enemy_name: String = "Trooper"
@@ -19,9 +19,10 @@ enum AIPattern { LOOP, RANDOM, SETUP }
 @export var kinetic_defense_rank: int = 5
 @export var energy_defense_rank: int = 5
 
-@export var action_deck: Array[Action]
 @export var ai_script_indices: Array[int]
-@export var ai_pattern: AIPattern = AIPattern.LOOP
+@export var ai_pattern: AIPattern = AIPattern.SEQUENCE
+@export var action_deck: Array[Action]
+@export var ai_overrides: Array[AIOverride]
 
 var stats: ActorStats
 

@@ -66,8 +66,6 @@ func _switch_scene(packed_scene: PackedScene, setup_func: Callable = Callable())
 	await tween_in.finished
 	fader.hide()
 
-# --- SETUP HELPERS ---
-
 func _setup_hub():
 	current_instance.head_out.connect(start_dungeon_run)
 	AudioManager.play_music("hub")

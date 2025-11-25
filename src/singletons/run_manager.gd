@@ -3,10 +3,9 @@ extends Node
 
 enum RunResult { SUCCESS, RETREAT, DEFEAT }
 
-@export var current_dungeon_tier: int = 1
-
 var active_dungeon_map: DungeonMap = null
 var is_run_active: bool = false
+var current_dungeon_tier: int = 1
 var current_run_seed: int = 0
 var run_bits: int = 0
 var run_xp: int = 0
@@ -57,6 +56,10 @@ func restore_run():
 	if active_dungeon_map:
 		seed(current_run_seed)
 		await active_dungeon_map.load_from_save_data(run_data.map_data)
+
+func generate_battle_roster(node_type: MapNode.NodeType) -> Array[EnemyData]:
+	var encounter = EncounterDatabase.get_random_encounter(current_dungeon_tier, node_type)
+	return encounter.enemies
 
 func spend_bits(amount: int) -> bool:
 	if SaveSystem.bits >= amount:

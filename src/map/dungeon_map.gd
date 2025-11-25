@@ -614,19 +614,16 @@ func _move_player_to(target_node: MapNode, is_start: bool = false):
 		_update_alert_visuals()
 		_update_vision()
 		return
-	else:
-		_animate_cursor_slide(target_node.position)
 
-	# 3. Handle Gameplay Logic
 	total_moves += 1
 	var is_revisit = target_node.has_been_visited
 	target_node.has_been_visited = true
 	var alert_gain = _calculate_alert_gain(is_revisit)
-
 	modify_alert(alert_gain)
 	_update_vision()
 
 	RunManager.auto_save()
+	await _animate_cursor_slide(target_node.position)
 
 	if target_node.state != MapNode.NodeState.COMPLETED:
 		interaction_requested.emit(target_node)
@@ -638,6 +635,7 @@ func _animate_cursor_slide(target_pos: Vector2):
 	cursor_move_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 
 	cursor_move_tween.tween_property(player_cursor, "position", target_pos, 0.3)
+	await cursor_move_tween.finished
 
 func _calculate_alert_gain(is_revisit: bool) -> int:
 	return int(ALERT_PER_STEP / 2) if is_revisit else ALERT_PER_STEP

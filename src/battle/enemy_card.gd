@@ -4,19 +4,21 @@ class_name EnemyCard
 # --- UNIQUE Signals ---
 signal enemy_clicked(enemy_card)
 
-# --- UNIQUE Data ---
-var enemy_data: EnemyData
-var ai_index: int = 0
-var intended_action: Action
-var intended_targets: Array[ActorCard]
-var intent_flash_tween: Tween
-
 # --- UNIQUE UI Node References ---
 @onready var intent_text: RichTextLabel = $Panel/IntentText
 @onready var kin_def_gauge: TextureProgressBar = $Panel/KinDef
 @onready var kin_def_value: Label = $Panel/KinDef/Value
 @onready var nrg_def_gauge: TextureProgressBar = $Panel/NrgDef
 @onready var nrg_def_value: Label = $Panel/NrgDef/Value
+
+# --- UNIQUE Data ---
+var enemy_data: EnemyData
+var ai_index: int = 0
+var intended_action: Action
+var intended_targets: Array[ActorCard]
+var intent_flash_tween: Tween
+var used_overrides: Array[AIOverride] = []
+var turn_counter: int = 0
 
 
 func setup(data: EnemyData):
@@ -30,26 +32,51 @@ func setup(data: EnemyData):
 	if enemy_data.portrait:
 		portrait_rect.texture = enemy_data.portrait
 
-func get_next_action() -> Action:
-	if enemy_data.action_deck.is_empty():
-		push_error(enemy_data.enemy_name + " has no actions in its action_deck!")
-		return null
-
-	var next_action = enemy_data.action_deck.pick_random()
-	return next_action
-	#if enemy_data.ai_script_indices.is_empty():
-		#return null
-#
-	#var script = enemy_data.ai_script_indices
-	#var ability_index = script[ai_index]
-	#next_action = enemy_data.action_deck[ability_index]
-#
-	#ai_index = (ai_index + 1) % script.size()
-	#return next_action
-
 func decide_intent(hero_targets: Array[HeroCard]):
-	intended_action = get_next_action()
+	turn_counter += 1
+
+	# 1. Check Overrides First (High Priority)
+	var override_action = _check_ai_overrides()
+	if override_action:
+		self.intended_action = override_action
+	else:
+		# 2. Fallback to Standard Pattern
+		self.intended_action = get_next_action_from_deck()
+
+	# 3. Pick Target (Your existing logic)
 	get_a_target(hero_targets)
+
+func _check_ai_overrides() -> Action:
+	if enemy_data.ai_overrides.is_empty(): return null
+
+	for override in enemy_data.ai_overrides:
+		if override in used_overrides: continue
+
+		var met = false
+		match override.condition:
+			AIOverride.PriorityType.HEALTH_BELOW_50:
+				met = (float(current_hp) / current_stats.max_hp) < 0.5
+			AIOverride.PriorityType.FIRST_TURN:
+				met = (turn_counter == 1)
+			# ... add other checks ...
+
+		if met and randf() <= override.probability:
+			if override.one_time_use:
+				used_overrides.append(override)
+			return override.action_to_use
+
+	return null
+
+func get_next_action_from_deck() -> Action:
+	if enemy_data.action_deck.is_empty(): return null
+
+	if enemy_data.ai_pattern == EnemyData.AIPattern.RANDOM:
+		return enemy_data.action_deck.pick_random()
+	else:
+		# SEQUENCE Logic
+		var action = enemy_data.action_deck[ai_index]
+		ai_index = (ai_index + 1) % enemy_data.action_deck.size()
+		return action
 
 func get_a_target(hero_targets: Array[HeroCard]):
 	var enemy_targets = battle_manager.get_living_enemies() as Array[EnemyCard]

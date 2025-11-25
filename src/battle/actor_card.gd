@@ -16,6 +16,23 @@ signal spawn_particles(pos, type)
 
 const MAX_GUARD = 10
 
+# --- UI Node References (Shared) ---
+@onready var name_label: Label = $Panel/Title
+@onready var hp_bar_ghost: ProgressBar = $Panel/HP/BarGhost
+@onready var hp_bar_actual: ProgressBar = $Panel/HP/BarActual
+@onready var panel: Panel = $Panel
+@onready var hp_value: Label = $Panel/HP/Value
+@onready var guard_bar: HBoxContainer = $Panel/GuardBar
+@onready var guard_label: Label = $Panel/GuardValue
+@onready var portrait_rect: TextureRect = $Panel/Portrait
+@onready var breached_label: Label = $Panel/BreachedLabel
+@onready var highlight_panel: Panel = $Panel/Highlight
+@onready var target_flash: Panel = $Panel/TargetFlash
+@onready var action_display: PanelContainer = $Panel/ActionName
+@onready var next_panel: Panel = $Panel/NextPanel
+@onready var debuffs_panel: Control = $Panel/Debuffs
+@onready var buffs_panel: Control = $Panel/Buffs
+
 var battle_manager: BattleManager
 var flash_tween: Tween
 var is_valid_target: bool
@@ -44,23 +61,6 @@ var panel_home_position: Vector2
 var last_popup_time: float = 0.0
 var popup_stack_offset: int = 0
 const POPUP_SPACING_TIME: float = 1.0
-
-# --- UI Node References (Shared) ---
-@onready var name_label: Label = $Panel/Title
-@onready var hp_bar_ghost: ProgressBar = $Panel/HP/BarGhost
-@onready var hp_bar_actual: ProgressBar = $Panel/HP/BarActual
-@onready var panel: Panel = $Panel
-@onready var hp_value: Label = $Panel/HP/Value
-@onready var guard_bar: HBoxContainer = $Panel/GuardBar
-@onready var guard_label: Label = $Panel/GuardValue
-@onready var portrait_rect: TextureRect = $Panel/Portrait
-@onready var breached_label: Label = $Panel/BreachedLabel
-@onready var highlight_panel: Panel = $Panel/Highlight
-@onready var target_flash: Panel = $Panel/TargetFlash
-@onready var action_display: PanelContainer = $Panel/ActionName
-@onready var next_panel: Panel = $Panel/NextPanel
-@onready var debuffs_panel: Control = $Panel/Debuffs
-@onready var buffs_panel: Control = $Panel/Buffs
 
 
 func setup_base(stats: ActorStats):

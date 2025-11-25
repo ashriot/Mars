@@ -5,16 +5,6 @@ class_name FXManager
 @export var impact_sparks: PackedScene
 @export var shield_hit: PackedScene
 
-## Play a muzzle flash at the attacker's weapon position
-#func play_attack_anim(attacker_pos: Vector2, direction: Vector2):
-	#if not muzzle_flash: return
-#
-	#var fx = muzzle_flash.instantiate()
-	#add_child(fx)
-	#fx.global_position = attacker_pos
-	#fx.rotation = direction.angle() # Rotate to face target
-	#fx.emitting = true
-
 # Play sparks at the victim's position
 func play_hit_effect(target_pos: Vector2, is_shield_hit: bool = false):
 	var scene_to_use = shield_hit if is_shield_hit else impact_sparks
@@ -26,6 +16,6 @@ func play_hit_effect(target_pos: Vector2, is_shield_hit: bool = false):
 	fx.emitting = true
 
 # Optional: Add a little screen shake for heavy hits
-func trigger_shake(intensity: float):
+func trigger_shake(_intensity: float):
 	# You can implement a camera shake logic here
 	pass

@@ -27,7 +27,6 @@ signal battle_ended(won)
 
 # --- Encounter Data Links ---
 @export var hero_data_files: Array[HeroData] = []
-@export var enemy_data_files: Array[EnemyData] = []
 
 # --- Actor Tracking ---
 var current_actor: ActorCard = null
@@ -43,22 +42,12 @@ func change_state(new_state):
 
 func _ready():
 	UI.modulate.a = 0.0
-	randomize() # For tie-breakers
 	await wait(0.1)
 	action_bar.action_selected.connect(_on_action_button_pressed)
 	action_bar.shift_button_pressed.connect(_on_shift_button_pressed)
 	current_action_panel.hide()
 
-	spawn_encounter()
-	change_state(State.LOADING)
-	await _fade_in()
-	await wait(0.25)
-	await _flush_all_health_animations()
-	await wait(0.5)
-	await _apply_starting_passives()
-	find_and_start_next_turn()
-
-func spawn_encounter():
+func spawn_encounter(enemy_roster: Array[EnemyData]):
 	print("Spawning encounter...")
 	for hero_data in RunManager.party_roster:
 		var hero_card: HeroCard = hero_card_scene.instantiate()
@@ -73,7 +62,7 @@ func spawn_encounter():
 		hero_card.current_ct = randi_range(0, hero_data.stats.speed * 5)
 		actor_list.append(hero_card)
 
-	for enemy_data in enemy_data_files:
+	for enemy_data in enemy_roster:
 		var enemy_card: EnemyCard = enemy_card_scene.instantiate()
 		enemy_area.add_child(enemy_card)
 		enemy_card.setup(enemy_data)
@@ -87,6 +76,13 @@ func spawn_encounter():
 		actor_list.append(enemy_card)
 		enemy_card.decide_intent(get_living_heroes())
 	print("Spawning complete.")
+	change_state(State.LOADING)
+	await _fade_in()
+	await wait(0.25)
+	await _flush_all_health_animations()
+	await wait(0.5)
+	await _apply_starting_passives()
+	find_and_start_next_turn()
 
 func _apply_starting_passives() -> void:
 	print("--- Applying Starting Passives ---")

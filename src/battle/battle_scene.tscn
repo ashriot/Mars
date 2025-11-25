@@ -1,4 +1,4 @@
-[gd_scene load_steps=25 format=3 uid="uid://dc5du0o5phhma"]
+[gd_scene load_steps=22 format=3 uid="uid://dc5du0o5phhma"]
 
 [ext_resource type="Script" uid="uid://dssm7j7rbyew6" path="res://src/battle/battle_scene.gd" id="1_1pykk"]
 [ext_resource type="Script" uid="uid://deoohlwp7dcfm" path="res://src/battle/battle_manager.gd" id="1_6cbqe"]
@@ -6,13 +6,10 @@
 [ext_resource type="PackedScene" uid="uid://b4tt3yil85l7j" path="res://src/battle/enemy_card.tscn" id="1_u5n4n"]
 [ext_resource type="Script" uid="uid://dc5sk0b0jubvj" path="res://data/scripts/data/hero_data.gd" id="4_w6n6o"]
 [ext_resource type="Resource" uid="uid://ctg8csrcqdj57" path="res://data/heroes/asher/asher.tres" id="5_16l6v"]
-[ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://data/scripts/data/enemy_data.gd" id="6_6by3n"]
 [ext_resource type="Resource" uid="uid://b2bkd217htd2n" path="res://data/heroes/echo/echo.tres" id="6_vtpwn"]
 [ext_resource type="PackedScene" uid="uid://260uyw1v5su0" path="res://src/battle/action_bar.tscn" id="8_w6n6o"]
 [ext_resource type="Script" uid="uid://bf5t2mtgtkbsn" path="res://src/battle/turn_queue.gd" id="9_16l6v"]
-[ext_resource type="Resource" uid="uid://s6fcg8egbavh" path="res://data/enemies/actors/scout_drone.tres" id="9_rvyyd"]
 [ext_resource type="PackedScene" uid="uid://diku73kk4tjv7" path="res://src/battle/actor_queue.tscn" id="10_6by3n"]
-[ext_resource type="Resource" uid="uid://xwe3skgcbr7x" path="res://data/enemies/actors/attack_drone.tres" id="12_tx5gf"]
 [ext_resource type="Texture2D" uid="uid://dldmpu0c4mvsl" path="res://assets/graphics/icons/skills/empty-chessboard.png" id="13_6rrcq"]
 [ext_resource type="Shader" uid="uid://cg8j5a78td0ei" path="res://src/battle/chroma.gdshader" id="13_w2kg5"]
 [ext_resource type="Script" uid="uid://cnb6qyk7u80ko" path="res://src/battle/fx_manager.gd" id="16_1pykk"]
@@ -69,7 +66,6 @@ current_action_panel = NodePath("../UI/CurrentAction")
 hero_card_scene = ExtResource("1_sft4c")
 enemy_card_scene = ExtResource("1_u5n4n")
 hero_data_files = Array[ExtResource("4_w6n6o")]([ExtResource("5_16l6v"), ExtResource("6_vtpwn")])
-enemy_data_files = Array[ExtResource("6_6by3n")]([ExtResource("9_rvyyd"), ExtResource("12_tx5gf")])
 
 [node name="UI" type="Control" parent="."]
 layout_mode = 1

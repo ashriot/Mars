@@ -13,7 +13,7 @@ signal dungeon_exited(success: bool)
 @onready var dungeon_map: DungeonMap = $DungeonMap
 @onready var overlay_layer = $DungeonMap/OverlayLayer
 
-var battle_scene: BattleScene = null
+var battle_scene: BattleScene
 
 func _ready():
 	# 1. Setup Loading Screen
@@ -83,15 +83,14 @@ func start_encounter():
 	AudioManager.play_music("battle", 0.0, true, false)
 	await dungeon_map.enter_battle_visuals()
 
+	var node_type = dungeon_map.current_node.type
+
+	var enemy_roster = RunManager.generate_battle_roster(node_type)
+
 	battle_scene = battle_scene_packed.instantiate()
 	overlay_layer.add_child(battle_scene)
+	battle_scene.setup_battle(enemy_roster)
 	battle_scene.battle_ended.connect(end_encounter)
-
-	# (If you have a death signal in battle_scene, connect it to _on_party_wipe)
-	# battle_scene.party_wiped.connect(_on_party_wipe)
-
-	await get_tree().create_timer(0.5).timeout
-	battle_scene.fade_in()
 
 func end_encounter(won: bool):
 	await battle_scene.fade_out()
@@ -173,13 +172,9 @@ func _on_party_wipe():
 	_show_end_screen(RunManager.RunResult.DEFEAT)
 
 func _show_end_screen(result: RunManager.RunResult):
-	# 1. Instantiate UI
 	var screen = dungeon_end_screen_scene.instantiate()
 	overlay_layer.add_child(screen)
 	screen.setup(result)
 	await screen.finished
 
-	# 4. NOW signal Main to swap scenes
-	# We pass 'true' because the logic is done and saved.
-	# The boolean in 'dungeon_exited' is less important now that RunManager handles the math.
 	dungeon_exited.emit(true)

@@ -23,6 +23,7 @@ InputIconMap="*res://src/singletons/input_map.gd"
 AudioManager="*res://src/singletons/audio_manager.gd"
 InputManager="*res://src/singletons/input_manager.gd"
 ItemDatabase="*res://src/singletons/item_database.gd"
+EncounterDatabase="*res://src/singletons/encounter_database.gd"
 
 [debug]
 

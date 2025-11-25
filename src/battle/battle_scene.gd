@@ -10,22 +10,8 @@ func _ready():
 	manager.battle_ended.connect(_on_battle_ended)
 	_on_viewport_resized()
 
-func fade_in():
-	pass
-
-func fade_out():
-	var tween = create_tween()
-	tween.set_trans(Tween.TRANS_SINE)
-	tween.set_ease(Tween.EASE_IN)
-
-	tween.tween_property(
-		self,
-		"modulate:a",
-		0.0,
-		0.5
-	)
-	await tween.finished
-	tween.kill()
+func setup_battle(enemy_roster: Array[EnemyData]):
+	manager.spawn_encounter(enemy_roster)
 
 func _on_viewport_resized():
 	var base_size = Vector2(1920, 1080)
