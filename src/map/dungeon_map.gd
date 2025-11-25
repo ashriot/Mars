@@ -27,6 +27,7 @@ const ALERT_PER_STEP = 2
 
 # --- Node Distribution Settings ---
 @export_group("Node Counts")
+@export var dungeon_has_boss: bool = false
 @export var num_combats: int = 7
 @export var num_elites: int = 2
 @export var num_events: int = 2
@@ -51,6 +52,7 @@ const ALERT_PER_STEP = 2
 @export_range(0.0, 5.0) var background_blur: float = 3.0
 
 # --- Internal Data ---
+var map_size: int
 var hex_width: float
 var hex_height: float
 var grid_nodes = {}
@@ -271,6 +273,7 @@ func generate_hex_grid() -> Dictionary:
 	alert_gauge.value = 0
 
 	# --- Grid Math ---
+	map_size = map_height * map_length
 	var valid_coords = {}
 	var start_pos = Vector2(100, 200)
 	var center_y = floor(map_height / 2.0)
@@ -556,7 +559,7 @@ func _move_player_to(target_node: MapNode, is_start: bool = false):
 	if is_start:
 		player_cursor.position = target_node.position
 		target_node.has_been_visited = true
-		target_node.set_state(MapNode.NodeState.COMPLETED)
+		#target_node.set_state(MapNode.NodeState.COMPLETED)
 		_update_alert_visuals()
 		_update_vision()
 		return
@@ -711,30 +714,38 @@ func _offset_to_cube(hex: Vector2i) -> Vector3i:
 
 func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 	var type_map = {}
-	# Fill defaults
 	for c in all_coords: type_map[c] = MapNode.NodeType.UNKNOWN
 
-	# --- 1. SETUP POOLS ---
-	# Create a working pool of coordinates we can subtract from
 	var available_pool = all_coords.duplicate()
 
-	# --- 2. START & BOSS (Fixed Logic) ---
+	# --- 1. FIND START (ENTRANCE) ---
 	var min_x = 9999
 	for c in all_coords:
 		if c.y == center_y and c.x < min_x: min_x = c.x
 	var start_node = Vector2i(min_x, center_y)
 
-	available_pool.erase(start_node) # Remove from pool
+	# Explicitly assign ENTRANCE type
+	type_map[start_node] = MapNode.NodeType.ENTRANCE
+	available_pool.erase(start_node)
 
-	# Boss Logic (Far right)
+	# --- 2. FIND END (BOSS or EXIT) ---
 	var sorted_by_x = all_coords.duplicate()
 	sorted_by_x.sort_custom(func(a, b): return a.x > b.x)
-	var boss_candidates = sorted_by_x.slice(0, min(7, sorted_by_x.size()))
-	var boss_node = boss_candidates.pick_random()
-	while boss_node == start_node: boss_node = boss_candidates.pick_random()
+	var end_variance = int(map_size / 4)
+	var end_candidates = sorted_by_x.slice(0, min(end_variance, sorted_by_x.size()))
+	var end_node = end_candidates.pick_random()
 
-	type_map[boss_node] = MapNode.NodeType.BOSS
-	available_pool.erase(boss_node)
+	# Sanity check
+	while end_node == start_node and end_candidates.size() > 1:
+		end_node = end_candidates.pick_random()
+
+	# Assign based on config
+	if dungeon_has_boss:
+		type_map[end_node] = MapNode.NodeType.BOSS
+	else:
+		type_map[end_node] = MapNode.NodeType.EXIT
+
+	available_pool.erase(end_node)
 
 	# --- 3. DEFINE "SAFE ZONE" ---
 	# Remove nodes too close to start from the pool for "Good Stuff"

@@ -31,6 +31,10 @@ func _on_map_interaction_requested(node: MapNode):
 	var instance = null
 
 	match node.type:
+		MapNode.NodeType.ENTRANCE:
+			print("Escaping the dungeon!")
+			_on_content_finished(false)
+
 		MapNode.NodeType.COMBAT, MapNode.NodeType.ELITE, MapNode.NodeType.BOSS:
 			start_encounter()
 

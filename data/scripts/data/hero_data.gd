@@ -55,13 +55,7 @@ func calculate_stats():
 			role_def.init_structure() # Ensure IDs exist
 			_process_node_stats(role_def.root_node, stats)
 
-	print("\n=== STATS FOR: ", stats.actor_name, " ===")
-	for prop in stats.get_property_list():
-		# This filter ensures we only print variables defined in the script
-		# (skips internal Godot stuff like 'reference', 'resource_path', etc.)
-		if prop.usage & PROPERTY_USAGE_SCRIPT_VARIABLE:
-			print(prop.name, ": ", stats.get(prop.name))
-	print("========================\n")
+	print(stats)
 
 func _add_stats(base: ActorStats, additional: ActorStats):
 	base.max_hp += additional.max_hp

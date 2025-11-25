@@ -845,6 +845,6 @@ grow_vertical = 2
 theme_override_colors/font_color = Color(0.18039216, 0.18039216, 0.18039216, 1)
 theme_override_fonts/font = ExtResource("2_em4mh")
 theme_override_font_sizes/font_size = 50
-text = "RK.22 [OPR]"
+text = "Rk.22 [OPR]"
 horizontal_alignment = 1
 vertical_alignment = 1

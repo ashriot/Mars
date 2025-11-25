@@ -3,14 +3,14 @@ extends Area2D
 
 signal node_clicked(node: MapNode)
 
-enum NodeType { EXIT, COMBAT, ELITE, BOSS, REWARD, REWARD_2, REWARD_3, EVENT, TERMINAL, UNKNOWN }
+enum NodeType { ENTRANCE, COMBAT, ELITE, BOSS, REWARD, REWARD_2, REWARD_3, EVENT, TERMINAL, EXIT, UNKNOWN }
 enum NodeState { HIDDEN, REVEALED, COMPLETED }
 
 @onready var hex_sprite = $HexSprite
 @onready var icon_sprite = $HexSprite/IconSprite
 
 @export_group("Event Icons")
-@export var icon_exit: Texture2D
+@export var icon_entrance: Texture2D
 @export var icon_combat: Texture2D
 @export var icon_elite: Texture2D
 @export var icon_boss: Texture2D
@@ -19,6 +19,7 @@ enum NodeState { HIDDEN, REVEALED, COMPLETED }
 @export var icon_reward_3: Texture2D
 @export var icon_event: Texture2D
 @export var icon_terminal: Texture2D
+@export var icon_exit: Texture2D
 
 # --- State ---
 var type: NodeType = NodeType.UNKNOWN
@@ -80,19 +81,21 @@ func set_state(new_state: NodeState):
 
 func _set_type_color():
 	match type:
-		NodeType.EXIT: hex_sprite.self_modulate = Color.WEB_GRAY
-		NodeType.COMBAT: hex_sprite.self_modulate = Color.YELLOW
-		NodeType.ELITE: hex_sprite.self_modulate = Color.INDIAN_RED
-		NodeType.BOSS: hex_sprite.self_modulate = Color.MAGENTA
+		NodeType.ENTRANCE: hex_sprite.self_modulate = Color.WEB_GRAY
+		NodeType.COMBAT: hex_sprite.self_modulate = Color.INDIAN_RED
+		NodeType.ELITE: hex_sprite.self_modulate = Color.ORANGE_RED
+		NodeType.BOSS: hex_sprite.self_modulate = Color.RED
 		NodeType.REWARD: hex_sprite.self_modulate = Color.YELLOW_GREEN
 		NodeType.REWARD_2: hex_sprite.self_modulate = Color.CADET_BLUE
 		NodeType.REWARD_3: hex_sprite.self_modulate = Color.MEDIUM_PURPLE
-		NodeType.EVENT: hex_sprite.self_modulate = Color.HOT_PINK
-		NodeType.TERMINAL: hex_sprite.self_modulate = Color(1.0, 0.474, 0.17, 1.0)
+		NodeType.EVENT: hex_sprite.self_modulate = Color.GOLDENROD
+		NodeType.TERMINAL: hex_sprite.self_modulate = Color.ORANGE
+		NodeType.EXIT: hex_sprite.self_modulate = Color.MAGENTA
 		NodeType.UNKNOWN: hex_sprite.self_modulate = Color.DIM_GRAY
 
 func _get_my_texture() -> Texture2D:
 	match type:
+		NodeType.ENTRANCE: return icon_entrance
 		NodeType.COMBAT: return icon_combat
 		NodeType.ELITE: return icon_elite
 		NodeType.BOSS: return icon_boss
@@ -100,5 +103,6 @@ func _get_my_texture() -> Texture2D:
 		NodeType.REWARD_2: return icon_reward_2
 		NodeType.REWARD_3: return icon_reward_3
 		NodeType.EVENT: return icon_event
+		NodeType.EXIT: return icon_exit
 		NodeType.TERMINAL: return icon_terminal
 	return null

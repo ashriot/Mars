@@ -39,14 +39,7 @@ func calculate_stats():
 	stats.kinetic_defense = kinetic_defense_rank * 20 - 10
 	stats.energy_defense = energy_defense_rank * 20 - 10
 
-	print("\n=== STATS FOR: ", stats.actor_name, " ===")
-	for prop in stats.get_property_list():
-		# This filter ensures we only print variables defined in the script
-		# (skips internal Godot stuff like 'reference', 'resource_path', etc.)
-		if prop.usage & PROPERTY_USAGE_SCRIPT_VARIABLE:
-			print(prop.name, ": ", stats.get(prop.name))
-	print("========================\n")
-	return stats
+	print(stats)
 
 func _calc_stat(rank: int) -> int:
 	var multiplier = _get_multiplier()

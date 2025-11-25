@@ -40,3 +40,17 @@ func add_stat(stat: Stats, value: int):
 		Stats.PRC: aim = clampi(aim + value, 0, 75)
 		Stats.KIN_DEF: kinetic_defense = clampi(kinetic_defense + value, 0, 90)
 		Stats.NRG_DEF: energy_defense = clampi(energy_defense + value, 0, 90)
+
+func _to_string() -> String:
+	return "%s | HP:%d GRD:%d | ATK:%d PSY:%d OVR:%d SPD:%d | AIM:%d%% KIN:%d%% NRG:%d%%" % [
+		actor_name,
+		max_hp,
+		starting_guard,
+		attack,
+		psyche,
+		overload,
+		speed,
+		aim,
+		kinetic_defense,
+		energy_defense
+	]
