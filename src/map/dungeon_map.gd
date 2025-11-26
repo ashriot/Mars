@@ -18,13 +18,14 @@ const PENALTY_BOSS_MOVE = 2.0
 @onready var camera: Camera2D = $Camera2D
 @onready var hud: Control = $CanvasLayer/HUD
 @onready var alert_gauge: ProgressBar = $CanvasLayer/HUD/AlertGauge
-@onready var alert_label: Label = $CanvasLayer/HUD/AlertGauge/Panel2/Value
+@onready var alert_label: Label = $CanvasLayer/HUD/AlertGauge/Percent/Value
 @onready var parallax_bg: Parallax2D = $Parallax2D
 @onready var bg_sprite: Sprite2D = $Parallax2D/Sprite2D
 @onready var background: Control = $Background
 @onready var player_cursor: Sprite2D = $Background/PlayerCursor
 
 @onready var team_status: VBoxContainer = $CanvasLayer/HUD/TeamStatus/VBox
+@onready var node_gauge: ProgressBar = $CanvasLayer/HUD/NodeGauge/Gauge
 @onready var nodes_done_label: Label = $CanvasLayer/HUD/NodeGauge/Nodes
 @onready var total_nodes_label: Label = $CanvasLayer/HUD/NodeGauge/Panel/Total
 @onready var warning_label: Label = $CanvasLayer/HUD/Warning
@@ -97,7 +98,6 @@ var cursor_move_tween: Tween
 
 var current_map_state: MapState = MapState.LOADING
 
-
 func _ready():
 	RunManager.active_dungeon_map = self
 	hex_width = sqrt(3.0) * hex_size
@@ -139,6 +139,7 @@ func initialize_map():
 		current_map_state = MapState.PLAYING
 
 		if current_node and current_node.state != MapNode.NodeState.COMPLETED:
+			await get_tree().create_timer(1.0).timeout
 			print("Resuming interrupted event at ", current_node.grid_coords)
 			interaction_requested.emit(current_node)
 
@@ -151,7 +152,7 @@ func initialize_map():
 		current_node = map_data.start_node
 		total_nodes = num_combats + num_elites + num_events + \
 			num_uncommon_rewards + num_rare_rewards + num_rewards + num_terminals
-
+		node_gauge.max_value = total_nodes
 		RunManager.is_run_active = true
 		RunManager.auto_save()
 
@@ -446,6 +447,7 @@ func refresh_team_status():
 	for hero_status in team_status.get_children():
 		hero_status.refresh_view()
 	nodes_done_label.text = str(nodes_done)
+	node_gauge.value = nodes_done
 	total_nodes_label.text = str(total_nodes)
 
 func _start_warning_pulse(color: Color):
@@ -486,6 +488,7 @@ func complete_current_node():
 				await get_tree().create_timer(1.0).timeout
 				modify_alert(-20.0)
 				print("Elite Defeated: Alert -20%")
+	refresh_team_status()
 
 func enter_battle_visuals(duration: float = 1.5):
 	# 1. Save state
@@ -538,23 +541,12 @@ func battle_ended():
 func exit_battle_visuals(duration: float = 1.0):
 	var tween = create_tween().set_parallel(true)
 	tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
-
-	# 1. Fade IN Map Elements
 	tween.tween_property(background, "modulate:a", 1.0, duration)
-
-	# 2. Fade IN Map HUD
 	tween.tween_property(hud, "modulate:a", 1.0, duration)
 
-	# 3. Restore Camera Position
-	# (If the player moved during battle, we might want to re-calculate this
-	# based on 'current_node.position' instead of the saved position, just to be safe)
 	var target_pos = current_node.position if current_node else _pre_battle_camera_pos
 	tween.tween_property(camera, "position", target_pos, duration)
-
-	# 4. Restore Camera Zoom
 	tween.tween_property(camera, "zoom", _pre_battle_zoom, duration)
-
-	# 5. (Optional) Restore Blur
 	tween.tween_method(
 		func(val): (bg_sprite.material as ShaderMaterial).set_shader_parameter("blur_amount", val),
 		0.0,

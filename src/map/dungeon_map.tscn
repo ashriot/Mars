@@ -67,10 +67,10 @@ corner_radius_top_left = 12
 corner_radius_bottom_left = 12
 shadow_color = Color(0.12156863, 0.12156863, 0.12156863, 1)
 shadow_size = 1
-shadow_offset = Vector2(0, 2)
+shadow_offset = Vector2(-1, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ssagv"]
-bg_color = Color(0.11764706, 0.11764706, 0.11764706, 1)
+bg_color = Color(1, 1, 1, 1)
 border_color = Color(1, 1, 1, 1)
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
@@ -78,6 +78,8 @@ expand_margin_left = 1.0
 expand_margin_top = 1.0
 expand_margin_right = 2.0
 expand_margin_bottom = 1.0
+shadow_size = 1
+shadow_offset = Vector2(1, 1)
 
 [node name="DungeonMap" type="Node2D"]
 script = ExtResource("1_5o7fj")
@@ -122,26 +124,26 @@ mouse_filter = 2
 
 [node name="AlertGauge" type="ProgressBar" parent="CanvasLayer/HUD"]
 layout_mode = 1
-offset_left = 140.0
+offset_left = 144.0
 offset_top = 20.0
-offset_right = 892.0
+offset_right = 649.0
 offset_bottom = 60.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_styles/background = SubResource("StyleBoxFlat_1a5qu")
 theme_override_styles/fill = SubResource("StyleBoxFlat_vfn15")
+value = 25.0
 rounded = true
 show_percentage = false
 
-[node name="Panel" type="Panel" parent="CanvasLayer/HUD/AlertGauge"]
+[node name="Title" type="Panel" parent="CanvasLayer/HUD/AlertGauge"]
 layout_mode = 1
 anchors_preset = 9
 anchor_bottom = 1.0
-offset_left = -119.0
-offset_right = 6.0
+offset_left = -125.0
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_bcccw")
 
-[node name="Alert" type="Label" parent="CanvasLayer/HUD/AlertGauge/Panel"]
+[node name="Alert" type="Label" parent="CanvasLayer/HUD/AlertGauge/Title"]
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
@@ -157,19 +159,18 @@ theme_override_font_sizes/font_size = 36
 text = "ALERT"
 vertical_alignment = 1
 
-[node name="Panel2" type="Panel" parent="CanvasLayer/HUD/AlertGauge"]
+[node name="Percent" type="Panel" parent="CanvasLayer/HUD/AlertGauge"]
 layout_mode = 1
 anchors_preset = 11
 anchor_left = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -6.0
-offset_right = 94.0
+offset_right = 100.0
 grow_horizontal = 0
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_gftom")
 
-[node name="Value" type="Label" parent="CanvasLayer/HUD/AlertGauge/Panel2"]
+[node name="Value" type="Label" parent="CanvasLayer/HUD/AlertGauge/Percent"]
 layout_mode = 1
 anchors_preset = 6
 anchor_left = 1.0
@@ -191,9 +192,9 @@ vertical_alignment = 1
 
 [node name="Warning" type="Label" parent="CanvasLayer/HUD"]
 layout_mode = 1
-offset_left = 994.0
+offset_left = 760.0
 offset_top = 17.0
-offset_right = 1383.0
+offset_right = 1149.0
 offset_bottom = 64.0
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 15
@@ -208,29 +209,31 @@ layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -273.0
+offset_left = -519.0
 offset_top = 20.0
-offset_right = -79.0
+offset_right = -325.0
 offset_bottom = 60.0
 grow_horizontal = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_ajvg2")
 
-[node name="Label" type="Label" parent="CanvasLayer/HUD/NodeGauge"]
+[node name="Gauge" type="ProgressBar" parent="CanvasLayer/HUD/NodeGauge"]
+show_behind_parent = true
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 13.0
-offset_top = -3.5
-offset_right = -68.0
-offset_bottom = 3.5
-grow_horizontal = 2
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 193.0
+offset_top = -20.0
+offset_right = 445.0
+offset_bottom = 20.0
 grow_vertical = 2
-theme_override_colors/font_color = Color(0.12041845, 0.12041845, 0.12041845, 1)
-theme_override_fonts/font = ExtResource("4_pf175")
-theme_override_font_sizes/font_size = 36
-text = "NODES"
-vertical_alignment = 1
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_styles/background = SubResource("StyleBoxFlat_1a5qu")
+theme_override_styles/fill = SubResource("StyleBoxFlat_vfn15")
+step = 1.0
+value = 100.0
+rounded = true
+show_percentage = false
 
 [node name="Nodes" type="Label" parent="CanvasLayer/HUD/NodeGauge"]
 layout_mode = 1
@@ -250,14 +253,34 @@ text = "99"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="Panel" type="Panel" parent="CanvasLayer/HUD/NodeGauge"]
+[node name="Label" type="Label" parent="CanvasLayer/HUD/NodeGauge"]
 layout_mode = 1
-anchors_preset = 11
-anchor_left = 1.0
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -2.0
-offset_right = 52.0
+offset_left = 13.0
+offset_top = -3.5
+offset_right = -68.0
+offset_bottom = 3.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.12041845, 0.12041845, 0.12041845, 1)
+theme_override_fonts/font = ExtResource("4_pf175")
+theme_override_font_sizes/font_size = 36
+text = "NODES"
+vertical_alignment = 1
+
+[node name="Panel" type="Panel" parent="CanvasLayer/HUD/NodeGauge"]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = 251.0
+offset_top = -19.0
+offset_right = 305.0
+offset_bottom = 19.0
 grow_horizontal = 0
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_ssagv")
@@ -269,6 +292,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_colors/font_color = Color(0.11764706, 0.11764706, 0.11764706, 1)
 theme_override_fonts/font = ExtResource("4_pf175")
 theme_override_font_sizes/font_size = 36
 text = "99"

@@ -543,6 +543,19 @@ func _fade_in(duration: float = 0.5):
 	)
 	await tween.finished
 
+func _fade_out(duration: float = 0.5):
+	var tween = create_tween()
+	tween.set_trans(Tween.TRANS_SINE)
+	tween.set_ease(Tween.EASE_IN)
+
+	tween.tween_property(
+		UI,
+		"modulate:a",
+		0.0,
+		duration
+	)
+	await tween.finished
+
 func _get_rich_description(action: Action) -> String:
 	var hero = current_actor as HeroCard
 	var description = action.get_rich_description(hero)
@@ -556,16 +569,21 @@ func _check_if_battle_ended() -> bool:
 	if not enemies_alive:
 		print("--- VICTORY ---")
 		change_state(State.BATTLE_OVER)
+		AudioManager.stop_music(1.0)
 		action_bar.slide_out()
-		await wait(2.0)
 		var xp_reward = 150
 		RunManager.add_run_xp(xp_reward)
+		await wait(0.5)
+		await _fade_out()
 		battle_ended.emit(true)
 		return true
 
 	if not heroes_alive:
 		print("--- DEFEAT ---")
 		change_state(State.BATTLE_OVER)
+		AudioManager.stop_music(2.0)
+		await wait(0.5)
+		await _fade_out()
 		await wait(2.0)
 		battle_ended.emit(false) # Player Lost
 		return true

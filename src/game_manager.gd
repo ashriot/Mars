@@ -16,10 +16,6 @@ signal dungeon_exited(success: bool)
 var battle_scene: BattleScene
 
 func _ready():
-	# 1. Setup Loading Screen
-	# We instantiate this IMMEDIATELY.
-	# Since Main.gd is currently fading in from black, this will be
-	# the first thing the player sees when the lights come on.
 	var loader = loading_screen_scene.instantiate()
 	overlay_layer.add_child(loader)
 
@@ -27,9 +23,6 @@ func _ready():
 	dungeon_map.map_generation_progress.connect(loader.update_progress)
 	dungeon_map.interaction_requested.connect(_on_map_interaction_requested)
 
-	# 3. Initialize Map
-	# We do NOT need to 'await' this. We let it run in the background.
-	# The Loading Screen will handle the UI feedback.
 	dungeon_map.initialize_map()
 
 func _on_map_interaction_requested(node: MapNode):
@@ -74,7 +67,6 @@ func _on_content_finished(should_complete_node: bool = true):
 
 func start_encounter():
 	AudioManager.play_sfx("radiate")
-	# Small pause for impact
 	await get_tree().create_timer(0.05).timeout
 
 	AudioManager.play_music("battle", 0.0, true, false)
