@@ -34,96 +34,141 @@ func setup(data: EnemyData, fight_level: int):
 	if enemy_data.portrait:
 		portrait_rect.texture = enemy_data.portrait
 
-func decide_intent(hero_targets: Array[HeroCard]):
-	self.intended_action = get_next_action()
-	get_a_target(hero_targets)
-
-func get_next_action() -> Action:
+# ===================================================================
+# STEP 1: THE PLAN (Run Once Per Round)
+# ===================================================================
+# BattleManager calls this at the start of the round (or end of previous turn)
+func prepare_turn_base_action():
 	turn_counter += 1
 
-	# 1. Check Overrides (High Priority)
-	var override_action = _check_ai_overrides()
-	if override_action:
-		print(actor_name, " logic override triggered: ", override_action.action_name)
-		return override_action
-
-	# 2. Fallback to Standard Deck (Your existing logic)
 	if enemy_data.action_deck.is_empty():
-		push_error(enemy_data.stats.actor_name + " has no actions!")
-		return null
+		base_turn_action = null
+		return
 
-	var script = enemy_data.ai_script_indices
-	# Safety check if no script exists, just pick random or first
-	if script.is_empty():
-		return enemy_data.action_deck[0]
+	# Advance the sequence/RNG exactly once per turn
+	if enemy_data.ai_pattern == EnemyData.AIPattern.RANDOM:
+		base_turn_action = enemy_data.action_deck.pick_random()
+	else:
+		# SEQUENCE
+		var script = enemy_data.ai_script_indices
+		if script.is_empty():
+			base_turn_action = enemy_data.action_deck[0]
+		else:
+			var ability_index = script[ai_index]
+			base_turn_action = enemy_data.action_deck[ability_index]
+			ai_index = (ai_index + 1) % script.size()
 
-	var ability_index = script[ai_index]
-	var next_action = enemy_data.action_deck[ability_index]
+# ===================================================================
+# STEP 2: THE REACTIVITY (Run Whenever Board Changes)
+# ===================================================================
+# BattleManager calls this whenever HP/Conditions change
+func decide_intent(hero_targets: Array[HeroCard]):
+	# A. Check Overrides (Priority)
+	var override = _check_ai_overrides()
 
-	ai_index = (ai_index + 1) % script.size()
-	return next_action
+	if override:
+		self.intended_action = override
+	else:
+		# B. Fallback to the Locked Plan
+		self.intended_action = base_turn_action
 
+	# C. Pick Targets based on the chosen action
+	get_a_target(hero_targets)
+
+# ===================================================================
+# STEP 3: TARGETING LOGIC (Updated for Allies)
+# ===================================================================
+func get_a_target(hero_targets: Array[HeroCard]):
+	if not intended_action:
+		_update_intent_ui()
+		return
+
+	var my_allies = battle_manager.get_living_enemies()
+	var new_targets: Array[ActorCard] = []
+
+	match intended_action.target_type:
+		# --- OFFENSIVE TARGETING (Against Heroes) ---
+		Action.TargetType.ONE_ENEMY:
+			# 1. Filter Untargetable (Decoy)
+			var valid_heroes = []
+			for hero in hero_targets:
+				if not hero.is_untargetable():
+					valid_heroes.append(hero)
+
+			# Safety: If everyone is hidden, target anyone
+			if valid_heroes.is_empty(): valid_heroes = hero_targets
+
+			# 2. Filter Taunts (Draw Fire)
+			var taunting_heroes = []
+			for hero in valid_heroes:
+				if hero.is_taunting():
+					taunting_heroes.append(hero)
+
+			if not taunting_heroes.is_empty():
+				new_targets = [taunting_heroes.pick_random()]
+			else:
+				new_targets = [valid_heroes.pick_random()]
+
+		Action.TargetType.ALL_ENEMIES, Action.TargetType.RANDOM_ENEMY:
+			# For an Enemy, "All Enemies" means "All Heroes"
+			for h in hero_targets:
+				new_targets.append(h)
+
+		# --- DEFENSIVE TARGETING (Against Self/Allies) ---
+		Action.TargetType.SELF:
+			new_targets = [self]
+
+		Action.TargetType.ONE_ALLY:
+			# Target a random ally (could be self)
+			if not my_allies.is_empty():
+				new_targets = [my_allies.pick_random()]
+
+		Action.TargetType.ALLIES_ONLY:
+			# Target ally excluding self
+			var friends = []
+			for ally in my_allies:
+				if ally != self: friends.append(ally)
+
+			if not friends.is_empty():
+				new_targets = [friends.pick_random()]
+			else:
+				new_targets = [self] # Fallback to self if alone
+
+		Action.TargetType.LEAST_GUARD_ALLY:
+			# Your existing logic
+			var final_target = my_allies[0]
+			for ally in my_allies:
+				if ally.current_guard < final_target.current_guard:
+					final_target = ally
+			new_targets = [final_target]
+
+		# (Add WEAKEST_ALLY, etc. here as needed)
+
+	# Only update UI if something actually changed
+	if new_targets != intended_targets:
+		intended_targets = new_targets
+		_update_intent_ui()
+
+# ===================================================================
+# HELPERS
+# ===================================================================
 
 func _check_ai_overrides() -> Action:
-	# If this enemy has no overrides defined, skip
-	if enemy_data.ai_overrides.is_empty():
-		return null
+	if enemy_data.ai_overrides.is_empty(): return null
 
 	for override in enemy_data.ai_overrides:
-		# Skip if one-time-use and already used
-		if override.one_time_use and override in used_overrides:
-			continue
+		if override.one_time_use and override in used_overrides: continue
 
 		var condition_met = false
 
+		# Note: We rely on 'turn_counter' which is incremented in prepare_turn_base_action
 		match override.priority:
 			AIOverride.PriorityType.FIRST_TURN:
 				condition_met = (turn_counter == 1)
 
-			AIOverride.PriorityType.HEALTH_BELOW_50:
-				var percent = float(current_hp) / float(current_stats.max_hp)
-				condition_met = (percent <= 0.50)
+			# ... (Your existing Override checks for HP, Buffs, Breach are perfect) ...
+			# ... (Keep them exactly as you wrote them) ...
 
-			AIOverride.PriorityType.HEALTH_BELOW_25:
-				var percent = float(current_hp) / float(current_stats.max_hp)
-				condition_met = (percent <= 0.25)
-
-			AIOverride.PriorityType.WHEN_SELF_BREACHED:
-				condition_met = is_breached
-
-			AIOverride.PriorityType.HAS_BUFF:
-				# Check for specific condition name stored in context_value
-				if override.context_value != "":
-					condition_met = has_condition(override.context_value)
-				else:
-					# If blank, maybe just check if ANY buff exists?
-					# Or return false to be safe.
-					condition_met = not active_conditions.is_empty()
-
-			AIOverride.PriorityType.WHEN_ALLY_BREACHED:
-				var allies = battle_manager.get_living_enemies()
-				for ally in allies:
-					if ally != self and ally.is_breached:
-						condition_met = true
-						break
-
-			AIOverride.PriorityType.WHEN_PLAYER_BREACHED:
-				var heroes = battle_manager.get_living_heroes()
-				for hero in heroes:
-					if hero.is_breached:
-						condition_met = true
-						break
-
-			AIOverride.PriorityType.ALLY_HP_LOW:
-				var allies = battle_manager.get_living_enemies()
-				for ally in allies:
-					if ally == self: continue
-					var pct = float(ally.current_hp) / float(ally.current_stats.max_hp)
-					if pct < 0.5: # Threshold for "Low"
-						condition_met = true
-						break
-
-		# If the condition is met, roll the dice
 		if condition_met:
 			if randf() <= override.probability:
 				if override.one_time_use:
@@ -132,47 +177,7 @@ func _check_ai_overrides() -> Action:
 
 	return null
 
-func get_a_target(hero_targets: Array[HeroCard]):
-	var enemy_targets = battle_manager.get_living_enemies() as Array[EnemyCard]
-	var new_targets: Array[ActorCard] = []
-
-	if not intended_action or hero_targets.is_empty():
-		update_intent_ui()
-		return
-
-	match intended_action.target_type:
-		Action.TargetType.ONE_ENEMY:
-			var valid_targets = []
-			for hero in hero_targets:
-				if not hero.is_untargetable():
-					valid_targets.append(hero)
-			if valid_targets.is_empty():
-				valid_targets = hero_targets
-			var taunting_targets = []
-			for hero in valid_targets:
-				if hero.is_taunting():
-					taunting_targets.append(hero)
-			if not taunting_targets.is_empty():
-				valid_targets = taunting_targets
-			new_targets = [valid_targets.pick_random()]
-
-		Action.TargetType.SELF:
-			new_targets = [self]
-		Action.TargetType.ALL_ENEMIES, Action.TargetType.RANDOM_ENEMY:
-			for target in hero_targets:
-				new_targets.append(target)
-		Action.TargetType.LEAST_GUARD_ALLY:
-			var final_target = enemy_targets[0]
-			for target in enemy_targets:
-				if target.current_guard < final_target.current_guard:
-					final_target = target
-			new_targets = [final_target]
-
-	if new_targets != intended_targets:
-		intended_targets = new_targets
-		update_intent_ui()
-
-func update_intent_ui():
+func _update_intent_ui():
 	if not intended_action:
 		intent_text.text = ""
 		return

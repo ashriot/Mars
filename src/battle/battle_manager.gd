@@ -79,7 +79,9 @@ func spawn_encounter(enemy_roster: Array[EnemyData]):
 		enemy_card.actor_conditions_changed.connect(_on_actor_conditions_changed)
 		enemy_card.current_ct = randi_range(0, enemy_data.stats.speed * 5)
 		actor_list.append(enemy_card)
-		enemy_card.decide_intent(get_living_heroes())
+		enemy_card.prepare_turn_base_action()
+	_update_all_enemy_intents()
+
 	print("Spawning complete.")
 	change_state(State.LOADING)
 	await _fade_in()
@@ -195,6 +197,15 @@ func _on_actor_breached():
 func update_turn_order():
 	turn_order_updated.emit(_run_ct_simulation())
 
+func _update_all_enemy_intents():
+	if current_state == State.EXECUTING_ACTION:
+		return
+	var living_heroes = get_living_heroes()
+	var living_enemies = get_living_enemies()
+	for enemy in living_enemies:
+		if enemy == current_actor: continue
+		enemy.decide_intent(living_heroes)
+
 func _on_actor_died(actor: ActorCard):
 	print(actor.actor_name, " has died. Removing from actor_list.")
 
@@ -205,7 +216,7 @@ func _on_actor_died(actor: ActorCard):
 	actor_list.erase(actor)
 	if await _check_if_battle_ended():
 		return
-
+	_update_all_enemy_intents()
 	update_turn_order()
 
 func _on_actor_revived(actor: ActorCard):
@@ -302,14 +313,14 @@ func execute_enemy_turn(enemy: EnemyCard):
 	enemy.show_action(action.action_name)
 	await wait(0.5)
 
-
 	if not action:
 		push_error(enemy.actor_name, " is missing an action!")
 		return
 
 	await execute_action(enemy, action, targets)
 	await wait(0.15)
-	enemy.decide_intent(get_living_heroes())
+	enemy.prepare_turn_base_action()
+	_update_all_enemy_intents()
 	return
 
 func get_living_heroes() -> Array[HeroCard]:
@@ -326,14 +337,8 @@ func get_living_enemies() -> Array[EnemyCard]:
 			living_enemies.append(enemy_card)
 	return living_enemies
 
-func _on_actor_conditions_changed(_actor_who_changed: ActorCard, retarget: bool):
-	var living_heroes = get_living_heroes()
-
-	for enemy in get_living_enemies():
-		if current_state == State.ENEMY_ACTION and enemy == current_actor:
-			continue
-		if retarget:
-			enemy.get_a_target(living_heroes)
+func _on_actor_conditions_changed():
+	_update_all_enemy_intents()
 
 func _on_action_button_pressed(button: ActionButton):
 	if current_state in [State.LOADING, State.FORCED_TARGET]: return

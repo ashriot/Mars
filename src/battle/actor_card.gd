@@ -11,7 +11,7 @@ signal actor_defeated(actor)
 signal actor_revived(actor)
 signal hp_changed(new_hp, max_hp)
 signal armor_changed(new_pips)
-signal actor_conditions_changed(actor, retarget)
+signal actor_conditions_changed
 signal spawn_particles(pos, type)
 
 const MAX_GUARD = 10
@@ -191,7 +191,7 @@ func add_condition(condition_resource: Condition):
 	print(actor_name, " gained condition: ", new_condition.condition_name)
 
 	await _fire_condition_event(Trigger.TriggerType.ON_APPLIED)
-	actor_conditions_changed.emit(self, new_condition.retarget)
+	actor_conditions_changed.emit()
 	_update_conditions_ui()
 
 func has_condition(condition_name: String) -> bool:
