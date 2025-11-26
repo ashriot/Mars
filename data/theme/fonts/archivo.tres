@@ -4,7 +4,3 @@
 
 [resource]
 base_font = ExtResource("1_h1fwm")
-variation_embolden = 0.33
-opentype_features = {
-1818847073: 1
-}

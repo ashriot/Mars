@@ -67,10 +67,19 @@ func spawn_encounter(enemy_roster: Array[EnemyData]):
 		hero_card.current_ct = randi_range(0, hero_data.stats.speed * 5)
 		actor_list.append(hero_card)
 
+	var spawned_enemies: Array[EnemyCard] = []
+	var name_counts: Dictionary = {}
+
 	for enemy_data in enemy_roster:
 		var enemy_card: EnemyCard = enemy_card_scene.instantiate()
 		enemy_area.add_child(enemy_card)
 		enemy_card.setup(enemy_data, fight_level)
+		var base_name = enemy_card.actor_name
+		if not name_counts.has(base_name):
+			name_counts[base_name] = 0
+		name_counts[base_name] += 1
+		spawned_enemies.append(enemy_card)
+
 		enemy_card.enemy_clicked.connect(_on_enemy_clicked)
 		enemy_card.actor_breached.connect(_on_actor_breached)
 		enemy_card.actor_defeated.connect(_on_actor_died)
@@ -80,6 +89,20 @@ func spawn_encounter(enemy_roster: Array[EnemyData]):
 		enemy_card.current_ct = randi_range(0, enemy_data.stats.speed * 5)
 		actor_list.append(enemy_card)
 		enemy_card.prepare_turn_base_action()
+
+	var current_indices = {}
+	var suffixes = [" A", " B", " C", " D"]
+	for enemy_card in spawned_enemies:
+		var base_name = enemy_card.actor_name
+		if name_counts[base_name] > 1:
+			var idx = current_indices.get(base_name, 0)
+			if idx < suffixes.size():
+				var new_name = base_name + suffixes[idx]
+				enemy_card.actor_name = new_name
+				enemy_card.current_stats.actor_name = new_name
+				enemy_card.name_label.text = new_name
+				current_indices[base_name] = idx + 1
+
 	_update_all_enemy_intents()
 
 	print("Spawning complete.")
@@ -179,6 +202,9 @@ func find_and_start_next_turn():
 		await _flush_all_health_animations()
 		await execute_enemy_turn(winner)
 		await winner.on_turn_ended()
+		change_state(State.LOADING)
+		current_actor = null
+		_update_all_enemy_intents()
 		await wait(0.5)
 		find_and_start_next_turn()
 
@@ -319,8 +345,8 @@ func execute_enemy_turn(enemy: EnemyCard):
 
 	await execute_action(enemy, action, targets)
 	await wait(0.15)
+	enemy.clear_intent()
 	enemy.prepare_turn_base_action()
-	_update_all_enemy_intents()
 	return
 
 func get_living_heroes() -> Array[HeroCard]:

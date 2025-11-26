@@ -149,7 +149,7 @@ func breach():
 	is_breached = true
 	is_in_danger = false
 	breached_label.text = "BREACHED"
-	guard_bar.modulate.a = 0.5
+	guard_bar.modulate.a = 0.25
 	current_ct = 0
 	print("Breached: ", actor_name, " -> CT: ", current_ct)
 	actor_breached.emit()

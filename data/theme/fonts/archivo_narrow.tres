@@ -1,0 +1,10 @@
+[gd_resource type="FontVariation" load_steps=2 format=3 uid="uid://bp8kbyvyd6lxw"]
+
+[ext_resource type="FontFile" uid="uid://qi0xsaacogs5" path="res://data/theme/fonts/base_fonts/ArchivoNarrow-VariableFont_wght.ttf" id="1_jc8xp"]
+
+[resource]
+base_font = ExtResource("1_jc8xp")
+variation_embolden = 0.33
+opentype_features = {
+1818847073: 1
+}

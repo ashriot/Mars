@@ -78,13 +78,12 @@ func _on_content_finished(should_complete_node: bool = true):
 func start_encounter():
 	AudioManager.play_sfx("radiate")
 	# Small pause for impact
-	await get_tree().create_timer(0.25).timeout
+	await get_tree().create_timer(0.05).timeout
 
 	AudioManager.play_music("battle", 0.0, true, false)
 	await dungeon_map.enter_battle_visuals()
 
 	var node_type = dungeon_map.current_node.type
-
 	var enemy_roster = RunManager.generate_battle_roster(node_type)
 
 	battle_scene = battle_scene_packed.instantiate()
@@ -100,11 +99,6 @@ func end_encounter(won: bool):
 		_on_content_finished(true)
 
 	else:
-		# --- CASE B: DEFEAT ---
-		# Do NOT resume map music (maybe play silence or a defeat sting?)
-		# Do NOT call _on_content_finished (we don't want to unlock map movement)
-
-		# Trigger the End Screen with the DEFEAT result
 		_show_end_screen(RunManager.RunResult.DEFEAT)
 	dungeon_map.refresh_team_status()
 

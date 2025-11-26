@@ -128,12 +128,12 @@ func initialize_map():
 		AudioManager.play_music("map_1", 1.0, false, true)
 		hud.modulate.a = 1.0
 
+		player_cursor.visible = true
+		current_map_state = MapState.PLAYING
+
 		if current_node and current_node.state != MapNode.NodeState.COMPLETED:
 			print("Resuming interrupted event at ", current_node.grid_coords)
 			interaction_requested.emit(current_node)
-
-		player_cursor.visible = true
-		current_map_state = MapState.PLAYING
 
 	else:
 		print("Starting fresh run...")
@@ -212,9 +212,7 @@ func _setup_camera():
 	camera.make_current()
 
 func _input(event):
-	if event is InputEventKey and event.pressed and event.keycode == KEY_R:
-		generate_hex_grid()
-
+	if current_map_state != MapState.PLAYING: return
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
 			_zoom_camera(zoom_step)

@@ -2,11 +2,11 @@
 
 [ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://data/scripts/data/enemy_data.gd" id="1_smfq8"]
 [ext_resource type="Script" uid="uid://7uqa1cmdmegp" path="res://data/scripts/enemies/encounter.gd" id="2_4q8al"]
-[ext_resource type="Resource" uid="uid://xwe3skgcbr7x" path="res://data/enemies/actors/attack_drone.tres" id="2_05fty"]
 [ext_resource type="Resource" uid="uid://s6fcg8egbavh" path="res://data/enemies/actors/scout_drone.tres" id="3_b002l"]
+[ext_resource type="Resource" uid="uid://iofc48r1ubbm" path="res://data/enemies/actors/guardian.tres" id="4_b002l"]
 
 [resource]
 script = ExtResource("2_4q8al")
-enemies = Array[ExtResource("1_smfq8")]([ExtResource("2_05fty"), ExtResource("3_b002l")])
+enemies = Array[ExtResource("1_smfq8")]([ExtResource("3_b002l"), ExtResource("3_b002l"), ExtResource("4_b002l")])
 max_tier = 5
 metadata/_custom_type_script = "uid://7uqa1cmdmegp"

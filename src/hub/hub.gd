@@ -11,7 +11,7 @@ func _ready():
 	bits_label.text = "Bits: %d" % SaveSystem.bits
 
 func _on_head_out_pressed() -> void:
-	RunManager.current_dungeon_tier = 2
+	RunManager.current_dungeon_tier = 1
 
 	# Option B: Based on Story Progress (from SaveSystem)
 	# e.g. If you are on Chapter 2, set tier to 2.

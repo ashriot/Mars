@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3 uid="uid://b4tt3yil85l7j"]
+[gd_scene load_steps=20 format=3 uid="uid://b4tt3yil85l7j"]
 
 [ext_resource type="Script" uid="uid://carvfoj4h04nm" path="res://src/battle/enemy_card.gd" id="1_cu1kv"]
 [ext_resource type="Texture2D" uid="uid://jeiq1r6ke2t7" path="res://assets/graphics/icons/textures/plus.png" id="2_e8ixv"]
@@ -10,6 +10,7 @@
 [ext_resource type="FontVariation" uid="uid://c0je4m574ytir" path="res://data/theme/fonts/suse_mono.tres" id="5_puinb"]
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="6_pdx0h"]
 [ext_resource type="Texture2D" uid="uid://ybrwd70w1dkb" path="res://assets/graphics/icons/textures/shield_sm.png" id="8_puinb"]
+[ext_resource type="FontVariation" uid="uid://da34kbi1ndel7" path="res://data/theme/fonts/archivo.tres" id="10_g4dne"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8i7ma"]
 bg_color = Color(0.6, 0.6, 0.6, 0)
@@ -412,6 +413,7 @@ offset_right = 8.0
 offset_bottom = 18.0
 grow_horizontal = 2
 grow_vertical = 0
+mouse_filter = 2
 
 [node name="Value" type="Label" parent="Panel/GuardLabel"]
 layout_mode = 1
@@ -515,18 +517,17 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -193.5
+offset_left = -221.0
 offset_top = 18.0
-offset_right = 193.5
-offset_bottom = 56.0
+offset_right = 221.0
+offset_bottom = 48.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.49019608)
-theme_override_constants/outline_size = 20
-theme_override_fonts/normal_font = ExtResource("6_pdx0h")
-theme_override_font_sizes/normal_font_size = 32
-bbcode_enabled = true
-text = "22x5  >  Asher"
+theme_override_constants/outline_size = 12
+theme_override_fonts/normal_font = ExtResource("10_g4dne")
+theme_override_font_sizes/normal_font_size = 28
+text = "20x5  ->  Asher"
 scroll_active = false
 horizontal_alignment = 1
 

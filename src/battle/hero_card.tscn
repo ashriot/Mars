@@ -627,6 +627,7 @@ offset_right = -8.0
 offset_bottom = 16.0
 grow_horizontal = 2
 grow_vertical = 0
+mouse_filter = 2
 
 [node name="Value" type="Label" parent="Panel/GuardLabel"]
 layout_mode = 1
