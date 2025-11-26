@@ -8,6 +8,7 @@ enum NodeState { HIDDEN, REVEALED, COMPLETED }
 
 @onready var hex_sprite = $HexSprite
 @onready var icon_sprite = $HexSprite/IconSprite
+@onready var unaware_highlight = $Unaware
 
 @export_group("Event Icons")
 @export var icon_entrance: Texture2D
@@ -25,6 +26,7 @@ enum NodeState { HIDDEN, REVEALED, COMPLETED }
 var type: NodeType = NodeType.UNKNOWN
 var state: NodeState = NodeState.HIDDEN
 var grid_coords: Vector2i
+var is_aware: bool = false
 var has_been_visited: bool = false:
 	set(value):
 		has_been_visited = value
@@ -39,6 +41,7 @@ func _ready():
 		hex_sprite.modulate = Color.DARK_GRAY
 	else:
 		hex_sprite.modulate = Color.WHITE
+	unaware_highlight.hide()
 
 func setup(coords: Vector2i, assigned_type: NodeType):
 	grid_coords = coords
@@ -71,6 +74,7 @@ func set_state(new_state: NodeState):
 
 		NodeState.REVEALED:
 			if icon_sprite: icon_sprite.visible = true
+			unaware_highlight.visible = not is_aware
 			_set_type_color()
 			hex_sprite.modulate.a = 1.0
 

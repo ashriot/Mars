@@ -28,6 +28,7 @@ func setup(data: Dictionary):
 
 	# 2. CALCULATE UPGRADES (0=Security, 1=Medical, 2=Finance)
 	var opt_sec = _get_security_text(upgrade_key == "security", alert_val)
+	var opt_scan = _get_scan_text(upgrade_key == "scan")
 	var opt_med = _get_medical_text(upgrade_key == "medical")
 	var opt_fin = _get_finance_text(upgrade_key == "finance", bits_val)
 
@@ -45,6 +46,7 @@ SELECT PROTOCOL:[b]
 {opt_2}
 {opt_3}
 {opt_4}
+{opt_5}
 
 ENTER CHOICE [1-4]: _[/b]
 [color=#666666][SECURITY: Trace detected. Purge in T-30s.][/color]"""
@@ -53,9 +55,10 @@ ENTER CHOICE [1-4]: _[/b]
 		"facility": facility_name,
 		"session": session,
 		"opt_1": opt_sec,
-		"opt_2": opt_med,
-		"opt_3": opt_fin,
-		"opt_4": "[url=opt_extract]4 -> SIGNAL EXTRACTION (TACTICAL RETREAT)[/url]"
+		"opt_2": opt_scan,
+		"opt_3": opt_med,
+		"opt_4": opt_fin,
+		"opt_5": "[url=opt_extract]4 -> SIGNAL EXTRACTION (TACTICAL RETREAT)[/url]"
 	}
 
 	final_text_content = text_body.format(format_data)
@@ -68,6 +71,13 @@ func _get_security_text(is_upgraded: bool, amount: int) -> String:
 	var label = "REBOOT SECURITY" if is_upgraded else "SCRAMBLE CAMERAS"
 	var tag = "opt_sec_up" if is_upgraded else "opt_sec"
 	return "[url=%s]1 -> %s (ALERT -%d%%)[/url]%s" % [tag, label, amount, suffix]
+
+func _get_scan_text(is_upgraded: bool) -> String:
+
+	if is_upgraded:
+		return "[url=opt_scan_up]2 -> HIJACK CAMERA NETWORK (WIDE SCAN)[/url] [color=gold][UPGRADED][/color]"
+	else:
+		return "[url=opt_scan]2 -> HIJACK LOCAL FEED (SECTOR SCAN)[/url]"
 
 func _get_finance_text(is_upgraded: bool, amount: int) -> String:
 	var suffix = " [color=gold][UPGRADED][/color]" if is_upgraded else ""

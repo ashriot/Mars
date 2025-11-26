@@ -28,12 +28,20 @@ icon_terminal = ExtResource("6_6jefm")
 icon_exit = ExtResource("4_6jefm")
 
 [node name="HexSprite" type="Sprite2D" parent="."]
-self_modulate = Color(1, 0.110000014, 0.110000014, 1)
 scale = Vector2(0.5, 0.5)
 texture = ExtResource("2_sr7yi")
 
 [node name="IconSprite" type="Sprite2D" parent="HexSprite"]
 scale = Vector2(2, 2)
+
+[node name="Unaware" type="Sprite2D" parent="."]
+modulate = Color(0, 1, 0.73333335, 0.78431374)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("3_w16p8")
+
+[node name="HexSprite2" type="Sprite2D" parent="Unaware"]
+modulate = Color(1, 1, 1, 0.29411766)
+texture = ExtResource("2_sr7yi")
 
 [node name="SelectionSprite" type="Sprite2D" parent="."]
 visible = false

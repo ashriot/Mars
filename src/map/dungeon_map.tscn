@@ -83,6 +83,7 @@ expand_margin_bottom = 1.0
 script = ExtResource("1_5o7fj")
 vision_range = 2
 num_combats = 6
+num_elites = 0
 num_terminals = 5
 hero_status_scene = ExtResource("7_31sxc")
 map_node_scene = ExtResource("2_vfn15")

@@ -70,7 +70,7 @@ func _on_content_finished(should_complete_node: bool = true):
 	if should_complete_node:
 		await dungeon_map.complete_current_node()
 		RunManager.auto_save()
-	dungeon_map.current_map_state = DungeonMap.MapState.PLAYING
+	dungeon_map.unlock_input()
 
 func start_encounter():
 	AudioManager.play_sfx("radiate")
@@ -101,11 +101,15 @@ func end_encounter(won: bool):
 
 func _on_terminal_choice(choice_tag: String, data: Dictionary):
 	match choice_tag:
+		"opt_scan", "opt_scan_up":
+			var radius = 2 if choice_tag == "opt_scan_up" else 1
+			_on_content_finished(true)
+			dungeon_map.start_targeting_mode(radius)
+
 		"opt_sec", "opt_sec_up":
 			dungeon_map.modify_alert(-int(data.alert))
 
 		"opt_med", "opt_med_up":
-			# Pass 'true' if it is the Upgraded Key
 			var is_upgraded = (data.upgrade_key == "medical")
 			_handle_medical_logic(is_upgraded)
 

@@ -4,6 +4,8 @@ class_name DungeonMap
 signal interaction_requested(node: MapNode)
 signal map_generation_progress(current, total)
 
+enum MapState { LOADING, PLAYING, LOCKED, TARGETING }
+
 const ALERT_LOW_THRESHOLD = 26
 const ALERT_MED_THRESHOLD = 75
 
@@ -87,12 +89,12 @@ var nodes_done: int = 0
 var current_node: MapNode = null
 var current_alert: float = 0.0
 var current_move_cost: float = 0.0
+var pending_scan_radius: int = 0
 
 # --- Player Cursor ---
 var cursor_pulse_tween: Tween
 var cursor_move_tween: Tween
 
-enum MapState { LOADING, PLAYING, LOCKED }
 var current_map_state: MapState = MapState.LOADING
 
 
@@ -180,6 +182,7 @@ func load_from_save_data(data: Dictionary):
 
 			# Restore logical state
 			node.has_been_visited = saved_info.visited
+			node.is_aware = saved_info.aware
 			node.set_state(int(saved_info.state))
 
 			node.modulate.a = 1.0
@@ -217,7 +220,7 @@ func _setup_camera():
 	camera.make_current()
 
 func _input(event):
-	if current_map_state != MapState.PLAYING: return
+	if current_map_state == MapState.LOADING or current_map_state == MapState.LOCKED: return
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
 			_zoom_camera(zoom_step)
@@ -232,31 +235,26 @@ func _generate_static_terminal_data(coords: Vector2i, index: int):
 	# 1. DEFINE BASE VALUES
 	var bits_val = int(50 * scalar)
 	var alert_val = 50 # Standard reduction
-	var upgrade_key = "" # "security", "medical", "finance"
+	var upgrade_key = "" # "security", "scan", "medical", "finance"
 
 	# 2. APPLY ROTATION LOGIC
-	# Remainder 0 = Security (Indices 0, 3, 6...)
-	# Remainder 1 = Medical (Indices 1, 4, 7...)
-	# Remainder 2 = Finance (Indices 2, 5, 8...)
-	var rot = index % 3
+	var rot = index % 4
 
 	if rot == 0:
 		upgrade_key = "security"
-		alert_val = 75 # Upgraded value
+		alert_val = 75
 
 	elif rot == 1:
-		upgrade_key = "medical"
-		# Medical reward is logic-based (Heal vs Buff),
-		# so we just flag it. Value stays 0 or standard.
+		upgrade_key = "scan"
 
 	elif rot == 2:
+		upgrade_key = "medical"
+
+	elif rot == 3:
 		upgrade_key = "finance"
-		bits_val = int(bits_val * 2) # Upgraded value
+		bits_val = int(bits_val * 2)
+		bits_val = roundi(bits_val * randf_range(0.8, 1.2))
 
-	# 3. APPLY VARIANCE (Final touch)
-	bits_val = roundi(bits_val * randf_range(0.9, 1.1))
-
-	# 4. SAVE FINAL DATA
 	terminal_memory[coords] = {
 		"facility_name": "ALPHA NODE " + str(index + 1),
 		"session_id": session,
@@ -603,8 +601,25 @@ func _create_map_node(grid_x, grid_y, screen_pos, type) -> MapNode:
 
 	return node
 
+func start_targeting_mode(radius: int):
+	current_map_state = MapState.TARGETING
+	pending_scan_radius = radius
+	print("Select a sector to scan...")
+
+func unlock_input():
+	if current_map_state == MapState.TARGETING:
+		return
+	current_map_state = MapState.PLAYING
+
 func _on_node_clicked(target_node: MapNode):
 	if target_node == current_node: return
+	if current_map_state == MapState.TARGETING:
+		execute_camera_scan(target_node, pending_scan_radius)
+		current_map_state = MapState.PLAYING
+		pending_scan_radius = 0
+		RunManager.auto_save()
+		return
+
 	if current_map_state != MapState.PLAYING: return
 
 	var dist = _get_hex_distance(current_node.grid_coords, target_node.grid_coords)
@@ -621,6 +636,7 @@ func _move_player_to(target_node: MapNode, is_start: bool = false):
 	if is_start:
 		player_cursor.position = target_node.position
 		target_node.has_been_visited = true
+		#target_node.is_aware = true
 		await _update_vision()
 		_update_alert_visuals()
 		return
@@ -651,7 +667,7 @@ func _calculate_alert_gain():
 	var total_cost = COST_MOVE_BASE
 	var threat_penalty = 0.0
 	for node in grid_nodes.values():
-		if node.state == MapNode.NodeState.REVEALED:
+		if node.state == MapNode.NodeState.REVEALED and node.is_aware:
 			match node.type:
 				MapNode.NodeType.COMBAT:
 					threat_penalty += PENALTY_NORMAL_MOVE
@@ -738,38 +754,47 @@ func _move_camera_to_player(force_center: bool):
 		tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 		tween.tween_property(camera, "position", new_cam_pos, camera_smooth_speed)
 
+func execute_camera_scan(center_node: MapNode, radius: int):
+	AudioManager.play_sfx("radiate")
+	var nodes_to_reveal = []
+	for node in grid_nodes.values():
+		var dist = _get_hex_distance(center_node.grid_coords, node.grid_coords)
+
+		if dist <= radius:
+			if node.state == MapNode.NodeState.HIDDEN:
+				node.is_aware = false
+				nodes_to_reveal.append(node)
+
+	if not nodes_to_reveal.is_empty():
+		var tween = create_tween().set_parallel(true)
+		for node in nodes_to_reveal:
+			node.set_state(MapNode.NodeState.REVEALED)
+			node.modulate.a = 0.0
+			var delay = _get_hex_distance(center_node.grid_coords, node.grid_coords) * 0.1
+			tween.tween_property(node, "modulate:a", 1.0, 0.5).set_delay(delay)
+
 func _update_vision():
 	if vision_range <= 0: return
 	var center_coords = current_node.grid_coords
 	var nodes_to_reveal: Array[MapNode] = []
 
 	for node in grid_nodes.values():
-		if node.state != MapNode.NodeState.HIDDEN: continue
+		if node.is_aware: continue
 
 		var dist = _get_hex_distance(center_coords, node.grid_coords)
 		if dist <= vision_range:
+			node.is_aware = true
 			nodes_to_reveal.append(node)
 
-	# 2. The Fix: If nobody needs revealing, stop here.
-	# This prevents the "started with no Tweeners" error.
 	if nodes_to_reveal.is_empty():
 		return
 
-	# 3. NOW it is safe to create the tween
 	var tween = create_tween().set_parallel(true)
-
 	for node in nodes_to_reveal:
-		# Update logical state
 		node.set_state(MapNode.NodeState.REVEALED)
-
-		# Set initial visual state
 		node.modulate.a = 0.5
-
-		# Calculate delay
 		var dist = _get_hex_distance(center_coords, node.grid_coords)
-		var delay = max(0, (dist - 1) * 0.1) # Ensure delay isn't negative
-
-		# Add to tween
+		var delay = max(0, (dist - 1) * 0.1)
 		tween.tween_property(node, "modulate:a", 1.0, 0.5)\
 			.set_delay(delay)\
 			.set_trans(Tween.TRANS_SINE)\
@@ -948,7 +973,8 @@ func get_save_data() -> Dictionary:
 		var key = var_to_str(coords)
 		node_states[key] = {
 			"state": node.state,
-			"visited": node.has_been_visited
+			"visited": node.has_been_visited,
+			"aware": node.is_aware
 		}
 
 	# 2. Serialize Terminal Memory
