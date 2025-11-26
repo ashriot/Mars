@@ -93,10 +93,6 @@ func start_encounter():
 	battle_scene.battle_ended.connect(end_encounter)
 
 func end_encounter(won: bool):
-	await battle_scene.fade_out()
-
-	# 2. Visuals: Zoom back out to the map
-	# (This looks cool even on defeat—it shows you "where you died" on the map)
 	dungeon_map.exit_battle_visuals(1.0)
 
 	if won:

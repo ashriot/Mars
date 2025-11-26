@@ -14,6 +14,7 @@ signal finished
 var _result: RunManager.RunResult
 
 func setup(result: RunManager.RunResult):
+	modulate.a = 0.0
 	_result = result
 
 	var raw_bits = RunManager.run_bits
@@ -45,6 +46,14 @@ func setup(result: RunManager.RunResult):
 	xp_earned.text = str(int(raw_xp))
 	total_bits.text = str(int(raw_bits * modifier))
 	total_xp.text = str(int(raw_xp * modifier))
+
+	var tween = create_tween()
+	tween.tween_property(
+		self,
+		"modulate:a",
+		1.0,
+		0.25
+	)
 
 func _on_continue_pressed():
 	RunManager.commit_rewards(_result)

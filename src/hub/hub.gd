@@ -11,4 +11,13 @@ func _ready():
 	bits_label.text = "Bits: %d" % SaveSystem.bits
 
 func _on_head_out_pressed() -> void:
+	RunManager.current_dungeon_tier = 2
+
+	# Option B: Based on Story Progress (from SaveSystem)
+	# e.g. If you are on Chapter 2, set tier to 2.
+	# RunManager.current_dungeon_tier = SaveSystem.data.meta_data.chapter
+
+	# Option C: Selected from UI (if you have a difficulty dropdown)
+	# RunManager.current_dungeon_tier = $MissionSelect.get_selected_tier()
+
 	head_out.emit()

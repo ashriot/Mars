@@ -23,7 +23,8 @@ const MAX_GUARD = 10
 @onready var panel: Panel = $Panel
 @onready var hp_value: Label = $Panel/HP/Value
 @onready var guard_bar: HBoxContainer = $Panel/GuardBar
-@onready var guard_label: Label = $Panel/GuardValue
+@onready var guard_label: Control = $Panel/GuardLabel
+@onready var guard_value: Label = $Panel/GuardLabel/Value
 @onready var portrait_rect: TextureRect = $Panel/Portrait
 @onready var breached_label: Label = $Panel/BreachedLabel
 @onready var highlight_panel: Panel = $Panel/Highlight
@@ -351,7 +352,8 @@ func is_untargetable() -> bool:
 	return false
 
 func update_guard_bar(animate: bool = true):
-	guard_label.text = str(current_guard)
+	guard_value.text = str(current_guard)
+	guard_value.position.x = (current_guard -1) * 39
 	guard_label.visible = current_guard > 0
 	var pips = guard_bar.get_children()
 

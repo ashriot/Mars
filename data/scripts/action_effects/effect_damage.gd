@@ -19,7 +19,7 @@ class_name Effect_Damage
 @export var pre_hit_triggers: Array[PreHitTrigger]
 
 func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleManager, action: Action = null, context: Dictionary = {}) -> void:
-	var final_targets: Array = parent_targets
+	var final_targets: Array = parent_targets.duplicate()
 
 	var random = false
 	var focus_cost = 0
@@ -33,13 +33,17 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 				return
 	var target: ActorCard = null
 	var hits = _get_dynamic_hit_count(attacker, target, context)
-
+	var loop_count = final_targets.size()
 	print("\n--- Damage Effect for ", hits, " hit(s) ---")
-	for t in final_targets.size():
+	for t in loop_count:
 		for i in hits:
+			if battle_manager.current_state == BattleManager.State.BATTLE_OVER:
+				return
 			if attacker.is_defeated:
 				return
 			if random:
+				final_targets = _filter_valid_targets(final_targets)
+				if final_targets.is_empty(): break
 				target = final_targets.pick_random() as ActorCard
 			else:
 				target = final_targets[t]
@@ -106,7 +110,7 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 				attacker.take_healing(healing)
 
 			if random and target.is_defeated:
-				final_targets.remove_at(t)
+				final_targets.erase(t)
 
 			if hits > 1 and i < hits - 1:
 				await battle_manager.wait(0.15)
@@ -114,6 +118,13 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 		await target._fire_condition_event(Trigger.TriggerType.AFTER_BEING_ATTACKED, context)
 
 	return
+
+func _filter_valid_targets(list: Array) -> Array:
+	var valid = []
+	for t in list:
+		if t and is_instance_valid(t) and not t.is_defeated:
+			valid.append(t)
+	return valid
 
 func _get_dynamic_hit_count(_attacker: ActorCard, _target: ActorCard, _context: Dictionary = {}) -> int:
 	return hit_count

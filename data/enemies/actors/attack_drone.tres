@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="EnemyData" load_steps=8 format=3 uid="uid://xwe3skgcbr7x"]
+[gd_resource type="Resource" script_class="EnemyData" load_steps=9 format=3 uid="uid://xwe3skgcbr7x"]
 
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_qonfr"]
 [ext_resource type="Resource" uid="uid://d0m01fmh2ig2s" path="res://data/enemies/actions/gunshot.tres" id="2_q5w66"]
@@ -7,12 +7,12 @@
 [ext_resource type="Resource" uid="uid://c0qexgdf5xce2" path="res://data/enemies/actions/mow_down.tres" id="5_ou3ae"]
 [ext_resource type="Resource" uid="uid://5sx21pdqqpbi" path="res://data/enemies/actions/rapid_fire.tres" id="5_sbo5v"]
 [ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://data/scripts/data/enemy_data.gd" id="6_hlj5o"]
+[ext_resource type="Script" uid="uid://bkbx3bonlo8gv" path="res://data/scripts/enemies/ai_override.gd" id="7_ou3ae"]
 
 [resource]
 script = ExtResource("6_hlj5o")
 enemy_id = "attack_drone"
 enemy_name = "Attack Drone"
-level = 0
 hp_rank = 2
 guard_rank = 2
 psyche_rank = 1

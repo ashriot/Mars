@@ -16,3 +16,6 @@ enum PriorityType {
 @export var action_to_use: Action
 @export var probability: float = 1.0 # 1.0 = Always do it if condition met
 @export var one_time_use: bool = false # If true, only fires once per battle
+
+# Use this for HAS_BUFF (e.g. "Enraged")
+@export var context_value: String = ""

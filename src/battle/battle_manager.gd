@@ -34,6 +34,7 @@ var current_action: Action = null
 var focused_button: ActionButton = null
 var actor_list: Array = []
 var TARGET_CT: int = 5000
+var force_enemy_level: int = -1
 
 func change_state(new_state):
 	print("--- State Change: ", State.keys()[current_state], " > ", State.keys()[new_state], " ---")
@@ -49,6 +50,10 @@ func _ready():
 
 func spawn_encounter(enemy_roster: Array[EnemyData]):
 	print("Spawning encounter...")
+	var fight_level = RunManager.current_dungeon_tier
+	if force_enemy_level != -1:
+		fight_level = force_enemy_level
+
 	for hero_data in RunManager.party_roster:
 		var hero_card: HeroCard = hero_card_scene.instantiate()
 		hero_area.add_child(hero_card)
@@ -65,7 +70,7 @@ func spawn_encounter(enemy_roster: Array[EnemyData]):
 	for enemy_data in enemy_roster:
 		var enemy_card: EnemyCard = enemy_card_scene.instantiate()
 		enemy_area.add_child(enemy_card)
-		enemy_card.setup(enemy_data)
+		enemy_card.setup(enemy_data, fight_level)
 		enemy_card.enemy_clicked.connect(_on_enemy_clicked)
 		enemy_card.actor_breached.connect(_on_actor_breached)
 		enemy_card.actor_defeated.connect(_on_actor_died)
@@ -521,7 +526,7 @@ func _check_if_battle_ended() -> bool:
 		print("--- VICTORY ---")
 		change_state(State.BATTLE_OVER)
 		action_bar.slide_out()
-		await wait(1.0)
+		await wait(2.0)
 		var xp_reward = 150
 		RunManager.add_run_xp(xp_reward)
 		battle_ended.emit(true)
@@ -530,6 +535,7 @@ func _check_if_battle_ended() -> bool:
 	if not heroes_alive:
 		print("--- DEFEAT ---")
 		change_state(State.BATTLE_OVER)
+		await wait(2.0)
 		battle_ended.emit(false) # Player Lost
 		return true
 

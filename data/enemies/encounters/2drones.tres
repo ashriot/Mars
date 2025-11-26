@@ -8,4 +8,5 @@
 [resource]
 script = ExtResource("2_4q8al")
 enemies = Array[ExtResource("1_smfq8")]([ExtResource("2_05fty"), ExtResource("3_b002l")])
+max_tier = 5
 metadata/_custom_type_script = "uid://7uqa1cmdmegp"
