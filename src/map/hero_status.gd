@@ -12,7 +12,6 @@ class_name HeroStatus
 @onready var armored_boon: TextureRect = $Boons/Armored
 
 var busy := false
-var anim_time := 0.3
 var label_width := 0
 
 var active_color = Color(0.118, 0.118, 0.118, 1.0)
@@ -32,7 +31,7 @@ func refresh_view():
 	if not linked_hero_data:
 		return
 
-	var defs = linked_hero_data.role_definitions
+	var defs = linked_hero_data.unlocked_roles
 	var idx = linked_hero_data.active_role_index
 
 	var prev_idx = (idx - 1 + defs.size()) % defs.size()
@@ -61,7 +60,9 @@ func _slide(direction: int):
 		return
 	busy = true
 
-	var defs = linked_hero_data.role_definitions
+	var duration = 0.1
+
+	var defs = linked_hero_data.unlocked_roles
 	var idx = linked_hero_data.active_role_index
 	var incoming = 0
 	if direction == 1:
@@ -75,11 +76,11 @@ func _slide(direction: int):
 
 	tween.parallel().tween_property(box, "position:x",
 			box.position.x - label_width * direction,
-			anim_time)
+			duration).set_ease(Tween.EASE_OUT)
 
 	var new_color = defs[incoming].color
 	tween.parallel().tween_property(self, "self_modulate",
-			new_color, anim_time)
+			new_color, duration)
 
 	tween.finished.connect(func():
 		if direction == 1:

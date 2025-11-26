@@ -3,6 +3,8 @@ class_name Hub
 
 signal head_out
 
+@export var dungeon_profile: DungeonProfile
+
 @onready var bits_label: Label = $UI/BitsLabel
 @onready var head_out_button: Button = $Actions/HeadOut
 
@@ -12,6 +14,7 @@ func _ready():
 
 func _on_head_out_pressed() -> void:
 	RunManager.current_dungeon_tier = 1
+	RunManager.current_dungeon_profile = dungeon_profile
 
 	# Option B: Based on Story Progress (from SaveSystem)
 	# e.g. If you are on Chapter 2, set tier to 2.

@@ -1,6 +1,8 @@
 extends Resource
 class_name Encounter
 
+@export var encounter_id: String = ""
+
 @export_group("Composition")
 # The list of enemies in this fight
 @export var enemies: Array[EnemyData]

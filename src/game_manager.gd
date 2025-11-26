@@ -31,10 +31,18 @@ func _on_map_interaction_requested(node: MapNode):
 	match node.type:
 		MapNode.NodeType.ENTRANCE:
 			print("Escaping the dungeon!")
-			_handle_extraction() # Use the helper function
+			_handle_extraction()
 
 		MapNode.NodeType.COMBAT, MapNode.NodeType.ELITE, MapNode.NodeType.BOSS:
-			start_encounter()
+
+			var enc_id = dungeon_map.encounter_memory.get(node.grid_coords, "")
+
+			var encounter_res = EncounterDatabase.get_encounter_by_id(enc_id)
+
+			if encounter_res:
+				_start_encounter(encounter_res)
+			else:
+				push_error("Encounter not found for ID: " + enc_id)
 
 		MapNode.NodeType.TERMINAL:
 			var data = dungeon_map.terminal_memory.get(node.grid_coords)
@@ -65,7 +73,7 @@ func _on_content_finished(should_complete_node: bool = true):
 		RunManager.auto_save()
 	dungeon_map.unlock_input()
 
-func start_encounter():
+func _start_encounter(encounter: Encounter):
 	AudioManager.play_sfx("radiate")
 	await get_tree().create_timer(0.05).timeout
 
@@ -73,11 +81,10 @@ func start_encounter():
 	await dungeon_map.enter_battle_visuals()
 
 	var node_type = dungeon_map.current_node.type
-	var enemy_roster = RunManager.generate_battle_roster(node_type)
 
 	battle_scene = battle_scene_packed.instantiate()
 	overlay_layer.add_child(battle_scene)
-	battle_scene.setup_battle(enemy_roster)
+	battle_scene.setup_battle(encounter.enemies)
 	battle_scene.battle_ended.connect(end_encounter)
 
 func end_encounter(won: bool):

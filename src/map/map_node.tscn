@@ -1,7 +1,7 @@
 [gd_scene load_steps=14 format=3 uid="uid://cqdl6q7d2hmox"]
 
 [ext_resource type="Script" uid="uid://dxr2orrn2qdfl" path="res://src/map/map_node.gd" id="1_4vxbe"]
-[ext_resource type="Texture2D" uid="uid://mnou58qeo8yu" path="res://assets/graphics/icons/map/hexagon.png" id="2_sr7yi"]
+[ext_resource type="Texture2D" uid="uid://fbou1uksr5cd" path="res://assets/graphics/icons/map/hexagon.png" id="2_sr7yi"]
 [ext_resource type="Texture2D" uid="uid://dvhsk65twrt22" path="res://assets/graphics/icons/map/bullets_1.png" id="2_w16p8"]
 [ext_resource type="Texture2D" uid="uid://da8p41jpdeqcq" path="res://assets/graphics/icons/map/exit.png" id="2_ys8p0"]
 [ext_resource type="Texture2D" uid="uid://df1aee6iltv4l" path="res://assets/graphics/icons/map/bullets_2.png" id="3_6jefm"]
@@ -40,7 +40,7 @@ scale = Vector2(0.5, 0.5)
 texture = ExtResource("3_w16p8")
 
 [node name="HexSprite2" type="Sprite2D" parent="Unaware"]
-modulate = Color(1, 1, 1, 0.29411766)
+modulate = Color(1, 1, 1, 0.09803922)
 texture = ExtResource("2_sr7yi")
 
 [node name="SelectionSprite" type="Sprite2D" parent="."]

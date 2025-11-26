@@ -33,7 +33,6 @@ var has_been_visited: bool = false:
 		if value:
 			hex_sprite.modulate = Color.DARK_GRAY
 
-
 func _ready():
 	if not hex_sprite:
 		push_error("hex_sprite missing!")

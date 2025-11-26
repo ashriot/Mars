@@ -26,7 +26,10 @@ class_name HeroData
 
 # --- Runtime Data (Not Saved) ---
 var stats: ActorStats
-var battle_roles: Dictionary = {} # Key: role_id, Value: RoleData
+var battle_roles: Dictionary = {}
+var unlocked_roles:
+	get: return role_definitions.filter(func(role):
+		return role.role_id in unlocked_role_ids)
 var current_role: RoleDefinition :
 	get : return (role_definitions[active_role_index])
 

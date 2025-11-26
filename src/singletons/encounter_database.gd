@@ -6,6 +6,8 @@ var normal_encounters: Array[Encounter] = []
 var elite_encounters: Array[Encounter] = []
 var boss_encounters: Array[Encounter] = []
 
+var _id_map: Dictionary = {}
+
 func _ready():
 	# Scan your data folder for .tres files
 	_scan_for_encounters("res://data/enemies/encounters/")
@@ -24,7 +26,10 @@ func _scan_for_encounters(path: String):
 				var res = load(path + "/" + clean_name)
 
 				if res is Encounter:
-					_register_encounter(res)
+					if res.encounter_id != "":
+						_id_map[res.encounter_id] = res
+					else:
+						push_error("Encounter missing ID: " + file_name)
 
 			file_name = dir.get_next()
 	else:
@@ -38,7 +43,8 @@ func _register_encounter(enc: Encounter):
 	else:
 		normal_encounters.append(enc)
 
-# --- PUBLIC API ---
+func get_encounter_by_id(id: String) -> Encounter:
+	return _id_map.get(id)
 
 func get_random_encounter(tier: int, type: MapNode.NodeType) -> Encounter:
 	var source_array: Array[Encounter] = []

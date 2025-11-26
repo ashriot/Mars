@@ -3,8 +3,9 @@ extends Node
 
 enum RunResult { SUCCESS, RETREAT, DEFEAT }
 
-var active_dungeon_map: DungeonMap = null
 var is_run_active: bool = false
+var active_dungeon_map: DungeonMap = null
+var current_dungeon_profile: DungeonProfile
 var current_dungeon_tier: int = 1
 var current_run_seed: int = 0
 var run_bits: int = 0
@@ -31,17 +32,22 @@ func get_loot_scalar() -> float:
 
 func get_run_save_data() -> Dictionary:
 	if not active_dungeon_map: return {}
+	var profile_path = current_dungeon_profile.resource_path
 
 	return {
 		"seed": current_run_seed,
 		"run_bits": run_bits,
 		"run_xp": run_xp,
 		"tier": current_dungeon_tier,
+		"profile_path": profile_path,
 		"map_data": active_dungeon_map.get_save_data()
 	}
 
 func restore_run():
 	var run_data = SaveSystem.data.get("active_run")
+	var path = run_data.get("profile_path", "")
+	if path != "" and ResourceLoader.exists(path):
+		current_dungeon_profile = load(path)
 
 	if not run_data:
 		push_error("Tried to restore run, but SaveSystem data has no 'active_run'!")
@@ -56,10 +62,6 @@ func restore_run():
 	if active_dungeon_map:
 		seed(current_run_seed)
 		await active_dungeon_map.load_from_save_data(run_data.map_data)
-
-func generate_battle_roster(node_type: MapNode.NodeType) -> Array[EnemyData]:
-	var encounter = EncounterDatabase.get_random_encounter(current_dungeon_tier, node_type)
-	return encounter.enemies
 
 func spend_bits(amount: int) -> bool:
 	if SaveSystem.bits >= amount:
@@ -100,4 +102,4 @@ func commit_rewards(result: RunResult):
 	is_run_active = false
 
 	# Save immediately
-	SaveSystem.save_current_slot()
+	auto_save()

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="DungeonProfile" load_steps=5 format=3 uid="uid://doxl25k4e5ifr"]
+
+[ext_resource type="Script" uid="uid://7uqa1cmdmegp" path="res://data/scripts/enemies/encounter.gd" id="1_sdejw"]
+[ext_resource type="Script" uid="uid://ct7i822gwhjjm" path="res://data/scripts/enemies/dungeon_profile.gd" id="2_ayoos"]
+[ext_resource type="Resource" uid="uid://xmucf5vxonri" path="res://data/enemies/encounters/scout_drones_2.tres" id="2_xhear"]
+[ext_resource type="Resource" uid="uid://gcxxktv0gspu" path="res://data/enemies/encounters/attack_drones_3.tres" id="3_kwn5u"]
+
+[resource]
+script = ExtResource("2_ayoos")
+profile_name = "Alleyway"
+normal_encounters = Array[ExtResource("1_sdejw")]([ExtResource("2_xhear"), ExtResource("3_kwn5u")])
+metadata/_custom_type_script = "uid://ct7i822gwhjjm"

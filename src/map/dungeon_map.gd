@@ -5,6 +5,7 @@ signal interaction_requested(node: MapNode)
 signal map_generation_progress(current, total)
 
 enum MapState { LOADING, PLAYING, LOCKED, TARGETING }
+enum AlertState { SAFE, CAUTION, DANGER }
 
 const ALERT_LOW_THRESHOLD = 26
 const ALERT_MED_THRESHOLD = 75
@@ -77,8 +78,8 @@ var _pre_battle_zoom: Vector2 = Vector2.ONE
 var _pre_battle_camera_pos: Vector2 = Vector2.ZERO
 var _calculated_depth_scale: Vector2 = Vector2.ONE
 var terminal_memory: Dictionary = {}
-var alert_tween: Tween
-var warning_tween: Tween
+var encounter_memory: Dictionary = {}
+var _last_alert_state: int = -1
 
 # --- Hex Values ---
 var hex_size: float = 50.0
@@ -95,6 +96,8 @@ var pending_scan_radius: int = 0
 # --- Player Cursor ---
 var cursor_pulse_tween: Tween
 var cursor_move_tween: Tween
+var warning_tween: Tween
+var alert_tween: Tween
 
 var current_map_state: MapState = MapState.LOADING
 
@@ -168,7 +171,7 @@ func initialize_map():
 	refresh_team_status()
 
 func load_from_save_data(data: Dictionary):
-	await generate_hex_grid()
+	await generate_hex_grid(false)
 
 	# 2. RESTORE GLOBAL STATE
 	current_alert = data.current_alert
@@ -188,11 +191,16 @@ func load_from_save_data(data: Dictionary):
 
 			node.modulate.a = 1.0
 
-	# 4. RESTORE TERMINALS
+	# 4. RESTORE TERMINALS & ENCOUNTERS
 	terminal_memory.clear()
-	for key_str in data.terminal_memory.keys():
-		var coords = str_to_var(key_str)
-		terminal_memory[coords] = data.terminal_memory[key_str]
+	for key in data.terminal_memory.keys():
+		var coords = str_to_var(key)
+		terminal_memory[coords] = data.terminal_memory[key]
+
+	encounter_memory.clear()
+	for key in data.encounter_memory.keys():
+		var coords = str_to_var(key)
+		encounter_memory[coords] = data.encounter_memory[key]
 
 	total_nodes = data.total_nodes
 	nodes_done = data.nodes_done
@@ -272,7 +280,7 @@ func _zoom_camera(step: float):
 	target_zoom.y = clamp(target_zoom.y, min_zoom, max_zoom)
 	camera.zoom = target_zoom
 
-func generate_hex_grid() -> Dictionary:
+func generate_hex_grid(generate_data: bool = true) -> Dictionary:
 	print("Generating Map Logic...")
 
 	# --- Cleanup ---
@@ -283,6 +291,7 @@ func generate_hex_grid() -> Dictionary:
 	hex_width = sqrt(3.0) * hex_size
 	hex_height = hex_size * 2.0
 	terminal_memory.clear()
+	encounter_memory.clear()
 
 	map_generation_progress.emit(0, 100)
 	await get_tree().process_frame
@@ -331,19 +340,39 @@ func generate_hex_grid() -> Dictionary:
 	# --- Node Instantiation ---
 	var node_types = await _distribute_node_types(valid_coords.keys(), center_y)
 	var nodes_list: Array[MapNode] = []
+	if generate_data:
+		# --- TERMINAL GENERATION ---
+		var sorted_coords = node_types.keys()
+		sorted_coords.sort_custom(func(a, b):
+			if a.x != b.x: return a.x < b.x
+			return a.y < b.y
+		)
+		var terminal_counter = 0
+		for coords in sorted_coords:
+			if node_types[coords] == MapNode.NodeType.TERMINAL:
+				_generate_static_terminal_data(coords, terminal_counter)
+				terminal_counter += 1
 
-	# --- TERMINAL GENERATION ---
-	var sorted_coords = node_types.keys()
-	sorted_coords.sort_custom(func(a, b):
-		if a.x != b.x: return a.x < b.x
-		return a.y < b.y
-	)
-	var terminal_counter = 0
-	for coords in sorted_coords:
-		if node_types[coords] == MapNode.NodeType.TERMINAL:
-			_generate_static_terminal_data(coords, terminal_counter)
-			terminal_counter += 1
+		# --- ENCOUNTER GENERATION ---
+		var profile: DungeonProfile = RunManager.current_dungeon_profile
+		var tier = RunManager.current_dungeon_tier
 
+		if profile:
+			for coords in sorted_coords:
+				var type = node_types[coords]
+				var enc_res: Encounter
+				if type == MapNode.NodeType.COMBAT or type == MapNode.NodeType.ELITE:
+					var is_elite = (type == MapNode.NodeType.ELITE)
+					enc_res = profile.pick_encounter(tier, is_elite)
+
+				elif type == MapNode.NodeType.BOSS:
+					enc_res = profile.boss_encounter
+
+				if enc_res: encounter_memory[coords] = enc_res.encounter_id
+		else:
+			push_error("DungeonMap: No DungeonProfile found in RunManager! Encounters will be empty.")
+
+	# --- SPAWN NODES ---
 	for coords in valid_coords.keys():
 		var new_node = _create_map_node(coords.x, coords.y, valid_coords[coords], node_types[coords])
 		nodes_list.append(new_node)
@@ -449,29 +478,6 @@ func refresh_team_status():
 	nodes_done_label.text = str(nodes_done)
 	node_gauge.value = nodes_done
 	total_nodes_label.text = str(total_nodes)
-
-func _start_warning_pulse(color: Color):
-	if warning_tween: warning_tween.kill()
-
-	if current_alert < ALERT_LOW_THRESHOLD:
-		warning_label.modulate = color
-		return
-
-	warning_tween = create_tween()
-	warning_tween.set_loops()
-	warning_tween.tween_property(
-		warning_label,
-		"modulate",
-		color,
-		0.5
-	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-
-	warning_tween.tween_property(
-		warning_label,
-		"modulate",
-		Color.WHITE,
-		0.5
-	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 func complete_current_node():
 	if current_node:
@@ -640,7 +646,6 @@ func _move_player_to(target_node: MapNode, is_start: bool = false):
 	_update_vision()
 	modify_alert(alert_gain)
 
-	RunManager.auto_save()
 	await _animate_cursor_slide(target_node.position)
 
 	if target_node.state != MapNode.NodeState.COMPLETED:
@@ -676,45 +681,68 @@ func modify_alert(amount: float):
 func _update_alert_visuals():
 	_calculate_alert_gain()
 	var cost_text = str(int(current_move_cost)) + "%"
-	var target_color: Color
-	if current_alert < ALERT_LOW_THRESHOLD:
-		warning_label.text = "OK +" + cost_text
-		target_color = Color(0.419, 1.063, 0.419)
-		vision_range = 2
-	elif current_alert < ALERT_MED_THRESHOLD:
-		warning_label.text = "CAUTION +" + cost_text
-		target_color = Color(1.437, 1.226, 0.0, 1.0)
-		vision_range = 1
-	else:
-		if current_alert == 100:
-			warning_label.text = "DANGER!! +" + cost_text
-		else:
-			warning_label.text = "WARNING! +" + cost_text
-		target_color = Color(1.437, 0.234, 0.0, 1.0)
-		vision_range = 0
 
-	_start_warning_pulse(target_color)
+	var current_state = AlertState.SAFE
+	var target_color = Color(0.419, 1.063, 0.419) # Green
+	var prefix_text = "OK"
+	var new_vision_range = 2
 
-	# 2. Setup the Tween
+	if current_alert >= ALERT_MED_THRESHOLD:
+		current_state = AlertState.DANGER
+		target_color = Color(1.437, 0.234, 0.0, 1.0) # HDR Red
+		prefix_text = "WARNING!" if current_alert < 100 else "DANGER!!"
+		new_vision_range = 0
+	elif current_alert >= ALERT_LOW_THRESHOLD:
+		current_state = AlertState.CAUTION
+		target_color = Color(1.437, 1.226, 0.0, 1.0) # HDR Gold
+		prefix_text = "CAUTION"
+		new_vision_range = 1
+
+	warning_label.text = prefix_text + " +" + cost_text
+
 	if alert_tween and alert_tween.is_running():
 		alert_tween.kill()
 
 	alert_tween = create_tween().set_parallel(true)
 	alert_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 
-	var duration = 0.5 # Tweak this for speed
-
-	# 3. Animate the Value (Bar + Text)
-	# We tween a method so we can update both the bar and label in sync
 	alert_tween.tween_method(
-		_set_alert_display_value, # The function to call
-		alert_gauge.value,        # Start value (current visual state)
-		float(current_alert),     # End value (target state)
-		duration
+		_set_alert_display_value,
+		alert_gauge.value,
+		float(current_alert),
+		0.5
 	)
+	alert_tween.tween_property(alert_gauge, "modulate", target_color, 0.5)
 
-	# 4. Animate the Color
-	alert_tween.tween_property(alert_gauge, "modulate", target_color, duration)
+	if current_state != _last_alert_state:
+		_last_alert_state = current_state
+		vision_range = new_vision_range
+		_update_warning_pulse(current_state, target_color)
+
+func _update_warning_pulse(state: AlertState, color: Color):
+	if warning_tween:
+		warning_tween.kill()
+
+	if state == AlertState.SAFE:
+		warning_label.modulate = color
+		return
+	var duration = 0.75 / float(1 + int(state))
+	warning_tween = create_tween()
+	warning_tween.set_loops()
+
+	warning_tween.tween_property(
+		warning_label,
+		"modulate",
+		color,
+		duration
+	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+	warning_tween.tween_property(
+		warning_label,
+		"modulate",
+		Color.WHITE,
+		duration
+	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 func _set_alert_display_value(val: float):
 	alert_gauge.value = val
@@ -958,10 +986,8 @@ func _pick_distant_coord(candidate_pool: Array, existing_group: Array, min_dist:
 func get_save_data() -> Dictionary:
 	var node_states = {}
 
-	# 1. Serialize Node States
 	for coords in grid_nodes:
 		var node = grid_nodes[coords]
-		# We key by String because JSON doesn't support Vector2i keys
 		var key = var_to_str(coords)
 		node_states[key] = {
 			"state": node.state,
@@ -969,12 +995,14 @@ func get_save_data() -> Dictionary:
 			"aware": node.is_aware
 		}
 
-	# 2. Serialize Terminal Memory
-	# We need to convert Vector2i keys to strings here too
 	var serializable_terminals = {}
 	for coords in terminal_memory:
 		var key = var_to_str(coords)
 		serializable_terminals[key] = terminal_memory[coords]
+
+	var serializable_encounters = {}
+	for coords in encounter_memory:
+		serializable_encounters[var_to_str(coords)] = encounter_memory[coords]
 
 	return {
 		"current_alert": current_alert,
@@ -982,5 +1010,6 @@ func get_save_data() -> Dictionary:
 		"nodes_done": nodes_done,
 		"current_coords": var_to_str(current_node.grid_coords),
 		"node_data": node_states,
-		"terminal_memory": serializable_terminals
+		"terminal_memory": serializable_terminals,
+		"encounter_memory": serializable_encounters
 	}
