@@ -23,7 +23,7 @@ const PENALTY_BOSS_MOVE = 2.0
 @onready var parallax_bg: Parallax2D = $Parallax2D
 @onready var bg_sprite: Sprite2D = $Parallax2D/Sprite2D
 @onready var background: Control = $Background
-@onready var player_cursor: Sprite2D = $Background/PlayerCursor
+@onready var player_cursor: Node2D = $Background/PlayerCursor
 
 @onready var team_status: VBoxContainer = $CanvasLayer/HUD/TeamStatus/VBox
 @onready var node_gauge: ProgressBar = $CanvasLayer/HUD/NodeGauge/Gauge
@@ -98,6 +98,8 @@ var cursor_pulse_tween: Tween
 var cursor_move_tween: Tween
 var warning_tween: Tween
 var alert_tween: Tween
+var _target_zoom_val: float = 1.0
+var _zoom_tween: Tween
 
 var current_map_state: MapState = MapState.LOADING
 
@@ -105,6 +107,7 @@ func _ready():
 	RunManager.active_dungeon_map = self
 	hex_width = sqrt(3.0) * hex_size
 	hex_height = hex_size * 2.0
+	player_cursor.visible = false
 	_setup_camera()
 
 	# Visual defaults
@@ -126,9 +129,8 @@ func _start_cursor_pulse():
 	cursor_pulse_tween.set_trans(Tween.TRANS_SINE)
 	cursor_pulse_tween.set_ease(Tween.EASE_IN_OUT)
 
-	player_cursor.modulate.a = 0.2
-	cursor_pulse_tween.tween_property(player_cursor, "modulate:a", 1.0, 0.6)
-	cursor_pulse_tween.tween_property(player_cursor, "modulate:a", 0.2, 0.6)
+	cursor_pulse_tween.tween_property(player_cursor, "modulate", Color("e06d2b"), 0.6)
+	cursor_pulse_tween.tween_property(player_cursor, "modulate", Color("e0a684ff"), 0.6)
 
 func initialize_map():
 	if RunManager.is_run_active:
@@ -273,17 +275,9 @@ func _generate_static_terminal_data(coords: Vector2i, index: int):
 		"upgrade_key": upgrade_key
 	}
 
-func _zoom_camera(step: float):
-	if not camera: return
-	var target_zoom = camera.zoom + Vector2(step, step)
-	target_zoom.x = clamp(target_zoom.x, min_zoom, max_zoom)
-	target_zoom.y = clamp(target_zoom.y, min_zoom, max_zoom)
-	camera.zoom = target_zoom
-
 func generate_hex_grid(generate_data: bool = true) -> Dictionary:
 	print("Generating Map Logic...")
 
-	# --- Cleanup ---
 	total_moves = 0
 	total_nodes = 0
 	nodes_done = 0
@@ -308,7 +302,7 @@ func generate_hex_grid(generate_data: bool = true) -> Dictionary:
 	num_terminals = int(map_size / 50) + 1
 	print("Terminals: ", num_terminals)
 	var valid_coords = {}
-	var start_pos = Vector2(100, 200)
+	var start_pos = Vector2.ZERO
 	var center_y = floor(map_height / 2.0)
 	var visual_center_x = (map_length - 1) / 2.0 + \
 		(0.5 if int(center_y) % 2 == 0 else 0.0)
@@ -377,6 +371,17 @@ func generate_hex_grid(generate_data: bool = true) -> Dictionary:
 		var new_node = _create_map_node(coords.x, coords.y, valid_coords[coords], node_types[coords])
 		nodes_list.append(new_node)
 
+	var grid_center = (min_bounds + max_bounds) / 2.0
+
+	var centering_offset = -grid_center
+
+	for node in nodes_list:
+		node.position += centering_offset
+
+	min_bounds += centering_offset
+	max_bounds += centering_offset
+
+	_map_center_pos = Vector2.ZERO
 	_update_background_transform(min_bounds, max_bounds)
 
 	# --- Find Start Node ---
@@ -508,28 +513,14 @@ func enter_battle_visuals(duration: float = 1.5):
 	tween.tween_property(background, "modulate:a", 0.0, duration / 2)
 	tween.tween_property(hud, "modulate:a", 0.0, duration / 2)
 
-	# 3. Move Camera to Center
-	tween.tween_property(camera, "position", _map_center_pos, duration)
+	tween.tween_property(camera, "position", Vector2.ZERO, duration)
+
+	# 5. Restore Parallax to 1.0 (Optional, but helps alignment)
 	tween.tween_property(parallax_bg, "scroll_scale", Vector2.ONE, duration)
 
-	# 5. Calculate Zoom
-	var vp_size = get_viewport_rect().size
-
-	# Note: We use the raw texture size * sprite scale.
-	# At scroll_scale 1.0, this is the exact world size we need to cover.
-	var bg_current_size = bg_sprite.texture.get_size() * bg_sprite.scale
-
-	var x_ratio = vp_size.x / bg_current_size.x
-	var y_ratio = vp_size.y / bg_current_size.y
-
-	# Use max() for "Cover" mode (fill screen, clip edges)
-	var target_zoom_val = max(x_ratio, y_ratio)
-
-	# Optional: Add a tiny padding (e.g. 1.05) to ensure no single-pixel gaps
-	target_zoom_val *= 1.02
-
-	var battle_zoom_vec = Vector2(target_zoom_val, target_zoom_val)
-	tween.tween_property(camera, "zoom", battle_zoom_vec, duration)
+	# 6. --- USE HELPER ---
+	var target_zoom = _get_cover_zoom_level()
+	tween.tween_property(camera, "zoom", target_zoom, duration)
 
 	# 6. Clear Blur
 	tween.tween_method(
@@ -562,15 +553,21 @@ func exit_battle_visuals(duration: float = 1.0):
 
 func _update_background_transform(min_b: Vector2, max_b: Vector2):
 	bg_sprite.texture = background_texture
+	if bg_sprite.material is ShaderMaterial:
+		(bg_sprite.material as ShaderMaterial).set_shader_parameter("blur_amount", background_blur)
 
 	var padding = Vector2(hex_width * 4, hex_height * 4)
-	var grid_center = (min_b + max_b) / 2.0
-	_map_center_pos = grid_center
 	var grid_size = (max_b - min_b) + padding
 
+	# --- THE FIX: FORCE ZERO CENTER ---
+	_map_center_pos = Vector2.ZERO
+	parallax_bg.scroll_offset = Vector2.ZERO
+	parallax_bg.position = Vector2.ZERO
+	# ----------------------------------
+
+	# Scale calculation (Existing logic is fine)
 	var max_dimension = max(grid_size.x, grid_size.y)
 	var depth_factor = clamp(1.0 - (max_dimension / 5000.0), 0.1, 0.9)
-
 	_calculated_depth_scale = Vector2(depth_factor, depth_factor)
 	parallax_bg.scroll_scale = _calculated_depth_scale
 
@@ -583,7 +580,6 @@ func _update_background_transform(min_b: Vector2, max_b: Vector2):
 
 	var final_scale = max(required_scale.x, required_scale.y)
 	bg_sprite.scale = Vector2(final_scale, final_scale)
-	parallax_bg.scroll_offset = grid_center
 
 func _create_map_node(grid_x, grid_y, screen_pos, type) -> MapNode:
 	var node = map_node_scene.instantiate()
@@ -748,31 +744,69 @@ func _set_alert_display_value(val: float):
 	alert_gauge.value = val
 	alert_label.text = str(roundi(val)) + "%"
 
-func _move_camera_to_player(force_center: bool):
+func _zoom_camera(step: float):
 	if not camera: return
-	var target_pos = current_node.position
+	if _zoom_tween and _zoom_tween.is_running(): _zoom_tween.kill()
+
+	var limit_zoom_vec = _get_cover_zoom_level()
+	var min_allowed = limit_zoom_vec.x # The "Wide" limit
+	var max_allowed = max_zoom         # The "Close" limit (e.g. 2.5)
+
+	# 1. Apply Zoom
+	var current_z = camera.zoom.x
+	var new_z = clamp(current_z + step, min_allowed, max_allowed)
+
+	# 2. Tween it
+	_zoom_tween = create_tween().set_parallel(true)
+	_zoom_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	var duration = 0.3
+
+	_zoom_tween.tween_property(camera, "zoom", Vector2(new_z, new_z), duration)
+
+	# 3. Update Position (The Hybrid Logic)
+	# We calculate where the camera *should* be at the NEW zoom level
+	var target_pos = _calculate_hybrid_position(Vector2(new_z, new_z))
+
+	_zoom_tween.tween_property(camera, "position", target_pos, duration)
+
+func _move_camera_to_player(force_center: bool):
+	if _zoom_tween and _zoom_tween.is_running():
+		_zoom_tween.kill()
+
+	var target_pos = _calculate_hybrid_position(camera.zoom)
 
 	if force_center:
 		camera.position = target_pos
 		return
 
-	var vp_size = get_viewport_rect().size / camera.zoom
-	var half_vp = vp_size / 2.0
-	var deadzone_x = max(0.0, half_vp.x - camera_edge_margin)
-	var deadzone_y = max(0.0, half_vp.y - camera_edge_margin * 0.56)
-	var diff = target_pos - camera.position
-	var desired_shift = Vector2.ZERO
+	var tween = create_tween()
+	tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_property(camera, "position", target_pos, camera_smooth_speed)
 
-	if diff.x > deadzone_x: desired_shift.x = diff.x - deadzone_x
-	elif diff.x < -deadzone_x: desired_shift.x = diff.x + deadzone_x
-	if diff.y > deadzone_y: desired_shift.y = diff.y - deadzone_y
-	elif diff.y < -deadzone_y: desired_shift.y = diff.y + deadzone_y
+func _calculate_hybrid_position(at_zoom: Vector2) -> Vector2:
+	if not current_node: return Vector2.ZERO
 
-	if desired_shift != Vector2.ZERO:
-		var new_cam_pos = camera.position + desired_shift
-		var tween = create_tween()
-		tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-		tween.tween_property(camera, "position", new_cam_pos, camera_smooth_speed)
+	var limit_zoom = _get_cover_zoom_level().x
+	var lock_threshold = 1.0
+
+	var influence = remap(at_zoom.x, limit_zoom, lock_threshold, 0.0, 1.0)
+
+	influence = clamp(influence, 0.0, 1.0)
+	var target_pos = lerp(Vector2.ZERO, current_node.position, influence)
+
+	return target_pos
+
+func _get_cover_zoom_level() -> Vector2:
+	var vp_size = get_viewport_rect().size
+
+	var bg_current_size = bg_sprite.texture.get_size() * bg_sprite.scale
+
+	var x_ratio = vp_size.x / bg_current_size.x
+	var y_ratio = vp_size.y / bg_current_size.y
+
+	var zoom_val = max(x_ratio, y_ratio)
+
+	return Vector2(zoom_val, zoom_val) * 1.02
 
 func execute_camera_scan(center_node: MapNode, radius: int):
 	AudioManager.play_sfx("radiate")
@@ -794,7 +828,6 @@ func execute_camera_scan(center_node: MapNode, radius: int):
 			tween.tween_property(node, "modulate:a", 1.0, 0.5).set_delay(delay)
 
 func _update_vision():
-	if vision_range <= 0: return
 	var center_coords = current_node.grid_coords
 	var nodes_to_reveal: Array[MapNode] = []
 
@@ -811,8 +844,8 @@ func _update_vision():
 
 	var tween = create_tween().set_parallel(true)
 	for node in nodes_to_reveal:
-		node.set_state(MapNode.NodeState.REVEALED)
 		node.modulate.a = 0.5
+		node.set_state(MapNode.NodeState.REVEALED)
 		var dist = _get_hex_distance(center_coords, node.grid_coords)
 		var delay = max(0, (dist - 1) * 0.1)
 		tween.tween_property(node, "modulate:a", 1.0, 0.5)\
