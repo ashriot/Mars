@@ -6,7 +6,12 @@ signal map_generation_progress(current, total)
 
 const ALERT_LOW_THRESHOLD = 26
 const ALERT_MED_THRESHOLD = 75
-const ALERT_PER_STEP = 2
+
+# Base Costs
+const COST_MOVE_BASE = 2.0
+const PENALTY_NORMAL_MOVE = 2.0
+const PENALTY_ELITE_MOVE = 4.0
+const PENALTY_BOSS_MOVE = 2.0
 
 @onready var camera: Camera2D = $Camera2D
 @onready var hud: Control = $CanvasLayer/HUD
@@ -68,10 +73,9 @@ var _map_center_pos: Vector2 = Vector2.ZERO
 var _pre_battle_zoom: Vector2 = Vector2.ONE
 var _pre_battle_camera_pos: Vector2 = Vector2.ZERO
 var _calculated_depth_scale: Vector2 = Vector2.ONE
+var terminal_memory: Dictionary = {}
 var alert_tween: Tween
 var warning_tween: Tween
-
-var terminal_memory: Dictionary = {}
 
 # --- Hex Values ---
 var hex_size: float = 50.0
@@ -81,7 +85,8 @@ var gap: float = 40.0
 var total_moves: int = 0
 var nodes_done: int = 0
 var current_node: MapNode = null
-var current_alert: int = 0
+var current_alert: float = 0.0
+var current_move_cost: float = 0.0
 
 # --- Player Cursor ---
 var cursor_pulse_tween: Tween
@@ -164,7 +169,6 @@ func load_from_save_data(data: Dictionary):
 
 	# 2. RESTORE GLOBAL STATE
 	current_alert = data.current_alert
-	_update_alert_visuals()
 
 	# 3. RESTORE NODE STATES
 	for key_str in data.node_data.keys():
@@ -206,7 +210,8 @@ func load_from_save_data(data: Dictionary):
 			parallax_bg.scroll_scale = _calculated_depth_scale
 
 		# Reveal neighbors
-		_update_vision()
+		await _update_vision()
+	_update_alert_visuals()
 
 func _setup_camera():
 	camera.make_current()
@@ -470,11 +475,19 @@ func _start_warning_pulse(color: Color):
 
 func complete_current_node():
 	if current_node:
-		if current_node.type != MapNode.NodeType.UNKNOWN:
-			nodes_done += 1
 		current_node.set_state(MapNode.NodeState.COMPLETED)
 		await _update_vision()
-		# Add rewards, xp, etc here
+		if current_node.type != MapNode.NodeType.UNKNOWN:
+			nodes_done += 1
+		match current_node.type:
+			MapNode.NodeType.COMBAT:
+				await get_tree().create_timer(1.0).timeout
+				modify_alert(-10.0)
+				print("Enemy Defeated: Alert -10%")
+			MapNode.NodeType.ELITE:
+				await get_tree().create_timer(1.0).timeout
+				modify_alert(-20.0)
+				print("Elite Defeated: Alert -20%")
 
 func enter_battle_visuals(duration: float = 1.5):
 	# 1. Save state
@@ -608,17 +621,16 @@ func _move_player_to(target_node: MapNode, is_start: bool = false):
 	if is_start:
 		player_cursor.position = target_node.position
 		target_node.has_been_visited = true
-		#target_node.set_state(MapNode.NodeState.COMPLETED)
+		await _update_vision()
 		_update_alert_visuals()
-		_update_vision()
 		return
 
 	total_moves += 1
 	var is_revisit = target_node.has_been_visited
 	target_node.has_been_visited = true
-	var alert_gain = _calculate_alert_gain(is_revisit)
-	modify_alert(alert_gain)
+	var alert_gain = current_move_cost / (2.0 if is_revisit else 1.0)
 	_update_vision()
+	modify_alert(alert_gain)
 
 	RunManager.auto_save()
 	await _animate_cursor_slide(target_node.position)
@@ -635,28 +647,41 @@ func _animate_cursor_slide(target_pos: Vector2):
 	cursor_move_tween.tween_property(player_cursor, "position", target_pos, 0.3)
 	await cursor_move_tween.finished
 
-func _calculate_alert_gain(is_revisit: bool) -> int:
-	return int(ALERT_PER_STEP / 2) if is_revisit else ALERT_PER_STEP
+func _calculate_alert_gain():
+	var total_cost = COST_MOVE_BASE
+	var threat_penalty = 0.0
+	for node in grid_nodes.values():
+		if node.state == MapNode.NodeState.REVEALED:
+			match node.type:
+				MapNode.NodeType.COMBAT:
+					threat_penalty += PENALTY_NORMAL_MOVE
+				MapNode.NodeType.ELITE:
+					threat_penalty += PENALTY_ELITE_MOVE
+				MapNode.NodeType.BOSS:
+					threat_penalty += PENALTY_BOSS_MOVE
+	current_move_cost = total_cost + threat_penalty
 
-func modify_alert(amount: int):
-	current_alert = clamp(current_alert + amount, 0, 100)
+func modify_alert(amount: float):
+	current_alert = clamp(current_alert + amount, 0.0, 100.0)
 	_update_alert_visuals()
 
 func _update_alert_visuals():
+	_calculate_alert_gain()
+	var cost_text = str(int(current_move_cost)) + "%"
 	var target_color: Color
 	if current_alert < ALERT_LOW_THRESHOLD:
-		warning_label.text = "OK"
+		warning_label.text = "OK +" + cost_text
 		target_color = Color(0.419, 1.063, 0.419)
 		vision_range = 2
 	elif current_alert < ALERT_MED_THRESHOLD:
-		warning_label.text = "CAUTION"
+		warning_label.text = "CAUTION +" + cost_text
 		target_color = Color(1.437, 1.226, 0.0, 1.0)
 		vision_range = 1
 	else:
 		if current_alert == 100:
-			warning_label.text = "DANGER!"
+			warning_label.text = "DANGER!! +" + cost_text
 		else:
-			warning_label.text = "WARNING"
+			warning_label.text = "WARNING! +" + cost_text
 		target_color = Color(1.437, 0.234, 0.0, 1.0)
 		vision_range = 0
 
@@ -716,12 +741,9 @@ func _move_camera_to_player(force_center: bool):
 func _update_vision():
 	if vision_range <= 0: return
 	var center_coords = current_node.grid_coords
-
-	# 1. Collect nodes that actually need revealing
 	var nodes_to_reveal: Array[MapNode] = []
 
 	for node in grid_nodes.values():
-		# Skip nodes that don't need updates
 		if node.state != MapNode.NodeState.HIDDEN: continue
 
 		var dist = _get_hex_distance(center_coords, node.grid_coords)
@@ -752,6 +774,7 @@ func _update_vision():
 			.set_delay(delay)\
 			.set_trans(Tween.TRANS_SINE)\
 			.set_ease(Tween.EASE_OUT)
+	await tween.finished
 
 func _get_hex_distance(a: Vector2i, b: Vector2i) -> int:
 	var ac = _offset_to_cube(a)

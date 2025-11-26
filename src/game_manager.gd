@@ -64,15 +64,12 @@ func _on_map_interaction_requested(node: MapNode):
 			return
 
 func _on_content_finished(should_complete_node: bool = true):
-	if should_complete_node:
-		await dungeon_map.complete_current_node()
-		# Auto-save progress after resolving an event
-		RunManager.auto_save()
-
-	# Clear UI
 	for child in overlay_layer.get_children():
 		child.queue_free()
 
+	if should_complete_node:
+		await dungeon_map.complete_current_node()
+		RunManager.auto_save()
 	dungeon_map.current_map_state = DungeonMap.MapState.PLAYING
 
 func start_encounter():
