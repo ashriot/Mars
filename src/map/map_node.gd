@@ -95,7 +95,7 @@ func _set_type_color():
 		NodeType.REWARD_2: hex_sprite.self_modulate = Color.CADET_BLUE
 		NodeType.REWARD_3: hex_sprite.self_modulate = Color.MEDIUM_PURPLE
 		NodeType.EVENT: hex_sprite.self_modulate = Color.GOLDENROD
-		NodeType.TERMINAL: hex_sprite.self_modulate = Color.ORANGE
+		NodeType.TERMINAL: hex_sprite.self_modulate = Color("e06d2b")
 		NodeType.EXIT: hex_sprite.self_modulate = Color.MAGENTA
 		NodeType.UNKNOWN: hex_sprite.self_modulate = Color.DIM_GRAY
 

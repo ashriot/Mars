@@ -29,6 +29,7 @@ const PENALTY_BOSS_MOVE = 2.0
 @onready var player_reticle: Node2D = $Player/Reticle
 
 @onready var team_status := $CanvasLayer/HUD/TeamStatus/VBox
+@onready var bits_found: Label = $CanvasLayer/HUD/BitsFound/Value
 @onready var node_gauge: ProgressBar = $CanvasLayer/HUD/NodeGauge/Gauge
 @onready var nodes_done_label: Label = $CanvasLayer/HUD/NodeGauge/Nodes
 @onready var total_nodes_label: Label = $CanvasLayer/HUD/NodeGauge/Panel/Total
@@ -105,6 +106,10 @@ var _zoom_tween: Tween
 var reticle_move_tween: Tween
 var reticle_color_tween: Tween
 
+# --- Bits Found ---
+var _visual_bits: float = 0.0
+var _bits_tween: Tween
+
 var current_map_state: MapState = MapState.LOADING
 
 func _ready():
@@ -115,10 +120,14 @@ func _ready():
 	player_reticle.visible = false
 	_setup_camera()
 
-	# Visual defaults
 	alert_gauge.modulate = Color.MEDIUM_SEA_GREEN
 	alert_gauge.value = 0
+	bits_found.text = "0"
 	alert_label.text = "0%"
+	_visual_bits = float(RunManager.run_bits)
+	_update_bits_text(_visual_bits)
+	RunManager.run_bits_changed.connect(_on_run_bits_changed)
+
 	hud.modulate.a = 0.0
 	for hero_data in RunManager.party_roster:
 		var status_ui = hero_status_scene.instantiate()
@@ -180,9 +189,6 @@ func initialize_map():
 func load_from_save_data(data: Dictionary):
 	await generate_hex_grid(false)
 
-	# 2. RESTORE GLOBAL STATE
-	current_alert = data.current_alert
-
 	# 3. RESTORE NODE STATES
 	for key_str in data.node_data.keys():
 		var coords = str_to_var(key_str)
@@ -231,6 +237,10 @@ func load_from_save_data(data: Dictionary):
 
 		# Reveal neighbors
 		await _update_vision()
+
+	# 2. RESTORE GLOBAL STATE
+	current_alert = data.current_alert
+	_animate_bits_change(RunManager.run_bits)
 	_update_alert_visuals()
 
 func _setup_camera():
@@ -528,6 +538,27 @@ func complete_current_node():
 				print("Elite Defeated: Alert -20%")
 	refresh_team_status()
 
+func _on_run_bits_changed(new_total_amount: int):
+	# Start animation from current visual state to new total
+	_animate_bits_change(new_total_amount)
+
+func _animate_bits_change(target_value: int):
+	if _bits_tween and _bits_tween.is_running():
+		_bits_tween.kill()
+
+	_bits_tween = create_tween()
+	_bits_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_bits_tween.tween_method(
+		_update_bits_text,
+		_visual_bits,        # Start from where we are right now
+		float(target_value), # End at the new total
+		0.5
+	)
+
+func _update_bits_text(val: float):
+	_visual_bits = val
+	bits_found.text = "%.1f" % (val / 10.0)
+
 func enter_battle_visuals(duration: float = 1.5):
 	# 1. Save state
 	_pre_battle_zoom = camera.zoom
@@ -538,6 +569,7 @@ func enter_battle_visuals(duration: float = 1.5):
 
 	# 2. Fade Elements
 	tween.tween_property(grid, "modulate:a", 0.0, duration / 2)
+	tween.tween_property($Player, "modulate:a", 0.0, duration / 2)
 	tween.tween_property(hud, "modulate:a", 0.0, duration / 2)
 
 	tween.tween_property(camera, "position", Vector2.ZERO, duration)
@@ -556,7 +588,6 @@ func enter_battle_visuals(duration: float = 1.5):
 		0.0,
 		duration
 	)
-
 	await tween.finished
 
 func battle_ended():
@@ -566,6 +597,7 @@ func exit_battle_visuals(duration: float = 1.0):
 	var tween = create_tween().set_parallel(true)
 	tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
 	tween.tween_property(grid, "modulate:a", 1.0, duration)
+	tween.tween_property($Player, "modulate:a", 1.0, duration)
 	tween.tween_property(hud, "modulate:a", 1.0, duration)
 
 	var target_pos = current_node.position if current_node else _pre_battle_camera_pos
@@ -922,146 +954,162 @@ func _offset_to_cube(hex: Vector2i) -> Vector3i:
 func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 	var type_map = {}
 	for c in all_coords: type_map[c] = MapNode.NodeType.UNKNOWN
-	var available_pool = all_coords.duplicate()
 
-	# --- 1. FIND START (ENTRANCE) ---
+	# --- 1. POOLS & BUFFERS ---
+	var shuffled_coords = all_coords.duplicate()
+	shuffled_coords.shuffle()
+
+	var available_pool = shuffled_coords
+	var start_node = Vector2i(-999, -999)
+	#var boss_node = Vector2i(-999, -999)
+
+	# (Start/Boss Logic - Keep your existing code here)
 	var min_x = 9999
 	for c in all_coords:
 		if c.y == center_y and c.x < min_x: min_x = c.x
-	var start_node = Vector2i(min_x, center_y)
-
-	# Explicitly assign ENTRANCE type
+	start_node = Vector2i(min_x, center_y)
 	type_map[start_node] = MapNode.NodeType.ENTRANCE
 	available_pool.erase(start_node)
 
-	# --- 2. FIND END (BOSS or EXIT) ---
 	var sorted_by_x = all_coords.duplicate()
 	sorted_by_x.sort_custom(func(a, b): return a.x > b.x)
 	var end_variance = int(map_size / 4)
 	var end_candidates = sorted_by_x.slice(0, min(end_variance, sorted_by_x.size()))
 	var end_node = end_candidates.pick_random()
-
-	# Sanity check
 	while end_node == start_node and end_candidates.size() > 1:
 		end_node = end_candidates.pick_random()
 
-	# Assign based on config
-	if dungeon_has_boss:
-		type_map[end_node] = MapNode.NodeType.BOSS
-	else:
-		type_map[end_node] = MapNode.NodeType.EXIT
-
+	if dungeon_has_boss: type_map[end_node] = MapNode.NodeType.BOSS
+	else: type_map[end_node] = MapNode.NodeType.EXIT
 	available_pool.erase(end_node)
 
-	# --- 3. DEFINE "SAFE ZONE" ---
-	# Remove nodes too close to start from the pool for "Good Stuff"
-	# (We will add them back later for "Combat" or "Empty")
+	# Define Safe Zone
 	var high_value_pool = []
 	var start_buffer_zone = []
-
 	for c in available_pool:
-		if _get_hex_distance(start_node, c) <= 2: # Increased buffer to 2
+		if _get_hex_distance(start_node, c) <= 2:
 			start_buffer_zone.append(c)
 		else:
 			high_value_pool.append(c)
 
-	# --- SETUP PROGRESS TRACKING ---
-	var total_heavy_items = num_terminals + num_elites
-	var items_placed_count = 0
+	# --- PROGRESS TRACKING (THE FIX) ---
+	var total_heavy_items = num_terminals + num_elites + num_rewards + num_uncommon_rewards + num_rare_rewards + num_events + num_combats
 
-	# Time Budget
+	# We wrap the counters in a Dictionary so the Lambda can update the "Real" values
+	var progress_state = {
+		"count": 0,
+		"time": Time.get_ticks_msec()
+	}
+
 	var max_frame_time_ms = 8
-	var frame_start_time = Time.get_ticks_msec()
 
-	# --- 4. DISTRIBUTE TERMINALS (Spaced Out) ---
-	var placed_terminals = []
-	# Calculate spacing dynamically based on map size.
-	var terminal_spacing = max(3, int(map_length / 3.0))
+	# --- 2. POI DISTRIBUTION ---
+	var all_pois: Array = []
 
-	for i in range(num_terminals):
-		if high_value_pool.is_empty(): break
+	var term_spacing = max(3, int(map_length / 3.0))
+	var elite_spacing = 3
+	var reward_spacing = 2
 
-		var coord = _pick_distant_coord(high_value_pool, placed_terminals, terminal_spacing)
-		type_map[coord] = MapNode.NodeType.TERMINAL
-		high_value_pool.erase(coord)
-		placed_terminals.append(coord)
-
-		# Progress & Yield
-		items_placed_count += 1
-		if Time.get_ticks_msec() - frame_start_time > max_frame_time_ms:
-			# Calculate % within the 0-90 range
-			var percent = (float(items_placed_count) / total_heavy_items) * 99.0
-			map_generation_progress.emit(percent, 100.0)
-
-			await get_tree().process_frame
-			frame_start_time = Time.get_ticks_msec()
-
-	# --- 5. DISTRIBUTE ELITES (Spaced Out) ---
-	# We want Elites spaced away from EACH OTHER, and ideally away from Start.
-	var placed_elites = []
-	var elite_spacing = 5
-
-	for i in range(num_elites):
-		if high_value_pool.is_empty(): break
-
-		var coord = _pick_distant_coord(high_value_pool, placed_elites, elite_spacing)
-		type_map[coord] = MapNode.NodeType.ELITE
-		high_value_pool.erase(coord)
-		placed_elites.append(coord)
-
-	# --- 6. DISTRIBUTE RANDOM REWARDS ---
-	# For rewards, simple shuffling is usually fine,
-	# but we use the remaining high_value_pool.
-	high_value_pool.shuffle()
-
-	var _assign_random = func(type, count):
+	# --- HELPER: ASYNC PLACEMENT (Updated) ---
+	var _place_batch_async = func(type, count, spacing):
 		for i in range(count):
-			if high_value_pool.is_empty(): break
-			var c = high_value_pool.pop_back()
-			type_map[c] = type
+			if high_value_pool.is_empty(): return
 
-	_assign_random.call(MapNode.NodeType.REWARD, num_rewards)
-	_assign_random.call(MapNode.NodeType.REWARD_2, num_uncommon_rewards)
-	_assign_random.call(MapNode.NodeType.REWARD_3, num_rare_rewards)
-	_assign_random.call(MapNode.NodeType.EVENT, num_events)
+			var coord = _pick_balanced_coord(high_value_pool, all_pois, spacing)
 
-	# --- 7. FILL COMBAT ---
-	# Now we recombine the buffer zone so enemies can spawn near start
+			type_map[coord] = type
+			high_value_pool.erase(coord)
+			all_pois.append(coord)
+
+			# Update the Dictionary State
+			progress_state.count += 1
+
+			if Time.get_ticks_msec() - progress_state.time > max_frame_time_ms:
+				var percent = (float(progress_state.count) / total_heavy_items) * 99.0
+				map_generation_progress.emit(percent, 100.0)
+				await get_tree().process_frame
+				progress_state.time = Time.get_ticks_msec() # Reset timer
+
+	# Call the helper
+	await _place_batch_async.call(MapNode.NodeType.TERMINAL, num_terminals, term_spacing)
+	await _place_batch_async.call(MapNode.NodeType.ELITE, num_elites, elite_spacing)
+	await _place_batch_async.call(MapNode.NodeType.REWARD_3, num_rare_rewards, reward_spacing)
+	await _place_batch_async.call(MapNode.NodeType.REWARD_2, num_uncommon_rewards, reward_spacing)
+	await _place_batch_async.call(MapNode.NodeType.REWARD, num_rewards, reward_spacing)
+	await _place_batch_async.call(MapNode.NodeType.EVENT, num_events, reward_spacing)
+
+	# --- 6. DISTRIBUTE COMBAT ---
 	var combat_pool = high_value_pool + start_buffer_zone
-	combat_pool.shuffle()
+	var placed_combats = []
+	var combat_spacing = 2
 
-	# Optional: Prevent combat on the literal adjacent nodes to start?
-	# For now, we just let them spawn anywhere remaining.
+	for i in range(num_combats):
+		if combat_pool.is_empty(): break
 
-	for i in range(min(num_combats, combat_pool.size())):
-		var c = combat_pool.pop_back()
+		var c = _pick_balanced_coord(combat_pool, placed_combats, combat_spacing)
+
 		type_map[c] = MapNode.NodeType.COMBAT
+		combat_pool.erase(c)
+		placed_combats.append(c)
+
+		# Use the same Dictionary State here to keep the bar moving correctly
+		progress_state.count += 1
+
+		if Time.get_ticks_msec() - progress_state.time > max_frame_time_ms:
+			var percent = (float(progress_state.count) / total_heavy_items) * 99.0
+			map_generation_progress.emit(percent, 100.0)
+			await get_tree().process_frame
+			progress_state.time = Time.get_ticks_msec()
 
 	return type_map
 
-func _pick_distant_coord(candidate_pool: Array, existing_group: Array, min_dist: int) -> Vector2i:
+func _pick_balanced_coord(candidate_pool: Array, existing_group: Array, min_dist: int) -> Vector2i:
 	if existing_group.is_empty():
 		return candidate_pool.pick_random()
 
-	var current_dist_check = min_dist
-	while current_dist_check >= 0:
-		var valid_subset = []
+	# --- 1. TRY STRICT DISTANCE ---
+	# Try to find a spot that meets the ideal spacing (e.g. 2 or 3)
+	var ideal_candidates = []
+	for candidate in candidate_pool:
+		var is_valid = true
+		for existing in existing_group:
+			if _get_hex_distance(candidate, existing) < min_dist:
+				is_valid = false
+				break
+		if is_valid:
+			ideal_candidates.append(candidate)
 
-		for candidate in candidate_pool:
-			var is_valid = true
-			for existing in existing_group:
-				if _get_hex_distance(candidate, existing) < current_dist_check:
-					is_valid = false
-					break
+	if not ideal_candidates.is_empty():
+		return ideal_candidates.pick_random()
 
-			if is_valid:
-				valid_subset.append(candidate)
+	# --- 2. FALLBACK: MINIMIZE CLUMPING ---
+	# We couldn't match the distance.
+	# Instead of random, find the spots with the LOWEST neighbor count.
+	var best_candidates = []
+	var lowest_neighbor_count = 999
 
-		if not valid_subset.is_empty():
-			return valid_subset.pick_random()
+	for candidate in candidate_pool:
+		var neighbors = _count_group_neighbors(candidate, existing_group)
 
-		current_dist_check -= 1
+		if neighbors < lowest_neighbor_count:
+			# Found a better (lonelier) spot. Reset the list.
+			lowest_neighbor_count = neighbors
+			best_candidates = [candidate]
+		elif neighbors == lowest_neighbor_count:
+			# Found another equally good spot. Add to list.
+			best_candidates.append(candidate)
+
+	if not best_candidates.is_empty():
+		return best_candidates.pick_random()
+
 	return candidate_pool.pick_random()
+
+func _count_group_neighbors(coord: Vector2i, group: Array) -> int:
+	var count = 0
+	for existing in group:
+		if _get_hex_distance(coord, existing) == 1:
+			count += 1
+	return count
 
 func _on_node_hovered(hovered_node: MapNode):
 	if current_map_state != MapState.PLAYING and current_map_state != MapState.TARGETING:

@@ -1,6 +1,8 @@
 # RunManager.gd
 extends Node
 
+signal run_bits_changed(new_amount: int)
+
 enum RunResult { SUCCESS, RETREAT, DEFEAT }
 
 var is_run_active: bool = false
@@ -20,6 +22,7 @@ func add_run_xp(amount: int):
 
 func add_run_bits(amount: int):
 	run_bits += amount
+	run_bits_changed.emit(run_bits)
 
 func get_loot_scalar() -> float:
 	var scalar = 1.0 + ((current_dungeon_tier - 1) * 0.25)

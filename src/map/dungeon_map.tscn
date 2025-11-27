@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://cqo38uie6gkdu"]
+[gd_scene load_steps=17 format=3 uid="uid://cqo38uie6gkdu"]
 
 [ext_resource type="Script" uid="uid://c0tmi3fc3fega" path="res://src/map/dungeon_map.gd" id="1_5o7fj"]
 [ext_resource type="Texture2D" uid="uid://bwqcku6nvr4ff" path="res://assets/graphics/backgrounds/street.webp" id="2_1a5qu"]
@@ -39,8 +39,8 @@ border_width_top = 3
 border_width_right = 3
 border_width_bottom = 3
 border_color = Color(1, 1, 1, 1)
-corner_radius_top_left = 12
-corner_radius_bottom_left = 12
+corner_radius_top_left = 10
+corner_radius_bottom_left = 10
 shadow_color = Color(0.12156863, 0.12156863, 0.12156863, 1)
 shadow_size = 1
 shadow_offset = Vector2(-1, 1)
@@ -52,10 +52,25 @@ border_width_top = 3
 border_width_right = 3
 border_width_bottom = 3
 border_color = Color(1, 1, 1, 1)
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
 shadow_size = 1
 shadow_offset = Vector2(1, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pxp8l"]
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0.12156863, 0.12156863, 0.12156863, 1)
+shadow_size = 1
+shadow_offset = Vector2(-1, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ajvg2"]
 bg_color = Color(1, 1, 1, 1)
@@ -64,8 +79,8 @@ border_width_top = 3
 border_width_right = 3
 border_width_bottom = 3
 border_color = Color(1, 1, 1, 1)
-corner_radius_top_left = 12
-corner_radius_bottom_left = 12
+corner_radius_top_left = 10
+corner_radius_bottom_left = 10
 shadow_color = Color(0.12156863, 0.12156863, 0.12156863, 1)
 shadow_size = 1
 shadow_offset = Vector2(-1, 1)
@@ -106,6 +121,12 @@ texture = ExtResource("2_1a5qu")
 [node name="Reticle" type="Node2D" parent="Player"]
 
 [node name="Sprite2" type="Sprite2D" parent="Player/Reticle"]
+modulate = Color(0.11764706, 0.11764706, 0.11764706, 1)
+z_index = 10
+scale = Vector2(0.52343756, 0.52343756)
+texture = ExtResource("5_pf175")
+
+[node name="Sprite3" type="Sprite2D" parent="Player/Reticle"]
 modulate = Color(0.11764706, 0.11764706, 0.11764706, 1)
 z_index = 10
 scale = Vector2(0.4765625, 0.4765625)
@@ -256,15 +277,65 @@ theme_override_font_sizes/font_size = 36
 text = "CAUTION"
 vertical_alignment = 1
 
+[node name="BitsFound" type="Panel" parent="CanvasLayer/HUD"]
+modulate = Color(0.19, 0.6759999, 1, 1)
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -681.0
+offset_top = 10.0
+offset_right = -457.0
+offset_bottom = 50.0
+grow_horizontal = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_pxp8l")
+
+[node name="Label" type="Label" parent="CanvasLayer/HUD/BitsFound"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 9.0
+offset_top = -3.5
+offset_right = -129.0
+offset_bottom = 3.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.12041845, 0.12041845, 0.12041845, 1)
+theme_override_fonts/font = ExtResource("4_pf175")
+theme_override_font_sizes/font_size = 36
+text = "Bts."
+vertical_alignment = 1
+
+[node name="Value" type="Label" parent="CanvasLayer/HUD/BitsFound"]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -128.0
+offset_top = -23.5
+offset_right = -7.0
+offset_bottom = 23.5
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.12041845, 0.12041845, 0.12041845, 1)
+theme_override_fonts/font = ExtResource("4_pf175")
+theme_override_font_sizes/font_size = 36
+text = "9999"
+horizontal_alignment = 2
+vertical_alignment = 1
+
 [node name="NodeGauge" type="Panel" parent="CanvasLayer/HUD"]
 modulate = Color(0.88, 0.42856, 0.1672, 1)
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -584.0
+offset_left = -444.0
 offset_top = 10.0
-offset_right = -395.0
+offset_right = -255.0
 offset_bottom = 50.0
 grow_horizontal = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_ajvg2")
@@ -277,7 +348,7 @@ anchor_top = 0.5
 anchor_bottom = 0.5
 offset_left = 189.0
 offset_top = -20.0
-offset_right = 515.0
+offset_right = 374.0
 offset_bottom = 20.0
 grow_vertical = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
@@ -330,13 +401,14 @@ anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = 327.0
+offset_left = 186.0
 offset_top = -19.0
-offset_right = 381.0
+offset_right = 240.0
 offset_bottom = 19.0
 grow_horizontal = 0
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_ssagv")
+metadata/_edit_group_ = true
 
 [node name="Total" type="Label" parent="CanvasLayer/HUD/NodeGauge/Panel"]
 layout_mode = 1
