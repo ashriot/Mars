@@ -111,7 +111,7 @@ func _get_damage_string(damage_effect: Effect_Damage, attacker: ActorCard) -> St
 
 
 static var ICON_PATHS = {
-	"focus": "res://assets/graphics/icons/textures/bolt.png",
+	"focus": "res://assets/graphics/icons/textures/bolt_sm.png",
 	"kinetic": "res://assets/graphics/icons/textures/bullet.png",
 	"energy": "res://assets/graphics/icons/textures/fire.png",
 	"piercing": "res://assets/graphics/icons/textures/pierce.png",

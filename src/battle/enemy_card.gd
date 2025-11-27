@@ -48,7 +48,8 @@ func prepare_turn_base_action():
 		# SEQUENCE
 		var script = enemy_data.ai_script_indices
 		if script.is_empty():
-			base_turn_action = enemy_data.action_deck[0]
+			var i = turn_counter % enemy_data.action_deck.size() - 1
+			base_turn_action = enemy_data.action_deck[i]
 		else:
 			var ability_index = script[ai_index]
 			base_turn_action = enemy_data.action_deck[ability_index]
