@@ -3,6 +3,8 @@ class_name DungeonMap
 
 signal interaction_requested(node: MapNode)
 signal map_generation_progress(current, total)
+signal scan_performed
+signal scan_canceled
 
 enum MapState { LOADING, PLAYING, LOCKED, TARGETING }
 enum AlertState { SAFE, CAUTION, DANGER }
@@ -22,10 +24,11 @@ const PENALTY_BOSS_MOVE = 2.0
 @onready var alert_label: Label = $CanvasLayer/HUD/AlertGauge/Percent/Value
 @onready var parallax_bg: Parallax2D = $Parallax2D
 @onready var bg_sprite: Sprite2D = $Parallax2D/Sprite2D
-@onready var background: Control = $Background
-@onready var player_cursor: Node2D = $Background/PlayerCursor
+@onready var grid: Node2D = $Grid
+@onready var player_cursor: Node2D = $Player/Cursor
+@onready var player_reticle: Node2D = $Player/Reticle
 
-@onready var team_status: VBoxContainer = $CanvasLayer/HUD/TeamStatus/VBox
+@onready var team_status := $CanvasLayer/HUD/TeamStatus/VBox
 @onready var node_gauge: ProgressBar = $CanvasLayer/HUD/NodeGauge/Gauge
 @onready var nodes_done_label: Label = $CanvasLayer/HUD/NodeGauge/Nodes
 @onready var total_nodes_label: Label = $CanvasLayer/HUD/NodeGauge/Panel/Total
@@ -98,8 +101,9 @@ var cursor_pulse_tween: Tween
 var cursor_move_tween: Tween
 var warning_tween: Tween
 var alert_tween: Tween
-var _target_zoom_val: float = 1.0
 var _zoom_tween: Tween
+var reticle_move_tween: Tween
+var reticle_color_tween: Tween
 
 var current_map_state: MapState = MapState.LOADING
 
@@ -108,6 +112,7 @@ func _ready():
 	hex_width = sqrt(3.0) * hex_size
 	hex_height = hex_size * 2.0
 	player_cursor.visible = false
+	player_reticle.visible = false
 	_setup_camera()
 
 	# Visual defaults
@@ -216,6 +221,7 @@ func load_from_save_data(data: Dictionary):
 		current_node = target_node
 
 		player_cursor.position = target_node.position
+		player_reticle.position = target_node.position
 		camera.position = target_node.position
 		camera.zoom = Vector2.ONE
 
@@ -230,6 +236,14 @@ func load_from_save_data(data: Dictionary):
 func _setup_camera():
 	camera.make_current()
 
+func _unhandled_input(event):
+	if current_map_state == MapState.TARGETING:
+		# Check for "Back" (Controller B) or Right Click
+		if event.is_action_pressed("ui_cancel") or \
+		   (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed):
+			_cancel_targeting()
+			get_viewport().set_input_as_handled()
+
 func _input(event):
 	if current_map_state == MapState.LOADING or current_map_state == MapState.LOCKED: return
 	if event is InputEventMouseButton:
@@ -237,6 +251,21 @@ func _input(event):
 			_zoom_camera(zoom_step)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			_zoom_camera(-zoom_step)
+
+	#if event.is_action_pressed("ui_right"):
+		## 1. Find the neighbor to the right of 'current_node'
+		#var target = _find_neighbor(current_node, Vector2i(1, 0))
+#
+		#if target:
+			## 2. Manually trigger the exact same visual function
+			#_animate_reticle_to(target.position)
+#
+			## 3. Store this target as the "Selected Node" variable
+			#_selected_node_for_controller = target
+#
+	#if event.is_action_pressed("ui_accept"):
+		#if _selected_node_for_controller:
+			#_on_node_clicked(_selected_node_for_controller)
 
 func _generate_static_terminal_data(coords: Vector2i, index: int):
 	var scalar = RunManager.get_loot_scalar()
@@ -290,9 +319,7 @@ func generate_hex_grid(generate_data: bool = true) -> Dictionary:
 	map_generation_progress.emit(0, 100)
 	await get_tree().process_frame
 
-	for child in background.get_children():
-		if child.name == "PlayerCursor":
-			continue
+	for child in grid.get_children():
 		child.queue_free()
 	grid_nodes.clear()
 	alert_gauge.value = 0
@@ -510,7 +537,7 @@ func enter_battle_visuals(duration: float = 1.5):
 	tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
 
 	# 2. Fade Elements
-	tween.tween_property(background, "modulate:a", 0.0, duration / 2)
+	tween.tween_property(grid, "modulate:a", 0.0, duration / 2)
 	tween.tween_property(hud, "modulate:a", 0.0, duration / 2)
 
 	tween.tween_property(camera, "position", Vector2.ZERO, duration)
@@ -538,7 +565,7 @@ func battle_ended():
 func exit_battle_visuals(duration: float = 1.0):
 	var tween = create_tween().set_parallel(true)
 	tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
-	tween.tween_property(background, "modulate:a", 1.0, duration)
+	tween.tween_property(grid, "modulate:a", 1.0, duration)
 	tween.tween_property(hud, "modulate:a", 1.0, duration)
 
 	var target_pos = current_node.position if current_node else _pre_battle_camera_pos
@@ -586,11 +613,10 @@ func _create_map_node(grid_x, grid_y, screen_pos, type) -> MapNode:
 	node.position = screen_pos
 	node.name = "Hex_%d_%d" % [grid_x, grid_y]
 	node.modulate.a = 0.0
-
-	$Background.add_child(node)
+	grid.add_child(node)
 	node.setup(Vector2i(grid_x, grid_y), type)
-
 	node.node_clicked.connect(_on_node_clicked)
+	node.node_hovered.connect(_on_node_hovered)
 	grid_nodes[Vector2i(grid_x, grid_y)] = node
 
 	return node
@@ -598,7 +624,31 @@ func _create_map_node(grid_x, grid_y, screen_pos, type) -> MapNode:
 func start_targeting_mode(radius: int):
 	current_map_state = MapState.TARGETING
 	pending_scan_radius = radius
-	print("Select a sector to scan...")
+	player_reticle.visible = true
+	_start_reticle_scan_pulse()
+
+	print("Targeting Mode Active. Right-click to cancel.")
+
+func _start_reticle_scan_pulse():
+	if reticle_color_tween and reticle_color_tween.is_running():
+		reticle_color_tween.kill()
+	reticle_color_tween = create_tween().set_loops()
+	reticle_color_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+	reticle_color_tween.tween_property(player_reticle, "modulate", Color.ORANGE, 0.5)
+	reticle_color_tween.tween_property(player_reticle, "modulate", Color.DODGER_BLUE, 0.5)
+
+func _cancel_targeting():
+	if current_map_state != MapState.TARGETING: return
+	current_map_state = MapState.PLAYING
+	pending_scan_radius = 0
+	_reset_reticle_visuals()
+	scan_canceled.emit()
+
+func _reset_reticle_visuals():
+	if reticle_color_tween: reticle_color_tween.kill()
+	player_reticle.modulate = Color.ORANGE
+	player_reticle.visible = false
 
 func unlock_input():
 	if current_map_state == MapState.TARGETING:
@@ -611,7 +661,8 @@ func _on_node_clicked(target_node: MapNode):
 		execute_camera_scan(target_node, pending_scan_radius)
 		current_map_state = MapState.PLAYING
 		pending_scan_radius = 0
-		RunManager.auto_save()
+		_reset_reticle_visuals()
+		scan_performed.emit()
 		return
 
 	if current_map_state != MapState.PLAYING: return
@@ -623,14 +674,15 @@ func _on_node_clicked(target_node: MapNode):
 	_move_player_to(target_node)
 
 func _move_player_to(target_node: MapNode, is_start: bool = false):
+	current_map_state = MapState.LOCKED
 	current_node = target_node
 	_move_camera_to_player(is_start)
 	player_cursor.visible = true
 
 	if is_start:
 		player_cursor.position = target_node.position
+		player_reticle.position = target_node.position
 		target_node.has_been_visited = true
-		#target_node.is_aware = true
 		await _update_vision()
 		_update_alert_visuals()
 		return
@@ -642,10 +694,12 @@ func _move_player_to(target_node: MapNode, is_start: bool = false):
 	_update_vision()
 	modify_alert(alert_gain)
 
-	await _animate_cursor_slide(target_node.position)
+	_animate_cursor_slide(target_node.position)
 
 	if target_node.state != MapNode.NodeState.COMPLETED:
 		interaction_requested.emit(target_node)
+	else:
+		current_map_state = MapState.PLAYING
 
 func _animate_cursor_slide(target_pos: Vector2):
 	if cursor_move_tween: cursor_move_tween.kill()
@@ -986,13 +1040,10 @@ func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 	return type_map
 
 func _pick_distant_coord(candidate_pool: Array, existing_group: Array, min_dist: int) -> Vector2i:
-	# 1. If no existing group, just pick random
 	if existing_group.is_empty():
 		return candidate_pool.pick_random()
 
-	# 2. Attempt to find a valid spot, lowering standards if needed
 	var current_dist_check = min_dist
-
 	while current_dist_check >= 0:
 		var valid_subset = []
 
@@ -1006,15 +1057,58 @@ func _pick_distant_coord(candidate_pool: Array, existing_group: Array, min_dist:
 			if is_valid:
 				valid_subset.append(candidate)
 
-		# Found valid spots? Pick one!
 		if not valid_subset.is_empty():
 			return valid_subset.pick_random()
 
-		# Map too crowded? Lower standards and try again.
 		current_dist_check -= 1
-
-	# Fallback (Should logically never reach here if dist reduces to 0)
 	return candidate_pool.pick_random()
+
+func _on_node_hovered(hovered_node: MapNode):
+	if current_map_state != MapState.PLAYING and current_map_state != MapState.TARGETING:
+		return
+	if current_map_state == MapState.TARGETING:
+		# Mouse Input = No Animation (Snap)
+		_animate_reticle_to(hovered_node.position, false)
+		return
+	if current_map_state == MapState.PLAYING:
+		var dist = _get_hex_distance(current_node.grid_coords, hovered_node.grid_coords)
+		if dist == 1:
+			# Mouse Input = No Animation (Snap)
+			_animate_reticle_to(hovered_node.position, false)
+		else:
+			_hide_reticle()
+
+func _animate_reticle_to(target_pos: Vector2, animate: bool = true):
+	player_reticle.visible = true
+	if reticle_move_tween and reticle_move_tween.is_running():
+		reticle_move_tween.kill()
+
+	if animate:
+		reticle_move_tween = create_tween()
+		reticle_move_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		reticle_move_tween.tween_property(player_reticle, "position", target_pos, 0.15)
+		if current_map_state != MapState.TARGETING:
+			reticle_move_tween.tween_property(player_reticle, "modulate:a", 1.0, 0.1)
+	else:
+		player_reticle.position = target_pos
+		if current_map_state != MapState.TARGETING:
+			player_reticle.modulate.a = 1.0
+
+func _hide_reticle():
+	if not player_reticle.visible: return
+	if reticle_move_tween and reticle_move_tween.is_running():
+		reticle_move_tween.kill()
+	if reticle_color_tween and reticle_color_tween.is_running():
+		reticle_color_tween.kill()
+
+	var tween = create_tween()
+	tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tween.tween_property(player_reticle, "modulate:a", 0.0, 0.2)
+
+	tween.finished.connect(func():
+		player_reticle.visible = false
+		player_reticle.modulate = Color.ORANGE
+	)
 
 func get_save_data() -> Dictionary:
 	var node_states = {}

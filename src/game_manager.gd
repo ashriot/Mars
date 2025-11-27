@@ -80,8 +80,6 @@ func _start_encounter(encounter: Encounter):
 	AudioManager.play_music("battle", 0.0, true, false)
 	await dungeon_map.enter_battle_visuals()
 
-	var node_type = dungeon_map.current_node.type
-
 	battle_scene = battle_scene_packed.instantiate()
 	overlay_layer.add_child(battle_scene)
 	battle_scene.setup_battle(encounter.enemies)
@@ -102,8 +100,13 @@ func _on_terminal_choice(choice_tag: String, data: Dictionary):
 	match choice_tag:
 		"opt_scan", "opt_scan_up":
 			var radius = 2 if choice_tag == "opt_scan_up" else 1
-			_on_content_finished(true)
+
+			for child in overlay_layer.get_children():
+				child.queue_free()
+			dungeon_map.scan_performed.connect(_on_scan_success, CONNECT_ONE_SHOT)
+			dungeon_map.scan_canceled.connect(_on_scan_canceled, CONNECT_ONE_SHOT)
 			dungeon_map.start_targeting_mode(radius)
+			return
 
 		"opt_sec", "opt_sec_up":
 			dungeon_map.modify_alert(-int(data.alert))
@@ -119,6 +122,16 @@ func _on_terminal_choice(choice_tag: String, data: Dictionary):
 			_handle_extraction()
 
 	_on_content_finished(true)
+
+func _on_scan_success():
+	if dungeon_map.scan_canceled.is_connected(_on_scan_canceled):
+		dungeon_map.scan_canceled.disconnect(_on_scan_canceled)
+	_on_content_finished(true)
+
+func _on_scan_canceled():
+	if dungeon_map.scan_performed.is_connected(_on_scan_success):
+		dungeon_map.scan_performed.disconnect(_on_scan_success)
+	_on_map_interaction_requested(dungeon_map.current_node)
 
 func _on_terminal_closed():
 	_on_content_finished(false)

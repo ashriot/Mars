@@ -84,7 +84,6 @@ shadow_offset = Vector2(1, 1)
 
 [node name="DungeonMap" type="Node2D"]
 script = ExtResource("1_5o7fj")
-map_length = 30
 vision_range = 2
 num_combats = 6
 num_elites = 0
@@ -100,35 +99,41 @@ background_texture = ExtResource("2_1a5qu")
 material = SubResource("ShaderMaterial_gftom")
 texture = ExtResource("2_1a5qu")
 
-[node name="Background" type="Control" parent="."]
-layout_mode = 3
-anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
+[node name="Grid" type="Node2D" parent="."]
 
-[node name="PlayerCursor" type="Node2D" parent="Background"]
-modulate = Color(0.88, 0.42856, 0.1672, 1)
+[node name="Player" type="Node2D" parent="."]
 
-[node name="Sprite4" type="Sprite2D" parent="Background/PlayerCursor"]
+[node name="Reticle" type="Node2D" parent="Player"]
+
+[node name="Sprite2" type="Sprite2D" parent="Player/Reticle"]
+modulate = Color(0.11764706, 0.11764706, 0.11764706, 1)
+z_index = 10
+scale = Vector2(0.4765625, 0.4765625)
+texture = ExtResource("5_pf175")
+
+[node name="Sprite" type="Sprite2D" parent="Player/Reticle"]
 z_index = 10
 scale = Vector2(0.5, 0.5)
 texture = ExtResource("5_pf175")
 
-[node name="Sprite" type="Sprite2D" parent="Background/PlayerCursor"]
+[node name="Cursor" type="Node2D" parent="Player"]
+modulate = Color(0.88, 0.42856, 0.1672, 1)
+
+[node name="Sprite" type="Sprite2D" parent="Player/Cursor"]
 modulate = Color(0.11764706, 0.11764706, 0.11764706, 1)
 z_index = 10
 position = Vector2(0, -36)
 scale = Vector2(0.3984375, 0.3984375)
 texture = ExtResource("7_ssagv")
 
-[node name="Sprite3" type="Sprite2D" parent="Background/PlayerCursor"]
+[node name="Sprite3" type="Sprite2D" parent="Player/Cursor"]
 modulate = Color(0.11764706, 0.11764706, 0.11764706, 1)
 z_index = 10
 position = Vector2(0, -38)
 scale = Vector2(0.265625, 0.2656249)
 texture = ExtResource("7_ssagv")
 
-[node name="Sprite2" type="Sprite2D" parent="Background/PlayerCursor"]
+[node name="Sprite2" type="Sprite2D" parent="Player/Cursor"]
 z_index = 10
 position = Vector2(0, -36)
 scale = Vector2(0.359375, 0.35937506)
@@ -141,27 +146,35 @@ layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_bottom = -998.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
 [node name="ColorRect" type="ColorRect" parent="CanvasLayer/HUD"]
 layout_mode = 1
-anchors_preset = 15
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 60.0
+grow_horizontal = 2
+color = Color(0, 0, 0, 0.88235295)
+
+[node name="ColorRect2" type="ColorRect" parent="CanvasLayer/HUD"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_bottom = -19.0
+offset_top = -60.0
 grow_horizontal = 2
-grow_vertical = 2
+grow_vertical = 0
 color = Color(0, 0, 0, 0.88235295)
 
 [node name="AlertGauge" type="ProgressBar" parent="CanvasLayer/HUD"]
 layout_mode = 1
 offset_left = 144.0
-offset_top = 11.0
-offset_right = 649.0
-offset_bottom = 51.0
+offset_top = 10.0
+offset_right = 569.0
+offset_bottom = 50.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_styles/background = SubResource("StyleBoxFlat_1a5qu")
 theme_override_styles/fill = SubResource("StyleBoxFlat_vfn15")
@@ -226,10 +239,14 @@ vertical_alignment = 1
 
 [node name="Warning" type="Label" parent="CanvasLayer/HUD"]
 layout_mode = 1
-offset_left = 760.0
-offset_top = 8.0
-offset_right = 1149.0
-offset_bottom = 55.0
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -281.0
+offset_top = 6.0
+offset_right = 108.0
+offset_bottom = 53.0
+grow_horizontal = 2
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 theme_override_constants/shadow_offset_x = 0
 theme_override_constants/shadow_offset_y = 2
@@ -245,10 +262,10 @@ layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -519.0
-offset_top = 11.0
-offset_right = -325.0
-offset_bottom = 51.0
+offset_left = -584.0
+offset_top = 10.0
+offset_right = -395.0
+offset_bottom = 50.0
 grow_horizontal = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_ajvg2")
 
@@ -258,9 +275,9 @@ layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_left = 193.0
+offset_left = 189.0
 offset_top = -20.0
-offset_right = 445.0
+offset_right = 515.0
 offset_bottom = 20.0
 grow_vertical = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
@@ -313,9 +330,9 @@ anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = 251.0
+offset_left = 327.0
 offset_top = -19.0
-offset_right = 305.0
+offset_right = 381.0
 offset_bottom = 19.0
 grow_horizontal = 0
 grow_vertical = 2
@@ -326,6 +343,8 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_top = -4.5
+offset_bottom = 4.5
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(0.11764706, 0.11764706, 0.11764706, 1)
@@ -336,20 +355,27 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="TeamStatus" type="Control" parent="CanvasLayer/HUD"]
-custom_minimum_size = Vector2(450, 0)
-anchors_preset = 0
-offset_left = 20.0
-offset_top = 69.0
-offset_right = 470.0
-offset_bottom = 254.0
+custom_minimum_size = Vector2(450, 40)
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 18.0
+offset_top = -51.0
+offset_right = -18.0
+offset_bottom = -11.0
+grow_horizontal = 2
+grow_vertical = 0
 
-[node name="VBox" type="VBoxContainer" parent="CanvasLayer/HUD/TeamStatus"]
+[node name="VBox" type="HBoxContainer" parent="CanvasLayer/HUD/TeamStatus"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 20
+alignment = 1
 
 [node name="Camera2D" type="Camera2D" parent="."]

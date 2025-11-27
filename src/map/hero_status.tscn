@@ -4,8 +4,8 @@
 [ext_resource type="Script" uid="uid://cxkviuaghnjrw" path="res://src/map/hero_status.gd" id="1_hfba2"]
 [ext_resource type="Texture2D" uid="uid://c3vg1nlh2b7a0" path="res://assets/graphics/icons/map/blood-drop.png" id="2_hfba2"]
 [ext_resource type="Texture2D" uid="uid://dni1rovx6ciyq" path="res://assets/graphics/icons/textures/bolt_sm.png" id="3_huwb8"]
-[ext_resource type="Texture2D" uid="uid://bp4qm1fim7f6v" path="res://assets/graphics/icons/textures/shield.png" id="5_hfba2"]
-[ext_resource type="Texture2D" uid="uid://bs7vv07inafvr" path="res://assets/graphics/icons/textures/chevron_h.png" id="6_huwb8"]
+[ext_resource type="Texture2D" uid="uid://ybrwd70w1dkb" path="res://assets/graphics/icons/textures/shield_sm.png" id="5_huwb8"]
+[ext_resource type="Texture2D" uid="uid://jdpryp48lvvd" path="res://assets/graphics/icons/textures/chevron_h.png" id="6_huwb8"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ssagv"]
 bg_color = Color(1, 1, 1, 1)
@@ -14,70 +14,72 @@ border_width_top = 3
 border_width_right = 3
 border_width_bottom = 3
 border_color = Color(1, 1, 1, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
 shadow_color = Color(0.12156863, 0.12156863, 0.12156863, 1)
 shadow_size = 5
 shadow_offset = Vector2(0, 2)
 
 [node name="HeroStatus" type="Panel"]
 self_modulate = Color(1.128, 1.437, 0.277, 1)
-custom_minimum_size = Vector2(400, 40)
+custom_minimum_size = Vector2(500, 40)
 offset_right = 450.0
 offset_bottom = 40.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_ssagv")
 script = ExtResource("1_hfba2")
 
 [node name="Role" type="Control" parent="."]
-modulate = Color(1, 1, 1, 0.78431374)
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_left = 2.0
+offset_left = 7.0
 offset_top = -17.5
-offset_right = 134.0
+offset_right = 159.0
 offset_bottom = 17.5
 grow_vertical = 2
 
 [node name="Left" type="TextureButton" parent="Role"]
-modulate = Color(0.12156863, 0.12156863, 0.12156863, 1)
-custom_minimum_size = Vector2(28, 28)
+modulate = Color(0.12, 0.12, 0.12, 0.9607843)
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_top = -14.0
-offset_right = 28.0
-offset_bottom = 14.0
+offset_left = -4.0
+offset_top = -20.0
+offset_right = 42.0
+offset_bottom = 20.0
 grow_vertical = 2
 texture_normal = ExtResource("6_huwb8")
 ignore_texture_size = true
-stretch_mode = 0
-flip_h = true
+stretch_mode = 3
 
 [node name="Right" type="TextureButton" parent="Role"]
-modulate = Color(0.12156863, 0.12156863, 0.12156863, 1)
-custom_minimum_size = Vector2(28, 28)
+modulate = Color(0.12, 0.12, 0.12, 0.9607843)
+custom_minimum_size = Vector2(32, 32)
 layout_mode = 1
 anchors_preset = 6
 anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = -28.0
-offset_top = -14.0
-offset_bottom = 14.0
+offset_left = -41.0
+offset_top = -20.0
+offset_right = 6.0
+offset_bottom = 20.0
 grow_horizontal = 0
 grow_vertical = 2
 texture_normal = ExtResource("6_huwb8")
 ignore_texture_size = true
-stretch_mode = 0
+stretch_mode = 3
+flip_h = true
 
 [node name="Window" type="Control" parent="Role"]
+modulate = Color(1, 1, 1, 0.88235295)
 clip_contents = true
+custom_minimum_size = Vector2(76, 0)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -90,6 +92,8 @@ offset_right = 38.0
 offset_bottom = 22.0
 grow_horizontal = 2
 grow_vertical = 2
+metadata/_edit_lock_ = true
+metadata/_edit_group_ = true
 
 [node name="HBox" type="HBoxContainer" parent="Role/Window"]
 layout_mode = 1
@@ -106,7 +110,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Prev" type="Label" parent="Role/Window/HBox"]
-custom_minimum_size = Vector2(65, 0)
+custom_minimum_size = Vector2(66, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.12156863, 0.12156863, 0.12156863, 1)
 theme_override_fonts/font = ExtResource("1_53fmm")
@@ -117,7 +121,7 @@ vertical_alignment = 1
 uppercase = true
 
 [node name="Name" type="Label" parent="Role/Window/HBox"]
-custom_minimum_size = Vector2(65, 0)
+custom_minimum_size = Vector2(66, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.12156863, 0.12156863, 0.12156863, 1)
 theme_override_fonts/font = ExtResource("1_53fmm")
@@ -128,7 +132,7 @@ vertical_alignment = 1
 uppercase = true
 
 [node name="Next" type="Label" parent="Role/Window/HBox"]
-custom_minimum_size = Vector2(65, 0)
+custom_minimum_size = Vector2(66, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.12156863, 0.12156863, 0.12156863, 1)
 theme_override_fonts/font = ExtResource("1_53fmm")
@@ -140,13 +144,16 @@ uppercase = true
 
 [node name="HeroName" type="Label" parent="."]
 layout_mode = 1
-anchors_preset = 4
+anchors_preset = 8
+anchor_left = 0.5
 anchor_top = 0.5
+anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = 148.0
+offset_left = -59.5
 offset_top = -23.5
-offset_right = 267.0
+offset_right = 59.5
 offset_bottom = 23.5
+grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(0.12156863, 0.12156863, 0.12156863, 1)
 theme_override_fonts/font = ExtResource("1_53fmm")
@@ -162,9 +169,9 @@ anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = -177.0
+offset_left = -169.0
 offset_top = -14.5
-offset_right = -117.0
+offset_right = -109.0
 offset_bottom = 13.5
 grow_horizontal = 0
 grow_vertical = 2
@@ -181,7 +188,7 @@ expand_mode = 1
 modulate = Color(0.12156863, 0.12156863, 0.12156863, 1)
 custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
-texture = ExtResource("5_hfba2")
+texture = ExtResource("5_huwb8")
 expand_mode = 1
 
 [node name="Injuries" type="HBoxContainer" parent="."]
@@ -191,13 +198,13 @@ anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = -100.0
+offset_left = -97.0
 offset_top = -14.5
-offset_right = -8.0
+offset_right = -5.0
 offset_bottom = 13.5
 grow_horizontal = 0
 grow_vertical = 2
-theme_override_constants/separation = 0
+theme_override_constants/separation = -2
 alignment = 2
 
 [node name="Drop1" type="TextureRect" parent="Injuries"]

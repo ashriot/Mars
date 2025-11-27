@@ -2,6 +2,7 @@ class_name MapNode
 extends Area2D
 
 signal node_clicked(node: MapNode)
+signal node_hovered(node: MapNode)
 
 enum NodeType { ENTRANCE, COMBAT, ELITE, BOSS, REWARD, REWARD_2, REWARD_3, EVENT, TERMINAL, EXIT, UNKNOWN }
 enum NodeState { HIDDEN, REVEALED, COMPLETED }
@@ -41,6 +42,8 @@ func _ready():
 	else:
 		hex_sprite.modulate = Color.WHITE
 	unaware_highlight.hide()
+	mouse_entered.connect(_on_mouse_entered)
+	mouse_exited.connect(_on_mouse_exited)
 
 func setup(coords: Vector2i, assigned_type: NodeType):
 	grid_coords = coords
@@ -109,3 +112,9 @@ func _get_my_texture() -> Texture2D:
 		NodeType.EXIT: return icon_exit
 		NodeType.TERMINAL: return icon_terminal
 	return null
+
+func _on_mouse_entered():
+	node_hovered.emit(self)
+
+func _on_mouse_exited():
+	pass

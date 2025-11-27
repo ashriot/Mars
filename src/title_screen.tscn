@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://bj37bql2rx1om"]
+[gd_scene load_steps=12 format=3 uid="uid://bj37bql2rx1om"]
 
 [ext_resource type="Script" uid="uid://qkc7usulviqt" path="res://src/title_screen.gd" id="1_whxi8"]
 [ext_resource type="Texture2D" uid="uid://xtvo634hhmpf" path="res://assets/graphics/backgrounds/mars.png" id="2_616sk"]
@@ -8,11 +8,22 @@
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="4_vedi7"]
 [ext_resource type="StyleBox" uid="uid://bhjtch4mfk4jc" path="res://data/theme/styleboxes/btn_opaque_normal.tres" id="8_tlpw0"]
 [ext_resource type="StyleBox" uid="uid://1p4tyofjick6" path="res://data/theme/styleboxes/btn_opaque_hover.tres" id="9_6ron6"]
+[ext_resource type="StyleBox" uid="uid://buhq36mq775hf" path="res://data/theme/styleboxes/btn_opaque_pressed.tres" id="9_036v4"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_odwn3"]
 shader = ExtResource("3_gc8o6")
 shader_parameter/aberration_x = 0.02000004845000003
 shader_parameter/aberration_y = 0.05000004987499995
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tlpw0"]
+bg_color = Color(1, 1, 1, 0.9607843)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
 
 [node name="TitleScreen" type="Control"]
 layout_mode = 3
@@ -182,6 +193,125 @@ theme_override_font_sizes/font_size = 40
 theme_override_styles/normal = ExtResource("8_tlpw0")
 theme_override_styles/hover = ExtResource("9_6ron6")
 text = "LOAD GAME"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+visible = false
+modulate = Color(0.88, 0.42856, 0.1672, 1)
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -150.0
+offset_top = -453.0
+offset_right = 150.0
+offset_bottom = -53.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="Panel" type="Panel" parent="HBoxContainer"]
+custom_minimum_size = Vector2(350, 400)
+layout_mode = 2
+
+[node name="Header" type="Panel" parent="HBoxContainer/Panel"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 50.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_tlpw0")
+
+[node name="Label" type="Label" parent="HBoxContainer/Panel/Header"]
+modulate = Color(0.11764706, 0.11764706, 0.11764706, 1)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_fonts/font = ExtResource("4_vedi7")
+theme_override_font_sizes/font_size = 40
+text = "save 01"
+horizontal_alignment = 1
+vertical_alignment = 1
+uppercase = true
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 21.0
+offset_top = 54.0
+offset_right = -21.0
+offset_bottom = -157.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="HBoxContainer/Panel/VBoxContainer"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_vedi7")
+text = "total playtime"
+vertical_alignment = 1
+uppercase = true
+
+[node name="Label2" type="Label" parent="HBoxContainer/Panel/VBoxContainer"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_vedi7")
+text = "29h 48m 32s"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="Label3" type="Label" parent="HBoxContainer/Panel/VBoxContainer"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_vedi7")
+text = "last played"
+vertical_alignment = 1
+uppercase = true
+
+[node name="Label4" type="Label" parent="HBoxContainer/Panel/VBoxContainer"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_vedi7")
+text = "11/26/25 07:26P"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="Button" type="Button" parent="HBoxContainer/Panel"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 26.0
+offset_top = -131.0
+offset_right = -26.0
+offset_bottom = -72.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_fonts/font = ExtResource("4_vedi7")
+theme_override_styles/normal = ExtResource("8_tlpw0")
+theme_override_styles/pressed = ExtResource("9_036v4")
+theme_override_styles/hover = ExtResource("9_6ron6")
+text = "CONTINUE"
+
+[node name="Button2" type="Button" parent="HBoxContainer/Panel"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 26.0
+offset_top = -62.0
+offset_right = -26.0
+offset_bottom = -15.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_fonts/font = ExtResource("4_vedi7")
+theme_override_styles/normal = ExtResource("8_tlpw0")
+theme_override_styles/pressed = ExtResource("9_036v4")
+theme_override_styles/hover = ExtResource("9_6ron6")
+text = "DELETE"
 
 [connection signal="pressed" from="MenuButtons/BtnStart" to="." method="_on_new_game_pressed"]
 [connection signal="pressed" from="MenuButtons/BtnContinue" to="." method="_on_continue_pressed"]
