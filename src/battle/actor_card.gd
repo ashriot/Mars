@@ -353,7 +353,7 @@ func is_untargetable() -> bool:
 
 func update_guard_bar(animate: bool = true):
 	guard_value.text = str(current_guard)
-	guard_value.position.x = (current_guard -1) * 39
+	guard_value.position.x = (current_guard -1) * 38
 	guard_label.visible = current_guard > 0
 	var pips = guard_bar.get_children()
 

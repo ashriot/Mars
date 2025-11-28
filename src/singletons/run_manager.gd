@@ -8,7 +8,7 @@ enum RunResult { SUCCESS, RETREAT, DEFEAT }
 var is_run_active: bool = false
 var active_dungeon_map: DungeonMap = null
 var dungeon_profile: DungeonProfile
-var current_dungeon_tier: int = 1
+var current_dungeon_tier: int = 0
 var current_run_seed: int = 0
 var run_bits: int = 0
 var run_xp: int = 0
@@ -59,7 +59,7 @@ func restore_run():
 	current_run_seed = int(run_data.seed)
 	run_bits = int(run_data.get("run_bits", 0))
 	run_xp = int(run_data.get("run_xp", 0))
-	current_dungeon_tier = int(run_data.get("tier", 1))
+	current_dungeon_tier = int(run_data.get("tier", 0))
 	is_run_active = true
 
 	if active_dungeon_map:

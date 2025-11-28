@@ -6,7 +6,7 @@
 script = ExtResource("1_g6q1d")
 equipment_id = "smg"
 item_name = "SMG"
-level = 20
+level = 2
 attack_rank = 4
 psyche_rank = 1
 overload_rank = 2
