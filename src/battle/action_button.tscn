@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bs7vlao78wiht" path="res://src/battle/action_button.gd" id="1_juqvx"]
 [ext_resource type="Texture2D" uid="uid://dldmpu0c4mvsl" path="res://assets/graphics/icons/skills/empty-chessboard.png" id="2_pk42m"]
-[ext_resource type="Texture2D" uid="uid://dni1rovx6ciyq" path="res://assets/graphics/icons/textures/bolt_sm.png" id="3_lyfxd"]
+[ext_resource type="Texture2D" uid="uid://dsut0jqlq77vv" path="res://assets/graphics/icons/textures/diamond_sm.png" id="3_lyfxd"]
 [ext_resource type="Texture2D" uid="uid://ebo48y7vo0tu" path="res://assets/graphics/glyphs/ps/ps_circle_normal.png" id="4_pk42m"]
 [ext_resource type="Texture2D" uid="uid://bd33lt3i3y1f5" path="res://assets/graphics/glyphs/ps/ps_circle_pressed.png" id="5_mvr6q"]
 [ext_resource type="Script" uid="uid://b684sdqsvpn3p" path="res://src/battle/dynamic_glyph.gd" id="6_lyfxd"]
@@ -77,9 +77,9 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -310.0
+offset_left = -305.0
 offset_top = -48.0
-offset_right = -15.0
+offset_right = -10.0
 offset_bottom = -8.0
 grow_horizontal = 0
 grow_vertical = 0
@@ -112,67 +112,53 @@ layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -212.0
-offset_top = 11.0
-offset_right = -7.0
-offset_bottom = 37.0
+offset_left = -198.0
+offset_top = 6.0
+offset_right = -6.0
+offset_bottom = 38.0
 grow_horizontal = 0
 mouse_filter = 2
-theme_override_constants/separation = -5
+theme_override_constants/separation = 0
 alignment = 2
 metadata/_edit_group_ = true
 
 [node name="Bolt" type="TextureRect" parent="FocusPips"]
-custom_minimum_size = Vector2(30, 26)
+custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("3_lyfxd")
 expand_mode = 1
 
 [node name="Bolt2" type="TextureRect" parent="FocusPips"]
-custom_minimum_size = Vector2(30, 26)
+custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("3_lyfxd")
 expand_mode = 1
 
 [node name="Bolt3" type="TextureRect" parent="FocusPips"]
-custom_minimum_size = Vector2(30, 26)
+custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("3_lyfxd")
 expand_mode = 1
 
 [node name="Bolt4" type="TextureRect" parent="FocusPips"]
-custom_minimum_size = Vector2(30, 26)
+custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("3_lyfxd")
 expand_mode = 1
 
 [node name="Bolt5" type="TextureRect" parent="FocusPips"]
-custom_minimum_size = Vector2(30, 26)
+custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("3_lyfxd")
 expand_mode = 1
 
 [node name="Bolt6" type="TextureRect" parent="FocusPips"]
-custom_minimum_size = Vector2(30, 26)
-layout_mode = 2
-mouse_filter = 2
-texture = ExtResource("3_lyfxd")
-expand_mode = 1
-
-[node name="Bolt7" type="TextureRect" parent="FocusPips"]
-custom_minimum_size = Vector2(30, 26)
-layout_mode = 2
-mouse_filter = 2
-texture = ExtResource("3_lyfxd")
-expand_mode = 1
-
-[node name="Bolt8" type="TextureRect" parent="FocusPips"]
-custom_minimum_size = Vector2(30, 26)
+custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("3_lyfxd")

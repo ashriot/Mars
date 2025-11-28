@@ -8,7 +8,7 @@
 [ext_resource type="PackedScene" uid="uid://dfbluo1xmfixj" path="res://src/map/dungeon_end_screen.tscn" id="5_uloe7"]
 
 [sub_resource type="Environment" id="Environment_jr7q5"]
-background_mode = 5
+background_mode = 3
 background_canvas_max_layer = 2
 glow_hdr_threshold = 0.8
 

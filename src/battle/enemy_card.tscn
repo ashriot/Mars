@@ -9,8 +9,9 @@
 [ext_resource type="Texture2D" uid="uid://05lare8hgtys" path="res://assets/graphics/icons/textures/bullet.png" id="4_l4hbp"]
 [ext_resource type="FontVariation" uid="uid://c0je4m574ytir" path="res://data/theme/fonts/suse_mono.tres" id="5_puinb"]
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="6_pdx0h"]
-[ext_resource type="Texture2D" uid="uid://ybrwd70w1dkb" path="res://assets/graphics/icons/textures/shield_sm.png" id="8_puinb"]
+[ext_resource type="Texture2D" uid="uid://bi50x3lsg4gpg" path="res://assets/graphics/icons/textures/shield.png" id="8_g4dne"]
 [ext_resource type="FontVariation" uid="uid://da34kbi1ndel7" path="res://data/theme/fonts/archivo.tres" id="10_g4dne"]
+[ext_resource type="Texture2D" uid="uid://dni1rovx6ciyq" path="res://assets/graphics/icons/textures/bolt_sm.png" id="10_hupy2"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8i7ma"]
 bg_color = Color(0.6, 0.6, 0.6, 0)
@@ -57,9 +58,6 @@ corner_radius_bottom_left = 6
 expand_margin_left = 1.0
 expand_margin_top = 1.0
 expand_margin_bottom = 1.0
-
-[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_1mnyd"]
-load_path = "res://.godot/imported/fire.png-e3c6a18f95f298d30e62adcd9e812c8b.ctex"
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pdx0h"]
 bg_color = Color(1, 0.4745098, 0.16862746, 1)
@@ -263,7 +261,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("8_puinb")
+texture = ExtResource("8_g4dne")
 expand_mode = 1
 
 [node name="Pip2" type="Control" parent="Panel/GuardBar"]
@@ -278,7 +276,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("8_puinb")
+texture = ExtResource("8_g4dne")
 expand_mode = 1
 
 [node name="Pip3" type="Control" parent="Panel/GuardBar"]
@@ -293,7 +291,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("8_puinb")
+texture = ExtResource("8_g4dne")
 expand_mode = 1
 
 [node name="Pip4" type="Control" parent="Panel/GuardBar"]
@@ -308,7 +306,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("8_puinb")
+texture = ExtResource("8_g4dne")
 expand_mode = 1
 
 [node name="Pip5" type="Control" parent="Panel/GuardBar"]
@@ -323,7 +321,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("8_puinb")
+texture = ExtResource("8_g4dne")
 expand_mode = 1
 
 [node name="Pip6" type="Control" parent="Panel/GuardBar"]
@@ -338,7 +336,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("8_puinb")
+texture = ExtResource("8_g4dne")
 expand_mode = 1
 
 [node name="Pip7" type="Control" parent="Panel/GuardBar"]
@@ -353,7 +351,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("8_puinb")
+texture = ExtResource("8_g4dne")
 expand_mode = 1
 
 [node name="Pip8" type="Control" parent="Panel/GuardBar"]
@@ -368,7 +366,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("8_puinb")
+texture = ExtResource("8_g4dne")
 expand_mode = 1
 
 [node name="Pip9" type="Control" parent="Panel/GuardBar"]
@@ -383,7 +381,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("8_puinb")
+texture = ExtResource("8_g4dne")
 expand_mode = 1
 
 [node name="Pip10" type="Control" parent="Panel/GuardBar"]
@@ -398,7 +396,7 @@ offset_left = 2.0
 offset_right = 43.0
 offset_bottom = 42.0
 mouse_filter = 2
-texture = ExtResource("8_puinb")
+texture = ExtResource("8_g4dne")
 expand_mode = 1
 
 [node name="GuardLabel" type="Control" parent="Panel"]
@@ -484,8 +482,8 @@ grow_horizontal = 0
 value = 65.0
 fill_mode = 3
 nine_patch_stretch = true
-texture_under = SubResource("CompressedTexture2D_1mnyd")
-texture_progress = SubResource("CompressedTexture2D_1mnyd")
+texture_under = ExtResource("10_hupy2")
+texture_progress = ExtResource("10_hupy2")
 tint_under = Color(0, 0, 0, 0.5019608)
 tint_progress = Color(0.5882353, 0.32941177, 1, 1)
 

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://npl47tdbveoc"
-path="res://.godot/imported/armor.png-f3084c0d010e0edd2e80dbdb93146031.ctex"
+uid="uid://brn4l7ui1051a"
+path="res://.godot/imported/diamond.png-aa1dc6d1a902f00769b17414c909cc70.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/icons/textures/armor.png"
-dest_files=["res://.godot/imported/armor.png-f3084c0d010e0edd2e80dbdb93146031.ctex"]
+source_file="res://assets/graphics/icons/textures/diamond.png"
+dest_files=["res://.godot/imported/diamond.png-aa1dc6d1a902f00769b17414c909cc70.ctex"]
 
 [params]
 

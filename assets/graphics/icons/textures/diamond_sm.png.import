@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b5v7fgvqaesro"
-path="res://.godot/imported/heartbeat.png-91a04d9e402a49dabe541951fc65584e.ctex"
+uid="uid://dsut0jqlq77vv"
+path="res://.godot/imported/diamond_sm.png-b1bed82faad5fa751498d9f7c1e1ee3b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/icons/textures/heartbeat.png"
-dest_files=["res://.godot/imported/heartbeat.png-91a04d9e402a49dabe541951fc65584e.ctex"]
+source_file="res://assets/graphics/icons/textures/diamond_sm.png"
+dest_files=["res://.godot/imported/diamond_sm.png-b1bed82faad5fa751498d9f7c1e1ee3b.ctex"]
 
 [params]
 
