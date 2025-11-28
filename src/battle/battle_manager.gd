@@ -35,6 +35,7 @@ var focused_button: ActionButton = null
 var actor_list: Array = []
 var TARGET_CT: int = 5000
 var force_enemy_level: int = -1
+var current_encounter: Encounter
 
 func change_state(new_state):
 	print("--- State Change: ", State.keys()[current_state], " > ", State.keys()[new_state], " ---")
@@ -48,11 +49,10 @@ func _ready():
 	action_bar.shift_button_pressed.connect(_on_shift_button_pressed)
 	current_action_panel.hide()
 
-func spawn_encounter(enemy_roster: Array[EnemyData]):
+func spawn_encounter():
 	print("Spawning encounter...")
 	var fight_level = RunManager.current_dungeon_tier
-	if force_enemy_level != -1:
-		fight_level = force_enemy_level
+	if force_enemy_level != -1: fight_level = force_enemy_level
 
 	for hero_data in RunManager.party_roster:
 		var hero_card: HeroCard = hero_card_scene.instantiate()
@@ -70,10 +70,14 @@ func spawn_encounter(enemy_roster: Array[EnemyData]):
 	var spawned_enemies: Array[EnemyCard] = []
 	var name_counts: Dictionary = {}
 
-	for enemy_data in enemy_roster:
+	var enemies_to_spawn = current_encounter.enemies
+	var is_elite = current_encounter.is_elite
+	var is_boss = current_encounter.is_boss
+
+	for enemy_data in enemies_to_spawn:
 		var enemy_card: EnemyCard = enemy_card_scene.instantiate()
 		enemy_area.add_child(enemy_card)
-		enemy_card.setup(enemy_data, fight_level)
+		enemy_card.setup(enemy_data, fight_level, is_elite, is_boss)
 		var base_name = enemy_card.actor_name
 		if not name_counts.has(base_name):
 			name_counts[base_name] = 0
@@ -204,6 +208,8 @@ func find_and_start_next_turn():
 		await winner.on_turn_ended()
 		change_state(State.LOADING)
 		current_actor = null
+		if await _check_if_battle_ended():
+			return
 		_update_all_enemy_intents()
 		await wait(0.5)
 		find_and_start_next_turn()
@@ -344,6 +350,8 @@ func execute_enemy_turn(enemy: EnemyCard):
 		return
 
 	await execute_action(enemy, action, targets)
+	if current_state == State.BATTLE_OVER:
+		return
 	await wait(0.15)
 	enemy.clear_intent()
 	enemy.prepare_turn_base_action()

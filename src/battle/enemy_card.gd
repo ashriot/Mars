@@ -22,17 +22,31 @@ var used_overrides: Array[AIOverride] = []
 var turn_counter: int = 0
 
 
-func setup(data: EnemyData, fight_level: int):
+func setup(data: EnemyData, fight_level: int, is_elite: bool, is_boss: bool):
 	enemy_data = data
 	enemy_data.level = fight_level
-	$Panel/Level.text = "Rk. " + str(data.level)
 	enemy_data.calculate_stats()
+	$Panel/Level.text = "Rk. " + str(data.level)
+	if is_elite:
+		$Panel/Level.text += " ELITE"
+		_apply_elite_scaling(enemy_data.stats)
+		name_label.modulate = Color.ORANGE_RED
+	elif is_boss:
+		$Panel/Level.text += " BOSS"
+		#_apply_boss_scaling(enemy_data.stats)
+		name_label.modulate = Color.MAGENTA
 	setup_base(enemy_data.stats)
 	update_defenses()
 
 	name_label.text = enemy_data.stats.actor_name
 	if enemy_data.portrait:
 		portrait_rect.texture = enemy_data.portrait
+
+func _apply_elite_scaling(stats: ActorStats):
+	stats.max_hp = int(stats.max_hp * 5.0)
+	stats.attack = int(stats.attack * 1.15)
+	stats.psyche = int(stats.psyche * 1.15)
+	stats.speed = int(stats.speed * 1.15)
 
 func prepare_turn_base_action():
 	turn_counter += 1
@@ -298,6 +312,7 @@ func _update_intent_ui():
 			final_text += " -> " + intended_targets[0].actor_name
 
 		intent_text.text = final_text
+	intent_text.tooltip_text = intended_action.get_rich_description(self)
 	flash_intent()
 
 func clear_intent():

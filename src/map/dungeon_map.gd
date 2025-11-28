@@ -408,14 +408,15 @@ func generate_hex_grid(generate_data: bool = true) -> Dictionary:
 			for coords in sorted_coords:
 				var type = node_types[coords]
 				var enc_res: Encounter
-				if type == MapNode.NodeType.COMBAT or type == MapNode.NodeType.ELITE:
-					var is_elite = (type == MapNode.NodeType.ELITE)
-					enc_res = profile.pick_encounter(tier, is_elite)
-
+				if type == MapNode.NodeType.COMBAT:
+					enc_res = profile.pick_encounter(tier, false)
+					encounter_memory[coords] = [enc_res.encounter_id, false, false]
+				elif type == MapNode.NodeType.ELITE:
+					enc_res = profile.pick_encounter(tier, true)
+					encounter_memory[coords] = [enc_res.encounter_id, true, false]
 				elif type == MapNode.NodeType.BOSS:
 					enc_res = profile.boss_encounter
-
-				if enc_res: encounter_memory[coords] = enc_res.encounter_id
+					encounter_memory[coords] = [enc_res.encounter_id, false, true]
 		else:
 			push_error("DungeonMap: No DungeonProfile found in RunManager! Encounters will be empty.")
 

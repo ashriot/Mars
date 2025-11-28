@@ -1,17 +1,23 @@
-[gd_resource type="Resource" script_class="RoleDefinition" load_steps=6 format=3 uid="uid://c2lsgpuh7cdfw"]
+[gd_resource type="Resource" script_class="RoleDefinition" load_steps=10 format=3 uid="uid://c2lsgpuh7cdfw"]
 
-[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_yuf4c"]
-[ext_resource type="Texture2D" uid="uid://dtwo50io0wj1u" path="res://assets/graphics/icons/roles/caduceus.png" id="2_wpqi1"]
-[ext_resource type="Resource" uid="uid://dbkrqjitp8c02" path="res://data/heroes/sands/actions/apply_painkillers.tres" id="3_mlqur"]
-[ext_resource type="Script" uid="uid://sy50n7nerbow" path="res://data/scripts/data/role_definition.gd" id="4_euyrb"]
-[ext_resource type="Resource" uid="uid://dax8kpkfwgv5l" path="res://data/heroes/sands/actions/triage.tres" id="5_lq36n"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_nkik1"]
+[ext_resource type="Texture2D" uid="uid://dtwo50io0wj1u" path="res://assets/graphics/icons/roles/caduceus.png" id="2_1cpdq"]
+[ext_resource type="Resource" uid="uid://bli3y5hj5i577" path="res://data/heroes/sands/actions/immunize.tres" id="2_633w3"]
+[ext_resource type="Resource" uid="uid://dbkrqjitp8c02" path="res://data/heroes/sands/actions/apply_painkillers.tres" id="3_c3eso"]
+[ext_resource type="Resource" uid="uid://epar5pumnvm7" path="res://data/heroes/sands/actions/booster_shots.tres" id="3_ykrgj"]
+[ext_resource type="Resource" uid="uid://dc2781k2lc1ma" path="res://data/heroes/sands/actions/auto_shields.tres" id="4_t4pui"]
+[ext_resource type="Resource" uid="uid://cp3da2e23258p" path="res://data/heroes/sands/actions/bastion.tres" id="5_c1yto"]
+[ext_resource type="Resource" uid="uid://dax8kpkfwgv5l" path="res://data/heroes/sands/actions/triage.tres" id="5_vg3au"]
+[ext_resource type="Script" uid="uid://sy50n7nerbow" path="res://data/scripts/data/role_definition.gd" id="9_w7vm7"]
 
 [resource]
-script = ExtResource("4_euyrb")
+script = ExtResource("9_w7vm7")
 role_id = "med"
 role_name = "Medic"
 description = "A party healer."
-icon = ExtResource("2_wpqi1")
-passive = ExtResource("3_mlqur")
-shift_action = ExtResource("5_lq36n")
+icon = ExtResource("2_1cpdq")
+color = Color(1, 0.29000002, 0.6094999, 1)
+shift_action = ExtResource("5_vg3au")
+passive = ExtResource("3_c3eso")
+actions = Array[ExtResource("1_nkik1")]([ExtResource("2_633w3"), ExtResource("3_ykrgj"), ExtResource("4_t4pui"), ExtResource("5_c1yto")])
 metadata/_custom_type_script = "uid://sy50n7nerbow"

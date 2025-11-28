@@ -21,7 +21,6 @@ metadata/_custom_type_script = "uid://dggojfw8tmpnk"
 
 [sub_resource type="Resource" id="Resource_habd1"]
 script = ExtResource("6_b537w")
-ct_boost_percent = 0.25
 target_type = 4
 metadata/_custom_type_script = "uid://dgkss5d1axeag"
 

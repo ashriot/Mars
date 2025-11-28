@@ -527,6 +527,7 @@ theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.49019608)
 theme_override_constants/outline_size = 12
 theme_override_fonts/normal_font = ExtResource("10_g4dne")
 theme_override_font_sizes/normal_font_size = 28
+bbcode_enabled = true
 text = "20x5  ->  Asher"
 scroll_active = false
 horizontal_alignment = 1

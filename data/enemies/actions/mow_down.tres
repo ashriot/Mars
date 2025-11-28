@@ -13,6 +13,7 @@ metadata/_custom_type_script = "uid://d0eibi4b735ay"
 [resource]
 script = ExtResource("5_gw4o6")
 action_name = "Mow Down"
+description = "Deals {dmg1} {kin} to all heroes."
 target_type = 1
 effects = Array[ExtResource("1_wkk0m")]([SubResource("Resource_rkxrt")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

@@ -12,5 +12,6 @@ metadata/_custom_type_script = "uid://cu12q7dfj3hfe"
 [resource]
 script = ExtResource("3_k8tvv")
 action_name = "Fortify"
+description = "Grants 3 Guard to the enemy with the least Guard."
 target_type = 10
 effects = Array[ExtResource("1_6vkkf")]([SubResource("Resource_4oof4")])

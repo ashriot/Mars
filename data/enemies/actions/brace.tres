@@ -18,5 +18,6 @@ metadata/_custom_type_script = "uid://cu12q7dfj3hfe"
 [resource]
 script = ExtResource("4_nc27u")
 action_name = "Brace"
+description = "Boosts its next turn by 25% and gains 3 Guard."
 target_type = 4
 effects = Array[ExtResource("1_4mkeg")]([SubResource("Resource_k8tvv"), SubResource("Resource_4oof4")])

@@ -9,7 +9,7 @@
 
 [sub_resource type="Resource" id="Resource_dp3ce"]
 script = ExtResource("3_l7wqc")
-potency = 0.5
+potency = 0.35
 hit_count = 2
 metadata/_custom_type_script = "uid://d0eibi4b735ay"
 

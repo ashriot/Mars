@@ -35,9 +35,14 @@ func _on_map_interaction_requested(node: MapNode):
 
 		MapNode.NodeType.COMBAT, MapNode.NodeType.ELITE, MapNode.NodeType.BOSS:
 
-			var enc_id = dungeon_map.encounter_memory.get(node.grid_coords, "")
+			var enc = dungeon_map.encounter_memory.get(node.grid_coords, "")
+			var enc_id = enc[0]
+			var is_elite = enc[1]
+			var is_boss = enc[2]
 
-			var encounter_res = EncounterDatabase.get_encounter_by_id(enc_id)
+			var encounter_res = EncounterDatabase.get_encounter_by_id(enc_id).duplicate()
+			encounter_res.is_elite = is_elite
+			encounter_res.is_boss = is_boss
 
 			if encounter_res:
 				_start_encounter(encounter_res)
@@ -82,7 +87,7 @@ func _start_encounter(encounter: Encounter):
 
 	battle_scene = battle_scene_packed.instantiate()
 	overlay_layer.add_child(battle_scene)
-	battle_scene.setup_battle(encounter.enemies)
+	battle_scene.setup_battle(encounter)
 	battle_scene.battle_ended.connect(end_encounter)
 
 func end_encounter(won: bool):

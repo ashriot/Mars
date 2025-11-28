@@ -6,12 +6,14 @@
 [ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://data/scripts/action_effects/pre_hit_trigger.gd" id="3_760br"]
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="3_khwkd"]
 
-[sub_resource type="Resource" id="Resource_760br"]
+[sub_resource type="Resource" id="Resource_4iqw3"]
 script = ExtResource("2_b7rhf")
 potency = 2.0
 metadata/_custom_type_script = "uid://d0eibi4b735ay"
 
 [resource]
 script = ExtResource("3_khwkd")
-action_name = "Gunshot"
-effects = Array[ExtResource("1_d2xm5")]([SubResource("Resource_760br")])
+action_name = "Potshot"
+description = "Deals {dmg1} {kin}."
+effects = Array[ExtResource("1_d2xm5")]([SubResource("Resource_4iqw3")])
+metadata/_custom_type_script = "uid://dm08rhkg3bai3"

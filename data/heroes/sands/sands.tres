@@ -1,38 +1,18 @@
-[gd_resource type="Resource" script_class="HeroData" load_steps=9 format=3 uid="uid://bycnj3e0g7w6x"]
+[gd_resource type="Resource" script_class="HeroData" load_steps=8 format=3 uid="uid://bycnj3e0g7w6x"]
 
-[ext_resource type="Script" uid="uid://i4rsbsrmba0c" path="res://data/scripts/data/role_progression.gd" id="1_hn6ea"]
+[ext_resource type="Resource" uid="uid://g3lhmj58116w" path="res://data/equipment/armor/kevlar_vest.tres" id="1_70kmf"]
 [ext_resource type="Script" uid="uid://dc5sk0b0jubvj" path="res://data/scripts/data/hero_data.gd" id="1_ng8ip"]
-[ext_resource type="Script" uid="uid://djmsh5w0dbytx" path="res://data/scripts/data/equipment.gd" id="1_y8jbk"]
-[ext_resource type="Script" uid="uid://d3mhjutrnvwsp" path="res://data/scripts/data/role_data.gd" id="3_kqimu"]
-[ext_resource type="Resource" uid="uid://cd2xsqr4p5xyg" path="res://data/heroes/sands/roles/vanguard.tres" id="4_ni5va"]
-[ext_resource type="Resource" uid="uid://b6i4mvgiq1dkc" path="res://data/heroes/sands/roles/medic.tres" id="5_g537u"]
-
-[sub_resource type="Resource" id="Resource_r0kvp"]
-script = ExtResource("1_y8jbk")
-equipment_id = "kevlar_vest"
-item_name = "Kevlar Vest"
-hp_rank = 4
-guard_rank = 3
-speed_rank = 2
-kinetic_defense_rank = 4
-energy_defense_rank = 3
-metadata/_custom_type_script = "uid://djmsh5w0dbytx"
-
-[sub_resource type="Resource" id="Resource_70kmf"]
-script = ExtResource("1_y8jbk")
-equipment_id = "shotgun"
-item_name = "Shotgun"
-attack_rank = 4
-psyche_rank = 3
-overload_rank = 1
-speed_rank = 3
-metadata/_custom_type_script = "uid://djmsh5w0dbytx"
+[ext_resource type="Script" uid="uid://sy50n7nerbow" path="res://data/scripts/data/role_definition.gd" id="2_e16q0"]
+[ext_resource type="Resource" uid="uid://bhqprk74bvr4" path="res://data/heroes/sands/roles/van.tres" id="3_1hmov"]
+[ext_resource type="Resource" uid="uid://c2lsgpuh7cdfw" path="res://data/heroes/sands/roles/med.tres" id="4_55x01"]
+[ext_resource type="Resource" uid="uid://04db8hw78o7b" path="res://data/heroes/sands/roles/stg.tres" id="5_jk5ex"]
+[ext_resource type="Resource" uid="uid://bs61k2q2i8hlv" path="res://data/equipment/weapons/shotgun.tres" id="7_rv7in"]
 
 [resource]
 script = ExtResource("1_ng8ip")
 hero_id = "sands"
 hero_name = "Sands"
-weapon = SubResource("Resource_70kmf")
-armor = SubResource("Resource_r0kvp")
-unlocked_roles = Array[ExtResource("3_kqimu")]([ExtResource("4_ni5va"), ExtResource("5_g537u"), null])
+weapon = ExtResource("7_rv7in")
+armor = ExtResource("1_70kmf")
+role_definitions = Array[ExtResource("2_e16q0")]([ExtResource("3_1hmov"), ExtResource("4_55x01"), ExtResource("5_jk5ex")])
 metadata/_custom_type_script = "uid://dc5sk0b0jubvj"

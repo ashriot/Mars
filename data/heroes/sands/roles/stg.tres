@@ -1,23 +1,23 @@
 [gd_resource type="Resource" script_class="RoleDefinition" load_steps=10 format=3 uid="uid://04db8hw78o7b"]
 
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_t5fm0"]
-[ext_resource type="Resource" uid="uid://vk5px1abwyri" path="res://data/heroes/sands/actions/draw_fire.tres" id="2_0nyo5"]
-[ext_resource type="Resource" uid="uid://bikya1n52nsow" path="res://data/heroes/sands/actions/overwatch.tres" id="3_xrfyu"]
-[ext_resource type="Resource" uid="uid://g6ncue0rx5ej" path="res://data/heroes/sands/actions/focus_fire.tres" id="4_3sym7"]
-[ext_resource type="Resource" uid="uid://cp7b4dfv1j0ad" path="res://data/heroes/sands/actions/phalanx.tres" id="5_1nfpt"]
-[ext_resource type="Texture2D" uid="uid://brxh73qv0bq0b" path="res://assets/graphics/icons/roles/winged-sword.png" id="6_5wn83"]
-[ext_resource type="Resource" uid="uid://dv4r7yc61o8e6" path="res://data/heroes/sands/actions/return_fire.tres" id="7_1lqk5"]
+[ext_resource type="Resource" uid="uid://b8pnoaxst6nos" path="res://data/heroes/sands/actions/direct.tres" id="2_t5fm0"]
+[ext_resource type="Resource" uid="uid://dvu18ot3ev1rk" path="res://data/heroes/sands/actions/gambit.tres" id="3_0nyo5"]
+[ext_resource type="Resource" uid="uid://bix1u2ymtt11k" path="res://data/heroes/sands/actions/advantage.tres" id="4_xrfyu"]
+[ext_resource type="Resource" uid="uid://bxthusds0tx8p" path="res://data/heroes/sands/actions/checkmate.tres" id="5_3sym7"]
+[ext_resource type="Texture2D" uid="uid://1pey5spsvbi" path="res://assets/graphics/icons/roles/crenulated-shield.png" id="6_1nfpt"]
+[ext_resource type="Resource" uid="uid://bkmsxk8n5s0gs" path="res://data/heroes/sands/actions/fianchetto.tres" id="7_5wn83"]
 [ext_resource type="Script" uid="uid://sy50n7nerbow" path="res://data/scripts/data/role_definition.gd" id="8_dj674"]
-[ext_resource type="Resource" uid="uid://bdv0soxiwb8dl" path="res://data/heroes/sands/actions/opening_salvo.tres" id="9_6xyln"]
+[ext_resource type="Resource" uid="uid://bskaup86urfso" path="res://data/heroes/sands/actions/opening_move.tres" id="9_1lqk5"]
 
 [resource]
 script = ExtResource("8_dj674")
-role_id = "van"
-role_name = "Vanguard"
-description = "A counterattacking bruiser."
-icon = ExtResource("6_5wn83")
-color = Color(1, 0.36078432, 0.2901961, 1)
-shift_action = ExtResource("9_6xyln")
-passive = ExtResource("7_1lqk5")
-actions = Array[ExtResource("1_t5fm0")]([ExtResource("2_0nyo5"), ExtResource("3_xrfyu"), ExtResource("4_3sym7"), ExtResource("5_1nfpt")])
+role_id = "stg"
+role_name = "Strategist"
+description = "A master commander who can greatly assist his allies."
+icon = ExtResource("6_1nfpt")
+color = Color(1, 0.5266667, 0.29000002, 1)
+shift_action = ExtResource("9_1lqk5")
+passive = ExtResource("7_5wn83")
+actions = Array[ExtResource("1_t5fm0")]([ExtResource("2_t5fm0"), ExtResource("3_0nyo5"), ExtResource("4_xrfyu"), ExtResource("5_3sym7")])
 metadata/_custom_type_script = "uid://sy50n7nerbow"

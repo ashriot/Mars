@@ -14,5 +14,6 @@ metadata/_custom_type_script = "uid://d0eibi4b735ay"
 
 [resource]
 script = ExtResource("3_j6tcq")
-action_name = "Gunshot"
+action_name = "Double Shot"
+description = "Deals {dmg1} {kin} twice."
 effects = Array[ExtResource("1_brfa0")]([SubResource("Resource_760br")])

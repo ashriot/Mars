@@ -39,19 +39,19 @@ var is_attack: bool :
 				return true
 		return false
 
-func get_rich_description(hero: ActorCard) -> String:
+func get_rich_description(user: ActorCard) -> String:
 	var final_desc = description
 
-	final_desc = final_desc.replace("{atk}", str(hero.get_power(PowerType.ATTACK)))
-	final_desc = final_desc.replace("{psy}", str(hero.get_power(PowerType.PSYCHE)))
+	final_desc = final_desc.replace("{atk}", str(user.get_power(PowerType.ATTACK)))
+	final_desc = final_desc.replace("{psy}", str(user.get_power(PowerType.PSYCHE)))
 
 	var focus_icon = _get_bbcode_icon("focus")
 	var kinetic_dmg = _get_bbcode_icon("kinetic")
 	var energy_dmg = _get_bbcode_icon("energy")
 	var pierce_dmg = _get_bbcode_icon("pierce")
 
-	final_desc = final_desc.replace("{atk}", str(hero.current_stats.attack))
-	final_desc = final_desc.replace("{psy}", str(hero.current_stats.psyche))
+	final_desc = final_desc.replace("{atk}", str(user.current_stats.attack))
+	final_desc = final_desc.replace("{psy}", str(user.current_stats.psyche))
 	final_desc = final_desc.replace("{foc}", focus_icon)
 	final_desc = final_desc.replace("{focus_cost}", str(focus_cost))
 	final_desc = final_desc.replace("{kin}", kinetic_dmg)
@@ -71,7 +71,7 @@ func get_rich_description(hero: ActorCard) -> String:
 			# Check if the description *wants* this value
 			if final_desc.find(damage_tag) != -1:
 				# It does! We'll ask the effect to calculate its damage.
-				var damage_string = _get_damage_string(effect, hero)
+				var damage_string = _get_damage_string(effect, user)
 				final_desc = final_desc.replace(damage_tag, damage_string)
 
 		# --- B. Check if it's a Grant Guard Effect ---
@@ -89,7 +89,7 @@ func get_rich_description(hero: ActorCard) -> String:
 			if final_desc.find(heal_tag) != -1:
 				# (This is a simplified version, it doesn't
 				# account for "missing HP" scaling in the preview)
-				var base_power = hero.get_power(effect.power_type)
+				var base_power = user.get_power(effect.power_type)
 				var heal_string = str(roundi(base_power * effect.potency))
 				final_desc = final_desc.replace(heal_tag, heal_string)
 
