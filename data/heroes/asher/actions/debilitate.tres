@@ -26,6 +26,6 @@ metadata/_custom_type_script = "uid://dggojfw8tmpnk"
 script = ExtResource("2_yvwpi")
 action_name = "Debilitate"
 icon = ExtResource("2_q3ibm")
-description = "Applies Debuff: This enemy's next attack deals 35% less damage."
+description = "Applies Debuff:[p][i]This enemy's next attack deals 35% less damage."
 effects = Array[ExtResource("1_8fe1i")]([SubResource("Resource_lmfyl")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

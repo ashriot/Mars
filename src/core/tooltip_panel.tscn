@@ -1,0 +1,34 @@
+[gd_scene load_steps=3 format=3 uid="uid://de0gvllipnn6g"]
+
+[ext_resource type="Script" uid="uid://hyed273hfjm8" path="res://src/core/tooltip_panel.gd" id="1_527p7"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_527p7"]
+content_margin_left = 20.0
+content_margin_top = 10.0
+content_margin_right = 20.0
+content_margin_bottom = 10.0
+bg_color = Color(0.18431373, 0.18431373, 0.18431373, 0.9607843)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[node name="TooltipPanel" type="PanelContainer"]
+offset_right = 846.0
+offset_bottom = 110.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_527p7")
+script = ExtResource("1_527p7")
+
+[node name="Label" type="RichTextLabel" parent="."]
+custom_minimum_size = Vector2(600, 0)
+layout_mode = 2
+mouse_filter = 2
+bbcode_enabled = true
+text = "Marks the target, apply Debuff:[p][i]Heroes gain +25% AIM against this target.[p]Lasts until Asher shifts."
+fit_content = true
+scroll_active = false

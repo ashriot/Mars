@@ -1,7 +1,6 @@
-[gd_resource type="Resource" script_class="EnemyData" load_steps=7 format=3 uid="uid://dgxpex6ql7scx"]
+[gd_resource type="Resource" script_class="EnemyData" load_steps=6 format=3 uid="uid://dgxpex6ql7scx"]
 
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_8qyty"]
-[ext_resource type="Resource" uid="uid://d0m01fmh2ig2s" path="res://data/enemies/actions/gunshot.tres" id="2_a1ki8"]
 [ext_resource type="Resource" uid="uid://cbruwytkh444f" path="res://data/enemies/actions/potshot.tres" id="3_kt2l0"]
 [ext_resource type="Resource" uid="uid://43gi1cxcpjxo" path="res://data/enemies/actions/stun_baton.tres" id="4_0ggm0"]
 [ext_resource type="Script" uid="uid://bkbx3bonlo8gv" path="res://data/scripts/enemies/ai_override.gd" id="6_sd7qb"]
@@ -20,5 +19,5 @@ speed_rank = 2
 aim_rank = 1
 kinetic_defense_rank = 4
 energy_defense_rank = 3
-action_deck = Array[ExtResource("1_8qyty")]([ExtResource("3_kt2l0"), ExtResource("2_a1ki8"), ExtResource("4_0ggm0")])
+action_deck = Array[ExtResource("1_8qyty")]([ExtResource("3_kt2l0"), ExtResource("4_0ggm0")])
 metadata/_custom_type_script = "uid://b3t5esgv1d2ku"

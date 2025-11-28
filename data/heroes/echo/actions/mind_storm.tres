@@ -9,7 +9,7 @@
 
 [sub_resource type="Resource" id="Resource_wbfou"]
 script = ExtResource("4_pd2qv")
-potency = 5.0
+potency = 4.0
 damage_type = 1
 potency_scalar_per_focus = 0.2
 metadata/_custom_type_script = "uid://d0eibi4b735ay"
@@ -18,6 +18,6 @@ metadata/_custom_type_script = "uid://d0eibi4b735ay"
 script = ExtResource("6_fodcv")
 action_name = "Mind Storm"
 icon = ExtResource("5_6lf2u")
-description = "Deals {dmg1} {nrg} (increased by 20% per point of {foc} Echo has.)"
+description = "Deals {atk*4.0} {nrg} (increased by 20% per point of {foc} Echo has.)"
 focus_cost = 5
 effects = Array[ExtResource("1_6lf2u")]([SubResource("Resource_wbfou")])

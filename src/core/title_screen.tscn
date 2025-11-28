@@ -1,6 +1,6 @@
 [gd_scene load_steps=12 format=3 uid="uid://bj37bql2rx1om"]
 
-[ext_resource type="Script" uid="uid://qkc7usulviqt" path="res://src/title_screen.gd" id="1_whxi8"]
+[ext_resource type="Script" uid="uid://qkc7usulviqt" path="res://src/core/title_screen.gd" id="1_whxi8"]
 [ext_resource type="Texture2D" uid="uid://xtvo634hhmpf" path="res://assets/graphics/backgrounds/mars.png" id="2_616sk"]
 [ext_resource type="FontVariation" uid="uid://busejf1art6n0" path="res://data/theme/fonts/nebula_hollow.tres" id="2_vayli"]
 [ext_resource type="FontVariation" uid="uid://d0rv8u3y8y67d" path="res://data/theme/fonts/nebula.tres" id="3_616sk"]

@@ -29,7 +29,7 @@ metadata/_custom_type_script = "uid://d0eibi4b735ay"
 [resource]
 script = ExtResource("5_h4aa8")
 action_name = "Charged Shot"
-description = "Deals {dmg1} {nrg}. If target is BREACHED, gain 2 {foc}."
+description = "Deals {atk*1.25} {nrg} damage.[p]If target is BREACHED, gain {foc}{foc}."
 is_shift_action = true
 effects = Array[ExtResource("1_onicn")]([SubResource("Resource_dq0ry")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

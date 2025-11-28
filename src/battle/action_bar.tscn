@@ -1,9 +1,10 @@
-[gd_scene load_steps=11 format=3 uid="uid://260uyw1v5su0"]
+[gd_scene load_steps=12 format=3 uid="uid://260uyw1v5su0"]
 
 [ext_resource type="Script" uid="uid://oximix62bbtr" path="res://src/battle/action_bar.gd" id="1_f8q7d"]
 [ext_resource type="PackedScene" uid="uid://d0wglriavtij" path="res://src/battle/action_button.tscn" id="2_664ah"]
 [ext_resource type="StyleBox" uid="uid://3o7lhriwwhfs" path="res://data/theme/styleboxes/shift_panel.tres" id="3_0s03y"]
 [ext_resource type="Texture2D" uid="uid://dldmpu0c4mvsl" path="res://assets/graphics/icons/skills/empty-chessboard.png" id="4_g6dho"]
+[ext_resource type="Script" uid="uid://m4vn3jl6sqd6" path="res://src/core/rich_tooltip.gd" id="4_txve6"]
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="5_d4ff0"]
 [ext_resource type="Texture2D" uid="uid://ebo48y7vo0tu" path="res://assets/graphics/glyphs/ps/ps_circle_normal.png" id="6_d4ff0"]
 [ext_resource type="Texture2D" uid="uid://bd33lt3i3y1f5" path="res://assets/graphics/glyphs/ps/ps_circle_pressed.png" id="7_txve6"]
@@ -115,6 +116,10 @@ offset_bottom = 3.0
 grow_vertical = 2
 theme_override_styles/panel = ExtResource("3_0s03y")
 
+[node name="RichTooltip" type="Node" parent="Actions/Passive"]
+script = ExtResource("4_txve6")
+metadata/_custom_type_script = "uid://m4vn3jl6sqd6"
+
 [node name="Mask" type="Panel" parent="Actions/Passive"]
 clip_children = 1
 custom_minimum_size = Vector2(86, 86)
@@ -200,6 +205,10 @@ grow_horizontal = 0
 grow_vertical = 2
 theme_override_styles/panel = ExtResource("3_0s03y")
 
+[node name="RichTooltip" type="Node" parent="Actions/ShiftAction"]
+script = ExtResource("4_txve6")
+metadata/_custom_type_script = "uid://m4vn3jl6sqd6"
+
 [node name="Mask" type="Panel" parent="Actions/ShiftAction"]
 clip_children = 1
 custom_minimum_size = Vector2(86, 86)
@@ -280,6 +289,10 @@ offset_top = -86.0
 offset_right = 320.0
 grow_vertical = 0
 
+[node name="RichTooltip" type="Node" parent="LeftShift"]
+script = ExtResource("4_txve6")
+metadata/_custom_type_script = "uid://m4vn3jl6sqd6"
+
 [node name="Button" type="Button" parent="LeftShift"]
 layout_mode = 1
 anchors_preset = 15
@@ -287,6 +300,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 1
 theme_override_font_sizes/font_size = 30
 
 [node name="Mask" type="Panel" parent="LeftShift"]
@@ -317,6 +331,7 @@ grow_vertical = 2
 mouse_filter = 2
 texture = ExtResource("4_g6dho")
 expand_mode = 1
+flip_h = true
 
 [node name="Title" type="Label" parent="LeftShift"]
 layout_mode = 1
@@ -390,6 +405,10 @@ offset_top = -86.0
 grow_horizontal = 0
 grow_vertical = 0
 
+[node name="RichTooltip" type="Node" parent="RightShift"]
+script = ExtResource("4_txve6")
+metadata/_custom_type_script = "uid://m4vn3jl6sqd6"
+
 [node name="Button" type="Button" parent="RightShift"]
 layout_mode = 1
 anchors_preset = 15
@@ -397,6 +416,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 1
 theme_override_font_sizes/font_size = 30
 
 [node name="Mask" type="Panel" parent="RightShift"]

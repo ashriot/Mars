@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3 uid="uid://cmk1udldhqk6p"]
 
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="1_l8lx2"]
-[ext_resource type="Script" uid="uid://bxobmppft3qbf" path="res://src/loading_screen.gd" id="1_o6473"]
+[ext_resource type="Script" uid="uid://bxobmppft3qbf" path="res://src/core/loading_screen.gd" id="1_o6473"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_l8lx2"]
 content_margin_left = 2.0

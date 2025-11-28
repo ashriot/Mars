@@ -8,6 +8,6 @@
 script = ExtResource("1_qikp5")
 condition_name = "Marked"
 icon = ExtResource("1_n5s43")
-description = "Enemy is Marked: Heroes' attacks gain +25% Crit Chance. Lasts until Asher Shifts."
+description = "[i]Heroes gain +25% AIM against this target.[p]Lasts until Asher shifts."
 condition_type = 1
 metadata/_custom_type_script = "uid://df30dm288ne1d"

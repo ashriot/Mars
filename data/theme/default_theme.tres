@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=9 format=3 uid="uid://ccvulqeqoxd07"]
+[gd_resource type="Theme" load_steps=10 format=3 uid="uid://ccvulqeqoxd07"]
 
 [ext_resource type="StyleBox" uid="uid://gk8mwp5dy06c" path="res://data/theme/styleboxes/button_normal.tres" id="1_1rtxc"]
 [ext_resource type="StyleBox" uid="uid://b8kulx87fc6hp" path="res://data/theme/styleboxes/button_disabled.tres" id="1_3vshq"]
@@ -6,6 +6,7 @@
 [ext_resource type="StyleBox" uid="uid://uc8el2l1ne33" path="res://data/theme/styleboxes/button_pressed.tres" id="1_vnit1"]
 [ext_resource type="StyleBox" uid="uid://c4ceted4k7fof" path="res://data/theme/styleboxes/panel.tres" id="5_dfs0r"]
 [ext_resource type="StyleBox" uid="uid://c8i85334pnaym" path="res://data/theme/styleboxes/tooltip_panel.tres" id="6_rukqk"]
+[ext_resource type="FontVariation" uid="uid://bk8iy3u13b88f" path="res://data/theme/fonts/archivo_italic.tres" id="6_xegx1"]
 [ext_resource type="FontVariation" uid="uid://da34kbi1ndel7" path="res://data/theme/fonts/archivo.tres" id="7_rukqk"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_smiq6"]
@@ -22,6 +23,13 @@ Button/styles/pressed = ExtResource("1_vnit1")
 Label/font_sizes/font_size = 32
 Panel/styles/panel = ExtResource("5_dfs0r")
 PanelContainer/styles/panel = ExtResource("5_dfs0r")
+RichTextLabel/font_sizes/bold_font_size = 24
+RichTextLabel/font_sizes/bold_italics_font_size = 24
+RichTextLabel/font_sizes/italics_font_size = 24
+RichTextLabel/font_sizes/mono_font_size = 24
+RichTextLabel/font_sizes/normal_font_size = 24
+RichTextLabel/fonts/italics_font = ExtResource("6_xegx1")
+RichTextLabel/fonts/normal_font = ExtResource("7_rukqk")
 TooltipLabel/colors/font_color = Color(1, 1, 1, 1)
 TooltipLabel/font_sizes/font_size = 24
 TooltipPanel/colors/title_color = Color(1, 1, 1, 1)

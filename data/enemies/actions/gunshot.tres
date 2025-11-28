@@ -14,6 +14,6 @@ metadata/_custom_type_script = "uid://d0eibi4b735ay"
 [resource]
 script = ExtResource("3_khwkd")
 action_name = "Potshot"
-description = "Deals {dmg1} {kin}."
+description = "Deals {atk*2.0} {kin} damage."
 effects = Array[ExtResource("1_d2xm5")]([SubResource("Resource_4iqw3")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

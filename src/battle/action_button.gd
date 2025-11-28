@@ -3,6 +3,7 @@ class_name ActionButton
 
 signal pressed(action_button: ActionButton)
 
+@onready var tooltip: RichTooltip = $RichTooltip
 @onready var label = $Title
 @onready var icon: TextureRect = $Mask/Icon
 @onready var button : Button = $Button
@@ -24,10 +25,10 @@ var disabled:
 	get: return button.disabled
 
 
-func setup(_action: Action, cur_focus: int, scaled_focus: int, color: Color):
+func setup(_action: Action, actor: HeroCard, scaled_focus: int, color: Color):
 	action = _action
-	button.tooltip_text = action.description
-	user_focus = cur_focus
+	tooltip.bbcode_text = action.get_rich_description(actor)
+	user_focus = actor.current_focus
 	focus_cost = scaled_focus
 	label.text = action.action_name
 	icon.texture = action.icon

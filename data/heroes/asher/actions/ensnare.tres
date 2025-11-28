@@ -35,6 +35,6 @@ metadata/_custom_type_script = "uid://dggojfw8tmpnk"
 script = ExtResource("2_mlk5y")
 action_name = "Ensnare"
 icon = ExtResource("5_vhf85")
-description = "Deals {dmg1} {nrg} damage and applies Debuff: This enemy is Slowed by 25% until it gains Guard."
+description = "Deals {psy*1.0} {nrg} damage and applies[p][i]Debuff: This enemy is Slowed by 25% until it gains {grd}."
 effects = Array[ExtResource("1_2wo0n")]([SubResource("Resource_jr0tf"), SubResource("Resource_wubkr")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

@@ -9,7 +9,7 @@
 
 [sub_resource type="Resource" id="Resource_4iqw3"]
 script = ExtResource("4_vcjrm")
-potency = 0.5
+potency = 0.75
 metadata/_custom_type_script = "uid://d0eibi4b735ay"
 
 [sub_resource type="Resource" id="Resource_vb63g"]
@@ -20,6 +20,6 @@ metadata/_custom_type_script = "uid://dgkss5d1axeag"
 [resource]
 script = ExtResource("5_bttx5")
 action_name = "Stun Baton"
-description = "Deals {dmg1} {kin} and delays your next turn by 50%."
+description = "Deals {atk*0.75} {kin} damage and delays your next turn by 50%."
 effects = Array[ExtResource("1_v3cg1")]([SubResource("Resource_4iqw3"), SubResource("Resource_vb63g")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

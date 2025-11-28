@@ -1,8 +1,9 @@
-[gd_scene load_steps=6 format=3 uid="uid://be3t7advgy14o"]
+[gd_scene load_steps=7 format=3 uid="uid://be3t7advgy14o"]
 
 [ext_resource type="Script" uid="uid://cj5wd4g4agbsm" path="res://src/battle/condition_ui.gd" id="1_hohed"]
 [ext_resource type="Texture2D" uid="uid://8p1vkux4ntf7" path="res://assets/graphics/icons/textures/play-black-triangle-interface-symbol-for-multimedia.png" id="2_e26l3"]
 [ext_resource type="StyleBox" uid="uid://ceuuychq76vmf" path="res://data/theme/styleboxes/condition_ui_panel.tres" id="3_e26l3"]
+[ext_resource type="Script" uid="uid://m4vn3jl6sqd6" path="res://src/core/rich_tooltip.gd" id="5_673s1"]
 [ext_resource type="Texture2D" uid="uid://dldmpu0c4mvsl" path="res://assets/graphics/icons/skills/empty-chessboard.png" id="5_t7fls"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_e26l3"]
@@ -31,6 +32,7 @@ offset_top = -3.0
 offset_right = 22.0
 offset_bottom = 19.0
 grow_horizontal = 2
+mouse_filter = 1
 
 [node name="Point" type="TextureRect" parent="Arrow"]
 layout_mode = 1
@@ -57,6 +59,7 @@ offset_top = -50.0
 offset_right = 25.0
 grow_horizontal = 2
 grow_vertical = 0
+mouse_filter = 1
 theme_override_styles/panel = ExtResource("3_e26l3")
 
 [node name="Mask" type="Panel" parent="Panel"]
@@ -88,3 +91,7 @@ grow_vertical = 2
 mouse_filter = 2
 texture = ExtResource("5_t7fls")
 expand_mode = 1
+
+[node name="RichTooltip" type="Node" parent="."]
+script = ExtResource("5_673s1")
+metadata/_custom_type_script = "uid://m4vn3jl6sqd6"

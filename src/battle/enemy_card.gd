@@ -6,6 +6,7 @@ signal enemy_clicked(enemy_card)
 
 # --- UNIQUE UI Node References ---
 @onready var intent_text: RichTextLabel = $Panel/IntentText
+@onready var intent_tooltip: RichTooltip = $Panel/IntentText/RichTooltip
 @onready var kin_def_gauge: TextureProgressBar = $Panel/KinDef
 @onready var kin_def_value: Label = $Panel/KinDef/Value
 @onready var nrg_def_gauge: TextureProgressBar = $Panel/NrgDef
@@ -39,6 +40,7 @@ func setup(data: EnemyData, fight_level: int, is_elite: bool, is_boss: bool):
 	update_defenses()
 
 	name_label.text = enemy_data.stats.actor_name
+
 	if enemy_data.portrait:
 		portrait_rect.texture = enemy_data.portrait
 
@@ -292,15 +294,17 @@ func _update_intent_ui():
 
 		# This is your final text string
 		var final_text = str(intended_dmg) + hits_text + " " + dmg_type
+		if intended_action.effects.size() > 1:
+			final_text += " *"
 
 		if intended_targets:
 			if intended_targets.size() > 1:
 				if intended_action.target_type == Action.TargetType.RANDOM_ENEMY:
-					final_text += ">RANDOM"
+					final_text += " > RANDOM"
 				else:
-					final_text += ">EVERYONE"
+					final_text += " > EVERYONE"
 			else:
-				final_text += "> " + intended_targets[0].actor_name
+				final_text += " > " + intended_targets[0].actor_name
 
 		intent_text.text = final_text
 
@@ -312,7 +316,7 @@ func _update_intent_ui():
 			final_text += " -> " + intended_targets[0].actor_name
 
 		intent_text.text = final_text
-	intent_text.tooltip_text = intended_action.get_rich_description(self)
+	intent_tooltip.bbcode_text = intended_action.get_rich_description(self)
 	flash_intent()
 
 func clear_intent():

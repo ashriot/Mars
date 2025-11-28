@@ -1,10 +1,10 @@
 [gd_scene load_steps=8 format=3 uid="uid://cl5f5vup72n32"]
 
-[ext_resource type="Script" uid="uid://288nsmb7vfck" path="res://src/game_manager.gd" id="1_p4js5"]
+[ext_resource type="Script" uid="uid://288nsmb7vfck" path="res://src/battle/game_manager.gd" id="1_p4js5"]
 [ext_resource type="PackedScene" uid="uid://dc5du0o5phhma" path="res://src/battle/battle_scene.tscn" id="2_jr7q5"]
 [ext_resource type="PackedScene" uid="uid://cqo38uie6gkdu" path="res://src/map/dungeon_map.tscn" id="3_jr7q5"]
 [ext_resource type="PackedScene" uid="uid://brd70upq3tjwu" path="res://src/map/terminal.tscn" id="3_lhik4"]
-[ext_resource type="PackedScene" uid="uid://cmk1udldhqk6p" path="res://src/loading_screen.tscn" id="4_vo8pw"]
+[ext_resource type="PackedScene" uid="uid://cmk1udldhqk6p" path="res://src/core/loading_screen.tscn" id="4_vo8pw"]
 [ext_resource type="PackedScene" uid="uid://dfbluo1xmfixj" path="res://src/map/dungeon_end_screen.tscn" id="5_uloe7"]
 
 [sub_resource type="Environment" id="Environment_jr7q5"]

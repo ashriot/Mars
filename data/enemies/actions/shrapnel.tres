@@ -23,6 +23,7 @@ metadata/_custom_type_script = "uid://dggojfw8tmpnk"
 script = ExtResource("2_g1c07")
 action_name = "Shrapnel"
 icon = ExtResource("7_56wyt")
-description = "Deals {dmg1} {kin} and applies Bleed."
+description = "Deals {atk*2.0} {kin} damage and applies Debuff:[p]
+[i]Take {atk*1.0} {prc} damage at the start of your turn."
 effects = Array[ExtResource("1_p6eth")]([SubResource("Resource_htl3v"), SubResource("Resource_6vwxq")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

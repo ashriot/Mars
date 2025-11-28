@@ -17,6 +17,7 @@ signal spawn_particles(pos, type)
 const MAX_GUARD = 10
 
 # --- UI Node References (Shared) ---
+@onready var rich_tooltip: RichTooltip = $Panel/RichTooltip
 @onready var name_label: Label = $Panel/Title
 @onready var hp_bar_ghost: ProgressBar = $Panel/HP/BarGhost
 @onready var hp_bar_actual: ProgressBar = $Panel/HP/BarActual
@@ -31,8 +32,8 @@ const MAX_GUARD = 10
 @onready var target_flash: Panel = $Panel/TargetFlash
 @onready var action_display: PanelContainer = $Panel/ActionName
 @onready var next_panel: Panel = $Panel/NextPanel
-@onready var debuffs_panel: Control = $Panel/Debuffs
-@onready var buffs_panel: Control = $Panel/Buffs
+@onready var debuffs_panel: Control = $Debuffs
+@onready var buffs_panel: Control = $Buffs
 
 var battle_manager: BattleManager
 var flash_tween: Tween
@@ -71,6 +72,7 @@ func setup_base(stats: ActorStats):
 	battle_manager = get_parent().get_node("%BattleManager")
 	current_stats = stats
 	actor_name = stats.actor_name
+	rich_tooltip.bbcode_text = current_stats._to_string()
 	hp_bar_ghost.max_value = current_stats.max_hp
 	current_hp = current_stats.max_hp
 	hp_bar_actual.max_value = current_stats.max_hp
@@ -377,7 +379,7 @@ func update_guard_bar(animate: bool = true):
 func show_action(action_name: String):
 	var duration = 0.1 / battle_manager.battle_speed
 	var label = action_display.get_node("MarginContainer/Label")
-	label.text = action_name.to_upper()
+	label.text = action_name
 	action_display.modulate.a = 0.0
 	action_display.show()
 

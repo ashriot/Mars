@@ -7,8 +7,8 @@
 [resource]
 script = ExtResource("2_5uhi3")
 condition_name = "Bullet Time"
-description = "Slowed by 15%."
 icon = ExtResource("1_t13li")
+description = "[i]Slowed by 15%."
 condition_type = 1
 speed_scalar = -0.15
 update_turn_order = true

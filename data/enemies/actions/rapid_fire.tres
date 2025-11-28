@@ -16,6 +16,6 @@ metadata/_custom_type_script = "uid://d0eibi4b735ay"
 [resource]
 script = ExtResource("3_rhgja")
 action_name = "Rapid Fire"
-description = "Deals {dmg1} {kin} to three random heroes."
+description = "Deals {atk*1.25} {kin} damage to three random targets."
 target_type = 3
 effects = Array[ExtResource("1_if5au")]([SubResource("Resource_760br")])

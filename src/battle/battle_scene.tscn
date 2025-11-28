@@ -102,7 +102,7 @@ position = Vector2(960, 540)
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_bottom = 454.0
+offset_bottom = 497.0
 grow_horizontal = 2
 texture = SubResource("GradientTexture2D_1pykk")
 
@@ -111,7 +111,7 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 674.0
+offset_top = 561.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = SubResource("GradientTexture2D_t4gpb")
@@ -156,8 +156,6 @@ expand_mode = 1
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/outline_size = 5
-theme_override_font_sizes/normal_font_size = 32
-theme_override_font_sizes/bold_font_size = 32
 bbcode_enabled = true
 text = "
 "

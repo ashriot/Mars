@@ -23,6 +23,6 @@ metadata/_custom_type_script = "uid://bhblyd70hrd4m"
 script = ExtResource("6_vco1p")
 action_name = "Telekinesis"
 icon = ExtResource("6_0kk3r")
-description = "Deals {dmg1} {nrg} granting {foc} to Echo's allies."
+description = "Deals {psy*0.75} {nrg} damage granting {foc} to Echo's teammates."
 effects = Array[ExtResource("1_s0sfa")]([SubResource("Resource_hlc1a"), SubResource("Resource_2tyc1")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

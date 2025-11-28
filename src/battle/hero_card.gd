@@ -126,7 +126,7 @@ func shift_role(direction: String):
 	await _fire_condition_event(Trigger.TriggerType.ON_SHIFT)
 
 func update_current_role():
-	role_label.text = get_current_role().role_name.to_upper()
+	role_label.text = get_current_role().role_name
 	role_icon.texture = get_current_role().icon
 	recolor()
 

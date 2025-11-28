@@ -13,11 +13,11 @@
 
 [resource]
 script = ExtResource("3_ipvff")
-description = "A multi-hit, single-target Kinetic blitzer."
+description = "GUNSLINGER[p][i]A multi-hit, single-target Kinetic blitzer."
 icon = ExtResource("1_pc4kf")
 color = Color(1.128, 1.437, 0.277, 1)
-passive = ExtResource("7_i3gk7")
 shift_action = ExtResource("10_vc0da")
+passive = ExtResource("7_i3gk7")
 actions = Array[ExtResource("1_0k6m3")]([ExtResource("2_g5d42"), ExtResource("3_02qky"), ExtResource("4_f5pd8"), ExtResource("5_utkbd")])
 root_node = ExtResource("2_pc4kf")
 metadata/_custom_type_script = "uid://sy50n7nerbow"

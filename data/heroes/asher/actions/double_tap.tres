@@ -17,6 +17,6 @@ metadata/_custom_type_script = "uid://d0eibi4b735ay"
 script = ExtResource("5_exkd4")
 action_name = "Double Tap"
 icon = ExtResource("4_0ukkd")
-description = "Deals {dmg1} {kin} twice."
+description = "Deals {atk*0.5} {kin} damage twice."
 effects = Array[ExtResource("1_4x8mm")]([SubResource("Resource_dp3ce")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

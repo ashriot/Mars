@@ -12,7 +12,6 @@ class_name Effect_Damage
 @export var damage_type: Action.DamageType = Action.DamageType.KINETIC
 
 @export var potency_per_guard: float = 0.0
-@export var potency_per_focus: float = 0.0
 @export var potency_scalar_per_focus: float = 0.0
 @export var lifedrain_scalar: float = 0.0
 @export var on_hit_triggers: Array[HitTrigger]
@@ -134,12 +133,6 @@ func _get_dynamic_potency(attacker: ActorCard, _target: ActorCard, _context: Dic
 		var guard = 0
 		guard = attacker.current_guard
 		return potency + potency_per_guard * guard
-
-	if potency_per_focus > 0.0:
-		var focus_pips = 0
-		if attacker is HeroCard:
-			focus_pips = attacker.current_focus
-		return potency + potency_per_focus * focus_pips
 
 	if potency_scalar_per_focus > 0.0:
 		var remaining_focus = 0

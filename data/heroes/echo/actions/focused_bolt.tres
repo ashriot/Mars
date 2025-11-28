@@ -12,12 +12,12 @@ script = ExtResource("3_284pn")
 potency = 0.5
 power_type = 1
 damage_type = 1
-potency_per_focus = 0.15
+potency_scalar_per_focus = 0.3
 metadata/_custom_type_script = "uid://d0eibi4b735ay"
 
 [resource]
 script = ExtResource("5_d62fs")
 action_name = "Focused Bolt"
 icon = ExtResource("4_vj4n2")
-description = "Deals {dmg1} {nrg} (increased by 10% per point of {foc} Echo has.)"
+description = "Deals {atk*0.5+atk*0.15*focus} {nrg} damage ({atk*0.5} plus 15% per point of {foc} Echo has.)"
 effects = Array[ExtResource("1_lqfxb")]([SubResource("Resource_6nryw")])

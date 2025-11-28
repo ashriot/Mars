@@ -15,11 +15,11 @@
 script = ExtResource("3_8kq5y")
 role_id = "snp"
 role_name = "Sniper"
-description = "A single-target Kinetic killing machine."
+description = "SNIPER[p][i]A single-target Kinetic killing machine."
 icon = ExtResource("1_sqs0w")
 color = Color(0.306, 1.437, 0, 1)
-passive = ExtResource("7_m3jwg")
 shift_action = ExtResource("10_ra63o")
+passive = ExtResource("7_m3jwg")
 actions = Array[ExtResource("1_5tdyi")]([ExtResource("2_4egdl"), ExtResource("3_obbrs"), ExtResource("4_d1ml5"), ExtResource("5_gtkj8")])
 root_node = ExtResource("2_sqs0w")
 metadata/_custom_type_script = "uid://sy50n7nerbow"

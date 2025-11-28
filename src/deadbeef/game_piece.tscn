@@ -1,6 +1,6 @@
 [gd_scene load_steps=11 format=3 uid="uid://bmfik6nt4y0j0"]
 
-[ext_resource type="Script" uid="uid://ddpwtj3v0qma3" path="res://game_piece.gd" id="1_ctm52"]
+[ext_resource type="Script" uid="uid://ddpwtj3v0qma3" path="res://src/deadbeef/game_piece.gd" id="1_ctm52"]
 [ext_resource type="Texture2D" uid="uid://cu1y5p7k0pads" path="res://assets/graphics/icons/deadbeef/hex_chip.png" id="2_g4mr7"]
 [ext_resource type="Texture2D" uid="uid://bh8gr2oebe1w7" path="res://assets/graphics/icons/deadbeef/hex_chip_u.png" id="4_5erml"]
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="4_mnfa6"]
