@@ -10,8 +10,8 @@ class_name RoleDefinition
 @export var color: Color = Color.WHITE
 
 @export_group("Kit Configuration")
-@export var passive: Action
 @export var shift_action: Action
+@export var passive: Action
 @export var actions: Array[Action] = []
 
 @export_group("Progression Tree")

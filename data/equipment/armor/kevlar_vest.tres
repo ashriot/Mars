@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="Equipment" load_steps=2 format=3 uid="uid://g3lhmj58116w"]
+
+[ext_resource type="Script" uid="uid://djmsh5w0dbytx" path="res://data/scripts/data/equipment.gd" id="1_1eapi"]
+
+[resource]
+script = ExtResource("1_1eapi")
+equipment_id = "kevlar_vest"
+item_name = "Kevlar Vest"
+hp_rank = 4
+guard_rank = 3
+speed_rank = 2
+kinetic_defense_rank = 4
+energy_defense_rank = 3
+metadata/_custom_type_script = "uid://djmsh5w0dbytx"

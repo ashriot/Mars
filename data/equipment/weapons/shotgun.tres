@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="Equipment" load_steps=2 format=3 uid="uid://bs61k2q2i8hlv"]
+
+[ext_resource type="Script" uid="uid://djmsh5w0dbytx" path="res://data/scripts/data/equipment.gd" id="1_qdkcv"]
+
+[resource]
+script = ExtResource("1_qdkcv")
+equipment_id = "shotgun"
+item_name = "Shotgun"
+attack_rank = 4
+psyche_rank = 3
+overload_rank = 1
+speed_rank = 3
+metadata/_custom_type_script = "uid://djmsh5w0dbytx"

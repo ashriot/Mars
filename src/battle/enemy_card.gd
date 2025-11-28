@@ -64,14 +64,16 @@ func decide_intent(hero_targets: Array[HeroCard]):
 	else:
 		new_proposed_action = base_turn_action
 
+	if not _is_action_usable(new_proposed_action):
+		print(actor_name, " action invalid (no targets). Switching to fallback.")
+		new_proposed_action = _get_fallback_action()
+
 	if new_proposed_action == intended_action:
 		if _is_current_target_valid(hero_targets):
 			return
 
-	# 3. CHANGE PLAN
-	# Either the action changed, OR the old target died/hid.
 	self.intended_action = new_proposed_action
-	get_a_target(hero_targets) # Pick a fresh target based on the new action
+	get_a_target(hero_targets)
 
 func _is_current_target_valid(hero_targets: Array[HeroCard]) -> bool:
 	# 1. Do we have a target?
@@ -227,6 +229,21 @@ func _check_ai_overrides() -> Action:
 
 	return null
 
+func _is_action_usable(action: Action) -> bool:
+	if not action: return false
+
+	var my_allies = battle_manager.get_living_enemies()
+
+	match action.target_type:
+		Action.TargetType.ALLIES_ONLY:
+			return my_allies.size() > 1
+	return true
+
+func _get_fallback_action() -> Action:
+	if enemy_data.action_deck.is_empty():
+		return null
+	return enemy_data.action_deck[0]
+
 func _update_intent_ui():
 	if not intended_action:
 		intent_text.text = ""
@@ -316,13 +333,6 @@ func defeated():
 
 	await tween.finished
 	modulate.a = 0
-
-#func show_intent(icon: Texture):
-	#intent_icon.texture = icon
-	#intent_icon.visible = true
-#
-#func hide_intent():
-	#intent_icon.visible = false
 
 func flash_intent(duration: float = 0.3):
 	duration /= battle_manager.battle_speed
