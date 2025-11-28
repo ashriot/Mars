@@ -14,7 +14,7 @@ func _ready():
 
 func _on_head_out_pressed() -> void:
 	RunManager.current_dungeon_tier = 1
-	RunManager.current_dungeon_profile = dungeon_profile
+	RunManager.dungeon_profile = dungeon_profile
 
 	# Option B: Based on Story Progress (from SaveSystem)
 	# e.g. If you are on Chapter 2, set tier to 2.

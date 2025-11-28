@@ -12,6 +12,26 @@ enum AlertState { SAFE, CAUTION, DANGER }
 const ALERT_LOW_THRESHOLD = 26
 const ALERT_MED_THRESHOLD = 75
 
+const NODE_DENSITY = {
+	"terminal": 2.0,
+	"combat": 3.0,
+	"elite": 0.4,
+	"reward_common": 1.6,
+	"reward_uncommon": 0.7,
+	"reward_rare": 0.25,
+	"event": 1.2
+}
+
+const NODE_MULT = {
+	"terminal": 1.0,
+	"combat": 1.0,
+	"elite": 1.0,
+	"reward_common": 1.0,
+	"reward_uncommon": 1.0,
+	"reward_rare": 1.0,
+	"event": 1.0
+}
+
 # Base Costs
 const COST_MOVE_BASE = 2.0
 const PENALTY_NORMAL_MOVE = 2.0
@@ -47,19 +67,19 @@ const PENALTY_BOSS_MOVE = 2.0
 # --- Node Distribution Settings ---
 @export_group("Node Counts")
 @export var dungeon_has_boss: bool = false
-@export var num_combats: int = 7
-@export var num_elites: int = 2
-@export var num_events: int = 2
-@export var num_terminals: int = 4
-@export var num_rewards: int = 3
-@export var num_uncommon_rewards: int = 2
-@export var num_rare_rewards: int = 1
+#@export var num_combats: int = 0
+#@export var num_elites: int = 0
+#@export var num_events: int = 0
+#@export var num_rewards: int = 0
+#@export var num_uncommon_rewards: int = 0
+#@export var num_rare_rewards: int = 0
+#@export var bonus_terminals: int = 0
 
 # --- Camera Settings ---
 @export_group("Camera")
-@export var zoom_step: float = 0.1
+@export var zoom_step: float = 0.25
 @export var min_zoom: float = 0.5
-@export var max_zoom: float = 2.5
+@export var max_zoom: float = 1.5
 @export var camera_smooth_speed: float = 0.3
 @export var camera_edge_margin: float = 850.0
 
@@ -169,8 +189,6 @@ func initialize_map():
 		seed(RunManager.current_run_seed)
 		var map_data = await generate_hex_grid()
 		current_node = map_data.start_node
-		total_nodes = num_combats + num_elites + num_events + \
-			num_uncommon_rewards + num_rare_rewards + num_rewards + num_terminals
 		node_gauge.max_value = total_nodes
 		RunManager.is_run_active = true
 		RunManager.auto_save()
@@ -336,8 +354,6 @@ func generate_hex_grid(generate_data: bool = true) -> Dictionary:
 
 	# --- Grid Math ---
 	map_size = map_height * map_length
-	num_terminals = int(map_size / 50) + 1
-	print("Terminals: ", num_terminals)
 	var valid_coords = {}
 	var start_pos = Vector2.ZERO
 	var center_y = floor(map_height / 2.0)
@@ -385,7 +401,7 @@ func generate_hex_grid(generate_data: bool = true) -> Dictionary:
 				terminal_counter += 1
 
 		# --- ENCOUNTER GENERATION ---
-		var profile: DungeonProfile = RunManager.current_dungeon_profile
+		var profile: DungeonProfile = RunManager.dungeon_profile
 		var tier = RunManager.current_dungeon_tier
 
 		if profile:
@@ -955,113 +971,152 @@ func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 	var type_map = {}
 	for c in all_coords: type_map[c] = MapNode.NodeType.UNKNOWN
 
-	# --- 1. POOLS & BUFFERS ---
-	var shuffled_coords = all_coords.duplicate()
-	shuffled_coords.shuffle()
+	# ----------------------------
+	# 1. Determine Node Counts
+	# ----------------------------
+	var num_terminals = _calculate_node_count("terminal")
+	var num_combats  = _calculate_node_count("combat")
+	var num_elites   = _calculate_node_count("elite")
+	var num_rewards  = _calculate_node_count("reward_common")
+	var num_uncommon = _calculate_node_count("reward_uncommon")
+	var num_rare     = _calculate_node_count("reward_rare")
+	var num_events   = _calculate_node_count("event")
 
-	var available_pool = shuffled_coords
-	var start_node = Vector2i(-999, -999)
-	#var boss_node = Vector2i(-999, -999)
+	print("Total Nodes:\n")
+	print("num_terminals: ", num_terminals)
+	print("num_combats: ", num_combats)
+	print("num_elites: ", num_elites)
+	print("num_rewards: ", num_rewards)
+	print("num_uncommon: ", num_uncommon)
+	print("num_rare: ", num_rare)
+	print("num_events: ", num_events)
 
-	# (Start/Boss Logic - Keep your existing code here)
+	total_nodes = num_combats + num_elites + num_events + \
+		num_uncommon + num_rare + num_rewards + num_terminals
+
+	var total_heavy_items = (
+		num_terminals + num_elites + num_rewards +
+		num_uncommon + num_rare + num_events + num_combats
+	)
+
+	num_terminals = max(1, num_terminals) + 1
+
+	# ----------------------------
+	# 2. Determine Entrance & Exit
+	# ----------------------------
 	var min_x = 9999
+	var start_node := Vector2i()
 	for c in all_coords:
-		if c.y == center_y and c.x < min_x: min_x = c.x
-	start_node = Vector2i(min_x, center_y)
-	type_map[start_node] = MapNode.NodeType.ENTRANCE
-	available_pool.erase(start_node)
+		if c.y == center_y and c.x < min_x:
+			min_x = c.x
+			start_node = c
 
+	type_map[start_node] = MapNode.NodeType.ENTRANCE
+
+	# Pick boss/exit far to the right but not too close
 	var sorted_by_x = all_coords.duplicate()
 	sorted_by_x.sort_custom(func(a, b): return a.x > b.x)
-	var end_variance = int(map_size / 4)
-	var end_candidates = sorted_by_x.slice(0, min(end_variance, sorted_by_x.size()))
-	var end_node = end_candidates.pick_random()
-	while end_node == start_node and end_candidates.size() > 1:
-		end_node = end_candidates.pick_random()
 
-	if dungeon_has_boss: type_map[end_node] = MapNode.NodeType.BOSS
-	else: type_map[end_node] = MapNode.NodeType.EXIT
-	available_pool.erase(end_node)
+	var end_slice = max(3, int(map_size / 6))
+	var end_candidates = sorted_by_x.slice(0, min(end_slice, sorted_by_x.size()))
+	end_candidates.shuffle()
 
-	# Define Safe Zone
-	var high_value_pool = []
-	var start_buffer_zone = []
-	for c in available_pool:
+	var end_node = end_candidates[0]
+	type_map[end_node] = (MapNode.NodeType.BOSS if dungeon_has_boss else MapNode.NodeType.EXIT)
+
+	# Remove protected cells
+	var available := all_coords.duplicate()
+	available.erase(start_node)
+	available.erase(end_node)
+
+	# ----------------------------
+	# 3. Safe Zone (buffer)
+	# ----------------------------
+	var buffer_zone := []
+	var main_pool := []
+
+	for c in available:
 		if _get_hex_distance(start_node, c) <= 2:
-			start_buffer_zone.append(c)
+			buffer_zone.append(c)
 		else:
-			high_value_pool.append(c)
+			main_pool.append(c)
 
-	# --- PROGRESS TRACKING (THE FIX) ---
-	var total_heavy_items = num_terminals + num_elites + num_rewards + num_uncommon_rewards + num_rare_rewards + num_events + num_combats
-
-	# We wrap the counters in a Dictionary so the Lambda can update the "Real" values
-	var progress_state = {
-		"count": 0,
-		"time": Time.get_ticks_msec()
-	}
-
+	# ----------------------------
+	# 4. Async Placement Helper
+	# ----------------------------
+	var progress_state = {"count": 0, "time": Time.get_ticks_msec()}
 	var max_frame_time_ms = 8
 
-	# --- 2. POI DISTRIBUTION ---
-	var all_pois: Array = []
+	var all_pois := []    # Track spacing for all placed POIs
 
-	var term_spacing = max(3, int(map_length / 3.0))
-	var elite_spacing = 3
-	var reward_spacing = 2
-
-	# --- HELPER: ASYNC PLACEMENT (Updated) ---
-	var _place_batch_async = func(type, count, spacing):
+	var _place_batch = func(type_enum, count: int, spacing: int) -> void:
 		for i in range(count):
-			if high_value_pool.is_empty(): return
 
-			var coord = _pick_balanced_coord(high_value_pool, all_pois, spacing)
+			if main_pool.is_empty(): return
 
-			type_map[coord] = type
-			high_value_pool.erase(coord)
-			all_pois.append(coord)
+			# Try main pool with spacing
+			var c = _pick_balanced_coord(main_pool, all_pois, spacing)
 
-			# Update the Dictionary State
+			# If spacing fails, degrade gracefully
+			if c == null:
+				c = main_pool.pick_random()
+
+			type_map[c] = type_enum
+			main_pool.erase(c)
+			all_pois.append(c)
+
+			# Update progress
 			progress_state.count += 1
-
 			if Time.get_ticks_msec() - progress_state.time > max_frame_time_ms:
-				var percent = (float(progress_state.count) / total_heavy_items) * 99.0
-				map_generation_progress.emit(percent, 100.0)
+				var pct = (float(progress_state.count) / total_heavy_items) * 99.0
+				map_generation_progress.emit(pct, 100.0)
 				await get_tree().process_frame
-				progress_state.time = Time.get_ticks_msec() # Reset timer
+				progress_state.time = Time.get_ticks_msec()
 
-	# Call the helper
-	await _place_batch_async.call(MapNode.NodeType.TERMINAL, num_terminals, term_spacing)
-	await _place_batch_async.call(MapNode.NodeType.ELITE, num_elites, elite_spacing)
-	await _place_batch_async.call(MapNode.NodeType.REWARD_3, num_rare_rewards, reward_spacing)
-	await _place_batch_async.call(MapNode.NodeType.REWARD_2, num_uncommon_rewards, reward_spacing)
-	await _place_batch_async.call(MapNode.NodeType.REWARD, num_rewards, reward_spacing)
-	await _place_batch_async.call(MapNode.NodeType.EVENT, num_events, reward_spacing)
+	# ----------------------------
+	# 5. Place POIs
+	# ----------------------------
+	await _place_batch.call(MapNode.NodeType.TERMINAL,     num_terminals, 4)
+	await _place_batch.call(MapNode.NodeType.ELITE,        num_elites,    3)
+	await _place_batch.call(MapNode.NodeType.REWARD_3,     num_rare,      2)
+	await _place_batch.call(MapNode.NodeType.REWARD_2,     num_uncommon,  2)
+	await _place_batch.call(MapNode.NodeType.REWARD,       num_rewards,   2)
+	await _place_batch.call(MapNode.NodeType.EVENT,        num_events,    1)
 
-	# --- 6. DISTRIBUTE COMBAT ---
-	var combat_pool = high_value_pool + start_buffer_zone
-	var placed_combats = []
+	# ----------------------------
+	# 6. Fill with combats
+	# ----------------------------
+	var combat_pool = main_pool + buffer_zone
+	var placed_combats := []
 	var combat_spacing = 2
 
 	for i in range(num_combats):
 		if combat_pool.is_empty(): break
 
 		var c = _pick_balanced_coord(combat_pool, placed_combats, combat_spacing)
+		if c == null:
+			c = combat_pool.pick_random()
 
 		type_map[c] = MapNode.NodeType.COMBAT
 		combat_pool.erase(c)
 		placed_combats.append(c)
 
-		# Use the same Dictionary State here to keep the bar moving correctly
 		progress_state.count += 1
-
 		if Time.get_ticks_msec() - progress_state.time > max_frame_time_ms:
-			var percent = (float(progress_state.count) / total_heavy_items) * 99.0
-			map_generation_progress.emit(percent, 100.0)
+			var pct = (float(progress_state.count) / total_heavy_items) * 99.0
+			map_generation_progress.emit(pct, 100.0)
 			await get_tree().process_frame
 			progress_state.time = Time.get_ticks_msec()
 
 	return type_map
+
+
+func _calculate_node_count(node_type: String) -> int:
+	var density = NODE_DENSITY[node_type]
+	var mult = RunManager.dungeon_profile.get_node_multiplier(node_type)
+	var per_hex = density / 100.0
+	return int(map_size * per_hex * mult)
+
 
 func _pick_balanced_coord(candidate_pool: Array, existing_group: Array, min_dist: int) -> Vector2i:
 	if existing_group.is_empty():

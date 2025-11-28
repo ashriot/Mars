@@ -7,7 +7,7 @@ enum RunResult { SUCCESS, RETREAT, DEFEAT }
 
 var is_run_active: bool = false
 var active_dungeon_map: DungeonMap = null
-var current_dungeon_profile: DungeonProfile
+var dungeon_profile: DungeonProfile
 var current_dungeon_tier: int = 1
 var current_run_seed: int = 0
 var run_bits: int = 0
@@ -35,7 +35,7 @@ func get_loot_scalar() -> float:
 
 func get_run_save_data() -> Dictionary:
 	if not active_dungeon_map: return {}
-	var profile_path = current_dungeon_profile.resource_path
+	var profile_path = dungeon_profile.resource_path
 
 	return {
 		"seed": current_run_seed,
@@ -50,7 +50,7 @@ func restore_run():
 	var run_data = SaveSystem.data.get("active_run")
 	var path = run_data.get("profile_path", "")
 	if path != "" and ResourceLoader.exists(path):
-		current_dungeon_profile = load(path)
+		dungeon_profile = load(path)
 
 	if not run_data:
 		push_error("Tried to restore run, but SaveSystem data has no 'active_run'!")
