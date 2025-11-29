@@ -8,11 +8,13 @@ enum Stats {
 var actor_name: String
 var max_hp: int = 25
 var starting_guard: int = 0
+var starting_focus: int = 4
 var attack: int = 8
 var psyche: int = 8
 var overload: int = 8
 var speed: int = 4
 var aim: int = 10  # Percentage (0-75 base cap)
+var aim_bonus: int = 50  # Percentage
 var kinetic_defense: int = 10  # Percentage (0-90 cap)
 var energy_defense: int = 10  # Percentage (0-90 cap)
 

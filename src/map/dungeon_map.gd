@@ -533,6 +533,8 @@ func play_intro_sequence(map_data: Dictionary) -> void:
 
 func refresh_team_status():
 	for hero_status in team_status.get_children():
+		if hero_status.is_stats_popped:
+			hero_status._toggle_stats_pop()
 		hero_status.refresh_view()
 	nodes_done_label.text = str(nodes_done)
 	node_gauge.value = nodes_done
@@ -723,6 +725,7 @@ func _on_node_clicked(target_node: MapNode):
 	_move_player_to(target_node)
 
 func _move_player_to(target_node: MapNode, is_start: bool = false):
+	refresh_team_status()
 	current_map_state = MapState.LOCKED
 	current_node = target_node
 	_move_camera_to_player(is_start)

@@ -21,6 +21,7 @@ metadata/_custom_type_script = "uid://dggojfw8tmpnk"
 
 [sub_resource type="Resource" id="Resource_habd1"]
 script = ExtResource("6_b537w")
+ct_boost_percent = 0.75
 target_type = 4
 metadata/_custom_type_script = "uid://dgkss5d1axeag"
 
@@ -28,6 +29,6 @@ metadata/_custom_type_script = "uid://dgkss5d1axeag"
 script = ExtResource("2_nbefs")
 action_name = "Mark Target"
 icon = ExtResource("6_m15ye")
-description = "Marks the target, apply Debuff:[p][i]Heroes gain +25% AIM against this target.[p]Lasts until Asher shifts."
+description = "Boosts Asher's next turn by 75% and Marks the target, apply Debuff:[p][i]Heroes gain +25% AIM against this target.[p]Lasts until Asher shifts."
 effects = Array[ExtResource("1_6ff7n")]([SubResource("Resource_8s7nv"), SubResource("Resource_82nfl"), SubResource("Resource_habd1")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

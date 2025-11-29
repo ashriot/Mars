@@ -1,9 +1,10 @@
-[gd_scene load_steps=8 format=3 uid="uid://1g2fulrngrw0"]
+[gd_scene load_steps=9 format=3 uid="uid://1g2fulrngrw0"]
 
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="1_53fmm"]
 [ext_resource type="Script" uid="uid://cxkviuaghnjrw" path="res://src/map/hero_status.gd" id="1_hfba2"]
 [ext_resource type="Texture2D" uid="uid://dsut0jqlq77vv" path="res://assets/graphics/icons/textures/diamond_sm.png" id="4_huwb8"]
 [ext_resource type="Texture2D" uid="uid://cqweju3y7kwst" path="res://assets/graphics/icons/textures/shield_sm.png" id="5_huwb8"]
+[ext_resource type="Texture2D" uid="uid://y2kx6im08fe7" path="res://assets/graphics/icons/map/cancel.png" id="5_yqtn3"]
 [ext_resource type="Texture2D" uid="uid://jdpryp48lvvd" path="res://assets/graphics/icons/textures/chevron_h.png" id="6_huwb8"]
 [ext_resource type="Texture2D" uid="uid://b6nbdnranryyc" path="res://assets/graphics/icons/textures/drop_sm.png" id="6_yqtn3"]
 
@@ -24,11 +25,401 @@ shadow_offset = Vector2(0, 2)
 
 [node name="HeroStatus" type="Panel"]
 self_modulate = Color(1.128, 1.437, 0.277, 1)
-custom_minimum_size = Vector2(500, 40)
-offset_right = 550.0
+custom_minimum_size = Vector2(450, 40)
+offset_right = 500.0
 offset_bottom = 40.0
+mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_ssagv")
 script = ExtResource("1_hfba2")
+
+[node name="StatsPanel" type="Control" parent="."]
+show_behind_parent = true
+clip_contents = true
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = -80.0
+offset_right = -12.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 1
+
+[node name="Panel" type="Panel" parent="StatsPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+
+[node name="CloseBtn" type="TextureButton" parent="StatsPanel/Panel"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -36.0
+offset_top = 5.0
+offset_right = -4.0
+offset_bottom = 37.0
+grow_horizontal = 0
+texture_normal = ExtResource("5_yqtn3")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="Stats" type="VBoxContainer" parent="StatsPanel/Panel"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -225.0
+offset_right = 225.0
+offset_bottom = 236.0
+grow_horizontal = 2
+theme_override_constants/separation = -2
+
+[node name="HP" type="HBoxContainer" parent="StatsPanel/Panel/Stats"]
+modulate = Color(0.304, 0.76, 0.34199995, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+alignment = 1
+
+[node name="Label" type="RichTextLabel" parent="StatsPanel/Panel/Stats/HP"]
+custom_minimum_size = Vector2(125, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("1_53fmm")
+theme_override_font_sizes/normal_font_size = 32
+text = "HP"
+horizontal_alignment = 2
+
+[node name="Value" type="RichTextLabel" parent="StatsPanel/Panel/Stats/HP"]
+custom_minimum_size = Vector2(250, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("1_53fmm")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "[color=\"fff2\"]00[color=\"fff\"]75/[color=\"fff2\"]0[color=\"fff\"]100"
+
+[node name="Resources" type="HBoxContainer" parent="StatsPanel/Panel/Stats"]
+layout_mode = 2
+theme_override_constants/separation = 120
+alignment = 1
+
+[node name="Guard" type="Control" parent="StatsPanel/Panel/Stats/Resources"]
+custom_minimum_size = Vector2(120, 41)
+layout_mode = 2
+
+[node name="Value" type="RichTextLabel" parent="StatsPanel/Panel/Stats/Resources/Guard"]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_top = -20.5
+offset_right = 40.0
+offset_bottom = 15.5
+grow_vertical = 2
+theme_override_fonts/normal_font = ExtResource("1_53fmm")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "5"
+scroll_active = false
+horizontal_alignment = 2
+
+[node name="Pip1" type="TextureRect" parent="StatsPanel/Panel/Stats/Resources/Guard"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -16.0
+offset_top = -16.0
+offset_right = 16.0
+offset_bottom = 16.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("5_huwb8")
+expand_mode = 1
+
+[node name="Total" type="Label" parent="StatsPanel/Panel/Stats/Resources/Guard"]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -40.0
+offset_top = -18.0
+offset_bottom = 18.0
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_fonts/font = ExtResource("1_53fmm")
+text = "10"
+
+[node name="Focus" type="Control" parent="StatsPanel/Panel/Stats/Resources"]
+custom_minimum_size = Vector2(120, 41)
+layout_mode = 2
+
+[node name="Value" type="RichTextLabel" parent="StatsPanel/Panel/Stats/Resources/Focus"]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_top = -20.5
+offset_right = 40.0
+offset_bottom = 15.5
+grow_vertical = 2
+theme_override_fonts/normal_font = ExtResource("1_53fmm")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "05"
+scroll_active = false
+horizontal_alignment = 2
+
+[node name="Pip1" type="TextureRect" parent="StatsPanel/Panel/Stats/Resources/Focus"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -16.0
+offset_top = -16.0
+offset_right = 16.0
+offset_bottom = 16.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("4_huwb8")
+expand_mode = 1
+
+[node name="Total" type="Label" parent="StatsPanel/Panel/Stats/Resources/Focus"]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -40.0
+offset_top = -18.0
+offset_bottom = 18.0
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_fonts/font = ExtResource("1_53fmm")
+text = "10"
+
+[node name="POW" type="HBoxContainer" parent="StatsPanel/Panel/Stats"]
+layout_mode = 2
+theme_override_constants/separation = 30
+alignment = 2
+
+[node name="ATK" type="HBoxContainer" parent="StatsPanel/Panel/Stats/POW"]
+modulate = Color(1, 0.37, 0.37, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="StatsPanel/Panel/Stats/POW/ATK"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_53fmm")
+text = "atk"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="StatsPanel/Panel/Stats/POW/ATK"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme_override_fonts/normal_font = ExtResource("1_53fmm")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "003"
+scroll_active = false
+
+[node name="PSY" type="HBoxContainer" parent="StatsPanel/Panel/Stats/POW"]
+modulate = Color(0.43, 0.63900006, 1, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="Label" parent="StatsPanel/Panel/Stats/POW/PSY"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_53fmm")
+text = "psy"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="StatsPanel/Panel/Stats/POW/PSY"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme_override_fonts/normal_font = ExtResource("1_53fmm")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "005"
+scroll_active = false
+
+[node name="SUB" type="HBoxContainer" parent="StatsPanel/Panel/Stats"]
+layout_mode = 2
+theme_override_constants/separation = 30
+alignment = 2
+
+[node name="OVR" type="HBoxContainer" parent="StatsPanel/Panel/Stats/SUB"]
+modulate = Color(0.7166667, 0.5, 1, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="StatsPanel/Panel/Stats/SUB/OVR"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_53fmm")
+text = "ovr"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="StatsPanel/Panel/Stats/SUB/OVR"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme_override_fonts/normal_font = ExtResource("1_53fmm")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "003"
+scroll_active = false
+
+[node name="SPD" type="HBoxContainer" parent="StatsPanel/Panel/Stats/SUB"]
+modulate = Color(1, 0.77666664, 0.32999998, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="Label" parent="StatsPanel/Panel/Stats/SUB/SPD"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_53fmm")
+text = "spd"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="StatsPanel/Panel/Stats/SUB/SPD"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme_override_fonts/normal_font = ExtResource("1_53fmm")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "005"
+scroll_active = false
+
+[node name="AIM" type="HBoxContainer" parent="StatsPanel/Panel/Stats"]
+modulate = Color(0.95100003, 0.51, 1, 1)
+layout_mode = 2
+theme_override_constants/separation = 30
+alignment = 2
+
+[node name="AIM" type="HBoxContainer" parent="StatsPanel/Panel/Stats/AIM"]
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="StatsPanel/Panel/Stats/AIM/AIM"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_53fmm")
+text = "aim"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="StatsPanel/Panel/Stats/AIM/AIM"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme_override_fonts/normal_font = ExtResource("1_53fmm")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "25%"
+scroll_active = false
+
+[node name="AimBonus" type="HBoxContainer" parent="StatsPanel/Panel/Stats/AIM"]
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="Label" parent="StatsPanel/Panel/Stats/AIM/AimBonus"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_53fmm")
+text = "+dmg"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="StatsPanel/Panel/Stats/AIM/AimBonus"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme_override_fonts/normal_font = ExtResource("1_53fmm")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "50%"
+scroll_active = false
+
+[node name="DEF" type="HBoxContainer" parent="StatsPanel/Panel/Stats"]
+layout_mode = 2
+theme_override_constants/separation = 30
+alignment = 2
+
+[node name="KIN" type="HBoxContainer" parent="StatsPanel/Panel/Stats/DEF"]
+modulate = Color(1, 0.4745098, 0.16862746, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="StatsPanel/Panel/Stats/DEF/KIN"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_53fmm")
+text = "kin"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="StatsPanel/Panel/Stats/DEF/KIN"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme_override_fonts/normal_font = ExtResource("1_53fmm")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "25%"
+scroll_active = false
+
+[node name="NRG" type="HBoxContainer" parent="StatsPanel/Panel/Stats/DEF"]
+modulate = Color(0.26, 1, 0.9259999, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="Label" parent="StatsPanel/Panel/Stats/DEF/NRG"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_53fmm")
+text = "nrg"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="StatsPanel/Panel/Stats/DEF/NRG"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme_override_fonts/normal_font = ExtResource("1_53fmm")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "50%"
+scroll_active = false
 
 [node name="Role" type="Control" parent="."]
 layout_mode = 1
@@ -227,192 +618,6 @@ custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 texture = ExtResource("6_yqtn3")
 expand_mode = 1
-
-[node name="Panel" type="Panel" parent="."]
-visible = false
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_top = -385.0
-offset_bottom = -10.0
-grow_horizontal = 2
-
-[node name="Stats" type="VBoxContainer" parent="Panel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 14.732178
-offset_top = 9.0
-offset_right = -14.732178
-offset_bottom = -9.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Vitals" type="HBoxContainer" parent="Panel/Stats"]
-layout_mode = 2
-
-[node name="HP" type="HBoxContainer" parent="Panel/Stats/Vitals"]
-custom_minimum_size = Vector2(0, 41)
-layout_mode = 2
-
-[node name="Label" type="Label" parent="Panel/Stats/Vitals/HP"]
-custom_minimum_size = Vector2(100, 0)
-layout_mode = 2
-theme_override_fonts/font = ExtResource("1_53fmm")
-text = "hp"
-uppercase = true
-
-[node name="Value" type="Label" parent="Panel/Stats/Vitals/HP"]
-custom_minimum_size = Vector2(250, 0)
-layout_mode = 2
-theme_override_fonts/font = ExtResource("1_53fmm")
-text = "1000/1500"
-uppercase = true
-
-[node name="GRD" type="HBoxContainer" parent="Panel/Stats/Vitals"]
-custom_minimum_size = Vector2(0, 41)
-layout_mode = 2
-
-[node name="Label" type="Label" parent="Panel/Stats/Vitals/GRD"]
-custom_minimum_size = Vector2(100, 0)
-layout_mode = 2
-theme_override_fonts/font = ExtResource("1_53fmm")
-text = "grd"
-uppercase = true
-
-[node name="Value" type="Label" parent="Panel/Stats/Vitals/GRD"]
-custom_minimum_size = Vector2(50, 0)
-layout_mode = 2
-theme_override_fonts/font = ExtResource("1_53fmm")
-text = "3"
-uppercase = true
-
-[node name="STR" type="HBoxContainer" parent="Panel/Stats"]
-custom_minimum_size = Vector2(0, 41)
-layout_mode = 2
-
-[node name="Label" type="Label" parent="Panel/Stats/STR"]
-custom_minimum_size = Vector2(100, 0)
-layout_mode = 2
-theme_override_fonts/font = ExtResource("1_53fmm")
-text = "str"
-uppercase = true
-
-[node name="Value" type="Label" parent="Panel/Stats/STR"]
-custom_minimum_size = Vector2(250, 0)
-layout_mode = 2
-theme_override_fonts/font = ExtResource("1_53fmm")
-text = "095"
-uppercase = true
-
-[node name="PSY" type="HBoxContainer" parent="Panel/Stats"]
-custom_minimum_size = Vector2(0, 41)
-layout_mode = 2
-
-[node name="Label" type="Label" parent="Panel/Stats/PSY"]
-custom_minimum_size = Vector2(100, 0)
-layout_mode = 2
-theme_override_fonts/font = ExtResource("1_53fmm")
-text = "str"
-uppercase = true
-
-[node name="Value" type="Label" parent="Panel/Stats/PSY"]
-custom_minimum_size = Vector2(250, 0)
-layout_mode = 2
-theme_override_fonts/font = ExtResource("1_53fmm")
-text = "095"
-uppercase = true
-
-[node name="OVR" type="HBoxContainer" parent="Panel/Stats"]
-custom_minimum_size = Vector2(0, 41)
-layout_mode = 2
-
-[node name="Label" type="Label" parent="Panel/Stats/OVR"]
-custom_minimum_size = Vector2(100, 0)
-layout_mode = 2
-theme_override_fonts/font = ExtResource("1_53fmm")
-text = "str"
-uppercase = true
-
-[node name="Value" type="Label" parent="Panel/Stats/OVR"]
-custom_minimum_size = Vector2(250, 0)
-layout_mode = 2
-theme_override_fonts/font = ExtResource("1_53fmm")
-text = "095"
-uppercase = true
-
-[node name="SPD" type="HBoxContainer" parent="Panel/Stats"]
-custom_minimum_size = Vector2(0, 41)
-layout_mode = 2
-
-[node name="Label" type="Label" parent="Panel/Stats/SPD"]
-custom_minimum_size = Vector2(100, 0)
-layout_mode = 2
-theme_override_fonts/font = ExtResource("1_53fmm")
-text = "str"
-uppercase = true
-
-[node name="Value" type="Label" parent="Panel/Stats/SPD"]
-custom_minimum_size = Vector2(250, 0)
-layout_mode = 2
-theme_override_fonts/font = ExtResource("1_53fmm")
-text = "095"
-uppercase = true
-
-[node name="AIM" type="HBoxContainer" parent="Panel/Stats"]
-custom_minimum_size = Vector2(0, 41)
-layout_mode = 2
-
-[node name="Label" type="Label" parent="Panel/Stats/AIM"]
-custom_minimum_size = Vector2(100, 0)
-layout_mode = 2
-theme_override_fonts/font = ExtResource("1_53fmm")
-text = "str"
-uppercase = true
-
-[node name="Value" type="Label" parent="Panel/Stats/AIM"]
-custom_minimum_size = Vector2(250, 0)
-layout_mode = 2
-theme_override_fonts/font = ExtResource("1_53fmm")
-text = "095"
-uppercase = true
-
-[node name="KIN" type="HBoxContainer" parent="Panel/Stats"]
-custom_minimum_size = Vector2(0, 41)
-layout_mode = 2
-
-[node name="Label" type="Label" parent="Panel/Stats/KIN"]
-custom_minimum_size = Vector2(100, 0)
-layout_mode = 2
-theme_override_fonts/font = ExtResource("1_53fmm")
-text = "str"
-uppercase = true
-
-[node name="Value" type="Label" parent="Panel/Stats/KIN"]
-custom_minimum_size = Vector2(250, 0)
-layout_mode = 2
-theme_override_fonts/font = ExtResource("1_53fmm")
-text = "095"
-uppercase = true
-
-[node name="NRG" type="HBoxContainer" parent="Panel/Stats"]
-custom_minimum_size = Vector2(0, 41)
-layout_mode = 2
-
-[node name="Label" type="Label" parent="Panel/Stats/NRG"]
-custom_minimum_size = Vector2(100, 0)
-layout_mode = 2
-theme_override_fonts/font = ExtResource("1_53fmm")
-text = "str"
-uppercase = true
-
-[node name="Value" type="Label" parent="Panel/Stats/NRG"]
-custom_minimum_size = Vector2(250, 0)
-layout_mode = 2
-theme_override_fonts/font = ExtResource("1_53fmm")
-text = "095"
-uppercase = true
 
 [connection signal="pressed" from="Role/Left" to="." method="_on_left_pressed"]
 [connection signal="pressed" from="Role/Right" to="." method="_on_right_pressed"]
