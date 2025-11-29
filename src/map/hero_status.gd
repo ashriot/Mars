@@ -101,8 +101,8 @@ func refresh_view():
 	# Stats
 	var cur_hp = max(0, stats.max_hp * (1 - linked_hero_data.injuries * .34))
 	hp.text = _stringify(cur_hp, 4) + "[color=fff]/" + _stringify(stats.max_hp, 4)
-	guard.text = _stringify(stats.starting_guard)
-	focus.text = _stringify(stats.starting_focus)
+	guard.text = _stringify(stats.starting_guard + (5 if linked_hero_data.boon_armored else 0))
+	focus.text = _stringify(stats.starting_focus + (5 if linked_hero_data.boon_focused else 0))
 	atk.text = _stringify(stats.attack, 3)
 	psy.text = _stringify(stats.psyche, 3)
 	ovr.text = _stringify(stats.overload, 3)

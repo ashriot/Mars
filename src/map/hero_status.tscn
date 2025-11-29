@@ -26,7 +26,7 @@ shadow_offset = Vector2(0, 2)
 [node name="HeroStatus" type="Panel"]
 self_modulate = Color(1.128, 1.437, 0.277, 1)
 custom_minimum_size = Vector2(450, 40)
-offset_right = 500.0
+offset_right = 450.0
 offset_bottom = 40.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_ssagv")
@@ -123,6 +123,7 @@ offset_top = -20.5
 offset_right = 40.0
 offset_bottom = 15.5
 grow_vertical = 2
+mouse_filter = 2
 theme_override_fonts/normal_font = ExtResource("1_53fmm")
 theme_override_font_sizes/normal_font_size = 32
 bbcode_enabled = true
@@ -175,6 +176,7 @@ offset_top = -20.5
 offset_right = 40.0
 offset_bottom = 15.5
 grow_vertical = 2
+mouse_filter = 2
 theme_override_fonts/normal_font = ExtResource("1_53fmm")
 theme_override_font_sizes/normal_font_size = 32
 bbcode_enabled = true
@@ -236,6 +238,7 @@ uppercase = true
 [node name="Value" type="RichTextLabel" parent="StatsPanel/Panel/Stats/POW/ATK"]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
+mouse_filter = 2
 theme_override_fonts/normal_font = ExtResource("1_53fmm")
 theme_override_font_sizes/normal_font_size = 32
 bbcode_enabled = true
@@ -260,6 +263,7 @@ uppercase = true
 [node name="Value" type="RichTextLabel" parent="StatsPanel/Panel/Stats/POW/PSY"]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
+mouse_filter = 2
 theme_override_fonts/normal_font = ExtResource("1_53fmm")
 theme_override_font_sizes/normal_font_size = 32
 bbcode_enabled = true
@@ -288,6 +292,7 @@ uppercase = true
 [node name="Value" type="RichTextLabel" parent="StatsPanel/Panel/Stats/SUB/OVR"]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
+mouse_filter = 2
 theme_override_fonts/normal_font = ExtResource("1_53fmm")
 theme_override_font_sizes/normal_font_size = 32
 bbcode_enabled = true
@@ -312,6 +317,7 @@ uppercase = true
 [node name="Value" type="RichTextLabel" parent="StatsPanel/Panel/Stats/SUB/SPD"]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
+mouse_filter = 2
 theme_override_fonts/normal_font = ExtResource("1_53fmm")
 theme_override_font_sizes/normal_font_size = 32
 bbcode_enabled = true
@@ -340,6 +346,7 @@ uppercase = true
 [node name="Value" type="RichTextLabel" parent="StatsPanel/Panel/Stats/AIM/AIM"]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
+mouse_filter = 2
 theme_override_fonts/normal_font = ExtResource("1_53fmm")
 theme_override_font_sizes/normal_font_size = 32
 bbcode_enabled = true
@@ -363,6 +370,7 @@ uppercase = true
 [node name="Value" type="RichTextLabel" parent="StatsPanel/Panel/Stats/AIM/AimBonus"]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
+mouse_filter = 2
 theme_override_fonts/normal_font = ExtResource("1_53fmm")
 theme_override_font_sizes/normal_font_size = 32
 bbcode_enabled = true
@@ -391,6 +399,7 @@ uppercase = true
 [node name="Value" type="RichTextLabel" parent="StatsPanel/Panel/Stats/DEF/KIN"]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
+mouse_filter = 2
 theme_override_fonts/normal_font = ExtResource("1_53fmm")
 theme_override_font_sizes/normal_font_size = 32
 bbcode_enabled = true
@@ -415,6 +424,7 @@ uppercase = true
 [node name="Value" type="RichTextLabel" parent="StatsPanel/Panel/Stats/DEF/NRG"]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
+mouse_filter = 2
 theme_override_fonts/normal_font = ExtResource("1_53fmm")
 theme_override_font_sizes/normal_font_size = 32
 bbcode_enabled = true
@@ -426,9 +436,9 @@ layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_left = 7.0
+offset_left = 1.0
 offset_top = -17.5
-offset_right = 159.0
+offset_right = 153.0
 offset_bottom = 17.5
 grow_vertical = 2
 
@@ -447,26 +457,6 @@ texture_normal = ExtResource("6_huwb8")
 ignore_texture_size = true
 stretch_mode = 3
 
-[node name="Right" type="TextureButton" parent="Role"]
-modulate = Color(0.12, 0.12, 0.12, 0.9607843)
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 1
-anchors_preset = 6
-anchor_left = 1.0
-anchor_top = 0.5
-anchor_right = 1.0
-anchor_bottom = 0.5
-offset_left = -41.0
-offset_top = -20.0
-offset_right = 6.0
-offset_bottom = 20.0
-grow_horizontal = 0
-grow_vertical = 2
-texture_normal = ExtResource("6_huwb8")
-ignore_texture_size = true
-stretch_mode = 3
-flip_h = true
-
 [node name="Window" type="Control" parent="Role"]
 modulate = Color(1, 1, 1, 0.88235295)
 clip_contents = true
@@ -477,13 +467,12 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -38.0
+offset_left = -44.0
 offset_top = -22.0
-offset_right = 38.0
+offset_right = 32.0
 offset_bottom = 22.0
 grow_horizontal = 2
 grow_vertical = 2
-metadata/_edit_lock_ = true
 metadata/_edit_group_ = true
 
 [node name="HBox" type="HBoxContainer" parent="Role/Window"]
@@ -533,6 +522,26 @@ horizontal_alignment = 1
 vertical_alignment = 1
 uppercase = true
 
+[node name="Right" type="TextureButton" parent="Role"]
+modulate = Color(0.12, 0.12, 0.12, 0.9607843)
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -52.0
+offset_top = -20.0
+offset_right = -5.0
+offset_bottom = 20.0
+grow_horizontal = 0
+grow_vertical = 2
+texture_normal = ExtResource("6_huwb8")
+ignore_texture_size = true
+stretch_mode = 3
+flip_h = true
+
 [node name="HeroName" type="Label" parent="."]
 layout_mode = 1
 anchors_preset = 8
@@ -540,9 +549,9 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -59.5
+offset_left = -76.0
 offset_top = -23.5
-offset_right = 59.5
+offset_right = 43.0
 offset_bottom = 23.5
 grow_horizontal = 2
 grow_vertical = 2

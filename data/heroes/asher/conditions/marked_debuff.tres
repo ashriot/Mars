@@ -10,4 +10,5 @@ condition_name = "Marked"
 icon = ExtResource("1_n5s43")
 description = "[i]Heroes gain +25% AIM against this target.[p]Lasts until Asher shifts."
 condition_type = 1
+incoming_aim_mod = 25
 metadata/_custom_type_script = "uid://df30dm288ne1d"

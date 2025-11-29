@@ -138,7 +138,7 @@ func _get_dynamic_potency(attacker: ActorCard, _target: ActorCard, _context: Dic
 		var remaining_focus = 0
 		if attacker is HeroCard:
 			remaining_focus = max(0, attacker.current_focus)
-
+		print("Focus Potency: ", potency * (1.0 + (potency_scalar_per_focus * remaining_focus)))
 		return potency * (1.0 + (potency_scalar_per_focus * remaining_focus))
 
 	return potency
