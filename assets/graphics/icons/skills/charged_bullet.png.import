@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://mnou58qeo8yu"
-path="res://.godot/imported/hexagon2.png-2c7d1307530d8e321d2faefee67e92df.ctex"
+uid="uid://crqjk4tu5bvlv"
+path="res://.godot/imported/charged_bullet.png-2ec3c8402d9ac8fffb781611f1627c81.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/icons/map/hexagon2.png"
-dest_files=["res://.godot/imported/hexagon2.png-2c7d1307530d8e321d2faefee67e92df.ctex"]
+source_file="res://assets/graphics/icons/skills/charged_bullet.png"
+dest_files=["res://.godot/imported/charged_bullet.png-2ec3c8402d9ac8fffb781611f1627c81.ctex"]
 
 [params]
 

@@ -2,11 +2,11 @@
 
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="1_53fmm"]
 [ext_resource type="Script" uid="uid://cxkviuaghnjrw" path="res://src/map/hero_status.gd" id="1_hfba2"]
-[ext_resource type="Texture2D" uid="uid://dsut0jqlq77vv" path="res://assets/graphics/icons/textures/diamond_sm.png" id="4_huwb8"]
+[ext_resource type="Texture2D" uid="uid://cj1mha2fhb12h" path="res://assets/graphics/icons/textures/bolt_sm.png" id="5_bwxda"]
 [ext_resource type="Texture2D" uid="uid://cqweju3y7kwst" path="res://assets/graphics/icons/textures/shield_sm.png" id="5_huwb8"]
 [ext_resource type="Texture2D" uid="uid://y2kx6im08fe7" path="res://assets/graphics/icons/map/cancel.png" id="5_yqtn3"]
 [ext_resource type="Texture2D" uid="uid://jdpryp48lvvd" path="res://assets/graphics/icons/textures/chevron_h.png" id="6_huwb8"]
-[ext_resource type="Texture2D" uid="uid://b6nbdnranryyc" path="res://assets/graphics/icons/textures/drop_sm.png" id="6_yqtn3"]
+[ext_resource type="Texture2D" uid="uid://dryq65tycahj3" path="res://assets/graphics/icons/textures/band-aid.png" id="7_yqtn3"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ssagv"]
 bg_color = Color(1, 1, 1, 1)
@@ -198,7 +198,7 @@ offset_right = 16.0
 offset_bottom = 16.0
 grow_horizontal = 2
 grow_vertical = 2
-texture = ExtResource("4_huwb8")
+texture = ExtResource("5_bwxda")
 expand_mode = 1
 
 [node name="Total" type="Label" parent="StatsPanel/Panel/Stats/Resources/Focus"]
@@ -276,7 +276,7 @@ theme_override_constants/separation = 30
 alignment = 2
 
 [node name="OVR" type="HBoxContainer" parent="StatsPanel/Panel/Stats/SUB"]
-modulate = Color(0.7166667, 0.5, 1, 1)
+modulate = Color(0.52156866, 0.42745098, 1, 1)
 custom_minimum_size = Vector2(0, 41)
 layout_mode = 2
 theme_override_constants/separation = 10
@@ -559,6 +559,7 @@ theme_override_colors/font_color = Color(0.12156863, 0.12156863, 0.12156863, 1)
 theme_override_fonts/font = ExtResource("1_53fmm")
 theme_override_font_sizes/font_size = 36
 text = "asher"
+horizontal_alignment = 1
 vertical_alignment = 1
 uppercase = true
 
@@ -575,13 +576,14 @@ offset_right = -109.0
 offset_bottom = 13.5
 grow_horizontal = 0
 grow_vertical = 2
+theme_override_constants/separation = -2
 alignment = 2
 
 [node name="Focused" type="TextureRect" parent="Boons"]
 modulate = Color(0.12156863, 0.12156863, 0.12156863, 1)
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
-texture = ExtResource("4_huwb8")
+texture = ExtResource("5_bwxda")
 expand_mode = 1
 
 [node name="Armored" type="TextureRect" parent="Boons"]
@@ -611,21 +613,21 @@ alignment = 2
 modulate = Color(0.12156863, 0.12156863, 0.12156863, 1)
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
-texture = ExtResource("6_yqtn3")
+texture = ExtResource("7_yqtn3")
 expand_mode = 1
 
 [node name="Drop2" type="TextureRect" parent="Injuries"]
 modulate = Color(0.12156863, 0.12156863, 0.12156863, 1)
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
-texture = ExtResource("6_yqtn3")
+texture = ExtResource("7_yqtn3")
 expand_mode = 1
 
 [node name="Drop3" type="TextureRect" parent="Injuries"]
 modulate = Color(0.12156863, 0.12156863, 0.12156863, 1)
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
-texture = ExtResource("6_yqtn3")
+texture = ExtResource("7_yqtn3")
 expand_mode = 1
 
 [connection signal="pressed" from="Role/Left" to="." method="_on_left_pressed"]

@@ -6,15 +6,15 @@ enum Stats {
 }
 
 var actor_name: String
-var max_hp: int = 15
+var max_hp: int = 0
 var starting_guard: int = 0
 var starting_focus: int = 4
-var attack: int = 5
-var psyche: int = 5
-var overload: int = 15
-var speed: int = 5
+var attack: int = 0
+var psyche: int = 0
+var overload: int = 0
+var speed: int = 0
 var aim: int = 0
-var aim_bonus: int = 50
+var aim_bonus: int = 0
 var kinetic_defense: int = 0
 var energy_defense: int = 0
 
@@ -44,7 +44,7 @@ func add_stat(stat: Stats, value: int):
 		Stats.NRG_DEF: energy_defense = clampi(energy_defense + value, 0, 90)
 
 func _to_string() -> String:
-	return "%s | HP:%d GRD:%d | ATK:%d PSY:%d OVR:%d SPD:%d | AIM:%d%% KIN:%d%% NRG:%d%%" % [
+	return "%s | HP:%d GRD:%d\nATK:%d PSY:%d OVR:%d SPD:%d\nAIM:%d%% DMG: %d KIN:%d%% NRG:%d%%" % [
 		actor_name,
 		max_hp,
 		starting_guard,
@@ -53,6 +53,7 @@ func _to_string() -> String:
 		overload,
 		speed,
 		aim,
+		aim_bonus,
 		kinetic_defense,
 		energy_defense
 	]

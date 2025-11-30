@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://bs7vlao78wiht" path="res://src/battle/action_button.gd" id="1_juqvx"]
 [ext_resource type="Script" uid="uid://m4vn3jl6sqd6" path="res://src/core/rich_tooltip.gd" id="2_83fjm"]
 [ext_resource type="Texture2D" uid="uid://dldmpu0c4mvsl" path="res://assets/graphics/icons/skills/empty-chessboard.png" id="2_pk42m"]
-[ext_resource type="Texture2D" uid="uid://dsut0jqlq77vv" path="res://assets/graphics/icons/textures/diamond_sm.png" id="3_lyfxd"]
+[ext_resource type="Texture2D" uid="uid://cj1mha2fhb12h" path="res://assets/graphics/icons/textures/bolt_sm.png" id="4_83fjm"]
 [ext_resource type="Texture2D" uid="uid://ebo48y7vo0tu" path="res://assets/graphics/glyphs/ps/ps_circle_normal.png" id="4_pk42m"]
 [ext_resource type="Texture2D" uid="uid://bd33lt3i3y1f5" path="res://assets/graphics/glyphs/ps/ps_circle_pressed.png" id="5_mvr6q"]
 [ext_resource type="Script" uid="uid://b684sdqsvpn3p" path="res://src/battle/dynamic_glyph.gd" id="6_lyfxd"]
@@ -132,42 +132,42 @@ metadata/_edit_group_ = true
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 mouse_filter = 2
-texture = ExtResource("3_lyfxd")
+texture = ExtResource("4_83fjm")
 expand_mode = 1
 
 [node name="Bolt2" type="TextureRect" parent="FocusPips"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 mouse_filter = 2
-texture = ExtResource("3_lyfxd")
+texture = ExtResource("4_83fjm")
 expand_mode = 1
 
 [node name="Bolt3" type="TextureRect" parent="FocusPips"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 mouse_filter = 2
-texture = ExtResource("3_lyfxd")
+texture = ExtResource("4_83fjm")
 expand_mode = 1
 
 [node name="Bolt4" type="TextureRect" parent="FocusPips"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 mouse_filter = 2
-texture = ExtResource("3_lyfxd")
+texture = ExtResource("4_83fjm")
 expand_mode = 1
 
 [node name="Bolt5" type="TextureRect" parent="FocusPips"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 mouse_filter = 2
-texture = ExtResource("3_lyfxd")
+texture = ExtResource("4_83fjm")
 expand_mode = 1
 
 [node name="Bolt6" type="TextureRect" parent="FocusPips"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 mouse_filter = 2
-texture = ExtResource("3_lyfxd")
+texture = ExtResource("4_83fjm")
 expand_mode = 1
 
 [node name="DynamicGlyph" type="TextureButton" parent="." node_paths=PackedStringArray("parent_node")]

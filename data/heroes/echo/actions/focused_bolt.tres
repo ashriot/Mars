@@ -10,7 +10,6 @@
 [sub_resource type="Resource" id="Resource_6nryw"]
 script = ExtResource("3_284pn")
 potency = 0.2
-power_type = 1
 damage_type = 1
 potency_scalar_per_focus = 1.0
 metadata/_custom_type_script = "uid://d0eibi4b735ay"

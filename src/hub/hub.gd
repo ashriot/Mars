@@ -10,7 +10,7 @@ signal head_out
 
 
 func _ready():
-	bits_label.text = "Bits: %d" % SaveSystem.bits
+	bits_label.text = "BITS: %d" % SaveSystem.bits
 
 func _on_head_out_pressed() -> void:
 	RunManager.current_dungeon_tier = 0

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Action" load_steps=10 format=3 uid="uid://c1tsuo00ej03r"]
+[gd_resource type="Resource" script_class="Action" load_steps=11 format=3 uid="uid://c1tsuo00ej03r"]
 
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_onicn"]
 [ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://data/scripts/conditions/hit_trigger.gd" id="2_fkay3"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://data/scripts/action_effects/pre_hit_trigger.gd" id="4_fkay3"]
 [ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/action_effects/effect_damage.gd" id="4_rvc4x"]
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="5_h4aa8"]
+[ext_resource type="Texture2D" uid="uid://crqjk4tu5bvlv" path="res://assets/graphics/icons/skills/charged_bullet.png" id="6_fgaxn"]
 
 [sub_resource type="Resource" id="Resource_mu8rt"]
 script = ExtResource("3_fgaxn")
@@ -21,7 +22,7 @@ metadata/_custom_type_script = "uid://bhpiwhufv87v7"
 
 [sub_resource type="Resource" id="Resource_dq0ry"]
 script = ExtResource("4_rvc4x")
-potency = 1.25
+potency = 1.5
 damage_type = 1
 on_hit_triggers = Array[ExtResource("2_fkay3")]([SubResource("Resource_ol13h")])
 metadata/_custom_type_script = "uid://d0eibi4b735ay"
@@ -29,6 +30,7 @@ metadata/_custom_type_script = "uid://d0eibi4b735ay"
 [resource]
 script = ExtResource("5_h4aa8")
 action_name = "Charged Shot"
+icon = ExtResource("6_fgaxn")
 description = "Deals {atk*1.25} {nrg} damage.[p]If target is BREACHED, gain {foc}{foc}."
 is_shift_action = true
 effects = Array[ExtResource("1_onicn")]([SubResource("Resource_dq0ry")])

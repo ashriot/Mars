@@ -73,6 +73,7 @@ func _add_stats(base: ActorStats, additional: ActorStats):
 	base.overload += additional.overload
 	base.speed += additional.speed
 	base.aim = clampi(base.aim + additional.aim, 0, 75)
+	base.aim_bonus += additional.aim_bonus
 	base.kinetic_defense = clampi(base.kinetic_defense + additional.kinetic_defense, 0, 90)
 	base.energy_defense = clampi(base.energy_defense + additional.energy_defense, 0, 90)
 

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://docm1w42qw1pf"
-path="res://.godot/imported/exit.png-fec9cf5d2cd26d690e34dce7fdde0f6a.ctex"
+uid="uid://dryq65tycahj3"
+path="res://.godot/imported/band-aid.png-6f38b55eafc866b9a65099d9b15d3a53.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/icons/map/exit.png"
-dest_files=["res://.godot/imported/exit.png-fec9cf5d2cd26d690e34dce7fdde0f6a.ctex"]
+source_file="res://assets/graphics/icons/textures/band-aid.png"
+dest_files=["res://.godot/imported/band-aid.png-6f38b55eafc866b9a65099d9b15d3a53.ctex"]
 
 [params]
 

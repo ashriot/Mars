@@ -6,12 +6,12 @@
 [ext_resource type="PackedScene" uid="uid://dwpde7pjb1jds" path="res://src/battle/debuff.tscn" id="3_1mnyd"]
 [ext_resource type="PackedScene" uid="uid://be3t7advgy14o" path="res://src/battle/buff.tscn" id="3_pdx0h"]
 [ext_resource type="Texture2D" uid="uid://bhk28mg1reyry" path="res://assets/graphics/glyphs/ps/ps_dpad_down_normal.png" id="4_e8ixv"]
-[ext_resource type="Texture2D" uid="uid://05lare8hgtys" path="res://assets/graphics/icons/textures/bullet.png" id="4_l4hbp"]
 [ext_resource type="FontVariation" uid="uid://c0je4m574ytir" path="res://data/theme/fonts/suse_mono.tres" id="5_puinb"]
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="6_pdx0h"]
 [ext_resource type="Texture2D" uid="uid://bi50x3lsg4gpg" path="res://assets/graphics/icons/textures/shield.png" id="8_g4dne"]
 [ext_resource type="FontVariation" uid="uid://da34kbi1ndel7" path="res://data/theme/fonts/archivo.tres" id="10_g4dne"]
-[ext_resource type="Texture2D" uid="uid://dni1rovx6ciyq" path="res://assets/graphics/icons/textures/bolt_sm.png" id="10_hupy2"]
+[ext_resource type="Texture2D" uid="uid://05lare8hgtys" path="res://assets/graphics/icons/textures/bullet.png" id="10_hupy2"]
+[ext_resource type="Texture2D" uid="uid://cpdb7o0qmlafb" path="res://assets/graphics/icons/textures/fire.png" id="10_mu8yp"]
 [ext_resource type="Script" uid="uid://m4vn3jl6sqd6" path="res://src/core/rich_tooltip.gd" id="13_mu8yp"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8i7ma"]
@@ -447,8 +447,8 @@ offset_bottom = 32.0
 value = 65.0
 fill_mode = 3
 nine_patch_stretch = true
-texture_under = ExtResource("4_l4hbp")
-texture_progress = ExtResource("4_l4hbp")
+texture_under = ExtResource("10_hupy2")
+texture_progress = ExtResource("10_hupy2")
 tint_under = Color(0, 0, 0, 0.5019608)
 tint_progress = Color(1, 0.4745098, 0.16862746, 1)
 
@@ -484,8 +484,8 @@ grow_horizontal = 0
 value = 65.0
 fill_mode = 3
 nine_patch_stretch = true
-texture_under = ExtResource("10_hupy2")
-texture_progress = ExtResource("10_hupy2")
+texture_under = ExtResource("10_mu8yp")
+texture_progress = ExtResource("10_mu8yp")
 tint_under = Color(0, 0, 0, 0.5019608)
 tint_progress = Color(0.5882353, 0.32941177, 1, 1)
 

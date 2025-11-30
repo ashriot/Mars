@@ -1,10 +1,11 @@
-[gd_resource type="Resource" script_class="EnemyData" load_steps=7 format=3 uid="uid://s6fcg8egbavh"]
+[gd_resource type="Resource" script_class="EnemyData" load_steps=8 format=3 uid="uid://s6fcg8egbavh"]
 
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_dv6wa"]
 [ext_resource type="Resource" uid="uid://d0m01fmh2ig2s" path="res://data/enemies/actions/gunshot.tres" id="2_ka13y"]
 [ext_resource type="Resource" uid="uid://cbruwytkh444f" path="res://data/enemies/actions/potshot.tres" id="3_842et"]
 [ext_resource type="Resource" uid="uid://40l6j7e7d5e2" path="res://data/enemies/actions/double_shot.tres" id="4_3ihxs"]
 [ext_resource type="Resource" uid="uid://c0qexgdf5xce2" path="res://data/enemies/actions/mow_down.tres" id="5_rovij"]
+[ext_resource type="Script" uid="uid://bkbx3bonlo8gv" path="res://data/scripts/enemies/ai_override.gd" id="6_dv6wa"]
 [ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://data/scripts/data/enemy_data.gd" id="7_n6qc5"]
 
 [resource]
@@ -18,8 +19,8 @@ attack_rank = 4
 psyche_rank = 1
 overload_rank = 2
 speed_rank = 4
-aim_rank = 2
-kinetic_defense_rank = 3
+aim_rank = 3
+kinetic_defense_rank = 2
 energy_defense_rank = 3
 action_deck = Array[ExtResource("1_dv6wa")]([ExtResource("2_ka13y"), ExtResource("3_842et"), ExtResource("4_3ihxs"), ExtResource("5_rovij")])
 metadata/_custom_type_script = "uid://b3t5esgv1d2ku"

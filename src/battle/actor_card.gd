@@ -572,8 +572,8 @@ func get_incoming_aim_mods() -> int:
 		mod += condition.incoming_aim_mod
 	return mod
 
-func get_crit_damage_bonus() -> float:
-	return 0.5
+func get_crit_damage_bonus() -> int:
+	return current_stats.aim_bonus
 
 func get_damage_dealt_scalar(target: ActorCard) -> float:
 	var scalar: float = 1.0

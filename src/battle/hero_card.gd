@@ -43,7 +43,7 @@ func setup(data: HeroData):
 
 	duration /= battle_manager.battle_speed
 	name_label.text = hero_data.stats.actor_name
-	current_focus = 4
+	current_focus = hero_data.stats.starting_focus
 
 	if hero_data.boon_focused:
 		current_focus = clamp(current_focus + 5, 0, 10)

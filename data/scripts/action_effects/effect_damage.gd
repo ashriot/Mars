@@ -80,13 +80,13 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 				power_for_hit += attacker.current_stats.overload
 				print("added overload: ", power_for_hit)
 
-			var base_hit_damage: float = power_for_hit * dynamic_potency
-
 			if is_crit:
 				print("Critical Hit!")
-				var crit_bonus: float = 0.0
+				var crit_bonus: int = 0
 				crit_bonus = attacker.get_crit_damage_bonus()
-				base_hit_damage *= (1.0 + crit_bonus)
+				power_for_hit += crit_bonus
+
+			var base_hit_damage: float = power_for_hit * dynamic_potency
 
 			var final_dmg_float = float(base_hit_damage)
 			var def_mod = 1.0 if not target.is_breached else 1.0

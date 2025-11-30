@@ -6,9 +6,10 @@
 script = ExtResource("1_1eapi")
 equipment_id = "kevlar_vest"
 item_name = "Kevlar Vest"
-hp_rank = 4
-guard_rank = 3
-speed_rank = 2
-kinetic_defense_rank = 4
+level = 2
+hp_rank = 5
+guard_rank = 4
+speed_rank = 1
+kinetic_defense_rank = 3
 energy_defense_rank = 3
 metadata/_custom_type_script = "uid://djmsh5w0dbytx"

@@ -47,6 +47,7 @@ func calculate_stats() -> ActorStats:
 		stats.attack = _calc_stat(attack_rank) if attack_rank > 0 else 0
 		stats.psyche = _calc_stat(psyche_rank) if psyche_rank > 0 else 0
 		stats.overload = _calc_stat(overload_rank, 0) * 3 if overload_rank > 0 else 0
+		stats.aim_bonus = _calc_stat(aim_rank) if aim_rank > 0 else 0
 
 		stats.aim = int(level / 2.0) + ((aim_rank * 4) if aim_rank > 0 else 0)
 		stats.aim = clampi(stats.aim, 0, 75)

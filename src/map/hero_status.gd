@@ -56,7 +56,7 @@ func _toggle_stats_pop():
 
 	pop_tween = create_tween().set_parallel()
 	# TRANS_BACK gives it that nice "overshoot" bounce effect
-	pop_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	pop_tween.set_trans(Tween.TRANS_CIRC).set_ease(Tween.EASE_OUT)
 
 	if is_stats_popped:
 		# Pop Down (Return to Home)
@@ -94,7 +94,9 @@ func refresh_view():
 	next_role_name.text = defs[next_idx].role_id
 
 	hero_name.text = linked_hero_data.hero_name
-	self.self_modulate = linked_hero_data.current_role.color
+	var role_color = linked_hero_data.current_role.color
+	self.self_modulate = role_color
+	$StatsPanel/Panel/Stats/Resources.modulate = role_color
 	$StatsPanel/Panel.self_modulate = linked_hero_data.current_role.color
 	$StatsPanel/Panel/CloseBtn.self_modulate = linked_hero_data.current_role.color
 
@@ -108,7 +110,7 @@ func refresh_view():
 	ovr.text = _stringify(stats.overload, 3)
 	spd.text = _stringify(stats.speed, 3)
 	aim.text = _stringify(stats.aim) + "%"
-	dmg.text = _stringify(stats.aim_bonus) + "%"
+	dmg.text = _stringify(stats.aim_bonus, 3)
 	kin.text = _stringify(stats.kinetic_defense) + "%"
 	nrg.text = _stringify(stats.energy_defense) + "%"
 
