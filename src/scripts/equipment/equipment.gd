@@ -65,9 +65,9 @@ func calculate_stats() -> ActorStats:
 		if ratings.has(ActorStats.Stats.FOC):
 			stats.starting_focus = ratings[ActorStats.Stats.FOC]
 		if ratings.has(ActorStats.Stats.KIN_DEF):
-			stats.kinetic_defense = int(rank / 2.0) + (ratings[ActorStats.Stats.KIN_DEF] * 15) - 10
+			stats.kinetic_defense = (ratings[ActorStats.Stats.KIN_DEF] * 5) + 10
 		if ratings.has(ActorStats.Stats.NRG_DEF):
-			stats.energy_defense = int(rank / 2.0) + (ratings[ActorStats.Stats.NRG_DEF] * 15) - 10
+			stats.energy_defense = (ratings[ActorStats.Stats.NRG_DEF] * 5) + 10
 
 	elif slot == Slot.WEAPON:
 		if ratings.has(ActorStats.Stats.ATK):
@@ -77,7 +77,7 @@ func calculate_stats() -> ActorStats:
 		if ratings.has(ActorStats.Stats.OVR):
 			stats.overload = _calc_stat(ratings[ActorStats.Stats.OVR], 0) * 3
 		if ratings.has(ActorStats.Stats.AIM):
-			stats.aim = _calc_stat(ratings[ActorStats.Stats.AIM])
+			stats.aim = (ratings[ActorStats.Stats.KIN_DEF] * 5) + 10
 			stats.aim_dmg = _calc_stat(ratings[ActorStats.Stats.AIM])
 
 	if ratings.has(ActorStats.Stats.SPD):

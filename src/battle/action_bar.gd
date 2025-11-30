@@ -192,12 +192,12 @@ func stop_flashing_panel():
 
 func _on_state_changed(state: BattleManager.State):
 	if not active_hero: return
-	var is_forced = state == BattleManager.State.FORCED_TARGET
+	var is_disabled = state in [BattleManager.State.FORCED_TARGET, BattleManager.State.EXECUTING_ACTION]
 	for button in actions_ui.get_children():
 		if button is ActionButton:
-			button.disabled = is_forced
-	left_shift_button.disabled = is_forced or active_hero.shifted_this_turn
-	right_shift_button.disabled = is_forced or active_hero.shifted_this_turn
+			button.disabled = is_disabled
+	left_shift_button.disabled = is_disabled or active_hero.shifted_this_turn
+	right_shift_button.disabled = is_disabled or active_hero.shifted_this_turn
 
 func slide_in(duration: float = 0.2):
 	sliding = true

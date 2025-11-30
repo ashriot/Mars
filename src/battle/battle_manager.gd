@@ -175,6 +175,7 @@ func find_and_start_next_turn():
 		return
 	if current_actor:
 		current_actor.highlight(false)
+	change_state(State.LOADING)
 
 	var projection = _run_ct_simulation()
 
@@ -194,7 +195,6 @@ func find_and_start_next_turn():
 
 	current_actor = winner
 	if winner is HeroCard:
-		change_state(State.LOADING)
 		if action_bar.sliding:
 			await action_bar.slide_finished
 		change_state(State.PLAYER_ACTION)
@@ -289,6 +289,7 @@ func _finish_hero_turn():
 	if focused_button:
 		focused_button.focused(false)
 		focused_button = null
+	change_state(BattleManager.State.PLAYER_ACTION)
 	if not is_shift_action:
 		current_action = null
 		await current_actor.on_turn_ended()
@@ -375,7 +376,7 @@ func _on_actor_conditions_changed():
 	_update_all_enemy_intents()
 
 func _on_action_button_pressed(button: ActionButton):
-	if current_state in [State.LOADING, State.FORCED_TARGET]: return
+	if current_state in [State.LOADING, State.FORCED_TARGET, State.EXECUTING_ACTION]: return
 
 	var action = button.action
 	if current_actor.current_focus < button.focus_cost:
@@ -386,6 +387,7 @@ func _on_action_button_pressed(button: ActionButton):
 	set_current_action(action)
 
 func _on_hero_clicked(target_hero: HeroCard):
+	if not current_action: return
 	if not target_hero.is_valid_target: return
 
 	print("Target selected: ", target_hero.actor_name)
@@ -398,6 +400,7 @@ func _on_hero_clicked(target_hero: HeroCard):
 	await _finish_hero_turn()
 
 func _on_enemy_clicked(target_enemy: EnemyCard):
+	if not current_action: return
 	if not target_enemy.is_valid_target: return
 
 	if target_enemy.is_defeated:
