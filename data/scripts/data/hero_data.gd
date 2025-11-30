@@ -33,9 +33,7 @@ var unlocked_roles:
 var current_role: RoleDefinition :
 	get : return (role_definitions[active_role_index])
 
-# ===================================================================
-# 1. STAT CALCULATION
-# ===================================================================
+
 func calculate_stats():
 	stats = ActorStats.new()
 	stats.actor_name = hero_name
@@ -62,6 +60,8 @@ func calculate_stats():
 		if role_def.root_node:
 			role_def.init_structure() # Ensure IDs exist
 			_process_node_stats(role_def.root_node, stats)
+
+	stats.aim += 10
 
 	print(stats)
 

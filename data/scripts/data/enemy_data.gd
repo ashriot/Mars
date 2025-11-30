@@ -34,17 +34,17 @@ func calculate_stats():
 	stats.starting_guard = int(level / 5) + guard_rank + 1
 	stats.attack = _calc_stat(attack_rank)
 	stats.psyche = _calc_stat(psyche_rank)
-	stats.overload = _calc_stat(overload_rank)
 	stats.speed = _calc_stat(speed_rank)
-	stats.aim = int(level / 2) + aim_rank * 5
+	stats.overload = _calc_stat(overload_rank, 0) * 3
+	stats.aim = 10 + int(level / 2) + aim_rank * 5
 	stats.kinetic_defense = kinetic_defense_rank * 20 - 10
 	stats.energy_defense = energy_defense_rank * 20 - 10
 
 	print(stats)
 
-func _calc_stat(rank: int) -> int:
+func _calc_stat(rank: int, rank_bonus: int = 5) -> int:
 	var multiplier = _get_multiplier()
-	var value = int((rank + 5) * multiplier)
+	var value = int((rank + rank_bonus) * multiplier)
 	return int(value)
 
 func _get_multiplier() -> int:

@@ -40,31 +40,26 @@ enum Rarity { COMMON, RARE, EPIC, LEGENDARY }
 
 func calculate_stats() -> ActorStats:
 	var stats = ActorStats.new()
-	var multiplier = _get_multiplier()
 
-	stats.max_hp = _calc_stat(hp_rank, multiplier) * 5 if hp_rank > 0 else 0
-	stats.starting_guard = guard_rank  # Guard is flat, not scaled
-	stats.attack = _calc_stat(attack_rank, multiplier) if attack_rank > 0 else 0
-	stats.psyche = _calc_stat(psyche_rank, multiplier) if psyche_rank > 0 else 0
-	stats.overload = _calc_stat(overload_rank, multiplier) if overload_rank > 0 else 0
-	stats.speed = _calc_stat(speed_rank, _get_multiplier(4)) if speed_rank > 0 else 0
+	stats.speed = _calc_stat(speed_rank) / 2 if speed_rank > 0 else 0
 
-	# Guard formula: INT(level/10) + rank + 2
-	stats.starting_guard = int(level / 10) + guard_rank + 2 if guard_rank > 0 else 0
+	if slot == Slot.WEAPON:
+		stats.attack = _calc_stat(attack_rank) if attack_rank > 0 else 0
+		stats.psyche = _calc_stat(psyche_rank) if psyche_rank > 0 else 0
+		stats.overload = _calc_stat(overload_rank, 0) * 3 if overload_rank > 0 else 0
 
-	# aim formula: (level/4) + (rank * 5)
-	stats.aim = int(level / 4.0) + (aim_rank * 5) if aim_rank > 0 else 0
-
-	# Kinetic Defense formula: (level/2) + (rank * 15) - 10
-	stats.kinetic_defense = int(level / 2.0) + (kinetic_defense_rank * 15) - 10 if kinetic_defense_rank > 0 else 0
-
-	# Energy Defense formula: (level/2) + (rank * 15) - 10
-	stats.energy_defense = int(level / 2.0) + (energy_defense_rank * 15) - 10 if energy_defense_rank > 0 else 0
-
-	# Clamp defenses and aim to valid ranges
-	stats.aim = clampi(stats.aim, 0, 75)
-	stats.kinetic_defense = clampi(stats.kinetic_defense, 0, 90)
-	stats.energy_defense = clampi(stats.energy_defense, 0, 90)
+		stats.aim = int(level / 2.0) + ((aim_rank * 4) if aim_rank > 0 else 0)
+		stats.aim = clampi(stats.aim, 0, 75)
+	elif slot == Slot.ARMOR:
+		stats.starting_guard = guard_rank
+		stats.max_hp = _calc_stat(hp_rank) * 5 if hp_rank > 0 else 0
+		stats.starting_guard = int(level / 10) + guard_rank + 2 if guard_rank > 0 else 0
+		stats.overload = 0
+		stats.aim = 0
+		stats.kinetic_defense = int(level / 2.0) + (kinetic_defense_rank * 15) - 10
+		stats.energy_defense = int(level / 2.0) + (energy_defense_rank * 15) - 10
+		stats.kinetic_defense = clampi(stats.kinetic_defense, 0, 90)
+		stats.energy_defense = clampi(stats.energy_defense, 0, 90)
 
 	return stats
 
@@ -114,10 +109,10 @@ func get_save_data() -> Dictionary:
 	}
 
 func _get_multiplier(base: int = 5) -> float:
-	return int(pow((level + base), 2) * 0.048)
+	return pow((level + base), 2) * 0.048
 
-func _calc_stat(rank: int, multiplier: float) -> int:
-	return int(((rank + 5) * multiplier))
+func _calc_stat(rank: int, rank_bonus: int = 5) -> int:
+	return int(((rank + rank_bonus) * _get_multiplier()))
 
 static func create_from_save_data(data: Dictionary) -> Equipment:
 	var id = data.get("id", "")
