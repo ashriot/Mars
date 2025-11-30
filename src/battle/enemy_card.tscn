@@ -6,12 +6,12 @@
 [ext_resource type="PackedScene" uid="uid://dwpde7pjb1jds" path="res://src/battle/debuff.tscn" id="3_1mnyd"]
 [ext_resource type="PackedScene" uid="uid://be3t7advgy14o" path="res://src/battle/buff.tscn" id="3_pdx0h"]
 [ext_resource type="Texture2D" uid="uid://bhk28mg1reyry" path="res://assets/graphics/glyphs/ps/ps_dpad_down_normal.png" id="4_e8ixv"]
-[ext_resource type="FontVariation" uid="uid://c0je4m574ytir" path="res://data/theme/fonts/suse_mono.tres" id="5_puinb"]
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="6_pdx0h"]
 [ext_resource type="Texture2D" uid="uid://bi50x3lsg4gpg" path="res://assets/graphics/icons/textures/shield.png" id="8_g4dne"]
 [ext_resource type="FontVariation" uid="uid://da34kbi1ndel7" path="res://data/theme/fonts/archivo.tres" id="10_g4dne"]
 [ext_resource type="Texture2D" uid="uid://05lare8hgtys" path="res://assets/graphics/icons/textures/bullet.png" id="10_hupy2"]
 [ext_resource type="Texture2D" uid="uid://dltm5gttkde6o" path="res://assets/graphics/icons/textures/energy.png" id="10_mu8yp"]
+[ext_resource type="Texture2D" uid="uid://blq6w453dyibk" path="res://assets/graphics/sprites/enemies/camera-drone.png" id="12_mu8yp"]
 [ext_resource type="Script" uid="uid://m4vn3jl6sqd6" path="res://src/core/rich_tooltip.gd" id="13_mu8yp"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8i7ma"]
@@ -195,22 +195,37 @@ text = "40%"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Level" type="Label" parent="Panel"]
+[node name="Info" type="MarginContainer" parent="Panel"]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -115.0
+offset_left = -86.0
 offset_top = 6.0
-offset_right = 115.0
+offset_right = 86.0
 offset_bottom = 37.0
 grow_horizontal = 2
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.39215687)
-theme_override_constants/outline_size = 8
-theme_override_fonts/font = ExtResource("5_puinb")
+
+[node name="Text" type="Label" parent="Panel/Info"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_fonts/font = ExtResource("6_pdx0h")
 theme_override_font_sizes/font_size = 24
-text = "Rk.01 ELITE"
+text = "Rk. 01 ELITE"
 horizontal_alignment = 1
+
+[node name="Icon" type="TextureRect" parent="Panel/Info/Text"]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = -39.0
+offset_top = -15.5
+offset_right = -7.0
+offset_bottom = 16.5
+grow_vertical = 2
+texture = ExtResource("12_mu8yp")
+expand_mode = 1
 
 [node name="Title" type="Label" parent="Panel"]
 layout_mode = 1
@@ -271,7 +286,7 @@ value = 12.0
 show_percentage = false
 
 [node name="HeartIcon" type="TextureRect" parent="Panel/HP"]
-modulate = Color(1, 1, 1, 0.39215687)
+modulate = Color(0.19607843, 0.19607843, 0.19607843, 1)
 layout_mode = 1
 anchors_preset = 9
 anchor_bottom = 1.0
@@ -488,7 +503,7 @@ offset_right = 34.0
 offset_bottom = 36.0
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 3
+theme_override_constants/outline_size = 1
 theme_override_fonts/font = ExtResource("6_pdx0h")
 theme_override_font_sizes/font_size = 28
 text = "6"
@@ -508,7 +523,6 @@ offset_right = 221.0
 offset_bottom = 56.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.49019608)
 theme_override_constants/outline_size = 12
 theme_override_fonts/normal_font = ExtResource("10_g4dne")
 theme_override_font_sizes/normal_font_size = 28

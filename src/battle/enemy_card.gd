@@ -27,13 +27,13 @@ func setup(data: EnemyData, fight_level: int, is_elite: bool, is_boss: bool):
 	enemy_data = data
 	enemy_data.level = fight_level
 	enemy_data.calculate_stats()
-	$Panel/Level.text = "Rk. " + str(data.level)
+	$Panel/Info/Text.text = "Rk. " + str(data.level)
 	if is_elite:
-		$Panel/Level.text += " ELITE"
+		$Panel/Info/Text.text += " ELITE"
 		_apply_elite_scaling(enemy_data.stats)
 		name_label.modulate = Color.ORANGE_RED
 	elif is_boss:
-		$Panel/Level.text += " BOSS"
+		$Panel/Info/Text.text += " BOSS"
 		#_apply_boss_scaling(enemy_data.stats)
 		name_label.modulate = Color.MAGENTA
 	setup_base(enemy_data.stats)
@@ -271,10 +271,7 @@ func _update_intent_ui():
 	var first_effect = intended_action.effects[0]
 
 	if first_effect is Effect_Damage:
-		# We cast it to access its unique properties
 		var damage_effect: Effect_Damage = first_effect
-
-		# --- 3. Now your code will work ---
 		var power = get_power(damage_effect.power_type)
 
 		var intended_dmg = int(power * damage_effect.potency)
@@ -284,11 +281,11 @@ func _update_intent_ui():
 		var dmg_type = ""
 		match damage_effect.damage_type:
 			Action.DamageType.KINETIC:
-				dmg_type = "KIN"
+				dmg_type = Action._get_bbcode_icon("kinetic", 28)
 			Action.DamageType.ENERGY:
-				dmg_type = "NRG"
+				dmg_type = Action._get_bbcode_icon("energy", 28)
 			Action.DamageType.PIERCING:
-				dmg_type = "PRC"
+				dmg_type = Action._get_bbcode_icon("pierce", 28)
 
 		var hits_text = "x" + str(damage_effect.hit_count) if damage_effect.hit_count > 1 else ""
 
@@ -300,20 +297,22 @@ func _update_intent_ui():
 		if intended_targets:
 			if intended_targets.size() > 1:
 				if intended_action.target_type == Action.TargetType.RANDOM_ENEMY:
-					final_text += " > RANDOM"
+					final_text += " RANDOM"
 				else:
-					final_text += " > EVERYONE"
+					final_text += " EVERYONE"
 			else:
-				final_text += " > " + intended_targets[0].actor_name
+				var tar = intended_targets[0] as HeroCard
+				var col = tar.get_current_role().color.to_html()
+				final_text += " [color=" + col + "]" + intended_targets[0].actor_name
 
 		intent_text.text = final_text
 
 	else:
 		var final_text = intended_action.action_name
 		if intended_targets.size() > 1:
-			final_text += " -> EVERYONE"
+			final_text += " EVERYONE"
 		else:
-			final_text += " -> " + intended_targets[0].actor_name
+			final_text += " " + intended_targets[0].actor_name
 
 		intent_text.text = final_text
 	intent_tooltip.bbcode_text = intended_action.get_rich_description(self)

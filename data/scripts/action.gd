@@ -100,9 +100,9 @@ func _get_damage_string(damage_effect: Effect_Damage, attacker: ActorCard) -> St
 static var ICON_PATHS = {
 	"focus": "res://assets/graphics/icons/textures/bolt_sm.png",
 	"guard": "res://assets/graphics/icons/textures/shield_sm.png",
-	"kinetic": "res://assets/graphics/icons/textures/bullet.png",
-	"energy": "res://assets/graphics/icons/textures/energy_sm.png",
-	"piercing": "res://assets/graphics/icons/textures/pierce.png",
+	"kinetic": "res://assets/graphics/icons/img/bullet_out.png",
+	"energy": "res://assets/graphics/icons/img/energy_out.png",
+	"pierce": "res://assets/graphics/icons/img/pierce_out.png",
 }
 
 static func _get_bbcode_icon(icon_name: String, size: int = 24) -> String:
