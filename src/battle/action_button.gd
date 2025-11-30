@@ -16,12 +16,16 @@ signal pressed(action_button: ActionButton)
 var action : Action
 var user_focus: int
 var focus_cost: int
+var override_disabled: bool :
+	set(value):
+		override_disabled = value
+		button.disabled = value
 var disabled:
 	set(value):
-		button.disabled = value
+		button.disabled = value or override_disabled
 		if action:
 			if not value:
-				button.disabled = user_focus < focus_cost
+				button.disabled = user_focus < focus_cost or override_disabled
 	get: return button.disabled
 
 

@@ -23,6 +23,7 @@ var actions_on_screen_pos: Vector2
 var passive_flash_tween: Tween
 var flashing_tween: Tween
 var active_hero: HeroCard
+var buttons_disabled: bool
 
 
 func _ready():
@@ -36,6 +37,7 @@ func _ready():
 	left_shift_ui.modulate.a = 0.0
 	right_shift_ui.modulate.a = 0.0
 	actions_ui.modulate.a = 0.0
+	buttons_disabled = false
 
 	slide_out(0.0)
 
@@ -192,12 +194,13 @@ func stop_flashing_panel():
 
 func _on_state_changed(state: BattleManager.State):
 	if not active_hero: return
-	var is_disabled = state in [BattleManager.State.FORCED_TARGET, BattleManager.State.EXECUTING_ACTION]
+	buttons_disabled = state in [BattleManager.State.FORCED_TARGET]
+	print("Buttons Disabled: ", buttons_disabled)
 	for button in actions_ui.get_children():
 		if button is ActionButton:
-			button.disabled = is_disabled
-	left_shift_button.disabled = is_disabled or active_hero.shifted_this_turn
-	right_shift_button.disabled = is_disabled or active_hero.shifted_this_turn
+			button.override_disabled = buttons_disabled
+	left_shift_button.disabled = buttons_disabled or active_hero.shifted_this_turn
+	right_shift_button.disabled = buttons_disabled or active_hero.shifted_this_turn
 
 func slide_in(duration: float = 0.2):
 	sliding = true

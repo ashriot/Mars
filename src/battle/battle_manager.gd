@@ -31,6 +31,7 @@ signal battle_ended(won)
 # --- Actor Tracking ---
 var current_actor: ActorCard = null
 var current_action: Action = null
+var executing_action: Action = null
 var focused_button: ActionButton = null
 var actor_list: Array = []
 var TARGET_CT: int = 5000
@@ -171,6 +172,7 @@ func _run_ct_simulation(num_turns := 7) -> Array:
 	return projected_queue
 
 func find_and_start_next_turn():
+	executing_action = null
 	if current_state == State.BATTLE_OVER:
 		return
 	if current_actor:
@@ -285,13 +287,13 @@ func _focus_button(button: ActionButton):
 	focused_button.focused(true)
 
 func _finish_hero_turn():
-	var is_shift_action = current_action.is_shift_action
-	if focused_button:
+	var is_shift_action = executing_action.is_shift_action
+	if focused_button and not is_shift_action:
 		focused_button.focused(false)
 		focused_button = null
+	executing_action = null
 	change_state(BattleManager.State.PLAYER_ACTION)
 	if not is_shift_action:
-		current_action = null
 		await current_actor.on_turn_ended()
 		find_and_start_next_turn()
 	await wait()
@@ -306,6 +308,8 @@ func _apply_role_passive(hero: HeroCard):
 
 func execute_action(actor: ActorCard, action: Action, targets: Array, display_name: bool = true):
 	var parent_targets = targets
+	executing_action = current_action
+	current_action = null
 	if actor is HeroCard:
 		current_action_panel.hide()
 		actor.modify_focus(-action.focus_cost)
@@ -376,7 +380,7 @@ func _on_actor_conditions_changed():
 	_update_all_enemy_intents()
 
 func _on_action_button_pressed(button: ActionButton):
-	if current_state in [State.LOADING, State.FORCED_TARGET, State.EXECUTING_ACTION]: return
+	if current_state in [State.LOADING, State.FORCED_TARGET]: return
 
 	var action = button.action
 	if current_actor.current_focus < button.focus_cost:
@@ -387,7 +391,7 @@ func _on_action_button_pressed(button: ActionButton):
 	set_current_action(action)
 
 func _on_hero_clicked(target_hero: HeroCard):
-	if not current_action: return
+	if executing_action: return
 	if not target_hero.is_valid_target: return
 
 	print("Target selected: ", target_hero.actor_name)
@@ -400,7 +404,7 @@ func _on_hero_clicked(target_hero: HeroCard):
 	await _finish_hero_turn()
 
 func _on_enemy_clicked(target_enemy: EnemyCard):
-	if not current_action: return
+	if executing_action: return
 	if not target_enemy.is_valid_target: return
 
 	if target_enemy.is_defeated:
