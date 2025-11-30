@@ -1,10 +1,10 @@
 [gd_resource type="Resource" script_class="EnemyData" load_steps=6 format=3 uid="uid://d0c5qshgc3e8"]
 
-[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_cbp0k"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="1_cbp0k"]
 [ext_resource type="Resource" uid="uid://d0m01fmh2ig2s" path="res://data/enemies/actions/gunshot.tres" id="2_wckpy"]
 [ext_resource type="Resource" uid="uid://m5wgycabl2ij" path="res://data/enemies/actions/fortify.tres" id="4_j7iu0"]
-[ext_resource type="Script" uid="uid://bkbx3bonlo8gv" path="res://data/scripts/enemies/ai_override.gd" id="7_4w2r0"]
-[ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://data/scripts/data/enemy_data.gd" id="8_rvaar"]
+[ext_resource type="Script" uid="uid://bkbx3bonlo8gv" path="res://src/scripts/enemies/ai_override.gd" id="7_4w2r0"]
+[ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://src/scripts/data/enemy_data.gd" id="8_rvaar"]
 
 [resource]
 script = ExtResource("8_rvaar")

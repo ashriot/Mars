@@ -4,7 +4,7 @@
 [ext_resource type="Script" uid="uid://deoohlwp7dcfm" path="res://src/battle/battle_manager.gd" id="1_6cbqe"]
 [ext_resource type="PackedScene" uid="uid://cj2ylb1ld6ews" path="res://src/battle/hero_card.tscn" id="1_sft4c"]
 [ext_resource type="PackedScene" uid="uid://b4tt3yil85l7j" path="res://src/battle/enemy_card.tscn" id="1_u5n4n"]
-[ext_resource type="Script" uid="uid://dc5sk0b0jubvj" path="res://data/scripts/data/hero_data.gd" id="4_w6n6o"]
+[ext_resource type="Script" uid="uid://dc5sk0b0jubvj" path="res://src/scripts/data/hero_data.gd" id="4_w6n6o"]
 [ext_resource type="Resource" uid="uid://ctg8csrcqdj57" path="res://data/heroes/asher/asher.tres" id="5_16l6v"]
 [ext_resource type="Resource" uid="uid://b2bkd217htd2n" path="res://data/heroes/echo/echo.tres" id="6_vtpwn"]
 [ext_resource type="PackedScene" uid="uid://260uyw1v5su0" path="res://src/battle/action_bar.tscn" id="8_w6n6o"]

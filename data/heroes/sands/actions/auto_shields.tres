@@ -1,13 +1,13 @@
 [gd_resource type="Resource" script_class="Action" load_steps=14 format=3 uid="uid://dc2781k2lc1ma"]
 
-[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_8nxcm"]
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_8nxcm"]
 [ext_resource type="Texture2D" uid="uid://blsm0tksr6r2a" path="res://assets/graphics/icons/skills/heart-shield.png" id="2_5peya"]
-[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="2_jdtbr"]
-[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://data/scripts/conditions/condition.gd" id="3_rfxfv"]
-[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://data/scripts/conditions/trigger.gd" id="4_epwt4"]
-[ext_resource type="Script" uid="uid://nqyc4vuadjr5" path="res://data/scripts/action_effects/effect_healing.gd" id="5_epwt4"]
-[ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://data/scripts/action_effects/effect_apply_condition.gd" id="5_wnvyd"]
-[ext_resource type="Script" uid="uid://cu12q7dfj3hfe" path="res://data/scripts/action_effects/effect_modify_guard.gd" id="6_wnvyd"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="2_jdtbr"]
+[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://src/scripts/conditions/condition.gd" id="3_rfxfv"]
+[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://src/scripts/conditions/trigger.gd" id="4_epwt4"]
+[ext_resource type="Script" uid="uid://nqyc4vuadjr5" path="res://src/scripts/action_effects/effect_healing.gd" id="5_epwt4"]
+[ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://src/scripts/action_effects/effect_apply_condition.gd" id="5_wnvyd"]
+[ext_resource type="Script" uid="uid://cu12q7dfj3hfe" path="res://src/scripts/action_effects/effect_modify_guard.gd" id="6_wnvyd"]
 
 [sub_resource type="Resource" id="Resource_wnvyd"]
 script = ExtResource("5_epwt4")

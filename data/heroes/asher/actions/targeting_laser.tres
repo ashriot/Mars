@@ -1,11 +1,11 @@
 [gd_resource type="Resource" script_class="Action" load_steps=9 format=3 uid="uid://dfy2472a6qr71"]
 
-[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_d5422"]
-[ext_resource type="Script" uid="uid://dgkss5d1axeag" path="res://data/scripts/action_effects/effect_modify_ct.gd" id="2_2luar"]
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_d5422"]
+[ext_resource type="Script" uid="uid://dgkss5d1axeag" path="res://src/scripts/action_effects/effect_modify_ct.gd" id="2_2luar"]
 [ext_resource type="Resource" uid="uid://dvmg2hjsfdqvh" path="res://data/heroes/asher/conditions/targeting_laser.tres" id="3_6olvn"]
-[ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://data/scripts/action_effects/effect_apply_condition.gd" id="4_cref8"]
+[ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://src/scripts/action_effects/effect_apply_condition.gd" id="4_cref8"]
 [ext_resource type="Texture2D" uid="uid://c3dq6b1eq70gv" path="res://assets/graphics/icons/skills/target-laser.png" id="5_dcxol"]
-[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="6_sdebn"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="6_d5422"]
 
 [sub_resource type="Resource" id="Resource_8vh47"]
 script = ExtResource("2_2luar")
@@ -19,7 +19,7 @@ condition = ExtResource("3_6olvn")
 metadata/_custom_type_script = "uid://dggojfw8tmpnk"
 
 [resource]
-script = ExtResource("6_sdebn")
+script = ExtResource("6_d5422")
 action_name = "Targeting Laser"
 icon = ExtResource("5_dcxol")
 description = "Boosts Asher's next turn by 25% and applies Debuff:[p][i]The next time Asher attacks this enemy, the damage is {prc} Piercing. "

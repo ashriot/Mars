@@ -1,12 +1,12 @@
 [gd_resource type="Resource" script_class="Condition" load_steps=10 format=3 uid="uid://cs14j80ix5lig"]
 
 [ext_resource type="Texture2D" uid="uid://bou6hl5kcyodt" path="res://assets/graphics/icons/skills/thunder-blade.png" id="1_wvs8m"]
-[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://data/scripts/conditions/condition.gd" id="2_wljsg"]
-[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://data/scripts/conditions/trigger.gd" id="3_gkf5h"]
-[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="4_x5spo"]
-[ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://data/scripts/conditions/hit_trigger.gd" id="6_dnbwm"]
-[ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://data/scripts/action_effects/pre_hit_trigger.gd" id="7_02m7j"]
-[ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/action_effects/effect_damage.gd" id="8_skyyc"]
+[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://src/scripts/conditions/condition.gd" id="2_wljsg"]
+[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://src/scripts/conditions/trigger.gd" id="3_gkf5h"]
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="4_x5spo"]
+[ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://src/scripts/conditions/hit_trigger.gd" id="6_dnbwm"]
+[ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://src/scripts/action_effects/pre_hit_trigger.gd" id="7_02m7j"]
+[ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://src/scripts/action_effects/effect_damage.gd" id="8_skyyc"]
 
 [sub_resource type="Resource" id="Resource_v3try"]
 script = ExtResource("8_skyyc")

@@ -1,11 +1,11 @@
 [gd_resource type="Resource" script_class="RoleDefinition" load_steps=11 format=3 uid="uid://df6wnpgvm1b44"]
 
-[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_0k6m3"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="1_0k6m3"]
 [ext_resource type="Texture2D" uid="uid://cogus1wqw41g8" path="res://assets/graphics/icons/roles/chaingun.png" id="1_pc4kf"]
 [ext_resource type="Resource" uid="uid://7dg4i7k6dya0" path="res://data/heroes/asher/actions/double_tap.tres" id="2_g5d42"]
 [ext_resource type="Resource" uid="uid://3eagsu7ser6b" path="res://data/heroes/asher/roles/gunslinger/gun_1.tres" id="2_pc4kf"]
 [ext_resource type="Resource" uid="uid://bbf5ij7wcomd4" path="res://data/heroes/asher/actions/fusion_ammo.tres" id="3_02qky"]
-[ext_resource type="Script" uid="uid://sy50n7nerbow" path="res://data/scripts/data/role_definition.gd" id="3_ipvff"]
+[ext_resource type="Script" uid="uid://sy50n7nerbow" path="res://src/scripts/data/role_definition.gd" id="3_ipvff"]
 [ext_resource type="Resource" uid="uid://cg0jwg4m14vwn" path="res://data/heroes/asher/actions/siphon_shots.tres" id="4_f5pd8"]
 [ext_resource type="Resource" uid="uid://cdiq4nrsnpwmk" path="res://data/heroes/asher/actions/bullet_storm.tres" id="5_utkbd"]
 [ext_resource type="Resource" uid="uid://bmdof7bqrfmkb" path="res://data/heroes/asher/actions/bullet_time.tres" id="7_i3gk7"]

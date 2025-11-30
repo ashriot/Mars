@@ -1,11 +1,11 @@
 [gd_resource type="Resource" script_class="Action" load_steps=8 format=3 uid="uid://dea3writltnu5"]
 
-[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_lqfxb"]
-[ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://data/scripts/conditions/hit_trigger.gd" id="2_yn1td"]
-[ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/action_effects/effect_damage.gd" id="3_284pn"]
-[ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://data/scripts/action_effects/pre_hit_trigger.gd" id="3_yn1td"]
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_lqfxb"]
+[ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://src/scripts/conditions/hit_trigger.gd" id="2_yn1td"]
+[ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://src/scripts/action_effects/effect_damage.gd" id="3_284pn"]
+[ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://src/scripts/action_effects/pre_hit_trigger.gd" id="3_yn1td"]
 [ext_resource type="Texture2D" uid="uid://cfhv6q8svang4" path="res://assets/graphics/icons/skills/hypersonic-bolt.png" id="4_vj4n2"]
-[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="5_d62fs"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="6_yn1td"]
 
 [sub_resource type="Resource" id="Resource_6nryw"]
 script = ExtResource("3_284pn")
@@ -15,7 +15,7 @@ potency_scalar_per_focus = 1.0
 metadata/_custom_type_script = "uid://d0eibi4b735ay"
 
 [resource]
-script = ExtResource("5_d62fs")
+script = ExtResource("6_yn1td")
 action_name = "Focused Bolt"
 icon = ExtResource("4_vj4n2")
 description = "Deals {atk*0.5+atk*0.15*focus} {nrg} damage ({atk*0.5} plus 15% per point of {foc} Echo has.)"

@@ -15,16 +15,13 @@ border_width_top = 3
 border_width_right = 3
 border_width_bottom = 3
 border_color = Color(1, 1, 1, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 shadow_color = Color(0.12156863, 0.12156863, 0.12156863, 1)
-shadow_size = 5
+shadow_size = 2
 shadow_offset = Vector2(0, 2)
 
 [node name="HeroStatus" type="Panel"]
-self_modulate = Color(1.128, 1.437, 0.277, 1)
 custom_minimum_size = Vector2(450, 40)
 offset_right = 450.0
 offset_bottom = 40.0
@@ -40,9 +37,7 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 12.0
 offset_top = -80.0
-offset_right = -12.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 1
@@ -114,67 +109,71 @@ alignment = 1
 custom_minimum_size = Vector2(120, 41)
 layout_mode = 2
 
-[node name="Value" type="RichTextLabel" parent="StatsPanel/Panel/Stats/Resources/Guard"]
+[node name="Pip1" type="TextureRect" parent="StatsPanel/Panel/Stats/Resources/Guard"]
+custom_minimum_size = Vector2(32, 32)
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_top = -20.5
-offset_right = 40.0
-offset_bottom = 15.5
-grow_vertical = 2
-mouse_filter = 2
-theme_override_fonts/normal_font = ExtResource("1_53fmm")
-theme_override_font_sizes/normal_font_size = 32
-bbcode_enabled = true
-text = "5"
-scroll_active = false
-horizontal_alignment = 2
-
-[node name="Pip1" type="TextureRect" parent="StatsPanel/Panel/Stats/Resources/Guard"]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -16.0
-offset_top = -16.0
-offset_right = 16.0
-offset_bottom = 16.0
-grow_horizontal = 2
+offset_left = 27.0
+offset_top = -12.5
+offset_right = 59.0
+offset_bottom = 19.5
 grow_vertical = 2
 texture = ExtResource("5_huwb8")
 expand_mode = 1
 
-[node name="Total" type="Label" parent="StatsPanel/Panel/Stats/Resources/Guard"]
+[node name="Value" type="RichTextLabel" parent="StatsPanel/Panel/Stats/Resources/Guard"]
 layout_mode = 1
 anchors_preset = 6
 anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = -40.0
+offset_left = -62.0
 offset_top = -18.0
+offset_right = 40.0
 offset_bottom = 18.0
 grow_horizontal = 0
 grow_vertical = 2
-theme_override_fonts/font = ExtResource("1_53fmm")
-text = "10"
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("1_53fmm")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "05(3)"
+scroll_active = false
+horizontal_alignment = 2
 
 [node name="Focus" type="Control" parent="StatsPanel/Panel/Stats/Resources"]
 custom_minimum_size = Vector2(120, 41)
 layout_mode = 2
 
-[node name="Value" type="RichTextLabel" parent="StatsPanel/Panel/Stats/Resources/Focus"]
+[node name="Pip1" type="TextureRect" parent="StatsPanel/Panel/Stats/Resources/Focus"]
+custom_minimum_size = Vector2(32, 32)
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_top = -20.5
-offset_right = 40.0
-offset_bottom = 15.5
+offset_left = 25.0
+offset_top = -11.5
+offset_right = 57.0
+offset_bottom = 20.5
+grow_vertical = 2
+texture = ExtResource("5_bwxda")
+expand_mode = 1
+
+[node name="Value" type="RichTextLabel" parent="StatsPanel/Panel/Stats/Resources/Focus"]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -57.0
+offset_top = -18.0
+offset_right = -17.0
+offset_bottom = 18.0
+grow_horizontal = 0
 grow_vertical = 2
 mouse_filter = 2
 theme_override_fonts/normal_font = ExtResource("1_53fmm")
@@ -183,38 +182,6 @@ bbcode_enabled = true
 text = "05"
 scroll_active = false
 horizontal_alignment = 2
-
-[node name="Pip1" type="TextureRect" parent="StatsPanel/Panel/Stats/Resources/Focus"]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -16.0
-offset_top = -16.0
-offset_right = 16.0
-offset_bottom = 16.0
-grow_horizontal = 2
-grow_vertical = 2
-texture = ExtResource("5_bwxda")
-expand_mode = 1
-
-[node name="Total" type="Label" parent="StatsPanel/Panel/Stats/Resources/Focus"]
-layout_mode = 1
-anchors_preset = 6
-anchor_left = 1.0
-anchor_top = 0.5
-anchor_right = 1.0
-anchor_bottom = 0.5
-offset_left = -40.0
-offset_top = -18.0
-offset_bottom = 18.0
-grow_horizontal = 0
-grow_vertical = 2
-theme_override_fonts/font = ExtResource("1_53fmm")
-text = "10"
 
 [node name="POW" type="HBoxContainer" parent="StatsPanel/Panel/Stats"]
 layout_mode = 2

@@ -1,8 +1,8 @@
 [gd_resource type="Resource" script_class="Action" load_steps=5 format=3 uid="uid://m5wgycabl2ij"]
 
-[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_6vkkf"]
-[ext_resource type="Script" uid="uid://cu12q7dfj3hfe" path="res://data/scripts/action_effects/effect_modify_guard.gd" id="2_6vkkf"]
-[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="3_k8tvv"]
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_6vkkf"]
+[ext_resource type="Script" uid="uid://cu12q7dfj3hfe" path="res://src/scripts/action_effects/effect_modify_guard.gd" id="2_6vkkf"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="3_k8tvv"]
 
 [sub_resource type="Resource" id="Resource_4oof4"]
 script = ExtResource("2_6vkkf")

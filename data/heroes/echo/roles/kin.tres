@@ -1,11 +1,11 @@
 [gd_resource type="Resource" script_class="RoleDefinition" load_steps=11 format=3 uid="uid://ggyc3b3330o5"]
 
 [ext_resource type="Texture2D" uid="uid://dsriy3sccbg28" path="res://assets/graphics/icons/roles/bolt-spell-cast.png" id="1_e0p5n"]
-[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_v81oy"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="1_v81oy"]
 [ext_resource type="Resource" uid="uid://bua2w6l1vluii" path="res://data/heroes/echo/actions/telekinesis.tres" id="2_30eyw"]
 [ext_resource type="Resource" uid="uid://hyr5rifx4e6g" path="res://data/heroes/echo/roles/kineticist/kin_1.tres" id="2_e0p5n"]
 [ext_resource type="Resource" uid="uid://dpuvmachojp84" path="res://data/heroes/echo/actions/rejuvenate.tres" id="3_3c7d1"]
-[ext_resource type="Script" uid="uid://sy50n7nerbow" path="res://data/scripts/data/role_definition.gd" id="3_r4q1p"]
+[ext_resource type="Script" uid="uid://sy50n7nerbow" path="res://src/scripts/data/role_definition.gd" id="3_r4q1p"]
 [ext_resource type="Resource" uid="uid://d2whtv83o2dt1" path="res://data/heroes/echo/actions/pain_transfer.tres" id="4_p63xo"]
 [ext_resource type="Resource" uid="uid://b4q2358kx0na0" path="res://data/heroes/echo/actions/energize.tres" id="5_udjcy"]
 [ext_resource type="Resource" uid="uid://b1fo5o00eq2jj" path="res://data/heroes/echo/actions/telepathy.tres" id="7_v81oy"]

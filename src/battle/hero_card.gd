@@ -41,6 +41,13 @@ func setup(data: HeroData):
 	hero_data.calculate_stats()
 	await super.setup_base(hero_data.stats)
 
+	# --- LOAD TRAITS ---
+	active_traits.clear()
+	if data.weapon and data.weapon.unique_trait:
+		_add_trait(data.weapon.unique_trait, data.weapon.tier)
+	if data.armor and data.armor.unique_trait:
+		_add_trait(data.armor.unique_trait, data.armor.tier)
+
 	duration /= battle_manager.battle_speed
 	name_label.text = hero_data.stats.actor_name
 	current_focus = hero_data.stats.starting_focus
@@ -158,6 +165,12 @@ func get_scaled_focus_cost(cost: int) -> int:
 	for condition in active_conditions:
 		scalar -= condition.focus_cost_reduction
 	return int(cost * scalar)
+
+func _add_trait(trait_res: Trait, tier: int):
+	var new_trait = trait_res.duplicate()
+	new_trait.current_tier = tier
+	active_traits.append(new_trait)
+	print("Added Trait: ", new_trait.trait_name, " (Tier ", tier, ")")
 
 func highlight(value: bool):
 	if value:

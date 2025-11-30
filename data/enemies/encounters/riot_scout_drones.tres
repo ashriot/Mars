@@ -1,9 +1,9 @@
 [gd_resource type="Resource" script_class="Encounter" load_steps=5 format=3 uid="uid://7psjbu8buqr3"]
 
-[ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://data/scripts/data/enemy_data.gd" id="1_msd4y"]
+[ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://src/scripts/data/enemy_data.gd" id="1_msd4y"]
 [ext_resource type="Resource" uid="uid://dgxpex6ql7scx" path="res://data/enemies/actors/riot_drone.tres" id="2_msd4y"]
 [ext_resource type="Resource" uid="uid://s6fcg8egbavh" path="res://data/enemies/actors/scout_drone.tres" id="3_xerj7"]
-[ext_resource type="Script" uid="uid://7uqa1cmdmegp" path="res://data/scripts/enemies/encounter.gd" id="4_q726f"]
+[ext_resource type="Script" uid="uid://7uqa1cmdmegp" path="res://src/scripts/enemies/encounter.gd" id="4_q726f"]
 
 [resource]
 script = ExtResource("4_q726f")

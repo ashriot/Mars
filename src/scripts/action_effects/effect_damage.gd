@@ -70,8 +70,8 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 			if split_damage: dynamic_potency /= final_targets.size()
 			var is_crit: bool = false
 			var crit_chance: int = attacker.get_aim() + target.get_incoming_aim_mods()
-			if pre_hit_context.has("aim_bonus"):
-				crit_chance += pre_hit_context.aim_bonus
+			if pre_hit_context.has("aim_dmg"):
+				crit_chance += pre_hit_context.aim_dmg
 			if randi_range(1, 100) <= crit_chance:
 				is_crit = true
 

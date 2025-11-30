@@ -1,12 +1,12 @@
 [gd_resource type="Resource" script_class="Action" load_steps=12 format=3 uid="uid://di707l5wx65bn"]
 
-[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_jhxm2"]
-[ext_resource type="Script" uid="uid://bhblyd70hrd4m" path="res://data/scripts/action_effects/effect_modify_focus.gd" id="2_i1dj6"]
-[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://data/scripts/conditions/condition.gd" id="3_lkdyd"]
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_jhxm2"]
+[ext_resource type="Script" uid="uid://bhblyd70hrd4m" path="res://src/scripts/action_effects/effect_modify_focus.gd" id="2_i1dj6"]
+[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://src/scripts/conditions/condition.gd" id="3_lkdyd"]
 [ext_resource type="Texture2D" uid="uid://wyrutpsf8kb8" path="res://assets/graphics/icons/skills/three-friends.png" id="3_x2dlm"]
-[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="4_lkdyd"]
-[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://data/scripts/conditions/trigger.gd" id="4_xxndc"]
-[ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://data/scripts/action_effects/effect_apply_condition.gd" id="6_qdx4p"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="4_lkdyd"]
+[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://src/scripts/conditions/trigger.gd" id="4_xxndc"]
+[ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://src/scripts/action_effects/effect_apply_condition.gd" id="6_qdx4p"]
 
 [sub_resource type="Resource" id="Resource_mujvo"]
 script = ExtResource("2_i1dj6")

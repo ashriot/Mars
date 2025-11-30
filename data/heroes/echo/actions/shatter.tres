@@ -1,12 +1,12 @@
 [gd_resource type="Resource" script_class="Action" load_steps=10 format=3 uid="uid://dk51rygyr5a1m"]
 
-[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_xlbqy"]
-[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="2_4okrc"]
-[ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://data/scripts/conditions/hit_trigger.gd" id="2_iuosj"]
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_xlbqy"]
+[ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://src/scripts/conditions/hit_trigger.gd" id="2_iuosj"]
 [ext_resource type="Texture2D" uid="uid://tkfwl3id68ud" path="res://assets/graphics/icons/skills/shatter.png" id="2_obhb8"]
-[ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://data/scripts/action_effects/pre_hit_trigger.gd" id="3_q320a"]
-[ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://data/scripts/action_effects/effect_damage.gd" id="4_0b4d0"]
-[ext_resource type="Script" uid="uid://cu12q7dfj3hfe" path="res://data/scripts/action_effects/effect_modify_guard.gd" id="5_q320a"]
+[ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://src/scripts/action_effects/pre_hit_trigger.gd" id="3_q320a"]
+[ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://src/scripts/action_effects/effect_damage.gd" id="4_0b4d0"]
+[ext_resource type="Script" uid="uid://cu12q7dfj3hfe" path="res://src/scripts/action_effects/effect_modify_guard.gd" id="5_q320a"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="7_q320a"]
 
 [sub_resource type="Resource" id="Resource_pan4o"]
 script = ExtResource("4_0b4d0")
@@ -22,7 +22,7 @@ target_type = 4
 metadata/_custom_type_script = "uid://cu12q7dfj3hfe"
 
 [resource]
-script = ExtResource("2_4okrc")
+script = ExtResource("7_q320a")
 action_name = "Shatter"
 icon = ExtResource("2_obhb8")
 description = "Shift. Deal {atk*0.25} {nrg} damage per point of Echo’s {grd} split between all enemies.[p]Then, her {grd} is reduced to 0."

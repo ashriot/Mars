@@ -1,10 +1,9 @@
 [gd_resource type="Resource" script_class="RoleNode" load_steps=3 format=3 uid="uid://cmi30c4pltcn"]
 
-[ext_resource type="Script" uid="uid://cuhoaxfyipk6s" path="res://data/scripts/data/role_node.gd" id="1_qoaaq"]
+[ext_resource type="Script" uid="uid://cuhoaxfyipk6s" path="res://src/scripts/data/role_node.gd" id="1_qoaaq"]
 [ext_resource type="Resource" uid="uid://c0sgo2tycw52y" path="res://data/heroes/echo/roles/kineticist/kin_3.tres" id="2_qoaaq"]
 
 [resource]
 script = ExtResource("1_qoaaq")
-stat_value = 10
 next_nodes = Array[ExtResource("1_qoaaq")]([ExtResource("2_qoaaq")])
 metadata/_custom_type_script = "uid://cuhoaxfyipk6s"

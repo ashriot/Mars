@@ -37,7 +37,7 @@ func calculate_stats():
 	stats.speed = _calc_stat(speed_rank)
 	stats.overload = _calc_stat(overload_rank, 0) * 3
 	stats.aim = int(level / 2) + aim_rank * 5
-	stats.aim_bonus = _calc_stat(aim_rank)
+	stats.aim_dmg = _calc_stat(aim_rank)
 	stats.kinetic_defense = kinetic_defense_rank * 20 - 10
 	stats.energy_defense = energy_defense_rank * 20 - 10
 

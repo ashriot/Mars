@@ -41,19 +41,15 @@ func calculate_stats():
 	if weapon:
 		var weapon_stats = weapon.calculate_stats()
 		_add_stats(stats, weapon_stats)
-		_apply_special_effect(stats, weapon)
 	if armor:
 		var armor_stats = armor.calculate_stats()
 		_add_stats(stats, armor_stats)
-		_apply_special_effect(stats, armor)
 	if accessory_1:
 		var acc1_stats = accessory_1.calculate_stats()
 		_add_stats(stats, acc1_stats)
-		_apply_special_effect(stats, accessory_1)
 	if accessory_2:
 		var acc2_stats = accessory_2.calculate_stats()
 		_add_stats(stats, acc2_stats)
-		_apply_special_effect(stats, accessory_2)
 
 	# Apply Tree Stats
 	for role_def in role_definitions:
@@ -68,21 +64,15 @@ func calculate_stats():
 func _add_stats(base: ActorStats, additional: ActorStats):
 	base.max_hp += additional.max_hp
 	base.starting_guard += additional.starting_guard
+	base.starting_focus += additional.starting_focus
 	base.attack += additional.attack
 	base.psyche += additional.psyche
 	base.overload += additional.overload
 	base.speed += additional.speed
 	base.aim = clampi(base.aim + additional.aim, 0, 75)
-	base.aim_bonus += additional.aim_bonus
+	base.aim_dmg += additional.aim_dmg
 	base.kinetic_defense = clampi(base.kinetic_defense + additional.kinetic_defense, 0, 90)
 	base.energy_defense = clampi(base.energy_defense + additional.energy_defense, 0, 90)
-
-func _apply_special_effect(actor_stats: ActorStats, equipment: Equipment):
-	match equipment.special_effect:
-		"glass_cannon":
-			var penalty = int(actor_stats.max_hp * abs(equipment.special_effect_value) / 100.0)
-			actor_stats.max_hp = max(1, actor_stats.max_hp - penalty)
-		_: pass
 
 func _process_node_stats(node: RoleNode, accum_stats: ActorStats):
 	# Check flat list

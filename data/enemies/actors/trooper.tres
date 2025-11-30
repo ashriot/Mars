@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="EnemyData" load_steps=7 format=3 uid="uid://cpdokr12lby8i"]
 
-[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_ih7pi"]
-[ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://data/scripts/data/enemy_data.gd" id="2_n3ati"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="1_ih7pi"]
+[ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://src/scripts/data/enemy_data.gd" id="2_n3ati"]
 [ext_resource type="Resource" uid="uid://d0m01fmh2ig2s" path="res://data/enemies/actions/gunshot.tres" id="2_odqln"]
 [ext_resource type="Resource" uid="uid://40l6j7e7d5e2" path="res://data/enemies/actions/double_shot.tres" id="3_ln7e3"]
 [ext_resource type="Resource" uid="uid://1rrrrrgvw07f" path="res://data/enemies/actions/shrapnel.tres" id="3_n3t2y"]

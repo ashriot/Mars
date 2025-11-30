@@ -1,8 +1,8 @@
 [gd_resource type="Resource" script_class="HeroData" load_steps=8 format=3 uid="uid://ctg8csrcqdj57"]
 
-[ext_resource type="Script" uid="uid://dc5sk0b0jubvj" path="res://data/scripts/data/hero_data.gd" id="1_avsjj"]
+[ext_resource type="Script" uid="uid://dc5sk0b0jubvj" path="res://src/scripts/data/hero_data.gd" id="1_avsjj"]
 [ext_resource type="Resource" uid="uid://d0p87alljgj7j" path="res://data/equipment/armor/leather_jacket.tres" id="1_sydmp"]
-[ext_resource type="Script" uid="uid://sy50n7nerbow" path="res://data/scripts/data/role_definition.gd" id="3_g3hqy"]
+[ext_resource type="Script" uid="uid://sy50n7nerbow" path="res://src/scripts/data/role_definition.gd" id="3_g3hqy"]
 [ext_resource type="Resource" uid="uid://df6wnpgvm1b44" path="res://data/heroes/asher/roles/gun.tres" id="4_c1wl5"]
 [ext_resource type="Resource" uid="uid://cedlk4sjfugeg" path="res://data/heroes/asher/roles/snp.tres" id="4_sydmp"]
 [ext_resource type="Resource" uid="uid://cq1s08aos0ely" path="res://data/heroes/asher/roles/opr.tres" id="5_xq1ki"]

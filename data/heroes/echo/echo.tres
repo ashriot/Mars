@@ -1,8 +1,8 @@
 [gd_resource type="Resource" script_class="HeroData" load_steps=7 format=3 uid="uid://b2bkd217htd2n"]
 
-[ext_resource type="Script" uid="uid://dc5sk0b0jubvj" path="res://data/scripts/data/hero_data.gd" id="1_coj7o"]
+[ext_resource type="Script" uid="uid://dc5sk0b0jubvj" path="res://src/scripts/data/hero_data.gd" id="1_coj7o"]
 [ext_resource type="Resource" uid="uid://byqjoch8ss1i6" path="res://data/equipment/armor/tech_shirt.tres" id="1_uk5hd"]
-[ext_resource type="Script" uid="uid://sy50n7nerbow" path="res://data/scripts/data/role_definition.gd" id="3_7nq6b"]
+[ext_resource type="Script" uid="uid://sy50n7nerbow" path="res://src/scripts/data/role_definition.gd" id="3_7nq6b"]
 [ext_resource type="Resource" uid="uid://8mpcdw2eyx0n" path="res://data/heroes/echo/roles/psi.tres" id="4_8d0rb"]
 [ext_resource type="Resource" uid="uid://ggyc3b3330o5" path="res://data/heroes/echo/roles/kin.tres" id="5_51sbu"]
 [ext_resource type="Resource" uid="uid://cfiu7md4m5qk2" path="res://data/equipment/weapons/pistol.tres" id="8_q53qh"]

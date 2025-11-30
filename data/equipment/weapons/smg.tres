@@ -1,15 +1,15 @@
 [gd_resource type="Resource" script_class="Equipment" load_steps=2 format=3 uid="uid://dl1qpi4irakxh"]
 
-[ext_resource type="Script" uid="uid://djmsh5w0dbytx" path="res://data/scripts/data/equipment.gd" id="1_g6q1d"]
+[ext_resource type="Script" uid="uid://djmsh5w0dbytx" path="res://src/scripts/equipment/equipment.gd" id="1_g6q1d"]
 
 [resource]
 script = ExtResource("1_g6q1d")
 equipment_id = "smg"
 item_name = "SMG"
-level = 2
-attack_rank = 5
-psyche_rank = 3
-overload_rank = 3
-speed_rank = 3
-aim_rank = 1
+tier = 2
+star_atk = 5
+star_psy = 3
+star_ovr = 3
+star_spd = 3
+star_aim = 1
 metadata/_custom_type_script = "uid://djmsh5w0dbytx"

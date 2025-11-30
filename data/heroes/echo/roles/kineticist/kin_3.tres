@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="RoleNode" load_steps=3 format=3 uid="uid://c0sgo2tycw52y"]
 
-[ext_resource type="Script" uid="uid://cuhoaxfyipk6s" path="res://data/scripts/data/role_node.gd" id="1_nofhy"]
+[ext_resource type="Script" uid="uid://cuhoaxfyipk6s" path="res://src/scripts/data/role_node.gd" id="1_nofhy"]
 [ext_resource type="Resource" uid="uid://btxkc7hoakdjo" path="res://data/heroes/echo/roles/kineticist/kin_4.tres" id="2_nofhy"]
 
 [resource]

@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="RoleNode" load_steps=2 format=3 uid="uid://d14v1rbl3vle1"]
 
-[ext_resource type="Script" uid="uid://cuhoaxfyipk6s" path="res://data/scripts/data/role_node.gd" id="1_1tieb"]
+[ext_resource type="Script" uid="uid://cuhoaxfyipk6s" path="res://src/scripts/data/role_node.gd" id="1_1tieb"]
 
 [resource]
 script = ExtResource("1_1tieb")

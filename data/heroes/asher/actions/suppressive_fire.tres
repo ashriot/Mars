@@ -1,10 +1,10 @@
 [gd_resource type="Resource" script_class="Action" load_steps=8 format=3 uid="uid://br0tqj3ba2itq"]
 
-[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="1_7ebnn"]
-[ext_resource type="Script" uid="uid://cu12q7dfj3hfe" path="res://data/scripts/action_effects/effect_modify_guard.gd" id="2_8qm4h"]
-[ext_resource type="Script" uid="uid://dgkss5d1axeag" path="res://data/scripts/action_effects/effect_modify_ct.gd" id="3_vusvv"]
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_7ebnn"]
+[ext_resource type="Script" uid="uid://cu12q7dfj3hfe" path="res://src/scripts/action_effects/effect_modify_guard.gd" id="2_8qm4h"]
+[ext_resource type="Script" uid="uid://dgkss5d1axeag" path="res://src/scripts/action_effects/effect_modify_ct.gd" id="3_vusvv"]
 [ext_resource type="Texture2D" uid="uid://bhxiy8yn4b52g" path="res://assets/graphics/icons/skills/striking-balls.png" id="4_vfqtf"]
-[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="5_lm744"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="5_7ebnn"]
 
 [sub_resource type="Resource" id="Resource_meswp"]
 script = ExtResource("2_8qm4h")
@@ -17,7 +17,7 @@ ct_boost_percent = -0.15
 metadata/_custom_type_script = "uid://dgkss5d1axeag"
 
 [resource]
-script = ExtResource("5_lm744")
+script = ExtResource("5_7ebnn")
 action_name = "Suppressive Fire"
 icon = ExtResource("4_vfqtf")
 description = "All enemies lose 1 {grd} and their next turn is delayed by 15%."

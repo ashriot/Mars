@@ -1,10 +1,10 @@
 [gd_resource type="Resource" script_class="EnemyData" load_steps=6 format=3 uid="uid://dgxpex6ql7scx"]
 
-[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://data/scripts/action.gd" id="1_8qyty"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="1_8qyty"]
 [ext_resource type="Resource" uid="uid://cbruwytkh444f" path="res://data/enemies/actions/potshot.tres" id="3_kt2l0"]
 [ext_resource type="Resource" uid="uid://43gi1cxcpjxo" path="res://data/enemies/actions/stun_baton.tres" id="4_0ggm0"]
-[ext_resource type="Script" uid="uid://bkbx3bonlo8gv" path="res://data/scripts/enemies/ai_override.gd" id="6_sd7qb"]
-[ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://data/scripts/data/enemy_data.gd" id="7_2vyhf"]
+[ext_resource type="Script" uid="uid://bkbx3bonlo8gv" path="res://src/scripts/enemies/ai_override.gd" id="6_sd7qb"]
+[ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://src/scripts/data/enemy_data.gd" id="7_2vyhf"]
 
 [resource]
 script = ExtResource("7_2vyhf")

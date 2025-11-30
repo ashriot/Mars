@@ -1,15 +1,15 @@
 [gd_resource type="Resource" script_class="Equipment" load_steps=2 format=3 uid="uid://cfiu7md4m5qk2"]
 
-[ext_resource type="Script" uid="uid://djmsh5w0dbytx" path="res://data/scripts/data/equipment.gd" id="1_htdrr"]
+[ext_resource type="Script" uid="uid://djmsh5w0dbytx" path="res://src/scripts/equipment/equipment.gd" id="1_htdrr"]
 
 [resource]
 script = ExtResource("1_htdrr")
 equipment_id = "pistol"
 item_name = "Pistol"
-level = 2
-attack_rank = 4
-psyche_rank = 4
-overload_rank = 3
-speed_rank = 2
-aim_rank = 2
+tier = 2
+star_atk = 4
+star_psy = 4
+star_ovr = 2
+star_spd = 3
+star_aim = 2
 metadata/_custom_type_script = "uid://djmsh5w0dbytx"

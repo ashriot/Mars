@@ -1,8 +1,8 @@
 [gd_resource type="Resource" script_class="HeroData" load_steps=8 format=3 uid="uid://bycnj3e0g7w6x"]
 
 [ext_resource type="Resource" uid="uid://g3lhmj58116w" path="res://data/equipment/armor/kevlar_vest.tres" id="1_70kmf"]
-[ext_resource type="Script" uid="uid://dc5sk0b0jubvj" path="res://data/scripts/data/hero_data.gd" id="1_ng8ip"]
-[ext_resource type="Script" uid="uid://sy50n7nerbow" path="res://data/scripts/data/role_definition.gd" id="2_e16q0"]
+[ext_resource type="Script" uid="uid://dc5sk0b0jubvj" path="res://src/scripts/data/hero_data.gd" id="1_ng8ip"]
+[ext_resource type="Script" uid="uid://sy50n7nerbow" path="res://src/scripts/data/role_definition.gd" id="2_e16q0"]
 [ext_resource type="Resource" uid="uid://bhqprk74bvr4" path="res://data/heroes/sands/roles/van.tres" id="3_1hmov"]
 [ext_resource type="Resource" uid="uid://c2lsgpuh7cdfw" path="res://data/heroes/sands/roles/med.tres" id="4_55x01"]
 [ext_resource type="Resource" uid="uid://04db8hw78o7b" path="res://data/heroes/sands/roles/stg.tres" id="5_jk5ex"]

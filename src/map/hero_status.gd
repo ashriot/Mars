@@ -33,7 +33,7 @@ var inactive_color = Color(0.212, 0.212, 0.212, 0.686)
 var linked_hero_data: HeroData
 
 var stats_home_pos: Vector2
-var stats_home_size_y: int
+var stats_home_size_y: float
 var is_stats_popped: bool = false
 var pop_tween: Tween
 const POP_OFFSET_Y: float = 200.0 # How far UP it slides (Negative is Up)
@@ -42,8 +42,8 @@ func _ready():
 	label_width = int(role_name.size.x)
 	_reset_positions()
 	await get_tree().process_frame
-	stats_home_pos = stats_panel.position
-	stats_home_size_y = int(stats_panel.size.y)
+	stats_home_pos = Vector2(0.0, -40.0)
+	stats_home_size_y = 80.0
 	stats_panel.gui_input.connect(_on_stats_panel_input)
 
 func _on_stats_panel_input(event: InputEvent):
@@ -104,13 +104,14 @@ func refresh_view():
 	var cur_hp = max(0, stats.max_hp * (1 - linked_hero_data.injuries * .34))
 	hp.text = _stringify(cur_hp, 4) + "[color=fff]/" + _stringify(stats.max_hp, 4)
 	guard.text = _stringify(stats.starting_guard + (5 if linked_hero_data.boon_armored else 0))
+	guard.text += "(" + str(ceili(stats.starting_guard / 2.0)) + ")"
 	focus.text = _stringify(stats.starting_focus + (5 if linked_hero_data.boon_focused else 0))
 	atk.text = _stringify(stats.attack, 3)
 	psy.text = _stringify(stats.psyche, 3)
 	ovr.text = _stringify(stats.overload, 3)
 	spd.text = _stringify(stats.speed, 3)
 	aim.text = _stringify(stats.aim) + "%"
-	dmg.text = _stringify(stats.aim_bonus, 3)
+	dmg.text = _stringify(stats.aim_dmg, 3)
 	kin.text = _stringify(stats.kinetic_defense) + "%"
 	nrg.text = _stringify(stats.energy_defense) + "%"
 

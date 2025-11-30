@@ -1,12 +1,12 @@
 [gd_resource type="Resource" script_class="Condition" load_steps=10 format=3 uid="uid://dxuxgbixi4snu"]
 
 [ext_resource type="Texture2D" uid="uid://cry2q1t6tv8rt" path="res://assets/graphics/icons/skills/spiked-armor.png" id="1_w0lcd"]
-[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://data/scripts/conditions/condition.gd" id="2_yw8cw"]
-[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://data/scripts/conditions/trigger.gd" id="3_krggw"]
-[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://data/scripts/action_effects/action_effect.gd" id="4_if7vu"]
-[ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://data/scripts/conditions/hit_trigger.gd" id="5_iweif"]
-[ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://data/scripts/action_effects/pre_hit_trigger.gd" id="6_3kgnf"]
-[ext_resource type="Script" uid="uid://k1ufhpx1h6tg" path="res://data/scripts/action_effects/effect_damage_inversion.gd" id="7_w0lcd"]
+[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://src/scripts/conditions/condition.gd" id="2_yw8cw"]
+[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://src/scripts/conditions/trigger.gd" id="3_krggw"]
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="4_if7vu"]
+[ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://src/scripts/conditions/hit_trigger.gd" id="5_iweif"]
+[ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://src/scripts/action_effects/pre_hit_trigger.gd" id="6_3kgnf"]
+[ext_resource type="Script" uid="uid://k1ufhpx1h6tg" path="res://src/scripts/action_effects/effect_damage_inversion.gd" id="7_w0lcd"]
 
 [sub_resource type="Resource" id="Resource_yw8cw"]
 script = ExtResource("7_w0lcd")

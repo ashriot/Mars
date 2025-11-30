@@ -44,6 +44,7 @@ var pip_tweens: Dictionary = {}
 var actor_name: String
 var stat_mods: Dictionary
 var stat_scalars: Dictionary
+var current_stats: ActorStats
 var current_hp: int
 var current_guard: int
 var current_ct: int = 0
@@ -51,7 +52,7 @@ var is_breached: bool
 var is_in_danger: bool
 var is_defeated: bool
 var active_conditions: Array[Condition] = []
-var current_stats: ActorStats
+var active_traits: Array[Trait] = []
 
 # --- Animation Tweens ---
 var shake_tween: Tween
@@ -269,6 +270,7 @@ func sync_visual_health() -> Tween:
 func _update_health_display(value_from_tween: float):
 	hp_value.text = str(roundi(value_from_tween))
 
+# need to add traits here
 func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary = {}) -> void:
 	for i in range(active_conditions.size() - 1, -1, -1):
 		var condition = active_conditions[i] as Condition
@@ -325,7 +327,10 @@ func recover_breach():
 	is_breached = false
 	guard_bar.modulate.a = 1
 	_stop_breach_pulse()
-	await modify_guard(current_stats.starting_guard, true)
+	var guard_recovery: int = current_stats.starting_guard
+	if self is HeroCard:
+		guard_recovery /= 2
+	await modify_guard(guard_recovery, true)
 
 func modify_guard(amount: int, is_recovering: bool = false):
 	current_guard = clamp(current_guard + amount, 0, MAX_GUARD)
@@ -573,12 +578,14 @@ func get_incoming_aim_mods() -> int:
 	return mod
 
 func get_crit_damage_bonus() -> int:
-	return current_stats.aim_bonus
+	return current_stats.aim_dmg
 
 func get_damage_dealt_scalar(target: ActorCard) -> float:
 	var scalar: float = 1.0
 	for condition in active_conditions:
 		scalar += condition.get_damage_dealt_scalar(self, target)
+	for trait_item in active_traits:
+		scalar += trait_item.get_damage_dealt_scalar(target)
 	return scalar
 
 func get_damage_taken_scalar() -> float:
