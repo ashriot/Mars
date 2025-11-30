@@ -123,7 +123,16 @@ grow_vertical = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_1mnyd")
 
+[node name="Portrait" type="TextureRect" parent="Panel"]
+layout_mode = 0
+offset_left = 264.0
+offset_top = 22.0
+offset_right = 380.0
+offset_bottom = 138.0
+mouse_filter = 2
+
 [node name="KinDef" type="TextureProgressBar" parent="Panel"]
+self_modulate = Color(1, 1, 1, 0.19607843)
 layout_mode = 1
 offset_left = 20.0
 offset_top = 4.0
@@ -135,10 +144,10 @@ nine_patch_stretch = true
 texture_under = ExtResource("10_hupy2")
 texture_progress = ExtResource("10_hupy2")
 tint_under = Color(0, 0, 0, 0.5019608)
-tint_progress = Color(1, 0.4745098, 0.16862746, 1)
+tint_progress = Color(1, 0.5019608, 0, 1)
 
 [node name="Value" type="Label" parent="Panel/KinDef"]
-modulate = Color(1, 0.4745098, 0.16862746, 1)
+modulate = Color(1, 0.5019608, 0, 1)
 layout_mode = 1
 offset_left = -16.0
 offset_right = 44.0
@@ -151,6 +160,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="NrgDef" type="TextureProgressBar" parent="Panel"]
+self_modulate = Color(1, 1, 1, 0.19607843)
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -166,10 +176,10 @@ nine_patch_stretch = true
 texture_under = ExtResource("10_mu8yp")
 texture_progress = ExtResource("10_mu8yp")
 tint_under = Color(0, 0, 0, 0.5019608)
-tint_progress = Color(0.5882353, 0.32941177, 1, 1)
+tint_progress = Color(0, 1, 1, 1)
 
 [node name="Value" type="Label" parent="Panel/NrgDef"]
-modulate = Color(0.5882353, 0.32941177, 1, 1)
+modulate = Color(0, 1, 1, 1)
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -484,14 +494,6 @@ theme_override_font_sizes/font_size = 28
 text = "6"
 horizontal_alignment = 1
 vertical_alignment = 1
-
-[node name="Portrait" type="TextureRect" parent="Panel"]
-layout_mode = 0
-offset_left = 264.0
-offset_top = 22.0
-offset_right = 380.0
-offset_bottom = 138.0
-mouse_filter = 2
 
 [node name="IntentText" type="RichTextLabel" parent="Panel"]
 layout_mode = 1
