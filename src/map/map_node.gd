@@ -4,7 +4,7 @@ extends Area2D
 signal node_clicked(node: MapNode)
 signal node_hovered(node: MapNode)
 
-enum NodeType { ENTRANCE, COMBAT, ELITE, BOSS, REWARD, REWARD_2, REWARD_3, EVENT, TERMINAL, EXIT, UNKNOWN }
+enum NodeType { ENTRANCE, COMBAT, ELITE, BOSS, REWARD, REWARD_2, REWARD_3, REWARD_4, EVENT, TERMINAL, EXIT, UNKNOWN }
 enum NodeState { HIDDEN, REVEALED, COMPLETED }
 
 @onready var hex_sprite = $HexSprite
@@ -19,6 +19,7 @@ enum NodeState { HIDDEN, REVEALED, COMPLETED }
 @export var icon_reward: Texture2D
 @export var icon_reward_2: Texture2D
 @export var icon_reward_3: Texture2D
+@export var icon_reward_4: Texture2D
 @export var icon_event: Texture2D
 @export var icon_terminal: Texture2D
 @export var icon_exit: Texture2D
@@ -91,9 +92,10 @@ func _set_type_color():
 		NodeType.COMBAT: hex_sprite.self_modulate = Color.INDIAN_RED
 		NodeType.ELITE: hex_sprite.self_modulate = Color.ORANGE_RED
 		NodeType.BOSS: hex_sprite.self_modulate = Color.RED
-		NodeType.REWARD: hex_sprite.self_modulate = Color.YELLOW_GREEN
-		NodeType.REWARD_2: hex_sprite.self_modulate = Color.CADET_BLUE
-		NodeType.REWARD_3: hex_sprite.self_modulate = Color.MEDIUM_PURPLE
+		NodeType.REWARD: hex_sprite.self_modulate = Color.DARK_GRAY
+		NodeType.REWARD_2: hex_sprite.self_modulate = Color.YELLOW_GREEN
+		NodeType.REWARD_3: hex_sprite.self_modulate = Color.CADET_BLUE
+		NodeType.REWARD_4: hex_sprite.self_modulate = Color.MEDIUM_PURPLE
 		NodeType.EVENT: hex_sprite.self_modulate = Color.GOLDENROD
 		NodeType.TERMINAL: hex_sprite.self_modulate = Color("e06d2b")
 		NodeType.EXIT: hex_sprite.self_modulate = Color.MAGENTA
@@ -108,6 +110,7 @@ func _get_my_texture() -> Texture2D:
 		NodeType.REWARD: return icon_reward
 		NodeType.REWARD_2: return icon_reward_2
 		NodeType.REWARD_3: return icon_reward_3
+		NodeType.REWARD_4: return icon_reward_4
 		NodeType.EVENT: return icon_event
 		NodeType.EXIT: return icon_exit
 		NodeType.TERMINAL: return icon_terminal

@@ -79,7 +79,7 @@ func get_rich_description(user: ActorCard) -> String:
 
 		if not _expression.has_execute_failed():
 			# C. Replace the tag with the result
-			var final_val = roundi(float(result))
+			var final_val = int(result)
 			final_desc = final_desc.replace(full_tag, str(final_val))
 
 	final_desc = final_desc.replace("{cost}", str(focus_cost))

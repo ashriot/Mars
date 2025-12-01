@@ -15,11 +15,12 @@ const ALERT_MED_THRESHOLD = 75
 const NODE_DENSITY = {
 	"terminal": 2.0,
 	"combat": 3.0,
-	"elite": 0.4,
-	"reward_common": 1.6,
-	"reward_uncommon": 0.7,
+	"elite": 0.5,
+	"reward_common": 1.5,
+	"reward_uncommon": 0.75,
 	"reward_rare": 0.25,
-	"event": 1.2
+	"reward_epic": 0.05,
+	"event": 1.25
 }
 
 const NODE_MULT = {
@@ -29,6 +30,7 @@ const NODE_MULT = {
 	"reward_common": 1.0,
 	"reward_uncommon": 1.0,
 	"reward_rare": 1.0,
+	"reward_epic": 1.0,
 	"event": 1.0
 }
 
@@ -984,6 +986,7 @@ func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 	var num_rewards  = _calculate_node_count("reward_common")
 	var num_uncommon = _calculate_node_count("reward_uncommon")
 	var num_rare     = _calculate_node_count("reward_rare")
+	var num_epic     = _calculate_node_count("reward_epic")
 	var num_events   = _calculate_node_count("event")
 
 	print("Total Nodes:\n")
@@ -993,14 +996,15 @@ func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 	print("num_rewards: ", num_rewards)
 	print("num_uncommon: ", num_uncommon)
 	print("num_rare: ", num_rare)
+	print("num_epic: ", num_epic)
 	print("num_events: ", num_events)
 
 	total_nodes = num_combats + num_elites + num_events + \
-		num_uncommon + num_rare + num_rewards + num_terminals
+		num_uncommon + num_rare + num_epic + num_rewards + num_terminals
 
 	var total_heavy_items = (
 		num_terminals + num_elites + num_rewards +
-		num_uncommon + num_rare + num_events + num_combats
+		num_uncommon + num_rare + num_epic + num_events + num_combats
 	)
 
 	num_terminals = max(1, num_terminals) + 1
@@ -1082,6 +1086,7 @@ func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 	# ----------------------------
 	await _place_batch.call(MapNode.NodeType.TERMINAL,     num_terminals, 4)
 	await _place_batch.call(MapNode.NodeType.ELITE,        num_elites,    3)
+	await _place_batch.call(MapNode.NodeType.REWARD_4,     num_epic,      2)
 	await _place_batch.call(MapNode.NodeType.REWARD_3,     num_rare,      2)
 	await _place_batch.call(MapNode.NodeType.REWARD_2,     num_uncommon,  2)
 	await _place_batch.call(MapNode.NodeType.REWARD,       num_rewards,   2)

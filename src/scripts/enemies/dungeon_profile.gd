@@ -15,6 +15,7 @@ class_name DungeonProfile
 @export var reward_common_mult: float = 1.0
 @export var reward_uncommon_mult: float = 1.0
 @export var reward_rare_mult: float = 1.0
+@export var reward_epic_mult: float = 1.0
 @export var event_mult: float = 1.0
 
 # Helper to pick a valid fight for the current tier
@@ -40,5 +41,6 @@ func get_node_multiplier(node_type: String) -> float:
 		"reward_common": return reward_common_mult
 		"reward_uncommon": return reward_uncommon_mult
 		"reward_rare": return reward_rare_mult
+		"reward_epic": return reward_epic_mult
 		"event": return event_mult
 	return 1.0
