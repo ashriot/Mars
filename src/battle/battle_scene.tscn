@@ -157,8 +157,7 @@ layout_mode = 2
 mouse_filter = 2
 theme_override_constants/outline_size = 5
 bbcode_enabled = true
-text = "
-"
+text = "Testing"
 fit_content = true
 autowrap_mode = 0
 vertical_alignment = 1
