@@ -6,7 +6,6 @@
 [ext_resource type="PackedScene" uid="uid://ckw8rm3jl32bx" path="res://src/battle/damage_popup.tscn" id="2_nheih"]
 [ext_resource type="PackedScene" uid="uid://be3t7advgy14o" path="res://src/battle/buff.tscn" id="3_wyvcu"]
 [ext_resource type="PackedScene" uid="uid://dwpde7pjb1jds" path="res://src/battle/debuff.tscn" id="7_ha0bt"]
-[ext_resource type="Texture2D" uid="uid://bc6ijp6mv3od0" path="res://assets/graphics/icons/textures/bolt.png" id="7_tvdfu"]
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="8_0mfya"]
 [ext_resource type="Texture2D" uid="uid://bi50x3lsg4gpg" path="res://assets/graphics/icons/textures/shield.png" id="9_0mfya"]
 [ext_resource type="Texture2D" uid="uid://dxkm2lucoigno" path="res://assets/graphics/glyphs/ps/ps_dpad_up_normal.png" id="9_ha0bt"]
@@ -31,6 +30,9 @@ corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
+
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_0mfya"]
+load_path = "res://.godot/imported/bolt.png-8a717bea2d5ba4f2bb3c47203bd3f00d.ctex"
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0mfya"]
 bg_color = Color(0, 0, 0, 0.78431374)
@@ -203,7 +205,7 @@ grow_horizontal = 2
 grow_vertical = 2
 pivot_offset = Vector2(25, 21)
 mouse_filter = 2
-texture = ExtResource("7_tvdfu")
+texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
 [node name="Pip2" type="Control" parent="Panel/FocusBar"]
@@ -221,7 +223,7 @@ grow_horizontal = 2
 grow_vertical = 2
 pivot_offset = Vector2(25, 21)
 mouse_filter = 2
-texture = ExtResource("7_tvdfu")
+texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
 [node name="Pip3" type="Control" parent="Panel/FocusBar"]
@@ -239,7 +241,7 @@ grow_horizontal = 2
 grow_vertical = 2
 pivot_offset = Vector2(25, 21)
 mouse_filter = 2
-texture = ExtResource("7_tvdfu")
+texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
 [node name="Pip4" type="Control" parent="Panel/FocusBar"]
@@ -257,7 +259,7 @@ grow_horizontal = 2
 grow_vertical = 2
 pivot_offset = Vector2(25, 21)
 mouse_filter = 2
-texture = ExtResource("7_tvdfu")
+texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
 [node name="Pip5" type="Control" parent="Panel/FocusBar"]
@@ -275,7 +277,7 @@ grow_horizontal = 2
 grow_vertical = 2
 pivot_offset = Vector2(25, 21)
 mouse_filter = 2
-texture = ExtResource("7_tvdfu")
+texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
 [node name="Pip6" type="Control" parent="Panel/FocusBar"]
@@ -293,7 +295,7 @@ grow_horizontal = 2
 grow_vertical = 2
 pivot_offset = Vector2(25, 21)
 mouse_filter = 2
-texture = ExtResource("7_tvdfu")
+texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
 [node name="Pip7" type="Control" parent="Panel/FocusBar"]
@@ -311,7 +313,7 @@ grow_horizontal = 2
 grow_vertical = 2
 pivot_offset = Vector2(25, 21)
 mouse_filter = 2
-texture = ExtResource("7_tvdfu")
+texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
 [node name="Pip8" type="Control" parent="Panel/FocusBar"]
@@ -329,7 +331,7 @@ grow_horizontal = 2
 grow_vertical = 2
 pivot_offset = Vector2(25, 21)
 mouse_filter = 2
-texture = ExtResource("7_tvdfu")
+texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
 [node name="Pip9" type="Control" parent="Panel/FocusBar"]
@@ -347,7 +349,7 @@ grow_horizontal = 2
 grow_vertical = 2
 pivot_offset = Vector2(25, 21)
 mouse_filter = 2
-texture = ExtResource("7_tvdfu")
+texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
 [node name="Pip10" type="Control" parent="Panel/FocusBar"]
@@ -365,7 +367,7 @@ grow_horizontal = 2
 grow_vertical = 2
 pivot_offset = Vector2(25, 21)
 mouse_filter = 2
-texture = ExtResource("7_tvdfu")
+texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
 [node name="Portrait" type="TextureRect" parent="Panel"]

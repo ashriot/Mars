@@ -2,7 +2,6 @@
 
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="1_53fmm"]
 [ext_resource type="Script" uid="uid://cxkviuaghnjrw" path="res://src/map/hero_status.gd" id="1_hfba2"]
-[ext_resource type="Texture2D" uid="uid://cj1mha2fhb12h" path="res://assets/graphics/icons/textures/bolt_sm.png" id="5_bwxda"]
 [ext_resource type="Texture2D" uid="uid://cqweju3y7kwst" path="res://assets/graphics/icons/textures/shield_sm.png" id="5_huwb8"]
 [ext_resource type="Texture2D" uid="uid://y2kx6im08fe7" path="res://assets/graphics/icons/map/cancel.png" id="5_yqtn3"]
 [ext_resource type="Texture2D" uid="uid://jdpryp48lvvd" path="res://assets/graphics/icons/textures/chevron_h.png" id="6_huwb8"]
@@ -21,6 +20,9 @@ shadow_color = Color(0.12156863, 0.12156863, 0.12156863, 1)
 shadow_size = 2
 shadow_offset = Vector2(0, 2)
 
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_huwb8"]
+load_path = "res://.godot/imported/bolt_sm.png-54f352b5e50e80987f5f73607db947d7.ctex"
+
 [node name="HeroStatus" type="Panel"]
 custom_minimum_size = Vector2(450, 40)
 offset_right = 450.0
@@ -37,7 +39,7 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -80.0
+offset_top = -280.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 1
@@ -108,72 +110,60 @@ alignment = 1
 [node name="Guard" type="Control" parent="StatsPanel/Panel/Stats/Resources"]
 custom_minimum_size = Vector2(120, 41)
 layout_mode = 2
+mouse_filter = 1
 
 [node name="Pip1" type="TextureRect" parent="StatsPanel/Panel/Stats/Resources/Guard"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 1
-anchors_preset = 4
+anchors_preset = 8
+anchor_left = 0.5
 anchor_top = 0.5
+anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = 27.0
+offset_left = -16.0
 offset_top = -12.5
-offset_right = 59.0
+offset_right = 16.0
 offset_bottom = 19.5
+grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("5_huwb8")
 expand_mode = 1
 
 [node name="Value" type="RichTextLabel" parent="StatsPanel/Panel/Stats/Resources/Guard"]
 layout_mode = 1
-anchors_preset = 6
-anchor_left = 1.0
+anchors_preset = 8
+anchor_left = 0.5
 anchor_top = 0.5
-anchor_right = 1.0
+anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -62.0
+offset_left = -58.0
 offset_top = -18.0
-offset_right = 40.0
+offset_right = 58.0
 offset_bottom = 18.0
-grow_horizontal = 0
+grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 theme_override_fonts/normal_font = ExtResource("1_53fmm")
 theme_override_font_sizes/normal_font_size = 32
 bbcode_enabled = true
-text = "05(3)"
+text = "05  03"
 scroll_active = false
 horizontal_alignment = 2
 
 [node name="Focus" type="Control" parent="StatsPanel/Panel/Stats/Resources"]
 custom_minimum_size = Vector2(120, 41)
 layout_mode = 2
+mouse_filter = 1
 
-[node name="Pip1" type="TextureRect" parent="StatsPanel/Panel/Stats/Resources/Focus"]
-custom_minimum_size = Vector2(32, 32)
+[node name="Value" type="RichTextLabel" parent="StatsPanel/Panel/Stats/Resources/Focus"]
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_left = 25.0
-offset_top = -11.5
-offset_right = 57.0
-offset_bottom = 20.5
-grow_vertical = 2
-texture = ExtResource("5_bwxda")
-expand_mode = 1
-
-[node name="Value" type="RichTextLabel" parent="StatsPanel/Panel/Stats/Resources/Focus"]
-layout_mode = 1
-anchors_preset = 6
-anchor_left = 1.0
-anchor_top = 0.5
-anchor_right = 1.0
-anchor_bottom = 0.5
-offset_left = -57.0
+offset_left = 2.0
 offset_top = -18.0
-offset_right = -17.0
+offset_right = 42.0
 offset_bottom = 18.0
-grow_horizontal = 0
 grow_vertical = 2
 mouse_filter = 2
 theme_override_fonts/normal_font = ExtResource("1_53fmm")
@@ -182,6 +172,23 @@ bbcode_enabled = true
 text = "05"
 scroll_active = false
 horizontal_alignment = 2
+
+[node name="Pip1" type="TextureRect" parent="StatsPanel/Panel/Stats/Resources/Focus"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -16.0
+offset_top = -11.5
+offset_right = 16.0
+offset_bottom = 20.5
+grow_horizontal = 2
+grow_vertical = 2
+texture = SubResource("CompressedTexture2D_huwb8")
+expand_mode = 1
 
 [node name="POW" type="HBoxContainer" parent="StatsPanel/Panel/Stats"]
 layout_mode = 2
@@ -550,7 +557,7 @@ alignment = 2
 modulate = Color(0.12156863, 0.12156863, 0.12156863, 1)
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
-texture = ExtResource("5_bwxda")
+texture = SubResource("CompressedTexture2D_huwb8")
 expand_mode = 1
 
 [node name="Armored" type="TextureRect" parent="Boons"]

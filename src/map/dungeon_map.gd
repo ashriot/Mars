@@ -69,13 +69,7 @@ const PENALTY_BOSS_MOVE = 2.0
 # --- Node Distribution Settings ---
 @export_group("Node Counts")
 @export var dungeon_has_boss: bool = false
-#@export var num_combats: int = 0
-#@export var num_elites: int = 0
-#@export var num_events: int = 0
-#@export var num_rewards: int = 0
-#@export var num_uncommon_rewards: int = 0
-#@export var num_rare_rewards: int = 0
-#@export var bonus_terminals: int = 0
+@export var global_loot_table: LootTable
 
 # --- Camera Settings ---
 @export_group("Camera")
@@ -105,6 +99,7 @@ var _pre_battle_camera_pos: Vector2 = Vector2.ZERO
 var _calculated_depth_scale: Vector2 = Vector2.ONE
 var terminal_memory: Dictionary = {}
 var encounter_memory: Dictionary = {}
+var reward_memory: Dictionary = {}
 var _last_alert_state: int = -1
 
 # --- Hex Values ---
@@ -235,6 +230,11 @@ func load_from_save_data(data: Dictionary):
 		var coords = str_to_var(key)
 		encounter_memory[coords] = data.encounter_memory[key]
 
+	reward_memory.clear()
+	for key in data.reward_memory.keys():
+		var coords = str_to_var(key)
+		reward_memory[coords] = data.reward_memory[key]
+
 	total_nodes = data.total_nodes
 	nodes_done = data.nodes_done
 
@@ -345,6 +345,7 @@ func generate_hex_grid(generate_data: bool = true) -> Dictionary:
 	hex_height = hex_size * 2.0
 	terminal_memory.clear()
 	encounter_memory.clear()
+	reward_memory.clear()
 
 	map_generation_progress.emit(0, 100)
 	await get_tree().process_frame
@@ -390,6 +391,8 @@ func generate_hex_grid(generate_data: bool = true) -> Dictionary:
 	var node_types = await _distribute_node_types(valid_coords.keys(), center_y)
 	var nodes_list: Array[MapNode] = []
 	if generate_data:
+		var tier = RunManager.current_dungeon_tier
+
 		# --- TERMINAL GENERATION ---
 		var sorted_coords = node_types.keys()
 		sorted_coords.sort_custom(func(a, b):
@@ -404,8 +407,6 @@ func generate_hex_grid(generate_data: bool = true) -> Dictionary:
 
 		# --- ENCOUNTER GENERATION ---
 		var profile: DungeonProfile = RunManager.dungeon_profile
-		var tier = RunManager.current_dungeon_tier
-
 		if profile:
 			for coords in sorted_coords:
 				var type = node_types[coords]
@@ -421,6 +422,20 @@ func generate_hex_grid(generate_data: bool = true) -> Dictionary:
 					encounter_memory[coords] = [enc_res.encounter_id, false, true]
 		else:
 			push_error("DungeonMap: No DungeonProfile found in RunManager! Encounters will be empty.")
+
+		# --- REWARD GENERATION ---
+		for coords in sorted_coords:
+			var type = node_types[coords]
+			var rarity_mod = 0
+			# Map Node Type to Rarity
+			if type == MapNode.NodeType.REWARD: rarity_mod = 0
+			elif type == MapNode.NodeType.REWARD_2: rarity_mod = 1 # Uncommon
+			elif type == MapNode.NodeType.REWARD_3: rarity_mod = 2 # Rare
+			else: continue # Not a reward node
+
+			if global_loot_table:
+				var loot = global_loot_table.roll_loot(tier, rarity_mod)
+				reward_memory[coords] = loot
 
 	# --- SPAWN NODES ---
 	for coords in valid_coords.keys():
@@ -1243,6 +1258,10 @@ func get_save_data() -> Dictionary:
 	for coords in encounter_memory:
 		serializable_encounters[var_to_str(coords)] = encounter_memory[coords]
 
+	var serializable_rewards = {}
+	for coords in reward_memory:
+		serializable_rewards[var_to_str(coords)] = reward_memory[coords]
+
 	return {
 		"current_alert": current_alert,
 		"total_nodes": total_nodes,
@@ -1250,5 +1269,6 @@ func get_save_data() -> Dictionary:
 		"current_coords": var_to_str(current_node.grid_coords),
 		"node_data": node_states,
 		"terminal_memory": serializable_terminals,
-		"encounter_memory": serializable_encounters
+		"encounter_memory": serializable_encounters,
+		"reward_memory": serializable_rewards
 	}

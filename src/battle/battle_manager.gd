@@ -39,6 +39,9 @@ var force_enemy_level: int = -1
 var current_encounter: Encounter
 
 func change_state(new_state):
+	if current_state == State.BATTLE_OVER:
+		print("Trying to change state when the battle has ended!")
+		return
 	print("--- State Change: ", State.keys()[current_state], " > ", State.keys()[new_state], " ---")
 	current_state = new_state
 	battle_state_changed.emit(current_state)

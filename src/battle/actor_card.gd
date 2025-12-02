@@ -552,10 +552,8 @@ func _on_gui_input(_event: InputEvent):
 
 func get_power(power_type: Action.PowerType) -> int:
 	if power_type == Action.PowerType.ATTACK:
-		print(actor_name, "'s ATK is: ", current_stats.attack)
 		return current_stats.attack
 	elif power_type == Action.PowerType.PSYCHE:
-		print(actor_name, "'s PSY is: ", current_stats.psyche)
 		return current_stats.psyche
 	return 0
 

@@ -59,7 +59,7 @@ func calculate_stats():
 
 	stats.aim += 10
 
-	print(stats)
+	#print(stats)
 
 func _add_stats(base: ActorStats, additional: ActorStats):
 	base.max_hp += additional.max_hp

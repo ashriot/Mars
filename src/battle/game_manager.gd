@@ -49,6 +49,9 @@ func _on_map_interaction_requested(node: MapNode):
 			else:
 				push_error("Encounter not found for ID: " + enc_id)
 
+		MapNode.NodeType.REWARD, MapNode.NodeType.REWARD_2, MapNode.NodeType.REWARD_3, MapNode.NodeType.REWARD_4:
+			_handle_reward_cache(node)
+
 		MapNode.NodeType.TERMINAL:
 			var data = dungeon_map.terminal_memory.get(node.grid_coords)
 			if not data:
@@ -160,6 +163,44 @@ func _handle_medical_logic(is_upgraded: bool):
 				else: hero_data.boon_armored = true
 
 	dungeon_map.refresh_team_status()
+
+func _handle_reward_cache(node: MapNode):
+	var loot = dungeon_map.reward_memory.get(node.grid_coords)
+
+	if not loot:
+		push_error("No loot found for node: ", node.grid_coords)
+		_on_content_finished(true)
+		return
+
+	AudioManager.play_sfx("terminal") # Or a chest sound
+
+	# 1. Process Loot (Give it to player)
+	var type = loot.get("type")
+	var msg = ""
+
+	# Note: You need to import/access LootTable.LootType enums or use integers
+	# Assuming simple integers or strings for now:
+	if type == 0: # BITS
+		var amount = int(loot.amount)
+		RunManager.add_run_bits(amount)
+		msg = "Found %d Bits!" % amount
+
+	elif type == 1: # MATERIAL
+		# RunManager.add_material(loot.id, loot.amount)
+		msg = "Found Material: %s (x%d)" % [loot.label, loot.amount]
+
+	elif type == 3: # EQUIPMENT
+		# RunManager.add_equipment(loot.id)
+		msg = "Found Equipment: %s" % loot.label
+
+	# 2. Show Visual Feedback
+	# You can reuse your LoadingScreen logic or a specialized Popup
+	print(msg)
+
+	# For now, just a quick delay to simulate opening, then finish
+	await get_tree().create_timer(0.5).timeout
+
+	_on_content_finished(true)
 
 func _handle_extraction():
 	print("Extraction requested.")

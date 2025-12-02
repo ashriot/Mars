@@ -41,7 +41,7 @@ func calculate_stats():
 	stats.kinetic_defense = kinetic_defense_rank * 20 - 10
 	stats.energy_defense = energy_defense_rank * 20 - 10
 
-	print(stats)
+	#print(stats)
 
 func _calc_stat(rank: int, rank_bonus: int = 5) -> int:
 	var multiplier = _get_multiplier()
