@@ -194,6 +194,7 @@ layout_mode = 2
 mouse_filter = 2
 
 [node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip1"]
+custom_minimum_size = Vector2(42, 0)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -211,6 +212,7 @@ layout_mode = 2
 mouse_filter = 2
 
 [node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip2"]
+custom_minimum_size = Vector2(42, 0)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -228,6 +230,7 @@ layout_mode = 2
 mouse_filter = 2
 
 [node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip3"]
+custom_minimum_size = Vector2(42, 0)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -245,6 +248,7 @@ layout_mode = 2
 mouse_filter = 2
 
 [node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip4"]
+custom_minimum_size = Vector2(42, 0)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -262,6 +266,7 @@ layout_mode = 2
 mouse_filter = 2
 
 [node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip5"]
+custom_minimum_size = Vector2(42, 0)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -279,6 +284,7 @@ layout_mode = 2
 mouse_filter = 2
 
 [node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip6"]
+custom_minimum_size = Vector2(42, 0)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -296,6 +302,7 @@ layout_mode = 2
 mouse_filter = 2
 
 [node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip7"]
+custom_minimum_size = Vector2(42, 0)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -313,6 +320,7 @@ layout_mode = 2
 mouse_filter = 2
 
 [node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip8"]
+custom_minimum_size = Vector2(42, 0)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -330,6 +338,7 @@ layout_mode = 2
 mouse_filter = 2
 
 [node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip9"]
+custom_minimum_size = Vector2(42, 0)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -347,6 +356,7 @@ layout_mode = 2
 mouse_filter = 2
 
 [node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip10"]
+custom_minimum_size = Vector2(42, 0)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0

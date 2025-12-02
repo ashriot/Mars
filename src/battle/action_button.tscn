@@ -133,42 +133,36 @@ custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("4_83fjm")
-expand_mode = 1
 
 [node name="Bolt2" type="TextureRect" parent="FocusPips"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("4_83fjm")
-expand_mode = 1
 
 [node name="Bolt3" type="TextureRect" parent="FocusPips"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("4_83fjm")
-expand_mode = 1
 
 [node name="Bolt4" type="TextureRect" parent="FocusPips"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("4_83fjm")
-expand_mode = 1
 
 [node name="Bolt5" type="TextureRect" parent="FocusPips"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("4_83fjm")
-expand_mode = 1
 
 [node name="Bolt6" type="TextureRect" parent="FocusPips"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("4_83fjm")
-expand_mode = 1
 
 [node name="DynamicGlyph" type="TextureButton" parent="." node_paths=PackedStringArray("parent_node")]
 layout_mode = 1

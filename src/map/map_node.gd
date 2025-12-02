@@ -33,13 +33,13 @@ var has_been_visited: bool = false:
 	set(value):
 		has_been_visited = value
 		if value:
-			hex_sprite.modulate = Color.DARK_GRAY
+			hex_sprite.modulate = Color.DIM_GRAY
 
 func _ready():
 	if not hex_sprite:
 		push_error("hex_sprite missing!")
 	if has_been_visited:
-		hex_sprite.modulate = Color.DARK_GRAY
+		hex_sprite.modulate = Color.DIM_GRAY
 	else:
 		hex_sprite.modulate = Color.WHITE
 	unaware_highlight.hide()
@@ -92,7 +92,7 @@ func _set_type_color():
 		NodeType.COMBAT: hex_sprite.self_modulate = Color.INDIAN_RED
 		NodeType.ELITE: hex_sprite.self_modulate = Color.ORANGE_RED
 		NodeType.BOSS: hex_sprite.self_modulate = Color.RED
-		NodeType.REWARD: hex_sprite.self_modulate = Color.DARK_GRAY
+		NodeType.REWARD: hex_sprite.self_modulate = Color.LIGHT_SLATE_GRAY
 		NodeType.REWARD_2: hex_sprite.self_modulate = Color.YELLOW_GREEN
 		NodeType.REWARD_3: hex_sprite.self_modulate = Color.CADET_BLUE
 		NodeType.REWARD_4: hex_sprite.self_modulate = Color.MEDIUM_PURPLE
