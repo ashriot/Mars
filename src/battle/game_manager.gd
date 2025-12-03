@@ -210,6 +210,13 @@ func _handle_reward_cache(node: MapNode):
 		msg = "%s (x%d)" % [pretty_name, 1]
 		icon_tex = ItemDatabase.get_item_icon(id)
 
+	elif type == LootManager.LootType.MOD:
+		var id = loot.id
+		RunManager.add_loot_item(id, 1)
+		var pretty_name = ItemDatabase.get_item_name(id)
+		msg = "Found Mod: %s" % pretty_name
+		icon_tex = ItemDatabase.get_item_icon(id)
+
 	print(msg)
 	var ft: FloatingText = floating_text_scene.instantiate()
 	dungeon_map.add_child(ft)

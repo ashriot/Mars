@@ -1,8 +1,9 @@
 extends Resource
 class_name EquipmentMod
 
+@export var id: String = ""
 @export var mod_name: String = ""
-@export_range(3, 5) var min_tier_required: int = 3
+@export_range(1, 5) var min_tier_required: int = 1
 
 @export var stat_to_reduce: ActorStats.Stats
 @export var stat_to_increase: ActorStats.Stats

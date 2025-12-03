@@ -15,7 +15,6 @@ var run_xp: int = 0
 var run_inventory: Dictionary = {} # Key: ID, Value: Amount
 var run_equipment_loot: Array[Equipment] = []
 
-
 var party_roster: Array[HeroData]:
 	get:
 		return SaveSystem.party_roster

@@ -3,12 +3,12 @@ extends Node
 
 var _item_registry: Dictionary = {}
 var _equipment_ids: Array[String] = []
+var _mod_ids: Array[String] = []
 
 func _ready():
 	_scan_for_items("res://data/equipment/")
 	_scan_for_items("res://data/materials/")
 
-# Automatically find all .tres files in your equipment folders
 func _scan_for_items(path: String):
 	var dir = DirAccess.open(path)
 	if dir:
@@ -17,21 +17,22 @@ func _scan_for_items(path: String):
 		while file_name != "":
 			if dir.current_is_dir():
 				if file_name != "." and file_name != "..":
-					# Recursively scan subfolders
 					_scan_for_items(path + "/" + file_name)
 			elif file_name.ends_with(".tres") or file_name.ends_with(".remap"):
-				# Load the resource to check its ID
-				# (In a huge game, we'd use a cache list, but for this size, loading is fine)
 				var clean_name = file_name.replace(".remap", "")
 				var full_path = path + "/" + clean_name
 				var res = load(full_path)
+
 				if "id" in res and res.id != "":
 					if _item_registry.has(res.id):
 						push_warning("ItemDatabase: Duplicate ID found: " + res.id)
 
 					_item_registry[res.id] = res
+
 					if res is Equipment:
 						_equipment_ids.append(res.id)
+					elif res is EquipmentMod:
+						_mod_ids.append(res.id)
 
 			file_name = dir.get_next()
 	else:
@@ -39,10 +40,8 @@ func _scan_for_items(path: String):
 
 func get_item_resource(id: String) -> Resource:
 	if _item_registry.has(id):
-		# Always duplicate to prevent shared state bugs
 		return _item_registry[id].duplicate()
 	return null
-
 
 func get_item_name(id: String) -> String:
 	if not _item_registry.has(id):
@@ -50,13 +49,15 @@ func get_item_name(id: String) -> String:
 
 	var res = _item_registry[id]
 
-	# Check for 'item_name' (Equipment) or 'name' (InventoryItem)
+	# Prioritize 'item_name' for Equipment/Mods, 'name' for others
 	if "item_name" in res:
 		return res.item_name
 	elif "name" in res:
 		return res.name
+	elif "mod_name" in res: # Assuming EquipmentMod has mod_name
+		return res.mod_name
 
-	return id # Fallback to ID if no name property found
+	return id
 
 func get_item_icon(id: String) -> Texture2D:
 	if not _item_registry.has(id):
@@ -65,9 +66,12 @@ func get_item_icon(id: String) -> Texture2D:
 	var res = _item_registry[id]
 	if "icon" in res:
 		return res.icon
-
 	return null
 
 func get_random_equipment_id() -> String:
 	if _equipment_ids.is_empty(): return ""
 	return _equipment_ids.pick_random()
+
+func get_random_mod_id() -> String:
+	if _mod_ids.is_empty(): return ""
+	return _mod_ids.pick_random()
