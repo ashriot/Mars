@@ -1,24 +1,25 @@
 extends PanelContainer
 class_name FloatingText
 
-@onready var label: RichTextLabel = $MarginContainer/Label
+@onready var label: RichTextLabel = $MarginContainer/Content/Label
+@onready var icon: TextureRect = $MarginContainer/Content/Icon
 
-# Default animation settings (Can be overridden in setup)
+
 const LINGER_DURATION: float = 1.0
 const FADE_DURATION: float = 0.5
 const FLOAT_DISTANCE: float = 60.0
 
-func setup(pos: Vector2, text: String, color: Color = Color.WHITE, scale_mult: float = 1.0):
+func setup(pos: Vector2, text: String, texture: Texture2D = null, color: Color = Color.WHITE, scale_mult: float = 1.0):
 	pivot_offset = Vector2(size.x / 2, size.y / 2)
 	global_position = pos + Vector2(size.x / -2, -150)
 	# 1. Set Content
 	label.text = "[center] %s[/center]" % text
+	icon.texture = texture
 
 	# 2. Visual Setup
 	self.self_modulate = color
-	self.scale = Vector2.ZERO # Start invisible/tiny
+	self.scale = Vector2.ZERO
 
-	# 3. Start the Animation Sequence
 	_play_animation(scale_mult)
 
 func _play_animation(target_scale: float):

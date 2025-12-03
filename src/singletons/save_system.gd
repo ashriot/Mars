@@ -15,6 +15,10 @@ var total_lifetime_xp: int = 0
 # The Dictionary is just for serialization now
 var data: Dictionary = {}
 
+var inventory: Dictionary = {}
+var inventory_equipment: Array[Equipment] = []
+
+
 func _ready():
 	if not DirAccess.dir_exists_absolute(SAVE_DIR):
 		DirAccess.make_dir_absolute(SAVE_DIR)
@@ -30,6 +34,14 @@ func save_game(slot_index: int):
 		data["active_run"] = RunManager.get_run_save_data()
 	else:
 		data["active_run"] = null
+
+	data["inventory"] = inventory.duplicate()
+
+	# Serialize Data
+	var eq_save_data = []
+	for item in inventory_equipment:
+		eq_save_data.append(item.get_save_data())
+	data["inventory_equipment"] = eq_save_data
 
 	# Serialize Heroes
 	var hero_dicts = []
@@ -61,6 +73,13 @@ func load_game(slot_index: int) -> bool:
 
 		bits = int(data.get("bits", 0))
 		total_lifetime_xp = int(data.get("total_lifetime_xp", 0))
+		inventory = data.get("inventory", {})
+
+		inventory_equipment.clear()
+		var eq_data = data.get("inventory_equipment", [])
+		for dict in eq_data:
+			var item = Equipment.create_from_save_data(dict)
+			if item: inventory_equipment.append(item)
 
 		# Restore Party
 		party_roster.clear()
@@ -119,3 +138,23 @@ func unlock_hero(hero_id: String):
 		new_hero.current_xp = total_lifetime_xp
 		party_roster.append(new_hero)
 		print(new_hero.hero_name, " joined the party with ", total_lifetime_xp, " XP!")
+
+func add_inventory_item(id: String, amount: int):
+	if not inventory.has(id):
+		inventory[id] = 0
+	inventory[id] += amount
+	print("Banked: %s x%d (Total: %d)" % [id, amount, inventory[id]])
+
+func add_equipment_to_inventory(item: Equipment):
+	inventory_equipment.append(item)
+
+func remove_inventory_item(id: String, amount: int) -> bool:
+	if get_item_count(id) >= amount:
+		inventory[id] -= amount
+		if inventory[id] <= 0:
+			inventory.erase(id) # Clean up empty slots
+		return true
+	return false
+
+func get_item_count(id: String) -> int:
+	return inventory.get(id, 0)

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="InventoryItem" load_steps=3 format=3 uid="uid://dywbjajpwn8rn"]
+
+[ext_resource type="Script" uid="uid://0ond6bv3ifh1" path="res://src/scripts/items/inventory_item.gd" id="2_8d4n8"]
+
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_p88n3"]
+load_path = "res://.godot/imported/fiber_out.png-32e7148bb63beb19ed19de4f460f06e1.ctex"
+
+[resource]
+script = ExtResource("2_8d4n8")
+name = "Nylon Fiber"
+icon = SubResource("CompressedTexture2D_p88n3")
+type = 1
+metadata/_custom_type_script = "uid://0ond6bv3ifh1"

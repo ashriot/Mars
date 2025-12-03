@@ -1,11 +1,12 @@
 # ItemDatabase.gd (Autoload)
 extends Node
 
-# Dictionary mapping "sword_mk1" -> preload("res://.../sword_mk1.tres")
 var _item_registry: Dictionary = {}
+var _equipment_ids: Array[String] = []
 
 func _ready():
 	_scan_for_items("res://data/equipment/")
+	_scan_for_items("res://data/materials/")
 
 # Automatically find all .tres files in your equipment folders
 func _scan_for_items(path: String):
@@ -24,20 +25,49 @@ func _scan_for_items(path: String):
 				var clean_name = file_name.replace(".remap", "")
 				var full_path = path + "/" + clean_name
 				var res = load(full_path)
-				if res and "equipment_id" in res and res.equipment_id != "":
-					_item_registry[res.equipment_id] = res
+				if "id" in res and res.id != "":
+					if _item_registry.has(res.id):
+						push_warning("ItemDatabase: Duplicate ID found: " + res.id)
+
+					_item_registry[res.id] = res
+					if res is Equipment:
+						_equipment_ids.append(res.id)
 
 			file_name = dir.get_next()
 	else:
 		push_error("ItemDatabase: Could not open path: " + path)
 
-# The Public API
-func get_item_resource(id: String) -> Equipment:
+func get_item_resource(id: String) -> Resource:
 	if _item_registry.has(id):
-		# CRITICAL: Always duplicate!
-		# If we don't, leveling up a sword in one save file
-		# levels it up in the Editor and every other save file.
+		# Always duplicate to prevent shared state bugs
 		return _item_registry[id].duplicate()
-
-	push_error("Item ID not found: " + id)
 	return null
+
+
+func get_item_name(id: String) -> String:
+	if not _item_registry.has(id):
+		return id
+
+	var res = _item_registry[id]
+
+	# Check for 'item_name' (Equipment) or 'name' (InventoryItem)
+	if "item_name" in res:
+		return res.item_name
+	elif "name" in res:
+		return res.name
+
+	return id # Fallback to ID if no name property found
+
+func get_item_icon(id: String) -> Texture2D:
+	if not _item_registry.has(id):
+		return null
+
+	var res = _item_registry[id]
+	if "icon" in res:
+		return res.icon
+
+	return null
+
+func get_random_equipment_id() -> String:
+	if _equipment_ids.is_empty(): return ""
+	return _equipment_ids.pick_random()

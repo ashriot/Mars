@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="InventoryItem" load_steps=3 format=3 uid="uid://cnq5x82j3r08u"]
+
+[ext_resource type="Script" uid="uid://0ond6bv3ifh1" path="res://src/scripts/items/inventory_item.gd" id="1_iyh4d"]
+[ext_resource type="Texture2D" uid="uid://koa7bq4pcx88" path="res://assets/graphics/icons/items/capacitor_out.png" id="1_r78ys"]
+
+[resource]
+script = ExtResource("1_iyh4d")
+name = "Flux Capacitor"
+icon = ExtResource("1_r78ys")
+category = 1
+tier = 2
+metadata/_custom_type_script = "uid://0ond6bv3ifh1"

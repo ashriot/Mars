@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_g6q1d")
-equipment_id = "smg"
+id = "smg"
 item_name = "SMG"
 rank = 2
 star_atk = 5

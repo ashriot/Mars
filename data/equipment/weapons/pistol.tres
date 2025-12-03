@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_htdrr")
-equipment_id = "pistol"
+id = "pistol"
 item_name = "Pistol"
 rank = 2
 star_atk = 4

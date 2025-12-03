@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="InventoryItem" load_steps=3 format=3 uid="uid://c27gl00sln1f"]
+
+[ext_resource type="Texture2D" uid="uid://bf25gvqhg2va7" path="res://assets/graphics/icons/items/filament_out.png" id="1_1ybqd"]
+[ext_resource type="Script" uid="uid://0ond6bv3ifh1" path="res://src/scripts/items/inventory_item.gd" id="1_7fo7n"]
+
+[resource]
+script = ExtResource("1_7fo7n")
+id = "mat_weap_1"
+icon = ExtResource("1_1ybqd")
+metadata/_custom_type_script = "uid://0ond6bv3ifh1"

@@ -1,10 +1,11 @@
-[gd_scene load_steps=4 format=3 uid="uid://bgdwir0m4773l"]
+[gd_scene load_steps=5 format=3 uid="uid://bgdwir0m4773l"]
 
 [ext_resource type="Script" uid="uid://cavapca75k2nq" path="res://src/core/floating_text.gd" id="1_0u83x"]
+[ext_resource type="Texture2D" uid="uid://blq6w453dyibk" path="res://assets/graphics/sprites/enemies/camera-drone.png" id="2_02eor"]
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="2_svyeq"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_svyeq"]
-bg_color = Color(1, 1, 1, 0.88235295)
+bg_color = Color(1, 1, 1, 0.9411765)
 corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
@@ -25,14 +26,23 @@ size_flags_vertical = 4
 theme_override_constants/margin_left = 50
 theme_override_constants/margin_right = 50
 
-[node name="Label" type="RichTextLabel" parent="MarginContainer"]
+[node name="Content" type="HBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="Icon" type="TextureRect" parent="MarginContainer/Content"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+texture = ExtResource("2_02eor")
+expand_mode = 1
+
+[node name="Label" type="RichTextLabel" parent="MarginContainer/Content"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/outline_size = 20
 theme_override_fonts/normal_font = ExtResource("2_svyeq")
-theme_override_font_sizes/normal_font_size = 48
+theme_override_font_sizes/normal_font_size = 52
 bbcode_enabled = true
-text = "[center]FOUND 10.4 BITS"
+text = "[center] testing "
 fit_content = true
 scroll_active = false
 autowrap_mode = 0

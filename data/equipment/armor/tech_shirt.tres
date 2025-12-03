@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_gs40i")
-equipment_id = "tech_shirt"
+id = "tech_shirt"
 item_name = "Tech Shirt"
 slot = 1
 rank = 2

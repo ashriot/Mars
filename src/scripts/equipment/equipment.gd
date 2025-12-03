@@ -5,7 +5,7 @@ enum Slot { WEAPON, ARMOR, ACCESSORY }
 enum Rarity { COMMON, UNIQUE }
 
 # --- IDENTITY ---
-@export var equipment_id: String = ""
+@export var id: String = ""
 @export var item_name: String = ""
 @export var slot: Slot = Slot.WEAPON
 @export var rarity: Rarity = Rarity.COMMON
@@ -39,9 +39,7 @@ enum Rarity { COMMON, UNIQUE }
 # --- CONSTANTS ---
 const XP_PER_RANK_BASE = 100
 
-# ===================================================================
-# STAT CALCULATION
-# ===================================================================
+# --- STAT CALCULATION ---
 
 func calculate_stats() -> ActorStats:
 	var stats = ActorStats.new()
@@ -104,9 +102,7 @@ func _get_base_ratings_dict() -> Dictionary:
 		ActorStats.Stats.NRG_DEF: star_nrg_def
 	}
 
-# ===================================================================
-# UPGRADE LOGIC
-# ===================================================================
+# --- UPGRADE LOGIC ---
 
 func get_stat_preview_at_rank(target_rank: int) -> ActorStats:
 	var current_rank = rank
@@ -171,13 +167,11 @@ func upgrade_tier():
 		tier += 1
 		print("Equipment Tier Up! Now Tier ", tier, ". Rank Cap is ", get_rank_cap())
 
-# ===================================================================
-# SAVE / LOAD
-# ===================================================================
+# --- SAVE / LOAD ---
 
 func get_save_data() -> Dictionary:
 	return {
-		"id": equipment_id,
+		"id": id,
 		"tier": tier,
 		"rank": rank,
 		"xp": current_xp,
@@ -185,8 +179,8 @@ func get_save_data() -> Dictionary:
 	}
 
 static func create_from_save_data(data: Dictionary) -> Equipment:
-	var id = data.get("id", "")
-	var instance = ItemDatabase.get_item_resource(id)
+	var new_id = data.get("id", "")
+	var instance = ItemDatabase.get_item_resource(new_id)
 
 	if instance:
 		instance.tier = data.get("tier", 1)

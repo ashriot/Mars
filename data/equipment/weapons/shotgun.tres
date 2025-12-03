@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_qdkcv")
-equipment_id = "shotgun"
+id = "shotgun"
 item_name = "Shotgun"
 star_atk = 5
 star_psy = 2

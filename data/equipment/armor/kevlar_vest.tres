@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_1eapi")
-equipment_id = "kevlar_vest"
+id = "kevlar_vest"
 item_name = "Kevlar Vest"
 slot = 1
 star_hp = 4

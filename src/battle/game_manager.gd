@@ -180,34 +180,40 @@ func _handle_reward_cache(node: MapNode):
 		color = Color.html(loot.color_html)
 
 	# 1. Process Loot (Give it to player)
-	var type = loot.get("type")
+	var type: int = loot.get("type")
 	var msg = ""
 
-	# Note: You need to import/access LootTable.LootType enums or use integers
-	# Assuming simple integers or strings for now:
-	if type == LootManager.LootType.BITS: # BITS
+	if loot.has("color_html"):
+		color = Color.html(loot.color_html)
+
+	var icon_tex: Texture2D = null
+
+	if type == LootManager.LootType.BITS:
+		# Bits are special (not in DB)
 		var amount = int(loot.amount)
 		RunManager.add_run_bits(amount)
-		msg = "%.1f Bits!" % float(amount / 10.0)
+		msg = "+%.1f Bits" % float(amount / 10.0)
+		# icon_tex = ... (optional bits icon)
 
-	elif type == LootManager.LootType.MATERIAL: # MATERIAL
-		# RunManager.add_material(loot.id, loot.amount)
-		msg = "%s (x%d)" % [loot.label, loot.amount]
+	elif type == LootManager.LootType.MATERIAL or type == LootManager.LootType.COMPONENT:
+		var id = loot.id
+		var amount = int(loot.amount)
+		RunManager.add_loot_item(id, amount)
+		var pretty_name = ItemDatabase.get_item_name(id)
+		msg = "%s (x%d)" % [pretty_name, amount]
+		icon_tex = ItemDatabase.get_item_icon(id)
 
-	elif type == LootManager.LootType.COMPONENT: # COMPONENT
-		# RunManager.add_material(loot.id, loot.amount)
-		msg = "%s (x%d)" % [loot.label, loot.amount]
+	elif type == LootManager.LootType.EQUIPMENT:
+		var id = loot.id
+		RunManager.add_loot_item(id, 1)
+		var pretty_name = ItemDatabase.get_item_name(id)
+		msg = "%s (x%d)" % [pretty_name, 1]
+		icon_tex = ItemDatabase.get_item_icon(id)
 
-	elif type == LootManager.LootType.EQUIPMENT: # EQUIPMENT
-		# RunManager.add_equipment(loot.id)
-		msg = "%s" % loot.label
-
-	# 2. Show Visual Feedback
-	# You can reuse your LoadingScreen logic or a specialized Popup
 	print(msg)
 	var ft: FloatingText = floating_text_scene.instantiate()
 	dungeon_map.add_child(ft)
-	ft.setup(node.global_position, msg, color)
+	ft.setup(node.global_position, msg, icon_tex, color)
 
 	_on_content_finished(true)
 
