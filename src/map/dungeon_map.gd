@@ -16,9 +16,9 @@ const NODE_DENSITY = {
 	"terminal": 2.0,
 	"combat": 3.0,
 	"elite": 0.5,
-	"reward_common": 1.5,
-	"reward_uncommon": 0.75,
-	"reward_rare": 0.25,
+	"reward_common": 1,
+	"reward_uncommon": 0.45,
+	"reward_rare": 0.15,
 	"reward_epic": 0.05,
 	"event": 1.25
 }
@@ -69,7 +69,6 @@ const PENALTY_BOSS_MOVE = 2.0
 # --- Node Distribution Settings ---
 @export_group("Node Counts")
 @export var dungeon_has_boss: bool = false
-@export var global_loot_table: LootTable
 
 # --- Camera Settings ---
 @export_group("Camera")
@@ -426,15 +425,16 @@ func generate_hex_grid(generate_data: bool = true) -> Dictionary:
 		# --- REWARD GENERATION ---
 		for coords in sorted_coords:
 			var type = node_types[coords]
-			var rarity_mod = 0
-			# Map Node Type to Rarity
-			if type == MapNode.NodeType.REWARD: rarity_mod = 0
-			elif type == MapNode.NodeType.REWARD_2: rarity_mod = 1 # Uncommon
-			elif type == MapNode.NodeType.REWARD_3: rarity_mod = 2 # Rare
-			else: continue # Not a reward node
+			var rarity_mod = -1
 
-			if global_loot_table:
-				var loot = global_loot_table.roll_loot(tier, rarity_mod)
+			match type:
+				MapNode.NodeType.REWARD: rarity_mod = 0
+				MapNode.NodeType.REWARD_2: rarity_mod = 1
+				MapNode.NodeType.REWARD_3: rarity_mod = 2
+				MapNode.NodeType.REWARD_4: rarity_mod = 3
+
+			if rarity_mod != -1:
+				var loot = LootManager.roll_loot(tier, rarity_mod)
 				reward_memory[coords] = loot
 
 	# --- SPAWN NODES ---
@@ -995,14 +995,35 @@ func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 	# ----------------------------
 	# 1. Determine Node Counts
 	# ----------------------------
-	var num_terminals = _calculate_node_count("terminal")
-	var num_combats  = _calculate_node_count("combat")
-	var num_elites   = _calculate_node_count("elite")
-	var num_rewards  = _calculate_node_count("reward_common")
-	var num_uncommon = _calculate_node_count("reward_uncommon")
-	var num_rare     = _calculate_node_count("reward_rare")
-	var num_epic     = _calculate_node_count("reward_epic")
-	var num_events   = _calculate_node_count("event")
+	var base_terminals = _calculate_node_count("terminal")
+	var base_combats  = _calculate_node_count("combat")
+	var base_elites   = _calculate_node_count("elite")
+	var base_rewards  = _calculate_node_count("reward_common")
+	var base_uncommon = _calculate_node_count("reward_uncommon")
+	var base_rare     = _calculate_node_count("reward_rare")
+	var base_epic     = _calculate_node_count("reward_epic")
+	var base_events   = _calculate_node_count("event")
+
+	# --- 1. GET PROFILE & MULTIPLIERS ---
+	var profile: DungeonProfile = RunManager.dungeon_profile
+
+	# Helper to calculate final count based on Profile
+	var _get_count = func(base_count: int, type_str: String) -> int:
+		if not profile: return base_count
+		var mult = profile.get_node_multiplier(type_str)
+		# We use ceil() so that if you have 1 elite and mult is 0.5, you still get 1?
+		# Or round(). Let's use roundi() for standard scaling.
+		return max(0, roundi(base_count * mult))
+
+	# Apply Multipliers to Base Counts
+	var num_terminals = _get_count.call(base_terminals, "terminal")
+	var num_elites = _get_count.call(base_elites, "elite")
+	var num_rewards = _get_count.call(base_rewards, "reward_common")
+	var num_uncommon = _get_count.call(base_uncommon, "reward_uncommon")
+	var num_rare = _get_count.call(base_rare, "reward_rare")
+	var num_epic = _get_count.call(base_epic, "reward_epic")
+	var num_events = _get_count.call(base_events, "event")
+	var num_combats = _get_count.call(base_combats, "combat")
 
 	print("Total Nodes:\n")
 	print("num_terminals: ", num_terminals)

@@ -1,0 +1,38 @@
+[gd_scene load_steps=4 format=3 uid="uid://bgdwir0m4773l"]
+
+[ext_resource type="Script" uid="uid://cavapca75k2nq" path="res://src/core/floating_text.gd" id="1_0u83x"]
+[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="2_svyeq"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_svyeq"]
+bg_color = Color(1, 1, 1, 0.88235295)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[node name="FloatingText" type="PanelContainer"]
+z_index = 99
+offset_right = 538.0
+offset_bottom = 68.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_svyeq")
+script = ExtResource("1_0u83x")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_constants/margin_left = 50
+theme_override_constants/margin_right = 50
+
+[node name="Label" type="RichTextLabel" parent="MarginContainer"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/outline_size = 20
+theme_override_fonts/normal_font = ExtResource("2_svyeq")
+theme_override_font_sizes/normal_font_size = 48
+bbcode_enabled = true
+text = "[center]FOUND 10.4 BITS"
+fit_content = true
+scroll_active = false
+autowrap_mode = 0

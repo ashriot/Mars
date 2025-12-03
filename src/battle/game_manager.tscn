@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://cl5f5vup72n32"]
+[gd_scene load_steps=9 format=3 uid="uid://cl5f5vup72n32"]
 
 [ext_resource type="Script" uid="uid://288nsmb7vfck" path="res://src/battle/game_manager.gd" id="1_p4js5"]
 [ext_resource type="PackedScene" uid="uid://dc5du0o5phhma" path="res://src/battle/battle_scene.tscn" id="2_jr7q5"]
@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://brd70upq3tjwu" path="res://src/map/terminal.tscn" id="3_lhik4"]
 [ext_resource type="PackedScene" uid="uid://cmk1udldhqk6p" path="res://src/core/loading_screen.tscn" id="4_vo8pw"]
 [ext_resource type="PackedScene" uid="uid://dfbluo1xmfixj" path="res://src/map/dungeon_end_screen.tscn" id="5_uloe7"]
+[ext_resource type="PackedScene" uid="uid://bgdwir0m4773l" path="res://src/core/floating_text.tscn" id="6_sr7bo"]
 
 [sub_resource type="Environment" id="Environment_jr7q5"]
 background_mode = 3
@@ -18,6 +19,7 @@ battle_scene_packed = ExtResource("2_jr7q5")
 terminal_scene_packed = ExtResource("3_lhik4")
 loading_screen_scene = ExtResource("4_vo8pw")
 dungeon_end_screen_scene = ExtResource("5_uloe7")
+floating_text_scene = ExtResource("6_sr7bo")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_jr7q5")

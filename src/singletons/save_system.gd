@@ -59,7 +59,6 @@ func load_game(slot_index: int) -> bool:
 		data = json.get_data()
 		current_slot_index = slot_index
 
-		# Restore Bits (THIS IS THE FIX)
 		bits = int(data.get("bits", 0))
 		total_lifetime_xp = int(data.get("total_lifetime_xp", 0))
 

@@ -59,7 +59,6 @@ func calculate_stats() -> ActorStats:
 	if slot == Slot.ARMOR:
 		if ratings.has(ActorStats.Stats.HP):
 			stats.max_hp = _calc_stat(ratings[ActorStats.Stats.HP]) * 5
-			print("HP Rating: ", ratings[ActorStats.Stats.HP], " = ", stats.max_hp, " Max HP")
 		if ratings.has(ActorStats.Stats.GRD):
 			stats.starting_guard = ratings[ActorStats.Stats.GRD]
 		if ratings.has(ActorStats.Stats.FOC):

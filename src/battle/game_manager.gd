@@ -8,6 +8,7 @@ signal dungeon_exited(success: bool)
 @export var terminal_scene_packed: PackedScene
 @export var loading_screen_scene: PackedScene
 @export var dungeon_end_screen_scene: PackedScene
+@export var floating_text_scene: PackedScene
 
 # --- REFERENCES ---
 @onready var dungeon_map: DungeonMap = $DungeonMap
@@ -172,7 +173,11 @@ func _handle_reward_cache(node: MapNode):
 		_on_content_finished(true)
 		return
 
-	AudioManager.play_sfx("terminal") # Or a chest sound
+	AudioManager.play_sfx("terminal")
+
+	var color = Color.BLACK
+	if loot.has("color_html"):
+		color = Color.html(loot.color_html)
 
 	# 1. Process Loot (Give it to player)
 	var type = loot.get("type")
@@ -180,25 +185,29 @@ func _handle_reward_cache(node: MapNode):
 
 	# Note: You need to import/access LootTable.LootType enums or use integers
 	# Assuming simple integers or strings for now:
-	if type == 0: # BITS
+	if type == LootManager.LootType.BITS: # BITS
 		var amount = int(loot.amount)
 		RunManager.add_run_bits(amount)
-		msg = "Found %d Bits!" % amount
+		msg = "%.1f Bits!" % float(amount / 10.0)
 
-	elif type == 1: # MATERIAL
+	elif type == LootManager.LootType.MATERIAL: # MATERIAL
 		# RunManager.add_material(loot.id, loot.amount)
-		msg = "Found Material: %s (x%d)" % [loot.label, loot.amount]
+		msg = "%s (x%d)" % [loot.label, loot.amount]
 
-	elif type == 3: # EQUIPMENT
+	elif type == LootManager.LootType.COMPONENT: # COMPONENT
+		# RunManager.add_material(loot.id, loot.amount)
+		msg = "%s (x%d)" % [loot.label, loot.amount]
+
+	elif type == LootManager.LootType.EQUIPMENT: # EQUIPMENT
 		# RunManager.add_equipment(loot.id)
-		msg = "Found Equipment: %s" % loot.label
+		msg = "%s" % loot.label
 
 	# 2. Show Visual Feedback
 	# You can reuse your LoadingScreen logic or a specialized Popup
 	print(msg)
-
-	# For now, just a quick delay to simulate opening, then finish
-	await get_tree().create_timer(0.5).timeout
+	var ft: FloatingText = floating_text_scene.instantiate()
+	dungeon_map.add_child(ft)
+	ft.setup(node.global_position, msg, color)
 
 	_on_content_finished(true)
 

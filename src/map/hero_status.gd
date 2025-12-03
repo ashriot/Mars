@@ -44,6 +44,8 @@ func _ready():
 	await get_tree().process_frame
 	stats_home_pos = Vector2(0.0, -40.0)
 	stats_home_size_y = 80.0
+	stats_panel.position = stats_home_pos
+	stats_panel.size.y = stats_home_size_y
 	stats_panel.gui_input.connect(_on_stats_panel_input)
 
 func _on_stats_panel_input(event: InputEvent):
