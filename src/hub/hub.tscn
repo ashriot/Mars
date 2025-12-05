@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://ckajtcj4403sy"]
+[gd_scene load_steps=19 format=3 uid="uid://ckajtcj4403sy"]
 
 [ext_resource type="Script" uid="uid://dff0o6ejveewn" path="res://src/hub/hub.gd" id="1_8xbvn"]
 [ext_resource type="Resource" uid="uid://doxl25k4e5ifr" path="res://data/enemies/dungeon_profiles/first_alleyway.tres" id="2_0pbk3"]
@@ -8,6 +8,7 @@
 [ext_resource type="StyleBox" uid="uid://bhjtch4mfk4jc" path="res://data/theme/styleboxes/btn_opaque_normal.tres" id="4_vmamr"]
 [ext_resource type="Texture2D" uid="uid://57er1ylqh81y" path="res://assets/graphics/icons/hub/home.png" id="5_gb5ag"]
 [ext_resource type="StyleBox" uid="uid://1p4tyofjick6" path="res://data/theme/styleboxes/btn_opaque_hover.tres" id="6_lgcv4"]
+[ext_resource type="StyleBox" uid="uid://buhq36mq775hf" path="res://data/theme/styleboxes/btn_opaque_pressed.tres" id="9_r4qrh"]
 
 [sub_resource type="Gradient" id="Gradient_ivd5l"]
 offsets = PackedFloat32Array(0, 0.15121952, 0.88536584, 1)
@@ -192,60 +193,72 @@ theme_override_constants/separation = 20
 [node name="Button" type="Button" parent="Actions"]
 custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
+theme_override_colors/font_pressed_color = Color(0.19607843, 0.19607843, 0.19607843, 1)
 theme_override_colors/font_hover_color = Color(0.11764706, 0.11764706, 0.11764706, 1)
 theme_override_fonts/font = ExtResource("4_bfsw3")
 theme_override_font_sizes/font_size = 48
 theme_override_styles/normal = ExtResource("4_vmamr")
+theme_override_styles/pressed = ExtResource("9_r4qrh")
 theme_override_styles/hover = ExtResource("6_lgcv4")
 text = "TERMINAL ACCESS"
 
 [node name="Button2" type="Button" parent="Actions"]
 custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
+theme_override_colors/font_pressed_color = Color(0.19607843, 0.19607843, 0.19607843, 1)
 theme_override_colors/font_hover_color = Color(0.11764706, 0.11764706, 0.11764706, 1)
 theme_override_fonts/font = ExtResource("4_bfsw3")
 theme_override_font_sizes/font_size = 48
 theme_override_styles/normal = ExtResource("4_vmamr")
+theme_override_styles/pressed = ExtResource("9_r4qrh")
 theme_override_styles/hover = ExtResource("6_lgcv4")
 text = "CHECK STATUS"
 
 [node name="Button3" type="Button" parent="Actions"]
 custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
+theme_override_colors/font_pressed_color = Color(0.19607843, 0.19607843, 0.19607843, 1)
 theme_override_colors/font_hover_color = Color(0.11764706, 0.11764706, 0.11764706, 1)
 theme_override_fonts/font = ExtResource("4_bfsw3")
 theme_override_font_sizes/font_size = 48
 theme_override_styles/normal = ExtResource("4_vmamr")
+theme_override_styles/pressed = ExtResource("9_r4qrh")
 theme_override_styles/hover = ExtResource("6_lgcv4")
 text = "RUN TRAINING EXE"
 
 [node name="Button4" type="Button" parent="Actions"]
 custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
+theme_override_colors/font_pressed_color = Color(0.19607843, 0.19607843, 0.19607843, 1)
 theme_override_colors/font_hover_color = Color(0.11764706, 0.11764706, 0.11764706, 1)
 theme_override_fonts/font = ExtResource("4_bfsw3")
 theme_override_font_sizes/font_size = 48
 theme_override_styles/normal = ExtResource("4_vmamr")
+theme_override_styles/pressed = ExtResource("9_r4qrh")
 theme_override_styles/hover = ExtResource("6_lgcv4")
 text = "ACCESS BANKING"
 
 [node name="Button5" type="Button" parent="Actions"]
 custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
+theme_override_colors/font_pressed_color = Color(0.19607843, 0.19607843, 0.19607843, 1)
 theme_override_colors/font_hover_color = Color(0.11764706, 0.11764706, 0.11764706, 1)
 theme_override_fonts/font = ExtResource("4_bfsw3")
 theme_override_font_sizes/font_size = 48
 theme_override_styles/normal = ExtResource("4_vmamr")
+theme_override_styles/pressed = ExtResource("9_r4qrh")
 theme_override_styles/hover = ExtResource("6_lgcv4")
 text = "CONTACT MILO"
 
 [node name="HeadOut" type="Button" parent="Actions"]
 custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
+theme_override_colors/font_pressed_color = Color(0.19607843, 0.19607843, 0.19607843, 1)
 theme_override_colors/font_hover_color = Color(0.11764706, 0.11764706, 0.11764706, 1)
 theme_override_fonts/font = ExtResource("4_bfsw3")
 theme_override_font_sizes/font_size = 48
 theme_override_styles/normal = ExtResource("4_vmamr")
+theme_override_styles/pressed = ExtResource("9_r4qrh")
 theme_override_styles/hover = ExtResource("6_lgcv4")
 text = "HEAD OUT"
 

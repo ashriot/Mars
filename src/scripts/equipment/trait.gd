@@ -1,29 +1,30 @@
+# src/data/Trait.gd
 extends Resource
 class_name Trait
 
 @export var trait_name: String = "New Trait"
-@export_multiline var description: String = ""
+@export_multiline var description_template: String = "Increases effect by {val}%."
 
-# --- RUNTIME STATE ---
-# This is injected by the HeroCard when the battle starts
-var current_tier: int = 1
+# --- UI HELPER ---
+# Allows the UI to show "Current: +10%" vs "Next: +20%"
+func get_description(_rank: int) -> String:
+	# Child classes can override this to do math (e.g. level * 10)
+	# and replace "{val}" in the template.
+	return description_template
 
-# ===================================================================
-# VIRTUAL HOOKS (Override these in child scripts)
-# ===================================================================
+# --- VIRTUAL HOOKS (Stateless Logic) ---
 
-# 1. Stat Modifiers (e.g. +5 SPD per Tier)
-func get_stat_mod(_stat: ActorStats.Stats) -> int:
+# 1. Stat Modifiers
+func get_stat_mod(_stat: ActorStats.Stats, _rank: int) -> int:
 	return 0
 
-# 2. Damage Modifiers (e.g. Relentlessness: +Dmg vs Breached)
+# 2. Damage Modifiers
 func get_damage_dealt_scalar(_target: ActorCard) -> float:
 	return 0.0
 
-func get_damage_taken_scalar(_attacker: ActorCard) -> float:
+func get_damage_taken_scalar(_attacker: ActorCard, _rank: int) -> float:
 	return 0.0
 
-# 3. Event Triggers (e.g. Shattering Blow: Effect on Breach)
-# We reuse your existing TriggerType enum for consistency
-func on_trigger(_trigger_type: Trigger.TriggerType, _context: Dictionary, _owner: ActorCard):
+# 3. Event Triggers
+func on_trigger(_trigger_type: Trigger.TriggerType, _context: Dictionary, _owner: ActorCard, _rank: int):
 	pass

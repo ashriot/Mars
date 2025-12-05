@@ -1,5 +1,6 @@
-[gd_resource type="Resource" script_class="Equipment" load_steps=2 format=3 uid="uid://cfiu7md4m5qk2"]
+[gd_resource type="Resource" script_class="Equipment" load_steps=3 format=3 uid="uid://cfiu7md4m5qk2"]
 
+[ext_resource type="Script" uid="uid://d3m6jlwrdo1vc" path="res://src/scripts/equipment/equipment_mod.gd" id="1_0ufff"]
 [ext_resource type="Script" uid="uid://djmsh5w0dbytx" path="res://src/scripts/equipment/equipment.gd" id="1_htdrr"]
 
 [resource]
@@ -12,4 +13,5 @@ star_psy = 4
 star_ovr = 2
 star_spd = 3
 star_aim = 2
+star_pre = 2
 metadata/_custom_type_script = "uid://djmsh5w0dbytx"

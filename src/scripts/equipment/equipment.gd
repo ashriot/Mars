@@ -1,19 +1,17 @@
 extends Resource
 class_name Equipment
 
-enum Slot { WEAPON, ARMOR, ACCESSORY }
-enum Rarity { COMMON, UNIQUE }
+enum Slot { WEAPON, ARMOR }
 
 # --- IDENTITY ---
 @export var id: String = ""
 @export var item_name: String = ""
 @export var slot: Slot = Slot.WEAPON
-@export var rarity: Rarity = Rarity.COMMON
 @export var icon: Texture
 
 # --- PROGRESSION STATE ---
-@export_range(1, 5) var tier: int = 1
-@export_range(1, 20) var rank: int = 1
+@export_range(0, 5) var tier: int = 0
+@export_range(1, 30) var rank: int = 1
 @export var current_xp: int = 0
 
 # --- STAR RATINGS ---
@@ -26,33 +24,45 @@ enum Rarity { COMMON, UNIQUE }
 @export_range(0, 10) var star_ovr: int = 0
 @export_range(0, 10) var star_spd: int = 0
 @export_range(0, 10) var star_aim: int = 0
+@export_range(0, 10) var star_pre: int = 0
 @export_range(0, 10) var star_kin_def: int = 0
 @export_range(0, 10) var star_nrg_def: int = 0
 
 # --- SOCKETS & TRAITS ---
-@export_group("Sockets")
-@export var equipped_mod: EquipmentMod
-
-@export_group("Unique Traits")
+@export_group("Customization")
+@export var group: TraitDatabase.Group = TraitDatabase.Group.NONE
 @export var unique_trait: Trait
+@export var invested_shared_trait: int = 0 # Max 3
+@export var invested_unique_trait: int = 0 # Max 3
+@export var invested_stat_boosts: Dictionary = {}
+@export var installed_mods: Array[EquipmentMod] = []
+
 
 # --- CONSTANTS ---
 const XP_PER_RANK_BASE = 100
 
-# --- STAT CALCULATION ---
+func get_display_name() -> String:
+	if tier > 0:
+		return "%s+%d" % [item_name, tier]
+	return item_name
 
+func get_max_mod_slots() -> int:
+	return tier
+
+func get_available_proficiency_points() -> int:
+	var spent = invested_shared_trait + invested_unique_trait + invested_stat_boosts.values().reduce(func(a, b): return a + b, 0)
+	return tier - spent
+
+# --- STAT CALCULATION ---
 func calculate_stats() -> ActorStats:
 	var stats = ActorStats.new()
-
-	# 1. Get Base Ratings (Stars)
 	var ratings = _get_base_ratings_dict()
 
-	# 2. Apply Mod
-	if equipped_mod:
-		var changes = equipped_mod.get_stat_changes(tier)
-		for stat_enum in changes:
-			if ratings.has(stat_enum):
-				ratings[stat_enum] = max(0, ratings[stat_enum] + changes[stat_enum])
+	# 1. Apply "Stat Boost" Proficiency Points (The +1 Rating)
+	for stat_key in invested_stat_boosts:
+		var boost_amount = invested_stat_boosts[stat_key]
+		if ratings.has(stat_key):
+			ratings[stat_key] += boost_amount
 
 	if slot == Slot.ARMOR:
 		if ratings.has(ActorStats.Stats.HP):
@@ -75,10 +85,25 @@ func calculate_stats() -> ActorStats:
 			stats.overload = _calc_stat(ratings[ActorStats.Stats.OVR], 0) * 3
 		if ratings.has(ActorStats.Stats.AIM):
 			stats.aim = (ratings[ActorStats.Stats.KIN_DEF] * 5) + 10
-			stats.aim_dmg = _calc_stat(ratings[ActorStats.Stats.AIM])
+			stats.precision = _calc_stat(ratings[ActorStats.Stats.PRE])
 
 	if ratings.has(ActorStats.Stats.SPD):
 		stats.speed = _calc_stat(ratings[ActorStats.Stats.SPD]) / 2
+
+	var allowed_slots = get_max_mod_slots()
+
+	for i in range(installed_mods.size()):
+		if i >= allowed_slots: break
+
+		var mod = installed_mods[i]
+		if not mod: continue
+
+		# Get the raw values (e.g. +20, -10)
+		var changes = mod.get_stat_changes(tier)
+
+		for stat_enum in changes:
+			var bonus = changes[stat_enum]
+			stats.add_stat(stat_enum, bonus) # Assuming ActorStats has add_stat helper
 
 	return stats
 
@@ -98,6 +123,7 @@ func _get_base_ratings_dict() -> Dictionary:
 		ActorStats.Stats.OVR: star_ovr,
 		ActorStats.Stats.SPD: star_spd,
 		ActorStats.Stats.AIM: star_aim,
+		ActorStats.Stats.PRE: star_pre,
 		ActorStats.Stats.KIN_DEF: star_kin_def,
 		ActorStats.Stats.NRG_DEF: star_nrg_def
 	}
@@ -129,7 +155,7 @@ func get_stat_gain_on_upgrade() -> Dictionary:
 	}
 
 func get_xp_to_next_rank() -> int:
-	if rank >= 20: return 0
+	if rank >= 30: return 0
 	# Cost: Target Rank * 100
 	# e.g. Rank 1 -> 2 costs 200 XP.
 	return (rank + 1) * XP_PER_RANK_BASE
@@ -161,35 +187,67 @@ func add_xp(amount: int):
 		else:
 			break
 
-# Call this when crafting components are spent
 func upgrade_tier():
 	if tier < 5:
 		tier += 1
 		print("Equipment Tier Up! Now Tier ", tier, ". Rank Cap is ", get_rank_cap())
 
-# --- SAVE / LOAD ---
-
 func get_save_data() -> Dictionary:
+	var saved_mods = []
+	for mod in installed_mods:
+		saved_mods.append(mod.id if mod else "")
+
 	return {
 		"id": id,
 		"tier": tier,
 		"rank": rank,
 		"xp": current_xp,
-		"mod_id": equipped_mod.resource_path if equipped_mod else "" # Or use an ID system for mods
+
+		# Proficiency State
+		"inv_shared": invested_shared_trait,
+		"inv_unique": invested_unique_trait,
+		"inv_stats": invested_stat_boosts, # Saves as {"2": 1, "5": 1}
+
+		"mods": saved_mods
 	}
 
 static func create_from_save_data(data: Dictionary) -> Equipment:
-	var new_id = data.get("id", "")
-	var instance = ItemDatabase.get_item_resource(new_id)
+	var load_id = data.get("id", "")
+	var instance = ItemDatabase.get_item_resource(load_id) # Loads base Pistol.tres
 
 	if instance:
-		instance.tier = data.get("tier", 1)
-		instance.rank = data.get("rank", 1)
-		instance.current_xp = data.get("xp", 0)
+		instance.tier = int(data.get("tier", 0))
+		instance.rank = int(data.get("rank", 1))
+		instance.current_xp = int(data.get("xp", 0))
 
-		var mod_path = data.get("mod_id", "")
-		if mod_path != "":
-			instance.equipped_mod = load(mod_path)
+		instance.invested_shared_trait = int(data.get("inv_shared", 0))
+		instance.invested_unique_trait = int(data.get("inv_unique", 0))
+
+		# --- FIX: RESTORE DICTIONARY KEYS TO INT ---
+		# JSON forces keys to Strings. We must cast them back to Ints
+		# so calculate_stats() can match them against the Enums.
+		var raw_stats = data.get("inv_stats", {})
+		instance.invested_stat_boosts.clear()
+
+		for key_str in raw_stats.keys():
+			var stat_enum = int(key_str) # "2" -> 2
+			var value = int(raw_stats[key_str])
+			instance.invested_stat_boosts[stat_enum] = value
+		# -------------------------------------------
+
+		# Load Mods
+		var saved_mods = data.get("mods", [])
+		instance.installed_mods.clear()
+		for mod_id in saved_mods:
+			if mod_id != "":
+				var mod_res = ItemDatabase.get_item_resource(mod_id)
+				# Verify it's actually a mod before appending
+				if mod_res is EquipmentMod:
+					instance.installed_mods.append(mod_res)
+				else:
+					instance.installed_mods.append(null) # Fallback
+			else:
+				instance.installed_mods.append(null) # Empty slot
 
 		return instance
 	return null

@@ -8,8 +8,6 @@ class_name HeroData
 # --- Equipment ---
 @export var weapon: Equipment
 @export var armor: Equipment
-@export var accessory_1: Equipment
-@export var accessory_2: Equipment
 
 # --- Progression Data ---
 @export var role_definitions: Array[RoleDefinition] = []
@@ -44,12 +42,6 @@ func calculate_stats():
 	if armor:
 		var armor_stats = armor.calculate_stats()
 		_add_stats(stats, armor_stats)
-	if accessory_1:
-		var acc1_stats = accessory_1.calculate_stats()
-		_add_stats(stats, acc1_stats)
-	if accessory_2:
-		var acc2_stats = accessory_2.calculate_stats()
-		_add_stats(stats, acc2_stats)
 
 	# Apply Tree Stats
 	for role_def in role_definitions:
@@ -70,7 +62,7 @@ func _add_stats(base: ActorStats, additional: ActorStats):
 	base.overload += additional.overload
 	base.speed += additional.speed
 	base.aim = clampi(base.aim + additional.aim, 0, 75)
-	base.aim_dmg += additional.aim_dmg
+	base.precision += additional.precision
 	base.kinetic_defense = clampi(base.kinetic_defense + additional.kinetic_defense, 0, 90)
 	base.energy_defense = clampi(base.energy_defense + additional.energy_defense, 0, 90)
 
@@ -151,8 +143,6 @@ func get_save_data() -> Dictionary:
 		"active_role": active_role_index,
 		"weapon": weapon.get_save_data() if weapon else {},
 		"armor": armor.get_save_data() if armor else {},
-		"acc1": accessory_1.get_save_data() if accessory_1 else {},
-		"acc2": accessory_2.get_save_data() if accessory_2 else {},
 		"unlocked_role_ids": unlocked_role_ids,
 		"unlocked_node_ids": unlocked_node_ids,
 	}
@@ -177,8 +167,6 @@ func load_from_save_data(data: Dictionary):
 
 	if data.get("weapon"): weapon = Equipment.create_from_save_data(data.weapon)
 	if data.get("armor"): armor = Equipment.create_from_save_data(data.armor)
-	if data.get("acc1"): accessory_1 = Equipment.create_from_save_data(data.acc1)
-	if data.get("acc2"): accessory_2 = Equipment.create_from_save_data(data.acc2)
 
 # --- XP LOGIC ---
 func gain_xp(amount: int):

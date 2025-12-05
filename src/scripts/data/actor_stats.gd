@@ -2,7 +2,7 @@ extends Resource
 class_name ActorStats
 
 enum Stats {
-	HP, GRD, FOC, ATK, PSY, OVR, SPD, AIM, KIN_DEF, NRG_DEF
+	HP, GRD, FOC, ATK, PSY, OVR, SPD, AIM, PRE, KIN_DEF, NRG_DEF
 }
 
 var actor_name: String
@@ -14,7 +14,7 @@ var psyche: int = 0
 var overload: int = 0
 var speed: int = 0
 var aim: int = 0
-var aim_dmg: int = 0
+var precision: int = 0
 var kinetic_defense: int = 0
 var energy_defense: int = 0
 
@@ -56,7 +56,7 @@ func _to_string() -> String:
 		overload,
 		speed,
 		aim,
-		aim_dmg,
+		precision,
 		kinetic_defense,
 		energy_defense
 	]

@@ -327,21 +327,21 @@ bbcode_enabled = true
 text = "25%"
 scroll_active = false
 
-[node name="AimBonus" type="HBoxContainer" parent="StatsPanel/Panel/Stats/AIM"]
+[node name="PRE" type="HBoxContainer" parent="StatsPanel/Panel/Stats/AIM"]
 custom_minimum_size = Vector2(0, 41)
 layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 1
 
-[node name="Label" type="Label" parent="StatsPanel/Panel/Stats/AIM/AimBonus"]
+[node name="Label" type="Label" parent="StatsPanel/Panel/Stats/AIM/PRE"]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("1_53fmm")
-text = "+dmg"
+text = "pre"
 horizontal_alignment = 2
 uppercase = true
 
-[node name="Value" type="RichTextLabel" parent="StatsPanel/Panel/Stats/AIM/AimBonus"]
+[node name="Value" type="RichTextLabel" parent="StatsPanel/Panel/Stats/AIM/PRE"]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 mouse_filter = 2

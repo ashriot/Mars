@@ -169,6 +169,7 @@ theme_override_colors/font_hover_color = Color(0.18039216, 0.18039216, 0.1803921
 theme_override_fonts/font = ExtResource("4_vedi7")
 theme_override_font_sizes/font_size = 40
 theme_override_styles/normal = ExtResource("8_tlpw0")
+theme_override_styles/pressed = ExtResource("9_036v4")
 theme_override_styles/hover = ExtResource("9_6ron6")
 text = "START NEW GAME"
 
@@ -180,6 +181,7 @@ theme_override_colors/font_hover_color = Color(0.18039216, 0.18039216, 0.1803921
 theme_override_fonts/font = ExtResource("4_vedi7")
 theme_override_font_sizes/font_size = 40
 theme_override_styles/normal = ExtResource("8_tlpw0")
+theme_override_styles/pressed = ExtResource("9_036v4")
 theme_override_styles/hover = ExtResource("9_6ron6")
 text = "CONTINUE GAME"
 
@@ -191,6 +193,7 @@ theme_override_colors/font_hover_color = Color(0.18039216, 0.18039216, 0.1803921
 theme_override_fonts/font = ExtResource("4_vedi7")
 theme_override_font_sizes/font_size = 40
 theme_override_styles/normal = ExtResource("8_tlpw0")
+theme_override_styles/pressed = ExtResource("9_036v4")
 theme_override_styles/hover = ExtResource("9_6ron6")
 text = "LOAD GAME"
 

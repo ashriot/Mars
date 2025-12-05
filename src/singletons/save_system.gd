@@ -17,7 +17,6 @@ var data: Dictionary = {}
 
 var inventory: Dictionary = {}
 var inventory_equipment: Array[Equipment] = []
-var unlocked_equipment_ids: Array[String] = []
 
 
 func _ready():
@@ -43,7 +42,6 @@ func save_game(slot_index: int):
 	for item in inventory_equipment:
 		eq_save_data.append(item.get_save_data())
 	data["inventory_equipment"] = eq_save_data
-	data["unlocked_equipment_ids"] = unlocked_equipment_ids
 
 	# Serialize Heroes
 	var hero_dicts = []
@@ -82,11 +80,6 @@ func load_game(slot_index: int) -> bool:
 		for dict in eq_data:
 			var item = Equipment.create_from_save_data(dict)
 			if item: inventory_equipment.append(item)
-
-		var loaded_ids = data.get("unlocked_equipment_ids", [])
-		unlocked_equipment_ids.clear()
-		for id in loaded_ids:
-			unlocked_equipment_ids.append(str(id))
 
 		# Restore Party
 		party_roster.clear()
@@ -162,14 +155,6 @@ func remove_inventory_item(id: String, amount: int) -> bool:
 			inventory.erase(id) # Clean up empty slots
 		return true
 	return false
-
-func has_equipment_id(id: String) -> bool:
-	return id in unlocked_equipment_ids
-
-func register_equipment(item: Equipment):
-	if not has_equipment_id(item.id):
-		unlocked_equipment_ids.append(item.id)
-		inventory_equipment.append(item)
 
 func get_item_count(id: String) -> int:
 	return inventory.get(id, 0)

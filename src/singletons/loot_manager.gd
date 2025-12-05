@@ -69,12 +69,10 @@ func _generate_loot_data(type: int, tier: int, rarity_mod: int) -> Dictionary:
 			# Label filled by GameManager lookup
 
 		LootType.MOD:
-			# 1. Pick random mod ID
 			var mod_id = ItemDatabase.get_random_mod_id()
-
 			data["id"] = mod_id
 			data["amount"] = 1
-			# Label filled by GameManager lookup
+			data["label"] = ItemDatabase.get_item_name(mod_id)
 
 		LootType.EQUIPMENT:
 			# Only used if manually called, not by random roll

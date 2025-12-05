@@ -20,7 +20,7 @@ class_name HeroStatus
 @onready var ovr: RichTextLabel = $StatsPanel/Panel/Stats/SUB/OVR/Value
 @onready var spd: RichTextLabel = $StatsPanel/Panel/Stats/SUB/SPD/Value
 @onready var aim: RichTextLabel = $StatsPanel/Panel/Stats/AIM/AIM/Value
-@onready var dmg: RichTextLabel = $StatsPanel/Panel/Stats/AIM/AimBonus/Value
+@onready var pre: RichTextLabel = $StatsPanel/Panel/Stats/AIM/PRE/Value
 @onready var kin: RichTextLabel = $StatsPanel/Panel/Stats/DEF/KIN/Value
 @onready var nrg: RichTextLabel = $StatsPanel/Panel/Stats/DEF/NRG/Value
 
@@ -113,7 +113,7 @@ func refresh_view():
 	ovr.text = _stringify(stats.overload, 3)
 	spd.text = _stringify(stats.speed, 3)
 	aim.text = _stringify(stats.aim) + "%"
-	dmg.text = _stringify(stats.aim_dmg, 3)
+	pre.text = _stringify(stats.precision, 3)
 	kin.text = _stringify(stats.kinetic_defense) + "%"
 	nrg.text = _stringify(stats.energy_defense) + "%"
 
