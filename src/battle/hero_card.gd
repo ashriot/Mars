@@ -97,7 +97,6 @@ func take_healing(heal_amount: int, is_revive: bool = false):
 		print(actor_name, " is revived!")
 		is_defeated = false
 		self_modulate = Color.WHITE
-		actor_revived.emit(self)
 
 	super.take_healing(heal_amount, is_revive)
 
@@ -235,6 +234,7 @@ func _on_gui_input(event: InputEvent):
 func recolor():
 	var color = get_current_role().color
 	panel.self_modulate = color
+	#$Panel/HP/HeartIcon.self_modulate = color
 	#name_label.self_modulate = color
 	role_label.self_modulate = color
 	role_icon.self_modulate = color

@@ -65,7 +65,6 @@ func spawn_encounter():
 		hero_card.hero_clicked.connect(_on_hero_clicked)
 		hero_card.actor_breached.connect(_on_actor_breached)
 		hero_card.actor_defeated.connect(_on_actor_died)
-		hero_card.actor_revived.connect(_on_actor_revived)
 		hero_card.spawn_particles.connect(_on_spawn_particles)
 		hero_card.actor_conditions_changed.connect(_on_actor_conditions_changed)
 		hero_card.current_ct = randi_range(0, hero_data.stats.speed * 5)
@@ -91,7 +90,6 @@ func spawn_encounter():
 		enemy_card.enemy_clicked.connect(_on_enemy_clicked)
 		enemy_card.actor_breached.connect(_on_actor_breached)
 		enemy_card.actor_defeated.connect(_on_actor_died)
-		enemy_card.actor_revived.connect(_on_actor_revived)
 		enemy_card.spawn_particles.connect(_on_spawn_particles)
 		enemy_card.actor_conditions_changed.connect(_on_actor_conditions_changed)
 		enemy_card.current_ct = randi_range(0, enemy_data.stats.speed * 5)
@@ -265,9 +263,6 @@ func _on_actor_revived(actor: ActorCard):
 		print("Actor was already in actor_list?")
 
 	update_turn_order()
-
-	# 3. Check if the battle needs to "un-end"
-	# (This is a future-proof check)
 
 func set_current_action(action: Action):
 	current_action = action
