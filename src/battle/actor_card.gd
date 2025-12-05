@@ -8,7 +8,6 @@ class_name ActorCard
 # --- Signals (Shared by both) ---
 signal actor_breached(actor)
 signal actor_defeated(actor)
-signal actor_revived(actor)
 signal hp_changed(new_hp, max_hp)
 signal armor_changed(new_pips)
 signal actor_conditions_changed
