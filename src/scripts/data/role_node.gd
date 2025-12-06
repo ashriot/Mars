@@ -1,71 +1,57 @@
 extends Resource
 class_name RoleNode
 
-const BASE_XP_COST: int = 10
-
 enum RewardType { STAT, ACTION, SHIFT_ACTION, PASSIVE, EMPTY }
 
 # --- REWARD DATA ---
 @export var type: RewardType = RewardType.STAT
-
-# For STAT rewards:
 @export var stat_type: ActorStats.Stats
 @export var stat_value: int = 0
-
-# For ACTION rewards:
-# 0=Bottom, 1=Right, 2=Left, 3=Top
-# This now maps directly to RoleDefinition.actions[i]
 @export var action_slot_index: int = -1
 
-# --- CONNECTIONS ---
-@export var next_nodes: Array[RoleNode]
+@export var left_node: RoleNode
+@export var right_node: RoleNode
+@export var child_node: RoleNode
 
-# --- RUNTIME GENERATED DATA ---
+# --- RUNTIME DATA ---
 var generated_id: String = ""
 var calculated_xp_cost: int = 0
-var rank: int = 0 # The "Depth" on the main spine
+var rank: int = 0
 
-# This function recursively initializes this node and its children
 func initialize_tree(role_prefix: String, parent_suffix: String, current_rank: int, is_spine_path: bool):
 	self.rank = current_rank
+	self.generated_id = "%s_%s" % [role_prefix, parent_suffix]
 
-	# 1. Generate ID Suffix
-	# If this is the Root (passed in manually), it's just the suffix.
-	# Otherwise, logic is handled by the parent loop below.
-	var my_suffix = parent_suffix
-	self.generated_id = "%s_%s" % [role_prefix, my_suffix]
-
-	# 2. Calculate Cost
-	var base_cost = BASE_XP_COST * current_rank
-
-	# Side Node Tax: If we aren't on the spine, costs are 50% higher
+	# Cost Logic
+	var base_cost = 100 * current_rank
 	if not is_spine_path:
 		self.calculated_xp_cost = int(base_cost * 1.5)
 	else:
 		self.calculated_xp_cost = base_cost
 
-	# 3. Process Children
-	for i in range(next_nodes.size()):
-		var child = next_nodes[i]
+	# --- RECURSION LOGIC ---
 
-		if i == 0:
-			# --- PATH A: CONTINUATION (Index 0) ---
-			if is_spine_path:
-				# We are on the spine, continuing the spine.
-				# ID: "1" -> "2"
-				# Rank: Increases
-				child.initialize_tree(role_prefix, str(current_rank + 1), current_rank + 1, true)
-			else:
-				# We are on a side path, continuing the side path.
-				# ID: "41" -> "411"
-				# Rank: Stays same (it's a sibling chain), or increases?
-				# Usually side chains get more expensive as they go deep,
-				# so let's treat depth as rank increase for cost purposes.
-				child.initialize_tree(role_prefix, my_suffix + "1", current_rank + 1, false)
+	# 1. Spine Child (Continues Down)
+	if child_node:
+		var suffix = parent_suffix
+		if is_spine_path:
+			# Main Spine: 1 -> 2
+			suffix = str(current_rank + 1)
 		else:
-			# --- PATH B: BRANCHING (Index 1+) ---
-			# We are branching OFF the current node.
-			# ID: "4" -> "41", "42"
-			# This marks the start of a side path.
-			var branch_suffix = my_suffix + str(i)
-			child.initialize_tree(role_prefix, branch_suffix, current_rank, false)
+			# Side Chain: 21 -> 211
+			suffix = parent_suffix + "1"
+
+		child_node.initialize_tree(role_prefix, suffix, current_rank + 1, is_spine_path)
+
+	# 2. Left Sibling (Branches Left)
+	if left_node:
+		# 2 -> 21 (Left)
+		var suffix = parent_suffix + "1"
+		# It is NO LONGER on the spine path
+		left_node.initialize_tree(role_prefix, suffix, current_rank, false)
+
+	# 3. Right Sibling (Branches Right)
+	if right_node:
+		# 2 -> 22 (Right)
+		var suffix = parent_suffix + "2"
+		right_node.initialize_tree(role_prefix, suffix, current_rank, false)

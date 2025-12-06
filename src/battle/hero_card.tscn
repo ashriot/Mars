@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://cj2ylb1ld6ews"]
+[gd_scene load_steps=21 format=3 uid="uid://cj2ylb1ld6ews"]
 
 [ext_resource type="Script" uid="uid://cp1th7fv4flgo" path="res://src/battle/hero_card.gd" id="1_n7b5o"]
 [ext_resource type="Texture2D" uid="uid://dve0tjghg88kw" path="res://assets/graphics/icons/roles/blindfold.png" id="2_53q4u"]
@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://ckw8rm3jl32bx" path="res://src/battle/damage_popup.tscn" id="2_nheih"]
 [ext_resource type="PackedScene" uid="uid://be3t7advgy14o" path="res://src/battle/buff.tscn" id="3_wyvcu"]
 [ext_resource type="PackedScene" uid="uid://dwpde7pjb1jds" path="res://src/battle/debuff.tscn" id="7_ha0bt"]
+[ext_resource type="FontVariation" uid="uid://da34kbi1ndel7" path="res://data/theme/fonts/archivo.tres" id="7_tvdfu"]
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="8_0mfya"]
 [ext_resource type="Texture2D" uid="uid://bi50x3lsg4gpg" path="res://assets/graphics/icons/textures/shield.png" id="9_0mfya"]
 [ext_resource type="Texture2D" uid="uid://dxkm2lucoigno" path="res://assets/graphics/glyphs/ps/ps_dpad_up_normal.png" id="9_ha0bt"]
@@ -174,6 +175,7 @@ theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/shadow_offset_x = 0
 theme_override_constants/shadow_offset_y = 0
 theme_override_constants/outline_size = 16
+theme_override_fonts/font = ExtResource("7_tvdfu")
 theme_override_font_sizes/font_size = 40
 text = "Unit"
 

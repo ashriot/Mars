@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="Equipment" load_steps=2 format=3 uid="uid://byqjoch8ss1i6"]
+[gd_resource type="Resource" script_class="Equipment" load_steps=3 format=3 uid="uid://byqjoch8ss1i6"]
 
 [ext_resource type="Script" uid="uid://djmsh5w0dbytx" path="res://src/scripts/equipment/equipment.gd" id="1_gs40i"]
+[ext_resource type="Script" uid="uid://d3m6jlwrdo1vc" path="res://src/scripts/equipment/equipment_mod.gd" id="1_yodpx"]
 
 [resource]
 script = ExtResource("1_gs40i")
@@ -11,7 +12,7 @@ rank = 2
 star_hp = 3
 star_guard = 3
 star_focus = 5
-star_spd = 4
-star_kin_def = 2
+star_spd = 3
+star_kin_def = 1
 star_nrg_def = 3
 metadata/_custom_type_script = "uid://djmsh5w0dbytx"

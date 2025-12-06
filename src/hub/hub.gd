@@ -4,6 +4,7 @@ class_name Hub
 signal head_out
 
 @export var dungeon_profile: DungeonProfile
+@export var skill_tree_menu: SkillTreeMenu
 
 @onready var bits_label: Label = $UI/BitsLabel
 @onready var head_out_button: Button = $Actions/HeadOut
@@ -24,3 +25,8 @@ func _on_head_out_pressed() -> void:
 	# RunManager.current_dungeon_tier = $MissionSelect.get_selected_tier()
 
 	head_out.emit()
+
+
+func _on_button_3_pressed() -> void:
+	var hero: HeroData = SaveSystem.party_roster[0]
+	skill_tree_menu.setup(hero, hero.current_role)

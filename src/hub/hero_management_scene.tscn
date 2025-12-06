@@ -1,9 +1,10 @@
-[gd_scene load_steps=7 format=3 uid="uid://cbfp64x5s3yph"]
+[gd_scene load_steps=9 format=3 uid="uid://cbfp64x5s3yph"]
 
 [ext_resource type="Script" uid="uid://7u5vnerkwbn" path="res://src/hub/hero_management_scene.gd" id="1_m2kg4"]
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="2_em4mh"]
-[ext_resource type="Texture2D" uid="uid://bs7vv07inafvr" path="res://assets/graphics/icons/textures/chevron_h.png" id="3_je1un"]
+[ext_resource type="Texture2D" uid="uid://jdpryp48lvvd" path="res://assets/graphics/icons/textures/chevron_h.png" id="3_je1un"]
 [ext_resource type="StyleBox" uid="uid://buhq36mq775hf" path="res://data/theme/styleboxes/btn_opaque_pressed.tres" id="4_0j42s"]
+[ext_resource type="Texture2D" uid="uid://dhjyqhqool5nk" path="res://assets/graphics/icons/skills/bullet-impacts.png" id="4_pl243"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5q2tr"]
 bg_color = Color(1, 1, 1, 0.9607843)
@@ -17,6 +18,18 @@ corner_radius_top_right = 12
 
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_md0uf"]
 load_path = "res://.godot/imported/chevron_v.png-8f022842b24a3d3a0a8d7eeaac311663.ctex"
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qqphc"]
+bg_color = Color(1, 1, 1, 0.9607843)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
 
 [node name="HeroManagementScene" type="Control"]
 layout_mode = 3
@@ -32,47 +45,57 @@ layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -549.0
+offset_left = -481.0
 offset_top = 31.0
-offset_right = 549.0
-offset_bottom = 243.0
+offset_right = 479.0
+offset_bottom = 157.0
 grow_horizontal = 2
+metadata/_edit_group_ = true
 
 [node name="Panel" type="Panel" parent="Panel"]
+custom_minimum_size = Vector2(0, 42)
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_bottom = 70.0
+offset_bottom = 36.0
 grow_horizontal = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_5q2tr")
 
 [node name="HeroName" type="Label" parent="Panel/Panel"]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -235.0
+offset_top = -20.5
+offset_right = 235.0
+offset_bottom = 20.5
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(0.18039216, 0.18039216, 0.18039216, 1)
-theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 50
+theme_override_font_sizes/font_size = 32
 text = "ASHER"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="HeroName2" type="Label" parent="Panel/Panel"]
+[node name="XP" type="Label" parent="Panel/Panel"]
 layout_mode = 1
-anchors_preset = 15
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
 anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 11.0
-offset_right = -11.0
-grow_horizontal = 2
+anchor_bottom = 0.5
+offset_left = -190.0
+offset_top = -20.5
+offset_right = -17.0
+offset_bottom = 20.5
+grow_horizontal = 0
 grow_vertical = 2
 theme_override_colors/font_color = Color(0.18039216, 0.18039216, 0.18039216, 1)
-theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 50
-text = "84,875 XP"
+theme_override_font_sizes/font_size = 32
+text = "12,735 XP"
 horizontal_alignment = 2
 vertical_alignment = 1
 
@@ -82,10 +105,10 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -130.0
+offset_top = -82.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_constants/separation = 16
+theme_override_constants/separation = -20
 alignment = 1
 
 [node name="HP" type="Control" parent="Panel/Stats"]
@@ -104,19 +127,18 @@ grow_vertical = 2
 [node name="Title" type="Label" parent="Panel/Stats/HP/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 28
 text = "HP"
 horizontal_alignment = 1
 
 [node name="Value" type="Label" parent="Panel/Stats/HP/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 28
 text = "9999"
 horizontal_alignment = 1
 
 [node name="GRD" type="Control" parent="Panel/Stats"]
-modulate = Color(0.71, 0.71, 0.71, 1)
 custom_minimum_size = Vector2(102, 0)
 layout_mode = 2
 
@@ -131,15 +153,41 @@ grow_vertical = 2
 [node name="Title" type="Label" parent="Panel/Stats/GRD/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 28
 text = "GRD"
 horizontal_alignment = 1
 
 [node name="Value" type="Label" parent="Panel/Stats/GRD/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 28
 text = "10"
+horizontal_alignment = 1
+
+[node name="FOC" type="Control" parent="Panel/Stats"]
+custom_minimum_size = Vector2(102, 0)
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="Panel/Stats/FOC"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Title" type="Label" parent="Panel/Stats/FOC/VBox"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_em4mh")
+theme_override_font_sizes/font_size = 28
+text = "FOC"
+horizontal_alignment = 1
+
+[node name="Value" type="Label" parent="Panel/Stats/FOC/VBox"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_em4mh")
+theme_override_font_sizes/font_size = 28
+text = "06"
 horizontal_alignment = 1
 
 [node name="ATK" type="Control" parent="Panel/Stats"]
@@ -158,14 +206,14 @@ grow_vertical = 2
 [node name="Title" type="Label" parent="Panel/Stats/ATK/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 28
 text = "ATK"
 horizontal_alignment = 1
 
 [node name="Value" type="Label" parent="Panel/Stats/ATK/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 28
 text = "190"
 horizontal_alignment = 1
 
@@ -185,14 +233,14 @@ grow_vertical = 2
 [node name="Title" type="Label" parent="Panel/Stats/PSY/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 28
 text = "PSY"
 horizontal_alignment = 1
 
 [node name="Value" type="Label" parent="Panel/Stats/PSY/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 28
 text = "165"
 horizontal_alignment = 1
 
@@ -212,14 +260,14 @@ grow_vertical = 2
 [node name="Title" type="Label" parent="Panel/Stats/OVR/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 28
 text = "OVR"
 horizontal_alignment = 1
 
 [node name="Value" type="Label" parent="Panel/Stats/OVR/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 28
 text = "150"
 horizontal_alignment = 1
 
@@ -239,15 +287,42 @@ grow_vertical = 2
 [node name="Title" type="Label" parent="Panel/Stats/SPD/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 28
 text = "SPD"
 horizontal_alignment = 1
 
 [node name="Value" type="Label" parent="Panel/Stats/SPD/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 28
 text = "180"
+horizontal_alignment = 1
+
+[node name="PRE" type="Control" parent="Panel/Stats"]
+modulate = Color(1, 0.5, 0.7249999, 1)
+custom_minimum_size = Vector2(102, 0)
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="Panel/Stats/PRE"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Title" type="Label" parent="Panel/Stats/PRE/VBox"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_em4mh")
+theme_override_font_sizes/font_size = 28
+text = "PRE"
+horizontal_alignment = 1
+
+[node name="Value" type="Label" parent="Panel/Stats/PRE/VBox"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_em4mh")
+theme_override_font_sizes/font_size = 28
+text = "172"
 horizontal_alignment = 1
 
 [node name="AIM" type="Control" parent="Panel/Stats"]
@@ -266,14 +341,14 @@ grow_vertical = 2
 [node name="Title" type="Label" parent="Panel/Stats/AIM/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 28
 text = "AIM"
 horizontal_alignment = 1
 
 [node name="Value" type="Label" parent="Panel/Stats/AIM/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 28
 text = "25%"
 horizontal_alignment = 1
 
@@ -293,14 +368,14 @@ grow_vertical = 2
 [node name="Title" type="Label" parent="Panel/Stats/KIN/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 28
 text = "KIN"
 horizontal_alignment = 1
 
 [node name="Value" type="Label" parent="Panel/Stats/KIN/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 28
 text = "45%"
 horizontal_alignment = 1
 
@@ -320,14 +395,14 @@ grow_vertical = 2
 [node name="Title" type="Label" parent="Panel/Stats/NRG/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 28
 text = "NRG"
 horizontal_alignment = 1
 
 [node name="Value" type="Label" parent="Panel/Stats/NRG/VBox"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 28
 text = "35%"
 horizontal_alignment = 1
 
@@ -339,23 +414,29 @@ offset_right = 400.0
 offset_bottom = 243.0
 
 [node name="Panel" type="Panel" parent="Panel2"]
+custom_minimum_size = Vector2(0, 42)
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_bottom = 70.0
+offset_bottom = 42.0
 grow_horizontal = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_5q2tr")
 
 [node name="HeroName" type="Label" parent="Panel2/Panel"]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -60.0
+offset_top = -20.5
+offset_right = 60.0
+offset_bottom = 20.5
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(0.18039216, 0.18039216, 0.18039216, 1)
-theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 50
+theme_override_font_sizes/font_size = 32
 text = "ECHO"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -369,23 +450,29 @@ offset_right = 400.0
 offset_bottom = 1058.0
 
 [node name="Panel" type="Panel" parent="Panel3"]
+custom_minimum_size = Vector2(0, 42)
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_bottom = 70.0
+offset_bottom = 36.0
 grow_horizontal = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_5q2tr")
 
 [node name="HeroName" type="Label" parent="Panel3/Panel"]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -165.0
+offset_top = -20.5
+offset_right = 165.0
+offset_bottom = 20.5
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(0.18039216, 0.18039216, 0.18039216, 1)
-theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 50
+theme_override_font_sizes/font_size = 32
 text = "Rk.20 [SNP]"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -398,31 +485,37 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -550.0
-offset_top = -283.0
-offset_right = 550.0
-offset_bottom = 518.0
+offset_left = -480.0
+offset_top = -369.0
+offset_right = 480.0
+offset_bottom = 517.0
 grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Panel" type="Panel" parent="RolePerks"]
+custom_minimum_size = Vector2(0, 42)
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_bottom = 70.0
+offset_bottom = 42.0
 grow_horizontal = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_5q2tr")
 
 [node name="HeroName" type="Label" parent="RolePerks/Panel"]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -330.0
+offset_top = -20.5
+offset_right = 330.0
+offset_bottom = 20.5
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(0.18039216, 0.18039216, 0.18039216, 1)
-theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 50
+theme_override_font_sizes/font_size = 32
 text = "Rk.25 GUNSLINGER [GUN]"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -433,12 +526,11 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 9.0
-offset_top = 86.0
+offset_top = 63.0
 offset_right = -9.0
 offset_bottom = -12.0
 grow_horizontal = 2
 grow_vertical = 2
-metadata/_edit_lock_ = true
 
 [node name="Button" type="Button" parent="RolePerks/Control"]
 custom_minimum_size = Vector2(300, 50)
@@ -451,10 +543,11 @@ offset_right = 150.0
 offset_bottom = 50.0
 grow_horizontal = 2
 theme_override_colors/font_pressed_color = Color(0.18039216, 0.18039216, 0.18039216, 1)
+theme_override_font_sizes/font_size = 24
 theme_override_styles/pressed = ExtResource("4_0j42s")
 toggle_mode = true
 button_pressed = true
-text = "Double Tap"
+text = "DOUBLE TAP"
 
 [node name="TextureRect" type="TextureRect" parent="RolePerks/Control/Button"]
 layout_mode = 1
@@ -472,6 +565,41 @@ grow_vertical = 0
 texture = SubResource("CompressedTexture2D_md0uf")
 expand_mode = 1
 
+[node name="XpCost" type="Label" parent="RolePerks/Control/Button"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -115.0
+offset_top = -14.0
+offset_right = 1.0
+offset_bottom = 17.0
+grow_horizontal = 0
+theme_override_colors/font_outline_color = Color(0.11764706, 0.11764706, 0.11764706, 1)
+theme_override_constants/outline_size = 10
+theme_override_font_sizes/font_size = 24
+text = "100 XP"
+horizontal_alignment = 2
+
+[node name="Panel" type="Panel" parent="RolePerks/Control/Button"]
+clip_children = 1
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_right = 50.0
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_qqphc")
+
+[node name="TextureRect" type="TextureRect" parent="RolePerks/Control/Button/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("4_pl243")
+expand_mode = 1
+
 [node name="Button2" type="Button" parent="RolePerks/Control"]
 custom_minimum_size = Vector2(300, 50)
 layout_mode = 1
@@ -483,6 +611,7 @@ offset_top = 97.0
 offset_right = 150.0
 offset_bottom = 147.0
 grow_horizontal = 2
+theme_override_font_sizes/font_size = 24
 text = "ATK+1"
 
 [node name="D" type="TextureRect" parent="RolePerks/Control/Button2"]
@@ -546,6 +675,7 @@ offset_top = 196.0
 offset_right = 150.0
 offset_bottom = 246.0
 grow_horizontal = 2
+theme_override_font_sizes/font_size = 24
 text = "HP+5"
 
 [node name="D" type="TextureRect" parent="RolePerks/Control/Button3"]
@@ -594,19 +724,21 @@ grow_horizontal = 0
 grow_vertical = 2
 texture = ExtResource("3_je1un")
 expand_mode = 1
+flip_h = true
 
 [node name="Button5" type="Button" parent="RolePerks/Control"]
 modulate = Color(1, 1, 1, 0.09803922)
-custom_minimum_size = Vector2(300, 50)
+custom_minimum_size = Vector2(200, 50)
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = 205.0
 offset_top = 196.0
-offset_right = 505.0
+offset_right = 405.0
 offset_bottom = 246.0
 grow_horizontal = 2
+theme_override_font_sizes/font_size = 24
 text = "HP+5"
 
 [node name="D" type="TextureRect" parent="RolePerks/Control/Button5"]
@@ -659,16 +791,17 @@ expand_mode = 1
 
 [node name="Button6" type="Button" parent="RolePerks/Control"]
 modulate = Color(1, 1, 1, 0.09803922)
-custom_minimum_size = Vector2(300, 50)
+custom_minimum_size = Vector2(200, 50)
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = 205.0
 offset_top = 293.0
-offset_right = 505.0
+offset_right = 405.0
 offset_bottom = 343.0
 grow_horizontal = 2
+theme_override_font_sizes/font_size = 24
 text = "HP+5"
 
 [node name="D" type="TextureRect" parent="RolePerks/Control/Button6"]
@@ -732,6 +865,7 @@ offset_top = 293.0
 offset_right = 150.0
 offset_bottom = 343.0
 grow_horizontal = 2
+theme_override_font_sizes/font_size = 24
 text = "SPD+1"
 
 [node name="D" type="TextureRect" parent="RolePerks/Control/Button4"]
@@ -794,7 +928,8 @@ offset_top = 390.0
 offset_right = 150.0
 offset_bottom = 440.0
 grow_horizontal = 2
-text = "Fusion Ammo"
+theme_override_font_sizes/font_size = 24
+text = "FUSION AMMO"
 
 [node name="D" type="TextureRect" parent="RolePerks/Control/Button7"]
 layout_mode = 1
@@ -847,29 +982,35 @@ expand_mode = 1
 [node name="Panel4" type="Panel" parent="."]
 modulate = Color(1, 0.79, 0.55, 1)
 layout_mode = 1
-offset_left = 1522.0
+offset_left = 1454.0
 offset_top = 259.0
-offset_right = 1898.0
+offset_right = 1830.0
 offset_bottom = 1058.0
 
 [node name="Panel" type="Panel" parent="Panel4"]
+custom_minimum_size = Vector2(0, 42)
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_bottom = 70.0
+offset_bottom = 42.0
 grow_horizontal = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_5q2tr")
 
 [node name="HeroName" type="Label" parent="Panel4/Panel"]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -165.0
+offset_top = -20.5
+offset_right = 165.0
+offset_bottom = 20.5
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(0.18039216, 0.18039216, 0.18039216, 1)
-theme_override_fonts/font = ExtResource("2_em4mh")
-theme_override_font_sizes/font_size = 50
+theme_override_font_sizes/font_size = 32
 text = "Rk.22 [OPR]"
 horizontal_alignment = 1
 vertical_alignment = 1

@@ -1,0 +1,52 @@
+[gd_scene load_steps=3 format=3 uid="uid://1qbutp7j5oji"]
+
+[ext_resource type="Script" uid="uid://cucubw6abjha7" path="res://src/hub/skill_tree_menu.gd" id="1_svdj7"]
+[ext_resource type="PackedScene" uid="uid://cqsffo424v35" path="res://src/hub/skill_tree_node.tscn" id="2_8ybbw"]
+
+[node name="SkillTreeMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_svdj7")
+node_scene = ExtResource("2_8ybbw")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 1)
+
+[node name="ScrollContainer" type="ScrollContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TreeContainer" type="Control" parent="ScrollContainer"]
+layout_mode = 2
+
+[node name="Nodes" type="Control" parent="ScrollContainer/TreeContainer"]
+z_index = 1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="XPDisplay" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -40.0
+offset_bottom = 41.0
+grow_horizontal = 0

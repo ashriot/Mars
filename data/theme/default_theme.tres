@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=10 format=3 uid="uid://ccvulqeqoxd07"]
+[gd_resource type="Theme" load_steps=11 format=3 uid="uid://ccvulqeqoxd07"]
 
 [ext_resource type="StyleBox" uid="uid://gk8mwp5dy06c" path="res://data/theme/styleboxes/button_normal.tres" id="1_1rtxc"]
 [ext_resource type="StyleBox" uid="uid://b8kulx87fc6hp" path="res://data/theme/styleboxes/button_disabled.tres" id="1_3vshq"]
@@ -8,11 +8,12 @@
 [ext_resource type="StyleBox" uid="uid://c8i85334pnaym" path="res://data/theme/styleboxes/tooltip_panel.tres" id="6_rukqk"]
 [ext_resource type="FontVariation" uid="uid://bk8iy3u13b88f" path="res://data/theme/fonts/archivo_italic.tres" id="6_xegx1"]
 [ext_resource type="FontVariation" uid="uid://da34kbi1ndel7" path="res://data/theme/fonts/archivo.tres" id="7_rukqk"]
+[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="9_idi1b"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_smiq6"]
 
 [resource]
-default_font = ExtResource("7_rukqk")
+default_font = ExtResource("9_idi1b")
 Button/colors/font_color = Color(1, 1, 1, 1)
 Button/font_sizes/font_size = 32
 Button/styles/disabled = ExtResource("1_3vshq")

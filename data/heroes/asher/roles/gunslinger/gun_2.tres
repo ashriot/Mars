@@ -1,11 +1,11 @@
-[gd_resource type="Resource" script_class="RoleNode" load_steps=3 format=3 uid="uid://dv5dbym5llexe"]
+[gd_resource type="Resource" script_class="RoleNode" load_steps=3 format=3 uid="uid://51rsmoa8mge4"]
 
 [ext_resource type="Script" uid="uid://cuhoaxfyipk6s" path="res://src/scripts/data/role_node.gd" id="1_yegw3"]
 [ext_resource type="Resource" uid="uid://d14v1rbl3vle1" path="res://data/heroes/asher/roles/gunslinger/gun_3.tres" id="2_yegw3"]
 
 [resource]
 script = ExtResource("1_yegw3")
-type = 1
-action_slot_index = 1
-next_nodes = Array[ExtResource("1_yegw3")]([ExtResource("2_yegw3")])
+stat_type = 3
+stat_value = 1
+child_node = ExtResource("2_yegw3")
 metadata/_custom_type_script = "uid://cuhoaxfyipk6s"

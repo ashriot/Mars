@@ -1,6 +1,7 @@
-[gd_scene load_steps=8 format=3 uid="uid://diku73kk4tjv7"]
+[gd_scene load_steps=9 format=3 uid="uid://diku73kk4tjv7"]
 
 [ext_resource type="Script" uid="uid://c2o3dssew3lm2" path="res://src/battle/actor_queue.gd" id="1_gqsil"]
+[ext_resource type="FontVariation" uid="uid://da34kbi1ndel7" path="res://data/theme/fonts/archivo.tres" id="2_xrck3"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_gqsil"]
 
@@ -71,6 +72,7 @@ theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6862745)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
 theme_override_constants/shadow_outline_size = 10
+theme_override_fonts/font = ExtResource("2_xrck3")
 theme_override_font_sizes/font_size = 32
 text = "Asher"
 

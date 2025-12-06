@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="RoleNode" load_steps=3 format=3 uid="uid://delqcgyo0tjw0"]
+
+[ext_resource type="Script" uid="uid://cuhoaxfyipk6s" path="res://src/scripts/data/role_node.gd" id="1_0r87b"]
+[ext_resource type="Resource" uid="uid://cf4d8o61ybuag" path="res://data/heroes/asher/roles/gunslinger/gun_33.tres" id="2_enyc3"]
+
+[resource]
+script = ExtResource("1_0r87b")
+stat_value = 5
+child_node = ExtResource("2_enyc3")
+metadata/_custom_type_script = "uid://cuhoaxfyipk6s"
