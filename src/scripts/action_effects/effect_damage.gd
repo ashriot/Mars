@@ -76,7 +76,7 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 				is_crit = true
 
 			var power_for_hit = attacker.get_power(power_type)
-			if target.is_breached and final_damage_type != Action.DamageType.PIERCING:
+			if target.is_breached:
 				power_for_hit += attacker.current_stats.overload
 				print("added overload: ", power_for_hit)
 
