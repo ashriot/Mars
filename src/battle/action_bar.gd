@@ -195,7 +195,6 @@ func stop_flashing_panel():
 func _on_state_changed(state: BattleManager.State):
 	if not active_hero: return
 	buttons_disabled = state in [BattleManager.State.FORCED_TARGET]
-	print("Buttons Disabled: ", buttons_disabled)
 	for button in actions_ui.get_children():
 		if button is ActionButton:
 			button.override_disabled = buttons_disabled

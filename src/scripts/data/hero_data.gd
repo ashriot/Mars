@@ -123,7 +123,7 @@ func rebuild_battle_roles():
 			battle_roles[def.role_id] = role_data
 			def.init_structure()
 			if def.root_node:
-				_bake_tree_into_role(def.root_node, def, unlocked_role_ids, role_data)
+				_bake_tree_into_role(def.root_node, def, unlocked_node_ids, role_data)
 
 func get_battle_role(role_id: String) -> RoleData:
 	return battle_roles.get(role_id)

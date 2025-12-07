@@ -7,5 +7,5 @@
 script = ExtResource("1_d86j2")
 type = 1
 action_slot_index = 1
-next_nodes = Array[ExtResource("1_d86j2")]([ExtResource("2_d86j2")])
+child_node = ExtResource("2_d86j2")
 metadata/_custom_type_script = "uid://cuhoaxfyipk6s"
