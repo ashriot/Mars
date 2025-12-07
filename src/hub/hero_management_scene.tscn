@@ -161,7 +161,7 @@ horizontal_alignment = 1
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_em4mh")
 theme_override_font_sizes/font_size = 28
-text = "10"
+text = "10(3)"
 horizontal_alignment = 1
 
 [node name="FOC" type="Control" parent="Panel/Stats"]

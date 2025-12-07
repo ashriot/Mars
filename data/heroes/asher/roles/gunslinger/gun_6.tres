@@ -1,5 +1,6 @@
-[gd_resource type="Resource" script_class="RoleNode" load_steps=3 format=3 uid="uid://didoyj6rocx3i"]
+[gd_resource type="Resource" script_class="RoleNode" load_steps=4 format=3 uid="uid://didoyj6rocx3i"]
 
+[ext_resource type="Resource" uid="uid://dti2dh2i1mn7j" path="res://data/heroes/asher/roles/gunslinger/gun_7.tres" id="1_8xqg8"]
 [ext_resource type="Resource" uid="uid://bjrhsbtcsc1qf" path="res://data/heroes/asher/roles/gunslinger/gun_62.tres" id="1_cexxe"]
 [ext_resource type="Script" uid="uid://cuhoaxfyipk6s" path="res://src/scripts/data/role_node.gd" id="1_fxo7v"]
 
@@ -8,4 +9,5 @@ script = ExtResource("1_fxo7v")
 stat_type = 4
 stat_value = 1
 right_node = ExtResource("1_cexxe")
+child_node = ExtResource("1_8xqg8")
 metadata/_custom_type_script = "uid://cuhoaxfyipk6s"

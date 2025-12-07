@@ -1,7 +1,17 @@
-[gd_scene load_steps=3 format=3 uid="uid://1qbutp7j5oji"]
+[gd_scene load_steps=4 format=3 uid="uid://1qbutp7j5oji"]
 
 [ext_resource type="Script" uid="uid://cucubw6abjha7" path="res://src/hub/skill_tree_menu.gd" id="1_svdj7"]
 [ext_resource type="PackedScene" uid="uid://cqsffo424v35" path="res://src/hub/skill_tree_node.tscn" id="2_8ybbw"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fgavx"]
+bg_color = Color(1, 1, 1, 0.9607843)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
 
 [node name="SkillTreeMenu" type="Control"]
 layout_mode = 3
@@ -13,16 +23,8 @@ grow_vertical = 2
 script = ExtResource("1_svdj7")
 node_scene = ExtResource("2_8ybbw")
 
-[node name="Background" type="ColorRect" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0, 0, 0, 1)
-
-[node name="ScrollContainer" type="ScrollContainer" parent="."]
+[node name="RolePerks" type="Panel" parent="."]
+modulate = Color(1, 0.91, 0.55, 1)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -30,23 +32,66 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="TreeContainer" type="Control" parent="ScrollContainer"]
+[node name="Panel" type="Panel" parent="RolePerks"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 42.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_fgavx")
+
+[node name="HeroName" type="Label" parent="RolePerks/Panel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -330.0
+offset_top = -20.5
+offset_right = 330.0
+offset_bottom = 20.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.18039216, 0.18039216, 0.18039216, 1)
+theme_override_font_sizes/font_size = 32
+text = "GUNSLINGER [GUN]"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Container" type="Control" parent="RolePerks"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 9.0
+offset_top = 63.0
+offset_right = -9.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="RolePerks/Container"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Nodes" type="Control" parent="RolePerks/Container/ScrollContainer"]
+z_index = 1
 layout_mode = 2
 
-[node name="Nodes" type="Control" parent="ScrollContainer/TreeContainer"]
-z_index = 1
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
 [node name="XPDisplay" type="Label" parent="."]
+modulate = Color(0.11764706, 0.11764706, 0.11764706, 1)
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -40.0
+offset_left = -287.0
+offset_right = -16.0
 offset_bottom = 41.0
 grow_horizontal = 0
+horizontal_alignment = 2

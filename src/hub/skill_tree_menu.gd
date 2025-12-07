@@ -3,15 +3,19 @@ class_name SkillTreeMenu
 
 @export var node_scene: PackedScene
 
-@onready var node_layer: Control = $ScrollContainer/TreeContainer/Nodes
+@onready var node_layer: Control = $RolePerks/Container/ScrollContainer/Nodes
 @onready var xp_label: Label = $XPDisplay
 
 var current_hero: HeroData
 var current_def: RoleDefinition
 var generated_nodes: Dictionary = {}
 
-const VERTICAL_SPACING = 100
-const HORIZONTAL_SPACING = 350
+const HORIZONTAL_SPACING = 280
+const VERTICAL_SPACING = 90
+
+
+func _ready() -> void:
+	hide()
 
 func setup(hero: HeroData, role_def: RoleDefinition):
 	current_hero = hero
@@ -24,10 +28,11 @@ func setup(hero: HeroData, role_def: RoleDefinition):
 	role_def.init_structure()
 
 	# Spawn Recursively
-	_spawn_node_recursive(role_def.root_node, Vector2(400, 50), 0)
+	_spawn_node_recursive(role_def.root_node, Vector2(size.x/2, 0), 0)
 
 	# Update Visuals
 	_update_tree_state()
+	show()
 
 func _clear_tree():
 	generated_nodes.clear()
@@ -39,6 +44,7 @@ func _spawn_node_recursive(data_node: RoleNode, pos: Vector2, depth: int):
 	node_layer.add_child(ui_node)
 
 	ui_node.position = pos
+	ui_node.position.x -= ui_node.size.x / 2
 	ui_node.pivot_offset = ui_node.size / 2
 	ui_node.setup(data_node, current_hero, depth)
 	ui_node.node_clicked.connect(_on_node_clicked)
@@ -81,9 +87,8 @@ func _check_availability_recursive(node: RoleNode, parent_unlocked: bool):
 	ui_node.set_availability(is_available, can_afford)
 
 	# 2. Update Arrows
-	# We update arrows here so they light up gold immediately when you buy the parent
-	ui_node._update_arrows(current_hero, is_owned)
-	ui_node._update_button_visuals(current_hero, is_owned)
+	ui_node._update_arrows(is_owned)
+	ui_node._update_button_visuals(is_owned)
 
 	# 3. Recurse (Explicit Slots)
 	# We pass 'is_owned' as the 'parent_unlocked' status for the children
@@ -111,4 +116,4 @@ func _on_node_clicked(ui_node: SkillTreeNode):
 		AudioManager.play_sfx("press")
 
 func _refresh_xp_ui():
-	xp_label.text = "XP: %d" % current_hero.current_xp
+	xp_label.text = Utils.commafy(current_hero.current_xp) + " XP"

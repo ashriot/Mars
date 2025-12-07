@@ -3,10 +3,13 @@ class_name SkillTreeNode
 
 signal node_clicked(node_ui)
 
+enum NodeState { LOCKED, AVAILABLE, UNLOCKED }
+
 # State
 var role_node_data: RoleNode
-var state: int = 0 # 0=Locked, 1=Available, 2=Unlocked
+var state: int = 0
 var depth: int = 0
+var hero_data: HeroData
 
 # UI References
 @onready var icon_rect: TextureRect = $Panel/Icon
@@ -20,57 +23,62 @@ var depth: int = 0
 
 func setup(node: RoleNode, hero: HeroData, current_depth: int):
 	role_node_data = node
+	hero_data = hero
 	depth = current_depth
 
 	var is_owned = node.generated_id in hero.unlocked_node_ids
 
 	# 1. Setup Button Visuals
-	_update_button_visuals(hero, is_owned)
+	_update_button_visuals(is_owned)
 
 	# 2. Setup Arrow Visuals
-	_update_arrows(hero, is_owned)
+	_update_arrows(is_owned)
 
 func set_availability(is_available: bool, can_afford: bool):
-	if state == 2: return # Already owned
+	if state == NodeState.UNLOCKED: return
 
 	if is_available:
-		state = 1
-		disabled = false
+		state = NodeState.AVAILABLE
+		disabled = not can_afford
 		if can_afford:
 			self.modulate = Color.WHITE
 			cost_label.modulate = Color.GREEN
 		else:
 			self.modulate = Color.LIGHT_GRAY
 			cost_label.modulate = Color.RED
+			modulate.a = 0.5
 	else:
-		state = 0
+		state = NodeState.LOCKED
 		disabled = true
-		self.modulate = Color(0.3, 0.3, 0.3, 0.5)
+		modulate.a = 0.25
 
-func _update_button_visuals(hero: HeroData, is_owned: bool):
+func _update_button_visuals(is_owned: bool):
 	cost_label.visible = not is_owned
+	icon_rect.texture = null
 	match role_node_data.type:
 		RoleNode.RewardType.STAT:
 			label.text = ActorStats.Stats.keys()[role_node_data.stat_type] + " +%d" % role_node_data.stat_value
 
 		RoleNode.RewardType.ACTION:
-			var resource: Action = hero.current_role.actions[role_node_data.action_slot_index]
+			var resource: Action = hero_data.current_role.actions[role_node_data.action_slot_index]
 			if resource:
 				label.text = resource.action_name
 				icon_rect.texture = resource.icon
 
 		RoleNode.RewardType.PASSIVE:
-			label.text = role_node_data.unlock_resource.condition_name
+			var resource: Action = hero_data.current_role.passive
+			label.text = resource.action_name
+			icon_rect.texture = resource.icon
 
-	cost_label.text = str(role_node_data.calculated_xp_cost) + " XP"
+	cost_label.text = Utils.commafy(role_node_data.calculated_xp_cost) + " XP"
 
 	if is_owned:
-		state = 2
+		state = NodeState.UNLOCKED
 		disabled = true
-		self.modulate = Color.GOLD
+		self.modulate.a = 1.0
 		cost_label.hide()
 
-func _update_arrows(hero: HeroData, is_self_owned: bool):
+func _update_arrows(is_self_owned: bool):
 	arrow_down.visible = false
 	arrow_left.visible = false
 	arrow_right.visible = false
@@ -80,8 +88,8 @@ func _update_arrows(hero: HeroData, is_self_owned: bool):
 		if target_node:
 			arrow.visible = true
 			if is_self_owned:
-				var is_child_owned = target_node.generated_id in hero.unlocked_node_ids
-				arrow.modulate = Color.GOLD if is_child_owned else Color.WHITE
+				var is_child_owned = target_node.generated_id in hero_data.unlocked_node_ids
+				arrow.modulate = Color.WHITE if is_child_owned else Color.GRAY
 			else:
 				arrow.modulate = Color(1, 1, 1, 0.5) # Dim
 
