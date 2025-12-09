@@ -4,6 +4,8 @@ class_name EnemyCard
 # --- UNIQUE Signals ---
 signal enemy_clicked(enemy_card)
 
+@export var recover_action: Action
+
 # --- UNIQUE UI Node References ---
 @onready var intent_text: RichTextLabel = $Panel/IntentText
 @onready var intent_tooltip: RichTooltip = $Panel/IntentText/RichTooltip
@@ -73,6 +75,16 @@ func prepare_turn_base_action():
 
 func decide_intent(hero_targets: Array[HeroCard]):
 	var new_proposed_action: Action = null
+	if is_breached:
+		if recover_action:
+			intended_action = recover_action
+			intended_targets = [self]
+
+			_update_intent_ui()
+			return
+		else:
+			push_error("Enemy breached but no recover_action assigned!")
+
 	var override_action = _check_ai_overrides()
 
 	if override_action:
@@ -312,7 +324,8 @@ func _update_intent_ui():
 		if intended_targets.size() > 1:
 			final_text += " EVERYONE"
 		else:
-			final_text += " " + intended_targets[0].actor_name
+			if intended_targets[0].actor_name != actor_name:
+				final_text += " " + intended_targets[0].actor_name
 
 		intent_text.text = final_text
 	intent_tooltip.bbcode_text = intended_action.get_rich_description(self)

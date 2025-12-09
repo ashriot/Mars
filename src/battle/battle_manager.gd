@@ -226,6 +226,7 @@ func sort_actors_by_ct(a, b):
 	return randf() > 0.5
 
 func _on_actor_breached():
+	_update_all_enemy_intents()
 	print("\n Actor was Breached -> New Queue: ")
 	update_turn_order()
 
@@ -233,8 +234,6 @@ func update_turn_order():
 	turn_order_updated.emit(_run_ct_simulation())
 
 func _update_all_enemy_intents():
-	if current_state == State.EXECUTING_ACTION:
-		return
 	var living_heroes = get_living_heroes()
 	var living_enemies = get_living_enemies()
 	for enemy in living_enemies:

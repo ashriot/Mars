@@ -102,8 +102,6 @@ func on_turn_started() -> void:
 	highlight(true)
 	await _fire_condition_event(Trigger.TriggerType.ON_TURN_START)
 
-	if is_breached:
-		recover_breach()
 	return
 
 func on_turn_ended() -> void:

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="Action" load_steps=6 format=3 uid="uid://bg7k6ixvwst7t"]
+
+[ext_resource type="Script" uid="uid://da5rrc2omd6le" path="res://src/scripts/action_effects/effect_recover_breach.gd" id="1_htc05"]
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_yp4mf"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="2_a3p8c"]
+[ext_resource type="Texture2D" uid="uid://bi50x3lsg4gpg" path="res://assets/graphics/icons/textures/shield.png" id="3_j5e5a"]
+
+[sub_resource type="Resource" id="Resource_8yifd"]
+script = ExtResource("1_htc05")
+metadata/_custom_type_script = "uid://da5rrc2omd6le"
+
+[resource]
+script = ExtResource("2_a3p8c")
+action_name = "Recover Breach"
+icon = ExtResource("3_j5e5a")
+description = "Recover your intial Guard value."
+target_type = 4
+effects = Array[ExtResource("1_yp4mf")]([SubResource("Resource_8yifd")])
+metadata/_custom_type_script = "uid://dm08rhkg3bai3"

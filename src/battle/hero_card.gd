@@ -86,6 +86,8 @@ func on_turn_started() -> void:
 	await _slide_up()
 	await battle_manager.action_bar.load_actions(self, false)
 	await super.on_turn_started()
+	if is_breached:
+		recover_breach()
 	return
 
 func on_turn_ended() -> void:
