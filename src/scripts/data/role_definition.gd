@@ -1,8 +1,8 @@
 extends Resource
 class_name RoleDefinition
 
-@export var role_id: String = "gun"
-@export var role_name: String = "Gunslinger"
+@export var role_id: String = ""
+@export var role_name: String = ""
 @export_multiline var description: String = ""
 
 @export_group("Visuals")

@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="RoleNode" load_steps=3 format=3 uid="uid://oi2pydrmoxhv"]
 
 [ext_resource type="Script" uid="uid://cuhoaxfyipk6s" path="res://src/scripts/data/role_node.gd" id="1_bondt"]
-[ext_resource type="Resource" uid="uid://didoyj6rocx3i" path="res://data/heroes/asher/roles/gunslinger/gun_6.tres" id="1_nmgxx"]
+[ext_resource type="Resource" uid="uid://didoyj6rocx3i" path="res://data/heroes/asher/roles/gunner/gun_6.tres" id="1_nmgxx"]
 
 [resource]
 script = ExtResource("1_bondt")

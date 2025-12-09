@@ -516,7 +516,7 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(0.18039216, 0.18039216, 0.18039216, 1)
 theme_override_font_sizes/font_size = 32
-text = "Rk.25 GUNSLINGER [GUN]"
+text = "Rk.25 GUNNER [GUN]"
 horizontal_alignment = 1
 vertical_alignment = 1
 

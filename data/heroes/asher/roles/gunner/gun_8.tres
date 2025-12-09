@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="RoleNode" load_steps=4 format=3 uid="uid://d3eyn5br8gd30"]
 
-[ext_resource type="Resource" uid="uid://cyf86y7fbkjxi" path="res://data/heroes/asher/roles/gunslinger/gun_9.tres" id="1_bmyy6"]
-[ext_resource type="Resource" uid="uid://qr6f3t58tsa4" path="res://data/heroes/asher/roles/gunslinger/gun_82.tres" id="1_m1gqd"]
+[ext_resource type="Resource" uid="uid://cyf86y7fbkjxi" path="res://data/heroes/asher/roles/gunner/gun_9.tres" id="1_bmyy6"]
+[ext_resource type="Resource" uid="uid://qr6f3t58tsa4" path="res://data/heroes/asher/roles/gunner/gun_82.tres" id="1_m1gqd"]
 [ext_resource type="Script" uid="uid://cuhoaxfyipk6s" path="res://src/scripts/data/role_node.gd" id="2_bmyy6"]
 
 [resource]
