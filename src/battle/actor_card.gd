@@ -119,7 +119,7 @@ func take_one_hit(damage: int, damage_effect: Effect_Damage, attacker: ActorCard
 	spawn_particles.emit(pos, "gunshot")
 	current_hp = max(0, current_hp - damage)
 	hp_bar_actual.value = current_hp
-	hp_value.text = str(current_hp)
+	hp_value.text = Utils.commafy(current_hp)
 	hp_changed.emit(current_hp, current_stats.max_hp)
 	print("Hit for ", damage, " damage!")
 	update_guard_bar()
@@ -267,7 +267,7 @@ func sync_visual_health() -> Tween:
 	return health_tween
 
 func _update_health_display(value_from_tween: float):
-	hp_value.text = str(roundi(value_from_tween))
+	hp_value.text = Utils.commafy(roundi(value_from_tween))
 
 # need to add traits here
 func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary = {}) -> void:

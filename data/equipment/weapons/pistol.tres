@@ -7,7 +7,6 @@
 script = ExtResource("1_htdrr")
 id = "pistol"
 item_name = "Pistol"
-rank = 2
 star_atk = 4
 star_psy = 4
 star_ovr = 2

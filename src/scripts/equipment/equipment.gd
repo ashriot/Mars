@@ -108,7 +108,7 @@ func calculate_stats() -> ActorStats:
 	return stats
 
 func _get_multiplier() -> float:
-	return pow((rank + 5), 2) * 0.048
+	return (rank + pow(rank, 2) * 0.03) / 2 + 1.5
 
 func _calc_stat(rating: int, base: int = 5) -> int:
 	return int(((rating + base) * _get_multiplier()))

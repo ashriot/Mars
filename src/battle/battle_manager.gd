@@ -209,10 +209,10 @@ func find_and_start_next_turn():
 		await _flush_all_health_animations()
 		await execute_enemy_turn(winner)
 		await winner.on_turn_ended()
-		change_state(State.LOADING)
 		current_actor = null
 		if await _check_if_battle_ended():
 			return
+		change_state(State.LOADING)
 		_update_all_enemy_intents()
 		await wait(0.5)
 		find_and_start_next_turn()
@@ -285,6 +285,8 @@ func _focus_button(button: ActionButton):
 	focused_button.focused(true)
 
 func _finish_hero_turn():
+	if current_state == State.BATTLE_OVER:
+		return
 	var is_shift_action = executing_action.is_shift_action
 	if focused_button and not is_shift_action:
 		focused_button.focused(false)
