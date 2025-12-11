@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="RoleDefinition" load_steps=9 format=3 uid="uid://b1qxtq3pnpo1m"]
+
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="1_8px85"]
+[ext_resource type="Resource" uid="uid://811d3h1n464x" path="res://data/heroes/echo/actions/displace.tres" id="2_o8nhr"]
+[ext_resource type="Resource" uid="uid://bhe5ab7bd2gbq" path="res://data/heroes/echo/actions/static_charge.tres" id="3_8px85"]
+[ext_resource type="Resource" uid="uid://dbs8wlu3x6uwq" path="res://data/heroes/echo/actions/feedback.tres" id="4_bd8j7"]
+[ext_resource type="Resource" uid="uid://bfalay3c0jkmr" path="res://data/heroes/echo/actions/inversion.tres" id="5_ies5g"]
+[ext_resource type="Texture2D" uid="uid://r6a5eh2mlkyk" path="res://assets/graphics/icons/roles/bolt-eye.png" id="6_8px85"]
+[ext_resource type="Resource" uid="uid://bm4jlai25snkq" path="res://data/heroes/echo/actions/force_field.tres" id="7_bu8it"]
+[ext_resource type="Script" uid="uid://sy50n7nerbow" path="res://src/scripts/data/role_definition.gd" id="9_32bgm"]
+
+[resource]
+script = ExtResource("9_32bgm")
+role_id = "dom"
+role_name = "Dominator"
+description = "A debuffer/controller."
+icon = ExtResource("6_8px85")
+color = Color(0.22077161, 0.44374573, 1.4369954, 1)
+passive = ExtResource("7_bu8it")
+actions = Array[ExtResource("1_8px85")]([ExtResource("2_o8nhr"), ExtResource("3_8px85"), ExtResource("4_bd8j7"), ExtResource("5_ies5g")])
+metadata/_custom_type_script = "uid://sy50n7nerbow"

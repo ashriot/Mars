@@ -282,10 +282,6 @@ text = "HEAD OUT"
 
 [node name="SkillTreeMenu" parent="." instance=ExtResource("10_yo4oc")]
 layout_mode = 1
-offset_left = 631.0
-offset_top = 34.0
-offset_right = -394.0
-offset_bottom = -37.0
 
 [connection signal="pressed" from="Actions/Button3" to="." method="_on_button_3_pressed"]
 [connection signal="pressed" from="Actions/HeadOut" to="." method="_on_head_out_pressed"]

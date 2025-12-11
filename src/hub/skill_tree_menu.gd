@@ -3,8 +3,8 @@ class_name SkillTreeMenu
 
 @export var node_scene: PackedScene
 
-@onready var node_layer: Control = $RolePerks/Container/ScrollContainer/Nodes
-@onready var xp_label: Label = $XPDisplay
+@onready var node_layer: Control = $Center/Nodes
+@onready var xp_label: Label = $Center/XPDisplay
 
 var current_hero: HeroData
 var current_def: RoleDefinition
@@ -28,7 +28,7 @@ func setup(hero: HeroData, role_def: RoleDefinition):
 	role_def.init_structure()
 
 	# Spawn Recursively
-	_spawn_node_recursive(role_def.root_node, Vector2(size.x/2, 0), 0)
+	_spawn_node_recursive(role_def.root_node, Vector2(node_layer.size.x/2, 0), 0)
 
 	# Update Visuals
 	_update_tree_state()
@@ -117,3 +117,7 @@ func _on_node_clicked(ui_node: SkillTreeNode):
 
 func _refresh_xp_ui():
 	xp_label.text = Utils.commafy(current_hero.current_xp) + " XP"
+
+
+func _on_back_btn_pressed() -> void:
+	hide()

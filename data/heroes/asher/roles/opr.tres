@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="RoleDefinition" load_steps=4 format=3 uid="uid://cq1s08aos0ely"]
+[gd_resource type="Resource" script_class="RoleDefinition" load_steps=5 format=3 uid="uid://cq1s08aos0ely"]
 
 [ext_resource type="Texture2D" uid="uid://m3oty7ssw1by" path="res://assets/graphics/icons/roles/walkie-talkie.png" id="1_67ry2"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="1_bhdnr"]
 [ext_resource type="Resource" uid="uid://ersfau78o3a7" path="res://data/heroes/asher/roles/operative/opr_1.tres" id="2_bhdnr"]
 [ext_resource type="Script" uid="uid://sy50n7nerbow" path="res://src/scripts/data/role_definition.gd" id="3_wvcdv"]
 
@@ -10,6 +11,6 @@ role_id = "opr"
 role_name = "Operative"
 description = "A team-supporting specialist."
 icon = ExtResource("1_67ry2")
-color = Color(1.437, 0.55, 0, 1)
+color = Color(1.4369954, 0.8005993, 0, 1)
 root_node = ExtResource("2_bhdnr")
 metadata/_custom_type_script = "uid://sy50n7nerbow"

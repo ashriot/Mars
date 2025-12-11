@@ -30,7 +30,7 @@ func calculate_stats():
 	stats = ActorStats.new()
 
 	stats.actor_name = enemy_name
-	stats.max_hp = _calc_stat(hp_rank) * 5
+	stats.max_hp = int(_calc_stat(hp_rank) * 7.5)
 	stats.starting_guard = int(level / 8) + guard_rank
 	stats.attack = _calc_stat(attack_rank)
 	stats.psyche = _calc_stat(psyche_rank)

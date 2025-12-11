@@ -75,7 +75,7 @@ func update_action_bar(hero_card: HeroCard, shifted: bool = false):
 	for i in range(4):
 		var button = actions_ui.get_child(i) as ActionButton
 		button.hide()
-		if i == current_role.actions.size(): break
+		if i >= current_role.actions.size(): continue
 		var action_data = current_role.actions[i]
 		if not action_data: continue
 		if button.pressed.is_connected(_on_action_button_pressed):
