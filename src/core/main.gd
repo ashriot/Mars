@@ -13,7 +13,6 @@ class_name Main
 var current_instance: Node = null
 
 func _ready():
-	# Start logic
 	load_title_screen()
 	get_tree().root.size_changed.connect(_on_viewport_resized)
 	_on_viewport_resized()

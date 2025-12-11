@@ -274,12 +274,32 @@ func _unhandled_input(event):
 			get_viewport().set_input_as_handled()
 
 func _input(event):
-	if current_map_state == MapState.LOADING or current_map_state == MapState.LOCKED: return
+	if current_map_state == MapState.LOADING or current_map_state == MapState.LOCKED:
+		return
+
+	# 1. MOUSE WHEEL (Your existing logic)
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
 			_zoom_camera(zoom_step)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			_zoom_camera(-zoom_step)
+
+	# 2. PINCH TO ZOOM (Trackpad / Touchscreen)
+	elif event is InputEventMagnifyGesture:
+		var zoom_delta = (event.factor - 1.0) * zoom_step * 25
+		_zoom_camera(zoom_delta)
+
+	# 3. TWO-FINGER SCROLL (Trackpad Panning)
+	elif event is InputEventPanGesture:
+		# Use the delta to move the camera directly
+		# You might need to multiply by camera.zoom.x to keep panning speed consistent
+		var pan_velocity = event.delta * 20.0 * camera.zoom.x
+		camera.position += pan_velocity
+
+		# Clamp the position so they don't pan off the map
+		# (Reuse your existing clamp logic helper if you have one exposed,
+		#  or rely on the _zoom_camera/move logic to fix it later)
+		# camera.position = _get_clamped_camera_pos(camera.position, camera.zoom)
 
 	#if event.is_action_pressed("ui_right"):
 		## 1. Find the neighbor to the right of 'current_node'

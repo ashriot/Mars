@@ -1,10 +1,11 @@
-[gd_scene load_steps=8 format=3 uid="uid://1qbutp7j5oji"]
+[gd_scene load_steps=9 format=3 uid="uid://1qbutp7j5oji"]
 
 [ext_resource type="Script" uid="uid://cucubw6abjha7" path="res://src/hub/skill_tree_menu.gd" id="1_svdj7"]
 [ext_resource type="PackedScene" uid="uid://cqsffo424v35" path="res://src/hub/skill_tree_node.tscn" id="2_8ybbw"]
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="4_3v1r5"]
 [ext_resource type="Texture2D" uid="uid://b5i73sh1oufv2" path="res://assets/graphics/icons/items/rifle.png" id="5_2gcty"]
 [ext_resource type="Texture2D" uid="uid://cqweju3y7kwst" path="res://assets/graphics/icons/textures/shield_sm.png" id="5_ac1ex"]
+[ext_resource type="FontVariation" uid="uid://da34kbi1ndel7" path="res://data/theme/fonts/archivo.tres" id="6_3v1r5"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fgavx"]
 bg_color = Color(1, 1, 1, 0.9607843)
@@ -38,12 +39,192 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 0.9607843)
 
+[node name="Center" type="Panel" parent="."]
+modulate = Color(1.4369954, 0.9420206, 0, 1)
+custom_minimum_size = Vector2(900, 1000)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -601.0
+offset_top = -500.0
+offset_right = 299.0
+offset_bottom = 500.0
+grow_horizontal = 2
+grow_vertical = 2
+metadata/_edit_group_ = true
+
+[node name="Header" type="Panel" parent="Center"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 42.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_fgavx")
+
+[node name="Label" type="Label" parent="Center/Header"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -330.0
+offset_top = -20.5
+offset_right = 330.0
+offset_bottom = 20.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.18039216, 0.18039216, 0.18039216, 1)
+theme_override_font_sizes/font_size = 32
+text = "GUNNER [GUN]"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Nodes" type="Control" parent="Center"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 9.0
+offset_top = 63.0
+offset_right = -9.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="XPDisplay" type="Label" parent="Center"]
+modulate = Color(0.11764706, 0.11764706, 0.11764706, 1)
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -287.0
+offset_right = -16.0
+offset_bottom = 41.0
+grow_horizontal = 0
+text = "XP"
+horizontal_alignment = 2
+
+[node name="Tabs" type="HBoxContainer" parent="Center"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 11.0
+offset_top = -65.0
+offset_right = -11.0
+offset_bottom = -15.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 12
+
+[node name="Tier1" type="Button" parent="Center/Tabs"]
+custom_minimum_size = Vector2(166, 0)
+layout_mode = 2
+text = "1-10"
+
+[node name="Tier2" type="Button" parent="Center/Tabs"]
+custom_minimum_size = Vector2(166, 0)
+layout_mode = 2
+text = "11-20"
+
+[node name="Tier3" type="Button" parent="Center/Tabs"]
+custom_minimum_size = Vector2(166, 0)
+layout_mode = 2
+text = "21-30"
+
+[node name="Tier4" type="Button" parent="Center/Tabs"]
+custom_minimum_size = Vector2(166, 0)
+layout_mode = 2
+text = "31-40"
+
+[node name="Tier5" type="Button" parent="Center/Tabs"]
+custom_minimum_size = Vector2(166, 0)
+layout_mode = 2
+text = "41-50"
+
+[node name="Weapon" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -632.0
+offset_top = -500.0
+offset_right = -31.0
+offset_bottom = -27.0
+grow_horizontal = 0
+grow_vertical = 2
+
+[node name="Header" type="Panel" parent="Weapon"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 42.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_fgavx")
+
+[node name="Label" type="Label" parent="Weapon/Header"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.18039216, 0.18039216, 0.18039216, 1)
+theme_override_font_sizes/font_size = 32
+text = "WEAPON"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Content" type="Control" parent="Weapon"]
+z_index = 1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 14.0
+offset_top = 52.0
+offset_right = -14.0
+offset_bottom = -14.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Icon" type="TextureRect" parent="Weapon/Content"]
+layout_mode = 0
+offset_right = 60.0
+offset_bottom = 60.0
+texture = ExtResource("5_2gcty")
+expand_mode = 1
+
+[node name="Label" type="Label" parent="Weapon/Content"]
+layout_mode = 0
+offset_left = 67.0
+offset_top = -6.0
+offset_right = 577.0
+offset_bottom = 57.0
+theme_override_constants/outline_size = 10
+theme_override_fonts/font = ExtResource("6_3v1r5")
+text = "Assault Rifle+3"
+vertical_alignment = 1
+
 [node name="Hero1" type="Panel" parent="."]
 layout_mode = 1
-offset_left = 30.0
-offset_top = 69.0
-offset_right = 330.0
-offset_bottom = 349.0
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 32.0
+offset_top = -502.0
+offset_right = 332.0
+offset_bottom = -212.0
+grow_vertical = 2
 mouse_filter = 1
 
 [node name="Header" type="Panel" parent="Hero1"]
@@ -87,9 +268,9 @@ anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -150.0
-offset_top = -6.0
+offset_top = 1.0
 offset_right = 150.0
-offset_bottom = 230.0
+offset_bottom = 237.0
 grow_horizontal = 2
 theme_override_constants/separation = -2
 
@@ -420,15 +601,25 @@ bbcode_enabled = true
 text = "50%"
 scroll_active = false
 
-[node name="Hero2" type="Panel" parent="."]
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 1
-offset_left = 30.0
-offset_top = 374.0
-offset_right = 330.0
-offset_bottom = 457.0
-mouse_filter = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 32.0
+offset_top = -185.0
+offset_right = 332.0
+offset_bottom = 375.0
+grow_vertical = 2
+theme_override_constants/separation = 20
 
-[node name="Header" type="Panel" parent="Hero2"]
+[node name="Hero2" type="Panel" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+mouse_filter = 1
+metadata/_edit_group_ = true
+
+[node name="Header" type="Panel" parent="VBoxContainer/Hero2"]
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 1
 anchors_preset = 10
@@ -437,7 +628,7 @@ offset_bottom = 42.0
 grow_horizontal = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_fgavx")
 
-[node name="Label" type="Label" parent="Hero2/Header"]
+[node name="Label" type="Label" parent="VBoxContainer/Hero2/Header"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -450,7 +641,7 @@ text = "ECHO"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Content" type="Control" parent="Hero2"]
+[node name="Content" type="Control" parent="VBoxContainer/Hero2"]
 clip_contents = true
 layout_mode = 1
 anchors_preset = 15
@@ -463,26 +654,26 @@ offset_bottom = -8.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Stats" type="VBoxContainer" parent="Hero2/Content"]
+[node name="Stats" type="VBoxContainer" parent="VBoxContainer/Hero2/Content"]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -150.0
-offset_top = -6.0
+offset_top = 1.0
 offset_right = 150.0
-offset_bottom = 230.0
+offset_bottom = 237.0
 grow_horizontal = 2
 theme_override_constants/separation = -2
 
-[node name="HP" type="HBoxContainer" parent="Hero2/Content/Stats"]
+[node name="HP" type="HBoxContainer" parent="VBoxContainer/Hero2/Content/Stats"]
 modulate = Color(0.304, 0.76, 0.34199995, 1)
 custom_minimum_size = Vector2(0, 41)
 layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 1
 
-[node name="Label" type="RichTextLabel" parent="Hero2/Content/Stats/HP"]
+[node name="Label" type="RichTextLabel" parent="VBoxContainer/Hero2/Content/Stats/HP"]
 custom_minimum_size = Vector2(60, 0)
 layout_mode = 2
 mouse_filter = 2
@@ -491,7 +682,7 @@ theme_override_font_sizes/normal_font_size = 32
 text = "HP"
 horizontal_alignment = 2
 
-[node name="Value" type="RichTextLabel" parent="Hero2/Content/Stats/HP"]
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero2/Content/Stats/HP"]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 mouse_filter = 2
@@ -500,16 +691,16 @@ theme_override_font_sizes/normal_font_size = 32
 bbcode_enabled = true
 text = "[color=\"fff2\"]0[color=\"fff\"]100"
 
-[node name="Resources" type="HBoxContainer" parent="Hero2/Content/Stats"]
+[node name="Resources" type="HBoxContainer" parent="VBoxContainer/Hero2/Content/Stats"]
 layout_mode = 2
 alignment = 1
 
-[node name="Guard" type="Control" parent="Hero2/Content/Stats/Resources"]
+[node name="Guard" type="Control" parent="VBoxContainer/Hero2/Content/Stats/Resources"]
 custom_minimum_size = Vector2(100, 41)
 layout_mode = 2
 mouse_filter = 1
 
-[node name="Pip1" type="TextureRect" parent="Hero2/Content/Stats/Resources/Guard"]
+[node name="Pip1" type="TextureRect" parent="VBoxContainer/Hero2/Content/Stats/Resources/Guard"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 1
 anchors_preset = 8
@@ -526,7 +717,7 @@ grow_vertical = 2
 texture = ExtResource("5_ac1ex")
 expand_mode = 1
 
-[node name="Value" type="RichTextLabel" parent="Hero2/Content/Stats/Resources/Guard"]
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero2/Content/Stats/Resources/Guard"]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -547,12 +738,12 @@ text = "05  03"
 scroll_active = false
 horizontal_alignment = 2
 
-[node name="Focus" type="Control" parent="Hero2/Content/Stats/Resources"]
+[node name="Focus" type="Control" parent="VBoxContainer/Hero2/Content/Stats/Resources"]
 custom_minimum_size = Vector2(100, 41)
 layout_mode = 2
 mouse_filter = 1
 
-[node name="Value" type="RichTextLabel" parent="Hero2/Content/Stats/Resources/Focus"]
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero2/Content/Stats/Resources/Focus"]
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
@@ -570,7 +761,7 @@ text = "05"
 scroll_active = false
 horizontal_alignment = 2
 
-[node name="Pip1" type="TextureRect" parent="Hero2/Content/Stats/Resources/Focus"]
+[node name="Pip1" type="TextureRect" parent="VBoxContainer/Hero2/Content/Stats/Resources/Focus"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 1
 anchors_preset = 8
@@ -587,18 +778,18 @@ grow_vertical = 2
 texture = SubResource("CompressedTexture2D_fgavx")
 expand_mode = 1
 
-[node name="POW" type="HBoxContainer" parent="Hero2/Content/Stats"]
+[node name="POW" type="HBoxContainer" parent="VBoxContainer/Hero2/Content/Stats"]
 layout_mode = 2
 theme_override_constants/separation = 0
 alignment = 2
 
-[node name="ATK" type="HBoxContainer" parent="Hero2/Content/Stats/POW"]
+[node name="ATK" type="HBoxContainer" parent="VBoxContainer/Hero2/Content/Stats/POW"]
 modulate = Color(1, 0.37, 0.37, 1)
 custom_minimum_size = Vector2(0, 41)
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Label" type="Label" parent="Hero2/Content/Stats/POW/ATK"]
+[node name="Label" type="Label" parent="VBoxContainer/Hero2/Content/Stats/POW/ATK"]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("4_3v1r5")
@@ -606,7 +797,7 @@ text = "atk"
 horizontal_alignment = 2
 uppercase = true
 
-[node name="Value" type="RichTextLabel" parent="Hero2/Content/Stats/POW/ATK"]
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero2/Content/Stats/POW/ATK"]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 mouse_filter = 2
@@ -616,14 +807,14 @@ bbcode_enabled = true
 text = "003"
 scroll_active = false
 
-[node name="PSY" type="HBoxContainer" parent="Hero2/Content/Stats/POW"]
+[node name="PSY" type="HBoxContainer" parent="VBoxContainer/Hero2/Content/Stats/POW"]
 modulate = Color(0.43, 0.63900006, 1, 1)
 custom_minimum_size = Vector2(0, 41)
 layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 1
 
-[node name="Label" type="Label" parent="Hero2/Content/Stats/POW/PSY"]
+[node name="Label" type="Label" parent="VBoxContainer/Hero2/Content/Stats/POW/PSY"]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("4_3v1r5")
@@ -631,7 +822,7 @@ text = "psy"
 horizontal_alignment = 2
 uppercase = true
 
-[node name="Value" type="RichTextLabel" parent="Hero2/Content/Stats/POW/PSY"]
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero2/Content/Stats/POW/PSY"]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 mouse_filter = 2
@@ -641,18 +832,18 @@ bbcode_enabled = true
 text = "005"
 scroll_active = false
 
-[node name="SUB" type="HBoxContainer" parent="Hero2/Content/Stats"]
+[node name="SUB" type="HBoxContainer" parent="VBoxContainer/Hero2/Content/Stats"]
 layout_mode = 2
 theme_override_constants/separation = 0
 alignment = 2
 
-[node name="OVR" type="HBoxContainer" parent="Hero2/Content/Stats/SUB"]
+[node name="OVR" type="HBoxContainer" parent="VBoxContainer/Hero2/Content/Stats/SUB"]
 modulate = Color(0.52156866, 0.42745098, 1, 1)
 custom_minimum_size = Vector2(0, 41)
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Label" type="Label" parent="Hero2/Content/Stats/SUB/OVR"]
+[node name="Label" type="Label" parent="VBoxContainer/Hero2/Content/Stats/SUB/OVR"]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("4_3v1r5")
@@ -660,7 +851,7 @@ text = "ovr"
 horizontal_alignment = 2
 uppercase = true
 
-[node name="Value" type="RichTextLabel" parent="Hero2/Content/Stats/SUB/OVR"]
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero2/Content/Stats/SUB/OVR"]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 mouse_filter = 2
@@ -670,14 +861,14 @@ bbcode_enabled = true
 text = "003"
 scroll_active = false
 
-[node name="SPD" type="HBoxContainer" parent="Hero2/Content/Stats/SUB"]
+[node name="SPD" type="HBoxContainer" parent="VBoxContainer/Hero2/Content/Stats/SUB"]
 modulate = Color(1, 0.77666664, 0.32999998, 1)
 custom_minimum_size = Vector2(0, 41)
 layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 1
 
-[node name="Label" type="Label" parent="Hero2/Content/Stats/SUB/SPD"]
+[node name="Label" type="Label" parent="VBoxContainer/Hero2/Content/Stats/SUB/SPD"]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("4_3v1r5")
@@ -685,7 +876,7 @@ text = "spd"
 horizontal_alignment = 2
 uppercase = true
 
-[node name="Value" type="RichTextLabel" parent="Hero2/Content/Stats/SUB/SPD"]
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero2/Content/Stats/SUB/SPD"]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 mouse_filter = 2
@@ -695,18 +886,18 @@ bbcode_enabled = true
 text = "005"
 scroll_active = false
 
-[node name="AIM" type="HBoxContainer" parent="Hero2/Content/Stats"]
+[node name="AIM" type="HBoxContainer" parent="VBoxContainer/Hero2/Content/Stats"]
 modulate = Color(0.95100003, 0.51, 1, 1)
 layout_mode = 2
 theme_override_constants/separation = 0
 alignment = 2
 
-[node name="AIM" type="HBoxContainer" parent="Hero2/Content/Stats/AIM"]
+[node name="AIM" type="HBoxContainer" parent="VBoxContainer/Hero2/Content/Stats/AIM"]
 custom_minimum_size = Vector2(0, 41)
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Label" type="Label" parent="Hero2/Content/Stats/AIM/AIM"]
+[node name="Label" type="Label" parent="VBoxContainer/Hero2/Content/Stats/AIM/AIM"]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("4_3v1r5")
@@ -714,7 +905,7 @@ text = "aim"
 horizontal_alignment = 2
 uppercase = true
 
-[node name="Value" type="RichTextLabel" parent="Hero2/Content/Stats/AIM/AIM"]
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero2/Content/Stats/AIM/AIM"]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 mouse_filter = 2
@@ -724,13 +915,13 @@ bbcode_enabled = true
 text = "25%"
 scroll_active = false
 
-[node name="PRE" type="HBoxContainer" parent="Hero2/Content/Stats/AIM"]
+[node name="PRE" type="HBoxContainer" parent="VBoxContainer/Hero2/Content/Stats/AIM"]
 custom_minimum_size = Vector2(0, 41)
 layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 1
 
-[node name="Label" type="Label" parent="Hero2/Content/Stats/AIM/PRE"]
+[node name="Label" type="Label" parent="VBoxContainer/Hero2/Content/Stats/AIM/PRE"]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("4_3v1r5")
@@ -738,7 +929,7 @@ text = "pre"
 horizontal_alignment = 2
 uppercase = true
 
-[node name="Value" type="RichTextLabel" parent="Hero2/Content/Stats/AIM/PRE"]
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero2/Content/Stats/AIM/PRE"]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 mouse_filter = 2
@@ -748,18 +939,18 @@ bbcode_enabled = true
 text = "003"
 scroll_active = false
 
-[node name="DEF" type="HBoxContainer" parent="Hero2/Content/Stats"]
+[node name="DEF" type="HBoxContainer" parent="VBoxContainer/Hero2/Content/Stats"]
 layout_mode = 2
 theme_override_constants/separation = 0
 alignment = 2
 
-[node name="KIN" type="HBoxContainer" parent="Hero2/Content/Stats/DEF"]
+[node name="KIN" type="HBoxContainer" parent="VBoxContainer/Hero2/Content/Stats/DEF"]
 modulate = Color(1, 0.4745098, 0.16862746, 1)
 custom_minimum_size = Vector2(0, 41)
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Label" type="Label" parent="Hero2/Content/Stats/DEF/KIN"]
+[node name="Label" type="Label" parent="VBoxContainer/Hero2/Content/Stats/DEF/KIN"]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("4_3v1r5")
@@ -767,7 +958,7 @@ text = "kin"
 horizontal_alignment = 2
 uppercase = true
 
-[node name="Value" type="RichTextLabel" parent="Hero2/Content/Stats/DEF/KIN"]
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero2/Content/Stats/DEF/KIN"]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 mouse_filter = 2
@@ -777,14 +968,14 @@ bbcode_enabled = true
 text = "25%"
 scroll_active = false
 
-[node name="NRG" type="HBoxContainer" parent="Hero2/Content/Stats/DEF"]
+[node name="NRG" type="HBoxContainer" parent="VBoxContainer/Hero2/Content/Stats/DEF"]
 modulate = Color(0.26, 1, 0.9259999, 1)
 custom_minimum_size = Vector2(0, 41)
 layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 1
 
-[node name="Label" type="Label" parent="Hero2/Content/Stats/DEF/NRG"]
+[node name="Label" type="Label" parent="VBoxContainer/Hero2/Content/Stats/DEF/NRG"]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("4_3v1r5")
@@ -792,7 +983,7 @@ text = "nrg"
 horizontal_alignment = 2
 uppercase = true
 
-[node name="Value" type="RichTextLabel" parent="Hero2/Content/Stats/DEF/NRG"]
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero2/Content/Stats/DEF/NRG"]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 mouse_filter = 2
@@ -802,23 +993,13 @@ bbcode_enabled = true
 text = "50%"
 scroll_active = false
 
-[node name="Center" type="Panel" parent="."]
-modulate = Color(1.4369954, 0.9420206, 0, 1)
-custom_minimum_size = Vector2(900, 1000)
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -601.0
-offset_top = -500.0
-offset_right = 299.0
-offset_bottom = 500.0
-grow_horizontal = 2
-grow_vertical = 2
+[node name="Hero3" type="Panel" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+mouse_filter = 1
+metadata/_edit_group_ = true
 
-[node name="Header" type="Panel" parent="Center"]
+[node name="Header" type="Panel" parent="VBoxContainer/Hero3"]
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 1
 anchors_preset = 10
@@ -827,104 +1008,378 @@ offset_bottom = 42.0
 grow_horizontal = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_fgavx")
 
-[node name="Label" type="Label" parent="Center/Header"]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -330.0
-offset_top = -20.5
-offset_right = 330.0
-offset_bottom = 20.5
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_colors/font_color = Color(0.18039216, 0.18039216, 0.18039216, 1)
-theme_override_font_sizes/font_size = 32
-text = "GUNNER [GUN]"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="Nodes" type="Control" parent="Center"]
+[node name="Label" type="Label" parent="VBoxContainer/Hero3/Header"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 9.0
-offset_top = 63.0
-offset_right = -9.0
-offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.18039216, 0.18039216, 0.18039216, 1)
+theme_override_font_sizes/font_size = 32
+text = "SANDS"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Content" type="Control" parent="VBoxContainer/Hero3"]
+clip_contents = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 46.0
+offset_right = -8.0
+offset_bottom = -8.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="XPDisplay" type="Label" parent="Center"]
-modulate = Color(0.11764706, 0.11764706, 0.11764706, 1)
+[node name="Stats" type="VBoxContainer" parent="VBoxContainer/Hero3/Content"]
 layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -287.0
-offset_right = -16.0
-offset_bottom = 41.0
-grow_horizontal = 0
-text = "XP"
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -150.0
+offset_top = 1.0
+offset_right = 150.0
+offset_bottom = 237.0
+grow_horizontal = 2
+theme_override_constants/separation = -2
+
+[node name="HP" type="HBoxContainer" parent="VBoxContainer/Hero3/Content/Stats"]
+modulate = Color(0.304, 0.76, 0.34199995, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="RichTextLabel" parent="VBoxContainer/Hero3/Content/Stats/HP"]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+text = "HP"
 horizontal_alignment = 2
 
-[node name="Tabs" type="HBoxContainer" parent="Center"]
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero3/Content/Stats/HP"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "[color=\"fff2\"]0[color=\"fff\"]100"
+
+[node name="Resources" type="HBoxContainer" parent="VBoxContainer/Hero3/Content/Stats"]
+layout_mode = 2
+alignment = 1
+
+[node name="Guard" type="Control" parent="VBoxContainer/Hero3/Content/Stats/Resources"]
+custom_minimum_size = Vector2(100, 41)
+layout_mode = 2
+mouse_filter = 1
+
+[node name="Pip1" type="TextureRect" parent="VBoxContainer/Hero3/Content/Stats/Resources/Guard"]
+custom_minimum_size = Vector2(32, 32)
 layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 11.0
-offset_top = -65.0
-offset_right = -11.0
-offset_bottom = -15.0
-grow_horizontal = 2
-grow_vertical = 0
-theme_override_constants/separation = 12
-
-[node name="Tier1" type="Button" parent="Center/Tabs"]
-custom_minimum_size = Vector2(166, 0)
-layout_mode = 2
-text = "1-10"
-
-[node name="Tier2" type="Button" parent="Center/Tabs"]
-custom_minimum_size = Vector2(166, 0)
-layout_mode = 2
-text = "11-20"
-
-[node name="Tier3" type="Button" parent="Center/Tabs"]
-custom_minimum_size = Vector2(166, 0)
-layout_mode = 2
-text = "21-30"
-
-[node name="Tier4" type="Button" parent="Center/Tabs"]
-custom_minimum_size = Vector2(166, 0)
-layout_mode = 2
-text = "31-40"
-
-[node name="Tier5" type="Button" parent="Center/Tabs"]
-custom_minimum_size = Vector2(166, 0)
-layout_mode = 2
-text = "41-50"
-
-[node name="Weapon" type="Panel" parent="."]
-layout_mode = 1
-anchors_preset = 6
-anchor_left = 1.0
+anchors_preset = 8
+anchor_left = 0.5
 anchor_top = 0.5
-anchor_right = 1.0
+anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -632.0
-offset_top = -500.0
-offset_right = -31.0
-offset_bottom = -27.0
-grow_horizontal = 0
+offset_left = -39.0
+offset_top = -12.5
+offset_right = -7.0
+offset_bottom = 19.5
+grow_horizontal = 2
 grow_vertical = 2
+texture = ExtResource("5_ac1ex")
+expand_mode = 1
 
-[node name="Header" type="Panel" parent="Weapon"]
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero3/Content/Stats/Resources/Guard"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -81.0
+offset_top = -18.0
+offset_right = 35.0
+offset_bottom = 18.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "05  03"
+scroll_active = false
+horizontal_alignment = 2
+
+[node name="Focus" type="Control" parent="VBoxContainer/Hero3/Content/Stats/Resources"]
+custom_minimum_size = Vector2(100, 41)
+layout_mode = 2
+mouse_filter = 1
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero3/Content/Stats/Resources/Focus"]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = -14.0
+offset_top = -18.0
+offset_right = 47.0
+offset_bottom = 18.0
+grow_vertical = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "05"
+scroll_active = false
+horizontal_alignment = 2
+
+[node name="Pip1" type="TextureRect" parent="VBoxContainer/Hero3/Content/Stats/Resources/Focus"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -1.0
+offset_top = -13.5
+offset_right = 31.0
+offset_bottom = 18.5
+grow_horizontal = 2
+grow_vertical = 2
+texture = SubResource("CompressedTexture2D_fgavx")
+expand_mode = 1
+
+[node name="POW" type="HBoxContainer" parent="VBoxContainer/Hero3/Content/Stats"]
+layout_mode = 2
+theme_override_constants/separation = 0
+alignment = 2
+
+[node name="ATK" type="HBoxContainer" parent="VBoxContainer/Hero3/Content/Stats/POW"]
+modulate = Color(1, 0.37, 0.37, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero3/Content/Stats/POW/ATK"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "atk"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero3/Content/Stats/POW/ATK"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "003"
+scroll_active = false
+
+[node name="PSY" type="HBoxContainer" parent="VBoxContainer/Hero3/Content/Stats/POW"]
+modulate = Color(0.43, 0.63900006, 1, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero3/Content/Stats/POW/PSY"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "psy"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero3/Content/Stats/POW/PSY"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "005"
+scroll_active = false
+
+[node name="SUB" type="HBoxContainer" parent="VBoxContainer/Hero3/Content/Stats"]
+layout_mode = 2
+theme_override_constants/separation = 0
+alignment = 2
+
+[node name="OVR" type="HBoxContainer" parent="VBoxContainer/Hero3/Content/Stats/SUB"]
+modulate = Color(0.52156866, 0.42745098, 1, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero3/Content/Stats/SUB/OVR"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "ovr"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero3/Content/Stats/SUB/OVR"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "003"
+scroll_active = false
+
+[node name="SPD" type="HBoxContainer" parent="VBoxContainer/Hero3/Content/Stats/SUB"]
+modulate = Color(1, 0.77666664, 0.32999998, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero3/Content/Stats/SUB/SPD"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "spd"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero3/Content/Stats/SUB/SPD"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "005"
+scroll_active = false
+
+[node name="AIM" type="HBoxContainer" parent="VBoxContainer/Hero3/Content/Stats"]
+modulate = Color(0.95100003, 0.51, 1, 1)
+layout_mode = 2
+theme_override_constants/separation = 0
+alignment = 2
+
+[node name="AIM" type="HBoxContainer" parent="VBoxContainer/Hero3/Content/Stats/AIM"]
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero3/Content/Stats/AIM/AIM"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "aim"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero3/Content/Stats/AIM/AIM"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "25%"
+scroll_active = false
+
+[node name="PRE" type="HBoxContainer" parent="VBoxContainer/Hero3/Content/Stats/AIM"]
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero3/Content/Stats/AIM/PRE"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "pre"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero3/Content/Stats/AIM/PRE"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "003"
+scroll_active = false
+
+[node name="DEF" type="HBoxContainer" parent="VBoxContainer/Hero3/Content/Stats"]
+layout_mode = 2
+theme_override_constants/separation = 0
+alignment = 2
+
+[node name="KIN" type="HBoxContainer" parent="VBoxContainer/Hero3/Content/Stats/DEF"]
+modulate = Color(1, 0.4745098, 0.16862746, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero3/Content/Stats/DEF/KIN"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "kin"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero3/Content/Stats/DEF/KIN"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "25%"
+scroll_active = false
+
+[node name="NRG" type="HBoxContainer" parent="VBoxContainer/Hero3/Content/Stats/DEF"]
+modulate = Color(0.26, 1, 0.9259999, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero3/Content/Stats/DEF/NRG"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "nrg"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero3/Content/Stats/DEF/NRG"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "50%"
+scroll_active = false
+
+[node name="Hero4" type="Panel" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+mouse_filter = 1
+metadata/_edit_group_ = true
+
+[node name="Header" type="Panel" parent="VBoxContainer/Hero4"]
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 1
 anchors_preset = 10
@@ -933,7 +1388,7 @@ offset_bottom = 42.0
 grow_horizontal = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_fgavx")
 
-[node name="Label" type="Label" parent="Weapon/Header"]
+[node name="Label" type="Label" parent="VBoxContainer/Hero4/Header"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -942,49 +1397,1132 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(0.18039216, 0.18039216, 0.18039216, 1)
 theme_override_font_sizes/font_size = 32
-text = "WEAPON"
+text = "DIANA"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Content" type="Control" parent="Weapon"]
-z_index = 1
+[node name="Content" type="Control" parent="VBoxContainer/Hero4"]
+clip_contents = true
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 14.0
-offset_top = 52.0
-offset_right = -14.0
-offset_bottom = -14.0
+offset_left = 8.0
+offset_top = 46.0
+offset_right = -8.0
+offset_bottom = -8.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Icon" type="TextureRect" parent="Weapon/Content"]
-layout_mode = 0
-offset_right = 80.0
-offset_bottom = 80.0
-texture = ExtResource("5_2gcty")
+[node name="Stats" type="VBoxContainer" parent="VBoxContainer/Hero4/Content"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -150.0
+offset_top = 1.0
+offset_right = 150.0
+offset_bottom = 237.0
+grow_horizontal = 2
+theme_override_constants/separation = -2
 
-[node name="Label" type="Label" parent="Weapon/Content"]
-layout_mode = 0
-offset_left = 89.0
-offset_top = 8.0
-offset_right = 560.0
-offset_bottom = 71.0
-theme_override_constants/outline_size = 10
-text = "Assault Rifle+3"
+[node name="HP" type="HBoxContainer" parent="VBoxContainer/Hero4/Content/Stats"]
+modulate = Color(0.304, 0.76, 0.34199995, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="RichTextLabel" parent="VBoxContainer/Hero4/Content/Stats/HP"]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+text = "HP"
+horizontal_alignment = 2
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero4/Content/Stats/HP"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "[color=\"fff2\"]0[color=\"fff\"]100"
+
+[node name="Resources" type="HBoxContainer" parent="VBoxContainer/Hero4/Content/Stats"]
+layout_mode = 2
+alignment = 1
+
+[node name="Guard" type="Control" parent="VBoxContainer/Hero4/Content/Stats/Resources"]
+custom_minimum_size = Vector2(100, 41)
+layout_mode = 2
+mouse_filter = 1
+
+[node name="Pip1" type="TextureRect" parent="VBoxContainer/Hero4/Content/Stats/Resources/Guard"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -39.0
+offset_top = -12.5
+offset_right = -7.0
+offset_bottom = 19.5
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("5_ac1ex")
+expand_mode = 1
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero4/Content/Stats/Resources/Guard"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -81.0
+offset_top = -18.0
+offset_right = 35.0
+offset_bottom = 18.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "05  03"
+scroll_active = false
+horizontal_alignment = 2
+
+[node name="Focus" type="Control" parent="VBoxContainer/Hero4/Content/Stats/Resources"]
+custom_minimum_size = Vector2(100, 41)
+layout_mode = 2
+mouse_filter = 1
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero4/Content/Stats/Resources/Focus"]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = -14.0
+offset_top = -18.0
+offset_right = 47.0
+offset_bottom = 18.0
+grow_vertical = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "05"
+scroll_active = false
+horizontal_alignment = 2
+
+[node name="Pip1" type="TextureRect" parent="VBoxContainer/Hero4/Content/Stats/Resources/Focus"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -1.0
+offset_top = -13.5
+offset_right = 31.0
+offset_bottom = 18.5
+grow_horizontal = 2
+grow_vertical = 2
+texture = SubResource("CompressedTexture2D_fgavx")
+expand_mode = 1
+
+[node name="POW" type="HBoxContainer" parent="VBoxContainer/Hero4/Content/Stats"]
+layout_mode = 2
+theme_override_constants/separation = 0
+alignment = 2
+
+[node name="ATK" type="HBoxContainer" parent="VBoxContainer/Hero4/Content/Stats/POW"]
+modulate = Color(1, 0.37, 0.37, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero4/Content/Stats/POW/ATK"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "atk"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero4/Content/Stats/POW/ATK"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "003"
+scroll_active = false
+
+[node name="PSY" type="HBoxContainer" parent="VBoxContainer/Hero4/Content/Stats/POW"]
+modulate = Color(0.43, 0.63900006, 1, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero4/Content/Stats/POW/PSY"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "psy"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero4/Content/Stats/POW/PSY"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "005"
+scroll_active = false
+
+[node name="SUB" type="HBoxContainer" parent="VBoxContainer/Hero4/Content/Stats"]
+layout_mode = 2
+theme_override_constants/separation = 0
+alignment = 2
+
+[node name="OVR" type="HBoxContainer" parent="VBoxContainer/Hero4/Content/Stats/SUB"]
+modulate = Color(0.52156866, 0.42745098, 1, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero4/Content/Stats/SUB/OVR"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "ovr"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero4/Content/Stats/SUB/OVR"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "003"
+scroll_active = false
+
+[node name="SPD" type="HBoxContainer" parent="VBoxContainer/Hero4/Content/Stats/SUB"]
+modulate = Color(1, 0.77666664, 0.32999998, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero4/Content/Stats/SUB/SPD"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "spd"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero4/Content/Stats/SUB/SPD"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "005"
+scroll_active = false
+
+[node name="AIM" type="HBoxContainer" parent="VBoxContainer/Hero4/Content/Stats"]
+modulate = Color(0.95100003, 0.51, 1, 1)
+layout_mode = 2
+theme_override_constants/separation = 0
+alignment = 2
+
+[node name="AIM" type="HBoxContainer" parent="VBoxContainer/Hero4/Content/Stats/AIM"]
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero4/Content/Stats/AIM/AIM"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "aim"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero4/Content/Stats/AIM/AIM"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "25%"
+scroll_active = false
+
+[node name="PRE" type="HBoxContainer" parent="VBoxContainer/Hero4/Content/Stats/AIM"]
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero4/Content/Stats/AIM/PRE"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "pre"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero4/Content/Stats/AIM/PRE"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "003"
+scroll_active = false
+
+[node name="DEF" type="HBoxContainer" parent="VBoxContainer/Hero4/Content/Stats"]
+layout_mode = 2
+theme_override_constants/separation = 0
+alignment = 2
+
+[node name="KIN" type="HBoxContainer" parent="VBoxContainer/Hero4/Content/Stats/DEF"]
+modulate = Color(1, 0.4745098, 0.16862746, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero4/Content/Stats/DEF/KIN"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "kin"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero4/Content/Stats/DEF/KIN"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "25%"
+scroll_active = false
+
+[node name="NRG" type="HBoxContainer" parent="VBoxContainer/Hero4/Content/Stats/DEF"]
+modulate = Color(0.26, 1, 0.9259999, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero4/Content/Stats/DEF/NRG"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "nrg"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero4/Content/Stats/DEF/NRG"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "50%"
+scroll_active = false
+
+[node name="Hero5" type="Panel" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+mouse_filter = 1
+metadata/_edit_group_ = true
+
+[node name="Header" type="Panel" parent="VBoxContainer/Hero5"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 42.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_fgavx")
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero5/Header"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.18039216, 0.18039216, 0.18039216, 1)
+theme_override_font_sizes/font_size = 32
+text = "ORTA"
+horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="Content" type="Control" parent="VBoxContainer/Hero5"]
+clip_contents = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 46.0
+offset_right = -8.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Stats" type="VBoxContainer" parent="VBoxContainer/Hero5/Content"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -150.0
+offset_top = 1.0
+offset_right = 150.0
+offset_bottom = 237.0
+grow_horizontal = 2
+theme_override_constants/separation = -2
+
+[node name="HP" type="HBoxContainer" parent="VBoxContainer/Hero5/Content/Stats"]
+modulate = Color(0.304, 0.76, 0.34199995, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="RichTextLabel" parent="VBoxContainer/Hero5/Content/Stats/HP"]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+text = "HP"
+horizontal_alignment = 2
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero5/Content/Stats/HP"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "[color=\"fff2\"]0[color=\"fff\"]100"
+
+[node name="Resources" type="HBoxContainer" parent="VBoxContainer/Hero5/Content/Stats"]
+layout_mode = 2
+alignment = 1
+
+[node name="Guard" type="Control" parent="VBoxContainer/Hero5/Content/Stats/Resources"]
+custom_minimum_size = Vector2(100, 41)
+layout_mode = 2
+mouse_filter = 1
+
+[node name="Pip1" type="TextureRect" parent="VBoxContainer/Hero5/Content/Stats/Resources/Guard"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -39.0
+offset_top = -12.5
+offset_right = -7.0
+offset_bottom = 19.5
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("5_ac1ex")
+expand_mode = 1
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero5/Content/Stats/Resources/Guard"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -81.0
+offset_top = -18.0
+offset_right = 35.0
+offset_bottom = 18.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "05  03"
+scroll_active = false
+horizontal_alignment = 2
+
+[node name="Focus" type="Control" parent="VBoxContainer/Hero5/Content/Stats/Resources"]
+custom_minimum_size = Vector2(100, 41)
+layout_mode = 2
+mouse_filter = 1
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero5/Content/Stats/Resources/Focus"]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = -14.0
+offset_top = -18.0
+offset_right = 47.0
+offset_bottom = 18.0
+grow_vertical = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "05"
+scroll_active = false
+horizontal_alignment = 2
+
+[node name="Pip1" type="TextureRect" parent="VBoxContainer/Hero5/Content/Stats/Resources/Focus"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -1.0
+offset_top = -13.5
+offset_right = 31.0
+offset_bottom = 18.5
+grow_horizontal = 2
+grow_vertical = 2
+texture = SubResource("CompressedTexture2D_fgavx")
+expand_mode = 1
+
+[node name="POW" type="HBoxContainer" parent="VBoxContainer/Hero5/Content/Stats"]
+layout_mode = 2
+theme_override_constants/separation = 0
+alignment = 2
+
+[node name="ATK" type="HBoxContainer" parent="VBoxContainer/Hero5/Content/Stats/POW"]
+modulate = Color(1, 0.37, 0.37, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero5/Content/Stats/POW/ATK"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "atk"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero5/Content/Stats/POW/ATK"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "003"
+scroll_active = false
+
+[node name="PSY" type="HBoxContainer" parent="VBoxContainer/Hero5/Content/Stats/POW"]
+modulate = Color(0.43, 0.63900006, 1, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero5/Content/Stats/POW/PSY"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "psy"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero5/Content/Stats/POW/PSY"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "005"
+scroll_active = false
+
+[node name="SUB" type="HBoxContainer" parent="VBoxContainer/Hero5/Content/Stats"]
+layout_mode = 2
+theme_override_constants/separation = 0
+alignment = 2
+
+[node name="OVR" type="HBoxContainer" parent="VBoxContainer/Hero5/Content/Stats/SUB"]
+modulate = Color(0.52156866, 0.42745098, 1, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero5/Content/Stats/SUB/OVR"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "ovr"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero5/Content/Stats/SUB/OVR"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "003"
+scroll_active = false
+
+[node name="SPD" type="HBoxContainer" parent="VBoxContainer/Hero5/Content/Stats/SUB"]
+modulate = Color(1, 0.77666664, 0.32999998, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero5/Content/Stats/SUB/SPD"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "spd"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero5/Content/Stats/SUB/SPD"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "005"
+scroll_active = false
+
+[node name="AIM" type="HBoxContainer" parent="VBoxContainer/Hero5/Content/Stats"]
+modulate = Color(0.95100003, 0.51, 1, 1)
+layout_mode = 2
+theme_override_constants/separation = 0
+alignment = 2
+
+[node name="AIM" type="HBoxContainer" parent="VBoxContainer/Hero5/Content/Stats/AIM"]
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero5/Content/Stats/AIM/AIM"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "aim"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero5/Content/Stats/AIM/AIM"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "25%"
+scroll_active = false
+
+[node name="PRE" type="HBoxContainer" parent="VBoxContainer/Hero5/Content/Stats/AIM"]
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero5/Content/Stats/AIM/PRE"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "pre"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero5/Content/Stats/AIM/PRE"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "003"
+scroll_active = false
+
+[node name="DEF" type="HBoxContainer" parent="VBoxContainer/Hero5/Content/Stats"]
+layout_mode = 2
+theme_override_constants/separation = 0
+alignment = 2
+
+[node name="KIN" type="HBoxContainer" parent="VBoxContainer/Hero5/Content/Stats/DEF"]
+modulate = Color(1, 0.4745098, 0.16862746, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero5/Content/Stats/DEF/KIN"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "kin"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero5/Content/Stats/DEF/KIN"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "25%"
+scroll_active = false
+
+[node name="NRG" type="HBoxContainer" parent="VBoxContainer/Hero5/Content/Stats/DEF"]
+modulate = Color(0.26, 1, 0.9259999, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero5/Content/Stats/DEF/NRG"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "nrg"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero5/Content/Stats/DEF/NRG"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "50%"
+scroll_active = false
+
+[node name="Hero6" type="Panel" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+mouse_filter = 1
+metadata/_edit_group_ = true
+
+[node name="Header" type="Panel" parent="VBoxContainer/Hero6"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 42.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_fgavx")
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero6/Header"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.18039216, 0.18039216, 0.18039216, 1)
+theme_override_font_sizes/font_size = 32
+text = "LUNA"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Content" type="Control" parent="VBoxContainer/Hero6"]
+clip_contents = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 46.0
+offset_right = -8.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Stats" type="VBoxContainer" parent="VBoxContainer/Hero6/Content"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -150.0
+offset_top = 1.0
+offset_right = 150.0
+offset_bottom = 237.0
+grow_horizontal = 2
+theme_override_constants/separation = -2
+
+[node name="HP" type="HBoxContainer" parent="VBoxContainer/Hero6/Content/Stats"]
+modulate = Color(0.304, 0.76, 0.34199995, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="RichTextLabel" parent="VBoxContainer/Hero6/Content/Stats/HP"]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+text = "HP"
+horizontal_alignment = 2
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero6/Content/Stats/HP"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "[color=\"fff2\"]0[color=\"fff\"]100"
+
+[node name="Resources" type="HBoxContainer" parent="VBoxContainer/Hero6/Content/Stats"]
+layout_mode = 2
+alignment = 1
+
+[node name="Guard" type="Control" parent="VBoxContainer/Hero6/Content/Stats/Resources"]
+custom_minimum_size = Vector2(100, 41)
+layout_mode = 2
+mouse_filter = 1
+
+[node name="Pip1" type="TextureRect" parent="VBoxContainer/Hero6/Content/Stats/Resources/Guard"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -39.0
+offset_top = -12.5
+offset_right = -7.0
+offset_bottom = 19.5
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("5_ac1ex")
+expand_mode = 1
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero6/Content/Stats/Resources/Guard"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -81.0
+offset_top = -18.0
+offset_right = 35.0
+offset_bottom = 18.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "05  03"
+scroll_active = false
+horizontal_alignment = 2
+
+[node name="Focus" type="Control" parent="VBoxContainer/Hero6/Content/Stats/Resources"]
+custom_minimum_size = Vector2(100, 41)
+layout_mode = 2
+mouse_filter = 1
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero6/Content/Stats/Resources/Focus"]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = -14.0
+offset_top = -18.0
+offset_right = 47.0
+offset_bottom = 18.0
+grow_vertical = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "05"
+scroll_active = false
+horizontal_alignment = 2
+
+[node name="Pip1" type="TextureRect" parent="VBoxContainer/Hero6/Content/Stats/Resources/Focus"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -1.0
+offset_top = -13.5
+offset_right = 31.0
+offset_bottom = 18.5
+grow_horizontal = 2
+grow_vertical = 2
+texture = SubResource("CompressedTexture2D_fgavx")
+expand_mode = 1
+
+[node name="POW" type="HBoxContainer" parent="VBoxContainer/Hero6/Content/Stats"]
+layout_mode = 2
+theme_override_constants/separation = 0
+alignment = 2
+
+[node name="ATK" type="HBoxContainer" parent="VBoxContainer/Hero6/Content/Stats/POW"]
+modulate = Color(1, 0.37, 0.37, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero6/Content/Stats/POW/ATK"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "atk"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero6/Content/Stats/POW/ATK"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "003"
+scroll_active = false
+
+[node name="PSY" type="HBoxContainer" parent="VBoxContainer/Hero6/Content/Stats/POW"]
+modulate = Color(0.43, 0.63900006, 1, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero6/Content/Stats/POW/PSY"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "psy"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero6/Content/Stats/POW/PSY"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "005"
+scroll_active = false
+
+[node name="SUB" type="HBoxContainer" parent="VBoxContainer/Hero6/Content/Stats"]
+layout_mode = 2
+theme_override_constants/separation = 0
+alignment = 2
+
+[node name="OVR" type="HBoxContainer" parent="VBoxContainer/Hero6/Content/Stats/SUB"]
+modulate = Color(0.52156866, 0.42745098, 1, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero6/Content/Stats/SUB/OVR"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "ovr"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero6/Content/Stats/SUB/OVR"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "003"
+scroll_active = false
+
+[node name="SPD" type="HBoxContainer" parent="VBoxContainer/Hero6/Content/Stats/SUB"]
+modulate = Color(1, 0.77666664, 0.32999998, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero6/Content/Stats/SUB/SPD"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "spd"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero6/Content/Stats/SUB/SPD"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "005"
+scroll_active = false
+
+[node name="AIM" type="HBoxContainer" parent="VBoxContainer/Hero6/Content/Stats"]
+modulate = Color(0.95100003, 0.51, 1, 1)
+layout_mode = 2
+theme_override_constants/separation = 0
+alignment = 2
+
+[node name="AIM" type="HBoxContainer" parent="VBoxContainer/Hero6/Content/Stats/AIM"]
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero6/Content/Stats/AIM/AIM"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "aim"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero6/Content/Stats/AIM/AIM"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "25%"
+scroll_active = false
+
+[node name="PRE" type="HBoxContainer" parent="VBoxContainer/Hero6/Content/Stats/AIM"]
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero6/Content/Stats/AIM/PRE"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "pre"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero6/Content/Stats/AIM/PRE"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "003"
+scroll_active = false
+
+[node name="DEF" type="HBoxContainer" parent="VBoxContainer/Hero6/Content/Stats"]
+layout_mode = 2
+theme_override_constants/separation = 0
+alignment = 2
+
+[node name="KIN" type="HBoxContainer" parent="VBoxContainer/Hero6/Content/Stats/DEF"]
+modulate = Color(1, 0.4745098, 0.16862746, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero6/Content/Stats/DEF/KIN"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "kin"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero6/Content/Stats/DEF/KIN"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "25%"
+scroll_active = false
+
+[node name="NRG" type="HBoxContainer" parent="VBoxContainer/Hero6/Content/Stats/DEF"]
+modulate = Color(0.26, 1, 0.9259999, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="Label" parent="VBoxContainer/Hero6/Content/Stats/DEF/NRG"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_3v1r5")
+text = "nrg"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="VBoxContainer/Hero6/Content/Stats/DEF/NRG"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4_3v1r5")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "50%"
+scroll_active = false
 
 [node name="BackBtn" type="Button" parent="."]
 layout_mode = 1
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 30.0
-offset_top = -119.0
-offset_right = 330.0
-offset_bottom = -39.0
-grow_vertical = 0
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 31.0
+offset_top = 403.0
+offset_right = 331.0
+offset_bottom = 500.0
+grow_vertical = 2
 text = "<BACK"
 
 [connection signal="pressed" from="BackBtn" to="." method="_on_back_btn_pressed"]

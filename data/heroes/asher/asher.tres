@@ -14,5 +14,5 @@ weapon = ExtResource("8_xq1ki")
 armor = ExtResource("1_sydmp")
 role_definitions = Array[ExtResource("3_g3hqy")]([ExtResource("4_c1wl5"), ExtResource("4_sydmp"), ExtResource("5_xq1ki")])
 unlocked_role_ids = Array[String](["gun", "snp"])
-unlocked_node_ids = Array[String](["gun_1", "snp_1"])
+unlocked_node_ids = Array[String](["gun_1", "snp_1", "snp_2"])
 metadata/_custom_type_script = "uid://dc5sk0b0jubvj"
