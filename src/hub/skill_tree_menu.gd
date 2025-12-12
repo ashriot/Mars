@@ -1,123 +1,143 @@
 extends Control
 class_name SkillTreeMenu
 
-@export var node_scene: PackedScene
+@export var hero_panel_scene: PackedScene
+@export var role_panel_scene: PackedScene
 
-@onready var node_layer: Control = $Center/Nodes
-@onready var xp_label: Label = $Center/XPDisplay
+@onready var hero_list_container: VBoxContainer = $HeroList
+@onready var role_list_container: HBoxContainer = $RoleList
+@onready var tabs_container: HBoxContainer = $Tabs/Container
 
+# --- STATE ---
+var party_roster: Array[HeroData] = []
 var current_hero: HeroData
-var current_def: RoleDefinition
-var generated_nodes: Dictionary = {}
 
-const HORIZONTAL_SPACING = 280
-const VERTICAL_SPACING = 90
-
+var current_hero_idx: int = 0
+var current_role_idx: int = 0
+var current_page: int = 0
 
 func _ready() -> void:
 	hide()
+	for i in tabs_container.get_child_count():
+		tabs_container.get_child(i).pressed.connect(_on_tab_pressed.bind(i))
 
-func setup(hero: HeroData, role_def: RoleDefinition):
-	current_hero = hero
-	current_def = role_def
+func open():
+	party_roster = SaveSystem.party_roster
+	if party_roster.is_empty(): return
 
-	_clear_tree()
-	_refresh_xp_ui()
+	current_hero_idx = 0
+	current_role_idx = 0
+	current_page = 0
 
-	if not role_def.root_node: return
-	role_def.init_structure()
-
-	# Spawn Recursively
-	_spawn_node_recursive(role_def.root_node, Vector2(node_layer.size.x/2, 0), 0)
-
-	# Update Visuals
-	_update_tree_state()
+	_refresh_hero_list()
+	# Trigger initial selection
+	_change_hero_by_index(0)
 	show()
-
-func _clear_tree():
-	generated_nodes.clear()
-	for child in node_layer.get_children():
-		child.queue_free()
-
-func _spawn_node_recursive(data_node: RoleNode, pos: Vector2, depth: int):
-	var ui_node = node_scene.instantiate() as SkillTreeNode
-	node_layer.add_child(ui_node)
-
-	ui_node.position = pos
-	ui_node.position.x -= ui_node.size.x / 2
-	ui_node.pivot_offset = ui_node.size / 2
-	ui_node.setup(data_node, current_hero, depth)
-	ui_node.node_clicked.connect(_on_node_clicked)
-
-	generated_nodes[data_node] = ui_node
-
-	# --- EXPLICIT LAYOUT ---
-
-	# 1. Child (Down)
-	if data_node.child_node:
-		var next_pos = pos + Vector2(0, VERTICAL_SPACING)
-		_spawn_node_recursive(data_node.child_node, next_pos, depth + 1)
-
-	# 2. Left (Side)
-	if data_node.left_node:
-		var next_pos = pos + Vector2(-HORIZONTAL_SPACING, 0)
-		# Important: Side nodes can have their OWN children that go DOWN from there.
-		_spawn_node_recursive(data_node.left_node, next_pos, depth)
-
-	# 3. Right (Side)
-	if data_node.right_node:
-		var next_pos = pos + Vector2(HORIZONTAL_SPACING, 0)
-		_spawn_node_recursive(data_node.right_node, next_pos, depth)
-
-func _update_tree_state():
-	if current_def and current_def.root_node:
-		_check_availability_recursive(current_def.root_node, true)
-
-func _check_availability_recursive(node: RoleNode, parent_unlocked: bool):
-	if not generated_nodes.has(node): return
-
-	var ui_node: SkillTreeNode = generated_nodes[node]
-	var is_owned = node.generated_id in current_hero.unlocked_node_ids
-	var can_afford = current_hero.current_xp >= node.calculated_xp_cost
-
-	# A node is available if you don't own it yet, but you DO own its parent
-	var is_available = (not is_owned) and parent_unlocked
-
-	# 1. Update Button State
-	ui_node.set_availability(is_available, can_afford)
-
-	# 2. Update Arrows
-	ui_node._update_arrows(is_owned)
-	ui_node._update_button_visuals(is_owned)
-
-	# 3. Recurse (Explicit Slots)
-	# We pass 'is_owned' as the 'parent_unlocked' status for the children
-	if node.child_node:
-		_check_availability_recursive(node.child_node, is_owned)
-
-	if node.left_node:
-		_check_availability_recursive(node.left_node, is_owned)
-
-	if node.right_node:
-		_check_availability_recursive(node.right_node, is_owned)
-
-func _on_node_clicked(ui_node: SkillTreeNode):
-	var data = ui_node.role_node_data
-
-	if current_hero.current_xp >= data.calculated_xp_cost:
-		current_hero.spend_xp(data.calculated_xp_cost)
-		current_hero.unlock_node(data)
-		current_hero.rebuild_battle_roles()
-
-		AudioManager.play_sfx("terminal")
-		_refresh_xp_ui()
-		_update_tree_state()
-	else:
-		AudioManager.play_sfx("press")
-
-func _refresh_xp_ui():
-	xp_label.text = Utils.commafy(current_hero.current_xp) + " XP"
-
 
 func _on_back_btn_pressed() -> void:
 	hide()
+
+# HERO LIST LOGIC
+
+func _refresh_hero_list():
+	for child in hero_list_container.get_children():
+		child.queue_free()
+
+	for i in range(party_roster.size()):
+		var hero_data = party_roster[i]
+		var panel = hero_panel_scene.instantiate() as HeroPanel
+		hero_list_container.add_child(panel)
+
+		panel.setup(hero_data)
+		panel.panel_selected.connect(_on_hero_panel_selected)
+
+		if i == current_hero_idx:
+			panel.set_expanded(true)
+		else:
+			panel.set_expanded(false)
+
+func _on_hero_panel_selected(selected_panel: HeroPanel):
+	var panels = hero_list_container.get_children()
+	for i in range(panels.size()):
+		var p = panels[i] as HeroPanel
+		if p == selected_panel:
+			p.set_expanded(true)
+			_change_hero_by_index(i)
+		else:
+			p.set_expanded(false)
+
+func _change_hero_by_index(index: int):
+	current_hero_idx = index
+	current_hero = party_roster[index]
+	current_role_idx = 0
+	current_page = 0
+	_refresh_role_list()
+
+func _refresh_role_list():
+	for child in role_list_container.get_children():
+		child.queue_free()
+
+	var roles = current_hero.unlocked_roles
+
+	var color: Color
+	for i in range(roles.size()):
+		var def = roles[i]
+		var panel = role_panel_scene.instantiate() as RolePanel
+		role_list_container.add_child(panel)
+
+		# Setup the panel with data
+		panel.setup(def, current_hero)
+		panel.panel_selected.connect(_on_role_panel_selected)
+
+		# Expand the first one by default, but render ALL of them
+		# Since you updated set_expanded to call render_tree, this ensures
+		# everyone renders the current page immediately.
+		if i == current_role_idx:
+			panel.set_expanded(true, current_page)
+			color = panel.def.color
+		else:
+			panel.set_expanded(false, current_page)
+	update_tabs(color)
+
+func _on_role_panel_selected(selected_panel: RolePanel):
+	var panels = role_list_container.get_children()
+	for i in range(panels.size()):
+		var p = panels[i] as RolePanel
+		if p == selected_panel:
+			current_role_idx = i
+			p.set_expanded(true, current_page)
+		else:
+			p.set_expanded(false, current_page)
+	update_tabs(selected_panel.def.color)
+
+func update_tabs(color: Color, animate: bool = true):
+	var pos = current_role_idx * 290 + current_role_idx * 20
+	if not animate:
+		tabs_container.position.x = pos
+		return
+
+	var tab_tween = create_tween().set_parallel()
+	tab_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tab_tween.tween_property(tabs_container, "position:x", pos, 0.3)
+	tab_tween.tween_property(tabs_container, "modulate", color, 0.3)
+
+# PAGINATION LOGIC
+
+func _on_tab_pressed(page_index: int):
+	if current_page == page_index: return
+	current_page = page_index
+
+	# --- FIX: Update ALL Role Panels ---
+	# This ensures that if you switch pages while looking at Role A,
+	# Role B and C also update their trees in the background.
+	var panels = role_list_container.get_children()
+	for child in panels:
+		if child is RolePanel:
+			child.render_tree(current_page)
+
+	_update_tab_visuals()
+
+func _update_tab_visuals():
+	for i in range(tabs_container.get_child_count()):
+		var btn = tabs_container.get_child(i)
+		btn.modulate = Color.YELLOW if i == current_page else Color.WHITE

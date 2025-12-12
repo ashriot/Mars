@@ -299,7 +299,7 @@ func _input(event):
 		# Clamp the position so they don't pan off the map
 		# (Reuse your existing clamp logic helper if you have one exposed,
 		#  or rely on the _zoom_camera/move logic to fix it later)
-		# camera.position = _get_clamped_camera_pos(camera.position, camera.zoom)
+		camera.position = _get_clamped_camera_pos(camera.position, camera.zoom)
 
 	#if event.is_action_pressed("ui_right"):
 		## 1. Find the neighbor to the right of 'current_node'
@@ -315,6 +315,38 @@ func _input(event):
 	#if event.is_action_pressed("ui_accept"):
 		#if _selected_node_for_controller:
 			#_on_node_clicked(_selected_node_for_controller)
+
+func _get_clamped_camera_pos(target_pos: Vector2, zoom_level: Vector2) -> Vector2:
+	var vp_size = get_viewport_rect().size
+	var visible_world_size = vp_size / zoom_level
+	var bg_size = bg_sprite.texture.get_size() * bg_sprite.scale
+	var p_scale = Vector2.ONE
+
+	if parallax_bg and parallax_bg.scroll_scale != Vector2.ZERO:
+		p_scale = parallax_bg.scroll_scale
+
+	var effective_bg_size = bg_size / p_scale
+	var half_bg = effective_bg_size / 3.0
+	var half_view = visible_world_size / 3.0
+	var center = Vector2.ZERO
+	var min_x = center.x - half_bg.x + half_view.x
+	var max_x = center.x + half_bg.x - half_view.x
+	var min_y = center.y - half_bg.y + half_view.y
+	var max_y = center.y + half_bg.y - half_view.y
+
+	if min_x > max_x:
+		min_x = center.x
+		max_x = center.x
+	if min_y > max_y:
+		min_y = center.y
+		max_y = center.y
+
+	# 6. Clamp
+	var clamped_pos = Vector2()
+	clamped_pos.x = clamp(target_pos.x, min_x, max_x)
+	clamped_pos.y = clamp(target_pos.y, min_y, max_y)
+
+	return clamped_pos
 
 func _generate_static_terminal_data(coords: Vector2i, index: int):
 	var scalar = RunManager.get_loot_scalar()

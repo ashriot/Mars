@@ -1,0 +1,405 @@
+[gd_scene load_steps=6 format=3 uid="uid://c3sqmfckgaala"]
+
+[ext_resource type="Script" uid="uid://lqyabhv1vfuk" path="res://src/hub/hero_panel.gd" id="1_r4b5v"]
+[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="1_tilru"]
+[ext_resource type="Texture2D" uid="uid://cqweju3y7kwst" path="res://assets/graphics/icons/textures/shield_sm.png" id="2_r4b5v"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fgavx"]
+bg_color = Color(1, 1, 1, 0.9607843)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_fgavx"]
+load_path = "res://.godot/imported/bolt_sm.png-54f352b5e50e80987f5f73607db947d7.ctex"
+
+[node name="HeroPanel" type="Panel"]
+custom_minimum_size = Vector2(300, 96)
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_top = -540.0
+offset_right = 300.0
+offset_bottom = -244.0
+grow_vertical = 2
+script = ExtResource("1_r4b5v")
+
+[node name="Header" type="Panel" parent="."]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 42.0
+grow_horizontal = 2
+mouse_filter = 1
+theme_override_styles/panel = SubResource("StyleBoxFlat_fgavx")
+
+[node name="Label" type="Label" parent="Header"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.18039216, 0.18039216, 0.18039216, 1)
+theme_override_font_sizes/font_size = 32
+text = "ASHER"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Content" type="Control" parent="."]
+clip_contents = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 46.0
+offset_right = -8.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+
+[node name="Stats" type="VBoxContainer" parent="Content"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -150.0
+offset_top = 1.0
+offset_right = 150.0
+offset_bottom = 237.0
+grow_horizontal = 2
+theme_override_constants/separation = -2
+
+[node name="HP" type="HBoxContainer" parent="Content/Stats"]
+modulate = Color(0.304, 0.76, 0.34199995, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="RichTextLabel" parent="Content/Stats/HP"]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("1_tilru")
+theme_override_font_sizes/normal_font_size = 32
+text = "HP"
+horizontal_alignment = 2
+
+[node name="Value" type="RichTextLabel" parent="Content/Stats/HP"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("1_tilru")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "[color=\"fff2\"]0[color=\"fff\"]100"
+
+[node name="Resources" type="HBoxContainer" parent="Content/Stats"]
+layout_mode = 2
+alignment = 1
+
+[node name="Guard" type="Control" parent="Content/Stats/Resources"]
+custom_minimum_size = Vector2(100, 41)
+layout_mode = 2
+mouse_filter = 1
+
+[node name="Pip1" type="TextureRect" parent="Content/Stats/Resources/Guard"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -39.0
+offset_top = -12.5
+offset_right = -7.0
+offset_bottom = 19.5
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_r4b5v")
+expand_mode = 1
+
+[node name="Value" type="RichTextLabel" parent="Content/Stats/Resources/Guard"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -81.0
+offset_top = -18.0
+offset_right = 35.0
+offset_bottom = 18.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("1_tilru")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "05  03"
+scroll_active = false
+horizontal_alignment = 2
+
+[node name="Focus" type="Control" parent="Content/Stats/Resources"]
+custom_minimum_size = Vector2(100, 41)
+layout_mode = 2
+mouse_filter = 1
+
+[node name="Value" type="RichTextLabel" parent="Content/Stats/Resources/Focus"]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = -14.0
+offset_top = -18.0
+offset_right = 47.0
+offset_bottom = 18.0
+grow_vertical = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("1_tilru")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "05"
+scroll_active = false
+horizontal_alignment = 2
+
+[node name="Pip1" type="TextureRect" parent="Content/Stats/Resources/Focus"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -1.0
+offset_top = -13.5
+offset_right = 31.0
+offset_bottom = 18.5
+grow_horizontal = 2
+grow_vertical = 2
+texture = SubResource("CompressedTexture2D_fgavx")
+expand_mode = 1
+
+[node name="POW" type="HBoxContainer" parent="Content/Stats"]
+layout_mode = 2
+theme_override_constants/separation = 0
+alignment = 2
+
+[node name="ATK" type="HBoxContainer" parent="Content/Stats/POW"]
+modulate = Color(1, 0.37, 0.37, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="Content/Stats/POW/ATK"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_tilru")
+text = "atk"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="Content/Stats/POW/ATK"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("1_tilru")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "003"
+scroll_active = false
+
+[node name="PSY" type="HBoxContainer" parent="Content/Stats/POW"]
+modulate = Color(0.43, 0.63900006, 1, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="Label" parent="Content/Stats/POW/PSY"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_tilru")
+text = "psy"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="Content/Stats/POW/PSY"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("1_tilru")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "005"
+scroll_active = false
+
+[node name="SUB" type="HBoxContainer" parent="Content/Stats"]
+layout_mode = 2
+theme_override_constants/separation = 0
+alignment = 2
+
+[node name="OVR" type="HBoxContainer" parent="Content/Stats/SUB"]
+modulate = Color(0.52156866, 0.42745098, 1, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="Content/Stats/SUB/OVR"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_tilru")
+text = "ovr"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="Content/Stats/SUB/OVR"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("1_tilru")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "003"
+scroll_active = false
+
+[node name="SPD" type="HBoxContainer" parent="Content/Stats/SUB"]
+modulate = Color(1, 0.77666664, 0.32999998, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="Label" parent="Content/Stats/SUB/SPD"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_tilru")
+text = "spd"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="Content/Stats/SUB/SPD"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("1_tilru")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "005"
+scroll_active = false
+
+[node name="AIM" type="HBoxContainer" parent="Content/Stats"]
+modulate = Color(0.95100003, 0.51, 1, 1)
+layout_mode = 2
+theme_override_constants/separation = 0
+alignment = 2
+
+[node name="AIM" type="HBoxContainer" parent="Content/Stats/AIM"]
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="Content/Stats/AIM/AIM"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_tilru")
+text = "aim"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="Content/Stats/AIM/AIM"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("1_tilru")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "25%"
+scroll_active = false
+
+[node name="PRE" type="HBoxContainer" parent="Content/Stats/AIM"]
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="Label" parent="Content/Stats/AIM/PRE"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_tilru")
+text = "pre"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="Content/Stats/AIM/PRE"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("1_tilru")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "003"
+scroll_active = false
+
+[node name="DEF" type="HBoxContainer" parent="Content/Stats"]
+layout_mode = 2
+theme_override_constants/separation = 0
+alignment = 2
+
+[node name="KIN" type="HBoxContainer" parent="Content/Stats/DEF"]
+modulate = Color(1, 0.4745098, 0.16862746, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="Content/Stats/DEF/KIN"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_tilru")
+text = "kin"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="Content/Stats/DEF/KIN"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("1_tilru")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "25%"
+scroll_active = false
+
+[node name="NRG" type="HBoxContainer" parent="Content/Stats/DEF"]
+modulate = Color(0.26, 1, 0.9259999, 1)
+custom_minimum_size = Vector2(0, 41)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="Label" parent="Content/Stats/DEF/NRG"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_tilru")
+text = "nrg"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Value" type="RichTextLabel" parent="Content/Stats/DEF/NRG"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("1_tilru")
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "50%"
+scroll_active = false

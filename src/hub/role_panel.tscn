@@ -1,0 +1,118 @@
+[gd_scene load_steps=4 format=3 uid="uid://xpuok17oufft"]
+
+[ext_resource type="Script" uid="uid://b5mb18febmqwh" path="res://src/hub/role_panel.gd" id="1_n8shc"]
+[ext_resource type="PackedScene" uid="uid://cqsffo424v35" path="res://src/hub/skill_tree_node.tscn" id="2_13wgo"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fgavx"]
+bg_color = Color(1, 1, 1, 0.9607843)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+
+[node name="RolePanel" type="Panel"]
+modulate = Color(1.4369954, 0.9420206, 0, 1)
+clip_contents = true
+custom_minimum_size = Vector2(300, 0)
+offset_right = 900.0
+offset_bottom = 900.0
+script = ExtResource("1_n8shc")
+node_scene = ExtResource("2_13wgo")
+
+[node name="Header" type="Panel" parent="."]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 42.0
+grow_horizontal = 2
+mouse_filter = 1
+theme_override_styles/panel = SubResource("StyleBoxFlat_fgavx")
+
+[node name="Label" type="Label" parent="Header"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -53.0
+offset_top = -20.5
+offset_right = 53.0
+offset_bottom = 20.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.18039216, 0.18039216, 0.18039216, 1)
+theme_override_font_sizes/font_size = 32
+text = "GUN"
+horizontal_alignment = 1
+vertical_alignment = 1
+uppercase = true
+
+[node name="Content" type="Control" parent="."]
+clip_contents = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 9.0
+offset_top = 1.0
+offset_right = -9.0
+offset_bottom = -9.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+
+[node name="RoleName" type="Label" parent="Content"]
+modulate = Color(0.11764706, 0.11764706, 0.11764706, 1)
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -438.0
+offset_right = -93.0
+offset_bottom = 41.0
+grow_horizontal = 2
+text = "GUNNER"
+uppercase = true
+
+[node name="XPDisplay" type="Label" parent="Content"]
+modulate = Color(0.11764706, 0.11764706, 0.11764706, 1)
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = 127.0
+offset_right = 440.0
+offset_bottom = 41.0
+grow_horizontal = 2
+text = "XP"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Nodes" type="Control" parent="Content"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -441.0
+offset_top = -397.0
+offset_right = 439.0
+offset_bottom = 443.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Button" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[connection signal="gui_input" from="Button" to="." method="_on_button_gui_input"]
