@@ -208,54 +208,36 @@ theme_override_constants/separation = 20
 [node name="Button" type="Button" parent="Actions"]
 custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
-theme_override_colors/font_pressed_color = Color(0.19607843, 0.19607843, 0.19607843, 1)
-theme_override_colors/font_hover_color = Color(0.11764706, 0.11764706, 0.11764706, 1)
-theme_override_fonts/font = ExtResource("4_bfsw3")
 theme_override_font_sizes/font_size = 48
 text = "TERMINAL ACCESS"
 
 [node name="Button2" type="Button" parent="Actions"]
 custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
-theme_override_colors/font_pressed_color = Color(0.19607843, 0.19607843, 0.19607843, 1)
-theme_override_colors/font_hover_color = Color(0.11764706, 0.11764706, 0.11764706, 1)
-theme_override_fonts/font = ExtResource("4_bfsw3")
 theme_override_font_sizes/font_size = 48
 text = "CHECK STATUS"
 
 [node name="Button3" type="Button" parent="Actions"]
 custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
-theme_override_colors/font_pressed_color = Color(0.19607843, 0.19607843, 0.19607843, 1)
-theme_override_colors/font_hover_color = Color(0.11764706, 0.11764706, 0.11764706, 1)
-theme_override_fonts/font = ExtResource("4_bfsw3")
 theme_override_font_sizes/font_size = 48
 text = "RUN TRAINING EXE"
 
 [node name="Button4" type="Button" parent="Actions"]
 custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
-theme_override_colors/font_pressed_color = Color(0.19607843, 0.19607843, 0.19607843, 1)
-theme_override_colors/font_hover_color = Color(0.11764706, 0.11764706, 0.11764706, 1)
-theme_override_fonts/font = ExtResource("4_bfsw3")
 theme_override_font_sizes/font_size = 48
 text = "ACCESS BANKING"
 
 [node name="Button5" type="Button" parent="Actions"]
 custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
-theme_override_colors/font_pressed_color = Color(0.19607843, 0.19607843, 0.19607843, 1)
-theme_override_colors/font_hover_color = Color(0.11764706, 0.11764706, 0.11764706, 1)
-theme_override_fonts/font = ExtResource("4_bfsw3")
 theme_override_font_sizes/font_size = 48
 text = "CONTACT MILO"
 
 [node name="HeadOut" type="Button" parent="Actions"]
 custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
-theme_override_colors/font_pressed_color = Color(0.19607843, 0.19607843, 0.19607843, 1)
-theme_override_colors/font_hover_color = Color(0.11764706, 0.11764706, 0.11764706, 1)
-theme_override_fonts/font = ExtResource("4_bfsw3")
 theme_override_font_sizes/font_size = 48
 text = "HEAD OUT"
 

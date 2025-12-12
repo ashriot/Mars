@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="RoleNode" load_steps=3 format=3 uid="uid://ci41rwq7203l1"]
+
+[ext_resource type="Resource" uid="uid://bagu3s2rd6d1d" path="res://data/heroes/echo/roles/psion/psi_6.tres" id="1_ktw0f"]
+[ext_resource type="Script" uid="uid://cuhoaxfyipk6s" path="res://src/scripts/data/role_node.gd" id="2_bmqd1"]
+
+[resource]
+script = ExtResource("2_bmqd1")
+type = 1
+action_slot_index = 1
+child_node = ExtResource("1_ktw0f")
+metadata/_custom_type_script = "uid://cuhoaxfyipk6s"

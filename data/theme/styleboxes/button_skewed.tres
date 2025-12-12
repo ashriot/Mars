@@ -1,8 +1,0 @@
-[gd_resource type="StyleBoxTexture" load_steps=2 format=3 uid="uid://chj3wuglgp3up"]
-
-[ext_resource type="Texture2D" uid="uid://da6tqh4f783ej" path="res://assets/graphics/icons/textures/skewed_rect.png" id="1_8jlky"]
-
-[resource]
-texture = ExtResource("1_8jlky")
-texture_margin_left = 130.0
-texture_margin_right = 130.0

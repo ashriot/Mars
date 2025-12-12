@@ -48,9 +48,9 @@ func set_availability(is_available: bool, can_afford: bool):
 			self.modulate = Color.WHITE
 			cost_label.modulate = Color.WHITE
 		else:
-			self.modulate = Color.DARK_GRAY
-			cost_label.modulate = Color.DARK_GRAY
-			modulate.a = 0.5
+			self.modulate = Color.GAINSBORO
+			cost_label.modulate = Color.GAINSBORO
+			modulate.a = 1.0
 	else:
 		state = NodeState.LOCKED
 		disabled = true
