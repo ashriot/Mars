@@ -28,5 +28,4 @@ func _on_head_out_pressed() -> void:
 
 
 func _on_button_3_pressed() -> void:
-	var hero: HeroData = SaveSystem.party_roster[0]
 	skill_tree_menu.open()
