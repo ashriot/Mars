@@ -104,18 +104,18 @@ func refresh_view():
 
 	# Stats
 	var cur_hp = max(0, stats.max_hp * (1 - linked_hero_data.injuries * .34))
-	hp.text = _stringify(cur_hp, 4) + "[color=fff]/" + _stringify(stats.max_hp, 4)
-	guard.text = _stringify(stats.starting_guard + (5 if linked_hero_data.boon_armored else 0))
-	guard.text += "  " + _stringify(ceili(stats.starting_guard / 2.0))
-	focus.text = _stringify(stats.starting_focus + (5 if linked_hero_data.boon_focused else 0))
-	atk.text = _stringify(stats.attack, 3)
-	psy.text = _stringify(stats.psyche, 3)
-	ovr.text = _stringify(stats.overload, 3)
-	spd.text = _stringify(stats.speed, 3)
-	aim.text = _stringify(stats.aim) + "%"
-	pre.text = _stringify(stats.precision, 3)
-	kin.text = _stringify(stats.kinetic_defense) + "%"
-	nrg.text = _stringify(stats.energy_defense) + "%"
+	hp.text = Utils.stringify(cur_hp, 4) + "[color=fff]/" + Utils.stringify(stats.max_hp, 4)
+	guard.text = Utils.stringify(stats.starting_guard + (5 if linked_hero_data.boon_armored else 0))
+	guard.text += "  " + Utils.stringify(ceili(stats.starting_guard / 2.0))
+	focus.text = Utils.stringify(stats.starting_focus + (5 if linked_hero_data.boon_focused else 0))
+	atk.text = Utils.stringify(stats.attack, 3)
+	psy.text = Utils.stringify(stats.psyche, 3)
+	ovr.text = Utils.stringify(stats.overload, 3)
+	spd.text = Utils.stringify(stats.speed, 3)
+	aim.text = Utils.stringify(stats.aim) + "%"
+	pre.text = Utils.stringify(stats.precision, 3)
+	kin.text = Utils.stringify(stats.kinetic_defense) + "%"
+	nrg.text = Utils.stringify(stats.energy_defense) + "%"
 
 	focused_boon.modulate = active_color if linked_hero_data.boon_focused else inactive_color
 	armored_boon.modulate = active_color if linked_hero_data.boon_armored else inactive_color
@@ -124,20 +124,6 @@ func refresh_view():
 	for i in range(injuries.get_child_count()):
 		var icon = injuries.get_child(i)
 		icon.modulate = active_color if i < count else inactive_color
-
-func _stringify(value: int, pad: int = 2) -> String:
-	var full_string = "%0*d" % [pad, value]
-
-	var value_len = str(value).length()
-	var zero_count = max(0, full_string.length() - value_len)
-
-	if zero_count == 0:
-		return "[color=#fff]%s[/color]" % full_string
-
-	var zeros = full_string.substr(0, zero_count)
-	var digits = full_string.substr(zero_count)
-
-	return "[color=#fff2]%s[/color][color=#fff]%s[/color]" % [zeros, digits]
 
 func _reset_positions():
 	box.position.x = -63.0

@@ -95,26 +95,35 @@ theme_override_constants/separation = 12
 [node name="Tier1" type="Button" parent="Tabs/Container"]
 custom_minimum_size = Vector2(166, 0)
 layout_mode = 2
+toggle_mode = true
 text = "1-10"
 
 [node name="Tier2" type="Button" parent="Tabs/Container"]
+visible = false
 custom_minimum_size = Vector2(166, 0)
 layout_mode = 2
+toggle_mode = true
 text = "11-20"
 
 [node name="Tier3" type="Button" parent="Tabs/Container"]
+visible = false
 custom_minimum_size = Vector2(166, 0)
 layout_mode = 2
+toggle_mode = true
 text = "21-30"
 
 [node name="Tier4" type="Button" parent="Tabs/Container"]
+visible = false
 custom_minimum_size = Vector2(166, 0)
 layout_mode = 2
+toggle_mode = true
 text = "31-40"
 
 [node name="Tier5" type="Button" parent="Tabs/Container"]
+visible = false
 custom_minimum_size = Vector2(166, 0)
 layout_mode = 2
+toggle_mode = true
 text = "41-50"
 
 [connection signal="pressed" from="BackBtn" to="." method="_on_back_btn_pressed"]

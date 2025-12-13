@@ -1,8 +1,13 @@
-[gd_resource type="Resource" script_class="RoleNode" load_steps=2 format=3 uid="uid://dg6piu7jctlvs"]
+[gd_resource type="Resource" script_class="RoleNode" load_steps=4 format=3 uid="uid://dg6piu7jctlvs"]
 
+[ext_resource type="Resource" uid="uid://jsgmmsfjoe23" path="res://data/heroes/asher/roles/sniper/snp_4.tres" id="1_4dpyd"]
 [ext_resource type="Script" uid="uid://cuhoaxfyipk6s" path="res://src/scripts/data/role_node.gd" id="1_8pg3p"]
+[ext_resource type="Resource" uid="uid://ch52mkoef8iqj" path="res://data/heroes/asher/roles/sniper/snp_31.tres" id="2_ayq6n"]
 
 [resource]
 script = ExtResource("1_8pg3p")
-type = 2
+stat_type = 3
+stat_value = 1
+left_node = ExtResource("2_ayq6n")
+child_node = ExtResource("1_4dpyd")
 metadata/_custom_type_script = "uid://cuhoaxfyipk6s"

@@ -18,8 +18,13 @@ var current_page: int = 0
 
 func _ready() -> void:
 	hide()
+	var tab_group = ButtonGroup.new()
+	tab_group.allow_unpress = false
 	for i in tabs_container.get_child_count():
-		tabs_container.get_child(i).pressed.connect(_on_tab_pressed.bind(i))
+		var btn = tabs_container.get_child(i) as Button
+		btn.toggle_mode = true
+		btn.button_group = tab_group
+		btn.pressed.connect(_on_tab_pressed.bind(i))
 
 func open():
 	party_roster = SaveSystem.party_roster
@@ -32,12 +37,11 @@ func open():
 	_refresh_hero_list()
 	# Trigger initial selection
 	_change_hero_by_index(0)
+	_update_tab_visuals()
 	show()
 
 func _on_back_btn_pressed() -> void:
 	hide()
-
-# HERO LIST LOGIC
 
 func _refresh_hero_list():
 	for child in hero_list_container.get_children():
@@ -93,10 +97,10 @@ func _refresh_role_list():
 		# Since you updated set_expanded to call render_tree, this ensures
 		# everyone renders the current page immediately.
 		if i == current_role_idx:
-			panel.set_expanded(true, current_page)
+			panel.set_expanded(true, current_page, false)
 			color = panel.def.color
 		else:
-			panel.set_expanded(false, current_page)
+			panel.set_expanded(false, current_page, false)
 	update_tabs(color)
 
 func _on_role_panel_selected(selected_panel: RolePanel):
@@ -121,15 +125,11 @@ func update_tabs(color: Color, animate: bool = true):
 	tab_tween.tween_property(tabs_container, "position:x", pos, 0.3)
 	tab_tween.tween_property(tabs_container, "modulate", color, 0.3)
 
-# PAGINATION LOGIC
-
 func _on_tab_pressed(page_index: int):
 	if current_page == page_index: return
+
 	current_page = page_index
 
-	# --- FIX: Update ALL Role Panels ---
-	# This ensures that if you switch pages while looking at Role A,
-	# Role B and C also update their trees in the background.
 	var panels = role_list_container.get_children()
 	for child in panels:
 		if child is RolePanel:
@@ -139,5 +139,6 @@ func _on_tab_pressed(page_index: int):
 
 func _update_tab_visuals():
 	for i in range(tabs_container.get_child_count()):
-		var btn = tabs_container.get_child(i)
-		btn.modulate = Color.YELLOW if i == current_page else Color.WHITE
+		var btn = tabs_container.get_child(i) as Button
+		if i == current_page:
+			btn.set_pressed_no_signal(true)

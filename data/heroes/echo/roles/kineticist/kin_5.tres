@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="RoleNode" load_steps=3 format=3 uid="uid://84bvp3pa48h5"]
+
+[ext_resource type="Resource" uid="uid://ciumwe85pocwu" path="res://data/heroes/echo/roles/kineticist/kin_6.tres" id="1_foply"]
+[ext_resource type="Script" uid="uid://cuhoaxfyipk6s" path="res://src/scripts/data/role_node.gd" id="1_ypgxn"]
+
+[resource]
+script = ExtResource("1_ypgxn")
+type = 1
+action_slot_index = 1
+child_node = ExtResource("1_foply")
+metadata/_custom_type_script = "uid://cuhoaxfyipk6s"

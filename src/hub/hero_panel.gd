@@ -5,17 +5,17 @@ signal panel_selected(hero_panel)
 
 @onready var content: Control = $Content
 @onready var name_label: Label = $Header/Label
-@onready var hp_value: RichTextLabel = $Content/Stats/HP/Value
-@onready var grd_value: RichTextLabel = $Content/Stats/Resources/Guard/Value
-@onready var foc_value: RichTextLabel = $Content/Stats/Resources/Focus/Value
-@onready var atk_value: RichTextLabel = $Content/Stats/POW/ATK/Value
-@onready var psy_value: RichTextLabel = $Content/Stats/POW/PSY/Value
-@onready var ovr_value: RichTextLabel = $Content/Stats/SUB/OVR/Value
-@onready var spd_value: RichTextLabel = $Content/Stats/SUB/SPD/Value
-@onready var aim_value: RichTextLabel = $Content/Stats/AIM/AIM/Value
-@onready var pre_value: RichTextLabel = $Content/Stats/AIM/PRE/Value
-@onready var kin_value: RichTextLabel = $Content/Stats/DEF/KIN/Value
-@onready var nrg_value: RichTextLabel = $Content/Stats/DEF/NRG/Value
+@onready var hp: RichTextLabel = $Content/Stats/HP/Value
+@onready var guard: RichTextLabel = $Content/Stats/Resources/Guard/Value
+@onready var focus: RichTextLabel = $Content/Stats/Resources/Focus/Value
+@onready var atk: RichTextLabel = $Content/Stats/POW/ATK/Value
+@onready var psy: RichTextLabel = $Content/Stats/POW/PSY/Value
+@onready var ovr: RichTextLabel = $Content/Stats/SUB/OVR/Value
+@onready var spd: RichTextLabel = $Content/Stats/SUB/SPD/Value
+@onready var aim: RichTextLabel = $Content/Stats/AIM/AIM/Value
+@onready var pre: RichTextLabel = $Content/Stats/AIM/PRE/Value
+@onready var kin: RichTextLabel = $Content/Stats/DEF/KIN/Value
+@onready var nrg: RichTextLabel = $Content/Stats/DEF/NRG/Value
 
 
 var collapsed_y: float = 96.0
@@ -37,9 +37,18 @@ func setup(hero_data: HeroData):
 func _refresh_stats():
 	data.calculate_stats()
 	var stats = data.stats
-	hp_value.text = str(stats.max_hp)
-	grd_value.text = str(stats.starting_guard)
-	foc_value.text = str(stats.starting_focus)
+	hp.text = Utils.stringify(stats.max_hp, 4)
+	guard.text = Utils.stringify(stats.starting_guard)
+	guard.text += "  " + Utils.stringify(ceili(stats.starting_guard / 2.0))
+	focus.text = Utils.stringify(stats.starting_focus)
+	atk.text = Utils.stringify(stats.attack, 3)
+	psy.text = Utils.stringify(stats.psyche, 3)
+	ovr.text = Utils.stringify(stats.overload, 3)
+	spd.text = Utils.stringify(stats.speed, 3)
+	aim.text = Utils.stringify(stats.aim) + "%"
+	pre.text = Utils.stringify(stats.precision, 3)
+	kin.text = Utils.stringify(stats.kinetic_defense) + "%"
+	nrg.text = Utils.stringify(stats.energy_defense) + "%"
 
 # --- INPUT HANDLING ---
 func _gui_input(event: InputEvent):
@@ -48,14 +57,18 @@ func _gui_input(event: InputEvent):
 		panel_selected.emit(self)
 
 # --- ANIMATION LOGIC ---
-func set_expanded(is_expanded: bool):
+func set_expanded(is_expanded: bool, animate: bool = true):
+	var target_h = expanded_y if is_expanded else collapsed_y
+	if not animate:
+		custom_minimum_size.y = target_h
+		return
+
 	if _size_tween and _size_tween.is_running():
 		_size_tween.kill()
 
 	_size_tween = create_tween().set_parallel(true)
 	_size_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 
-	var target_h = expanded_y if is_expanded else collapsed_y
 
 	# 1. Animate Height (The VBox will update automatically)
 	_size_tween.tween_property(self, "custom_minimum_size:y", target_h, 0.3)

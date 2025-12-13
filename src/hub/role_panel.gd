@@ -38,13 +38,11 @@ func setup(role_def: RoleDefinition, hero: HeroData):
 	modulate = def.color
 	_refresh_xp_ui()
 
-# --- INPUT ---
 func _on_button_gui_input(event: InputEvent):
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		get_viewport().set_input_as_handled()
 		panel_selected.emit(self)
 
-# --- EXPANSION LOGIC ---
 func set_expanded(is_expanded: bool, current_page: int, animate: bool = true):
 	# Update State
 	is_currently_expanded = is_expanded
@@ -53,19 +51,14 @@ func set_expanded(is_expanded: bool, current_page: int, animate: bool = true):
 
 	if not animate:
 		custom_minimum_size.x = target_w
-		return
-
-	if _size_tween and _size_tween.is_running():
-		_size_tween.kill()
-
-	_size_tween = create_tween().set_parallel(true)
-	_size_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-
-	_size_tween.tween_property(self, "custom_minimum_size:x", target_w, 0.3)
+	else:
+		if _size_tween and _size_tween.is_running():
+			_size_tween.kill()
+		_size_tween = create_tween().set_parallel(true)
+		_size_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		_size_tween.tween_property(self, "custom_minimum_size:x", target_w, 0.3)
 
 	render_tree(current_page)
-
-# TREE GENERATION
 
 func render_tree(page_index: int):
 	_clear_tree()
@@ -115,10 +108,6 @@ func _spawn_node_recursive(data_node: RoleNode, pos: Vector2, depth: int, page_i
 	if data_node.right_node:
 		var next_pos = pos + Vector2(HORIZONTAL_SPACING, 0)
 		_spawn_node_recursive(data_node.right_node, next_pos, depth, page_index)
-
-# ===================================================================
-# INTERACTION
-# ===================================================================
 
 func _update_tree_state():
 	if def and def.root_node:

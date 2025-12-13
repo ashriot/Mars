@@ -9,4 +9,5 @@ script = ExtResource("3_jtby4")
 encounter_id = "attack_drones_1"
 enemies = Array[ExtResource("1_a0fax")]([ExtResource("2_sjppm")])
 max_tier = 5
+is_elite = true
 metadata/_custom_type_script = "uid://7uqa1cmdmegp"
