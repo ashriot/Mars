@@ -30,56 +30,15 @@ corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
-[node name="ActorQueue" type="Control"]
+[node name="ActorQueue" type="HBoxContainer"]
 custom_minimum_size = Vector2(200, 40)
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_right = -1720.0
-offset_bottom = -1040.0
-grow_horizontal = 2
-grow_vertical = 2
+offset_right = 200.0
+offset_bottom = 41.0
 script = ExtResource("1_gqsil")
 
-[node name="CtLabel" type="Label" parent="."]
-visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 41.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6862745)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_constants/shadow_outline_size = 10
-theme_override_font_sizes/font_size = 32
-text = "99"
-horizontal_alignment = 2
-
-[node name="NameLabel" type="Label" parent="."]
-layout_mode = 1
-anchors_preset = 4
-anchor_top = 0.5
-anchor_bottom = 0.5
-offset_top = -20.0
-offset_right = 94.0
-offset_bottom = 20.0
-grow_vertical = 2
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6862745)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_constants/shadow_outline_size = 10
-theme_override_fonts/font = ExtResource("2_xrck3")
-theme_override_font_sizes/font_size = 32
-text = "Asher"
-
 [node name="CT" type="Control" parent="."]
-anchors_preset = 0
-offset_right = 50.0
-offset_bottom = 40.0
+custom_minimum_size = Vector2(30, 0)
+layout_mode = 2
 
 [node name="Bar1" type="ProgressBar" parent="CT"]
 layout_mode = 1
@@ -116,3 +75,23 @@ theme_override_styles/background = SubResource("StyleBoxEmpty_wvepw")
 theme_override_styles/fill = SubResource("StyleBoxFlat_xrck3")
 value = 40.0
 show_percentage = false
+
+[node name="CtLabel" type="Label" parent="."]
+layout_mode = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6862745)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_constants/shadow_outline_size = 10
+theme_override_font_sizes/font_size = 32
+text = "99"
+horizontal_alignment = 2
+
+[node name="NameLabel" type="Label" parent="."]
+layout_mode = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6862745)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_constants/shadow_outline_size = 10
+theme_override_fonts/font = ExtResource("2_xrck3")
+theme_override_font_sizes/font_size = 32
+text = "Asher"

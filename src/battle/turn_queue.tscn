@@ -1,0 +1,23 @@
+[gd_scene load_steps=3 format=3 uid="uid://b7pmdidfa57uo"]
+
+[ext_resource type="Script" uid="uid://bf5t2mtgtkbsn" path="res://src/battle/turn_queue.gd" id="1_0t4nl"]
+[ext_resource type="PackedScene" uid="uid://diku73kk4tjv7" path="res://src/battle/actor_queue.tscn" id="2_67eim"]
+
+[node name="TurnQueue" type="Control"]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 300.0
+offset_bottom = 40.0
+mouse_filter = 2
+script = ExtResource("1_0t4nl")
+actor_queue_scene = ExtResource("2_67eim")
+
+[node name="Queue" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2

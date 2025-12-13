@@ -63,7 +63,9 @@ func _update_button_visuals(is_owned: bool):
 
 	match role_node_data.type:
 		RoleNode.RewardType.STAT:
-			label.text = ActorStats.Stats.keys()[role_node_data.stat_type] + " +%d" % role_node_data.stat_value
+			label.text = ActorStats.Stats.keys()[role_node_data.stat_type] + "+%d" % role_node_data.stat_value
+			if role_node_data.stat_type in [ActorStats.Stats.AIM, ActorStats.Stats.KIN_DEF, ActorStats.Stats.NRG_DEF]:
+				label.text += "%"
 
 		RoleNode.RewardType.ACTION:
 			var slot = role_node_data.action_slot_index

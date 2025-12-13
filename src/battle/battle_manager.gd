@@ -68,6 +68,7 @@ func spawn_encounter():
 		hero_card.spawn_particles.connect(_on_spawn_particles)
 		hero_card.actor_conditions_changed.connect(_on_actor_conditions_changed)
 		hero_card.current_ct = randi_range(0, hero_data.stats.speed * 5)
+		print(hero_card.actor_name, "'s CT: ", hero_card.current_ct)
 		actor_list.append(hero_card)
 
 	var spawned_enemies: Array[EnemyCard] = []
@@ -93,6 +94,7 @@ func spawn_encounter():
 		enemy_card.spawn_particles.connect(_on_spawn_particles)
 		enemy_card.actor_conditions_changed.connect(_on_actor_conditions_changed)
 		enemy_card.current_ct = randi_range(0, enemy_data.stats.speed * 5)
+		print(enemy_card.actor_name, "'s CT: ", enemy_card.current_ct)
 		actor_list.append(enemy_card)
 		enemy_card.prepare_turn_base_action()
 
@@ -142,12 +144,13 @@ func _run_ct_simulation(num_turns := 7) -> Array:
 
 	while projected_queue.size() < num_turns:
 		var winner_dict = null
-		var ticks_needed_for_winner = 999999
+		var ticks_needed_for_winner = INF
 
 		# 3. Find the next winner in the "ghost" list
 		for data in sim_data:
 			var ct_needed = TARGET_CT - data.ct
-			var ticks_needed = ceil(float(ct_needed) / data.actor.get_speed())
+			var speed = max(data.actor.get_speed(), 1)
+			var ticks_needed = ceil(float(ct_needed) / speed)
 
 			if ticks_needed < ticks_needed_for_winner:
 				ticks_needed_for_winner = ticks_needed
@@ -194,7 +197,7 @@ func find_and_start_next_turn():
 		actor.current_ct += actor.get_speed() * real_ticks_passed
 
 	winner.current_ct = 0
-	turn_order_updated.emit(projection)
+	turn_order_updated.emit(projection, false)
 
 	current_actor = winner
 	if winner is HeroCard:
@@ -231,7 +234,7 @@ func _on_actor_breached():
 	update_turn_order()
 
 func update_turn_order():
-	turn_order_updated.emit(_run_ct_simulation())
+	turn_order_updated.emit(_run_ct_simulation(), true)
 
 func _update_all_enemy_intents():
 	var living_heroes = get_living_heroes()

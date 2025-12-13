@@ -6,6 +6,6 @@
 [resource]
 script = ExtResource("1_bqatd")
 stat_type = 3
-stat_value = 1
+stat_value = 2
 child_node = ExtResource("1_vhvxf")
 metadata/_custom_type_script = "uid://cuhoaxfyipk6s"

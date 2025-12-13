@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3 uid="uid://dc5du0o5phhma"]
+[gd_scene load_steps=21 format=3 uid="uid://dc5du0o5phhma"]
 
 [ext_resource type="Script" uid="uid://dssm7j7rbyew6" path="res://src/battle/battle_scene.gd" id="1_1pykk"]
 [ext_resource type="Script" uid="uid://deoohlwp7dcfm" path="res://src/battle/battle_manager.gd" id="1_6cbqe"]
@@ -8,8 +8,7 @@
 [ext_resource type="Resource" uid="uid://ctg8csrcqdj57" path="res://data/heroes/asher/asher.tres" id="5_16l6v"]
 [ext_resource type="Resource" uid="uid://b2bkd217htd2n" path="res://data/heroes/echo/echo.tres" id="6_vtpwn"]
 [ext_resource type="PackedScene" uid="uid://260uyw1v5su0" path="res://src/battle/action_bar.tscn" id="8_w6n6o"]
-[ext_resource type="Script" uid="uid://bf5t2mtgtkbsn" path="res://src/battle/turn_queue.gd" id="9_16l6v"]
-[ext_resource type="PackedScene" uid="uid://diku73kk4tjv7" path="res://src/battle/actor_queue.tscn" id="10_6by3n"]
+[ext_resource type="PackedScene" uid="uid://b7pmdidfa57uo" path="res://src/battle/turn_queue.tscn" id="12_rvyyd"]
 [ext_resource type="Texture2D" uid="uid://dldmpu0c4mvsl" path="res://assets/graphics/icons/skills/empty-chessboard.png" id="13_6rrcq"]
 [ext_resource type="Shader" uid="uid://cg8j5a78td0ei" path="res://src/battle/chroma.gdshader" id="13_w2kg5"]
 [ext_resource type="Script" uid="uid://cnb6qyk7u80ko" path="res://src/battle/fx_manager.gd" id="16_1pykk"]
@@ -209,23 +208,13 @@ alignment = 1
 layout_mode = 1
 battle_manager = NodePath("../../BattleManager")
 
-[node name="TurnQueue" type="Control" parent="UI" node_paths=PackedStringArray("battle_manager")]
-custom_minimum_size = Vector2(300, 0)
-anchors_preset = 0
-offset_left = 25.0
-offset_top = 503.0
-offset_right = 325.0
-offset_bottom = 543.0
-mouse_filter = 2
-script = ExtResource("9_16l6v")
-actor_queue_scene = ExtResource("10_6by3n")
-battle_manager = NodePath("../../BattleManager")
-
-[node name="Queue" type="VBoxContainer" parent="UI/TurnQueue"]
+[node name="TurnQueue" parent="UI" node_paths=PackedStringArray("battle_manager") instance=ExtResource("12_rvyyd")]
 layout_mode = 0
-offset_right = 282.0
-offset_bottom = 440.0
-mouse_filter = 2
+offset_left = 15.0
+offset_top = 365.0
+offset_right = 315.0
+offset_bottom = 405.0
+battle_manager = NodePath("../../BattleManager")
 
 [node name="FXManager" type="Node2D" parent="."]
 script = ExtResource("16_1pykk")
