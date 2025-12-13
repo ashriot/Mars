@@ -238,7 +238,7 @@ func _on_actor_breached():
 	update_turn_order()
 
 func update_turn_order():
-	turn_order_updated.emit(_run_ct_simulation(), true)
+	turn_order_updated.emit(_run_ct_simulation(), false)
 
 func _update_all_enemy_intents():
 	var living_heroes = get_living_heroes()

@@ -3,9 +3,11 @@ extends Control
 class_name ActorQueue
 
 @onready var name_label: Label = $NameLabel
+@onready var ct_label: Label = $CtLabel
 @onready var ct_bar_1: ProgressBar = $CT/Bar1
 @onready var ct_bar_2: ProgressBar = $CT/Bar2
 @onready var ct_bar_3: ProgressBar = $CT/Bar3
+@onready var current_turn: Control = $CurrentTurn
 
 const BAR_WIDTH_PX: int = 50
 const ANIMATION_DURATION: float = 0.3
@@ -18,10 +20,13 @@ func setup(actor: ActorCard, bar_position: float, actual_ticks: int, animate: bo
 	name_label.text = actor.actor_name
 
 	# Show the actual tick value
-	if is_current:
-		$CtLabel.text = "NOW "
-	else:
-		$CtLabel.text = str(actual_ticks) + " "
+	#if is_current:
+		#$CtLabel.text = "NOW "
+	#else:
+		#$CtLabel.text = str(actual_ticks) + " "
+	ct_label.text = ""
+
+	current_turn.visible = is_current
 
 	_kill_all_tweens()
 
