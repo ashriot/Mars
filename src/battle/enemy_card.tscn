@@ -662,4 +662,8 @@ mouse_filter = 2
 texture = ExtResource("4_e8ixv")
 expand_mode = 1
 
+[connection signal="focus_entered" from="Panel" to="." method="_on_focus_entered"]
+[connection signal="focus_exited" from="Panel" to="." method="_on_focus_exited"]
 [connection signal="gui_input" from="Panel" to="." method="_on_gui_input"]
+[connection signal="mouse_entered" from="Panel" to="." method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="Panel" to="." method="_on_mouse_exited"]

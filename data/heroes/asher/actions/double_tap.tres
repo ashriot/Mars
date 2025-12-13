@@ -1,10 +1,11 @@
-[gd_resource type="Resource" script_class="Action" load_steps=8 format=3 uid="uid://7dg4i7k6dya0"]
+[gd_resource type="Resource" script_class="Action" load_steps=10 format=3 uid="uid://7dg4i7k6dya0"]
 
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_4x8mm"]
 [ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://src/scripts/conditions/hit_trigger.gd" id="2_nb1km"]
 [ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://src/scripts/action_effects/effect_damage.gd" id="3_l7wqc"]
 [ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://src/scripts/action_effects/pre_hit_trigger.gd" id="3_nb1km"]
 [ext_resource type="Texture2D" uid="uid://dhjyqhqool5nk" path="res://assets/graphics/icons/skills/bullet-impacts.png" id="4_0ukkd"]
+[ext_resource type="Script" uid="uid://dgkss5d1axeag" path="res://src/scripts/action_effects/effect_modify_ct.gd" id="5_l7wqc"]
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="6_nb1km"]
 
 [sub_resource type="Resource" id="Resource_dp3ce"]
@@ -13,10 +14,15 @@ potency = 0.5
 hit_count = 2
 metadata/_custom_type_script = "uid://d0eibi4b735ay"
 
+[sub_resource type="Resource" id="Resource_0ukkd"]
+script = ExtResource("5_l7wqc")
+ct_boost_percent = -0.5
+metadata/_custom_type_script = "uid://dgkss5d1axeag"
+
 [resource]
 script = ExtResource("6_nb1km")
 action_name = "Double Tap"
 icon = ExtResource("4_0ukkd")
 description = "Deals {atk*0.5} {kin} damage twice."
-effects = Array[ExtResource("1_4x8mm")]([SubResource("Resource_dp3ce")])
+effects = Array[ExtResource("1_4x8mm")]([SubResource("Resource_dp3ce"), SubResource("Resource_0ukkd")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

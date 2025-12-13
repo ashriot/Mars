@@ -6,7 +6,7 @@ enum State { LOADING, PLAYER_ACTION, ENEMY_ACTION, EXECUTING_ACTION, FORCED_TARG
 var current_state = State.LOADING
 
 # --- Signals ---
-signal turn_order_updated(turn_queue_data)
+signal turn_order_updated(projected_queue, animate)
 signal battle_state_changed(new_state)
 signal battle_ended(won)
 
@@ -89,6 +89,8 @@ func spawn_encounter():
 		spawned_enemies.append(enemy_card)
 
 		enemy_card.enemy_clicked.connect(_on_enemy_clicked)
+		enemy_card.enemy_hovered.connect(_on_enemy_hovered)
+		enemy_card.enemy_unhovered.connect(_on_enemy_unhovered)
 		enemy_card.actor_breached.connect(_on_actor_breached)
 		enemy_card.actor_defeated.connect(_on_actor_died)
 		enemy_card.spawn_particles.connect(_on_spawn_particles)
@@ -131,7 +133,7 @@ func _apply_starting_passives() -> void:
 	print("--- Starting Passives Applied ---")
 	return
 
-func _run_ct_simulation(num_turns := 7) -> Array:
+func _run_ct_simulation(num_turns := 10) -> Array:
 	var projected_queue = []
 	var relative_ticks = 0
 
@@ -149,8 +151,10 @@ func _run_ct_simulation(num_turns := 7) -> Array:
 		# 3. Find the next winner in the "ghost" list
 		for data in sim_data:
 			var ct_needed = TARGET_CT - data.ct
-			var speed = max(data.actor.get_speed(), 1)
-			var ticks_needed = ceil(float(ct_needed) / speed)
+			var ticks_needed = 0
+			if ct_needed > 0:
+				var speed = max(data.actor.get_speed(), 1)
+				ticks_needed = ceil(float(ct_needed) / speed)
 
 			if ticks_needed < ticks_needed_for_winner:
 				ticks_needed_for_winner = ticks_needed
@@ -389,6 +393,7 @@ func _on_action_button_pressed(button: ActionButton):
 		return
 
 	AudioManager.play_sfx("terminal")
+	preview_action_turn_order(current_actor, action)
 	_focus_button(button)
 	set_current_action(action)
 
@@ -428,6 +433,14 @@ func _on_enemy_clicked(target_enemy: EnemyCard):
 
 	await execute_action(current_actor, current_action, targets_array)
 	await _finish_hero_turn()
+
+func _on_enemy_hovered(enemy: EnemyCard):
+	if enemy.is_valid_target:
+		preview_action_turn_order(current_actor, current_action, enemy)
+
+func _on_enemy_unhovered(enemy: EnemyCard):
+	if enemy.is_valid_target:
+		preview_action_turn_order(current_actor, current_action, null)
 
 func _on_shift_button_pressed(direction: String):
 	var current_hero = current_actor as HeroCard
@@ -572,6 +585,55 @@ func _fade_out(duration: float = 0.5):
 		duration
 	)
 	await tween.finished
+
+func preview_action_turn_order(actor: ActorCard, action: Action, selected_target: ActorCard = null):
+	var original_ct_values = {}
+	for a in actor_list:
+		original_ct_values[a] = a.current_ct
+
+	if action:
+		for effect in action.effects:
+			if effect is Effect_ModifyCT:
+				var primary_targets = []
+
+				if effect.target_type == Action.TargetType.PARENT:
+					if selected_target:
+						primary_targets.append(selected_target)
+					else:
+						continue
+
+				var targets = get_targets(effect.target_type, actor is ActorCard, primary_targets, actor)
+				for target in targets:
+					var ct_change = int(TARGET_CT * effect.ct_boost_percent)
+					target.current_ct += ct_change
+
+	var projection = _run_ct_simulation()
+
+	var current_turn_entry = {
+		"actor": actor,
+		"ticks_needed": 0
+	}
+	projection.insert(0, current_turn_entry)
+	projection.pop_back()
+
+	for a in actor_list:
+		a.current_ct = original_ct_values[a]
+
+	turn_order_updated.emit(projection, true)
+
+func _get_effect_targets(effect: ActionEffect, user: ActorCard, selected_target: ActorCard = null) -> Array:
+	"""Helper to resolve who an action will target"""
+	match effect.target_type:
+		Action.TargetType.SELF, Action.TargetType.ATTACKER:
+			return [user]
+		Action.TargetType.ONE_ENEMY:
+			return [selected_target] if selected_target else []
+		Action.TargetType.ALL_ENEMIES:
+			return get_living_enemies()
+		Action.TargetType.ALL_ALLIES:
+			return get_living_heroes()
+		_:
+			return []
 
 func _get_rich_description(action: Action) -> String:
 	var hero = current_actor as HeroCard

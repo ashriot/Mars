@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="RoleNode" load_steps=2 format=3 uid="uid://dncjr8bpbmth5"]
+
+[ext_resource type="Script" uid="uid://cuhoaxfyipk6s" path="res://src/scripts/data/role_node.gd" id="1_0j40b"]
+
+[resource]
+script = ExtResource("1_0j40b")
+type = 1
+action_slot_index = 1
+metadata/_custom_type_script = "uid://cuhoaxfyipk6s"

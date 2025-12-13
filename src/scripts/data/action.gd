@@ -42,7 +42,6 @@ var is_attack: bool :
 				return true
 		return false
 
-
 func get_rich_description(user: ActorCard) -> String:
 	_init_regex()
 	var final_desc = description
@@ -88,6 +87,7 @@ func get_rich_description(user: ActorCard) -> String:
 	final_desc = final_desc.replace("{kin}", _get_bbcode_icon("kinetic"))
 	final_desc = final_desc.replace("{nrg}", _get_bbcode_icon("energy"))
 	final_desc = final_desc.replace("{prc}", _get_bbcode_icon("piercing"))
+	final_desc = final_desc.replace("{ct_effect}", get_ct_description())
 
 	return final_desc
 
@@ -96,6 +96,72 @@ func _get_damage_string(damage_effect: Effect_Damage, attacker: ActorCard) -> St
 	var base_power = attacker.get_power(damage_effect.power_type)
 	var final_damage = roundi(base_power * dynamic_potency)
 	return str(final_damage)
+
+func _init_regex():
+	if _regex.get_pattern() == "":
+		_regex.compile("\\{([^}]+)\\}")
+
+func get_ct_modification_for_actor(actor: ActorCard, battle_manager: BattleManager) -> int:
+	"""
+	Calculate CT modification that will be applied to a specific actor.
+	Returns positive for boost, negative for delay.
+	"""
+	var total_ct_change = 0
+
+	for effect in effects:
+		if effect is Effect_ModifyCT:
+			# Check if this effect will target the given actor
+			if _effect_targets_actor(effect, actor):
+				total_ct_change += int(battle_manager.TARGET_CT * effect.ct_boost_percent)
+
+	return total_ct_change
+
+func _effect_targets_actor(effect: ActionEffect, actor: ActorCard) -> bool:
+	"""Check if an effect will target the given actor based on action's target_type"""
+	match effect.target_type:
+		TargetType.SELF, TargetType.ATTACKER:
+			return true  # Effect targets the user
+		TargetType.ONE_ENEMY, TargetType.ALL_ENEMIES, TargetType.ENEMY_GROUP, TargetType.RANDOM_ENEMY:
+			return false  # Effect targets enemies
+		TargetType.ONE_ALLY, TargetType.ALLY_ONLY, TargetType.ALL_ALLIES, TargetType.ALLIES_ONLY:
+			return actor.is_hero  # Targets allies
+		TargetType.PARENT:
+			return false  # Context-dependent, safer to assume no
+		_:
+			return false
+
+func has_self_ct_modification() -> bool:
+	"""Check if this action boosts/delays the user's turn"""
+	for effect in effects:
+		if effect is Effect_ModifyCT:
+			if target_type in [TargetType.SELF, TargetType.ATTACKER]:
+				return true
+	return false
+
+# In Action class
+func get_ct_description() -> String:
+	"""Get human-readable CT effect description"""
+	for effect in effects:
+		if effect is Effect_ModifyCT:
+			var percent = int(abs(effect.ct_boost_percent * 100))
+
+			# Determine who it affects
+			var target_text = ""
+			match target_type:
+				TargetType.SELF, TargetType.ATTACKER:
+					target_text = "your"
+				TargetType.ONE_ENEMY, TargetType.ALL_ENEMIES:
+					target_text = "enemy's"
+				TargetType.ONE_ALLY, TargetType.ALL_ALLIES:
+					target_text = "ally's"
+				_:
+					target_text = "target's"
+
+			if effect.ct_boost_percent > 0:
+				return "Boost %s next turn by %d%%" % [target_text, percent]
+			else:
+				return "Delay %s next turn by %d%%" % [target_text, percent]
+	return ""
 
 static var ICON_PATHS = {
 	"focus": "res://assets/graphics/icons/textures/bolt_sm.png",
@@ -109,8 +175,3 @@ static func _get_bbcode_icon(icon_name: String, size: int = 24) -> String:
 	if ICON_PATHS.has(icon_name):
 		return "[img width=%d height=%d]%s[/img]" % [size, size, ICON_PATHS[icon_name]]
 	return ""
-
-
-func _init_regex():
-	if _regex.get_pattern() == "":
-		_regex.compile("\\{([^}]+)\\}")

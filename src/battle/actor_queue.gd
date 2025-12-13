@@ -11,30 +11,20 @@ const BAR_WIDTH_PX: int = 50
 const ANIMATION_DURATION: float = 0.3
 
 var active_tweens: Array[Tween] = []
+var actor_ref: ActorCard
 
 func setup(actor: ActorCard, bar_position: float, actual_ticks: int, animate: bool, is_current: bool = false):
-	"""
-	Setup the actor queue display with overlapping bars (FFX style).
-
-	Args:
-		actor: The actor to display
-		bar_position: Visual position from 0.0 (at line) to 3.0+ (past all bars)
-		actual_ticks: The actual tick count to display to the user
-		is_current: Whether this is the current actor taking their turn
-		animate: Whether to tween the bars or set them instantly
-	"""
-	$NameLabel.text = actor.actor_name
+	actor_ref = actor
+	name_label.text = actor.actor_name
 
 	# Show the actual tick value
 	if is_current:
-		$CtLabel.text = "NOW"
+		$CtLabel.text = "NOW "
 	else:
-		$CtLabel.text = str(actual_ticks)
+		$CtLabel.text = str(actual_ticks) + " "
 
-	# Kill any existing tweens to prevent conflicts
 	_kill_all_tweens()
 
-	# All bars use 0-1 scale for their fill
 	ct_bar_1.max_value = 1.0
 	ct_bar_2.max_value = 1.0
 	ct_bar_3.max_value = 1.0
