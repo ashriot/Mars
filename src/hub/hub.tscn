@@ -6,7 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://b0a4ghiukj8yg" path="res://src/effects/Flare_small.PNG" id="3_c3p1t"]
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="4_bfsw3"]
 [ext_resource type="Texture2D" uid="uid://57er1ylqh81y" path="res://assets/graphics/icons/hub/home.png" id="5_gb5ag"]
-[ext_resource type="PackedScene" uid="uid://1qbutp7j5oji" path="res://src/hub/skill_tree_menu.tscn" id="10_yo4oc"]
+[ext_resource type="PackedScene" uid="uid://1qbutp7j5oji" path="res://src/hub/party_menu.tscn" id="10_yo4oc"]
 
 [sub_resource type="Gradient" id="Gradient_ivd5l"]
 offsets = PackedFloat32Array(0, 0.15121952, 0.88536584, 1)
@@ -72,7 +72,7 @@ shadow_color = Color(0, 0, 0, 0.78431374)
 shadow_size = 1
 shadow_offset = Vector2(0, 1)
 
-[node name="Hub" type="Control" node_paths=PackedStringArray("skill_tree_menu")]
+[node name="Hub" type="Control" node_paths=PackedStringArray("party_menu")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -81,7 +81,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_8xbvn")
 dungeon_profile = ExtResource("2_0pbk3")
-skill_tree_menu = NodePath("SkillTreeMenu")
+party_menu = NodePath("PartyMenu")
 
 [node name="Background" type="TextureRect" parent="."]
 layout_mode = 1
@@ -241,8 +241,7 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 48
 text = "HEAD OUT"
 
-[node name="SkillTreeMenu" parent="." instance=ExtResource("10_yo4oc")]
-visible = false
+[node name="PartyMenu" parent="." instance=ExtResource("10_yo4oc")]
 layout_mode = 1
 
 [connection signal="pressed" from="Actions/Button3" to="." method="_on_button_3_pressed"]

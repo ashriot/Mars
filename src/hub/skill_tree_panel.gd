@@ -1,10 +1,8 @@
 extends Control
-class_name SkillTreeMenu
+class_name SkillTreePanel
 
-@export var hero_panel_scene: PackedScene
 @export var role_panel_scene: PackedScene
 
-@onready var hero_list_container: VBoxContainer = $HeroList
 @onready var role_list_container: HBoxContainer = $RoleList
 @onready var tabs_container: HBoxContainer = $Tabs/Container
 
@@ -16,66 +14,21 @@ var current_hero_idx: int = 0
 var current_role_idx: int = 0
 var current_page: int = 0
 
-func _ready() -> void:
-	hide()
-	var tab_group = ButtonGroup.new()
-	tab_group.allow_unpress = false
-	for i in tabs_container.get_child_count():
-		var btn = tabs_container.get_child(i) as Button
-		btn.toggle_mode = true
-		btn.button_group = tab_group
-		btn.pressed.connect(_on_tab_pressed.bind(i))
 
-func open():
-	party_roster = SaveSystem.party_roster
-	if party_roster.is_empty(): return
+func setup(hero: HeroData):
+	current_hero = hero
 
-	current_hero_idx = 0
+	# Reset local state
 	current_role_idx = 0
 	current_page = 0
 
-	_refresh_hero_list()
-	# Trigger initial selection
-	_change_hero_by_index(0)
-	_update_tab_visuals()
-	show()
-
-func _on_back_btn_pressed() -> void:
-	hide()
-
-func _refresh_hero_list():
-	for child in hero_list_container.get_children():
-		child.queue_free()
-
-	for i in range(party_roster.size()):
-		var hero_data = party_roster[i]
-		var panel = hero_panel_scene.instantiate() as HeroPanel
-		hero_list_container.add_child(panel)
-
-		panel.setup(hero_data)
-		panel.panel_selected.connect(_on_hero_panel_selected)
-
-		if i == current_hero_idx:
-			panel.set_expanded(true)
-		else:
-			panel.set_expanded(false)
-
-func _on_hero_panel_selected(selected_panel: HeroPanel):
-	var panels = hero_list_container.get_children()
-	for i in range(panels.size()):
-		var p = panels[i] as HeroPanel
-		if p == selected_panel:
-			p.set_expanded(true)
-			_change_hero_by_index(i)
-		else:
-			p.set_expanded(false)
-
-func _change_hero_by_index(index: int):
-	current_hero_idx = index
-	current_hero = party_roster[index]
-	current_role_idx = 0
-	current_page = 0
+	# Setup the View
 	_refresh_role_list()
+
+	# Trigger initial selection
+	# (Your existing logic to select role 0)
+	#_on_role_panel_selected(role_list_container.get_child(0))
+
 
 func _refresh_role_list():
 	for child in role_list_container.get_children():
@@ -93,9 +46,6 @@ func _refresh_role_list():
 		panel.setup(def, current_hero)
 		panel.panel_selected.connect(_on_role_panel_selected)
 
-		# Expand the first one by default, but render ALL of them
-		# Since you updated set_expanded to call render_tree, this ensures
-		# everyone renders the current page immediately.
 		if i == current_role_idx:
 			panel.set_expanded(true, current_page, false)
 			color = panel.def.color

@@ -1,0 +1,83 @@
+[gd_scene load_steps=3 format=3 uid="uid://b7iret6dna06c"]
+
+[ext_resource type="Script" uid="uid://ddxu45lpffv2c" path="res://src/hub/skill_tree_panel.gd" id="1_heh8r"]
+[ext_resource type="PackedScene" uid="uid://xpuok17oufft" path="res://src/hub/role_panel.tscn" id="2_q0e1y"]
+
+[node name="SkillTreePanel" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_heh8r")
+role_panel_scene = ExtResource("2_q0e1y")
+
+[node name="RoleList" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -78.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+
+[node name="Tabs" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -64.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="Container" type="HBoxContainer" parent="Tabs"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -760.0
+offset_top = -25.0
+offset_right = 118.0
+offset_bottom = 25.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+
+[node name="Tier1" type="Button" parent="Tabs/Container"]
+custom_minimum_size = Vector2(166, 0)
+layout_mode = 2
+toggle_mode = true
+text = "1-10"
+
+[node name="Tier2" type="Button" parent="Tabs/Container"]
+visible = false
+custom_minimum_size = Vector2(166, 0)
+layout_mode = 2
+toggle_mode = true
+text = "11-20"
+
+[node name="Tier3" type="Button" parent="Tabs/Container"]
+visible = false
+custom_minimum_size = Vector2(166, 0)
+layout_mode = 2
+toggle_mode = true
+text = "21-30"
+
+[node name="Tier4" type="Button" parent="Tabs/Container"]
+visible = false
+custom_minimum_size = Vector2(166, 0)
+layout_mode = 2
+toggle_mode = true
+text = "31-40"
+
+[node name="Tier5" type="Button" parent="Tabs/Container"]
+visible = false
+custom_minimum_size = Vector2(166, 0)
+layout_mode = 2
+toggle_mode = true
+text = "41-50"

@@ -4,7 +4,7 @@ class_name Hub
 signal head_out
 
 @export var dungeon_profile: DungeonProfile
-@export var skill_tree_menu: SkillTreeMenu
+@export var party_menu: PartyMenu
 
 @onready var bits_label: Label = $UI/BitsLabel
 @onready var head_out_button: Button = $Actions/HeadOut
@@ -28,4 +28,4 @@ func _on_head_out_pressed() -> void:
 
 
 func _on_button_3_pressed() -> void:
-	skill_tree_menu.open()
+	party_menu.open()

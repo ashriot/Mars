@@ -37,6 +37,7 @@ func _on_turn_order_updated(projected_queue: Array, animate: bool = true):
 
 	# 4. Rebuild the List
 	var ticks_per_bar = _calculate_ticks_per_bar(projected_queue)
+	print("Ticks per bar: ", ticks_per_bar)
 	var first_turn_ticks = projected_queue[0].ticks_needed
 
 	# We limit the display count to keep the UI clean (e.g., 10 items max)
@@ -81,11 +82,8 @@ func _on_turn_order_updated(projected_queue: Array, animate: bool = true):
 			item_ui.position.x = 0
 			item_ui.modulate.a = 1.0
 
-	# 5. Cleanup unused
 	for unused_item in old_items:
 		_animate_exit(unused_item)
-
-# --- HELPERS ---
 
 func _find_and_pop_match(actor: ActorCard, pool: Array) -> ActorQueue:
 	for i in range(pool.size()):
