@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="Equipment" load_steps=3 format=3 uid="uid://dl1qpi4irakxh"]
+[gd_resource type="Resource" script_class="Equipment" load_steps=4 format=3 uid="uid://dl1qpi4irakxh"]
 
 [ext_resource type="Script" uid="uid://djmsh5w0dbytx" path="res://src/scripts/equipment/equipment.gd" id="1_g6q1d"]
+[ext_resource type="Texture2D" uid="uid://ok0isbgp7u1e" path="res://assets/graphics/sprites/equipment/smg.png" id="1_u0f6o"]
 [ext_resource type="Script" uid="uid://d3m6jlwrdo1vc" path="res://src/scripts/equipment/equipment_mod.gd" id="1_wqrvl"]
 
 [resource]
@@ -8,6 +9,7 @@ script = ExtResource("1_g6q1d")
 id = "smg"
 item_name = "SMG"
 type = 2
+icon = ExtResource("1_u0f6o")
 star_atk = 5
 star_psy = 3
 star_ovr = 3

@@ -1,55 +1,72 @@
 extends Panel
 class_name EquipmentPanel
 
-@export var weapon_icon: Texture2D
-@export var armor_icon: Texture2D
-
 @onready var icon_rect: TextureRect = $Border/Content/Icon
 @onready var type_icon: TextureRect = $Header/Icon
 @onready var name_label: Label = $Header/Label
 @onready var xp_label: Label = $Border/Content/XP/Value
 @onready var xp_gauge: ProgressBar = $Border/Content/XP/ProgressBar
-@onready var details: Control = $VBox/Details
-@onready var stars: HBoxContainer = $Border/Content/XP/Stars
-@onready var shadows: HBoxContainer = $Border/Content/XP/Shadows
+@onready var rank_label: Label = $Border/Content/XP/Rank
+@onready var weapon_stats: GridContainer = $Border/Content/WeaponStats
+@onready var armor_stats: GridContainer = $Border/Content/ArmorStats
+@onready var mods_container: HBoxContainer = $Border/Content/Mods
+
+var equipment: Equipment
 
 # Setup visuals based on the Equipment Data
 func setup(item: Equipment):
 	if not item:
-		# Empty State
 		name_label.text = "Empty"
-		icon_rect.texture = null # Or a "Empty Slot" texture
-		details.modulate.a = 0.0
+		icon_rect.texture = null
 		return
 
-	type_icon.texture = ItemDatabase.get_type_icon(item)
-	name_label.text = item.get_display_name()
-	icon_rect.texture = item.icon
+	equipment = item
+	type_icon.texture = ItemDatabase.get_type_icon(equipment)
+	name_label.text = equipment.get_display_name()
+	icon_rect.texture = equipment.icon
 
-	# Color by Rarity (Optional polish)
-	# self.self_modulate = get_rarity_color(item.rarity)
+	_refresh_details()
 
-	_refresh_details(item)
-
-func _refresh_details(item: Equipment):
+func _refresh_details():
 	# Here you would populate the StatsContainer and ModsContainer
 	# based on the item.installed_mods and calculated stats.
-	for child in stars.get_children():
-		var i = child.get_index()
-		var display = i < item.tier
-		child.visible = display
-		shadows.get_child(i).visible = display
-
-	var next = (item.rank + 1) * 100
+	var next = (equipment.rank + 1) * 100
+	var rank_cap = equipment.tier * 5 + 5
 	xp_gauge.max_value = next
-	xp_gauge.value = item.current_xp
-	next -= item.current_xp
-	xp_label.text = Utils.commafy(next)
+	xp_gauge.value = equipment.current_xp
+	next -= equipment.current_xp
+	if equipment.rank == rank_cap:
+		xp_label.text = "MAX"
+		xp_gauge.value = next
+	else:
+		xp_label.text = Utils.commafy(next) + " EP"
+	rank_label.text = "Rk." + str(equipment.rank) + "/" + str(rank_cap)
+	if equipment.slot == Equipment.Slot.WEAPON:
+		_refresh_weapon()
+	else:
+		_refresh_armor()
 
-# Called by HeroPanel to animate visibility
-func set_expanded_visuals(is_expanded: bool, duration: float, tween: Tween):
-	var target_alpha = 1.0 if is_expanded else 0.0
-	tween.parallel().tween_property(details, "modulate:a", target_alpha, duration)
+func _refresh_weapon():
+	armor_stats.hide()
+	var stats: ActorStats = equipment.calculate_stats()
+	weapon_stats.get_child(0).text = "ATK+" + Utils.stringify(stats.attack, 3)
+	weapon_stats.get_child(1).text = "PSY+" + Utils.stringify(stats.psyche, 3)
+	weapon_stats.get_child(2).text = "OVR+" + Utils.stringify(stats.overload, 3)
+	weapon_stats.get_child(3).text = "SPD+" + Utils.stringify(stats.speed, 3)
+	weapon_stats.get_child(4).text = "AIM+" + Utils.stringify(stats.aim) + "%"
+	weapon_stats.get_child(5).text = "PRE+" + Utils.stringify(stats.precision, 3)
+	weapon_stats.show()
 
-func _on_button_gui_input(_event: InputEvent) -> void:
+func _refresh_armor():
+	weapon_stats.hide()
+	var stats: ActorStats = equipment.calculate_stats()
+	armor_stats.get_child(0).text = "GRD+" + str(stats.starting_guard)
+	armor_stats.get_child(1).text = "FOC+" + str(stats.starting_focus)
+	armor_stats.get_child(2).text = "HP+" + Utils.stringify(stats.max_hp, 4)
+	armor_stats.get_child(3).text = "SPD+" + Utils.stringify(stats.speed, 3)
+	armor_stats.get_child(4).text = "KIN+" + Utils.stringify(stats.kinetic_defense) + "%"
+	armor_stats.get_child(5).text = "NRG+" + Utils.stringify(stats.energy_defense) + "%"
+	armor_stats.show()
+
+func _on_gui_input(_event: InputEvent) -> void:
 	pass # Replace with function body.

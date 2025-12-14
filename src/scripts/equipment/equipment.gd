@@ -39,12 +39,12 @@ enum EquipmentType { PISTOL, SHOTGUN, RIFLE, CLOTHES, SUIT, VEST }
 @export var invested_stat_boosts: Dictionary = {}
 @export var installed_mods: Array[EquipmentMod] = []
 
-
 const XP_PER_RANK_BASE = 100
 
+
 func get_display_name() -> String:
-	if rank > 0:
-		return "%s+%d" % [item_name, rank]
+	if tier > 0:
+		return "%s+%d" % [item_name, tier]
 	return item_name
 
 func get_max_mod_slots() -> int:

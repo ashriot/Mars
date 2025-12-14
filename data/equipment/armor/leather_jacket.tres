@@ -1,19 +1,21 @@
-[gd_resource type="Resource" script_class="Equipment" load_steps=3 format=3 uid="uid://d0p87alljgj7j"]
+[gd_resource type="Resource" script_class="Equipment" load_steps=4 format=3 uid="uid://d0p87alljgj7j"]
 
+[ext_resource type="Texture2D" uid="uid://cq4whfb17ev6r" path="res://assets/graphics/sprites/equipment/leather_jacket.png" id="1_6b6fv"]
 [ext_resource type="Script" uid="uid://d3m6jlwrdo1vc" path="res://src/scripts/equipment/equipment_mod.gd" id="1_h08c2"]
 [ext_resource type="Script" uid="uid://djmsh5w0dbytx" path="res://src/scripts/equipment/equipment.gd" id="1_vi8hw"]
 
 [resource]
 script = ExtResource("1_vi8hw")
 id = "leather_jacket"
-item_name = "Trenchcoat"
+item_name = "Leather Jacket"
 slot = 1
 type = 4
+icon = ExtResource("1_6b6fv")
 rank = 2
 star_hp = 4
 star_guard = 3
 star_focus = 4
-star_spd = 5
+star_spd = 2
 star_kin_def = 3
 star_nrg_def = 3
 metadata/_custom_type_script = "uid://djmsh5w0dbytx"

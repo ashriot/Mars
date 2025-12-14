@@ -75,7 +75,7 @@ grow_horizontal = 2
 theme_override_constants/separation = -2
 
 [node name="HP" type="HBoxContainer" parent="Content/Stats"]
-modulate = Color(0.304, 0.76, 0.34199995, 1)
+modulate = Color(0.30588236, 0.7607843, 0.34117648, 1)
 custom_minimum_size = Vector2(0, 41)
 layout_mode = 2
 theme_override_constants/separation = 10
@@ -192,7 +192,7 @@ theme_override_constants/separation = 0
 alignment = 2
 
 [node name="ATK" type="HBoxContainer" parent="Content/Stats/POW"]
-modulate = Color(1, 0.37, 0.37, 1)
+modulate = Color(1, 0.36862746, 0.36862746, 1)
 custom_minimum_size = Vector2(0, 41)
 layout_mode = 2
 theme_override_constants/separation = 10
@@ -216,7 +216,7 @@ text = "003"
 scroll_active = false
 
 [node name="PSY" type="HBoxContainer" parent="Content/Stats/POW"]
-modulate = Color(0.43, 0.63900006, 1, 1)
+modulate = Color(0.43137255, 0.6392157, 1, 1)
 custom_minimum_size = Vector2(0, 41)
 layout_mode = 2
 theme_override_constants/separation = 10
@@ -270,7 +270,7 @@ text = "003"
 scroll_active = false
 
 [node name="SPD" type="HBoxContainer" parent="Content/Stats/SUB"]
-modulate = Color(1, 0.77666664, 0.32999998, 1)
+modulate = Color(1, 0.7764706, 0.32941177, 1)
 custom_minimum_size = Vector2(0, 41)
 layout_mode = 2
 theme_override_constants/separation = 10
@@ -295,7 +295,7 @@ text = "005"
 scroll_active = false
 
 [node name="AIM" type="HBoxContainer" parent="Content/Stats"]
-modulate = Color(0.95100003, 0.51, 1, 1)
+modulate = Color(0.9529412, 0.50980395, 1, 1)
 layout_mode = 2
 theme_override_constants/separation = 0
 alignment = 2
@@ -377,7 +377,7 @@ text = "25%"
 scroll_active = false
 
 [node name="NRG" type="HBoxContainer" parent="Content/Stats/DEF"]
-modulate = Color(0.26, 1, 0.9259999, 1)
+modulate = Color(0.25882354, 1, 0.9254902, 1)
 custom_minimum_size = Vector2(0, 41)
 layout_mode = 2
 theme_override_constants/separation = 10

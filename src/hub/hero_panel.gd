@@ -61,7 +61,6 @@ func _gui_input(event: InputEvent):
 func set_mode(is_inventory_mode: bool):
 	weapon_panel.visible = is_inventory_mode
 	armor_panel.visible = is_inventory_mode
-	#set_expanded(false)
 
 func set_expanded(is_expanded: bool, animate: bool = true):
 	var target_h = expanded_y if is_expanded else collapsed_y

@@ -1,12 +1,14 @@
-[gd_resource type="Resource" script_class="Equipment" load_steps=3 format=3 uid="uid://cfiu7md4m5qk2"]
+[gd_resource type="Resource" script_class="Equipment" load_steps=4 format=3 uid="uid://cfiu7md4m5qk2"]
 
 [ext_resource type="Script" uid="uid://d3m6jlwrdo1vc" path="res://src/scripts/equipment/equipment_mod.gd" id="1_0ufff"]
 [ext_resource type="Script" uid="uid://djmsh5w0dbytx" path="res://src/scripts/equipment/equipment.gd" id="1_htdrr"]
+[ext_resource type="Texture2D" uid="uid://cn08n873klcs8" path="res://assets/graphics/sprites/equipment/pistol.png" id="1_jr7xw"]
 
 [resource]
 script = ExtResource("1_htdrr")
 id = "pistol"
 item_name = "Pistol"
+icon = ExtResource("1_jr7xw")
 star_atk = 4
 star_psy = 4
 star_ovr = 2

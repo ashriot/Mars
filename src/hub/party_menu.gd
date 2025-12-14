@@ -89,3 +89,6 @@ func _update_active_view():
 		skill_view.hide()
 		inventory_view.show()
 		inventory_view.setup(hero)
+
+func _on_back_btn_pressed() -> void:
+	hide()

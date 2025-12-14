@@ -15,7 +15,7 @@ const ANIMATION_DURATION: float = 0.3
 var active_tweens: Array[Tween] = []
 var actor_ref: ActorCard
 
-func setup(actor: ActorCard, bar_position: float, actual_ticks: int, animate: bool, is_current: bool = false):
+func setup(actor: ActorCard, bar_position: float, _actual_ticks: int, animate: bool, is_current: bool = false):
 	actor_ref = actor
 	name_label.text = actor.actor_name
 
