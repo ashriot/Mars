@@ -1,12 +1,14 @@
-[gd_resource type="Resource" script_class="Equipment" load_steps=3 format=3 uid="uid://b8pts6qkisgmv"]
+[gd_resource type="Resource" script_class="Equipment" load_steps=4 format=3 uid="uid://b8pts6qkisgmv"]
 
 [ext_resource type="Texture2D" uid="uid://b5i73sh1oufv2" path="res://assets/graphics/icons/items/rifle.png" id="1_3occm"]
 [ext_resource type="Script" uid="uid://djmsh5w0dbytx" path="res://src/scripts/equipment/equipment.gd" id="1_bh031"]
+[ext_resource type="Script" uid="uid://d3m6jlwrdo1vc" path="res://src/scripts/equipment/equipment_mod.gd" id="2_2icoh"]
 
 [resource]
 script = ExtResource("1_bh031")
 id = "rifle"
 item_name = "Rifle"
+type = 2
 icon = ExtResource("1_3occm")
 rank = 2
 star_atk = 5

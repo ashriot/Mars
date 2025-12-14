@@ -1,8 +1,9 @@
-[gd_scene load_steps=6 format=3 uid="uid://c3sqmfckgaala"]
+[gd_scene load_steps=7 format=3 uid="uid://c3sqmfckgaala"]
 
 [ext_resource type="Script" uid="uid://lqyabhv1vfuk" path="res://src/hub/hero_panel.gd" id="1_r4b5v"]
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="1_tilru"]
 [ext_resource type="Texture2D" uid="uid://cqweju3y7kwst" path="res://assets/graphics/icons/textures/shield_sm.png" id="2_r4b5v"]
+[ext_resource type="PackedScene" uid="uid://bc5k1xyxevh03" path="res://src/hub/equipment_panel.tscn" id="4_p6r37"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fgavx"]
 bg_color = Color(1, 1, 1, 0.9607843)
@@ -28,17 +29,27 @@ offset_bottom = -244.0
 grow_vertical = 2
 script = ExtResource("1_r4b5v")
 
-[node name="Header" type="Panel" parent="."]
+[node name="Content" type="Control" parent="."]
+clip_contents = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+metadata/_edit_group_ = true
+
+[node name="Header" type="Panel" parent="Content"]
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_bottom = 42.0
 grow_horizontal = 2
 mouse_filter = 1
 theme_override_styles/panel = SubResource("StyleBoxFlat_fgavx")
 
-[node name="Label" type="Label" parent="Header"]
+[node name="Label" type="Label" parent="Content/Header"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -51,29 +62,15 @@ text = "ASHER"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Content" type="Control" parent="."]
-clip_contents = true
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 8.0
-offset_top = 46.0
-offset_right = -8.0
-offset_bottom = -8.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 1
-
 [node name="Stats" type="VBoxContainer" parent="Content"]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -150.0
-offset_top = 1.0
+offset_top = 48.0
 offset_right = 150.0
-offset_bottom = 237.0
+offset_bottom = 284.0
 grow_horizontal = 2
 theme_override_constants/separation = -2
 
@@ -403,3 +400,21 @@ theme_override_font_sizes/normal_font_size = 32
 bbcode_enabled = true
 text = "50%"
 scroll_active = false
+
+[node name="Equipment" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 11.0
+offset_right = 1223.0
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_constants/separation = 12
+
+[node name="WeaponPanel" parent="Equipment" instance=ExtResource("4_p6r37")]
+layout_mode = 2
+
+[node name="ArmorPanel" parent="Equipment" instance=ExtResource("4_p6r37")]
+layout_mode = 2

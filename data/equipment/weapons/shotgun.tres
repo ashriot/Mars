@@ -1,11 +1,13 @@
-[gd_resource type="Resource" script_class="Equipment" load_steps=2 format=3 uid="uid://bs61k2q2i8hlv"]
+[gd_resource type="Resource" script_class="Equipment" load_steps=3 format=3 uid="uid://bs61k2q2i8hlv"]
 
+[ext_resource type="Script" uid="uid://d3m6jlwrdo1vc" path="res://src/scripts/equipment/equipment_mod.gd" id="1_3il7k"]
 [ext_resource type="Script" uid="uid://djmsh5w0dbytx" path="res://src/scripts/equipment/equipment.gd" id="1_qdkcv"]
 
 [resource]
 script = ExtResource("1_qdkcv")
 id = "shotgun"
 item_name = "Shotgun"
+type = 1
 star_atk = 5
 star_psy = 2
 star_ovr = 3

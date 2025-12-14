@@ -6,8 +6,9 @@
 [resource]
 script = ExtResource("1_vi8hw")
 id = "leather_jacket"
-item_name = "Leather Jacket"
+item_name = "Trenchcoat"
 slot = 1
+type = 4
 rank = 2
 star_hp = 4
 star_guard = 3

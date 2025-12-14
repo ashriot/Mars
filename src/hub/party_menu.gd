@@ -71,6 +71,11 @@ func _on_mode_changed(mode_index: int):
 	_update_active_view()
 
 func _update_active_view():
+	var is_inventory = (current_mode == 1)
+	for child in hero_list_container.get_children():
+		if child is HeroPanel:
+			child.set_mode(is_inventory)
+
 	var hero = party_roster[current_hero_idx]
 
 	if current_mode == 0:

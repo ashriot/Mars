@@ -2,11 +2,13 @@ extends Resource
 class_name Equipment
 
 enum Slot { WEAPON, ARMOR }
+enum EquipmentType { PISTOL, SHOTGUN, RIFLE, CLOTHES, SUIT, VEST }
 
 # --- IDENTITY ---
 @export var id: String = ""
 @export var item_name: String = ""
 @export var slot: Slot = Slot.WEAPON
+@export var type: EquipmentType = EquipmentType.PISTOL
 @export var icon: Texture
 
 # --- PROGRESSION STATE ---
@@ -38,12 +40,11 @@ enum Slot { WEAPON, ARMOR }
 @export var installed_mods: Array[EquipmentMod] = []
 
 
-# --- CONSTANTS ---
 const XP_PER_RANK_BASE = 100
 
 func get_display_name() -> String:
-	if tier > 0:
-		return "%s+%d" % [item_name, tier]
+	if rank > 0:
+		return "%s+%d" % [item_name, rank]
 	return item_name
 
 func get_max_mod_slots() -> int:
@@ -53,7 +54,6 @@ func get_available_proficiency_points() -> int:
 	var spent = invested_shared_trait + invested_unique_trait + invested_stat_boosts.values().reduce(func(a, b): return a + b, 0)
 	return tier - spent
 
-# --- STAT CALCULATION ---
 func calculate_stats() -> ActorStats:
 	var stats = ActorStats.new()
 	var ratings = _get_base_ratings_dict()
@@ -127,8 +127,6 @@ func _get_base_ratings_dict() -> Dictionary:
 		ActorStats.Stats.KIN_DEF: star_kin_def,
 		ActorStats.Stats.NRG_DEF: star_nrg_def
 	}
-
-# --- UPGRADE LOGIC ---
 
 func get_stat_preview_at_rank(target_rank: int) -> ActorStats:
 	var current_rank = rank

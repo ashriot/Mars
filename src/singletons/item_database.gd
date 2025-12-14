@@ -5,6 +5,13 @@ var _item_registry: Dictionary = {}
 var _equipment_ids: Array[String] = []
 var _mod_ids: Array[String] = []
 
+var icon_pistol = preload("res://assets/graphics/icons/equipment/pistol.png")
+var icon_shotgun = preload("res://assets/graphics/icons/equipment/shotgun.png")
+var icon_rifle = preload("res://assets/graphics/icons/equipment/rifle.png")
+var icon_shirt = preload("res://assets/graphics/icons/equipment/shirt.png")
+var icon_suit = preload("res://assets/graphics/icons/equipment/suit.png")
+var icon_armor = preload("res://assets/graphics/icons/equipment/vest.png")
+
 func _ready():
 	_scan_for_items("res://data/equipment/")
 	_scan_for_items("res://data/materials/")
@@ -66,6 +73,18 @@ func get_item_icon(id: String) -> Texture2D:
 	var res = _item_registry[id]
 	if "icon" in res:
 		return res.icon
+	return null
+
+func get_type_icon(item: Equipment) -> Texture2D:
+	# 1. Try to find a specific SubType icon first
+	match item.type:
+		Equipment.EquipmentType.PISTOL: return icon_pistol
+		Equipment.EquipmentType.SHOTGUN: return icon_shotgun
+		Equipment.EquipmentType.RIFLE: return icon_rifle
+		Equipment.EquipmentType.CLOTHES: return icon_shirt
+		Equipment.EquipmentType.SUIT: return icon_suit
+		Equipment.EquipmentType.VEST: return icon_armor
+
 	return null
 
 func get_random_equipment_id() -> String:
