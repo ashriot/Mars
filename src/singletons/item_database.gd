@@ -12,6 +12,9 @@ var icon_shirt = preload("res://assets/graphics/icons/equipment/shirt.png")
 var icon_suit = preload("res://assets/graphics/icons/equipment/suit.png")
 var icon_armor = preload("res://assets/graphics/icons/equipment/vest.png")
 
+var icon_filament = preload("res://assets/graphics/icons/items/filament.png")
+var icon_fiber = preload("res://assets/graphics/icons/items/fiber.png")
+
 func _ready():
 	_scan_for_items("res://data/equipment/")
 	_scan_for_items("res://data/materials/")
@@ -75,8 +78,7 @@ func get_item_icon(id: String) -> Texture2D:
 		return res.icon
 	return null
 
-func get_type_icon(item: Equipment) -> Texture2D:
-	# 1. Try to find a specific SubType icon first
+func get_equipment_icon(item: Equipment) -> Texture2D:
 	match item.type:
 		Equipment.EquipmentType.PISTOL: return icon_pistol
 		Equipment.EquipmentType.SHOTGUN: return icon_shotgun
@@ -84,6 +86,15 @@ func get_type_icon(item: Equipment) -> Texture2D:
 		Equipment.EquipmentType.CLOTHES: return icon_shirt
 		Equipment.EquipmentType.SUIT: return icon_suit
 		Equipment.EquipmentType.VEST: return icon_armor
+
+	return null
+
+func get_material_icon(item: InventoryItem) -> Texture2D:
+	if item.category == InventoryItem.ItemCategory.MATERIAL:
+		if item.type == InventoryItem.ItemType.WEAPON:
+			return icon_filament
+		else:
+			return icon_fiber
 
 	return null
 

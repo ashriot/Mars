@@ -2,6 +2,9 @@ extends Panel
 class_name HeroPanel
 
 signal panel_selected(hero_panel)
+signal equip_requested(item, slot_type)
+signal tune_requested(item)
+signal mod_requested(item, slot_index)
 
 @onready var stats_content: Control = $Content
 @onready var name_label: Label = $Content/Header/Label
@@ -28,6 +31,15 @@ var _size_tween: Tween
 
 func _ready():
 	custom_minimum_size.y = collapsed_y
+	# WEAPON CONNECTIONS
+	weapon_panel.equip_requested.connect(func(item): equip_requested.emit(item, Equipment.Slot.WEAPON))
+	weapon_panel.tune_requested.connect(func(item): tune_requested.emit(item))
+	weapon_panel.mod_requested.connect(func(item, slot): mod_requested.emit(item, slot))
+
+	# ARMOR CONNECTIONS
+	armor_panel.equip_requested.connect(func(item): equip_requested.emit(item, Equipment.Slot.ARMOR))
+	armor_panel.tune_requested.connect(func(item): tune_requested.emit(item))
+	armor_panel.mod_requested.connect(func(item, slot): mod_requested.emit(item, slot))
 
 func setup(hero_data: HeroData):
 	data = hero_data

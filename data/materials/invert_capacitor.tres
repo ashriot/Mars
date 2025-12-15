@@ -5,7 +5,6 @@
 
 [resource]
 script = ExtResource("2_h7rhr")
-id = "comp_weap_2_rare"
 name = "Invert Capacitor"
 icon = ExtResource("1_tfowm")
 category = 1

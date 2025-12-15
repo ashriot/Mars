@@ -159,7 +159,7 @@ func get_xp_to_next_rank() -> int:
 	return (rank + 1) * XP_PER_RANK_BASE
 
 func get_rank_cap() -> int:
-	return tier * 4 # T1=4, T2=8, T3=12, T4=16, T5=20
+	return 5 + tier * 5
 
 func can_add_xp() -> bool:
 	return rank < get_rank_cap()

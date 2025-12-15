@@ -1,15 +1,22 @@
 extends Panel
 class_name EquipmentPanel
 
+signal equip_requested(current_item)
+signal tune_requested(current_item)
+signal mod_requested(current_item, slot_index)
+
 @onready var icon_rect: TextureRect = $Border/Content/Icon
 @onready var type_icon: TextureRect = $Header/Icon
 @onready var name_label: Label = $Header/Label
-@onready var xp_label: Label = $Border/Content/XP/Value
-@onready var xp_gauge: ProgressBar = $Border/Content/XP/ProgressBar
-@onready var rank_label: Label = $Border/Content/XP/Rank
+@onready var xp_label: Label = $Border/Content/XP/Gauge/Value
+@onready var xp_gauge: ProgressBar = $Border/Content/XP/Gauge
+@onready var rank_label: Label = $Border/Content/XP/Gauge/Rank
 @onready var weapon_stats: GridContainer = $Border/Content/WeaponStats
 @onready var armor_stats: GridContainer = $Border/Content/ArmorStats
 @onready var mods_container: HBoxContainer = $Border/Content/Mods
+
+@onready var equip_button: TextureButton = $Header/EquipBtn
+@onready var tune_button: TextureButton = $Border/Content/XP/TuneBtn
 
 var equipment: Equipment
 
@@ -21,9 +28,13 @@ func setup(item: Equipment):
 		return
 
 	equipment = item
-	type_icon.texture = ItemDatabase.get_type_icon(equipment)
+	type_icon.texture = ItemDatabase.get_equipment_icon(equipment)
 	name_label.text = equipment.get_display_name()
 	icon_rect.texture = equipment.icon
+
+	for slot in mods_container.get_children():
+		var enable = slot.get_index() < equipment.tier
+		slot.setup(null, enable)
 
 	_refresh_details()
 
@@ -31,16 +42,15 @@ func _refresh_details():
 	# Here you would populate the StatsContainer and ModsContainer
 	# based on the item.installed_mods and calculated stats.
 	var next = (equipment.rank + 1) * 100
-	var rank_cap = equipment.tier * 5 + 5
 	xp_gauge.max_value = next
 	xp_gauge.value = equipment.current_xp
 	next -= equipment.current_xp
-	if equipment.rank == rank_cap:
+	if equipment.rank == equipment.get_rank_cap():
 		xp_label.text = "MAX"
 		xp_gauge.value = next
 	else:
-		xp_label.text = Utils.commafy(next) + " EP"
-	rank_label.text = "Rk." + str(equipment.rank) + "/" + str(rank_cap)
+		xp_label.text = "-" + Utils.commafy(next) + " EP"
+	rank_label.text = "Rk." + str(equipment.rank) + "/" + str(equipment.get_rank_cap())
 	if equipment.slot == Equipment.Slot.WEAPON:
 		_refresh_weapon()
 	else:
@@ -68,5 +78,10 @@ func _refresh_armor():
 	armor_stats.get_child(5).text = "NRG+" + Utils.stringify(stats.energy_defense) + "%"
 	armor_stats.show()
 
-func _on_gui_input(_event: InputEvent) -> void:
-	pass # Replace with function body.
+func _on_equip_btn_pressed() -> void:
+	equip_requested.emit(equipment)
+	print("Equip requested!")
+
+func _on_tune_btn_pressed() -> void:
+	tune_requested.emit(equipment)
+	print("Tune requested!")

@@ -16,7 +16,6 @@ var current_mode: int = 0 # 0=Skills, 1=Inventory
 
 func _ready():
 	hide()
-	# Connect Mode Tabs (assuming 2 buttons)
 	for i in range(mode_tabs.get_child_count()):
 		var btn = mode_tabs.get_child(i) as Button
 		btn.pressed.connect(_on_mode_changed.bind(i))
@@ -26,8 +25,9 @@ func open():
 	if party_roster.is_empty(): return
 
 	_refresh_hero_list()
-
 	_select_hero(0)
+	var btn: Button = mode_tabs.get_child(0)
+	btn.set_pressed_no_signal(true)
 	show()
 
 func _on_back_pressed():
@@ -44,6 +44,9 @@ func _refresh_hero_list():
 
 		panel.setup(hero_data)
 		panel.panel_selected.connect(_on_hero_panel_selected)
+		panel.equip_requested.connect(inventory_view.on_equip_requested)
+		panel.tune_requested.connect(inventory_view.on_tune_requested)
+		panel.mod_requested.connect(inventory_view.on_mod_requested)
 
 		# Visual selection state
 		if i == current_hero_idx:
@@ -68,6 +71,8 @@ func _select_hero(index: int):
 func _on_mode_changed(mode_index: int):
 	if current_mode == mode_index: return
 	current_mode = mode_index
+	var btn: Button = mode_tabs.get_child(mode_index)
+	btn.button_pressed = true
 	_update_active_view()
 
 func _update_active_view():

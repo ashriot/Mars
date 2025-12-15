@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://5rdfx772oesw"]
+[gd_scene load_steps=3 format=3 uid="uid://5rdfx772oesw"]
 
 [ext_resource type="Script" uid="uid://batkpkc6evrgr" path="res://src/hub/inventory_panel.gd" id="1_pg1we"]
+[ext_resource type="PackedScene" uid="uid://dmtt2wgwi52h5" path="res://src/hub/item_button.tscn" id="2_dkl2r"]
 
 [node name="InventoryPanel" type="Control"]
 layout_mode = 3
@@ -10,14 +11,38 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_pg1we")
+item_button_scene = ExtResource("2_dkl2r")
 
-[node name="InventoryGrid" type="GridContainer" parent="."]
+[node name="Header" type="Control" parent="."]
 layout_mode = 1
-anchors_preset = 11
+anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
+offset_left = -647.0
+offset_bottom = 40.0
+grow_horizontal = 0
+
+[node name="Label" type="Label" parent="Header"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -900.0
+offset_left = -22.0
+offset_top = -0.5
+offset_right = -13.0
+offset_bottom = 1.5
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="InventoryGrid" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -500.0
+offset_top = -488.0
+offset_bottom = 488.0
 grow_horizontal = 0
 grow_vertical = 2
-columns = 3

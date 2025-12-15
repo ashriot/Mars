@@ -5,5 +5,6 @@
 
 [resource]
 script = ExtResource("1_7fo7n")
+name = "Iron Filament"
 icon = ExtResource("1_1ybqd")
 metadata/_custom_type_script = "uid://0ond6bv3ifh1"

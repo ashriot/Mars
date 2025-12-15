@@ -24,6 +24,7 @@ func setup(hero: HeroData):
 
 	# Setup the View
 	_refresh_role_list()
+	_update_tab_visuals()
 
 	# Trigger initial selection
 	# (Your existing logic to select role 0)

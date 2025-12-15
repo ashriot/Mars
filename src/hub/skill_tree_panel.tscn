@@ -1,7 +1,9 @@
-[gd_scene load_steps=3 format=3 uid="uid://b7iret6dna06c"]
+[gd_scene load_steps=4 format=3 uid="uid://b7iret6dna06c"]
 
 [ext_resource type="Script" uid="uid://ddxu45lpffv2c" path="res://src/hub/skill_tree_panel.gd" id="1_heh8r"]
 [ext_resource type="PackedScene" uid="uid://xpuok17oufft" path="res://src/hub/role_panel.tscn" id="2_q0e1y"]
+
+[sub_resource type="ButtonGroup" id="ButtonGroup_q0e1y"]
 
 [node name="SkillTreePanel" type="Control"]
 layout_mode = 3
@@ -52,6 +54,7 @@ theme_override_constants/separation = 12
 custom_minimum_size = Vector2(166, 0)
 layout_mode = 2
 toggle_mode = true
+button_group = SubResource("ButtonGroup_q0e1y")
 text = "1-10"
 
 [node name="Tier2" type="Button" parent="Tabs/Container"]
@@ -59,6 +62,7 @@ visible = false
 custom_minimum_size = Vector2(166, 0)
 layout_mode = 2
 toggle_mode = true
+button_group = SubResource("ButtonGroup_q0e1y")
 text = "11-20"
 
 [node name="Tier3" type="Button" parent="Tabs/Container"]
@@ -66,6 +70,7 @@ visible = false
 custom_minimum_size = Vector2(166, 0)
 layout_mode = 2
 toggle_mode = true
+button_group = SubResource("ButtonGroup_q0e1y")
 text = "21-30"
 
 [node name="Tier4" type="Button" parent="Tabs/Container"]
@@ -73,6 +78,7 @@ visible = false
 custom_minimum_size = Vector2(166, 0)
 layout_mode = 2
 toggle_mode = true
+button_group = SubResource("ButtonGroup_q0e1y")
 text = "31-40"
 
 [node name="Tier5" type="Button" parent="Tabs/Container"]
@@ -80,4 +86,5 @@ visible = false
 custom_minimum_size = Vector2(166, 0)
 layout_mode = 2
 toggle_mode = true
+button_group = SubResource("ButtonGroup_q0e1y")
 text = "41-50"

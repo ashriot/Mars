@@ -411,6 +411,7 @@ offset_left = 11.0
 offset_right = 1223.0
 grow_horizontal = 0
 grow_vertical = 2
+mouse_filter = 2
 theme_override_constants/separation = 12
 
 [node name="WeaponPanel" parent="Equipment" instance=ExtResource("4_p6r37")]
