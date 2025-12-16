@@ -28,7 +28,6 @@ func setup(item: Equipment):
 		name_label.text = "Empty"
 		icon_rect.texture = null
 		return
-
 	equipment = item
 	if equipment.stats_changed.is_connected(_refresh_details):
 		equipment.stats_changed.disconnect(_refresh_details)
@@ -41,14 +40,16 @@ func setup(item: Equipment):
 	icon_rect.texture = equipment.icon
 
 	for slot in mods_container.get_children():
-		var enable = slot.get_index() < equipment.tier
+		var max_slots = equipment.get_max_mod_slots()
+		var enable = slot.get_index() < max_slots
 		slot.setup(null, enable)
 
+	set_visual_state("none")
 	_refresh_details()
 
 func _refresh_details():
-	# Here you would populate the StatsContainer and ModsContainer
-	# based on the item.installed_mods and calculated stats.
+	if not equipment: return
+	name_label.text = equipment.get_display_name()
 	var next = (equipment.rank + 1) * 100
 	xp_gauge.max_value = next
 	xp_gauge.value = equipment.current_xp
@@ -56,10 +57,11 @@ func _refresh_details():
 	if equipment.rank == equipment.get_rank_cap():
 		xp_label.text = "MAX"
 		xp_gauge.value = next
+		rank_label.text = str(equipment.rank) + "/" + str(equipment.get_rank_cap())
+
 	else:
 		xp_label.text = Utils.commafy(next) + " EP"
-	name_label.text = equipment.get_display_name()
-	rank_label.text = "-> " + str(equipment.rank + 1) + "/" + str(equipment.get_rank_cap())
+		rank_label.text = "-> " + str(equipment.rank + 1) + "/" + str(equipment.get_rank_cap())
 	if equipment.slot == Equipment.Slot.WEAPON:
 		_refresh_weapon()
 	else:

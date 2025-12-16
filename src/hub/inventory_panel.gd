@@ -2,6 +2,7 @@ extends Control
 class_name InventoryPanel
 
 signal hero_stats_updated
+signal mode_changed(mode, active_item, active_slot)
 
 # --- EXPORTS ---
 @export var item_button_scene: PackedScene
@@ -24,31 +25,32 @@ func setup(hero: HeroData):
 	# Default to View mode (or just clear)
 	current_mode = Mode.VIEW
 	_refresh_view_mode()
+	_close_panel()
 
-func request_equip_mode(item: Equipment, slot_type: Equipment.Slot) -> bool:
+func request_equip_mode(item: Equipment, slot_type: Equipment.Slot):
 	if current_mode == Mode.EQUIP and active_equipment == item and active_slot == slot_type:
-		# TOGGLE OFF
 		_close_panel()
-		return false
+	else:
+		on_equip_requested(item, slot_type)
 
-	# NEW MODE
-	on_equip_requested(item, slot_type)
-	return true
-
-func request_tune_mode(item: Equipment) -> bool:
+func request_tune_mode(item: Equipment):
 	if current_mode == Mode.TUNE and active_equipment == item:
-		# TOGGLE OFF
 		_close_panel()
-		return false
+	else:
+		on_tune_requested(item)
 
-	on_tune_requested(item)
-	return true
+func request_mod_mode(item: Equipment, slot_idx: int):
+	if current_mode == Mode.MOD and active_equipment == item:
+		_close_panel()
+	else:
+		on_mod_requested(item, slot_idx)
 
 func _close_panel():
 	current_mode = Mode.VIEW
 	active_equipment = null
 	header_label.text = "Inventory"
 	_clear_grid()
+	mode_changed.emit(current_mode, null, -1)
 
 func on_equip_requested(item: Equipment, slot_type: Equipment.Slot):
 	current_mode = Mode.EQUIP
@@ -60,6 +62,7 @@ func on_equip_requested(item: Equipment, slot_type: Equipment.Slot):
 	header_label.text = "Equip " + slot_name
 
 	_populate_grid_with_equipment(slot_type)
+	mode_changed.emit(current_mode, active_equipment, active_slot)
 
 func on_tune_requested(item: Equipment):
 	if not item: return
@@ -67,6 +70,7 @@ func on_tune_requested(item: Equipment):
 	active_equipment = item
 	header_label.text = "Tune: " + item.item_name
 	_populate_grid_with_materials(item)
+	mode_changed.emit(current_mode, active_equipment, -1)
 
 func on_mod_requested(item: Equipment, slot_idx: int):
 	if not item: return
@@ -74,6 +78,7 @@ func on_mod_requested(item: Equipment, slot_idx: int):
 	active_equipment = item
 	header_label.text = "Select Mod"
 	_populate_grid_with_mods(item)
+	mode_changed.emit(current_mode, active_equipment, -1)
 
 func _refresh_view_mode():
 	# Default state: Show all uneven/unequipped items? Or just empty?
@@ -130,11 +135,8 @@ func _populate_grid_with_mods(target_item: Equipment):
 				btn.pressed.connect(_on_mod_clicked.bind(resource, btn))
 
 func _on_equipment_clicked(new_item: Equipment):
-	# 1. Swap Logic
-	# Remove new_item from inventory
 	SaveSystem.inventory_equipment.erase(new_item)
 
-	# If we had an old item, put it back in inventory
 	var old_item = null
 	if active_slot == Equipment.Slot.WEAPON:
 		old_item = active_hero.weapon
@@ -149,6 +151,7 @@ func _on_equipment_clicked(new_item: Equipment):
 	AudioManager.play_sfx("terminal")
 	_populate_grid_with_equipment(active_slot)
 	hero_stats_updated.emit()
+	_close_panel()
 
 func _on_material_clicked(mat: InventoryItem, btn_ui: ItemButton):
 	if not active_equipment: return

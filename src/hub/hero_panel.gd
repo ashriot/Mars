@@ -76,7 +76,6 @@ func _refresh_stats():
 	kin.text = Utils.stringify(stats.kinetic_defense) + "%"
 	nrg.text = Utils.stringify(stats.energy_defense) + "%"
 
-# --- INPUT HANDLING ---
 func _gui_input(event: InputEvent):
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		get_viewport().set_input_as_handled()
