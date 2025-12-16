@@ -43,12 +43,11 @@ func _refresh_role_list():
 		var panel = role_panel_scene.instantiate() as RolePanel
 		role_list_container.add_child(panel)
 
-		# Setup the panel with data
 		panel.setup(def, current_hero)
 		panel.panel_selected.connect(_on_role_panel_selected)
 
 		if i == current_role_idx:
-			panel.set_expanded(true, current_page, false)
+			panel.set_expanded(true, current_page, true)
 			color = panel.def.color
 		else:
 			panel.set_expanded(false, current_page, false)

@@ -9,15 +9,17 @@
 [ext_resource type="Texture2D" uid="uid://c0pbt1n7ptuui" path="res://assets/graphics/icons/hub/maint_disabled.png" id="5_dghca"]
 [ext_resource type="PackedScene" uid="uid://d1s2fic8fbwev" path="res://src/hub/mod_slot.tscn" id="8_4ftbt"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fgavx"]
-bg_color = Color(1, 1, 1, 0.9607843)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4ftbt"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_width_left = 6
+border_width_top = 42
+border_width_right = 6
+border_width_bottom = 6
 border_color = Color(1, 1, 1, 1)
 corner_radius_top_left = 12
 corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pnfj5"]
 content_margin_left = 2.0
@@ -48,16 +50,16 @@ mouse_filter = 2
 script = ExtResource("1_8e66j")
 
 [node name="Header" type="Panel" parent="."]
-custom_minimum_size = Vector2(0, 42)
 layout_mode = 1
-anchors_preset = 10
+anchors_preset = 15
 anchor_right = 1.0
-offset_bottom = 42.0
+anchor_bottom = 1.0
 grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_fgavx")
+theme_override_styles/panel = SubResource("StyleBoxFlat_4ftbt")
 
-[node name="Icon" type="TextureRect" parent="Header"]
+[node name="Icon" type="TextureRect" parent="."]
 modulate = Color(0.16470589, 0.16470589, 0.16470589, 1)
 layout_mode = 0
 offset_left = 7.0
@@ -66,28 +68,26 @@ offset_right = 39.0
 offset_bottom = 37.0
 texture = ExtResource("2_pnfj5")
 
-[node name="Label" type="Label" parent="Header"]
+[node name="Label" type="Label" parent="."]
 layout_mode = 1
-anchors_preset = 15
+anchors_preset = 10
 anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 47.0
-offset_right = -11.0
+offset_left = 42.0
+offset_right = -8.0
+offset_bottom = 41.0
 grow_horizontal = 2
-grow_vertical = 2
 theme_override_colors/font_color = Color(0.18039216, 0.18039216, 0.18039216, 1)
 theme_override_font_sizes/font_size = 32
 text = "Assault Rifle+17"
 vertical_alignment = 1
 uppercase = true
 
-[node name="EquipBtn" type="TextureButton" parent="Header"]
+[node name="EquipBtn" type="TextureButton" parent="."]
 layout_mode = 1
-anchors_preset = 15
+anchors_preset = 10
 anchor_right = 1.0
-anchor_bottom = 1.0
+offset_bottom = 42.0
 grow_horizontal = 2
-grow_vertical = 2
 
 [node name="Border" type="Control" parent="."]
 clip_contents = true
@@ -98,7 +98,7 @@ anchor_bottom = 1.0
 offset_left = 8.0
 offset_top = 48.0
 offset_right = -8.0
-offset_bottom = -6.0
+offset_bottom = -9.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -171,7 +171,7 @@ grow_horizontal = 0
 grow_vertical = 2
 theme_override_colors/font_shadow_color = Color(0.09803922, 0.09803922, 0.09803922, 1)
 theme_override_constants/outline_size = 10
-text = "+18/25"
+text = "-> 18/25"
 horizontal_alignment = 2
 
 [node name="Icon" type="TextureRect" parent="Border/Content"]
@@ -363,5 +363,5 @@ layout_mode = 2
 [node name="ModSlot5" parent="Border/Content/Mods" instance=ExtResource("8_4ftbt")]
 layout_mode = 2
 
-[connection signal="pressed" from="Header/EquipBtn" to="." method="_on_equip_btn_pressed"]
+[connection signal="pressed" from="EquipBtn" to="." method="_on_equip_btn_pressed"]
 [connection signal="pressed" from="Border/Content/XP/TuneBtn" to="." method="_on_tune_btn_pressed"]

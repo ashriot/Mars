@@ -5,15 +5,17 @@
 [ext_resource type="Texture2D" uid="uid://cqweju3y7kwst" path="res://assets/graphics/icons/textures/shield_sm.png" id="2_r4b5v"]
 [ext_resource type="PackedScene" uid="uid://bc5k1xyxevh03" path="res://src/hub/equipment_panel.tscn" id="4_p6r37"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fgavx"]
-bg_color = Color(1, 1, 1, 0.9607843)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_p6r37"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_width_left = 6
+border_width_top = 42
+border_width_right = 6
+border_width_bottom = 6
 border_color = Color(1, 1, 1, 1)
 corner_radius_top_left = 12
 corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
 
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_fgavx"]
 load_path = "res://.godot/imported/bolt_sm.png-54f352b5e50e80987f5f73607db947d7.ctex"
@@ -41,21 +43,21 @@ mouse_filter = 1
 metadata/_edit_group_ = true
 
 [node name="Header" type="Panel" parent="Content"]
-custom_minimum_size = Vector2(0, 42)
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-grow_horizontal = 2
-mouse_filter = 1
-theme_override_styles/panel = SubResource("StyleBoxFlat_fgavx")
-
-[node name="Label" type="Label" parent="Content/Header"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_p6r37")
+
+[node name="Label" type="Label" parent="Content/Header"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 41.0
+grow_horizontal = 2
 theme_override_colors/font_color = Color(0.18039216, 0.18039216, 0.18039216, 1)
 theme_override_font_sizes/font_size = 32
 text = "ASHER"

@@ -15,7 +15,7 @@ signal stats_changed
 
 # --- PROGRESSION STATE ---
 @export_range(0, 5) var tier: int = 0
-@export_range(1, 30) var rank: int = 1
+@export_range(0, 30) var rank: int = 0
 @export var current_xp: int = 0
 
 # --- STAR RATINGS ---
@@ -45,8 +45,8 @@ const XP_PER_RANK_BASE = 100
 
 
 func get_display_name() -> String:
-	if tier > 0:
-		return "%s+%d" % [item_name, tier]
+	if rank > 0:
+		return "%s+%d" % [item_name, rank]
 	return item_name
 
 func get_max_mod_slots() -> int:

@@ -25,6 +25,31 @@ func setup(hero: HeroData):
 	current_mode = Mode.VIEW
 	_refresh_view_mode()
 
+func request_equip_mode(item: Equipment, slot_type: Equipment.Slot) -> bool:
+	if current_mode == Mode.EQUIP and active_equipment == item and active_slot == slot_type:
+		# TOGGLE OFF
+		_close_panel()
+		return false
+
+	# NEW MODE
+	on_equip_requested(item, slot_type)
+	return true
+
+func request_tune_mode(item: Equipment) -> bool:
+	if current_mode == Mode.TUNE and active_equipment == item:
+		# TOGGLE OFF
+		_close_panel()
+		return false
+
+	on_tune_requested(item)
+	return true
+
+func _close_panel():
+	current_mode = Mode.VIEW
+	active_equipment = null
+	header_label.text = "Inventory"
+	_clear_grid()
+
 func on_equip_requested(item: Equipment, slot_type: Equipment.Slot):
 	current_mode = Mode.EQUIP
 
@@ -52,9 +77,8 @@ func on_mod_requested(item: Equipment, slot_idx: int):
 
 func _refresh_view_mode():
 	# Default state: Show all uneven/unequipped items? Or just empty?
-	#header_label.text = "Inventory"
+	header_label.text = "Inventory"
 	_clear_grid()
-	# Optional: List everything in a read-only mode
 	# _populate_grid_all()
 
 func _populate_grid_with_equipment(slot_type: Equipment.Slot):

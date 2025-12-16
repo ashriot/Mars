@@ -31,15 +31,27 @@ var _size_tween: Tween
 
 func _ready():
 	custom_minimum_size.y = collapsed_y
-	# WEAPON CONNECTIONS
-	weapon_panel.equip_requested.connect(func(item): equip_requested.emit(item, Equipment.Slot.WEAPON))
-	weapon_panel.tune_requested.connect(func(item): tune_requested.emit(item))
-	weapon_panel.mod_requested.connect(func(item, slot): mod_requested.emit(item, slot))
+	# 1. WEAPON SIGNALS
+	weapon_panel.equip_requested.connect(func(item):
+		equip_requested.emit(item, Equipment.Slot.WEAPON)
+	)
+	weapon_panel.tune_requested.connect(func(item):
+		tune_requested.emit(item)
+	)
+	weapon_panel.mod_requested.connect(func(item, slot):
+		mod_requested.emit(item, slot)
+	)
 
-	# ARMOR CONNECTIONS
-	armor_panel.equip_requested.connect(func(item): equip_requested.emit(item, Equipment.Slot.ARMOR))
-	armor_panel.tune_requested.connect(func(item): tune_requested.emit(item))
-	armor_panel.mod_requested.connect(func(item, slot): mod_requested.emit(item, slot))
+	# 2. ARMOR SIGNALS
+	armor_panel.equip_requested.connect(func(item):
+		equip_requested.emit(item, Equipment.Slot.ARMOR)
+	)
+	armor_panel.tune_requested.connect(func(item):
+		tune_requested.emit(item)
+	)
+	armor_panel.mod_requested.connect(func(item, slot):
+		mod_requested.emit(item, slot)
+	)
 
 func setup(hero_data: HeroData):
 	data = hero_data
@@ -86,3 +98,15 @@ func set_expanded(is_expanded: bool, animate: bool = true):
 	_size_tween = create_tween().set_parallel(true)
 	_size_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	_size_tween.tween_property(self, "custom_minimum_size:y", target_h, 0.3)
+
+func set_active_mode(active_child: EquipmentPanel, mode_string: String):
+	active_child.set_visual_state(mode_string)
+
+	if active_child == weapon_panel:
+		armor_panel.set_visual_state("none")
+	else:
+		weapon_panel.set_visual_state("none")
+
+func clear_highlights():
+	weapon_panel.set_visual_state("none")
+	armor_panel.set_visual_state("none")
