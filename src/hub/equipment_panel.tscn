@@ -77,7 +77,7 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(0.18039216, 0.18039216, 0.18039216, 1)
 theme_override_font_sizes/font_size = 32
-text = "Assault Rifle+4"
+text = "Assault Rifle+17"
 vertical_alignment = 1
 uppercase = true
 
@@ -171,7 +171,7 @@ grow_horizontal = 0
 grow_vertical = 2
 theme_override_colors/font_shadow_color = Color(0.09803922, 0.09803922, 0.09803922, 1)
 theme_override_constants/outline_size = 10
-text = "Rk.17/25"
+text = "+18/25"
 horizontal_alignment = 2
 
 [node name="Icon" type="TextureRect" parent="Border/Content"]
@@ -346,7 +346,7 @@ offset_right = 184.0
 offset_bottom = -6.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_constants/separation = 12
+theme_override_constants/separation = 13
 
 [node name="ModSlot" parent="Border/Content/Mods" instance=ExtResource("8_4ftbt")]
 layout_mode = 2

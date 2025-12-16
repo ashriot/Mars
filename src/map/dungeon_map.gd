@@ -201,6 +201,8 @@ func initialize_map():
 	refresh_team_status()
 
 func load_from_save_data(data: Dictionary):
+	map_length = int(data.get("width", map_length))
+	map_height = int(data.get("height", map_height))
 	var restored_types = {}
 	var saved_nodes = data.node_data
 
@@ -1360,6 +1362,8 @@ func get_save_data() -> Dictionary:
 		"total_nodes": total_nodes,
 		"nodes_done": nodes_done,
 		"current_coords": var_to_str(current_node.grid_coords),
+		"width": map_length,
+		"height": map_height,
 		"node_data": node_states,
 		"terminal_memory": serializable_terminals,
 		"encounter_memory": serializable_encounters,
