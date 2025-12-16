@@ -201,15 +201,28 @@ func initialize_map():
 	refresh_team_status()
 
 func load_from_save_data(data: Dictionary):
-	await generate_hex_grid(false)
+	var restored_types = {}
+	var saved_nodes = data.node_data
 
-	# 3. RESTORE NODE STATES
+	for key_str in saved_nodes.keys():
+		var coords = str_to_var(key_str)
+		var saved_info = saved_nodes[key_str]
+
+		if grid_nodes.has(coords):
+			var node = grid_nodes[coords]
+			node.has_been_visited = saved_info.visited
+			node.is_aware = saved_info.get("aware", false)
+			node.set_state(int(saved_info.state))
+			node.modulate.a = 1.0
+
+	await generate_hex_grid(false, restored_types)
+
 	for key_str in data.node_data.keys():
 		var coords = str_to_var(key_str)
 		var saved_info = data.node_data[key_str]
 
 		if grid_nodes.has(coords):
-			var node = grid_nodes[coords]
+			var node = grid_nodes[coords] as MapNode
 
 			# Restore logical state
 			node.has_been_visited = saved_info.visited
@@ -385,7 +398,7 @@ func _generate_static_terminal_data(coords: Vector2i, index: int):
 		"upgrade_key": upgrade_key
 	}
 
-func generate_hex_grid(generate_data: bool = true) -> Dictionary:
+func generate_hex_grid(generate_data: bool = true, forced_types: Dictionary = {}) -> Dictionary:
 	print("Generating Map Logic...")
 
 	total_moves = 0
@@ -439,7 +452,13 @@ func generate_hex_grid(generate_data: bool = true) -> Dictionary:
 			max_bounds = max_bounds.max(final_pos)
 
 	# --- Node Instantiation ---
-	var node_types = await _distribute_node_types(valid_coords.keys(), center_y)
+	# --- NODE TYPE DETERMINATION ---
+	var node_types = {}
+
+	if not forced_types.is_empty():
+		node_types = forced_types
+	else:
+		node_types = await _distribute_node_types(valid_coords.keys(), center_y)
 	var nodes_list: Array[MapNode] = []
 	if generate_data:
 		var tier = RunManager.current_dungeon_tier
@@ -1319,7 +1338,8 @@ func get_save_data() -> Dictionary:
 		node_states[key] = {
 			"state": node.state,
 			"visited": node.has_been_visited,
-			"aware": node.is_aware
+			"aware": node.is_aware,
+			"type": node.type
 		}
 
 	var serializable_terminals = {}

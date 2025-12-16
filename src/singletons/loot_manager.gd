@@ -4,9 +4,9 @@ extends Node
 enum LootType { BITS, MATERIAL, COMPONENT, EQUIPMENT, MOD }
 
 # --- CONFIGURATION ---
-const CHANCE_BITS: float = 0.4
-const CHANCE_MATERIAL: float = 0.3
-const CHANCE_COMPONENT: float = 0.2
+const CHANCE_MATERIAL: float = 0.6
+const CHANCE_BITS: float = 0.2
+const CHANCE_COMPONENT: float = 0.1
 const CHANCE_MOD: float = 0.1
 
 # --- DEFINE RARITY COLORS ---
@@ -43,23 +43,22 @@ func _generate_loot_data(type: int, tier: int, rarity_mod: int) -> Dictionary:
 		LootType.BITS:
 			var mult = 1.0 + (0.5 * rarity_mod)
 			var base = 50 * tier
-			data["amount"] = roundi(base * mult * randf_range(0.9, 1.1))
+			data["amount"] = roundi(base * mult * randf_range(0.8, 1.2))
 			data["label"] = "Bits"
 
 		LootType.MATERIAL:
 			var type_str = "weap" if randf() > 0.5 else "arm"
 			var id = "mat_%s_%d" % [type_str, tier]
-			var amount = 1 + rarity_mod + int(randf() * rarity_mod)
+			var amount = (1 + rarity_mod) * 2 + int(randf() * (2 + rarity_mod) * 2)
 
 			data["id"] = id
 			data["amount"] = amount
-			# Label filled by GameManager lookup
 
 		LootType.COMPONENT:
-			var comp_tier = max(2, tier)
+			var comp_tier = max(1, tier)
 			var type_str = "weap" if randf() > 0.5 else "arm"
 			var rarity_str = "common"
-			if rarity_mod >= 2 and randf() > 0.5:
+			if rarity_mod >= 2 and randf() > 0.75:
 				rarity_str = "rare"
 
 			var id = "comp_%s_%d_%s" % [type_str, comp_tier, rarity_str]

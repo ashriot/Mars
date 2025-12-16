@@ -8,5 +8,4 @@ script = ExtResource("1_iyh4d")
 name = "Flux Capacitor"
 icon = ExtResource("1_r78ys")
 category = 1
-tier = 2
 metadata/_custom_type_script = "uid://0ond6bv3ifh1"

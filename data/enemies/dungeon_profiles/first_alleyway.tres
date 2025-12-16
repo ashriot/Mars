@@ -11,6 +11,7 @@ script = ExtResource("2_ayoos")
 profile_name = "Alleyway"
 normal_encounters = Array[ExtResource("1_sdejw")]([ExtResource("2_xhear"), ExtResource("4_kwn5u"), ExtResource("3_xhear")])
 elite_encounters = Array[ExtResource("1_sdejw")]([ExtResource("3_xhear")])
+combat_mult = 0.0
 elite_mult = 0.0
 reward_common_mult = 1.5
 metadata/_custom_type_script = "uid://ct7i822gwhjjm"

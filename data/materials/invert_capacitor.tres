@@ -8,6 +8,5 @@ script = ExtResource("2_h7rhr")
 name = "Invert Capacitor"
 icon = ExtResource("1_tfowm")
 category = 1
-tier = 2
 rarity = 1
 metadata/_custom_type_script = "uid://0ond6bv3ifh1"
