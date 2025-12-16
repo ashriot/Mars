@@ -1,6 +1,8 @@
 extends Control
 class_name InventoryPanel
 
+signal hero_stats_updated
+
 # --- EXPORTS ---
 @export var item_button_scene: PackedScene
 
@@ -63,13 +65,11 @@ func _populate_grid_with_equipment(slot_type: Equipment.Slot):
 	var available_gear = []
 	for item in SaveSystem.inventory_equipment:
 		if item.slot == slot_type:
-			# Optional: Check if equipped by someone else?
-			# For Physical Ownership, usually items in 'inventory_equipment' are NOT equipped.
 			available_gear.append(item)
 
 	# 2. Spawn Buttons
 	for item in available_gear:
-		var btn = _spawn_grid_button(item, 1)
+		var btn = _spawn_grid_button(item, item.slot, 1)
 		btn.pressed.connect(_on_equipment_clicked.bind(item))
 
 	if available_gear.is_empty():
@@ -81,14 +81,17 @@ func _populate_grid_with_materials(target_item: Equipment):
 	for id in SaveSystem.inventory.keys():
 		var resource = ItemDatabase.get_item_resource(id)
 
-		# Check if it is a MATERIAL and compatible
+		# Check if it is a MATERIAL
 		if resource is InventoryItem and resource.category == InventoryItem.ItemCategory.MATERIAL:
 
-			# Simple compatibility check
-			if resource.is_compatible_with(target_item):
-				var count = SaveSystem.inventory[id]
-				var btn = _spawn_grid_button(resource, count)
-				btn.pressed.connect(_on_material_clicked.bind(resource, btn))
+			# --- 1. REMOVED TYPE FILTER ---
+			# We no longer check 'is_compatible_with'.
+			# We show ALL materials.
+
+			var count = SaveSystem.inventory[id]
+			var btn = _spawn_grid_button(resource, target_item.slot, count)
+
+			btn.pressed.connect(_on_material_clicked.bind(resource, btn))
 
 func _populate_grid_with_mods(target_item: Equipment):
 	_clear_grid()
@@ -99,7 +102,7 @@ func _populate_grid_with_mods(target_item: Equipment):
 		if resource is EquipmentMod:
 			if target_item.tier >= resource.min_tier_required:
 				var count = SaveSystem.inventory[id]
-				var btn = _spawn_grid_button(resource, count)
+				var btn = _spawn_grid_button(resource, -1, count)
 				btn.pressed.connect(_on_mod_clicked.bind(resource, btn))
 
 func _on_equipment_clicked(new_item: Equipment):
@@ -119,35 +122,24 @@ func _on_equipment_clicked(new_item: Equipment):
 	if old_item:
 		SaveSystem.inventory_equipment.append(old_item)
 
-	AudioManager.play_sfx("terminal") # Equip sound
-
-	# 2. Refresh UI
-	# We need to tell the PartyMenu to refresh the HeroPanel
-	# Or emit a signal up
-	# For now, just refresh this grid (it should remove the clicked item and add the old one)
+	AudioManager.play_sfx("terminal")
 	_populate_grid_with_equipment(active_slot)
+	hero_stats_updated.emit()
 
-	# Force hero panel update (Quick and dirty way, better to use signals)
-	# But since HeroPanel reads from HeroData in _process or update functions,
-	# we might need to explicitly trigger it.
-	get_tree().call_group("hero_panel_ui", "setup", active_hero)
-
-func _on_material_clicked(mat: InventoryItem, btn_ui: Control):
+func _on_material_clicked(mat: InventoryItem, btn_ui: ItemButton):
 	if not active_equipment: return
 
-	# 1. Check Cap
 	if not active_equipment.can_add_xp():
 		print("Max Rank reached for this Tier.")
 		return
 
-	# 2. Consume
 	if SaveSystem.remove_inventory_item(mat.id, 1): # Assumes ID is on the resource logic or we find it
 		# Note: UpgradeMaterial resource might not store its own ID string depending on your impl.
 		# If it doesn't, we need to pass the ID string in _populate.
 		# Assuming ItemDatabase returns a resource that has 'id' populated or we used the dict key.
 
 		# 3. Apply XP
-		var xp = mat.get_xp_value() # Your calculation function
+		var xp = mat.get_xp_value(active_equipment.slot)
 		active_equipment.add_xp(xp)
 
 		# 4. Visuals
@@ -160,14 +152,12 @@ func _on_material_clicked(mat: InventoryItem, btn_ui: Control):
 		# Let's assume we pass ID in the bind for safety in future refactors.
 
 		var new_count = SaveSystem.get_item_count(mat.id) # Assuming resource has .id
-		if btn_ui.has_method("set_count"):
-			btn_ui.set_count(new_count)
+		btn_ui.update_quantity(new_count)
 
 		if new_count <= 0:
 			btn_ui.disabled = true
 
-		# Force Hero Panel Update to show XP bar growing
-		get_tree().call_group("hero_panel_ui", "setup", active_hero)
+		hero_stats_updated.emit()
 
 func _on_mod_clicked(mod: EquipmentMod, btn_ui: Control):
 	# Logic to insert mod into active_equipment
@@ -179,20 +169,11 @@ func _clear_grid():
 	for child in grid.get_children():
 		child.queue_free()
 
-func _spawn_grid_button(resource: Resource, count: int) -> Control:
-	var btn
-	if item_button_scene:
-		btn = item_button_scene.instantiate() as ItemButton
-	else:
-		# Fallback if no scene assigned
-		btn = Button.new()
-		btn.text = "Item"
-		btn.custom_minimum_size = Vector2(100, 50)
+func _spawn_grid_button(resource: Resource, slot: int, count: int) -> Control:
+	var btn = item_button_scene.instantiate() as ItemButton
 
 	grid.add_child(btn)
-
-	# Setup Data
-	btn.setup(resource, count)
+	btn.setup(resource, slot, count)
 
 	return btn
 

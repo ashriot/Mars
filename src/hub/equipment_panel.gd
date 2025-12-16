@@ -28,6 +28,12 @@ func setup(item: Equipment):
 		return
 
 	equipment = item
+	if equipment.stats_changed.is_connected(_refresh_details):
+		equipment.stats_changed.disconnect(_refresh_details)
+
+	if not equipment.stats_changed.is_connected(_refresh_details):
+		equipment.stats_changed.connect(_refresh_details)
+
 	type_icon.texture = ItemDatabase.get_equipment_icon(equipment)
 	name_label.text = equipment.get_display_name()
 	icon_rect.texture = equipment.icon

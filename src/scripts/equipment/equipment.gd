@@ -4,6 +4,8 @@ class_name Equipment
 enum Slot { WEAPON, ARMOR }
 enum EquipmentType { PISTOL, SHOTGUN, RIFLE, CLOTHES, SUIT, VEST }
 
+signal stats_changed
+
 # --- IDENTITY ---
 @export var id: String = ""
 @export var item_name: String = ""
@@ -184,11 +186,13 @@ func add_xp(amount: int):
 				break
 		else:
 			break
+	stats_changed.emit()
 
 func upgrade_tier():
 	if tier < 5:
 		tier += 1
 		print("Equipment Tier Up! Now Tier ", tier, ". Rank Cap is ", get_rank_cap())
+	stats_changed.emit()
 
 func get_save_data() -> Dictionary:
 	var saved_mods = []

@@ -20,9 +20,6 @@ var id: String:
 @export_range(1, 5) var tier: int = 1
 @export var rarity: Rarity = Rarity.COMMON
 
-# ===================================================================
-# LOGIC
-# ===================================================================
 
 func _generate_id() -> String:
 	var prefix = "mat" if category == ItemCategory.MATERIAL else "comp"
@@ -35,16 +32,21 @@ func _generate_id() -> String:
 
 	return prefix + suffix
 
-# --- MERGED LOGIC FROM UpgradeMaterial ---
-func get_xp_value() -> int:
-	# Only Materials give XP. Components are for Tier Upgrades.
+func get_xp_value(target_slot: int = -1) -> int:
 	if category != ItemCategory.MATERIAL:
 		return 0
 
-	# Exponential Scaling: 10, 20, 40, 80, 160
-	return 10 * int(pow(2, tier - 1))
+	var base_val = 20 * tier
 
-# Optional: Helper to check compatibility
+	var matches = false
+	if target_slot != -1 and target_slot == type:
+		matches = true
+
+	if matches:
+		return int(base_val * 1.5)
+
+	return base_val
+
 func is_compatible_with(equipment: Equipment) -> bool:
 	if equipment.slot == Equipment.Slot.WEAPON:
 		return type == ItemType.WEAPON

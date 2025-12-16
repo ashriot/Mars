@@ -16,6 +16,7 @@ var current_mode: int = 0 # 0=Skills, 1=Inventory
 
 func _ready():
 	hide()
+	inventory_view.hero_stats_updated.connect(_on_hero_stats_updated)
 	for i in range(mode_tabs.get_child_count()):
 		var btn = mode_tabs.get_child(i) as Button
 		btn.pressed.connect(_on_mode_changed.bind(i))
@@ -94,6 +95,12 @@ func _update_active_view():
 		skill_view.hide()
 		inventory_view.show()
 		inventory_view.setup(hero)
+
+func _on_hero_stats_updated():
+	SaveSystem.save_current_slot()
+	if current_hero_idx < hero_list_container.get_child_count():
+		var panel = hero_list_container.get_child(current_hero_idx) as HeroPanel
+		panel._refresh_stats()
 
 func _on_back_btn_pressed() -> void:
 	hide()
