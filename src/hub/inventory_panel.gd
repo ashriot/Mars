@@ -18,6 +18,7 @@ var current_mode: Mode = Mode.VIEW
 var active_hero: HeroData
 var active_equipment: Equipment
 var active_slot: Equipment.Slot
+var active_mod_slot_index: int = -1
 
 # --- SETUP ---
 func setup(hero: HeroData):
@@ -76,12 +77,12 @@ func on_mod_requested(item: Equipment, slot_idx: int):
 	if not item: return
 	current_mode = Mode.MOD
 	active_equipment = item
+	active_mod_slot_index = slot_idx
 	header_label.text = "Select Mod"
 	_populate_grid_with_mods(item)
 	mode_changed.emit(current_mode, active_equipment, -1)
 
 func _refresh_view_mode():
-	# Default state: Show all uneven/unequipped items? Or just empty?
 	header_label.text = "Inventory"
 	_clear_grid()
 	# _populate_grid_all()
@@ -110,29 +111,39 @@ func _populate_grid_with_materials(target_item: Equipment):
 	for id in SaveSystem.inventory.keys():
 		var resource = ItemDatabase.get_item_resource(id)
 
-		# Check if it is a MATERIAL
 		if resource is InventoryItem and resource.category == InventoryItem.ItemCategory.MATERIAL:
-
-			# --- 1. REMOVED TYPE FILTER ---
-			# We no longer check 'is_compatible_with'.
-			# We show ALL materials.
-
 			var count = SaveSystem.inventory[id]
 			var btn = _spawn_grid_button(resource, target_item.slot, count)
-
 			btn.pressed.connect(_on_material_clicked.bind(resource, btn))
 
 func _populate_grid_with_mods(target_item: Equipment):
 	_clear_grid()
 
-	for id in SaveSystem.inventory.keys():
-		var resource = ItemDatabase.get_item_resource(id)
+	# 1. UNEQUIP BUTTON
+	var current_mod = null
+	if target_item.installed_mods.size() > active_mod_slot_index:
+		current_mod = target_item.installed_mods[active_mod_slot_index]
 
-		if resource is EquipmentMod:
-			if target_item.tier >= resource.min_tier_required:
-				var count = SaveSystem.inventory[id]
-				var btn = _spawn_grid_button(resource, -1, count)
-				btn.pressed.connect(_on_mod_clicked.bind(resource, btn))
+	if current_mod:
+		var btn = Button.new()
+		btn.text = "Unequip Mod"
+		btn.modulate = Color.RED
+		grid.add_child(btn)
+		btn.pressed.connect(_on_unequip_mod_clicked)
+
+	# 2. POPULATE FROM MOD INVENTORY
+	# We iterate the array of unique mod objects, not the dictionary keys.
+	for mod in SaveSystem.inventory_mods:
+		if "slot" in mod:
+			if mod.slot != target_item.slot:
+				continue
+
+		var btn = _spawn_grid_button(mod, 1, 1)
+
+		if btn.has_method("set_preview_context"):
+			btn.set_preview_context(target_item.slot)
+
+		btn.pressed.connect(_on_mod_clicked.bind(mod, btn))
 
 func _on_equipment_clicked(new_item: Equipment):
 	SaveSystem.inventory_equipment.erase(new_item)
@@ -186,10 +197,52 @@ func _on_material_clicked(mat: InventoryItem, btn_ui: ItemButton):
 
 		hero_stats_updated.emit()
 
-func _on_mod_clicked(mod: EquipmentMod, btn_ui: Control):
-	# Logic to insert mod into active_equipment
-	# ...
-	pass
+func _on_mod_clicked(new_mod: EquipmentMod, btn_ui: Control):
+	if not active_equipment or active_mod_slot_index == -1: return
+	if SaveSystem.inventory_mods.has(new_mod):
+		SaveSystem.inventory_mods.erase(new_mod)
+	else:
+		push_error("Tried to equip mod not in inventory!")
+		return
+
+	# 3. Handle the Swap
+	if active_equipment.installed_mods.size() <= active_mod_slot_index:
+		active_equipment.installed_mods.resize(active_mod_slot_index + 1)
+
+	# Get the old mod (if any)
+	var old_mod = active_equipment.installed_mods[active_mod_slot_index]
+
+	# Put old mod back in Inventory
+	if old_mod:
+		SaveSystem.inventory_mods.append(old_mod)
+		print("Unequipped: ", old_mod.mod_name)
+
+	# Install new mod
+	active_equipment.installed_mods[active_mod_slot_index] = new_mod
+	print("Installed: ", new_mod.mod_name)
+
+	# 4. Finish Up
+	AudioManager.play_sfx("terminal")
+
+	# Save Game
+	SaveSystem.save_current_slot()
+
+	hero_stats_updated.emit()
+
+	_close_panel()
+
+func _on_unequip_mod_clicked():
+	if not active_equipment or active_mod_slot_index == -1: return
+
+	var old_mod = active_equipment.installed_mods[active_mod_slot_index]
+	if old_mod:
+		SaveSystem.inventory_mods.append(old_mod)
+		active_equipment.installed_mods[active_mod_slot_index] = null
+
+		AudioManager.play_sfx("terminal")
+		SaveSystem.save_current_slot()
+		hero_stats_updated.emit()
+		_close_panel()
 
 func _clear_grid():
 	if not grid: return
@@ -198,7 +251,6 @@ func _clear_grid():
 
 func _spawn_grid_button(resource: Resource, slot: int, count: int) -> Control:
 	var btn = item_button_scene.instantiate() as ItemButton
-
 	grid.add_child(btn)
 	btn.setup(resource, slot, count)
 

@@ -22,7 +22,7 @@ signal mod_requested(current_item, slot_index)
 var equipment: Equipment
 var _highlight_tween: Tween
 
-# Setup visuals based on the Equipment Data
+
 func setup(item: Equipment):
 	if not item:
 		name_label.text = "Empty"
@@ -66,6 +66,7 @@ func _refresh_details():
 		_refresh_weapon()
 	else:
 		_refresh_armor()
+	_refresh_mods()
 
 func _refresh_weapon():
 	armor_stats.hide()
@@ -89,11 +90,53 @@ func _refresh_armor():
 	armor_stats.get_child(5).text = "NRG+" + Utils.stringify(stats.energy_defense) + "%"
 	armor_stats.show()
 
-func set_visual_state(mode: String): # "equip", "tune", "mod", "none"
-	# 1. Kill old animation
-	if _highlight_tween: _highlight_tween.kill()
+func _refresh_mods():
+	# 1. Get Limits
+	# e.g. Tier 3 item has 3 slots.
+	var max_slots = equipment.get_max_mod_slots()
 
-	# 2. Reset Defaults
+	# 2. Iterate through the UI slots
+	var ui_slots = mods_container.get_children()
+
+	for i in range(ui_slots.size()):
+		var slot_ui = ui_slots[i] as ModSlot
+		if not slot_ui: continue
+
+		# 3. Disconnect old signals (Safety)
+		if slot_ui.clicked.is_connected(_on_mod_slot_clicked):
+			slot_ui.clicked.disconnect(_on_mod_slot_clicked)
+
+		# 4. Determine Data
+		var mod_data = null
+		if i < equipment.installed_mods.size():
+			mod_data = equipment.installed_mods[i]
+
+		# 5. Determine State
+		# Slot is enabled if it's within the Tier limit
+		var is_enabled = (i < max_slots)
+
+		# 6. Setup
+		slot_ui.setup(mod_data, is_enabled)
+
+		# 7. Connect Signal
+		if is_enabled:
+			slot_ui.clicked.connect(_on_mod_slot_clicked.bind(i))
+
+func _on_mod_slot_clicked(slot_index: int):
+	mod_requested.emit(equipment, slot_index)
+
+	var ui_slots = mods_container.get_children()
+	for i in range(ui_slots.size()):
+		var slot = ui_slots[i] as ModSlot
+		if not slot: continue
+
+		if i == slot_index:
+			slot.pulse(Color.CYAN)
+		else:
+			slot.stop_pulse()
+
+func set_visual_state(mode: String):
+	if _highlight_tween: _highlight_tween.kill()
 	header.modulate = Color.WHITE
 
 	# 3. Handle Tune Button State
@@ -118,12 +161,17 @@ func set_visual_state(mode: String): # "equip", "tune", "mod", "none"
 		"none":
 			do_pulse = false
 
-	# 4. Start Pulse (on self_modulate only)
 	if do_pulse:
 		_highlight_tween = create_tween().set_loops()
 		_highlight_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		_highlight_tween.tween_property(header, "modulate", target_color, 0.5)
 		_highlight_tween.tween_property(header, "modulate", Color.WHITE, 0.5)
+
+	if mode != "mod":
+		var ui_slots = mods_container.get_children()
+		for child in ui_slots:
+			if child is ModSlot:
+				child.stop_pulse()
 
 func _exit_tree():
 	if _highlight_tween: _highlight_tween.kill()

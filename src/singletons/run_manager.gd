@@ -12,8 +12,10 @@ var current_dungeon_tier: int = 0
 var current_run_seed: int = 0
 var run_bits: int = 0
 var run_xp: int = 0
-var run_inventory: Dictionary = {} # Key: ID, Value: Amount
+var run_inventory: Dictionary = {}
 var run_equipment_loot: Array[Equipment] = []
+var run_mods_loot: Array[EquipmentMod] = []
+
 
 var party_roster: Array[HeroData]:
 	get:
@@ -29,7 +31,7 @@ func add_run_bits(amount: int):
 func add_loot_item(id: String, amount: int):
 	if not run_inventory.has(id):
 		run_inventory[id] = 0
-	run_inventory[id] += amount
+	run_inventory[id] += int(amount)
 	print("Looted: %s x%d" % [id, amount])
 
 func add_loot_equipment(id: String, tier: int, rank: int):
@@ -45,6 +47,18 @@ func add_loot_equipment(id: String, tier: int, rank: int):
 	# 3. Store in temporary run stash
 	run_equipment_loot.append(item_res)
 	print("Looted Equipment: %s (T%d R%d)" % [item_res.item_name, tier, rank])
+
+func add_loot_mod(id: String, tier: int):
+	var mod_res = ItemDatabase.get_item_resource(id)
+
+	if not mod_res or not (mod_res is EquipmentMod):
+		push_error("RunManager: Failed to add mod loot. Invalid ID: " + id)
+		return
+
+	mod_res.tier = tier
+
+	run_mods_loot.append(mod_res)
+	print("Looted Mod: %s (Tier %d)" % [mod_res.mod_name, tier])
 
 func get_loot_scalar() -> float:
 	var scalar = 1.0 + ((current_dungeon_tier - 1) * 0.25)
@@ -62,12 +76,17 @@ func get_run_save_data() -> Dictionary:
 	for item in run_equipment_loot:
 		equip_data.append(item.get_save_data())
 
+	var mod_data = []
+	for mod in run_mods_loot:
+		mod_data.append(mod.get_save_data())
+
 	return {
 		"seed": current_run_seed,
 		"run_bits": run_bits,
 		"run_xp": run_xp,
 		"run_inventory": run_inventory,
 		"run_equipment": equip_data,
+		"run_mods": mod_data,
 		"tier": current_dungeon_tier,
 		"profile_path": profile_path,
 		"map_data": active_dungeon_map.get_save_data()
@@ -88,11 +107,18 @@ func restore_run():
 	run_xp = int(run_data.get("run_xp", 0))
 	run_inventory = run_data.get("run_inventory", {})
 	current_dungeon_tier = int(run_data.get("tier", 0))
+
 	run_equipment_loot.clear()
 	var saved_eq = run_data.get("run_equipment", [])
 	for eq_dict in saved_eq:
 		var item = Equipment.create_from_save_data(eq_dict)
 		if item: run_equipment_loot.append(item)
+
+	run_mods_loot.clear()
+	var saved_mods = run_data.get("run_mods", [])
+	for mod_dict in saved_mods:
+		var mod = EquipmentMod.create_from_save_data(mod_dict)
+		if mod: run_mods_loot.append(mod)
 
 	is_run_active = true
 	if active_dungeon_map:
@@ -126,11 +152,12 @@ func commit_rewards(result: RunResult):
 			var amount = run_inventory[id]
 			SaveSystem.add_inventory_item(id, amount)
 		for item in run_equipment_loot:
-			SaveSystem.add_equipment_to_inventory(item)
+			SaveSystem.add_equipment(item)
+		for item in run_mods_loot:
+			SaveSystem.add_mod(item)
 	elif result == RunResult.RETREAT:
-		# Keep 50% of items? Or keep full items but lose bits?
-		# Let's assume you keep 50% of the stack (rounded down)
 		run_equipment_loot.clear()
+		run_mods_loot.clear()
 		for id in run_inventory:
 			var amount = floor(run_inventory[id] * 0.5)
 			if amount > 0:

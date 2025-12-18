@@ -1,9 +1,12 @@
-[gd_resource type="Resource" script_class="EquipmentMod" load_steps=2 format=3 uid="uid://clj37i5u6xngp"]
+[gd_resource type="Resource" script_class="EquipmentMod" load_steps=3 format=3 uid="uid://clj37i5u6xngp"]
 
 [ext_resource type="Script" uid="uid://d3m6jlwrdo1vc" path="res://src/scripts/equipment/equipment_mod.gd" id="1_2j8ml"]
+[ext_resource type="Texture2D" uid="uid://cvk1e1gks5fji" path="res://assets/graphics/icons/items/invert_capacitor.png" id="1_xtnas"]
 
 [resource]
 script = ExtResource("1_2j8ml")
 id = "power_booster"
 mod_name = "Power Booster"
+icon = ExtResource("1_xtnas")
+atk = 5
 metadata/_custom_type_script = "uid://d3m6jlwrdo1vc"

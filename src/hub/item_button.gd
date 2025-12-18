@@ -21,6 +21,8 @@ func setup(resource: Resource, slot_type: int, amount: int):
 	_target_slot_context = slot_type
 	if resource is Equipment:
 		_setup_equipment(resource)
+	elif resource is EquipmentMod:
+		_setup_mod(resource)
 	elif resource is InventoryItem:
 		_setup_item(resource)
 	update_quantity(amount)
@@ -35,6 +37,11 @@ func _setup_equipment(item: Equipment):
 	category_icon.texture = ItemDatabase.get_equipment_icon(item)
 	label.text = item.get_display_name()
 	info.text = "Rk." + str(item.rank) + "/" + str(item.get_rank_cap())
+
+func _setup_mod(item: EquipmentMod):
+	category_icon.texture = item.icon
+	label.text = item.mod_name
+	info.text = ""
 
 func _setup_item(item: InventoryItem):
 	category_icon.texture = ItemDatabase.get_material_icon(item)

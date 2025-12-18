@@ -212,10 +212,12 @@ func _handle_reward_cache(node: MapNode):
 
 	elif type == LootManager.LootType.MOD:
 		var id = loot.id
-		RunManager.add_loot_item(id, 1)
+		var tier = int(loot.get("tier", 1))
+		RunManager.add_loot_mod(id, tier)
 		var pretty_name = ItemDatabase.get_item_name(id)
-		msg = "Found Mod: %s" % pretty_name
+		msg = "%s (T%d)" % [pretty_name, tier]
 		icon_tex = ItemDatabase.get_item_icon(id)
+		color = Color.ORANGE
 
 	print(msg)
 	var ft: FloatingText = floating_text_scene.instantiate()

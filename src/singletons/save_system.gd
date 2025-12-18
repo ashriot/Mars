@@ -17,19 +17,16 @@ var data: Dictionary = {}
 
 var inventory: Dictionary = {}
 var inventory_equipment: Array[Equipment] = []
-
+var inventory_mods: Array[EquipmentMod] = []
 
 func _ready():
 	if not DirAccess.dir_exists_absolute(SAVE_DIR):
 		DirAccess.make_dir_absolute(SAVE_DIR)
 
-# --- FILE I/O ---
-
 func save_current_slot():
 	save_game(current_slot_index)
 
 func save_game(slot_index: int):
-	# 1. Update Dictionary with Live Data
 	if RunManager.is_run_active:
 		data["active_run"] = RunManager.get_run_save_data()
 	else:
@@ -43,6 +40,11 @@ func save_game(slot_index: int):
 		eq_save_data.append(item.get_save_data())
 	data["inventory_equipment"] = eq_save_data
 
+	var mod_save_data = []
+	for mod in inventory_mods:
+		mod_save_data.append(mod.get_save_data())
+	data["inventory_mods"] = mod_save_data
+
 	# Serialize Heroes
 	var hero_dicts = []
 	for hero in party_roster:
@@ -52,7 +54,6 @@ func save_game(slot_index: int):
 	data["bits"] = bits
 	data["total_lifetime_xp"] = total_lifetime_xp
 
-	# 2. Write to disk
 	var path = _get_slot_path(slot_index)
 	var file = FileAccess.open(path, FileAccess.WRITE)
 	file.store_string(JSON.stringify(data, "\t"))
@@ -80,6 +81,12 @@ func load_game(slot_index: int) -> bool:
 		for dict in eq_data:
 			var item = Equipment.create_from_save_data(dict)
 			if item: inventory_equipment.append(item)
+
+		inventory_mods.clear()
+		var mod_data_list = data.get("inventory_mods", [])
+		for dict in mod_data_list:
+			var mod = EquipmentMod.create_from_save_data(dict)
+			if mod: inventory_mods.append(mod)
 
 		# Restore Party
 		party_roster.clear()
@@ -145,8 +152,11 @@ func add_inventory_item(id: String, amount: int):
 	inventory[id] += amount
 	print("Banked: %s x%d (Total: %d)" % [id, amount, inventory[id]])
 
-func add_equipment_to_inventory(item: Equipment):
+func add_equipment(item: Equipment):
 	inventory_equipment.append(item)
+
+func add_mod(item: EquipmentMod):
+	inventory_mods.append(item)
 
 func remove_inventory_item(id: String, amount: int) -> bool:
 	if get_item_count(id) >= amount:

@@ -101,7 +101,7 @@ func calculate_stats() -> ActorStats:
 		if not mod: continue
 
 		# Get the raw values (e.g. +20, -10)
-		var changes = mod.get_stat_changes(tier)
+		var changes = mod.get_stat_changes()
 
 		for stat_enum in changes:
 			var bonus = changes[stat_enum]

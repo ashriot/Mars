@@ -4,10 +4,10 @@ extends Node
 enum LootType { BITS, MATERIAL, COMPONENT, EQUIPMENT, MOD }
 
 # --- CONFIGURATION ---
-const CHANCE_MATERIAL: float = 0.6
+const CHANCE_MATERIAL: float = 0.3
 const CHANCE_BITS: float = 0.2
 const CHANCE_COMPONENT: float = 0.1
-const CHANCE_MOD: float = 0.1
+const CHANCE_MOD: float = 0.4
 
 # --- DEFINE RARITY COLORS ---
 const COLOR_COMMON = Color.LIGHT_SLATE_GRAY
