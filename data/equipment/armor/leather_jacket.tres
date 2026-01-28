@@ -11,7 +11,6 @@ item_name = "Leather Jacket"
 slot = 1
 type = 4
 icon = ExtResource("1_6b6fv")
-rank = 2
 star_hp = 4
 star_guard = 3
 star_focus = 4

@@ -15,7 +15,7 @@ signal stats_changed
 
 # --- PROGRESSION STATE ---
 @export_range(0, 5) var tier: int = 0
-@export_range(0, 30) var rank: int = 0
+@export_range(0, 30) var rank: int = 1
 @export var current_xp: int = 0
 
 # --- STAR RATINGS ---
@@ -60,7 +60,6 @@ func calculate_stats() -> ActorStats:
 	var stats = ActorStats.new()
 	var ratings = _get_base_ratings_dict()
 
-	# 1. Apply "Stat Boost" Proficiency Points (The +1 Rating)
 	for stat_key in invested_stat_boosts:
 		var boost_amount = invested_stat_boosts[stat_key]
 		if ratings.has(stat_key):
@@ -68,7 +67,7 @@ func calculate_stats() -> ActorStats:
 
 	if slot == Slot.ARMOR:
 		if ratings.has(ActorStats.Stats.HP):
-			stats.max_hp = _calc_stat(ratings[ActorStats.Stats.HP]) * 5
+			stats.max_hp = _calc_stat(ratings[ActorStats.Stats.HP], 0) * 10
 		if ratings.has(ActorStats.Stats.GRD):
 			stats.starting_guard = ratings[ActorStats.Stats.GRD]
 		if ratings.has(ActorStats.Stats.FOC):
@@ -84,7 +83,7 @@ func calculate_stats() -> ActorStats:
 		if ratings.has(ActorStats.Stats.PSY):
 			stats.psyche = _calc_stat(ratings[ActorStats.Stats.PSY])
 		if ratings.has(ActorStats.Stats.OVR):
-			stats.overload = _calc_stat(ratings[ActorStats.Stats.OVR], 0) * 3
+			stats.overload = _calc_stat(ratings[ActorStats.Stats.OVR], 0) * 4
 		if ratings.has(ActorStats.Stats.AIM):
 			stats.aim = (ratings[ActorStats.Stats.KIN_DEF] * 5) + 10
 			stats.precision = _calc_stat(ratings[ActorStats.Stats.PRE])
