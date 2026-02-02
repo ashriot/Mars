@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="HeroData" load_steps=8 format=3 uid="uid://bycnj3e0g7w6x"]
+[gd_resource type="Resource" script_class="HeroData" format=3 uid="uid://bycnj3e0g7w6x"]
 
 [ext_resource type="Resource" uid="uid://g3lhmj58116w" path="res://data/equipment/armor/kevlar_vest.tres" id="1_70kmf"]
 [ext_resource type="Script" uid="uid://dc5sk0b0jubvj" path="res://src/scripts/data/hero_data.gd" id="1_ng8ip"]

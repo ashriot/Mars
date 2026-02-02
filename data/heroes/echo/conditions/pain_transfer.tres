@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Condition" load_steps=8 format=3 uid="uid://f0t1e05pcxrs"]
+[gd_resource type="Resource" script_class="Condition" format=3 uid="uid://f0t1e05pcxrs"]
 
 [ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://src/scripts/conditions/trigger.gd" id="1_cy2gg"]
 [ext_resource type="Texture2D" uid="uid://1bfvnwipmvrg" path="res://assets/graphics/icons/skills/heart-drop.png" id="1_ynmux"]

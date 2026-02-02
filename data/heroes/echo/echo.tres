@@ -1,9 +1,10 @@
-[gd_resource type="Resource" script_class="HeroData" load_steps=7 format=3 uid="uid://b2bkd217htd2n"]
+[gd_resource type="Resource" script_class="HeroData" format=3 uid="uid://b2bkd217htd2n"]
 
 [ext_resource type="Script" uid="uid://dc5sk0b0jubvj" path="res://src/scripts/data/hero_data.gd" id="1_coj7o"]
 [ext_resource type="Resource" uid="uid://byqjoch8ss1i6" path="res://data/equipment/armor/tech_shirt.tres" id="1_uk5hd"]
 [ext_resource type="Script" uid="uid://sy50n7nerbow" path="res://src/scripts/data/role_definition.gd" id="3_7nq6b"]
 [ext_resource type="Resource" uid="uid://8mpcdw2eyx0n" path="res://data/heroes/echo/roles/psi.tres" id="4_8d0rb"]
+[ext_resource type="Resource" uid="uid://b1qxtq3pnpo1m" path="res://data/heroes/echo/roles/dom.tres" id="5_8djkq"]
 [ext_resource type="Resource" uid="uid://ggyc3b3330o5" path="res://data/heroes/echo/roles/kin.tres" id="5_51sbu"]
 [ext_resource type="Resource" uid="uid://cfiu7md4m5qk2" path="res://data/equipment/weapons/pistol.tres" id="8_q53qh"]
 
@@ -13,7 +14,7 @@ hero_id = "echo"
 hero_name = "Echo"
 weapon = ExtResource("8_q53qh")
 armor = ExtResource("1_uk5hd")
-role_definitions = Array[ExtResource("3_7nq6b")]([ExtResource("4_8d0rb"), ExtResource("5_51sbu")])
+role_definitions = Array[ExtResource("3_7nq6b")]([ExtResource("4_8d0rb"), ExtResource("5_51sbu"), ExtResource("5_8djkq")])
 unlocked_role_ids = Array[String](["psi", "kin"])
 unlocked_node_ids = Array[String](["psi_1", "psi_2", "kin_1", "kin_2", "psi_3"])
 metadata/_custom_type_script = "uid://dc5sk0b0jubvj"

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Action" load_steps=8 format=3 uid="uid://dbkrqjitp8c02"]
+[gd_resource type="Resource" script_class="Action" format=3 uid="uid://dbkrqjitp8c02"]
 
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_cwe1c"]
 [ext_resource type="Resource" uid="uid://bptlesxknutbi" path="res://data/heroes/sands/conditions/painkillers.tres" id="2_a1ptl"]

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Action" load_steps=7 format=3 uid="uid://c0engj2adit4x"]
+[gd_resource type="Resource" script_class="Action" format=3 uid="uid://c0engj2adit4x"]
 
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_qbifr"]
 [ext_resource type="Resource" uid="uid://bg3qdb8pseo4x" path="res://data/heroes/echo/conditions/psionic_pulse_cond.tres" id="2_4gxfh"]

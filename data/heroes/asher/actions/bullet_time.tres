@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Action" load_steps=9 format=3 uid="uid://bmdof7bqrfmkb"]
+[gd_resource type="Resource" script_class="Action" format=3 uid="uid://bmdof7bqrfmkb"]
 
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_hir7p"]
 [ext_resource type="Resource" uid="uid://bnjl0l387tgh2" path="res://data/heroes/asher/conditions/bullet_time_passive.tres" id="2_rr5yx"]

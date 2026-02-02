@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Action" load_steps=11 format=3 uid="uid://bikya1n52nsow"]
+[gd_resource type="Resource" script_class="Action" format=3 uid="uid://bikya1n52nsow"]
 
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_t1vww"]
 [ext_resource type="Resource" uid="uid://dd5jh6mwgwgij" path="res://data/heroes/sands/conditions/overwatch_buff.tres" id="2_r7g3a"]

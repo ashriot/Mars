@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Action" load_steps=7 format=3 uid="uid://vk5px1abwyri"]
+[gd_resource type="Resource" script_class="Action" format=3 uid="uid://vk5px1abwyri"]
 
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_trdq1"]
 [ext_resource type="Resource" uid="uid://3daimnlv4sye" path="res://data/heroes/sands/conditions/draw_fire.tres" id="2_y7tn4"]

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Action" load_steps=8 format=3 uid="uid://811d3h1n464x"]
+[gd_resource type="Resource" script_class="Action" format=3 uid="uid://811d3h1n464x"]
 
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_gpnli"]
 [ext_resource type="Script" uid="uid://cu12q7dfj3hfe" path="res://src/scripts/action_effects/effect_modify_guard.gd" id="2_vdk5u"]

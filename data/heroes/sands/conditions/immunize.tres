@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Condition" load_steps=12 format=3 uid="uid://5ig0tj75p5ja"]
+[gd_resource type="Resource" script_class="Condition" format=3 uid="uid://5ig0tj75p5ja"]
 
 [ext_resource type="Texture2D" uid="uid://dcvk1kqm7v1x0" path="res://assets/graphics/icons/skills/syringe.png" id="1_53k5o"]
 [ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://src/scripts/conditions/condition.gd" id="1_lgweh"]

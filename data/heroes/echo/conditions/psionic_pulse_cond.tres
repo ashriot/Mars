@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Condition" load_steps=10 format=3 uid="uid://bg3qdb8pseo4x"]
+[gd_resource type="Resource" script_class="Condition" format=3 uid="uid://bg3qdb8pseo4x"]
 
 [ext_resource type="Texture2D" uid="uid://div7g73yak03i" path="res://assets/graphics/icons/skills/crowned-explosion.png" id="1_b1cra"]
 [ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://src/scripts/conditions/condition.gd" id="2_r4ipv"]

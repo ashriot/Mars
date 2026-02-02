@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://ckajtcj4403sy"]
+[gd_scene format=3 uid="uid://ckajtcj4403sy"]
 
 [ext_resource type="Script" uid="uid://dff0o6ejveewn" path="res://src/hub/hub.gd" id="1_8xbvn"]
 [ext_resource type="Resource" uid="uid://doxl25k4e5ifr" path="res://data/enemies/dungeon_profiles/first_alleyway.tres" id="2_0pbk3"]
@@ -72,7 +72,7 @@ shadow_color = Color(0, 0, 0, 0.78431374)
 shadow_size = 1
 shadow_offset = Vector2(0, 1)
 
-[node name="Hub" type="Control" node_paths=PackedStringArray("party_menu")]
+[node name="Hub" type="Control" unique_id=264458138 node_paths=PackedStringArray("party_menu")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -83,7 +83,7 @@ script = ExtResource("1_8xbvn")
 dungeon_profile = ExtResource("2_0pbk3")
 party_menu = NodePath("PartyMenu")
 
-[node name="Background" type="TextureRect" parent="."]
+[node name="Background" type="TextureRect" parent="." unique_id=348337114]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -94,7 +94,7 @@ texture = ExtResource("2_n1oa3")
 metadata/_edit_group_ = true
 metadata/_edit_lock_ = true
 
-[node name="Background" type="GPUParticles2D" parent="Background"]
+[node name="Background" type="GPUParticles2D" parent="Background" unique_id=1384140898]
 modulate = Color(1, 1, 1, 0.13725491)
 position = Vector2(962, 459)
 amount = 300
@@ -103,7 +103,7 @@ lifetime = 30.0
 preprocess = 20.0
 process_material = SubResource("ParticleProcessMaterial_vmamr")
 
-[node name="Top" type="TextureRect" parent="Background"]
+[node name="Top" type="TextureRect" parent="Background" unique_id=334173174]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -112,7 +112,7 @@ grow_horizontal = 2
 grow_vertical = 2
 texture = SubResource("GradientTexture2D_c3p1t")
 
-[node name="Top" type="TextureRect" parent="Background/Top"]
+[node name="Top" type="TextureRect" parent="Background/Top" unique_id=394414580]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
@@ -120,7 +120,7 @@ offset_bottom = 207.0
 grow_horizontal = 2
 texture = SubResource("GradientTexture2D_bfsw3")
 
-[node name="Panel" type="Panel" parent="."]
+[node name="Panel" type="Panel" parent="." unique_id=1064016874]
 self_modulate = Color(0.88, 0.42856, 0.1672, 1)
 layout_mode = 1
 offset_left = 111.0
@@ -129,7 +129,7 @@ offset_right = 599.0
 offset_bottom = 100.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_lgcv4")
 
-[node name="Label" type="Label" parent="Panel"]
+[node name="Label" type="Label" parent="Panel" unique_id=703417971]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -146,7 +146,7 @@ text = "ECHO'S APARTMENT"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Margin" type="Panel" parent="Panel"]
+[node name="Margin" type="Panel" parent="Panel" unique_id=2076194217]
 self_modulate = Color(0.11764706, 0.11764706, 0.11764706, 1)
 layout_mode = 1
 anchors_preset = 9
@@ -156,7 +156,7 @@ offset_right = 1.0
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_gb5ag")
 
-[node name="TextureRect" type="TextureRect" parent="Panel/Margin"]
+[node name="TextureRect" type="TextureRect" parent="Panel/Margin" unique_id=995602536]
 modulate = Color(0.88, 0.42856, 0.1672, 1)
 layout_mode = 1
 anchors_preset = 15
@@ -171,7 +171,7 @@ grow_vertical = 2
 texture = ExtResource("5_gb5ag")
 expand_mode = 1
 
-[node name="UI" type="Control" parent="."]
+[node name="UI" type="Control" parent="." unique_id=1609931298]
 layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
@@ -182,7 +182,7 @@ offset_right = 499.0
 offset_bottom = -40.0
 grow_vertical = 0
 
-[node name="BitsLabel" type="Label" parent="UI"]
+[node name="BitsLabel" type="Label" parent="UI" unique_id=2064987132]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -196,7 +196,7 @@ theme_override_font_sizes/font_size = 40
 text = "1,000 BITS"
 vertical_alignment = 1
 
-[node name="Actions" type="VBoxContainer" parent="."]
+[node name="Actions" type="VBoxContainer" parent="." unique_id=361157542]
 modulate = Color(0.38, 0.8139999, 1, 1)
 layout_mode = 1
 offset_left = 50.0
@@ -205,43 +205,43 @@ offset_right = 600.0
 offset_bottom = 651.0
 theme_override_constants/separation = 20
 
-[node name="Button" type="Button" parent="Actions"]
+[node name="Button" type="Button" parent="Actions" unique_id=107320782]
 custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
 theme_override_font_sizes/font_size = 48
 text = "TERMINAL ACCESS"
 
-[node name="Button2" type="Button" parent="Actions"]
+[node name="Button2" type="Button" parent="Actions" unique_id=1140169094]
 custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
 theme_override_font_sizes/font_size = 48
 text = "CHECK STATUS"
 
-[node name="Button3" type="Button" parent="Actions"]
+[node name="Button3" type="Button" parent="Actions" unique_id=126340158]
 custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
 theme_override_font_sizes/font_size = 48
 text = "RUN TRAINING EXE"
 
-[node name="Button4" type="Button" parent="Actions"]
+[node name="Button4" type="Button" parent="Actions" unique_id=2002833102]
 custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
 theme_override_font_sizes/font_size = 48
 text = "ACCESS BANKING"
 
-[node name="Button5" type="Button" parent="Actions"]
+[node name="Button5" type="Button" parent="Actions" unique_id=89016860]
 custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
 theme_override_font_sizes/font_size = 48
 text = "CONTACT MILO"
 
-[node name="HeadOut" type="Button" parent="Actions"]
+[node name="HeadOut" type="Button" parent="Actions" unique_id=2139768617]
 custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
 theme_override_font_sizes/font_size = 48
 text = "HEAD OUT"
 
-[node name="PartyMenu" parent="." instance=ExtResource("10_yo4oc")]
+[node name="PartyMenu" parent="." unique_id=223303855 instance=ExtResource("10_yo4oc")]
 layout_mode = 1
 
 [connection signal="pressed" from="Actions/Button3" to="." method="_on_button_3_pressed"]

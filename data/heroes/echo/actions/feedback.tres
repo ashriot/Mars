@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Action" load_steps=7 format=3 uid="uid://dbs8wlu3x6uwq"]
+[gd_resource type="Resource" script_class="Action" format=3 uid="uid://dbs8wlu3x6uwq"]
 
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_5s2aw"]
 [ext_resource type="Texture2D" uid="uid://bou6hl5kcyodt" path="res://assets/graphics/icons/skills/thunder-blade.png" id="2_bnmhk"]

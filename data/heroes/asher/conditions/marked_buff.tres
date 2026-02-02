@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Condition" load_steps=8 format=3 uid="uid://dya51rfrgr2bw"]
+[gd_resource type="Resource" script_class="Condition" format=3 uid="uid://dya51rfrgr2bw"]
 
 [ext_resource type="Texture2D" uid="uid://c8be56w4pxbui" path="res://assets/graphics/icons/skills/human-target.png" id="1_i87cr"]
 [ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://src/scripts/conditions/condition.gd" id="2_n0a27"]

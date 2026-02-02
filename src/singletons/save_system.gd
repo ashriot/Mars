@@ -92,7 +92,7 @@ func load_game(slot_index: int) -> bool:
 		party_roster.clear()
 		var saved_heroes = data.get("heroes", [])
 		for hero_dict in saved_heroes:
-			var hero_id = hero_dict.get("hero_id", "asher")
+			var hero_id = hero_dict.get("hero_id")
 			var path_to_base = "res://data/heroes/" + hero_id + "/" + hero_id + ".tres"
 
 			if ResourceLoader.exists(path_to_base):
@@ -110,7 +110,7 @@ func start_new_campaign(slot_index: int):
 	party_roster.clear()
 	party_roster.append(load("res://data/heroes/asher/asher.tres").duplicate())
 	party_roster.append(load("res://data/heroes/echo/echo.tres").duplicate())
-	#party_roster.append(load("res://data/heroes/sands/sands.tres").duplicate())
+	party_roster.append(load("res://data/heroes/sands/sands.tres").duplicate())
 
 	# Default Bits
 	bits = 100

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Condition" load_steps=10 format=3 uid="uid://bfbdhof0hj83s"]
+[gd_resource type="Resource" script_class="Condition" format=3 uid="uid://bfbdhof0hj83s"]
 
 [ext_resource type="Texture2D" uid="uid://c2gwjo0dxv750" path="res://assets/graphics/icons/skills/supersonic-bullet.png" id="1_r6rm2"]
 [ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://src/scripts/conditions/condition.gd" id="2_xipui"]

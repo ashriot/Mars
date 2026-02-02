@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Condition" load_steps=10 format=3 uid="uid://cs14j80ix5lig"]
+[gd_resource type="Resource" script_class="Condition" format=3 uid="uid://cs14j80ix5lig"]
 
 [ext_resource type="Texture2D" uid="uid://bou6hl5kcyodt" path="res://assets/graphics/icons/skills/thunder-blade.png" id="1_wvs8m"]
 [ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://src/scripts/conditions/condition.gd" id="2_wljsg"]

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Action" load_steps=8 format=3 uid="uid://cg0jwg4m14vwn"]
+[gd_resource type="Resource" script_class="Action" format=3 uid="uid://cg0jwg4m14vwn"]
 
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_r4ptv"]
 [ext_resource type="Texture2D" uid="uid://b6akugnahj553" path="res://assets/graphics/icons/skills/leeching-worm.png" id="2_trwkj"]

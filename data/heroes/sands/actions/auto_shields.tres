@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Action" load_steps=14 format=3 uid="uid://dc2781k2lc1ma"]
+[gd_resource type="Resource" script_class="Action" format=3 uid="uid://dc2781k2lc1ma"]
 
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_8nxcm"]
 [ext_resource type="Texture2D" uid="uid://blsm0tksr6r2a" path="res://assets/graphics/icons/skills/heart-shield.png" id="2_5peya"]
