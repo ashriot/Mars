@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="RoleDefinition" load_steps=11 format=3 uid="uid://8mpcdw2eyx0n"]
+[gd_resource type="Resource" script_class="RoleDefinition" format=3 uid="uid://8mpcdw2eyx0n"]
 
 [ext_resource type="Texture2D" uid="uid://dve0tjghg88kw" path="res://assets/graphics/icons/roles/blindfold.png" id="1_2ckq0"]
 [ext_resource type="Script" uid="uid://sy50n7nerbow" path="res://src/scripts/data/role_definition.gd" id="1_a5jl1"]

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="RoleDefinition" load_steps=10 format=3 uid="uid://c2lsgpuh7cdfw"]
+[gd_resource type="Resource" script_class="RoleDefinition" format=3 uid="uid://c2lsgpuh7cdfw"]
 
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="1_nkik1"]
 [ext_resource type="Texture2D" uid="uid://dtwo50io0wj1u" path="res://assets/graphics/icons/roles/caduceus.png" id="2_1cpdq"]
@@ -8,6 +8,7 @@
 [ext_resource type="Resource" uid="uid://dc2781k2lc1ma" path="res://data/heroes/sands/actions/auto_shields.tres" id="4_t4pui"]
 [ext_resource type="Resource" uid="uid://cp3da2e23258p" path="res://data/heroes/sands/actions/bastion.tres" id="5_c1yto"]
 [ext_resource type="Resource" uid="uid://dax8kpkfwgv5l" path="res://data/heroes/sands/actions/triage.tres" id="5_vg3au"]
+[ext_resource type="Resource" uid="uid://ceuh24g7qaq8v" path="res://data/heroes/sands/roles/medic/med_1.tres" id="8_ykrgj"]
 [ext_resource type="Script" uid="uid://sy50n7nerbow" path="res://src/scripts/data/role_definition.gd" id="9_w7vm7"]
 
 [resource]
@@ -20,4 +21,5 @@ color = Color(1, 0.29000002, 0.6094999, 1)
 shift_action = ExtResource("5_vg3au")
 passive = ExtResource("3_c3eso")
 actions = Array[ExtResource("1_nkik1")]([ExtResource("2_633w3"), ExtResource("3_ykrgj"), ExtResource("4_t4pui"), ExtResource("5_c1yto")])
+root_node = ExtResource("8_ykrgj")
 metadata/_custom_type_script = "uid://sy50n7nerbow"

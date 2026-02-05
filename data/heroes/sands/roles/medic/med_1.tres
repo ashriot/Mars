@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="RoleNode" format=3 uid="uid://ceuh24g7qaq8v"]
+
+[ext_resource type="Resource" uid="uid://dkpjpxe80t3ip" path="res://data/heroes/sands/roles/medic/med_2.tres" id="1_55lrv"]
+[ext_resource type="Script" uid="uid://cuhoaxfyipk6s" path="res://src/scripts/data/role_node.gd" id="2_2yb2u"]
+
+[resource]
+script = ExtResource("2_2yb2u")
+type = 1
+action_slot_index = 0
+child_node = ExtResource("1_55lrv")
+metadata/_custom_type_script = "uid://cuhoaxfyipk6s"

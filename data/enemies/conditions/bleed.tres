@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Condition" load_steps=10 format=3 uid="uid://cmkivbg7nlle6"]
+[gd_resource type="Resource" script_class="Condition" format=3 uid="uid://cmkivbg7nlle6"]
 
 [ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://src/scripts/conditions/condition.gd" id="1_0njqx"]
 [ext_resource type="Texture2D" uid="uid://b7uy6nk2wao6q" path="res://assets/graphics/icons/skills/blood.png" id="1_rkhse"]

@@ -15,4 +15,6 @@ hero_name = "Sands"
 weapon = ExtResource("7_rv7in")
 armor = ExtResource("1_70kmf")
 role_definitions = Array[ExtResource("2_e16q0")]([ExtResource("3_1hmov"), ExtResource("4_55x01"), ExtResource("5_jk5ex")])
+unlocked_role_ids = Array[String](["van", "med", "stg"])
+unlocked_node_ids = Array[String](["van_1", "van_2", "van_3", "van_4", "med_1", "med_2", "med_3", "med_4", "stg_1", "stg_2", "stg_3", "stg_4", "stg_5", "stg_6", "van_5", "van_6", "med_5", "med_6"])
 metadata/_custom_type_script = "uid://dc5sk0b0jubvj"

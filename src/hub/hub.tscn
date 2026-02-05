@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://ckajtcj4403sy"]
 
 [ext_resource type="Script" uid="uid://dff0o6ejveewn" path="res://src/hub/hub.gd" id="1_8xbvn"]
-[ext_resource type="Resource" uid="uid://doxl25k4e5ifr" path="res://data/enemies/dungeon_profiles/first_alleyway.tres" id="2_0pbk3"]
+[ext_resource type="Resource" uid="uid://lapq7v4xfd17" path="res://data/enemies/dungeon_profiles/level_one.tres" id="2_gb5ag"]
 [ext_resource type="Texture2D" uid="uid://5g78sj1okle7" path="res://assets/graphics/backgrounds/apartment.webp" id="2_n1oa3"]
 [ext_resource type="Texture2D" uid="uid://b0a4ghiukj8yg" path="res://src/effects/Flare_small.PNG" id="3_c3p1t"]
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="4_bfsw3"]
@@ -80,7 +80,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_8xbvn")
-dungeon_profile = ExtResource("2_0pbk3")
+dungeon_profile = ExtResource("2_gb5ag")
 party_menu = NodePath("PartyMenu")
 
 [node name="Background" type="TextureRect" parent="." unique_id=348337114]

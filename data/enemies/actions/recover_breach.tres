@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Action" load_steps=6 format=3 uid="uid://bg7k6ixvwst7t"]
+[gd_resource type="Resource" script_class="Action" format=3 uid="uid://bg7k6ixvwst7t"]
 
 [ext_resource type="Script" uid="uid://da5rrc2omd6le" path="res://src/scripts/action_effects/effect_recover_breach.gd" id="1_htc05"]
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_yp4mf"]

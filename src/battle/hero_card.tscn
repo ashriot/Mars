@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3 uid="uid://cj2ylb1ld6ews"]
+[gd_scene format=3 uid="uid://cj2ylb1ld6ews"]
 
 [ext_resource type="Script" uid="uid://cp1th7fv4flgo" path="res://src/battle/hero_card.gd" id="1_n7b5o"]
 [ext_resource type="Texture2D" uid="uid://dve0tjghg88kw" path="res://assets/graphics/icons/roles/blindfold.png" id="2_53q4u"]
@@ -74,7 +74,7 @@ corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
 
-[node name="HeroCard" type="Control"]
+[node name="HeroCard" type="Control" unique_id=1974145477]
 custom_minimum_size = Vector2(400, 180)
 layout_mode = 3
 anchors_preset = 0
@@ -87,7 +87,7 @@ damage_popup_scene = ExtResource("2_nheih")
 buff_scene = ExtResource("3_wyvcu")
 debuff_scene = ExtResource("7_ha0bt")
 
-[node name="Panel" type="Panel" parent="."]
+[node name="Panel" type="Panel" parent="." unique_id=428660112]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -96,7 +96,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 1
 
-[node name="Highlight" type="Panel" parent="Panel"]
+[node name="Highlight" type="Panel" parent="Panel" unique_id=1592490958]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -110,7 +110,7 @@ grow_vertical = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_nheih")
 
-[node name="TargetFlash" type="Panel" parent="Panel"]
+[node name="TargetFlash" type="Panel" parent="Panel" unique_id=1829386083]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -125,7 +125,7 @@ grow_vertical = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_fh56t")
 
-[node name="RoleIcon" type="TextureRect" parent="Panel"]
+[node name="RoleIcon" type="TextureRect" parent="Panel" unique_id=943124167]
 modulate = Color(1, 1, 1, 0.29411766)
 layout_mode = 1
 anchors_preset = 1
@@ -138,7 +138,7 @@ mouse_filter = 2
 texture = ExtResource("2_53q4u")
 expand_mode = 1
 
-[node name="Role" type="Label" parent="Panel"]
+[node name="Role" type="Label" parent="Panel" unique_id=834641003]
 modulate = Color(1, 1, 1, 0.5254902)
 layout_mode = 1
 anchors_preset = 6
@@ -161,7 +161,7 @@ theme_override_font_sizes/font_size = 24
 text = "ROLE NAME"
 uppercase = true
 
-[node name="Title" type="Label" parent="Panel"]
+[node name="Title" type="Label" parent="Panel" unique_id=1980234667]
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
@@ -179,7 +179,7 @@ theme_override_fonts/font = ExtResource("7_tvdfu")
 theme_override_font_sizes/font_size = 40
 text = "Unit"
 
-[node name="FocusBar" type="HBoxContainer" parent="Panel"]
+[node name="FocusBar" type="HBoxContainer" parent="Panel" unique_id=1969958843]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -192,12 +192,12 @@ grow_horizontal = 2
 mouse_filter = 2
 theme_override_constants/separation = -1
 
-[node name="Pip1" type="Control" parent="Panel/FocusBar"]
+[node name="Pip1" type="Control" parent="Panel/FocusBar" unique_id=394576159]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip1"]
+[node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip1" unique_id=721749434]
 custom_minimum_size = Vector2(42, 0)
 layout_mode = 1
 anchors_preset = 15
@@ -210,12 +210,12 @@ mouse_filter = 2
 texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
-[node name="Pip2" type="Control" parent="Panel/FocusBar"]
+[node name="Pip2" type="Control" parent="Panel/FocusBar" unique_id=282571059]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip2"]
+[node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip2" unique_id=1912337033]
 custom_minimum_size = Vector2(42, 0)
 layout_mode = 1
 anchors_preset = 15
@@ -228,12 +228,12 @@ mouse_filter = 2
 texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
-[node name="Pip3" type="Control" parent="Panel/FocusBar"]
+[node name="Pip3" type="Control" parent="Panel/FocusBar" unique_id=97056832]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip3"]
+[node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip3" unique_id=1850614304]
 custom_minimum_size = Vector2(42, 0)
 layout_mode = 1
 anchors_preset = 15
@@ -246,12 +246,12 @@ mouse_filter = 2
 texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
-[node name="Pip4" type="Control" parent="Panel/FocusBar"]
+[node name="Pip4" type="Control" parent="Panel/FocusBar" unique_id=153304968]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip4"]
+[node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip4" unique_id=118212832]
 custom_minimum_size = Vector2(42, 0)
 layout_mode = 1
 anchors_preset = 15
@@ -264,12 +264,12 @@ mouse_filter = 2
 texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
-[node name="Pip5" type="Control" parent="Panel/FocusBar"]
+[node name="Pip5" type="Control" parent="Panel/FocusBar" unique_id=904281542]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip5"]
+[node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip5" unique_id=935521401]
 custom_minimum_size = Vector2(42, 0)
 layout_mode = 1
 anchors_preset = 15
@@ -282,12 +282,12 @@ mouse_filter = 2
 texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
-[node name="Pip6" type="Control" parent="Panel/FocusBar"]
+[node name="Pip6" type="Control" parent="Panel/FocusBar" unique_id=1496505669]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip6"]
+[node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip6" unique_id=758272827]
 custom_minimum_size = Vector2(42, 0)
 layout_mode = 1
 anchors_preset = 15
@@ -300,12 +300,12 @@ mouse_filter = 2
 texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
-[node name="Pip7" type="Control" parent="Panel/FocusBar"]
+[node name="Pip7" type="Control" parent="Panel/FocusBar" unique_id=1869530063]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip7"]
+[node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip7" unique_id=1266343788]
 custom_minimum_size = Vector2(42, 0)
 layout_mode = 1
 anchors_preset = 15
@@ -318,12 +318,12 @@ mouse_filter = 2
 texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
-[node name="Pip8" type="Control" parent="Panel/FocusBar"]
+[node name="Pip8" type="Control" parent="Panel/FocusBar" unique_id=661180217]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip8"]
+[node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip8" unique_id=1545517628]
 custom_minimum_size = Vector2(42, 0)
 layout_mode = 1
 anchors_preset = 15
@@ -336,12 +336,12 @@ mouse_filter = 2
 texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
-[node name="Pip9" type="Control" parent="Panel/FocusBar"]
+[node name="Pip9" type="Control" parent="Panel/FocusBar" unique_id=945014529]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip9"]
+[node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip9" unique_id=831064824]
 custom_minimum_size = Vector2(42, 0)
 layout_mode = 1
 anchors_preset = 15
@@ -354,12 +354,12 @@ mouse_filter = 2
 texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
-[node name="Pip10" type="Control" parent="Panel/FocusBar"]
+[node name="Pip10" type="Control" parent="Panel/FocusBar" unique_id=361432478]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip10"]
+[node name="Diamond" type="TextureRect" parent="Panel/FocusBar/Pip10" unique_id=834813337]
 custom_minimum_size = Vector2(42, 0)
 layout_mode = 1
 anchors_preset = 15
@@ -372,7 +372,7 @@ mouse_filter = 2
 texture = SubResource("CompressedTexture2D_0mfya")
 expand_mode = 1
 
-[node name="Portrait" type="TextureRect" parent="Panel"]
+[node name="Portrait" type="TextureRect" parent="Panel" unique_id=1414936185]
 layout_mode = 0
 offset_left = 264.0
 offset_top = 22.0
@@ -380,7 +380,7 @@ offset_right = 380.0
 offset_bottom = 138.0
 mouse_filter = 2
 
-[node name="HP" type="Control" parent="Panel"]
+[node name="HP" type="Control" parent="Panel" unique_id=344446381]
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
@@ -394,7 +394,7 @@ grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
 
-[node name="BarGhost" type="ProgressBar" parent="Panel/HP"]
+[node name="BarGhost" type="ProgressBar" parent="Panel/HP" unique_id=80904360]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -408,7 +408,7 @@ theme_override_styles/fill = SubResource("StyleBoxFlat_tvdfu")
 value = 16.0
 show_percentage = false
 
-[node name="BarActual" type="ProgressBar" parent="Panel/HP"]
+[node name="BarActual" type="ProgressBar" parent="Panel/HP" unique_id=114061263]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -421,7 +421,7 @@ theme_override_styles/fill = SubResource("StyleBoxFlat_t7qsg")
 value = 12.0
 show_percentage = false
 
-[node name="HeartIcon" type="TextureRect" parent="Panel/HP"]
+[node name="HeartIcon" type="TextureRect" parent="Panel/HP" unique_id=174426532]
 layout_mode = 1
 anchors_preset = 9
 anchor_bottom = 1.0
@@ -435,7 +435,7 @@ texture = ExtResource("2_d6207")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Value" type="Label" parent="Panel/HP"]
+[node name="Value" type="Label" parent="Panel/HP" unique_id=1402853598]
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
@@ -452,7 +452,7 @@ theme_override_font_sizes/font_size = 50
 text = "99999"
 horizontal_alignment = 2
 
-[node name="GuardBar" type="HBoxContainer" parent="Panel"]
+[node name="GuardBar" type="HBoxContainer" parent="Panel" unique_id=2144207938]
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -468,12 +468,12 @@ grow_vertical = 0
 mouse_filter = 2
 theme_override_constants/separation = -2
 
-[node name="Pip" type="Control" parent="Panel/GuardBar"]
+[node name="Pip" type="Control" parent="Panel/GuardBar" unique_id=560742020]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip"]
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip" unique_id=972814148]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 0
 offset_left = 2.0
@@ -483,12 +483,12 @@ mouse_filter = 2
 texture = ExtResource("9_0mfya")
 expand_mode = 1
 
-[node name="Pip2" type="Control" parent="Panel/GuardBar"]
+[node name="Pip2" type="Control" parent="Panel/GuardBar" unique_id=757187846]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip2"]
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip2" unique_id=33278289]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 0
 offset_left = 2.0
@@ -498,12 +498,12 @@ mouse_filter = 2
 texture = ExtResource("9_0mfya")
 expand_mode = 1
 
-[node name="Pip3" type="Control" parent="Panel/GuardBar"]
+[node name="Pip3" type="Control" parent="Panel/GuardBar" unique_id=2100992452]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip3"]
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip3" unique_id=16731368]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 0
 offset_left = 2.0
@@ -513,12 +513,12 @@ mouse_filter = 2
 texture = ExtResource("9_0mfya")
 expand_mode = 1
 
-[node name="Pip4" type="Control" parent="Panel/GuardBar"]
+[node name="Pip4" type="Control" parent="Panel/GuardBar" unique_id=1537444316]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip4"]
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip4" unique_id=51673829]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 0
 offset_left = 2.0
@@ -528,12 +528,12 @@ mouse_filter = 2
 texture = ExtResource("9_0mfya")
 expand_mode = 1
 
-[node name="Pip5" type="Control" parent="Panel/GuardBar"]
+[node name="Pip5" type="Control" parent="Panel/GuardBar" unique_id=26013784]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip5"]
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip5" unique_id=614693769]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 0
 offset_left = 2.0
@@ -543,12 +543,12 @@ mouse_filter = 2
 texture = ExtResource("9_0mfya")
 expand_mode = 1
 
-[node name="Pip6" type="Control" parent="Panel/GuardBar"]
+[node name="Pip6" type="Control" parent="Panel/GuardBar" unique_id=1849942748]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip6"]
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip6" unique_id=1087169199]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 0
 offset_left = 2.0
@@ -558,12 +558,12 @@ mouse_filter = 2
 texture = ExtResource("9_0mfya")
 expand_mode = 1
 
-[node name="Pip7" type="Control" parent="Panel/GuardBar"]
+[node name="Pip7" type="Control" parent="Panel/GuardBar" unique_id=1315129115]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip7"]
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip7" unique_id=413407654]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 0
 offset_left = 2.0
@@ -573,12 +573,12 @@ mouse_filter = 2
 texture = ExtResource("9_0mfya")
 expand_mode = 1
 
-[node name="Pip8" type="Control" parent="Panel/GuardBar"]
+[node name="Pip8" type="Control" parent="Panel/GuardBar" unique_id=494668365]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip8"]
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip8" unique_id=728486833]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 0
 offset_left = 2.0
@@ -588,12 +588,12 @@ mouse_filter = 2
 texture = ExtResource("9_0mfya")
 expand_mode = 1
 
-[node name="Pip9" type="Control" parent="Panel/GuardBar"]
+[node name="Pip9" type="Control" parent="Panel/GuardBar" unique_id=683966531]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip9"]
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip9" unique_id=477270166]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 0
 offset_left = 2.0
@@ -603,12 +603,12 @@ mouse_filter = 2
 texture = ExtResource("9_0mfya")
 expand_mode = 1
 
-[node name="Pip10" type="Control" parent="Panel/GuardBar"]
+[node name="Pip10" type="Control" parent="Panel/GuardBar" unique_id=97402157]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip10"]
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip10" unique_id=608630659]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 0
 offset_left = 2.0
@@ -618,7 +618,7 @@ mouse_filter = 2
 texture = ExtResource("9_0mfya")
 expand_mode = 1
 
-[node name="GuardLabel" type="Control" parent="Panel"]
+[node name="GuardLabel" type="Control" parent="Panel" unique_id=762656241]
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
@@ -632,7 +632,7 @@ grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
 
-[node name="Value" type="Label" parent="Panel/GuardLabel"]
+[node name="Value" type="Label" parent="Panel/GuardLabel" unique_id=1263148142]
 layout_mode = 1
 offset_left = 342.0
 offset_right = 376.0
@@ -646,7 +646,7 @@ text = "3"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="BreachedLabel" type="Label" parent="Panel"]
+[node name="BreachedLabel" type="Label" parent="Panel" unique_id=1332516405]
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
@@ -666,7 +666,7 @@ theme_override_font_sizes/font_size = 40
 text = "BREACHED"
 horizontal_alignment = 1
 
-[node name="ActionName" type="PanelContainer" parent="Panel"]
+[node name="ActionName" type="PanelContainer" parent="Panel" unique_id=1345014826]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -677,12 +677,12 @@ offset_right = 107.5
 offset_bottom = -14.0
 grow_horizontal = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="Panel/ActionName"]
+[node name="MarginContainer" type="MarginContainer" parent="Panel/ActionName" unique_id=1222873100]
 layout_mode = 2
 theme_override_constants/margin_left = 50
 theme_override_constants/margin_right = 50
 
-[node name="Label" type="Label" parent="Panel/ActionName/MarginContainer"]
+[node name="Label" type="Label" parent="Panel/ActionName/MarginContainer" unique_id=1933119339]
 layout_mode = 2
 theme_override_constants/line_spacing = -5
 theme_override_constants/outline_size = 5
@@ -693,7 +693,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 uppercase = true
 
-[node name="NextPanel" type="Panel" parent="Panel"]
+[node name="NextPanel" type="Panel" parent="Panel" unique_id=881314003]
 visible = false
 layout_mode = 1
 anchors_preset = 5
@@ -706,7 +706,7 @@ offset_bottom = -14.0
 grow_horizontal = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_ha0bt")
 
-[node name="Label" type="Label" parent="Panel/NextPanel"]
+[node name="Label" type="Label" parent="Panel/NextPanel" unique_id=342005600]
 modulate = Color(1, 1, 1, 0.5019608)
 layout_mode = 1
 anchors_preset = 15
@@ -719,7 +719,7 @@ text = "NEXT"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="GlyphButton" type="TextureButton" parent="Panel"]
+[node name="GlyphButton" type="TextureButton" parent="Panel" unique_id=1602440663]
 visible = false
 layout_mode = 1
 anchors_preset = 4
@@ -737,11 +737,11 @@ texture_disabled = ExtResource("10_0mfya")
 ignore_texture_size = true
 stretch_mode = 0
 
-[node name="RichTooltip" type="Node" parent="Panel"]
+[node name="RichTooltip" type="Node" parent="Panel" unique_id=68368071]
 script = ExtResource("12_tvdfu")
 metadata/_custom_type_script = "uid://m4vn3jl6sqd6"
 
-[node name="Debuffs" type="HBoxContainer" parent="."]
+[node name="Debuffs" type="HBoxContainer" parent="." unique_id=2033316261]
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 1
 anchors_preset = 12
@@ -755,7 +755,7 @@ grow_horizontal = 2
 grow_vertical = 0
 theme_override_constants/separation = 8
 
-[node name="Buffs" type="HBoxContainer" parent="."]
+[node name="Buffs" type="HBoxContainer" parent="." unique_id=1821538196]
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 1
 anchors_preset = 12

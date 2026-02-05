@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="RoleDefinition" load_steps=11 format=3 uid="uid://ggyc3b3330o5"]
+[gd_resource type="Resource" script_class="RoleDefinition" format=3 uid="uid://ggyc3b3330o5"]
 
 [ext_resource type="Texture2D" uid="uid://dsriy3sccbg28" path="res://assets/graphics/icons/roles/bolt-spell-cast.png" id="1_e0p5n"]
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="1_v81oy"]

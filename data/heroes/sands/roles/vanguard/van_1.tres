@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="RoleNode" format=3 uid="uid://o64onstiarf6"]
+
+[ext_resource type="Resource" uid="uid://be78n13pq3acj" path="res://data/heroes/sands/roles/vanguard/van_2.tres" id="1_2400p"]
+[ext_resource type="Script" uid="uid://cuhoaxfyipk6s" path="res://src/scripts/data/role_node.gd" id="2_20t7e"]
+
+[resource]
+script = ExtResource("2_20t7e")
+type = 1
+action_slot_index = 0
+child_node = ExtResource("1_2400p")
+metadata/_custom_type_script = "uid://cuhoaxfyipk6s"

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="RoleDefinition" load_steps=10 format=3 uid="uid://bhqprk74bvr4"]
+[gd_resource type="Resource" script_class="RoleDefinition" format=3 uid="uid://bhqprk74bvr4"]
 
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="1_yuf4c"]
 [ext_resource type="Resource" uid="uid://vk5px1abwyri" path="res://data/heroes/sands/actions/draw_fire.tres" id="2_lq36n"]
@@ -8,6 +8,7 @@
 [ext_resource type="Resource" uid="uid://cp7b4dfv1j0ad" path="res://data/heroes/sands/actions/phalanx.tres" id="5_jvqkd"]
 [ext_resource type="Texture2D" uid="uid://brxh73qv0bq0b" path="res://assets/graphics/icons/roles/winged-sword.png" id="6_db3vp"]
 [ext_resource type="Resource" uid="uid://dv4r7yc61o8e6" path="res://data/heroes/sands/actions/return_fire.tres" id="7_u45y4"]
+[ext_resource type="Resource" uid="uid://o64onstiarf6" path="res://data/heroes/sands/roles/vanguard/van_1.tres" id="8_ib8gl"]
 [ext_resource type="Resource" uid="uid://bdv0soxiwb8dl" path="res://data/heroes/sands/actions/opening_salvo.tres" id="9_rqijg"]
 
 [resource]
@@ -20,4 +21,5 @@ color = Color(1, 0.29000002, 0.37283343, 1)
 shift_action = ExtResource("9_rqijg")
 passive = ExtResource("7_u45y4")
 actions = Array[ExtResource("1_yuf4c")]([ExtResource("2_lq36n"), ExtResource("3_ib8gl"), ExtResource("4_c5u6x"), ExtResource("5_jvqkd")])
+root_node = ExtResource("8_ib8gl")
 metadata/_custom_type_script = "uid://sy50n7nerbow"

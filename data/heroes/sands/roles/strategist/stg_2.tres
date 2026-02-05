@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="RoleNode" format=3 uid="uid://d2ucvpso4qjdu"]
+
+[ext_resource type="Resource" uid="uid://bgh4na0q8j4pc" path="res://data/heroes/sands/roles/strategist/stg_3.tres" id="1_rvekq"]
+[ext_resource type="Script" uid="uid://cuhoaxfyipk6s" path="res://src/scripts/data/role_node.gd" id="2_d5cid"]
+
+[resource]
+script = ExtResource("2_d5cid")
+type = 1
+action_slot_index = 1
+child_node = ExtResource("1_rvekq")
+metadata/_custom_type_script = "uid://cuhoaxfyipk6s"
