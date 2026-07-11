@@ -1,50 +1,114 @@
-# InputIconMap.gd
 extends Node
 
-# --- ENUM DEFINITIONS ---
-enum ControllerType { UNKNOWN, XBOX, PS, SWITCH }
-
-# Actions that match your Project Settings -> Input Map names
-enum Action {
-	SHIFT_LEFT, SHIFT_RIGHT,
-	ACTION_1, ACTION_2, ACTION_3, ACTION_4,
-	TARGET_UP, TARGET_DOWN, TARGET_LEFT, TARGET_RIGHT
+enum ControllerType {
+	KEYBOARD_MOUSE,
+	XBOX,
+	PLAYSTATION,
+	NINTENDO_SWITCH,
+	NINTENDO_SWITCH_2,
+	STEAM_CONTROLLER,
+	STEAM_DECK,
+	# Temporary aliases for InputManager until Task 3 replaces device-mode handling.
+	UNKNOWN = KEYBOARD_MOUSE,
+	PS = PLAYSTATION,
+	SWITCH = NINTENDO_SWITCH,
 }
 
-# Dictionary structure: [ControllerType][Action][State (Normal/Pressed)] -> Texture2D
-const GLYPHS = {
-	ControllerType.PS: {
-		# Action Glyphs (L2/R2)
-		Action.SHIFT_LEFT:   { "normal": preload("res://assets/graphics/glyphs/ps/ps_L2_normal.png"),   "pressed": preload("res://assets/graphics/glyphs/ps/ps_L2_pressed.png") },
-		Action.SHIFT_RIGHT:  { "normal": preload("res://assets/graphics/glyphs/ps/ps_R2_normal.png"),  "pressed": preload("res://assets/graphics/glyphs/ps/ps_R2_pressed.png") },
-		# Face Button Glyphs (A/B/X/Y)
-		Action.ACTION_1:     { "normal": preload("res://assets/graphics/glyphs/ps/ps_cross_normal.png"), "pressed": preload("res://assets/graphics/glyphs/ps/ps_cross_pressed.png") },
-		Action.ACTION_2:     { "normal": preload("res://assets/graphics/glyphs/ps/ps_circle_normal.png"),"pressed": preload("res://assets/graphics/glyphs/ps/ps_circle_pressed.png") },
-		Action.ACTION_3:     { "normal": preload("res://assets/graphics/glyphs/ps/ps_square_normal.png"),"pressed": preload("res://assets/graphics/glyphs/ps/ps_square_pressed.png") },
-		Action.ACTION_4:     { "normal": preload("res://assets/graphics/glyphs/ps/ps_triangle_normal.png"),"pressed": preload("res://assets/graphics/glyphs/ps/ps_triangle_pressed.png") },
-		# D-Pad Glyphs (Targeting)
-		Action.TARGET_UP:    { "normal": preload("res://assets/graphics/glyphs/ps/ps_dpad_up_normal.png"),  "pressed": preload("res://assets/graphics/glyphs/ps/ps_dpad_up_pressed.png") },
-		Action.TARGET_DOWN:  { "normal": preload("res://assets/graphics/glyphs/ps/ps_dpad_down_normal.png"), "pressed": preload("res://assets/graphics/glyphs/ps/ps_dpad_down_pressed.png") },
-		Action.TARGET_LEFT:  { "normal": preload("res://assets/graphics/glyphs/ps/ps_dpad_left_normal.png"), "pressed": preload("res://assets/graphics/glyphs/ps/ps_dpad_left_pressed.png") },
-		Action.TARGET_RIGHT: { "normal": preload("res://assets/graphics/glyphs/ps/ps_dpad_right_normal.png"),"pressed": preload("res://assets/graphics/glyphs/ps/ps_dpad_right_pressed.png") },
+const FAMILY_FOLDERS := {
+	ControllerType.KEYBOARD_MOUSE: "keyboard_mouse",
+	ControllerType.XBOX: "xbox",
+	ControllerType.PLAYSTATION: "playstation",
+	ControllerType.NINTENDO_SWITCH: "nintendo_switch",
+	ControllerType.NINTENDO_SWITCH_2: "nintendo_switch_2",
+	ControllerType.STEAM_CONTROLLER: "steam_controller",
+	ControllerType.STEAM_DECK: "steam_deck",
+}
+
+const GLYPH_FILES := {
+	ControllerType.KEYBOARD_MOUSE: {
+		&"confirm": "keyboard_enter.svg", &"cancel": "keyboard_escape.svg",
+		&"action_1": "keyboard_space.svg", &"action_2": "keyboard_a.svg",
+		&"action_3": "keyboard_s.svg", &"action_4": "keyboard_d.svg",
 	},
-	# Add your ControllerType.XBOX and ControllerType.SWITCH entries here
 	ControllerType.XBOX: {
-		# ... Fill in all 10 Xbox actions with normal/pressed textures ...
+		&"confirm": "xbox_button_a.svg", &"cancel": "xbox_button_b.svg",
+		&"action_1": "xbox_button_a.svg", &"action_2": "xbox_button_b.svg",
+		&"action_3": "xbox_button_x.svg", &"action_4": "xbox_button_y.svg",
+		&"shift_action": "xbox_lt.svg",
 	},
-	ControllerType.SWITCH: {
-		# ... Fill in all 10 Switch actions with normal/pressed textures ...
-	}
+	ControllerType.PLAYSTATION: {
+		&"confirm": "playstation_button_cross.svg", &"cancel": "playstation_button_circle.svg",
+		&"action_1": "playstation_button_cross.svg", &"action_2": "playstation_button_circle.svg",
+		&"action_3": "playstation_button_square.svg", &"action_4": "playstation_button_triangle.svg",
+		&"shift_action": "playstation_trigger_l2.svg",
+	},
+	ControllerType.NINTENDO_SWITCH: {
+		&"confirm": "switch_button_a.svg", &"cancel": "switch_button_b.svg",
+		&"action_1": "switch_button_b.svg", &"action_2": "switch_button_a.svg",
+		&"action_3": "switch_button_y.svg", &"action_4": "switch_button_x.svg",
+		&"shift_action": "switch_button_zl.svg",
+	},
+	ControllerType.NINTENDO_SWITCH_2: {
+		&"confirm": "switch_button_a.svg", &"cancel": "switch_button_b.svg",
+		&"action_1": "switch_button_b.svg", &"action_2": "switch_button_a.svg",
+		&"action_3": "switch_button_y.svg", &"action_4": "switch_button_x.svg",
+		&"shift_action": "switch_button_zl.svg",
+	},
+	ControllerType.STEAM_CONTROLLER: {
+		&"confirm": "steam_button_a.svg", &"cancel": "steam_button_b.svg",
+		&"action_1": "steam_button_a.svg", &"action_2": "steam_button_b.svg",
+		&"action_3": "steam_button_x.svg", &"action_4": "steam_button_y.svg",
+		&"shift_action": "controller_button_l2.svg",
+	},
+	ControllerType.STEAM_DECK: {
+		&"confirm": "steamdeck_button_a.svg", &"cancel": "steamdeck_button_b.svg",
+		&"action_1": "steamdeck_button_a.svg", &"action_2": "steamdeck_button_b.svg",
+		&"action_3": "steamdeck_button_x.svg", &"action_4": "steamdeck_button_y.svg",
+		&"shift_action": "steamdeck_button_l2.svg",
+	},
 }
 
-# --- HELPER FUNCTION ---
+
+func runtime_controller_types() -> Array[ControllerType]:
+	return [
+		ControllerType.KEYBOARD_MOUSE,
+		ControllerType.XBOX,
+		ControllerType.PLAYSTATION,
+		ControllerType.NINTENDO_SWITCH,
+		ControllerType.NINTENDO_SWITCH_2,
+		ControllerType.STEAM_CONTROLLER,
+		ControllerType.STEAM_DECK,
+	]
+
 
 func get_controller_type_from_name(controller_name: String) -> ControllerType:
-	var lower_name = controller_name.to_lower()
-	if "xbox" in lower_name:
-		return ControllerType.XBOX
+	var lower_name := controller_name.to_lower()
+	if "nintendo switch 2" in lower_name or "switch 2" in lower_name:
+		return ControllerType.NINTENDO_SWITCH_2
+	if "nintendo" in lower_name or "switch" in lower_name or "joy-con" in lower_name:
+		return ControllerType.NINTENDO_SWITCH
 	if "playstation" in lower_name or "dualshock" in lower_name or "dualsense" in lower_name:
-		return ControllerType.PS
-	if "nintendo" in lower_name:
-		return ControllerType.SWITCH
-	return ControllerType.UNKNOWN
+		return ControllerType.PLAYSTATION
+	if "steam controller" in lower_name:
+		return ControllerType.STEAM_CONTROLLER
+	if "steam deck" in lower_name or "steam virtual" in lower_name:
+		return ControllerType.STEAM_DECK
+	if "xbox" in lower_name or "xinput" in lower_name:
+		return ControllerType.XBOX
+	return ControllerType.STEAM_DECK
+
+
+func get_glyph_path(type: ControllerType, action: StringName) -> String:
+	var resolved_type := type if GLYPH_FILES.has(type) else ControllerType.STEAM_DECK
+	var family: Dictionary = GLYPH_FILES[resolved_type]
+	var file_name: String = family.get(action, "")
+	if file_name.is_empty():
+		return ""
+	return "res://assets/graphics/glyphs/%s/vector/%s" % [FAMILY_FOLDERS[resolved_type], file_name]
+
+
+func get_glyph(type: ControllerType, action: StringName) -> Texture2D:
+	var path := get_glyph_path(type, action)
+	if path.is_empty() or not ResourceLoader.exists(path):
+		return null
+	return load(path) as Texture2D

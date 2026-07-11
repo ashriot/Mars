@@ -11,7 +11,7 @@ signal pressed(action_button: ActionButton)
 @onready var highlight_panel: Panel = $Highlight
 @onready var dynamic_glyph: DynamicGlyph = $DynamicGlyph
 
-@export_enum("SHIFT_LEFT", "SHIFT_RIGHT", "ACTION_1", "ACTION_2", "ACTION_3", "ACTION_4", "TARGET_UP", "TARGET_DOWN", "TARGET_LEFT", "TARGET_RIGHT") var associated_action: int = InputIconMap.Action.ACTION_1
+@export var glyph_action: StringName = &"action_1"
 
 var action : Action
 var user_focus: int
@@ -27,6 +27,10 @@ var disabled:
 			if not value:
 				button.disabled = user_focus < focus_cost or override_disabled
 	get: return button.disabled
+
+
+func _ready() -> void:
+	dynamic_glyph.set_action(glyph_action)
 
 
 func setup(_action: Action, actor: HeroCard, scaled_focus: int, color: Color):

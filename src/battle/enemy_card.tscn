@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3 uid="uid://b4tt3yil85l7j"]
+[gd_scene load_steps=21 format=3 uid="uid://b4tt3yil85l7j"]
 
 [ext_resource type="Script" uid="uid://carvfoj4h04nm" path="res://src/battle/enemy_card.gd" id="1_cu1kv"]
 [ext_resource type="Resource" uid="uid://bg7k6ixvwst7t" path="res://data/enemies/actions/recover_breach.tres" id="2_dmmmv"]
@@ -6,7 +6,6 @@
 [ext_resource type="PackedScene" uid="uid://ckw8rm3jl32bx" path="res://src/battle/damage_popup.tscn" id="2_xkcvw"]
 [ext_resource type="PackedScene" uid="uid://dwpde7pjb1jds" path="res://src/battle/debuff.tscn" id="3_1mnyd"]
 [ext_resource type="PackedScene" uid="uid://be3t7advgy14o" path="res://src/battle/buff.tscn" id="3_pdx0h"]
-[ext_resource type="Texture2D" uid="uid://bhk28mg1reyry" path="res://assets/graphics/glyphs/ps/ps_dpad_down_normal.png" id="4_e8ixv"]
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="6_pdx0h"]
 [ext_resource type="Texture2D" uid="uid://bi50x3lsg4gpg" path="res://assets/graphics/icons/textures/shield.png" id="8_g4dne"]
 [ext_resource type="FontVariation" uid="uid://da34kbi1ndel7" path="res://data/theme/fonts/archivo.tres" id="10_g4dne"]
@@ -659,7 +658,6 @@ offset_bottom = 125.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
-texture = ExtResource("4_e8ixv")
 expand_mode = 1
 
 [connection signal="focus_entered" from="Panel" to="." method="_on_focus_entered"]
