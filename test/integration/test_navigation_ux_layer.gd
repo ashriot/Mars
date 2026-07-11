@@ -3,6 +3,27 @@ extends GutTest
 const UXScene = preload("res://src/ui/navigation/navigation_ux_layer.tscn")
 
 
+func test_top_modal_query_tracks_nested_ownership() -> void:
+	var ux = UXScene.instantiate()
+	add_child_autofree(ux)
+	var outer := Control.new()
+	var outer_button := Button.new()
+	outer.add_child(outer_button)
+	add_child_autofree(outer)
+	var inner := Control.new()
+	var inner_button := Button.new()
+	inner.add_child(inner_button)
+	add_child_autofree(inner)
+	assert_false(ux.is_top_modal(outer))
+	ux.push_modal(outer, outer_button)
+	assert_true(ux.is_top_modal(outer))
+	ux.push_modal(inner, inner_button)
+	assert_false(ux.is_top_modal(outer))
+	assert_true(ux.is_top_modal(inner))
+	ux.pop_modal(inner)
+	assert_true(ux.is_top_modal(outer))
+
+
 func test_registered_screens_track_focus_and_modal_restores_it() -> void:
 	var ux = UXScene.instantiate()
 	add_child_autofree(ux)

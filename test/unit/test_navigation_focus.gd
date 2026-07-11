@@ -41,3 +41,13 @@ func test_freed_highlighted_control_releases_saved_state() -> void:
 	assert_true(NavigationFocus._states.has(instance_id))
 	control.free()
 	assert_false(NavigationFocus._states.has(instance_id))
+
+
+func test_apply_after_completed_clear_reuses_tree_exit_cleanup_safely() -> void:
+	var control := Button.new()
+	add_child_autofree(control)
+	NavigationFocus.apply(control)
+	NavigationFocus.clear(control)
+	await get_tree().create_timer(0.1).timeout
+	NavigationFocus.apply(control)
+	assert_engine_error_count(0)

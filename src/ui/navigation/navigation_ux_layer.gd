@@ -61,6 +61,11 @@ func pop_modal(root: Control) -> void:
 	_restore_from_entry(entry)
 
 
+func is_top_modal(root: Control) -> bool:
+	_prune_state()
+	return not _modal_stack.is_empty() and _weak_get(_modal_stack.back().root) == root
+
+
 func get_focus_target() -> Control:
 	return _focus_target
 

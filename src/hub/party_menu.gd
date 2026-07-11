@@ -27,6 +27,8 @@ func _ready():
 	for i in range(mode_tabs.get_child_count()):
 		var btn = mode_tabs.get_child(i) as Button
 		btn.pressed.connect(_on_mode_changed.bind(i))
+		btn.focus_entered.connect(_publish_hints)
+	$BackBtn.focus_entered.connect(_publish_hints)
 
 
 func _exit_tree() -> void:
@@ -46,10 +48,7 @@ func open():
 	var navigation := _navigation_ux_layer()
 	if navigation:
 		navigation.push_modal(self, btn)
-		navigation.publish_hints([
-			{action = &"confirm", label = "Select", enabled = true},
-			{action = &"cancel", label = "Back", enabled = true},
-		])
+	_publish_hints()
 	_grab_focus_if_valid.call_deferred(btn)
 
 func _on_back_pressed():
@@ -57,7 +56,8 @@ func _on_back_pressed():
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if visible and event.is_action_pressed(&"cancel"):
+	var navigation := _navigation_ux_layer()
+	if visible and navigation and navigation.is_top_modal(self) and event.is_action_pressed(&"cancel"):
 		get_viewport().set_input_as_handled()
 		_close()
 
@@ -248,6 +248,8 @@ func _on_back_btn_pressed() -> void:
 
 func _close() -> void:
 	var navigation := _navigation_ux_layer()
+	if navigation and not navigation.is_top_modal(self):
+		return
 	if navigation:
 		navigation.pop_modal(self)
 	hide()
@@ -255,6 +257,15 @@ func _close() -> void:
 
 func _navigation_ux_layer() -> NavigationUXLayer:
 	return get_tree().root.find_child("NavigationUXLayer", true, false) as NavigationUXLayer
+
+
+func _publish_hints() -> void:
+	var navigation := _navigation_ux_layer()
+	if navigation and navigation.is_top_modal(self):
+		navigation.publish_hints([
+			{action = &"confirm", label = "Select", enabled = true},
+			{action = &"cancel", label = "Back", enabled = true},
+		])
 
 
 func _grab_focus_if_valid(control: Control) -> void:
