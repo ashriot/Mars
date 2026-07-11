@@ -23,17 +23,6 @@ const NODE_DENSITY = {
 	"event": 1.25
 }
 
-const NODE_MULT = {
-	"terminal": 1.0,
-	"combat": 1.0,
-	"elite": 1.0,
-	"reward_common": 1.0,
-	"reward_uncommon": 1.0,
-	"reward_rare": 1.0,
-	"reward_epic": 1.0,
-	"event": 1.0
-}
-
 # Base Costs
 const COST_MOVE_BASE = 2.0
 const PENALTY_NORMAL_MOVE = 2.0
@@ -1065,58 +1054,24 @@ func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 	var type_map = {}
 	for c in all_coords: type_map[c] = MapNode.NodeType.UNKNOWN
 
-	# ----------------------------
-	# 1. Determine Node Counts
-	# ----------------------------
-	var base_terminals = _calculate_node_count("terminal")
-	var base_combats  = _calculate_node_count("combat")
-	var base_elites   = _calculate_node_count("elite")
-	var base_rewards  = _calculate_node_count("reward_common")
-	var base_uncommon = _calculate_node_count("reward_uncommon")
-	var base_rare     = _calculate_node_count("reward_rare")
-	var base_epic     = _calculate_node_count("reward_epic")
-	var base_events   = _calculate_node_count("event")
-
-	# --- 1. GET PROFILE & MULTIPLIERS ---
-	var profile: DungeonProfile = RunManager.dungeon_profile
-
-	# Helper to calculate final count based on Profile
-	var _get_count = func(base_count: int, type_str: String) -> int:
-		if not profile: return base_count
-		var mult = profile.get_node_multiplier(type_str)
-		# We use ceil() so that if you have 1 elite and mult is 0.5, you still get 1?
-		# Or round(). Let's use roundi() for standard scaling.
-		return max(0, roundi(base_count * mult))
-
-	# Apply Multipliers to Base Counts
-	var num_terminals = _get_count.call(base_terminals, "terminal")
-	var num_elites = _get_count.call(base_elites, "elite")
-	var num_rewards = _get_count.call(base_rewards, "reward_common")
-	var num_uncommon = _get_count.call(base_uncommon, "reward_uncommon")
-	var num_rare = _get_count.call(base_rare, "reward_rare")
-	var num_epic = _get_count.call(base_epic, "reward_epic")
-	var num_events = _get_count.call(base_events, "event")
-	var num_combats = _get_count.call(base_combats, "combat")
+	var counts = {
+		"terminal": _calculate_node_count("terminal"),
+		"combat": _calculate_node_count("combat"),
+		"elite": _calculate_node_count("elite"),
+		"reward_common": _calculate_node_count("reward_common"),
+		"reward_uncommon": _calculate_node_count("reward_uncommon"),
+		"reward_rare": _calculate_node_count("reward_rare"),
+		"reward_epic": _calculate_node_count("reward_epic"),
+		"event": _calculate_node_count("event"),
+	}
+	counts.terminal = DungeonRules.apply_minimum(counts.terminal, DungeonRules.MIN_TERMINALS)
 
 	print("Total Nodes:\n")
-	print("num_terminals: ", num_terminals)
-	print("num_combats: ", num_combats)
-	print("num_elites: ", num_elites)
-	print("num_rewards: ", num_rewards)
-	print("num_uncommon: ", num_uncommon)
-	print("num_rare: ", num_rare)
-	print("num_epic: ", num_epic)
-	print("num_events: ", num_events)
+	for node_type in counts:
+		print("num_", node_type, ": ", counts[node_type])
 
-	total_nodes = num_combats + num_elites + num_events + \
-		num_uncommon + num_rare + num_epic + num_rewards + num_terminals
-
-	var total_heavy_items = (
-		num_terminals + num_elites + num_rewards +
-		num_uncommon + num_rare + num_epic + num_events + num_combats
-	)
-
-	num_terminals = max(1, num_terminals) + 1
+	total_nodes = DungeonRules.actionable_total(counts, dungeon_has_boss)
+	var total_heavy_items = DungeonRules.actionable_total(counts, false)
 
 	# ----------------------------
 	# 2. Determine Entrance & Exit
@@ -1193,13 +1148,13 @@ func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 	# ----------------------------
 	# 5. Place POIs
 	# ----------------------------
-	await _place_batch.call(MapNode.NodeType.TERMINAL,     num_terminals, 4)
-	await _place_batch.call(MapNode.NodeType.ELITE,        num_elites,    3)
-	await _place_batch.call(MapNode.NodeType.REWARD_4,     num_epic,      2)
-	await _place_batch.call(MapNode.NodeType.REWARD_3,     num_rare,      2)
-	await _place_batch.call(MapNode.NodeType.REWARD_2,     num_uncommon,  2)
-	await _place_batch.call(MapNode.NodeType.REWARD,       num_rewards,   2)
-	await _place_batch.call(MapNode.NodeType.EVENT,        num_events,    1)
+	await _place_batch.call(MapNode.NodeType.TERMINAL, counts.terminal, 4)
+	await _place_batch.call(MapNode.NodeType.ELITE, counts.elite, 3)
+	await _place_batch.call(MapNode.NodeType.REWARD_4, counts.reward_epic, 2)
+	await _place_batch.call(MapNode.NodeType.REWARD_3, counts.reward_rare, 2)
+	await _place_batch.call(MapNode.NodeType.REWARD_2, counts.reward_uncommon, 2)
+	await _place_batch.call(MapNode.NodeType.REWARD, counts.reward_common, 2)
+	await _place_batch.call(MapNode.NodeType.EVENT, counts.event, 1)
 
 	# ----------------------------
 	# 6. Fill with combats
@@ -1208,7 +1163,7 @@ func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 	var placed_combats := []
 	var combat_spacing = 2
 
-	for i in range(num_combats):
+	for i in range(counts.combat):
 		if combat_pool.is_empty(): break
 
 		var c = _pick_balanced_coord(combat_pool, placed_combats, combat_spacing)
@@ -1231,9 +1186,10 @@ func _distribute_node_types(all_coords: Array, center_y: int) -> Dictionary:
 
 func _calculate_node_count(node_type: String) -> int:
 	var density = NODE_DENSITY[node_type]
-	var mult = RunManager.dungeon_profile.get_node_multiplier(node_type)
-	var per_hex = density / 100.0
-	return int(map_size * per_hex * mult)
+	var multiplier := 1.0
+	if RunManager.dungeon_profile:
+		multiplier = RunManager.dungeon_profile.get_node_multiplier(node_type)
+	return DungeonRules.calculate_count(map_size, density, multiplier)
 
 
 func _pick_balanced_coord(candidate_pool: Array, existing_group: Array, min_dist: int) -> Vector2i:

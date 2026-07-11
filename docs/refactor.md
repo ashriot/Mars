@@ -32,11 +32,11 @@ Use this template for future candidates:
 
 **Problem:** Random layout generation, live scene creation, HUD progress, and serialized run state share one script.
 
-**Proposed boundary:** A `DungeonGenerator` that accepts dimensions, profile multipliers, endpoint rules, and a seed, then returns plain map data.
+**Proposed boundary:** The pure count seam now lives in `src/map/dungeon_rules.gd`. Full extraction remains a `DungeonGenerator` that accepts dimensions, profile multipliers, endpoint rules, and a seed, then returns plain map data.
 
-**Why defer:** Pure count helpers are enough to stabilize current generation without moving scene construction.
+**Why defer:** The pure count seam stabilizes current generation without moving scene construction; extracting random placement, scene construction, and progress signaling remains a separate architectural change.
 
-**Tests protecting behavior:** Seed determinism, node-count invariants, and payload/type correspondence.
+**Tests protecting behavior:** `test/unit/test_dungeon_rules.gd` covers tier normalization, loot scaling, one-time multiplier application, terminal minimums, and actionable totals. Seed determinism and payload/type correspondence still need coverage before full extraction.
 
 **Likely files affected:** `src/map/dungeon_map.gd`, a future generator script, and dungeon generation tests.
 

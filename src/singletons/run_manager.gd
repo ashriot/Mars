@@ -8,7 +8,7 @@ enum RunResult { SUCCESS, RETREAT, DEFEAT }
 var is_run_active: bool = false
 var active_dungeon_map: DungeonMap = null
 var dungeon_profile: DungeonProfile
-var current_dungeon_tier: int = 0
+var current_dungeon_tier: int = DungeonRules.MIN_DUNGEON_TIER
 var current_run_seed: int = 0
 var run_bits: int = 0
 var run_xp: int = 0
@@ -61,13 +61,7 @@ func add_loot_mod(id: String, tier: int):
 	print("Looted Mod: %s (Tier %d)" % [mod_res.mod_name, tier])
 
 func get_loot_scalar() -> float:
-	var scalar = 1.0 + ((current_dungeon_tier - 1) * 0.25)
-
-	# 2. (Future-Proofing) Add Party Level Logic here later
-	# var avg_level = _get_average_party_level()
-	# scalar += avg_level * 0.1
-
-	return scalar
+	return DungeonRules.loot_scalar(current_dungeon_tier)
 
 func get_run_save_data() -> Dictionary:
 	if not active_dungeon_map: return {}
@@ -106,7 +100,7 @@ func restore_run():
 	run_bits = int(run_data.get("run_bits", 0))
 	run_xp = int(run_data.get("run_xp", 0))
 	run_inventory = run_data.get("run_inventory", {})
-	current_dungeon_tier = int(run_data.get("tier", 0))
+	current_dungeon_tier = DungeonRules.normalized_tier(int(run_data.get("tier", 1)))
 
 	run_equipment_loot.clear()
 	var saved_eq = run_data.get("run_equipment", [])
