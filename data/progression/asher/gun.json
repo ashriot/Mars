@@ -1,0 +1,222 @@
+{
+  "content_revision": 1,
+  "nodes": [
+    {
+      "column": 0,
+      "effect": {
+        "resource": "res://data/heroes/asher/actions/double_tap.tres",
+        "slot": 1,
+        "type": "action"
+      },
+      "id": "gun.root",
+      "parent": null,
+      "rank": 1,
+      "xp_cost": 100
+    },
+    {
+      "column": 0,
+      "effect": {
+        "amount": 1,
+        "stat": "ATK",
+        "type": "stat"
+      },
+      "id": "gun.atk_1",
+      "parent": "gun.root",
+      "rank": 2,
+      "xp_cost": 200
+    },
+    {
+      "column": 0,
+      "effect": {
+        "amount": 5,
+        "stat": "HP",
+        "type": "stat"
+      },
+      "id": "gun.hp_5",
+      "parent": "gun.atk_1",
+      "rank": 3,
+      "xp_cost": 300
+    },
+    {
+      "column": -1,
+      "effect": {
+        "amount": 10,
+        "stat": "HP",
+        "type": "stat"
+      },
+      "id": "gun.hp_10",
+      "parent": "gun.hp_5",
+      "rank": 3,
+      "xp_cost": 450
+    },
+    {
+      "column": -1,
+      "effect": {
+        "amount": 10,
+        "stat": "HP",
+        "type": "stat"
+      },
+      "id": "gun.hp_10_2",
+      "parent": "gun.hp_10",
+      "rank": 4,
+      "xp_cost": 600
+    },
+    {
+      "column": 0,
+      "effect": {
+        "amount": 1,
+        "stat": "SPD",
+        "type": "stat"
+      },
+      "id": "gun.spd_1",
+      "parent": "gun.hp_5",
+      "rank": 4,
+      "xp_cost": 400
+    },
+    {
+      "column": 0,
+      "effect": {
+        "resource": "res://data/heroes/asher/actions/fusion_ammo.tres",
+        "slot": 2,
+        "type": "action"
+      },
+      "id": "gun.fusion_ammo",
+      "parent": "gun.spd_1",
+      "rank": 5,
+      "xp_cost": 500
+    },
+    {
+      "column": 0,
+      "effect": {
+        "amount": 1,
+        "stat": "PSY",
+        "type": "stat"
+      },
+      "id": "gun.psy_1",
+      "parent": "gun.fusion_ammo",
+      "rank": 6,
+      "xp_cost": 600
+    },
+    {
+      "column": 0,
+      "effect": {
+        "amount": 5,
+        "stat": "HP",
+        "type": "stat"
+      },
+      "id": "gun.hp_5_2",
+      "parent": "gun.psy_1",
+      "rank": 7,
+      "xp_cost": 700
+    },
+    {
+      "column": -1,
+      "effect": {
+        "amount": 10,
+        "stat": "HP",
+        "type": "stat"
+      },
+      "id": "gun.hp_10_3",
+      "parent": "gun.hp_5_2",
+      "rank": 7,
+      "xp_cost": 1050
+    },
+    {
+      "column": 0,
+      "effect": {
+        "amount": 1,
+        "stat": "SPD",
+        "type": "stat"
+      },
+      "id": "gun.spd_1_2",
+      "parent": "gun.hp_5_2",
+      "rank": 8,
+      "xp_cost": 800
+    },
+    {
+      "column": 0,
+      "effect": {
+        "amount": 1,
+        "stat": "ATK",
+        "type": "stat"
+      },
+      "id": "gun.atk_1_2",
+      "parent": "gun.spd_1_2",
+      "rank": 9,
+      "xp_cost": 900
+    },
+    {
+      "column": -1,
+      "effect": {
+        "amount": 2,
+        "stat": "ATK",
+        "type": "stat"
+      },
+      "id": "gun.atk_2",
+      "parent": "gun.atk_1_2",
+      "rank": 9,
+      "xp_cost": 1350
+    },
+    {
+      "column": -1,
+      "effect": {
+        "amount": 2,
+        "stat": "ATK",
+        "type": "stat"
+      },
+      "id": "gun.atk_2_2",
+      "parent": "gun.atk_2",
+      "rank": 10,
+      "xp_cost": 1500
+    },
+    {
+      "column": 0,
+      "effect": {
+        "resource": "res://data/heroes/asher/actions/bullet_time.tres",
+        "type": "passive"
+      },
+      "id": "gun.bullet_time",
+      "parent": "gun.atk_1_2",
+      "rank": 10,
+      "xp_cost": 1000
+    },
+    {
+      "column": 1,
+      "effect": {
+        "amount": 2,
+        "stat": "SPD",
+        "type": "stat"
+      },
+      "id": "gun.spd_2",
+      "parent": "gun.spd_1_2",
+      "rank": 8,
+      "xp_cost": 1200
+    },
+    {
+      "column": 1,
+      "effect": {
+        "amount": 2,
+        "stat": "SPD",
+        "type": "stat"
+      },
+      "id": "gun.spd_2_2",
+      "parent": "gun.spd_2",
+      "rank": 9,
+      "xp_cost": 1350
+    },
+    {
+      "column": 1,
+      "effect": {
+        "amount": 2,
+        "stat": "PSY",
+        "type": "stat"
+      },
+      "id": "gun.psy_2",
+      "parent": "gun.psy_1",
+      "rank": 6,
+      "xp_cost": 900
+    }
+  ],
+  "role_id": "gun",
+  "schema_version": 1
+}

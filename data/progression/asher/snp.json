@@ -1,0 +1,103 @@
+{
+  "content_revision": 1,
+  "nodes": [
+    {
+      "column": 0,
+      "effect": {
+        "resource": "res://data/heroes/asher/actions/mark_target.tres",
+        "slot": 1,
+        "type": "action"
+      },
+      "id": "snp.root",
+      "parent": null,
+      "rank": 1,
+      "xp_cost": 100
+    },
+    {
+      "column": 0,
+      "effect": {
+        "amount": 5,
+        "stat": "HP",
+        "type": "stat"
+      },
+      "id": "snp.hp_5",
+      "parent": "snp.root",
+      "rank": 2,
+      "xp_cost": 200
+    },
+    {
+      "column": 0,
+      "effect": {
+        "amount": 1,
+        "stat": "ATK",
+        "type": "stat"
+      },
+      "id": "snp.atk_1",
+      "parent": "snp.hp_5",
+      "rank": 3,
+      "xp_cost": 300
+    },
+    {
+      "column": -1,
+      "effect": {
+        "amount": 2,
+        "stat": "ATK",
+        "type": "stat"
+      },
+      "id": "snp.atk_2",
+      "parent": "snp.atk_1",
+      "rank": 3,
+      "xp_cost": 450
+    },
+    {
+      "column": -1,
+      "effect": {
+        "amount": 2,
+        "stat": "ATK",
+        "type": "stat"
+      },
+      "id": "snp.atk_2_2",
+      "parent": "snp.atk_2",
+      "rank": 4,
+      "xp_cost": 600
+    },
+    {
+      "column": -1,
+      "effect": {
+        "amount": 1,
+        "stat": "AIM",
+        "type": "stat"
+      },
+      "id": "snp.aim_1",
+      "parent": "snp.atk_2_2",
+      "rank": 5,
+      "xp_cost": 750
+    },
+    {
+      "column": 0,
+      "effect": {
+        "amount": 1,
+        "stat": "OVR",
+        "type": "stat"
+      },
+      "id": "snp.ovr_1",
+      "parent": "snp.atk_1",
+      "rank": 4,
+      "xp_cost": 400
+    },
+    {
+      "column": 0,
+      "effect": {
+        "resource": "res://data/heroes/asher/actions/aimed_shot.tres",
+        "slot": 2,
+        "type": "action"
+      },
+      "id": "snp.aimed_shot",
+      "parent": "snp.ovr_1",
+      "rank": 5,
+      "xp_cost": 500
+    }
+  ],
+  "role_id": "snp",
+  "schema_version": 1
+}

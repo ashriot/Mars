@@ -13,8 +13,8 @@ class_name PartyMenu
 var party_roster: Array[HeroData] = []
 var current_hero_idx: int = 0
 var current_mode: int = 0 # 0=Skills, 1=Inventory
-var progression_service: ProgressionService
-var progression_catalog: ProgressionCatalog
+var progression_service: ProgressionService = ProgressionSystem.service
+var progression_catalog: ProgressionCatalog = ProgressionSystem.catalog
 var save_progression: Callable = SaveSystem.save_current_slot
 var play_progression_audio: Callable = AudioManager.play_sfx
 var refresh_hero_stats: Callable = _refresh_matching_hero_stats

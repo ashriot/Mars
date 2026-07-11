@@ -28,9 +28,7 @@ func load_directory(path: String) -> Error:
 		_errors = [ProgressionContentError.new(path, "", "directory", "Could not open directory.")]
 		return ERR_CANT_OPEN
 	var filenames: Array[String] = []
-	for filename: String in directory.get_files():
-		if filename.get_extension().to_lower() == "json":
-			filenames.append(filename)
+	_collect_json_files(path, "", filenames)
 	filenames.sort()
 	var next_roles: Dictionary[String, RoleTreeDefinition] = {}
 	var next_errors: Array[ProgressionContentError] = []
@@ -50,6 +48,22 @@ func load_directory(path: String) -> Error:
 	_roles = next_roles
 	_errors.clear()
 	return OK
+
+
+func _collect_json_files(root_path: String, relative_path: String, output: Array[String]) -> void:
+	var current_path := root_path.path_join(relative_path) if not relative_path.is_empty() else root_path
+	var directory := DirAccess.open(current_path)
+	if directory == null:
+		return
+	for filename: String in directory.get_files():
+		if filename.get_extension().to_lower() == "json":
+			output.append(relative_path.path_join(filename) if not relative_path.is_empty() else filename)
+	var child_directories: Array[String] = []
+	for child: String in directory.get_directories():
+		child_directories.append(child)
+	child_directories.sort()
+	for child: String in child_directories:
+		_collect_json_files(root_path, relative_path.path_join(child) if not relative_path.is_empty() else child, output)
 
 
 func get_role(role_id: String) -> RoleTreeDefinition:

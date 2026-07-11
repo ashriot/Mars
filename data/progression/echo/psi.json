@@ -1,0 +1,223 @@
+{
+  "content_revision": 1,
+  "nodes": [
+    {
+      "column": 0,
+      "effect": {
+        "resource": "res://data/heroes/echo/actions/focused_bolt.tres",
+        "slot": 1,
+        "type": "action"
+      },
+      "id": "psi.root",
+      "parent": null,
+      "rank": 1,
+      "xp_cost": 100
+    },
+    {
+      "column": 0,
+      "effect": {
+        "amount": 5,
+        "stat": "HP",
+        "type": "stat"
+      },
+      "id": "psi.hp_5",
+      "parent": "psi.root",
+      "rank": 2,
+      "xp_cost": 200
+    },
+    {
+      "column": 0,
+      "effect": {
+        "amount": 1,
+        "stat": "ATK",
+        "type": "stat"
+      },
+      "id": "psi.atk_1",
+      "parent": "psi.hp_5",
+      "rank": 3,
+      "xp_cost": 300
+    },
+    {
+      "column": -1,
+      "effect": {
+        "amount": 2,
+        "stat": "ATK",
+        "type": "stat"
+      },
+      "id": "psi.atk_2",
+      "parent": "psi.atk_1",
+      "rank": 3,
+      "xp_cost": 450
+    },
+    {
+      "column": -1,
+      "effect": {
+        "amount": 2,
+        "stat": "ATK",
+        "type": "stat"
+      },
+      "id": "psi.atk_2_2",
+      "parent": "psi.atk_2",
+      "rank": 4,
+      "xp_cost": 600
+    },
+    {
+      "column": 0,
+      "effect": {
+        "amount": 1,
+        "stat": "OVR",
+        "type": "stat"
+      },
+      "id": "psi.ovr_1",
+      "parent": "psi.atk_1",
+      "rank": 4,
+      "xp_cost": 400
+    },
+    {
+      "column": 0,
+      "effect": {
+        "resource": "res://data/heroes/echo/actions/energy_barrier.tres",
+        "slot": 2,
+        "type": "action"
+      },
+      "id": "psi.energy_barrier",
+      "parent": "psi.ovr_1",
+      "rank": 5,
+      "xp_cost": 500
+    },
+    {
+      "column": 0,
+      "effect": {
+        "amount": 1,
+        "stat": "PSY",
+        "type": "stat"
+      },
+      "id": "psi.psy_1",
+      "parent": "psi.energy_barrier",
+      "rank": 6,
+      "xp_cost": 600
+    },
+    {
+      "column": 0,
+      "effect": {
+        "amount": 5,
+        "stat": "HP",
+        "type": "stat"
+      },
+      "id": "psi.hp_5_2",
+      "parent": "psi.psy_1",
+      "rank": 7,
+      "xp_cost": 700
+    },
+    {
+      "column": -1,
+      "effect": {
+        "amount": 10,
+        "stat": "HP",
+        "type": "stat"
+      },
+      "id": "psi.hp_10",
+      "parent": "psi.hp_5_2",
+      "rank": 7,
+      "xp_cost": 1050
+    },
+    {
+      "column": 0,
+      "effect": {
+        "amount": 1,
+        "stat": "OVR",
+        "type": "stat"
+      },
+      "id": "psi.ovr_1_2",
+      "parent": "psi.hp_5_2",
+      "rank": 8,
+      "xp_cost": 800
+    },
+    {
+      "column": 0,
+      "effect": {
+        "amount": 1,
+        "stat": "ATK",
+        "type": "stat"
+      },
+      "id": "psi.atk_1_2",
+      "parent": "psi.ovr_1_2",
+      "rank": 9,
+      "xp_cost": 900
+    },
+    {
+      "column": -1,
+      "effect": {
+        "amount": 2,
+        "stat": "ATK",
+        "type": "stat"
+      },
+      "id": "psi.atk_2_3",
+      "parent": "psi.atk_1_2",
+      "rank": 9,
+      "xp_cost": 1350
+    },
+    {
+      "column": -1,
+      "effect": {
+        "amount": 2,
+        "stat": "ATK",
+        "type": "stat"
+      },
+      "id": "psi.atk_2_4",
+      "parent": "psi.atk_2_3",
+      "rank": 10,
+      "xp_cost": 1500
+    },
+    {
+      "column": 0,
+      "effect": {
+        "resource": "res://data/heroes/echo/actions/reverberate.tres",
+        "slot": 3,
+        "type": "action"
+      },
+      "id": "psi.reverberate",
+      "parent": "psi.atk_1_2",
+      "rank": 10,
+      "xp_cost": 1000
+    },
+    {
+      "column": 1,
+      "effect": {
+        "amount": 2,
+        "stat": "OVR",
+        "type": "stat"
+      },
+      "id": "psi.ovr_2",
+      "parent": "psi.ovr_1_2",
+      "rank": 8,
+      "xp_cost": 1200
+    },
+    {
+      "column": 1,
+      "effect": {
+        "amount": 2,
+        "stat": "PSY",
+        "type": "stat"
+      },
+      "id": "psi.psy_2",
+      "parent": "psi.psy_1",
+      "rank": 6,
+      "xp_cost": 900
+    },
+    {
+      "column": 1,
+      "effect": {
+        "amount": 2,
+        "stat": "OVR",
+        "type": "stat"
+      },
+      "id": "psi.ovr_2_2",
+      "parent": "psi.ovr_1",
+      "rank": 4,
+      "xp_cost": 600
+    }
+  ],
+  "role_id": "psi",
+  "schema_version": 1
+}

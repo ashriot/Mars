@@ -14,6 +14,9 @@ class_name RoleDefinition
 @export var passive: Action
 @export var actions: Array[Action] = []
 
+# Transitional compatibility only. Authoritative topology is loaded by
+# ProgressionSystem from data/progression/<hero>/<role_id>.json. Task 7 removes
+# these legacy fields after saved legacy IDs and traversal have been retired.
 @export_group("Progression Tree")
 @export var root_node: RoleNode
 

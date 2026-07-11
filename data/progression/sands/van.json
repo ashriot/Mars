@@ -1,0 +1,77 @@
+{
+  "content_revision": 1,
+  "nodes": [
+    {
+      "column": 0,
+      "effect": {
+        "resource": "res://data/heroes/sands/actions/draw_fire.tres",
+        "slot": 1,
+        "type": "action"
+      },
+      "id": "van.root",
+      "parent": null,
+      "rank": 1,
+      "xp_cost": 100
+    },
+    {
+      "column": 0,
+      "effect": {
+        "resource": "res://data/heroes/sands/actions/overwatch.tres",
+        "slot": 2,
+        "type": "action"
+      },
+      "id": "van.overwatch",
+      "parent": "van.root",
+      "rank": 2,
+      "xp_cost": 200
+    },
+    {
+      "column": 0,
+      "effect": {
+        "resource": "res://data/heroes/sands/actions/focus_fire.tres",
+        "slot": 3,
+        "type": "action"
+      },
+      "id": "van.focus_fire",
+      "parent": "van.overwatch",
+      "rank": 3,
+      "xp_cost": 300
+    },
+    {
+      "column": 0,
+      "effect": {
+        "resource": "res://data/heroes/sands/actions/phalanx.tres",
+        "slot": 4,
+        "type": "action"
+      },
+      "id": "van.phalanx",
+      "parent": "van.focus_fire",
+      "rank": 4,
+      "xp_cost": 400
+    },
+    {
+      "column": 0,
+      "effect": {
+        "resource": "res://data/heroes/sands/actions/return_fire.tres",
+        "type": "passive"
+      },
+      "id": "van.return_fire",
+      "parent": "van.phalanx",
+      "rank": 5,
+      "xp_cost": 500
+    },
+    {
+      "column": 0,
+      "effect": {
+        "resource": "res://data/heroes/sands/actions/opening_salvo.tres",
+        "type": "shift_action"
+      },
+      "id": "van.opening_salvo",
+      "parent": "van.return_fire",
+      "rank": 6,
+      "xp_cost": 600
+    }
+  ],
+  "role_id": "van",
+  "schema_version": 1
+}

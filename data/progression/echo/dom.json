@@ -1,0 +1,19 @@
+{
+  "content_revision": 1,
+  "nodes": [
+    {
+      "column": 0,
+      "effect": {
+        "resource": "res://data/heroes/echo/actions/displace.tres",
+        "slot": 1,
+        "type": "action"
+      },
+      "id": "dom.root",
+      "parent": null,
+      "rank": 1,
+      "xp_cost": 100
+    }
+  ],
+  "role_id": "dom",
+  "schema_version": 1
+}
