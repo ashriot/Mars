@@ -6,6 +6,17 @@ class FakeDungeonMap extends DungeonMap:
 		pass
 
 
+class BattleDungeonMap extends FakeDungeonMap:
+	var exit_visuals_count := 0
+	var refresh_count := 0
+
+	func exit_battle_visuals(_duration: float = 1.0) -> void:
+		exit_visuals_count += 1
+
+	func refresh_team_status() -> void:
+		refresh_count += 1
+
+
 class FloatingTextDouble extends FloatingText:
 	func setup(
 		_pos: Vector2,
@@ -327,7 +338,7 @@ func test_finance_terminal_choice_grants_once_and_completes_once() -> void:
 	manager.free()
 
 
-func test_extraction_and_defeat_present_results_and_only_route_run_ended() -> void:
+func test_terminal_extraction_presents_retreat_and_only_routes_run_ended() -> void:
 	var manager := EndingManagerDouble.new()
 	manager.dungeon_map = FakeDungeonMap.new()
 	manager.overlay_layer = Node.new()
@@ -337,17 +348,33 @@ func test_extraction_and_defeat_present_results_and_only_route_run_ended() -> vo
 	manager.dungeon_map.current_node = node
 
 	manager._on_terminal_choice("opt_extract", _terminal_payload())
-	manager._on_party_wipe()
 
-	assert_eq(manager.presented_results, [RunManager.RunResult.RETREAT, RunManager.RunResult.DEFEAT])
-	assert_eq(manager.outcomes, [
-		GameManager.InteractionOutcome.RUN_ENDED,
-		GameManager.InteractionOutcome.RUN_ENDED,
-	])
+	assert_eq(manager.presented_results, [RunManager.RunResult.RETREAT])
+	assert_eq(manager.outcomes, [GameManager.InteractionOutcome.RUN_ENDED])
 	assert_eq(manager.completed_count, 0)
 	assert_eq(manager.canceled_count, 0)
 	assert_eq(manager.cleared_count, 0)
 	node.free()
+	manager.free()
+
+
+func test_battle_defeat_presents_defeat_and_only_routes_run_ended() -> void:
+	var manager := EndingManagerDouble.new()
+	var dungeon_map := BattleDungeonMap.new()
+	manager.dungeon_map = dungeon_map
+	manager.overlay_layer = Node.new()
+	manager.add_child(manager.dungeon_map)
+	manager.add_child(manager.overlay_layer)
+
+	manager.end_encounter(false)
+
+	assert_eq(dungeon_map.exit_visuals_count, 1)
+	assert_eq(dungeon_map.refresh_count, 1)
+	assert_eq(manager.presented_results, [RunManager.RunResult.DEFEAT])
+	assert_eq(manager.outcomes, [GameManager.InteractionOutcome.RUN_ENDED])
+	assert_eq(manager.completed_count, 0)
+	assert_eq(manager.canceled_count, 0)
+	assert_eq(manager.cleared_count, 0)
 	manager.free()
 
 
