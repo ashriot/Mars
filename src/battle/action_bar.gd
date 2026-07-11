@@ -159,7 +159,7 @@ func activate_slot(index: int) -> bool:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if buttons_disabled or sliding or not visible or (battle_manager and battle_manager.current_state != BattleManager.State.PLAYER_ACTION) or _modal_is_open():
+	if buttons_disabled or sliding or not visible or (battle_manager and (battle_manager.current_state != BattleManager.State.PLAYER_ACTION or battle_manager.current_action != null)) or _modal_is_open():
 		return
 	for index in 4:
 		if event.is_action_pressed(StringName("action_%d" % (index + 1))):

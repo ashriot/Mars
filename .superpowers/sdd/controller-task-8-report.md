@@ -48,3 +48,23 @@ Task 8 changes are limited to battle implementation/scene files, the new battle 
 ## Remaining Concern
 
 No physical controller or Steam Deck hardware pass was performed; Task 9 owns the full-loop/manual verification checklist.
+
+## Formal Review Fixes
+
+Commit follow-up after formal Task 8 review:
+
+- Direct-action hints now omit disabled, unaffordable, hidden, and missing slots rather than publishing disabled entries.
+- `ActionBar` stops accepting face-action input once `BattleManager.current_action` enters targeting. A real `InputEventJoypadButton` button-0 test proves the shared `confirm` / `action_1` mapping selects exactly once on the first press and confirms exactly once on a later press.
+- A real `NavigationUXLayer` modal test proves battle action and target input remain suppressed while the modal owns cursor/focus, then adapter cursor ownership restores after pop.
+- A teardown test frees the live battle adapter and proves the global adapter, cursor target, and hint list contain no stale references.
+
+Review-fix TDD RED observed the disabled action in the live hint list and observed the second physical button-0 press reselecting the action instead of confirming.
+
+Fresh verification after fixes:
+
+```text
+Focused battle controller: 14/14 passed, 47 assertions, 0 orphans
+Editor import/class scan: exit 0
+Headless project load: exit 0
+Full GUT: 237/237 passed, 5,411 assertions, 0 failures
+```

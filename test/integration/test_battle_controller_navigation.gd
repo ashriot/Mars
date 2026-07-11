@@ -1,6 +1,12 @@
 extends GutTest
 
 const ActionButtonScene := preload("res://src/battle/action_button.tscn")
+const UXScene := preload("res://src/ui/navigation/navigation_ux_layer.tscn")
+
+
+class MinimalActionBar extends ActionBar:
+	func _ready() -> void:
+		pass
 
 
 class TrackingBattleScene extends BattleScene:
@@ -16,12 +22,26 @@ class TrackingBattleManager extends BattleManager:
 	var clear_count := 0
 	var enemy_hover_count := 0
 	var enemy_unhover_count := 0
+	var action_select_count := 0
+	var confirm_count := 0
+	var forced_target: EnemyCard
+
+	func _ready() -> void:
+		if action_bar:
+			action_bar.action_selected.connect(_on_action_button_pressed)
+
+	func _on_action_button_pressed(button: ActionButton):
+		action_select_count += 1
+		current_action = button.action
+		if forced_target:
+			forced_target.is_valid_target = true
 
 	func _on_hero_clicked(hero: HeroCard):
 		selected_hero = hero
 
 	func _on_enemy_clicked(enemy: EnemyCard):
 		selected_enemy = enemy
+		confirm_count += 1
 
 	func _on_shift_button_pressed(direction: String):
 		shift_direction = direction
@@ -182,6 +202,81 @@ func test_action_button_glyph_dims_with_disabled_state() -> void:
 	assert_eq(action_button.dynamic_glyph.modulate.a, 1.0)
 
 
+func test_hints_omit_disabled_hidden_and_missing_direct_actions() -> void:
+	var fixture := await _navigation_fixture()
+	var scene: BattleScene = fixture.scene
+	var ux: NavigationUXLayer = fixture.ux
+	scene._publish_controller_hints()
+	var actions: Array[StringName] = []
+	for index in ux.hint_bar.get_hint_count():
+		actions.append(ux.hint_bar.get_hint(index).action)
+	assert_eq(actions, [&"action_1"], "only visible enabled direct actions are hinted")
+
+
+func test_targeting_hints_omit_actions_that_action_bar_rejects() -> void:
+	var fixture := await _navigation_fixture()
+	var scene: BattleScene = fixture.scene
+	var manager: TrackingBattleManager = fixture.manager
+	var ux: NavigationUXLayer = fixture.ux
+	manager.current_action = Action.new()
+	fixture.enemy.is_valid_target = true
+	scene._controller_target = fixture.enemy
+	scene._publish_controller_hints()
+	var actions: Array[StringName] = []
+	for index in ux.hint_bar.get_hint_count():
+		actions.append(ux.hint_bar.get_hint(index).action)
+	assert_eq(actions, [&"confirm", &"cancel"])
+
+
+func test_physical_button_zero_selects_then_distinct_press_confirms() -> void:
+	var fixture := await _navigation_fixture()
+	var manager: TrackingBattleManager = fixture.manager
+	assert_true(InputMap.event_is_action(_joy_button_zero(), &"confirm"))
+	assert_true(InputMap.event_is_action(_joy_button_zero(), &"action_1"))
+	Input.parse_input_event(_joy_button_zero())
+	await get_tree().process_frame
+	assert_eq(manager.action_select_count, 1)
+	assert_eq(manager.confirm_count, 0, "slot selection must not confirm in the same physical press")
+	Input.parse_input_event(_joy_button_zero())
+	await get_tree().process_frame
+	assert_eq(manager.action_select_count, 1, "targeting press must not reselect the action")
+	assert_eq(manager.confirm_count, 1)
+
+
+func test_top_modal_suppresses_battle_input_and_restores_adapter_cursor() -> void:
+	var fixture := await _navigation_fixture()
+	var scene: BattleScene = fixture.scene
+	var manager: TrackingBattleManager = fixture.manager
+	var ux: NavigationUXLayer = fixture.ux
+	var modal := Control.new()
+	var modal_button := Button.new()
+	modal.add_child(modal_button)
+	add_child_autofree(modal)
+	ux.push_modal(modal, modal_button)
+	await get_tree().process_frame
+	assert_same(ux.get_focus_target(), modal_button)
+	fixture.bar._unhandled_input(_action_event(&"action_1"))
+	scene._unhandled_input(_action_event(&"confirm"))
+	assert_eq(manager.action_select_count, 0)
+	assert_eq(manager.confirm_count, 0)
+	ux.pop_modal(modal)
+	await get_tree().process_frame
+	assert_same(ux._adapter, scene)
+	assert_same(ux.cursor._target, manager.current_actor)
+
+
+func test_battle_adapter_teardown_clears_global_cursor_hints_and_refs() -> void:
+	var fixture := await _navigation_fixture()
+	var scene: BattleScene = fixture.scene
+	var ux: NavigationUXLayer = fixture.ux
+	assert_same(ux._adapter, scene)
+	scene.free()
+	await get_tree().process_frame
+	assert_null(ux._adapter)
+	assert_null(ux.cursor._target)
+	assert_eq(ux.hint_bar.get_hint_count(), 0)
+
+
 func _battle_fixture() -> Dictionary:
 	var scene := TrackingBattleScene.new()
 	var manager := TrackingBattleManager.new()
@@ -223,3 +318,79 @@ func _action_event(action: StringName) -> InputEventAction:
 	event.action = action
 	event.pressed = true
 	return event
+
+
+func _joy_button_zero() -> InputEventJoypadButton:
+	var event := InputEventJoypadButton.new()
+	event.button_index = JOY_BUTTON_A
+	event.pressed = true
+	return event
+
+
+func _navigation_fixture() -> Dictionary:
+	var ux := UXScene.instantiate() as NavigationUXLayer
+	add_child_autofree(ux)
+	var scene := BattleScene.new()
+	var manager := TrackingBattleManager.new()
+	var bar := MinimalActionBar.new()
+	var actions := Control.new()
+	actions.name = "Actions"
+	bar.actions_ui = actions
+	bar.add_child(actions)
+	var left_shift := Control.new()
+	left_shift.name = "LeftShift"
+	var left_button := Button.new()
+	left_button.name = "Button"
+	left_shift.add_child(left_button)
+	left_shift.visible = false
+	bar.add_child(left_shift)
+	var right_shift := Control.new()
+	right_shift.name = "RightShift"
+	var right_button := Button.new()
+	right_button.name = "Button"
+	right_shift.add_child(right_button)
+	right_shift.visible = false
+	bar.add_child(right_shift)
+	for index in 3:
+		var action_button := ActionButtonScene.instantiate() as ActionButton
+		action_button.button = action_button.get_node("Button")
+		action_button.label = action_button.get_node("Title")
+		action_button.action = Action.new()
+		action_button.visible = index != 2
+		action_button.button.disabled = index == 1
+		action_button.label.text = "Action %d" % (index + 1)
+		actions.add_child(action_button)
+	var passive := Panel.new()
+	passive.name = "Passive"
+	actions.add_child(passive)
+	var shift_action_panel := Panel.new()
+	shift_action_panel.name = "ShiftAction"
+	actions.add_child(shift_action_panel)
+	bar.battle_manager = manager
+	bar.buttons_disabled = false
+	bar.sliding = false
+	manager.action_bar = bar
+	manager.current_state = BattleManager.State.PLAYER_ACTION
+	var hero := preload("res://src/battle/hero_card.tscn").instantiate() as HeroCard
+	var enemy := preload("res://src/battle/enemy_card.tscn").instantiate() as EnemyCard
+	hero.battle_manager = manager
+	enemy.battle_manager = manager
+	hero.is_defeated = false
+	enemy.is_defeated = false
+	enemy.is_valid_target = false
+	var hero_area := Control.new()
+	var enemy_area := Control.new()
+	hero_area.add_child(hero)
+	enemy_area.add_child(enemy)
+	manager.hero_area = hero_area
+	manager.enemy_area = enemy_area
+	manager.current_actor = hero
+	manager.forced_target = enemy
+	scene.manager = manager
+	scene.add_child(manager)
+	scene.add_child(hero_area)
+	scene.add_child(enemy_area)
+	scene.add_child(bar)
+	add_child_autofree(scene)
+	await get_tree().process_frame
+	return {scene = scene, manager = manager, bar = bar, ux = ux, hero = hero, enemy = enemy}
