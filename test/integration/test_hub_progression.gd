@@ -1,10 +1,27 @@
 extends GutTest
 
 var calls: Array = []
+const TEST_SLOT := 987654
+var saved_roster: Array[HeroData] = []
+var saved_slot: int
 
 
 func before_each() -> void:
 	calls.clear()
+	saved_roster.assign(SaveSystem.party_roster)
+	saved_slot = SaveSystem.current_slot_index
+	SaveSystem.current_slot_index = TEST_SLOT
+	SaveSystem.party_roster.clear()
+
+
+func after_each() -> void:
+	for tween in get_tree().get_processed_tweens():
+		tween.kill()
+	for player in AudioManager._sfx_players:
+		player.stop()
+	SaveSystem.party_roster.assign(saved_roster)
+	SaveSystem.current_slot_index = saved_slot
+	DirAccess.remove_absolute(SaveSystem._get_slot_path(TEST_SLOT))
 
 
 func _tree() -> RoleTreeDefinition:
@@ -30,12 +47,35 @@ func _legacy_role() -> RoleDefinition:
 	return role
 
 
+func _role(role_id: String) -> RoleDefinition:
+	var role := RoleDefinition.new()
+	role.role_id = role_id
+	role.role_name = role_id.capitalize()
+	return role
+
+
+func _single_tree(role_id: String, cost: int = 100) -> RoleTreeDefinition:
+	return RoleTreeDefinition.new(role_id, 1, [
+		ProgressionNodeDefinition.new(role_id + ".root", "", 1, 0, cost, ProgressionEffect.stat("ATK", 1)),
+	])
+
+
 func _record_save() -> void:
 	calls.append("save")
 
 
 func _record_audio(cue: String) -> void:
 	calls.append(cue)
+
+
+func _record_real_audio(cue: String) -> void:
+	calls.append(cue)
+	AudioManager.play_sfx(cue)
+
+
+func _record_real_save() -> void:
+	calls.append("save")
+	SaveSystem.save_current_slot()
 
 
 func _record_stats(_purchased_hero: HeroData) -> void:
@@ -134,5 +174,129 @@ func test_refresh_preserves_role_page_and_node_identity_and_updates_xp_affordabi
 	assert_eq(sibling.get_instance_id(), sibling_id)
 	assert_eq(panel.current_role_idx, 0)
 	assert_eq(panel.current_page, 0)
+	panel.free()
+	await get_tree().process_frame
+
+
+func test_stale_double_click_runs_success_side_effects_and_tree_refresh_once() -> void:
+	var hero := _hero()
+	hero.role_definitions.assign([_legacy_role()])
+	var catalog := ProgressionCatalog.from_validated_trees([_tree()])
+	var menu := preload("res://src/hub/party_menu.tscn").instantiate() as PartyMenu
+	menu.progression_catalog = catalog
+	menu.progression_service = ProgressionService.new(catalog, func(_purchased_hero): return true)
+	menu.save_progression = _record_save
+	menu.play_progression_audio = _record_audio
+	menu.refresh_hero_stats = _record_stats
+	SaveSystem.party_roster.assign([hero])
+	add_child(menu)
+	menu.open()
+	watch_signals(menu.skill_view)
+	var role_panel := menu.skill_view.role_list_container.get_child(0) as RolePanel
+	var node := role_panel.generated_nodes["gun.root"] as SkillTreeNode
+
+	node.node_clicked.emit(node)
+	node.node_clicked.emit(node)
+
+	assert_eq(calls.count("terminal"), 1)
+	assert_eq(calls.count("press"), 1)
+	assert_eq(calls.count("save"), 1)
+	assert_eq(calls.count("stats"), 1)
+	assert_signal_emit_count(menu.skill_view, "progression_refreshed", 1)
+	menu.free()
+	await get_tree().process_frame
+
+
+func test_success_refreshes_all_matching_roles_and_leaves_other_hero_unchanged() -> void:
+	var hero := _hero(150)
+	hero.unlocked_role_ids.assign(["gun", "snp"])
+	hero.role_definitions.assign([_role("gun"), _role("snp")])
+	var other := _hero(999)
+	other.hero_id = "echo"
+	other.unlocked_role_ids.assign(["other"])
+	other.role_definitions.assign([_role("other")])
+	var catalog := ProgressionCatalog.from_validated_trees([_single_tree("gun"), _single_tree("snp"), _single_tree("other")])
+	var panel := preload("res://src/hub/skill_tree_panel.tscn").instantiate() as SkillTreePanel
+	panel.progression_catalog = catalog
+	add_child(panel)
+	panel.setup(hero)
+	var first := panel.role_list_container.get_child(0) as RolePanel
+	var sibling := panel.role_list_container.get_child(1) as RolePanel
+	var sibling_node := sibling.generated_nodes["snp.root"] as SkillTreeNode
+	var sibling_id := sibling_node.get_instance_id()
+	var other_panel := preload("res://src/hub/role_panel.tscn").instantiate() as RolePanel
+	add_child(other_panel)
+	other_panel.setup(_role("other"), catalog.get_role("other"), other)
+	other_panel.set_expanded(true, 0, false)
+	var other_text := other_panel.xp_display.text
+	var other_node := other_panel.generated_nodes["other.root"] as SkillTreeNode
+	var other_node_id := other_node.get_instance_id()
+	var other_disabled := other_node.disabled
+	ProgressionService.new(catalog, func(_purchased_hero): return true).purchase_node(hero, "gun", "gun.root")
+
+	panel.refresh_progression_state(hero)
+
+	assert_eq(first.xp_display.text, "50 XP")
+	assert_eq(sibling.xp_display.text, "50 XP")
+	assert_true(sibling_node.disabled)
+	assert_eq(sibling_node.get_instance_id(), sibling_id)
+	assert_eq(other_panel.xp_display.text, other_text)
+	assert_eq(other_node.get_instance_id(), other_node_id)
+	assert_eq(other_node.disabled, other_disabled)
+	other_panel.free()
+	panel.free()
+	await get_tree().process_frame
+
+
+func test_real_party_menu_purchase_writes_save_refreshes_matching_card_and_tree_once() -> void:
+	var asher := load("res://data/heroes/asher/asher.tres").duplicate(true) as HeroData
+	var echo := load("res://data/heroes/echo/echo.tres").duplicate(true) as HeroData
+	asher.current_xp = 250
+	var catalog := ProgressionCatalog.from_validated_trees([_tree()])
+	SaveSystem.party_roster.assign([asher, echo])
+	var menu := preload("res://src/hub/party_menu.tscn").instantiate() as PartyMenu
+	menu.progression_catalog = catalog
+	menu.progression_service = ProgressionService.new(catalog, func(_purchased_hero): return true)
+	menu.save_progression = _record_real_save
+	menu.play_progression_audio = _record_real_audio
+	add_child(menu)
+	menu.open()
+	var asher_card := menu.hero_list_container.get_child(0) as HeroPanel
+	var echo_card := menu.hero_list_container.get_child(1) as HeroPanel
+	asher_card.atk.text = "STALE"
+	var echo_before := [echo_card.hp.text, echo_card.atk.text, echo_card.psy.text]
+	watch_signals(menu.skill_view)
+	var role_panel := menu.skill_view.role_list_container.get_child(0) as RolePanel
+	var node := role_panel.generated_nodes["gun.root"] as SkillTreeNode
+
+	node.node_clicked.emit(node)
+
+	var saved := JSON.parse_string(FileAccess.get_file_as_string(SaveSystem._get_slot_path(TEST_SLOT))) as Dictionary
+	assert_eq(int(saved.heroes[0].current_xp), 150)
+	assert_eq(saved.heroes[0].role_progress.gun.owned_node_ids, ["gun.root"])
+	assert_eq(calls.count("save"), 1)
+	assert_eq(calls.count("terminal"), 1)
+	assert_ne(asher_card.atk.text, "STALE")
+	assert_eq([echo_card.hp.text, echo_card.atk.text, echo_card.psy.text], echo_before)
+	assert_signal_emit_count(menu.skill_view, "progression_refreshed", 1)
+	menu.free()
+	await get_tree().process_frame
+
+
+func test_partial_catalog_selects_and_expands_first_rendered_role() -> void:
+	var hero := _hero()
+	hero.unlocked_role_ids.assign(["missing", "gun"])
+	hero.role_definitions.assign([_role("missing"), _role("gun")])
+	var panel := preload("res://src/hub/skill_tree_panel.tscn").instantiate() as SkillTreePanel
+	panel.progression_catalog = ProgressionCatalog.from_validated_trees([_tree()])
+	add_child(panel)
+
+	panel.setup(hero)
+
+	assert_eq(panel.role_list_container.get_child_count(), 1)
+	assert_eq(panel.current_role_idx, 0)
+	var rendered := panel.role_list_container.get_child(0) as RolePanel
+	assert_true(rendered.is_currently_expanded)
+	assert_eq(rendered.role_id, "gun")
 	panel.free()
 	await get_tree().process_frame

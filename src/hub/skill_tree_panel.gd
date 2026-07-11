@@ -2,6 +2,7 @@ extends Control
 class_name SkillTreePanel
 
 signal purchase_requested(hero: HeroData, role_id: String, node_id: String)
+signal progression_refreshed(hero: HeroData)
 
 @export var role_panel_scene: PackedScene
 
@@ -39,24 +40,28 @@ func _refresh_role_list():
 		child.queue_free()
 
 	var roles = current_hero.unlocked_roles
+	var rendered_roles: Array[RoleDefinition] = []
+	for candidate: RoleDefinition in roles:
+		if progression_catalog and progression_catalog.get_role(candidate.role_id):
+			rendered_roles.append(candidate)
+	current_role_idx = clampi(current_role_idx, 0, rendered_roles.size() - 1) if not rendered_roles.is_empty() else 0
 
 	var color := Color.WHITE
-	for i in range(roles.size()):
-		var def = roles[i]
-		var tree := progression_catalog.get_role(def.role_id) if progression_catalog else null
-		if tree == null:
-			continue
+	var rendered_index := 0
+	for def: RoleDefinition in rendered_roles:
+		var tree := progression_catalog.get_role(def.role_id)
 		var panel = role_panel_scene.instantiate() as RolePanel
 		role_list_container.add_child(panel)
 		panel.setup(def, tree, current_hero)
 		panel.panel_selected.connect(_on_role_panel_selected)
 		panel.purchase_requested.connect(_on_purchase_requested)
 
-		if i == current_role_idx:
+		if rendered_index == current_role_idx:
 			panel.set_expanded(true, current_page, true)
 			color = panel.def.color
 		else:
 			panel.set_expanded(false, current_page, false)
+		rendered_index += 1
 	update_tabs(color)
 
 func refresh_progression_state(hero: HeroData) -> void:
@@ -64,6 +69,7 @@ func refresh_progression_state(hero: HeroData) -> void:
 		var panel := child as RolePanel
 		if panel and is_same(panel.hero_data, hero):
 			panel.refresh_progression_state()
+	progression_refreshed.emit(hero)
 
 
 func _on_purchase_requested(hero: HeroData, role_id: String, node_id: String) -> void:
