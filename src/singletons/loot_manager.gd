@@ -55,13 +55,15 @@ func _generate_loot_data(type: int, tier: int, rarity_mod: int) -> Dictionary:
 			data["amount"] = amount
 
 		LootType.COMPONENT:
-			var comp_tier = max(1, tier)
-			var type_str = "weap" if randf() > 0.5 else "arm"
-			var rarity_str = "common"
-			if rarity_mod >= 2 and randf() > 0.75:
-				rarity_str = "rare"
-
-			var id = "comp_%s_%d_%s" % [type_str, comp_tier, rarity_str]
+			var requested_rarity := (
+				InventoryItem.Rarity.RARE
+				if rarity_mod >= 2
+				else InventoryItem.Rarity.COMMON
+			)
+			var id := ItemDatabase.get_component_id(tier, requested_rarity)
+			if id.is_empty():
+				push_error("LootManager: No component resources are registered.")
+				return {}
 
 			data["id"] = id
 			data["amount"] = 1

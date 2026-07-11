@@ -4,6 +4,7 @@ extends Node
 var _item_registry: Dictionary = {}
 var _equipment_ids: Array[String] = []
 var _mod_ids: Array[String] = []
+var _component_ids: Array[String] = []
 
 var icon_pistol = preload("res://assets/graphics/icons/equipment/pistol.png")
 var icon_shotgun = preload("res://assets/graphics/icons/equipment/shotgun.png")
@@ -43,6 +44,8 @@ func _scan_for_items(path: String):
 						_equipment_ids.append(res.id)
 					elif res is EquipmentMod:
 						_mod_ids.append(res.id)
+					elif res is InventoryItem and res.category == InventoryItem.ItemCategory.COMPONENT:
+						_component_ids.append(res.id)
 
 			file_name = dir.get_next()
 	else:
@@ -105,3 +108,18 @@ func get_random_equipment_id() -> String:
 func get_random_mod_id() -> String:
 	if _mod_ids.is_empty(): return ""
 	return _mod_ids.pick_random()
+
+func get_component_id(tier: int, rarity: InventoryItem.Rarity) -> String:
+	for id in _component_ids:
+		var item := _item_registry[id] as InventoryItem
+		if item.tier == tier and item.rarity == rarity:
+			return id
+
+	for id in _component_ids:
+		var item := _item_registry[id] as InventoryItem
+		if item.rarity == rarity:
+			return id
+
+	if not _component_ids.is_empty():
+		return _component_ids[0]
+	return ""
