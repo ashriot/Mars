@@ -104,6 +104,26 @@ func test_load_result_and_catalog_diagnostics_are_defensive_and_exclusive() -> v
 	assert_gt(catalog.errors.size(), 0)
 
 
+func test_bare_load_result_constructor_is_an_exclusive_sentinel_failure() -> void:
+	var result := ProgressionJsonLoader.LoadResult.new()
+	assert_null(result.tree)
+	assert_eq(result.errors.size(), 1)
+	assert_eq(result.errors[0].field, "result")
+	assert_string_contains(result.errors[0].reason, "factory")
+
+
+func test_content_errors_are_immutable_and_defensive_arrays_cannot_replace_them() -> void:
+	var result = ProgressionJsonLoader.load_file(FIXTURES + "invalid_effect.json")
+	var retained_error: ProgressionContentError = result.errors[0]
+	var original_reason := retained_error.reason
+	retained_error.set("reason", "changed by caller")
+	assert_eq(retained_error.reason, original_reason)
+
+	var exposed_errors: Array[ProgressionContentError] = result.errors
+	exposed_errors[0] = ProgressionContentError.new("fake", "", "fake", "fake")
+	assert_true(is_same(result.errors[0], retained_error))
+
+
 func test_failed_catalog_reload_preserves_previously_committed_roles() -> void:
 	var valid_directory := "user://progression_reload_valid"
 	_write_document(_valid_document(), "progression_reload_valid/gun.json")

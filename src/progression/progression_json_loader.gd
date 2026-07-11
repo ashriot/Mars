@@ -19,11 +19,15 @@ class LoadResult extends RefCounted:
 		get:
 			return _errors.duplicate()
 
+	func _init() -> void:
+		_errors = [ProgressionContentError.new("", "", "result", "Use the success() or failure() factory.")]
+
 	static func success(loaded_tree: RoleTreeDefinition) -> LoadResult:
 		var result := LoadResult.new()
 		if loaded_tree == null:
 			result._errors = [ProgressionContentError.new("", "", "tree", "Successful load requires a tree.")]
 		else:
+			result._errors.clear()
 			result._tree = loaded_tree
 		return result
 
