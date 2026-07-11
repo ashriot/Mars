@@ -2,7 +2,9 @@
 
 **Tested gameplay commit:** `41555e2`
 
-**Docs-only verification commit:** Record after committing this checklist and the related verification documentation.
+**Initial docs-only verification commit:** `bb29480d33e6a4d4fc8538416064b0ad8912f000`
+
+**Checklist wording amendment commit:** `7dc80b6f37c56bbc76cff8974ffe95af9388eff9`
 
 ## Automated verification completed
 
@@ -10,13 +12,13 @@
 - [x] Headless editor import/parse check run against gameplay commit `41555e2`.
 - [x] Repository diff whitespace check run before the docs-only verification commit.
 
-Automated results and the docs-only verification commit are reported in the Task 8 handoff. These checks do not replace the interactive crawl below.
+Latest durable automated result: Godot 4.7 with GUT 9.7.1 completed 67/67 tests and 435 assertions; the headless editor check was clean. The only allowed log output was the documented macOS CA warning and GUT-captured `[ExpectedError]` cases. These checks do not replace the interactive crawl below.
 
 ## Manual verification pending
 
 Do not mark an item complete without interactively playing the scenario and recording any observed error or mismatch.
 
-- [ ] Start a fresh run at dungeon tier 1; confirm the first movement cost and loot scalar use tier 1 values rather than tier 0 values.
+- [ ] Start a fresh run; use the Remote Inspector or debugger to confirm `RunManager.current_dungeon_tier == 1`, then with no aware threats confirm the first move adds the base +2% Alert. Loot scalar is automated by `test_tier_and_loot_scalar_start_at_one`: 1.0 at tier 1 and 1.5 at tier 3.
 - [ ] Confirm the HUD actionable-node total matches the generated crawl.
 - [ ] Close a terminal, then reopen it and confirm it remains available.
 - [ ] Cancel scan targeting and confirm the same terminal reopens without being consumed.

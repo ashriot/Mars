@@ -6,7 +6,7 @@
 
 **Architecture:** Preserve the current `GameManager`/`DungeonMap`/`RunManager` ownership. Add only two pure, stateless seams (`DungeonRules` and `DungeonSaveCodec`) for deterministic testing, then centralize interaction completion and run-ending transitions inside `GameManager`. Record broader restructuring opportunities in `docs/refactor.md` without implementing them during stabilization.
 
-**Tech Stack:** Godot 4.6, GDScript, GUT 9.6.x, headless Godot CLI.
+**Tech Stack:** Godot project metadata 4.6, GDScript, official GUT `godot_4_7` snapshot `aeb5d4f3f7f0a6c9b5e178876d6c99b791fda605` (runtime 9.7.1), and the Godot 4.7 test binary. See `addons/gut/VENDORED.md` for the pinned source and current harness command.
 
 ---
 
@@ -14,7 +14,7 @@
 
 **Create:**
 
-- `addons/gut/` — vendored GUT 9.6.x test framework.
+- `addons/gut/` — vendored official GUT `godot_4_7` snapshot at `aeb5d4f3f7f0a6c9b5e178876d6c99b791fda605`, runtime 9.7.1.
 - `.gutconfig.json` — headless test discovery and exit settings.
 - `docs/refactor.md` — evidence-backed backlog for the later refactor pass.
 - `src/map/dungeon_rules.gd` — pure tier, node-count, progress-total, and medical-effect rules.
@@ -51,17 +51,16 @@ Do not touch Event behavior or add a 100%-Alert consequence in this plan.
 - Create: `docs/refactor.md`
 - Modify: `project.godot`
 
-- [ ] **Step 1: Vendor GUT 9.6.0**
+- [ ] **Step 1: Verify the pinned GUT snapshot**
 
-Run from the repository root:
+The harness is already vendored. Do not replace it with a release-tag download. From the repository root, verify the recorded source and executable entry point:
 
-```bash
-curl -L https://github.com/bitwes/Gut/archive/refs/tags/v9.6.0.zip -o /tmp/gut-9.6.0.zip
-unzip -q /tmp/gut-9.6.0.zip -d /tmp/gut-9.6.0
-cp -R /tmp/gut-9.6.0/Gut-9.6.0/addons/gut addons/gut
+```sh
+rg -n "godot_4_7|aeb5d4f3f7f0a6c9b5e178876d6c99b791fda605|Runtime version: GUT 9.7.1" addons/gut/VENDORED.md
+test -f addons/gut/gut_cmdln.gd
 ```
 
-Expected: `addons/gut/gut_cmdln.gd` and `addons/gut/plugin.cfg` exist.
+Expected: all three pinned identifiers are present and `addons/gut/gut_cmdln.gd` exists. `addons/gut/VENDORED.md` is authoritative for retrieval and local-normalization details.
 
 - [ ] **Step 2: Add deterministic CLI configuration**
 
@@ -94,7 +93,7 @@ Create `test/unit/test_test_harness.gd`:
 ```gdscript
 extends GutTest
 
-func test_gut_runs_under_godot_4_6() -> void:
+func test_gut_runs_under_supported_godot_4() -> void:
 	assert_eq(Engine.get_version_info().major, 4)
 	assert_true(Engine.get_version_info().minor >= 6)
 ```
@@ -104,7 +103,7 @@ func test_gut_runs_under_godot_4_6() -> void:
 Run:
 
 ```bash
-/Applications/Godot.app/Contents/MacOS/Godot -d -s --headless --path "$PWD" addons/gut/gut_cmdln.gd -gtest=res://test/unit/test_test_harness.gd -gexit
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot -d -s --headless --path "$PWD" addons/gut/gut_cmdln.gd -gtest=res://test/unit/test_test_harness.gd -gexit
 ```
 
 Expected: `1 passed`, exit code 0.
@@ -200,7 +199,7 @@ func test_tier_and_loot_scalar_start_at_one() -> void:
 - [ ] **Step 2: Run the rule test and confirm the missing-script failure**
 
 ```bash
-/Applications/Godot.app/Contents/MacOS/Godot -d -s --headless --path "$PWD" addons/gut/gut_cmdln.gd -gtest=res://test/unit/test_dungeon_rules.gd -gexit
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot -d -s --headless --path "$PWD" addons/gut/gut_cmdln.gd -gtest=res://test/unit/test_dungeon_rules.gd -gexit
 ```
 
 Expected: FAIL because `res://src/map/dungeon_rules.gd` does not exist.
@@ -281,8 +280,8 @@ current_dungeon_tier = DungeonRules.normalized_tier(int(run_data.get("tier", 1))
 - [ ] **Step 6: Run focused and full tests**
 
 ```bash
-/Applications/Godot.app/Contents/MacOS/Godot -d -s --headless --path "$PWD" addons/gut/gut_cmdln.gd -gtest=res://test/unit/test_dungeon_rules.gd -gexit
-/Applications/Godot.app/Contents/MacOS/Godot -d -s --headless --path "$PWD" addons/gut/gut_cmdln.gd -gexit
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot -d -s --headless --path "$PWD" addons/gut/gut_cmdln.gd -gtest=res://test/unit/test_dungeon_rules.gd -gexit
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot -d -s --headless --path "$PWD" addons/gut/gut_cmdln.gd -gexit
 ```
 
 Expected: all tests pass.
@@ -928,7 +927,7 @@ Record the commit tested and mark every item before declaring stabilization comp
 - [ ] **Step 2: Run every automated test headlessly**
 
 ```bash
-/Applications/Godot.app/Contents/MacOS/Godot -d -s --headless --path "$PWD" addons/gut/gut_cmdln.gd -gexit
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot -d -s --headless --path "$PWD" addons/gut/gut_cmdln.gd -gexit
 ```
 
 Expected: exit code 0, no failed or pending tests.
@@ -936,7 +935,7 @@ Expected: exit code 0, no failed or pending tests.
 - [ ] **Step 3: Run a project parse/runtime smoke check**
 
 ```bash
-/Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" --editor --quit
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" --editor --quit
 ```
 
 Expected: exit code 0 and no `SCRIPT ERROR`, `Parse Error`, or invalid resource errors.
