@@ -1,5 +1,7 @@
 extends GutTest
 
+const TEST_SLOT := 987654
+
 class MainRouteDouble extends Main:
 	var hub_route_invoked := false
 	var game_scene_created := false
@@ -15,6 +17,11 @@ var _saved_data: Dictionary
 var _saved_bits: int
 var _saved_inventory: Dictionary
 var _saved_active: bool
+var _saved_roster: Array[HeroData]
+var _saved_slot: int
+var _test_save_path: String
+var _test_save_existed: bool
+var _test_save_bytes: PackedByteArray
 
 
 func before_each() -> void:
@@ -22,13 +29,27 @@ func before_each() -> void:
 	_saved_bits = SaveSystem.bits
 	_saved_inventory = SaveSystem.inventory
 	_saved_active = RunManager.is_run_active
+	_saved_roster.assign(SaveSystem.party_roster)
+	_saved_slot = SaveSystem.current_slot_index
+	_test_save_path = SaveSystem._get_slot_path(TEST_SLOT)
+	_test_save_existed = FileAccess.file_exists(_test_save_path)
+	if _test_save_existed:
+		_test_save_bytes = FileAccess.get_file_as_bytes(_test_save_path)
+	SaveSystem.current_slot_index = TEST_SLOT
 
 
 func after_each() -> void:
 	SaveSystem.data = _saved_data
 	SaveSystem.bits = _saved_bits
 	SaveSystem.inventory = _saved_inventory
+	SaveSystem.party_roster.assign(_saved_roster)
 	RunManager.is_run_active = _saved_active
+	if _test_save_existed:
+		var file := FileAccess.open(_test_save_path, FileAccess.WRITE)
+		file.store_buffer(_test_save_bytes)
+	else:
+		DirAccess.remove_absolute(_test_save_path)
+	SaveSystem.current_slot_index = _saved_slot
 
 
 func test_game_manager_failed_initialization_emits_restore_failure_route() -> void:
