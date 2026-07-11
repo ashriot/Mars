@@ -138,30 +138,6 @@ func test_action_slots_are_one_based_and_bounded_to_four() -> void:
 	assert_false(applier.apply(ProgressionEffect.action(ACTION_PATH, 5), stats, role))
 
 
-func test_rebuild_does_not_initialize_or_traverse_legacy_role_trees() -> void:
-	var legacy_root := RoleNode.new()
-	legacy_root.generated_id = "authored-id"
-	legacy_root.rank = 27
-	legacy_root.calculated_xp_cost = 4321
-	legacy_root.type = RoleNode.RewardType.STAT
-	legacy_root.stat_type = ActorStats.Stats.ATK
-	legacy_root.stat_value = 999
-	var definition := _definition("gun")
-	definition.root_node = legacy_root
-	var hero := HeroData.new()
-	hero.role_definitions = [definition]
-	hero.unlocked_role_ids = ["gun"]
-	hero.unlocked_node_ids = ["authored-id"]
-	hero.role_progress["gun"] = HeroRoleProgress.new(1, ["gun.root"])
-	var catalog := ProgressionCatalog.from_validated_trees([_tree("gun", [_node("gun.root", "", 1, 0, ProgressionEffect.stat("ATK", 2))])])
-
-	assert_true(ProgressionRebuilder.new(catalog).rebuild(hero).success)
-	assert_eq(hero.stats.attack, 2)
-	assert_eq(legacy_root.generated_id, "authored-id")
-	assert_eq(legacy_root.rank, 27)
-	assert_eq(legacy_root.calculated_xp_cost, 4321)
-
-
 func test_precision_stat_effect_updates_precision() -> void:
 	var hero := HeroData.new()
 	hero.role_definitions = [_definition("gun")]

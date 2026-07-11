@@ -24,6 +24,30 @@ Use this template for future candidates:
 **Risks/open questions:** Decisions required before refactoring
 ```
 
+## Completed boundary: JSON-backed hero progression
+
+Role topology, prerequisites, layout, costs, and typed rewards now come exclusively from validated JSON under `data/progression/`. `ProgressionCatalog` owns immutable definitions, `ProgressionService` owns atomic purchases, and `ProgressionRebuilder` derives hero stats and battle kits. Editor-authored node resources, positional node IDs, and UI-owned XP sequencing have been removed. Pre-redesign prototype saves intentionally start with empty new-format role progress; positional IDs are never guessed or translated.
+
+Revision mismatches are reported while preserving the saved record and XP history. They do not trigger an automatic reset, refund, or reconciliation.
+
+## Candidate: Reconcile progression content revisions
+
+**Current location:** `src/progression/hero_role_progress.gd`, `src/scripts/data/hero_data.gd`, and `src/progression/progression_service.gd`
+
+**Observed while:** Completing the JSON progression boundary and removing prototype node resources
+
+**Problem:** Saved records retain accepted content revisions and exact XP paid, but a mismatch can only be reported; removed or materially changed node definitions require an explicit game-design policy.
+
+**Proposed boundary:** Add a deterministic, idempotent reconciliation service that validates old ownership against a new tree and applies an explicit keep/refund/reset decision while producing an audit report.
+
+**Why defer:** Refund and reset semantics are product decisions and were explicitly excluded from the prototype cutover.
+
+**Tests protecting behavior:** `test/unit/test_progression_service.gd` protects historical prices, revision reporting without mutation, and clean initialization for legacy-only saves.
+
+**Likely files affected:** Progression save records, catalog/service APIs, save-load reporting, hub messaging, and progression unit/integration tests.
+
+**Risks/open questions:** Decide treatment of removed nodes, prerequisite changes, cost changes, partial-role refunds, hero-wide resets, and whether reconciliation requires explicit player confirmation.
+
 ## Candidate: Separate save serialization from map geometry
 
 **Current location:** `src/map/dungeon_save_codec.gd`, especially `_expected_coordinate_keys()` and `extract_node_types()`, and `src/map/dungeon_map.gd` grid construction and save/restore methods

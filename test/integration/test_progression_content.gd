@@ -1,13 +1,6 @@
 extends GutTest
 
 const CONTENT_ROOT := "res://data/progression/"
-const STAT_NAMES := ["HP", "GRD", "FOC", "ATK", "PSY", "OVR", "SPD", "AIM", "PRE", "KIN_DEF", "NRG_DEF"]
-const COMPLETE_LEGACY_ROLES := {
-	"gun":"res://data/heroes/asher/roles/gun.tres", "snp":"res://data/heroes/asher/roles/snp.tres",
-	"kin":"res://data/heroes/echo/roles/kin.tres", "psi":"res://data/heroes/echo/roles/psi.tres",
-	"med":"res://data/heroes/sands/roles/med.tres", "stg":"res://data/heroes/sands/roles/stg.tres",
-	"van":"res://data/heroes/sands/roles/van.tres",
-}
 const EXPECTED := {
 	"gun": {"hero":"asher", "nodes":18, "xp":13900, "effects":{"stat":15,"action":2,"passive":1,"shift_action":0}},
 	"snp": {"hero":"asher", "nodes":8, "xp":3300, "effects":{"stat":6,"action":2,"passive":0,"shift_action":0}},
@@ -21,8 +14,7 @@ const EXPECTED := {
 }
 
 # Stable IDs are authored semantic names: role.root, then reward/resource names;
-# repeated stat rewards receive a deterministic numeric suffix. They never use
-# legacy RoleNode generated path IDs such as gun_311.
+# repeated stat rewards receive a deterministic numeric suffix.
 const EXPECTED_IDS := {
 	"gun": ["gun.root","gun.atk_1","gun.hp_5","gun.hp_10","gun.hp_10_2","gun.spd_1","gun.fusion_ammo","gun.psy_1","gun.hp_5_2","gun.hp_10_3","gun.spd_1_2","gun.atk_1_2","gun.atk_2","gun.atk_2_2","gun.bullet_time","gun.spd_2","gun.spd_2_2","gun.psy_2"],
 	"snp": ["snp.root","snp.hp_5","snp.atk_1","snp.atk_2","snp.atk_2_2","snp.aim_1","snp.ovr_1","snp.aimed_shot"],
@@ -63,26 +55,8 @@ func test_all_non_stat_rewards_reference_explicit_action_resources() -> void:
 				assert_true(ResourceLoader.exists(node.effect.target), node.id)
 				assert_true(ResourceLoader.load(node.effect.target) is Action, node.id)
 
-func test_complete_json_trees_match_every_legacy_node_field_and_edge() -> void:
-	for role_id: String in COMPLETE_LEGACY_ROLES:
-		var role: RoleDefinition = load(COMPLETE_LEGACY_ROLES[role_id])
-		role.init_structure()
-		var expected_nodes: Array[Dictionary] = []
-		_collect_legacy_parity(role, role.root_node, null, 0, expected_nodes, EXPECTED_IDS[role_id])
-		var document: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(
-			CONTENT_ROOT.path_join(EXPECTED[role_id].hero).path_join(role_id + ".json")
-		))
-		_assert_node_arrays_match(document.nodes, expected_nodes, role_id)
-
 func test_confirmed_single_root_roles_are_explicit_approved_baselines() -> void:
-	var operative_node_text := FileAccess.get_file_as_string("res://data/heroes/asher/roles/operative/opr_1.tres")
-	assert_string_contains(operative_node_text, "unlock_resource")
-	assert_string_contains(operative_node_text, "res://data/heroes/asher/actions/inspire.tres")
 	_assert_single_action_root("opr", "asher", "res://data/heroes/asher/actions/inspire.tres")
-
-	var dominator: RoleDefinition = load("res://data/heroes/echo/roles/dom.tres")
-	assert_null(dominator.root_node, "Dominator has no legacy tree; Displace is the approved authored baseline.")
-	assert_eq(dominator.actions[0].resource_path, "res://data/heroes/echo/actions/displace.tres")
 	_assert_single_action_root("dom", "echo", "res://data/heroes/echo/actions/displace.tres")
 
 func test_catalog_recursively_loads_all_nine_production_roles() -> void:
@@ -124,25 +98,26 @@ func test_new_progression_consumers_never_access_legacy_role_topology() -> void:
 	for root in ["res://src/progression", "res://src/hub"]:
 		_assert_no_legacy_topology_access(root)
 
-func _collect_legacy_parity(role: RoleDefinition, node: RoleNode, parent: Variant, column: int, output: Array[Dictionary], stable_ids: Array) -> void:
-	var stable_id: String = stable_ids[output.size()]
-	var effect := _legacy_effect(role, node)
-	output.append({"column":column, "effect":effect, "id":stable_id, "parent":parent, "rank":node.rank, "xp_cost":node.calculated_xp_cost})
-	if node.left_node: _collect_legacy_parity(role, node.left_node, stable_id, column - 1, output, stable_ids)
-	if node.child_node: _collect_legacy_parity(role, node.child_node, stable_id, column, output, stable_ids)
-	if node.right_node: _collect_legacy_parity(role, node.right_node, stable_id, column + 1, output, stable_ids)
-
-func _legacy_effect(role: RoleDefinition, node: RoleNode) -> Dictionary:
-	match node.type:
-		RoleNode.RewardType.STAT:
-			return {"amount":node.stat_value, "stat":STAT_NAMES[node.stat_type], "type":"stat"}
-		RoleNode.RewardType.ACTION:
-			return {"resource":role.actions[node.action_slot_index].resource_path, "slot":node.action_slot_index + 1, "type":"action"}
-		RoleNode.RewardType.PASSIVE:
-			return {"resource":role.passive.resource_path, "type":"passive"}
-		RoleNode.RewardType.SHIFT_ACTION:
-			return {"resource":role.shift_action.resource_path, "type":"shift_action"}
-	return {}
+func test_production_content_has_no_legacy_progression_references() -> void:
+	var forbidden := [
+		"RoleNode", "root_node", "init_structure", "generated_id",
+		"calculated_xp_cost", "unlocked_node_ids", "unlock_node(",
+		"spend_xp(", "_process_node_stats", "_bake_tree_into_role",
+	]
+	for root in ["res://src", "res://data"]:
+		_assert_tree_excludes_tokens(root, forbidden)
+	assert_false(FileAccess.file_exists("res://src/scripts/data/role_node.gd"))
+	for path in [
+		"res://data/heroes/asher/roles/gunner",
+		"res://data/heroes/asher/roles/sniper",
+		"res://data/heroes/asher/roles/operative",
+		"res://data/heroes/echo/roles/kineticist",
+		"res://data/heroes/echo/roles/psion",
+		"res://data/heroes/sands/roles/medic",
+		"res://data/heroes/sands/roles/strategist",
+		"res://data/heroes/sands/roles/vanguard",
+	]:
+		assert_false(DirAccess.dir_exists_absolute(path), path)
 
 func _assert_single_action_root(role_id: String, hero_id: String, resource_path: String) -> void:
 	var document: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(CONTENT_ROOT.path_join(hero_id).path_join(role_id + ".json")))
@@ -181,3 +156,16 @@ func _assert_no_legacy_topology_access(root: String) -> void:
 			assert_false("init_structure" in source, root.path_join(filename))
 	for child: String in directory.get_directories():
 		_assert_no_legacy_topology_access(root.path_join(child))
+
+func _assert_tree_excludes_tokens(root: String, forbidden: Array) -> void:
+	var directory := DirAccess.open(root)
+	assert_not_null(directory, root)
+	if directory == null: return
+	for filename: String in directory.get_files():
+		if filename.get_extension() not in ["gd", "tscn", "tres"]: continue
+		var path := root.path_join(filename)
+		var source := FileAccess.get_file_as_string(path)
+		for token: String in forbidden:
+			assert_false(token in source, "%s contains %s" % [path, token])
+	for child: String in directory.get_directories():
+		_assert_tree_excludes_tokens(root.path_join(child), forbidden)

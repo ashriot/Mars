@@ -3,7 +3,6 @@
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="1_0k6m3"]
 [ext_resource type="Texture2D" uid="uid://cogus1wqw41g8" path="res://assets/graphics/icons/roles/chaingun.png" id="1_pc4kf"]
 [ext_resource type="Resource" uid="uid://7dg4i7k6dya0" path="res://data/heroes/asher/actions/double_tap.tres" id="2_g5d42"]
-[ext_resource type="Resource" uid="uid://3eagsu7ser6b" path="res://data/heroes/asher/roles/gunner/gun_1.tres" id="2_pc4kf"]
 [ext_resource type="Resource" uid="uid://bbf5ij7wcomd4" path="res://data/heroes/asher/actions/fusion_ammo.tres" id="3_02qky"]
 [ext_resource type="Script" uid="uid://sy50n7nerbow" path="res://src/scripts/data/role_definition.gd" id="3_ipvff"]
 [ext_resource type="Resource" uid="uid://cg0jwg4m14vwn" path="res://data/heroes/asher/actions/siphon_shots.tres" id="4_f5pd8"]
@@ -21,5 +20,4 @@ color = Color(1.128, 1.437, 0.277, 1)
 shift_action = ExtResource("10_vc0da")
 passive = ExtResource("7_i3gk7")
 actions = Array[ExtResource("1_0k6m3")]([ExtResource("2_g5d42"), ExtResource("3_02qky"), ExtResource("4_f5pd8"), ExtResource("5_utkbd")])
-root_node = ExtResource("2_pc4kf")
 metadata/_custom_type_script = "uid://sy50n7nerbow"

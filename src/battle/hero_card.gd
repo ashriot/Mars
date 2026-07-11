@@ -27,7 +27,7 @@ var blink_tween: Tween
 
 func setup(data: HeroData):
 	hero_data = data as HeroData
-	hero_data.rebuild_battle_roles()
+	hero_data.calculate_stats()
 	current_role_index = hero_data.active_role_index
 	if hero_data.portrait:
 		portrait_rect.texture = hero_data.portrait
@@ -38,7 +38,6 @@ func setup(data: HeroData):
 		if role:
 			loaded_roles.append(role)
 
-	hero_data.calculate_stats()
 	await super.setup_base(hero_data.stats)
 
 	# --- LOAD TRAITS ---
