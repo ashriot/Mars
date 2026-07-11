@@ -18,7 +18,7 @@ Latest durable automated result: Godot 4.7 with GUT 9.7.1 completed 67/67 tests 
 
 Do not mark an item complete without interactively playing the scenario and recording any observed error or mismatch.
 
-- [ ] Start a fresh run; use the Remote Inspector or debugger to confirm `RunManager.current_dungeon_tier == 1`, then with no aware threats confirm the first move adds the base +2% Alert. Loot scalar is automated by `test_tier_and_loot_scalar_start_at_one`: 1.0 at tier 1 and 1.5 at tier 3.
+- [ ] Start a fresh run; use the Remote Inspector or debugger to confirm `RunManager.current_dungeon_tier == 1`, then with no aware threats confirm the first move adds the base +2% Alert. Tier normalization and loot scaling are automated by `test_normalized_tier_clamps_to_minimum` and `test_loot_scalar_scales_from_normalized_tier`: 1.0 at tier 1 and 1.5 at tier 3.
 - [ ] Confirm the HUD actionable-node total matches the generated crawl.
 - [ ] Close a terminal, then reopen it and confirm it remains available.
 - [ ] Cancel scan targeting and confirm the same terminal reopens without being consumed.
