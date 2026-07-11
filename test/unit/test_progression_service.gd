@@ -141,6 +141,39 @@ func test_failed_rebuild_restores_derived_state_after_mutating_callback() -> voi
 	assert_true(is_same(hero.battle_roles.gun, original_role))
 
 
+func test_failed_rebuild_restores_mutated_fields_inside_existing_role() -> void:
+	var hero := _hero()
+	var definition := RoleDefinition.new()
+	definition.role_id = "gun"
+	var original_action: Action = load("res://data/heroes/asher/actions/double_tap.tres")
+	var original_passive: Action = load("res://data/heroes/asher/actions/inspire.tres")
+	var original_shift: Action = load("res://data/heroes/asher/actions/bullet_time.tres")
+	var original_role := RoleData.new()
+	original_role.source_definition = definition
+	original_role.actions = [original_action]
+	original_role.passive = original_passive
+	original_role.shift_action = original_shift
+	hero.battle_roles = {"gun": original_role}
+	var original_roles := hero.battle_roles
+	var service := ProgressionService.new(catalog, func(rebuilding_hero):
+		var role: RoleData = rebuilding_hero.battle_roles.gun
+		role.source_definition = RoleDefinition.new()
+		role.actions.clear()
+		role.passive = null
+		role.shift_action = null
+		return false
+	)
+
+	assert_eq(service.purchase_node(hero, "gun", "gun.root").status, ProgressionPurchaseResult.Status.INVALID_EFFECT)
+	assert_true(is_same(hero.battle_roles, original_roles))
+	assert_true(is_same(hero.battle_roles.gun, original_role))
+	assert_true(is_same(original_role.source_definition, definition))
+	assert_eq(original_role.actions.size(), 1)
+	assert_true(is_same(original_role.actions[0], original_action))
+	assert_true(is_same(original_role.passive, original_passive))
+	assert_true(is_same(original_role.shift_action, original_shift))
+
+
 func test_role_progress_save_round_trip_rejects_malformed_and_reports_revision_without_reset() -> void:
 	var hero := _hero()
 	hero.unlocked_node_ids = ["legacy.node"]

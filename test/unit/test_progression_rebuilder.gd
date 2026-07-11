@@ -160,3 +160,17 @@ func test_rebuild_does_not_initialize_or_traverse_legacy_role_trees() -> void:
 	assert_eq(legacy_root.generated_id, "authored-id")
 	assert_eq(legacy_root.rank, 27)
 	assert_eq(legacy_root.calculated_xp_cost, 4321)
+
+
+func test_precision_stat_effect_updates_precision() -> void:
+	var hero := HeroData.new()
+	hero.role_definitions = [_definition("gun")]
+	hero.unlocked_role_ids = ["gun"]
+	hero.role_progress["gun"] = HeroRoleProgress.new(1, ["gun.root"])
+	var catalog := ProgressionCatalog.from_validated_trees([_tree("gun", [_node("gun.root", "", 1, 0, ProgressionEffect.stat("PRE", 6))])])
+
+	var result := ProgressionRebuilder.new(catalog).rebuild(hero)
+
+	assert_true(result.success)
+	assert_eq(hero.stats.precision, 6)
+	assert_eq(hero.stats.get_stat(ActorStats.Stats.PRE), 6)

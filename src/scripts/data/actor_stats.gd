@@ -28,6 +28,7 @@ func get_stat(stat: Stats) -> int:
 		Stats.OVR: return overload
 		Stats.SPD: return speed
 		Stats.AIM: return aim
+		Stats.PRE: return precision
 		Stats.KIN_DEF: return kinetic_defense
 		Stats.NRG_DEF: return energy_defense
 	return 0
@@ -42,6 +43,7 @@ func add_stat(stat: Stats, value: int):
 		Stats.OVR: overload += value
 		Stats.SPD: speed += value
 		Stats.AIM: aim = clampi(aim + value, 0, 75)
+		Stats.PRE: precision += value
 		Stats.KIN_DEF: kinetic_defense = clampi(kinetic_defense + value, 0, 90)
 		Stats.NRG_DEF: energy_defense = clampi(energy_defense + value, 0, 90)
 

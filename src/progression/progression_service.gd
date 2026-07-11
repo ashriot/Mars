@@ -42,6 +42,7 @@ func purchase_node(hero: HeroData, role_id: String, node_id: String) -> Progress
 	var previous_stats_values := _snapshot_stats(hero.stats)
 	var previous_battle_roles := hero.battle_roles
 	var previous_battle_role_values := hero.battle_roles.duplicate()
+	var previous_role_states := _snapshot_role_states(hero.battle_roles)
 
 	# Commit only after every rejection path has been evaluated.
 	if progress == null:
@@ -56,7 +57,7 @@ func purchase_node(hero: HeroData, role_id: String, node_id: String) -> Progress
 	var rebuild_result: Variant = _rebuild.call(hero)
 	if not _rebuild_succeeded(rebuild_result):
 		hero.current_xp = previous_xp
-		_restore_derived_state(hero, previous_stats, previous_stats_values, previous_battle_roles, previous_battle_role_values)
+		_restore_derived_state(hero, previous_stats, previous_stats_values, previous_battle_roles, previous_battle_role_values, previous_role_states)
 		if previous_progress == null:
 			hero.role_progress.erase(role_id)
 		else:
@@ -95,7 +96,21 @@ func _snapshot_stats(stats: ActorStats) -> Dictionary:
 	}
 
 
-func _restore_derived_state(hero: HeroData, previous_stats: ActorStats, previous_values: Dictionary, previous_roles: Dictionary, previous_role_values: Dictionary) -> void:
+func _snapshot_role_states(roles: Dictionary) -> Dictionary:
+	var snapshots := {}
+	for role_id in roles:
+		var role: Variant = roles[role_id]
+		if role is RoleData:
+			snapshots[role_id] = {
+				"source_definition": role.source_definition,
+				"actions": role.actions.duplicate(),
+				"passive": role.passive,
+				"shift_action": role.shift_action,
+			}
+	return snapshots
+
+
+func _restore_derived_state(hero: HeroData, previous_stats: ActorStats, previous_values: Dictionary, previous_roles: Dictionary, previous_role_values: Dictionary, previous_role_states: Dictionary) -> void:
 	if previous_stats != null:
 		previous_stats.actor_name = previous_values.actor_name
 		previous_stats.max_hp = previous_values.max_hp
@@ -110,6 +125,13 @@ func _restore_derived_state(hero: HeroData, previous_stats: ActorStats, previous
 		previous_stats.kinetic_defense = previous_values.kinetic_defense
 		previous_stats.energy_defense = previous_values.energy_defense
 	hero.stats = previous_stats
+	for role_id in previous_role_states:
+		var role: RoleData = previous_role_values[role_id]
+		var state: Dictionary = previous_role_states[role_id]
+		role.source_definition = state.source_definition
+		role.actions.assign(state.actions)
+		role.passive = state.passive
+		role.shift_action = state.shift_action
 	previous_roles.clear()
 	previous_roles.merge(previous_role_values)
 	hero.battle_roles = previous_roles
