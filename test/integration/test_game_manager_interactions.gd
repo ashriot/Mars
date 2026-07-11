@@ -61,25 +61,22 @@ class RealCancellationManager extends GameManager:
 
 
 class EndingManagerDouble extends InteractionManagerDouble:
-	var outcomes: Array[GameManager.InteractionOutcome] = []
 	var presented_results: Array[RunManager.RunResult] = []
 
-	func _finish_interaction(outcome: InteractionOutcome) -> void:
-		outcomes.append(outcome)
-
-	func _show_end_screen(result: RunManager.RunResult) -> void:
+	func _present_end_screen(result: RunManager.RunResult) -> void:
 		presented_results.append(result)
 
 
 class ExtractionLifecycleManager extends GameManager:
-	var outcomes: Array[GameManager.InteractionOutcome] = []
-
 	func _ready() -> void:
 		pass
 
-	func _finish_interaction(outcome: InteractionOutcome) -> void:
-		outcomes.append(outcome)
-		await super._finish_interaction(outcome)
+
+class EndScreenDouble extends DungeonEndScreen:
+	var commit_count := 0
+
+	func _commit_rewards() -> void:
+		commit_count += 1
 
 
 func _manager() -> InteractionManagerDouble:
@@ -394,10 +391,10 @@ func test_terminal_extraction_presents_retreat_and_only_routes_run_ended() -> vo
 	manager._on_terminal_choice("opt_extract", _terminal_payload())
 
 	assert_eq(manager.presented_results, [RunManager.RunResult.RETREAT])
-	assert_eq(manager.outcomes, [GameManager.InteractionOutcome.RUN_ENDED])
+	assert_true(manager._run_end_started)
 	assert_eq(manager.completed_count, 0)
 	assert_eq(manager.canceled_count, 0)
-	assert_eq(manager.cleared_count, 0)
+	assert_eq(manager.cleared_count, 1)
 	node.free()
 	manager.free()
 
@@ -419,7 +416,7 @@ func test_real_terminal_extraction_close_does_not_clear_end_screen() -> void:
 	terminal._on_text_link_clicked("opt_extract")
 	await get_tree().create_timer(0.35).timeout
 
-	assert_eq(manager.outcomes, [GameManager.InteractionOutcome.RUN_ENDED])
+	assert_true(manager._run_end_started)
 	assert_eq(manager.overlay_layer.get_child_count(), 1)
 	assert_true(manager.overlay_layer.get_child(0) is DungeonEndScreen)
 	node.free()
@@ -441,11 +438,142 @@ func test_battle_defeat_presents_defeat_and_only_routes_run_ended() -> void:
 	assert_eq(dungeon_map.exit_visuals_count, 1)
 	assert_eq(dungeon_map.refresh_count, 1)
 	assert_eq(manager.presented_results, [RunManager.RunResult.DEFEAT])
-	assert_eq(manager.outcomes, [GameManager.InteractionOutcome.RUN_ENDED])
+	assert_true(manager._run_end_started)
 	assert_eq(manager.completed_count, 0)
 	assert_eq(manager.canceled_count, 0)
-	assert_eq(manager.cleared_count, 0)
+	assert_eq(manager.cleared_count, 1)
 	manager.free()
+
+
+func test_begin_run_end_is_guarded_clears_once_and_keeps_map_locked() -> void:
+	var manager := EndingManagerDouble.new()
+	manager.dungeon_map = FakeDungeonMap.new()
+	manager.overlay_layer = Node.new()
+	manager.add_child(manager.dungeon_map)
+	manager.add_child(manager.overlay_layer)
+	manager.dungeon_map.current_map_state = DungeonMap.MapState.PLAYING
+
+	manager._begin_run_end(RunManager.RunResult.SUCCESS)
+	manager._begin_run_end(RunManager.RunResult.DEFEAT)
+
+	assert_eq(manager.presented_results, [RunManager.RunResult.SUCCESS])
+	assert_eq(manager.cleared_count, 1)
+	assert_eq(manager.dungeon_map.current_map_state, DungeonMap.MapState.LOCKED)
+	assert_eq(manager.completed_count, 0)
+	assert_eq(manager.canceled_count, 0)
+	manager.free()
+
+
+func test_entrance_and_exit_have_explicit_results() -> void:
+	for case in [
+		[MapNode.NodeType.ENTRANCE, RunManager.RunResult.RETREAT],
+		[MapNode.NodeType.EXIT, RunManager.RunResult.SUCCESS],
+	]:
+		var manager := EndingManagerDouble.new()
+		manager.dungeon_map = FakeDungeonMap.new()
+		manager.overlay_layer = Node.new()
+		manager.add_child(manager.dungeon_map)
+		manager.add_child(manager.overlay_layer)
+		var node := _node(case[0])
+
+		manager._on_map_interaction_requested(node)
+
+		assert_eq(manager.presented_results, [case[1]])
+		assert_eq(manager.completed_count, 0)
+		assert_eq(manager.canceled_count, 0)
+		node.free()
+		manager.free()
+
+
+func test_duplicate_terminal_extraction_presents_one_retreat() -> void:
+	var manager := EndingManagerDouble.new()
+	manager.dungeon_map = FakeDungeonMap.new()
+	manager.overlay_layer = Node.new()
+	manager.add_child(manager.dungeon_map)
+	manager.add_child(manager.overlay_layer)
+
+	manager._on_terminal_choice("opt_extract", _terminal_payload())
+	manager._on_terminal_choice("opt_extract", _terminal_payload())
+	manager._on_terminal_closed()
+
+	assert_eq(manager.presented_results, [RunManager.RunResult.RETREAT])
+	assert_eq(manager.completed_count, 0)
+	assert_eq(manager.canceled_count, 0)
+	manager.free()
+
+
+func test_battle_result_distinguishes_normal_boss_and_defeat() -> void:
+	var manager := EndingManagerDouble.new()
+	manager.dungeon_map = BattleDungeonMap.new()
+	manager.overlay_layer = Node.new()
+	manager.add_child(manager.dungeon_map)
+	manager.add_child(manager.overlay_layer)
+	var normal := Encounter.new()
+	var boss := Encounter.new()
+	boss.is_boss = true
+
+	manager.current_encounter = normal
+	assert_eq(manager._result_for_battle_end(false), RunManager.RunResult.DEFEAT)
+	assert_eq(manager._result_for_battle_end(true), -1)
+	manager.end_encounter(true)
+	assert_eq(manager.presented_results, [])
+	assert_eq(manager.completed_count, 1)
+
+	manager.current_encounter = boss
+	assert_eq(manager._result_for_battle_end(true), RunManager.RunResult.SUCCESS)
+	manager.end_encounter(true)
+	assert_eq(manager.presented_results, [RunManager.RunResult.SUCCESS])
+	assert_eq(manager.completed_count, 1)
+	for player in [AudioManager._music_player_1, AudioManager._music_player_2]:
+		player.stop()
+		player.stream = null
+	AudioManager._current_music_player = null
+	AudioManager._current_track_key = ""
+	manager.free()
+
+
+func test_real_result_screen_survives_cleanup_and_exits_once() -> void:
+	var manager := ExtractionLifecycleManager.new()
+	manager.dungeon_map = FakeDungeonMap.new()
+	manager.overlay_layer = Node.new()
+	manager.add_child(manager.dungeon_map)
+	add_child(manager.overlay_layer)
+	manager.dungeon_end_screen_scene = load("res://src/map/dungeon_end_screen.tscn")
+	var transient := Node.new()
+	manager.overlay_layer.add_child(transient)
+	var exit_count := [0]
+	manager.dungeon_exited.connect(func(_success: bool): exit_count[0] += 1)
+
+	manager._begin_run_end(RunManager.RunResult.RETREAT)
+	await get_tree().process_frame
+
+	assert_false(is_instance_valid(transient))
+	assert_eq(manager.overlay_layer.get_child_count(), 1)
+	var screen := manager.overlay_layer.get_child(0) as DungeonEndScreen
+	assert_not_null(screen)
+	screen.finished.emit()
+	screen.finished.emit()
+	assert_eq(exit_count[0], 1)
+	manager.overlay_layer.free()
+	manager.free()
+	await get_tree().process_frame
+
+
+func test_end_screen_continue_commits_and_finishes_once() -> void:
+	var screen := EndScreenDouble.new()
+	var button := Button.new()
+	screen.add_child(button)
+	screen.continue_button = button
+	var finished_count := [0]
+	screen.finished.connect(func(): finished_count[0] += 1)
+
+	screen._on_continue_pressed()
+	screen._on_continue_pressed()
+
+	assert_eq(screen.commit_count, 1)
+	assert_eq(finished_count[0], 1)
+	assert_true(button.disabled)
+	screen.free()
 
 
 func _terminal_payload() -> Dictionary:

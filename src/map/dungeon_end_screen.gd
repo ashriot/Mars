@@ -12,6 +12,7 @@ signal finished
 @onready var total_xp: Label = $Panel/VBox/GridContainer/TotalXpValue
 
 var _result: RunManager.RunResult
+var _confirmed := false
 
 func setup(result: RunManager.RunResult):
 	modulate.a = 0.0
@@ -56,5 +57,13 @@ func setup(result: RunManager.RunResult):
 	)
 
 func _on_continue_pressed():
-	RunManager.commit_rewards(_result)
+	if _confirmed:
+		return
+	_confirmed = true
+	continue_button.disabled = true
+	_commit_rewards()
 	finished.emit()
+
+
+func _commit_rewards() -> void:
+	RunManager.commit_rewards(_result)

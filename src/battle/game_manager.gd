@@ -18,6 +18,9 @@ signal restore_failed
 @onready var overlay_layer = $DungeonMap/OverlayLayer
 
 var battle_scene: BattleScene
+var current_encounter: Encounter
+var _run_end_started := false
+var _dungeon_exit_emitted := false
 
 func _ready():
 	var loader = loading_screen_scene.instantiate()
@@ -41,7 +44,7 @@ func _on_map_interaction_requested(node: MapNode):
 	match node.type:
 		MapNode.NodeType.ENTRANCE:
 			print("Escaping the dungeon!")
-			_handle_extraction()
+			_begin_run_end(RunManager.RunResult.RETREAT)
 
 		MapNode.NodeType.COMBAT, MapNode.NodeType.ELITE, MapNode.NodeType.BOSS:
 			var enc = dungeon_map.encounter_memory.get(node.grid_coords)
@@ -80,13 +83,15 @@ func _on_map_interaction_requested(node: MapNode):
 			terminal.closed.connect(_on_terminal_closed)
 
 		MapNode.NodeType.EXIT:
-			_handle_extraction()
+			_begin_run_end(RunManager.RunResult.SUCCESS)
 
 		_:
 			_finish_interaction(InteractionOutcome.COMPLETED)
 			return
 
 func _finish_interaction(outcome: InteractionOutcome) -> void:
+	if _run_end_started:
+		return
 	match outcome:
 		InteractionOutcome.COMPLETED:
 			await _complete_current_interaction()
@@ -97,6 +102,7 @@ func _finish_interaction(outcome: InteractionOutcome) -> void:
 
 func _clear_transient_overlay() -> void:
 	for child in overlay_layer.get_children():
+		overlay_layer.remove_child(child)
 		child.queue_free()
 
 func _complete_current_interaction() -> void:
@@ -113,6 +119,7 @@ func _report_interaction_error(message: String) -> void:
 	push_error("GameManager interaction error: " + message)
 
 func _start_encounter(encounter: Encounter):
+	current_encounter = encounter
 	AudioManager.play_sfx("radiate")
 	await get_tree().create_timer(0.05).timeout
 
@@ -127,14 +134,21 @@ func _start_encounter(encounter: Encounter):
 func end_encounter(won: bool):
 	dungeon_map.exit_battle_visuals(1.0)
 
-	if won:
+	var result := _result_for_battle_end(won)
+	if result == -1:
 		AudioManager.play_music("map_1", 1.0, false, true)
 		_finish_interaction(InteractionOutcome.COMPLETED)
-
 	else:
-		_show_end_screen(RunManager.RunResult.DEFEAT)
-		_finish_interaction(InteractionOutcome.RUN_ENDED)
+		_begin_run_end(result as RunManager.RunResult)
 	dungeon_map.refresh_team_status()
+
+
+func _result_for_battle_end(won: bool) -> int:
+	if not won:
+		return RunManager.RunResult.DEFEAT
+	if current_encounter != null and current_encounter.is_boss:
+		return RunManager.RunResult.SUCCESS
+	return -1
 
 func _on_terminal_choice(choice_tag: String, data: Dictionary):
 	match choice_tag:
@@ -159,7 +173,7 @@ func _on_terminal_choice(choice_tag: String, data: Dictionary):
 			RunManager.add_run_bits(int(data.bits))
 
 		"opt_extract":
-			_handle_extraction()
+			_begin_run_end(RunManager.RunResult.RETREAT)
 			return
 
 	_finish_interaction(InteractionOutcome.COMPLETED)
@@ -258,30 +272,24 @@ func _handle_reward_cache(node: MapNode):
 
 	_finish_interaction(InteractionOutcome.COMPLETED)
 
-func _handle_extraction():
-	print("Extraction requested.")
+func _begin_run_end(result: RunManager.RunResult) -> void:
+	if _run_end_started:
+		return
+	_run_end_started = true
+	dungeon_map.current_map_state = DungeonMap.MapState.LOCKED
+	_clear_transient_overlay()
+	_present_end_screen(result)
 
-	# Determine if this is a Win or a Retreat
-	# If we are at the EXIT node or BOSS node, it's a Success.
-	# Otherwise (Entrance/Terminal), it's a Retreat.
-	var result = RunManager.RunResult.RETREAT
 
-	if dungeon_map.current_node.type == MapNode.NodeType.EXIT or \
-	   dungeon_map.current_node.type == MapNode.NodeType.BOSS:
-		result = RunManager.RunResult.SUCCESS
-
-	_show_end_screen(result)
-	_finish_interaction(InteractionOutcome.RUN_ENDED)
-
-func _on_party_wipe():
-	# This comes from the BattleManager signal "dungeon_exited(false)"
-	_show_end_screen(RunManager.RunResult.DEFEAT)
-	_finish_interaction(InteractionOutcome.RUN_ENDED)
-
-func _show_end_screen(result: RunManager.RunResult):
+func _present_end_screen(result: RunManager.RunResult) -> void:
 	var screen = dungeon_end_screen_scene.instantiate()
 	overlay_layer.add_child(screen)
 	screen.setup(result)
-	await screen.finished
+	screen.finished.connect(_on_end_screen_finished, CONNECT_ONE_SHOT)
 
+
+func _on_end_screen_finished() -> void:
+	if _dungeon_exit_emitted:
+		return
+	_dungeon_exit_emitted = true
 	dungeon_exited.emit(true)
