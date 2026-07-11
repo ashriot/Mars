@@ -68,8 +68,18 @@ func save_game(slot_index: int):
 	data["bits"] = bits
 	data["total_lifetime_xp"] = total_lifetime_xp
 
+	var save_dir := _get_save_dir()
+	if not DirAccess.dir_exists_absolute(save_dir):
+		var dir_error := DirAccess.make_dir_absolute(save_dir)
+		if dir_error != OK:
+			push_error("SaveSystem: Failed to create save directory: %s" % save_dir)
+			return
+
 	var path = _get_slot_path(slot_index)
 	var file = FileAccess.open(path, FileAccess.WRITE)
+	if not file:
+		push_error("SaveSystem: Failed to open save slot for writing: %s" % path)
+		return
 	file.store_string(JSON.stringify(data, "\t"))
 	#print("Game saved to Slot ", slot_index)
 
