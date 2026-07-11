@@ -29,6 +29,9 @@ var type: NodeType = NodeType.UNKNOWN
 var state: NodeState = NodeState.HIDDEN
 var grid_coords: Vector2i
 var is_aware: bool = false
+## Set by navigation adapters while building a candidate set. Pure selectors also
+## honor it so callers can exclude nodes without duplicating scoring logic.
+var navigation_eligible: bool = true
 var has_been_visited: bool = false:
 	set(value):
 		has_been_visited = value

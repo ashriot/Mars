@@ -2,6 +2,7 @@ extends Node2D
 class_name DungeonMap
 
 const SaveCodec = preload("res://src/map/dungeon_save_codec.gd")
+const DungeonNavigation = preload("res://src/map/dungeon_navigation.gd")
 
 signal interaction_requested(node: MapNode)
 signal map_generation_progress(current, total)
@@ -68,6 +69,7 @@ const PENALTY_BOSS_MOVE = 2.0
 @export var max_zoom: float = 1.5
 @export var camera_smooth_speed: float = 0.3
 @export var camera_edge_margin: float = 850.0
+@export var camera_pan_speed: float = 600.0
 
 # --- Visuals ---
 @export_group("Visuals")
@@ -91,6 +93,8 @@ var terminal_memory: Dictionary = {}
 var encounter_memory: Dictionary = {}
 var reward_memory: Dictionary = {}
 var _last_alert_state: int = -1
+var _controller_preview_node: MapNode = null
+var _last_controller_direction: Vector2 = Vector2.ZERO
 
 # --- Hex Values ---
 var hex_size: float = 50.0
@@ -141,6 +145,43 @@ func _ready():
 		team_status.add_child(status_ui)
 		status_ui.setup(hero_data)
 	_start_cursor_pulse()
+	set_process(true)
+	_publish_controller_hints()
+
+
+func _exit_tree() -> void:
+	var navigation := _navigation_ux_layer()
+	if navigation:
+		navigation.publish_hints([])
+
+
+func _navigation_ux_layer() -> NavigationUXLayer:
+	return get_tree().root.find_child("NavigationUXLayer", true, false) as NavigationUXLayer
+
+
+func _publish_controller_hints() -> void:
+	var navigation := _navigation_ux_layer()
+	if navigation:
+		navigation.publish_hints([
+			{action = &"confirm", label = "Move / Scan", enabled = true},
+			{action = &"cancel", label = "Clear / Cancel", enabled = true},
+			{action = &"zoom_in", label = "Zoom", enabled = true},
+			{action = &"recenter", label = "Recenter", enabled = true},
+		])
+
+
+func _process(delta: float) -> void:
+	if current_map_state == MapState.LOADING or current_map_state == MapState.LOCKED:
+		return
+	var selection_direction := Input.get_vector(&"nav_left", &"nav_right", &"nav_up", &"nav_down")
+	if not selection_direction.is_zero_approx() and (
+		_last_controller_direction.is_zero_approx()
+		or selection_direction.normalized().dot(_last_controller_direction.normalized()) < 0.99
+	):
+		select_direction(selection_direction)
+	_last_controller_direction = selection_direction
+	var pan_direction := Input.get_vector(&"camera_pan_left", &"camera_pan_right", &"camera_pan_up", &"camera_pan_down")
+	process_controller_camera(pan_direction, delta)
 
 func _start_cursor_pulse():
 	if cursor_pulse_tween: cursor_pulse_tween.kill()
@@ -263,12 +304,103 @@ func _setup_camera():
 	camera.make_current()
 
 func _unhandled_input(event):
+	if current_map_state == MapState.LOADING or current_map_state == MapState.LOCKED:
+		return
+	if event.is_action_pressed(&"confirm"):
+		confirm_preview()
+		get_viewport().set_input_as_handled()
+		return
+	if event.is_action_pressed(&"cancel"):
+		cancel_preview()
+		get_viewport().set_input_as_handled()
+		return
+	if event.is_action_pressed(&"zoom_in"):
+		_zoom_camera(zoom_step)
+		get_viewport().set_input_as_handled()
+		return
+	if event.is_action_pressed(&"zoom_out"):
+		_zoom_camera(-zoom_step)
+		get_viewport().set_input_as_handled()
+		return
+	if event.is_action_pressed(&"recenter"):
+		recenter_camera()
+		get_viewport().set_input_as_handled()
+		return
 	if current_map_state == MapState.TARGETING:
 		# Check for "Back" (Controller B) or Right Click
 		if event.is_action_pressed("ui_cancel") or \
 		   (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed):
 			_cancel_targeting()
 			get_viewport().set_input_as_handled()
+
+
+func select_direction(direction: Vector2) -> void:
+	if current_map_state == MapState.LOADING or current_map_state == MapState.LOCKED:
+		return
+	if direction.is_zero_approx() or current_node == null:
+		return
+	var candidates: Array[MapNode] = _controller_candidates()
+	var selected := DungeonNavigation.closest_by_angle(current_node.position, direction, candidates)
+	if selected == null:
+		return
+	_controller_preview_node = selected
+	_animate_reticle_to(selected.position)
+
+
+func confirm_preview() -> void:
+	if current_map_state == MapState.LOADING or current_map_state == MapState.LOCKED:
+		return
+	if _controller_preview_node == null:
+		return
+	var selected := _controller_preview_node
+	_controller_preview_node = null
+	_on_node_clicked(selected)
+
+
+func cancel_preview() -> void:
+	if current_map_state == MapState.LOADING or current_map_state == MapState.LOCKED:
+		return
+	_controller_preview_node = null
+	if current_map_state == MapState.TARGETING:
+		_cancel_targeting()
+	else:
+		_hide_reticle()
+
+
+func _controller_candidates() -> Array[MapNode]:
+	var candidates: Array[MapNode] = []
+	for value in grid_nodes.values():
+		var node := value as MapNode
+		node.navigation_eligible = _is_controller_candidate(node)
+		if node.navigation_eligible:
+			candidates.append(node)
+	return candidates
+
+
+func _is_controller_candidate(node: MapNode) -> bool:
+	if node == null or node == current_node or node.state == MapNode.NodeState.HIDDEN:
+		return false
+	if current_map_state == MapState.TARGETING:
+		return true
+	return current_map_state == MapState.PLAYING \
+		and node.state == MapNode.NodeState.REVEALED \
+		and _get_hex_distance(current_node.grid_coords, node.grid_coords) == 1
+
+
+func process_controller_camera(direction: Vector2, delta: float) -> void:
+	if current_map_state == MapState.LOADING or current_map_state == MapState.LOCKED or direction.is_zero_approx():
+		return
+	camera.position = _get_clamped_camera_pos(
+		camera.position + direction.normalized() * camera_pan_speed * delta * camera.zoom.x,
+		camera.zoom
+	)
+
+
+func recenter_camera() -> void:
+	if current_map_state == MapState.LOADING or current_map_state == MapState.LOCKED or current_node == null:
+		return
+	camera.position = _get_clamped_camera_pos(current_node.position, camera.zoom)
+
 
 func _input(event):
 	if current_map_state == MapState.LOADING or current_map_state == MapState.LOCKED:
@@ -745,6 +877,7 @@ func _create_map_node(grid_x, grid_y, screen_pos, type) -> MapNode:
 	return node
 
 func start_targeting_mode(radius: int):
+	_controller_preview_node = null
 	current_map_state = MapState.TARGETING
 	pending_scan_radius = radius
 	player_reticle.visible = true
@@ -765,6 +898,7 @@ func _cancel_targeting():
 	if current_map_state != MapState.TARGETING: return
 	current_map_state = MapState.PLAYING
 	pending_scan_radius = 0
+	_controller_preview_node = null
 	_reset_reticle_visuals()
 	scan_canceled.emit()
 
@@ -781,6 +915,8 @@ func unlock_input():
 func _on_node_clicked(target_node: MapNode):
 	if target_node == current_node: return
 	if current_map_state == MapState.TARGETING:
+		if target_node.state == MapNode.NodeState.HIDDEN:
+			return
 		execute_camera_scan(target_node, pending_scan_radius)
 		current_map_state = MapState.PLAYING
 		pending_scan_radius = 0
@@ -789,6 +925,7 @@ func _on_node_clicked(target_node: MapNode):
 		return
 
 	if current_map_state != MapState.PLAYING: return
+	if target_node.state != MapNode.NodeState.REVEALED: return
 
 	var dist = _get_hex_distance(current_node.grid_coords, target_node.grid_coords)
 	if dist > 1:
@@ -927,7 +1064,7 @@ func _zoom_camera(step: float):
 	if _zoom_tween and _zoom_tween.is_running(): _zoom_tween.kill()
 
 	var limit_zoom_vec = _get_cover_zoom_level()
-	var min_allowed = limit_zoom_vec.x # The "Wide" limit
+	var min_allowed = max(min_zoom, limit_zoom_vec.x) # The "Wide" limit
 	var max_allowed = max_zoom         # The "Close" limit (e.g. 2.5)
 
 	# 1. Apply Zoom

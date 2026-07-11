@@ -120,6 +120,7 @@ hero_status_scene = ExtResource("7_31sxc")
 map_node_scene = ExtResource("2_vfn15")
 selection_texture = ExtResource("5_pf175")
 background_texture = ExtResource("2_1a5qu")
+camera_pan_speed = 600.0
 
 [node name="Parallax2D" type="Parallax2D" parent="."]
 

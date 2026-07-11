@@ -67,3 +67,102 @@ func test_restore_preserves_authoritative_map_state_and_danger_vision() -> void:
 	assert_eq(resaved.terminal_memory, saved.terminal_memory)
 	assert_eq(resaved.encounter_memory, saved.encounter_memory)
 	assert_eq(resaved.reward_memory, saved.reward_memory)
+
+
+func _prepare_navigation_map() -> Dictionary:
+	var dungeon_map := await _make_map()
+	await dungeon_map.generate_hex_grid(false, {
+		Vector2i(0, 0): MapNode.NodeType.ENTRANCE,
+		Vector2i(1, 0): MapNode.NodeType.COMBAT,
+		Vector2i(2, 0): MapNode.NodeType.REWARD,
+		Vector2i(3, 0): MapNode.NodeType.TERMINAL,
+	})
+	var nodes: Array = dungeon_map.grid_nodes.values()
+	nodes.sort_custom(func(a: MapNode, b: MapNode): return a.position.x < b.position.x)
+	for node: MapNode in nodes:
+		node.set_state(MapNode.NodeState.REVEALED)
+	dungeon_map.current_node = nodes[1]
+	dungeon_map.player_cursor.position = nodes[1].position
+	dungeon_map.current_map_state = DungeonMap.MapState.PLAYING
+	return {map = dungeon_map, nodes = nodes}
+
+
+func test_controller_preview_retains_on_neutral_and_confirm_uses_validated_move() -> void:
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	var nodes: Array = setup.nodes
+	var cursor_start := dungeon_map.player_cursor.position
+
+	dungeon_map.select_direction(Vector2.RIGHT)
+	var preview: MapNode = dungeon_map._controller_preview_node
+	assert_not_null(preview)
+	assert_eq(dungeon_map.player_cursor.position, cursor_start)
+	dungeon_map.select_direction(Vector2.ZERO)
+	assert_same(dungeon_map._controller_preview_node, preview)
+	dungeon_map.confirm_preview()
+	assert_same(dungeon_map.current_node, preview)
+	assert_eq(dungeon_map.current_map_state, DungeonMap.MapState.LOCKED)
+	assert_ne(preview, nodes[0])
+
+
+func test_controller_candidates_filter_hidden_completed_unreachable_and_cancel_clears() -> void:
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	var nodes: Array = setup.nodes
+	nodes[2].set_state(MapNode.NodeState.COMPLETED)
+
+	dungeon_map.select_direction(Vector2.RIGHT)
+	assert_null(dungeon_map._controller_preview_node)
+	nodes[2].set_state(MapNode.NodeState.REVEALED)
+	dungeon_map.select_direction(Vector2.RIGHT)
+	assert_same(dungeon_map._controller_preview_node, nodes[2])
+	dungeon_map.cancel_preview()
+	assert_null(dungeon_map._controller_preview_node)
+
+
+func test_scan_selection_filters_hidden_candidates_and_cancel_cancels_scan() -> void:
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	var nodes: Array = setup.nodes
+	nodes[2].set_state(MapNode.NodeState.HIDDEN)
+	dungeon_map.start_targeting_mode(1)
+	dungeon_map.select_direction(Vector2.RIGHT)
+	assert_same(dungeon_map._controller_preview_node, nodes[3])
+	dungeon_map.cancel_preview()
+	assert_eq(dungeon_map.current_map_state, DungeonMap.MapState.PLAYING)
+	assert_eq(dungeon_map.pending_scan_radius, 0)
+
+
+func test_locked_state_suppresses_selection_camera_and_confirmation() -> void:
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	var start_node := dungeon_map.current_node
+	var start_camera := dungeon_map.camera.position
+	dungeon_map.current_map_state = DungeonMap.MapState.LOCKED
+
+	dungeon_map.select_direction(Vector2.RIGHT)
+	dungeon_map.process_controller_camera(Vector2.RIGHT, 1.0)
+	dungeon_map.confirm_preview()
+	assert_null(dungeon_map._controller_preview_node)
+	assert_same(dungeon_map.current_node, start_node)
+	assert_eq(dungeon_map.camera.position, start_camera)
+
+
+func test_camera_pan_is_delta_scaled_zoom_is_clamped_and_recenter_targets_current_node() -> void:
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	dungeon_map.camera_pan_speed = 100.0
+	dungeon_map.camera.position = Vector2.ZERO
+	dungeon_map.process_controller_camera(Vector2.RIGHT, 0.25)
+	var quarter_delta := dungeon_map.camera.position.x
+	dungeon_map.camera.position = Vector2.ZERO
+	dungeon_map.process_controller_camera(Vector2.RIGHT, 0.5)
+	assert_almost_eq(dungeon_map.camera.position.x, quarter_delta * 2.0, 0.01)
+
+	dungeon_map.camera.zoom = Vector2(dungeon_map.max_zoom, dungeon_map.max_zoom)
+	dungeon_map._zoom_camera(dungeon_map.zoom_step)
+	await get_tree().create_timer(0.35).timeout
+	assert_eq(dungeon_map.camera.zoom, Vector2(dungeon_map.max_zoom, dungeon_map.max_zoom))
+	dungeon_map.camera.position = Vector2(9999, 9999)
+	dungeon_map.recenter_camera()
+	assert_eq(dungeon_map.camera.position, dungeon_map._get_clamped_camera_pos(dungeon_map.current_node.position, dungeon_map.camera.zoom))
