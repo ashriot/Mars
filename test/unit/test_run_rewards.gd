@@ -52,7 +52,7 @@ func before_each() -> void:
 	RunManager.prepare_fresh_run()
 	RunManager.is_run_active = true
 	RunManager.run_bits = 101
-	RunManager.run_xp = 0
+	RunManager.run_xp = 101
 	RunManager.run_inventory = {"mat_weap_1": 3, "mat_arm_1": 2}
 	RunManager.run_equipment_loot.assign([load("res://data/equipment/weapons/pistol.tres").duplicate()])
 	RunManager.run_mods_loot.assign([load("res://data/equipment/mods/health_booster.tres").duplicate()])
@@ -110,6 +110,7 @@ func test_success_banks_all_rewards_and_clears_temporary_state() -> void:
 	RunManager.commit_rewards(RunManager.RunResult.SUCCESS)
 
 	assert_eq(SaveSystem.bits, 111)
+	assert_eq(SaveSystem.total_lifetime_xp, 101)
 	assert_eq(SaveSystem.inventory, {"existing": 2, "mat_weap_1": 3, "mat_arm_1": 2})
 	assert_eq(SaveSystem.inventory_equipment.size(), 1)
 	assert_eq(SaveSystem.inventory_mods.size(), 1)
@@ -120,6 +121,7 @@ func test_retreat_banks_half_stack_rewards_and_no_equipment_or_mods() -> void:
 	RunManager.commit_rewards(RunManager.RunResult.RETREAT)
 
 	assert_eq(SaveSystem.bits, 60)
+	assert_eq(SaveSystem.total_lifetime_xp, 50)
 	assert_eq(SaveSystem.inventory, {"existing": 2, "mat_weap_1": 1, "mat_arm_1": 1})
 	assert_eq(SaveSystem.inventory_equipment.size(), 0)
 	assert_eq(SaveSystem.inventory_mods.size(), 0)
@@ -130,6 +132,7 @@ func test_defeat_banks_nothing_and_clears_temporary_state() -> void:
 	RunManager.commit_rewards(RunManager.RunResult.DEFEAT)
 
 	assert_eq(SaveSystem.bits, 10)
+	assert_eq(SaveSystem.total_lifetime_xp, 0)
 	assert_eq(SaveSystem.inventory, {"existing": 2})
 	assert_eq(SaveSystem.inventory_equipment.size(), 0)
 	assert_eq(SaveSystem.inventory_mods.size(), 0)

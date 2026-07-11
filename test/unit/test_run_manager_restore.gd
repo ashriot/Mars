@@ -21,6 +21,8 @@ var _saved_tier: int
 var _saved_profile: DungeonProfile
 var _saved_active: bool
 var _saved_committed: bool
+var _saved_equipment: Array[Equipment]
+var _saved_mods: Array[EquipmentMod]
 
 
 func before_each() -> void:
@@ -34,6 +36,8 @@ func before_each() -> void:
 	_saved_profile = RunManager.dungeon_profile
 	_saved_active = RunManager.is_run_active
 	_saved_committed = RunManager._rewards_committed
+	_saved_equipment.assign(RunManager.run_equipment_loot)
+	_saved_mods.assign(RunManager.run_mods_loot)
 
 
 func after_each() -> void:
@@ -47,8 +51,8 @@ func after_each() -> void:
 	RunManager.dungeon_profile = _saved_profile
 	RunManager.is_run_active = _saved_active
 	RunManager._rewards_committed = _saved_committed
-	RunManager.run_equipment_loot.clear()
-	RunManager.run_mods_loot.clear()
+	RunManager.run_equipment_loot.assign(_saved_equipment)
+	RunManager.run_mods_loot.assign(_saved_mods)
 
 
 func _map_data() -> Dictionary:
