@@ -24,10 +24,11 @@ func _ready():
 	# 2. Check Save Status
 	if SaveSystem.has_save(1):
 		continue_button.disabled = false
-		continue_button.grab_focus() # Nice UX touch
 	else:
 		continue_button.disabled = true
-		start_button.grab_focus()
+
+	load_button.disabled = true
+	_configure_navigation()
 
 	# 3. Disable Input during Intro
 	#for child in menu_buttons.get_children():
@@ -55,6 +56,38 @@ func _ready():
 	for child in menu_buttons.get_children():
 		if child is Control:
 			child.mouse_filter = Control.MOUSE_FILTER_STOP
+
+
+func _exit_tree() -> void:
+	var navigation := _navigation_ux_layer()
+	if navigation:
+		navigation.unregister_screen(self)
+
+
+func _configure_navigation() -> void:
+	var default_focus := continue_button if not continue_button.disabled else start_button
+	for button in [start_button, continue_button, load_button]:
+		button.focus_entered.connect(_publish_hints)
+	var navigation := _navigation_ux_layer()
+	if navigation:
+		navigation.register_screen(self, default_focus)
+	_publish_hints()
+	_grab_focus_if_valid.call_deferred(default_focus)
+
+
+func _navigation_ux_layer() -> NavigationUXLayer:
+	return get_tree().root.find_child("NavigationUXLayer", true, false) as NavigationUXLayer
+
+
+func _publish_hints() -> void:
+	var navigation := _navigation_ux_layer()
+	if navigation:
+		navigation.publish_hints([{action = &"confirm", label = "Select", enabled = true}])
+
+
+func _grab_focus_if_valid(control: Control) -> void:
+	if is_instance_valid(control) and control.is_inside_tree() and control.is_visible_in_tree() and not (control is BaseButton and control.disabled):
+		control.grab_focus()
 
 func _on_new_game_pressed():
 	# 1. Initialize Data

@@ -28,6 +28,12 @@ func _ready():
 		var btn = mode_tabs.get_child(i) as Button
 		btn.pressed.connect(_on_mode_changed.bind(i))
 
+
+func _exit_tree() -> void:
+	var navigation := _navigation_ux_layer()
+	if navigation:
+		navigation.pop_modal(self)
+
 func open():
 	party_roster = SaveSystem.party_roster
 	if party_roster.is_empty(): return
@@ -37,9 +43,23 @@ func open():
 	var btn: Button = mode_tabs.get_child(0)
 	btn.set_pressed_no_signal(true)
 	show()
+	var navigation := _navigation_ux_layer()
+	if navigation:
+		navigation.push_modal(self, btn)
+		navigation.publish_hints([
+			{action = &"confirm", label = "Select", enabled = true},
+			{action = &"cancel", label = "Back", enabled = true},
+		])
+	_grab_focus_if_valid.call_deferred(btn)
 
 func _on_back_pressed():
-	hide()
+	_close()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if visible and event.is_action_pressed(&"cancel"):
+		get_viewport().set_input_as_handled()
+		_close()
 
 func _refresh_hero_list():
 	for child in hero_list_container.get_children():
@@ -223,4 +243,20 @@ func _on_purchase_requested(hero: HeroData, role_id: String, node_id: String) ->
 		skill_view.refresh_progression_state(hero)
 
 func _on_back_btn_pressed() -> void:
+	_close()
+
+
+func _close() -> void:
+	var navigation := _navigation_ux_layer()
+	if navigation:
+		navigation.pop_modal(self)
 	hide()
+
+
+func _navigation_ux_layer() -> NavigationUXLayer:
+	return get_tree().root.find_child("NavigationUXLayer", true, false) as NavigationUXLayer
+
+
+func _grab_focus_if_valid(control: Control) -> void:
+	if is_instance_valid(control) and control.is_inside_tree() and control.is_visible_in_tree() and not (control is BaseButton and control.disabled):
+		control.grab_focus()

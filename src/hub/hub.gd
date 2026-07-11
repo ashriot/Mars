@@ -12,6 +12,20 @@ signal head_out
 
 func _ready():
 	bits_label.text = "BITS: %d" % SaveSystem.bits
+	for button in $Actions.get_children():
+		if button is Button:
+			button.focus_entered.connect(_publish_hints)
+	var navigation := _navigation_ux_layer()
+	if navigation:
+		navigation.register_screen(self, head_out_button)
+	_publish_hints()
+	_grab_focus_if_valid.call_deferred(head_out_button)
+
+
+func _exit_tree() -> void:
+	var navigation := _navigation_ux_layer()
+	if navigation:
+		navigation.unregister_screen(self)
 
 func _on_head_out_pressed() -> void:
 	RunManager.current_dungeon_tier = 1
@@ -29,3 +43,18 @@ func _on_head_out_pressed() -> void:
 
 func _on_button_3_pressed() -> void:
 	party_menu.open()
+
+
+func _navigation_ux_layer() -> NavigationUXLayer:
+	return get_tree().root.find_child("NavigationUXLayer", true, false) as NavigationUXLayer
+
+
+func _publish_hints() -> void:
+	var navigation := _navigation_ux_layer()
+	if navigation:
+		navigation.publish_hints([{action = &"confirm", label = "Select", enabled = true}])
+
+
+func _grab_focus_if_valid(control: Control) -> void:
+	if is_instance_valid(control) and control.is_inside_tree() and control.is_visible_in_tree() and not (control is BaseButton and control.disabled):
+		control.grab_focus()

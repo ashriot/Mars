@@ -20,6 +20,19 @@ var base_alert_reduction: int = 0
 
 func _ready():
 	text_label.meta_clicked.connect(_on_text_link_clicked)
+	_configure_navigation()
+
+
+func _exit_tree() -> void:
+	var navigation := _navigation_ux_layer()
+	if navigation:
+		navigation.pop_modal(self)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if visible and event.is_action_pressed(&"cancel"):
+		get_viewport().set_input_as_handled()
+		_on_close_button_pressed()
 
 func setup(data: Dictionary):
 	_lifecycle_generation += 1
@@ -140,6 +153,9 @@ func _animate_close(emit_closed: bool = true):
 		return
 	close_tween = null
 	hide()
+	var navigation := _navigation_ux_layer()
+	if navigation:
+		navigation.pop_modal(self)
 	if emit_closed:
 		closed.emit()
 	else:
@@ -151,3 +167,23 @@ func _on_close_button_pressed() -> void:
 	_interaction_started = true
 	close_button.disabled = true
 	_animate_close()
+
+
+func _configure_navigation() -> void:
+	var navigation := _navigation_ux_layer()
+	if navigation:
+		navigation.push_modal(self, close_button)
+		navigation.publish_hints([
+			{action = &"confirm", label = "Select", enabled = true},
+			{action = &"cancel", label = "Close", enabled = true},
+		])
+	_grab_focus_if_valid.call_deferred(close_button)
+
+
+func _navigation_ux_layer() -> NavigationUXLayer:
+	return get_tree().root.find_child("NavigationUXLayer", true, false) as NavigationUXLayer
+
+
+func _grab_focus_if_valid(control: Control) -> void:
+	if is_instance_valid(control) and control.is_inside_tree() and control.is_visible_in_tree() and not (control is BaseButton and control.disabled):
+		control.grab_focus()

@@ -14,6 +14,20 @@ signal finished
 var _result: RunManager.RunResult
 var _confirmed := false
 
+
+func _ready() -> void:
+	var navigation := _navigation_ux_layer()
+	if navigation:
+		navigation.push_modal(self, continue_button)
+		navigation.publish_hints([{action = &"confirm", label = "Continue", enabled = true}])
+	_grab_focus_if_valid.call_deferred(continue_button)
+
+
+func _exit_tree() -> void:
+	var navigation := _navigation_ux_layer()
+	if navigation:
+		navigation.pop_modal(self)
+
 func setup(result: RunManager.RunResult):
 	modulate.a = 0.0
 	_result = result
@@ -67,3 +81,12 @@ func _on_continue_pressed():
 
 func _commit_rewards() -> void:
 	RunManager.commit_rewards(_result)
+
+
+func _navigation_ux_layer() -> NavigationUXLayer:
+	return get_tree().root.find_child("NavigationUXLayer", true, false) as NavigationUXLayer
+
+
+func _grab_focus_if_valid(control: Control) -> void:
+	if is_instance_valid(control) and control.is_inside_tree() and control.is_visible_in_tree() and not (control is BaseButton and control.disabled):
+		control.grab_focus()

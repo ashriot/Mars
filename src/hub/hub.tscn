@@ -208,36 +208,54 @@ theme_override_constants/separation = 20
 [node name="Button" type="Button" parent="Actions" unique_id=107320782]
 custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
+focus_neighbor_top = NodePath("../HeadOut")
+focus_neighbor_bottom = NodePath("../Button2")
+focus_mode = 2
 theme_override_font_sizes/font_size = 48
 text = "TERMINAL ACCESS"
 
 [node name="Button2" type="Button" parent="Actions" unique_id=1140169094]
 custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
+focus_neighbor_top = NodePath("../Button")
+focus_neighbor_bottom = NodePath("../Button3")
+focus_mode = 2
 theme_override_font_sizes/font_size = 48
 text = "CHECK STATUS"
 
 [node name="Button3" type="Button" parent="Actions" unique_id=126340158]
 custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
+focus_neighbor_top = NodePath("../Button2")
+focus_neighbor_bottom = NodePath("../Button4")
+focus_mode = 2
 theme_override_font_sizes/font_size = 48
 text = "RUN TRAINING EXE"
 
 [node name="Button4" type="Button" parent="Actions" unique_id=2002833102]
 custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
+focus_neighbor_top = NodePath("../Button3")
+focus_neighbor_bottom = NodePath("../Button5")
+focus_mode = 2
 theme_override_font_sizes/font_size = 48
 text = "ACCESS BANKING"
 
 [node name="Button5" type="Button" parent="Actions" unique_id=89016860]
 custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
+focus_neighbor_top = NodePath("../Button4")
+focus_neighbor_bottom = NodePath("../HeadOut")
+focus_mode = 2
 theme_override_font_sizes/font_size = 48
 text = "CONTACT MILO"
 
 [node name="HeadOut" type="Button" parent="Actions" unique_id=2139768617]
 custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
+focus_neighbor_top = NodePath("../Button5")
+focus_neighbor_bottom = NodePath("../Button")
+focus_mode = 2
 theme_override_font_sizes/font_size = 48
 text = "HEAD OUT"
 
