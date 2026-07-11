@@ -16,6 +16,7 @@ var _saved_inventory: Dictionary
 var _saved_inventory_equipment: Array[Equipment]
 var _saved_inventory_mods: Array[EquipmentMod]
 var _saved_run_active: bool
+var _saved_last_load_issues: Array[String]
 
 
 func before_each() -> void:
@@ -32,6 +33,7 @@ func before_each() -> void:
 	_saved_inventory_equipment = SaveSystem.inventory_equipment.duplicate()
 	_saved_inventory_mods = SaveSystem.inventory_mods.duplicate()
 	_saved_run_active = RunManager.is_run_active
+	_saved_last_load_issues = SaveSystem.last_load_issues.duplicate()
 
 
 func after_each() -> void:
@@ -46,6 +48,7 @@ func after_each() -> void:
 	SaveSystem.inventory_equipment = _saved_inventory_equipment
 	SaveSystem.inventory_mods = _saved_inventory_mods
 	RunManager.is_run_active = _saved_run_active
+	SaveSystem.last_load_issues = _saved_last_load_issues
 
 
 func _restore_file(path: String, existed: bool, bytes: PackedByteArray) -> void:
@@ -55,6 +58,14 @@ func _restore_file(path: String, existed: bool, bytes: PackedByteArray) -> void:
 			file.store_buffer(bytes)
 	elif FileAccess.file_exists(path):
 		DirAccess.remove_absolute(path)
+
+
+func _write_test_slot(document: Dictionary) -> void:
+	DirAccess.make_dir_recursive_absolute(SaveSystem.TEST_SAVE_DIR)
+	var file := FileAccess.open(TEST_SLOT_PATH, FileAccess.WRITE)
+	assert_not_null(file)
+	if file:
+		file.store_string(JSON.stringify(document))
 
 
 func test_gut_runner_argument_is_detected() -> void:
@@ -98,3 +109,43 @@ func test_save_game_recreates_only_test_root_and_preserves_production_slot() -> 
 	assert_eq(FileAccess.file_exists(PRODUCTION_SLOT_PATH), _production_slot_existed)
 	if _production_slot_existed:
 		assert_eq(FileAccess.get_file_as_bytes(PRODUCTION_SLOT_PATH), _production_slot_bytes)
+
+
+func test_load_game_reports_intentional_legacy_progression_reset_without_mapping_ids() -> void:
+	_write_test_slot({"heroes": [{
+		"hero_id": "asher",
+		"current_xp": 777,
+		"unlocked_role_ids": ["gun"],
+		"unlocked_node_ids": ["gun_1", "gun_311"],
+	}]})
+
+	assert_true(SaveSystem.load_game(1))
+	assert_eq(SaveSystem.party_roster.size(), 1)
+	assert_true(SaveSystem.party_roster[0].role_progress.is_empty())
+	assert_eq(SaveSystem.party_roster[0].current_xp, 777)
+	assert_eq(SaveSystem.last_load_issues, ["Hero 'asher': legacy progression data is incompatible and was intentionally reset."])
+	assert_push_warning("Hero 'asher': legacy progression data is incompatible and was intentionally reset.")
+
+
+func test_load_game_reports_catalog_revision_mismatch_without_reset_or_refund() -> void:
+	var gun_revision: int = ProgressionSystem.catalog.get_role("gun").version
+	_write_test_slot({"heroes": [{
+		"hero_id": "asher",
+		"current_xp": 555,
+		"unlocked_role_ids": ["gun"],
+		"role_progress": {"gun": {
+			"content_revision": gun_revision + 1,
+			"owned_node_ids": ["gun.root"],
+			"xp_paid_by_node": {"gun.root": 100},
+		}},
+	}]})
+
+	assert_true(SaveSystem.load_game(1))
+	var hero: HeroData = SaveSystem.party_roster[0]
+	assert_eq(hero.current_xp, 555)
+	assert_eq(hero.role_progress.gun.content_revision, gun_revision + 1)
+	assert_eq(hero.role_progress.gun.owned_node_ids, ["gun.root"])
+	assert_eq(hero.role_progress.gun.xp_paid_by_node, {"gun.root": 100})
+	var expected := "Hero 'asher' role 'gun': saved progression revision %d does not match content revision %d; progression was preserved without reset or refund." % [gun_revision + 1, gun_revision]
+	assert_eq(SaveSystem.last_load_issues, [expected])
+	assert_push_warning(expected)

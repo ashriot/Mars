@@ -20,6 +20,7 @@ var data: Dictionary = {}
 var inventory: Dictionary = {}
 var inventory_equipment: Array[Equipment] = []
 var inventory_mods: Array[EquipmentMod] = []
+var last_load_issues: Array[String] = []
 
 func _ready():
 	var save_dir := _get_save_dir()
@@ -84,6 +85,7 @@ func save_game(slot_index: int):
 	#print("Game saved to Slot ", slot_index)
 
 func load_game(slot_index: int) -> bool:
+	last_load_issues.clear()
 	var path = _get_slot_path(slot_index)
 	if not FileAccess.file_exists(path):
 		return false
@@ -115,17 +117,35 @@ func load_game(slot_index: int) -> bool:
 		# Restore Party
 		party_roster.clear()
 		var saved_heroes = data.get("heroes", [])
+		var expected_revisions := ProgressionSystem.get_content_revisions()
 		for hero_dict in saved_heroes:
 			var hero_id = hero_dict.get("hero_id")
 			var path_to_base = "res://data/heroes/" + hero_id + "/" + hero_id + ".tres"
 
 			if ResourceLoader.exists(path_to_base):
 				var hero_obj = load(path_to_base).duplicate()
-				hero_obj.load_from_save_data(hero_dict)
+				var hero_issues: Array[String] = hero_obj.load_from_save_data(hero_dict, expected_revisions)
+				for issue: String in hero_issues:
+					_report_hero_load_issue(hero_id, issue)
 				party_roster.append(hero_obj)
 
 		return true
 	return false
+
+func _report_hero_load_issue(hero_id: String, issue: String) -> void:
+	var message: String
+	if issue == "legacy_progression_reset":
+		message = "Hero '%s': legacy progression data is incompatible and was intentionally reset." % hero_id
+	elif issue.begins_with("revision_mismatch:"):
+		var parts := issue.split(":")
+		if parts.size() == 4:
+			message = "Hero '%s' role '%s': saved progression revision %s does not match content revision %s; progression was preserved without reset or refund." % [hero_id, parts[1], parts[2], parts[3]]
+		else:
+			message = "Hero '%s': progression revision mismatch was reported with invalid context (%s)." % [hero_id, issue]
+	else:
+		message = "Hero '%s': invalid progression data (%s)." % [hero_id, issue]
+	last_load_issues.append(message)
+	push_warning(message)
 
 func start_new_campaign(slot_index: int):
 	current_slot_index = slot_index

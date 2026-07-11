@@ -101,23 +101,16 @@ func test_new_progression_consumers_never_access_legacy_role_topology() -> void:
 func test_production_content_has_no_legacy_progression_references() -> void:
 	var forbidden := [
 		"RoleNode", "root_node", "init_structure", "generated_id",
-		"calculated_xp_cost", "unlocked_node_ids", "unlock_node(",
+		"calculated_xp_cost", "unlock_node(",
 		"spend_xp(", "_process_node_stats", "_bake_tree_into_role",
+		"role_node.gd", "uid://cuhoaxfyipk6s",
 	]
 	for root in ["res://src", "res://data"]:
 		_assert_tree_excludes_tokens(root, forbidden)
+	_assert_file_excludes_tokens("res://project.godot", forbidden)
 	assert_false(FileAccess.file_exists("res://src/scripts/data/role_node.gd"))
-	for path in [
-		"res://data/heroes/asher/roles/gunner",
-		"res://data/heroes/asher/roles/sniper",
-		"res://data/heroes/asher/roles/operative",
-		"res://data/heroes/echo/roles/kineticist",
-		"res://data/heroes/echo/roles/psion",
-		"res://data/heroes/sands/roles/medic",
-		"res://data/heroes/sands/roles/strategist",
-		"res://data/heroes/sands/roles/vanguard",
-	]:
-		assert_false(DirAccess.dir_exists_absolute(path), path)
+	assert_true(_is_legacy_nested_role_resource("res://data/heroes/new_hero/roles/new_role/node.tres"))
+	assert_false(_is_legacy_nested_role_resource("res://data/heroes/new_hero/roles/new_role.tres"))
 
 func _assert_single_action_root(role_id: String, hero_id: String, resource_path: String) -> void:
 	var document: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(CONTENT_ROOT.path_join(hero_id).path_join(role_id + ".json")))
@@ -162,10 +155,23 @@ func _assert_tree_excludes_tokens(root: String, forbidden: Array) -> void:
 	assert_not_null(directory, root)
 	if directory == null: return
 	for filename: String in directory.get_files():
-		if filename.get_extension() not in ["gd", "tscn", "tres"]: continue
 		var path := root.path_join(filename)
-		var source := FileAccess.get_file_as_string(path)
-		for token: String in forbidden:
-			assert_false(token in source, "%s contains %s" % [path, token])
+		if _is_legacy_nested_role_resource(path):
+			fail_test("Legacy nested role resource remains: %s" % path)
+		if filename.get_extension().to_lower() in ["gd", "tscn", "tres", "res", "godot", "cfg", "import", "remap"]:
+			_assert_file_excludes_tokens(path, forbidden)
 	for child: String in directory.get_directories():
 		_assert_tree_excludes_tokens(root.path_join(child), forbidden)
+
+func _assert_file_excludes_tokens(path: String, forbidden: Array) -> void:
+	var source := FileAccess.get_file_as_string(path)
+	for token: String in forbidden:
+		assert_false(token in source, "%s contains %s" % [path, token])
+
+func _is_legacy_nested_role_resource(path: String) -> bool:
+	if path.get_extension().to_lower() != "tres":
+		return false
+	var normalized := path.trim_prefix("res://")
+	var parts := normalized.split("/")
+	var roles_index := Array(parts).find("roles")
+	return roles_index >= 0 and roles_index + 2 < parts.size()

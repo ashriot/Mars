@@ -181,19 +181,19 @@ func test_role_progress_save_round_trip_rejects_malformed_and_reports_revision_w
 	assert_false(saved.has("unlocked_node_ids"))
 	var loaded := HeroData.new()
 	var issues := loaded.load_from_save_data(saved, {"gun": 3})
-	assert_eq(issues, ["gun"])
+	assert_eq(issues, ["revision_mismatch:gun:2:3"])
 	assert_eq(loaded.role_progress.gun.content_revision, 2)
 	assert_eq(loaded.role_progress.gun.owned_node_ids, ["gun.root"])
 	assert_eq(loaded.role_progress.gun.xp_paid_by_node, {"gun.root": 75})
 
 	var legacy := HeroData.new()
-	legacy.load_from_save_data({"unlocked_node_ids": ["legacy.node"]})
+	assert_eq(legacy.load_from_save_data({"unlocked_node_ids": ["legacy.node"]}), ["legacy_progression_reset"])
 	assert_true(legacy.role_progress.is_empty())
 	assert_false(legacy.get_save_data().has("unlocked_node_ids"))
 
 	var malformed := HeroData.new()
 	var malformed_issues := malformed.load_from_save_data({"role_progress": {"gun": {"content_revision": "3", "owned_node_ids": [], "xp_paid_by_node": {}}}})
-	assert_eq(malformed_issues, ["gun"])
+	assert_eq(malformed_issues, ["invalid_role_progress:gun"])
 	assert_true(malformed.role_progress.is_empty())
 
 
@@ -209,6 +209,8 @@ func test_role_progress_parser_rejects_every_malformed_boundary() -> void:
 		{"content_revision": 3, "owned_node_ids": ["gun.root"], "xp_paid_by_node": {"gun.other": 100}},
 		{"content_revision": 3, "owned_node_ids": ["gun.root"], "xp_paid_by_node": {}},
 		{"content_revision": 3, "owned_node_ids": ["gun.root"], "xp_paid_by_node": {"gun.root": "100"}},
+		{"content_revision": 3.5, "owned_node_ids": ["gun.root"], "xp_paid_by_node": {"gun.root": 100}},
+		{"content_revision": 3, "owned_node_ids": ["gun.root"], "xp_paid_by_node": {"gun.root": 100.5}},
 		{"content_revision": 3, "owned_node_ids": ["gun.root"], "xp_paid_by_node": {"gun.root": 0}},
 		{"content_revision": 3, "owned_node_ids": ["gun.root"], "xp_paid_by_node": {"gun.root": -1}},
 	]

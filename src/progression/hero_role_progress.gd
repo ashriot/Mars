@@ -25,7 +25,7 @@ func to_save_data() -> Dictionary:
 static func from_save_data(data: Variant) -> HeroRoleProgress:
 	if not data is Dictionary:
 		return null
-	if not data.get("content_revision") is int or int(data.content_revision) <= 0:
+	if not _is_positive_integral_number(data.get("content_revision")):
 		return null
 	if not data.get("owned_node_ids") is Array or not data.get("xp_paid_by_node") is Dictionary:
 		return null
@@ -37,9 +37,15 @@ static func from_save_data(data: Variant) -> HeroRoleProgress:
 	var paid: Dictionary[String, int] = {}
 	for node_id in data.xp_paid_by_node:
 		var amount: Variant = data.xp_paid_by_node[node_id]
-		if not node_id is String or not node_id in owned or not amount is int or int(amount) <= 0:
+		if not node_id is String or not node_id in owned or not _is_positive_integral_number(amount):
 			return null
-		paid[node_id] = amount
+		paid[node_id] = int(amount)
 	if paid.size() != owned.size():
 		return null
-	return HeroRoleProgress.new(data.content_revision, owned, paid)
+	return HeroRoleProgress.new(int(data.content_revision), owned, paid)
+
+
+static func _is_positive_integral_number(value: Variant) -> bool:
+	if value is int:
+		return value > 0
+	return value is float and value > 0.0 and value == floor(value)

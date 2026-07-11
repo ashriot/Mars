@@ -109,21 +109,23 @@ func load_from_save_data(data: Dictionary, expected_revisions: Dictionary = {}) 
 	active_role_index = data.get("active_role", 0)
 
 	role_progress.clear()
+	if data.has("unlocked_node_ids") and not data.has("role_progress"):
+		progression_issues.append("legacy_progression_reset")
 	var loaded_progress: Variant = data.get("role_progress", {})
 	if loaded_progress is Dictionary:
 		for role_id in loaded_progress:
 			if not role_id is String or role_id.is_empty():
-				progression_issues.append(str(role_id))
+				progression_issues.append("invalid_role_progress:%s" % str(role_id))
 				continue
 			var record := HeroRoleProgress.from_save_data(loaded_progress[role_id])
 			if record == null:
-				progression_issues.append(role_id)
+				progression_issues.append("invalid_role_progress:%s" % role_id)
 				continue
 			role_progress[role_id] = record
 			if expected_revisions.has(role_id) and expected_revisions[role_id] is int and record.content_revision != expected_revisions[role_id]:
-				progression_issues.append(role_id)
+				progression_issues.append("revision_mismatch:%s:%d:%d" % [role_id, record.content_revision, expected_revisions[role_id]])
 	elif data.has("role_progress"):
-		progression_issues.append("role_progress")
+		progression_issues.append("invalid_role_progress:role_progress")
 
 	# Load Role IDs
 	var loaded_role_ids = data.get("unlocked_role_ids", [])
