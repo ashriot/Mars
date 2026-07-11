@@ -114,6 +114,14 @@ func _update_tree_state():
 	if def and def.root_node:
 		_check_availability_recursive(def.root_node, true)
 
+
+func refresh_progression_state() -> void:
+	if not hero_data:
+		return
+	_refresh_xp_ui()
+	_update_tree_state()
+
+
 func _check_availability_recursive(node: RoleNode, parent_unlocked: bool):
 	var is_owned = node.generated_id in hero_data.unlocked_node_ids
 

@@ -57,6 +57,10 @@ func _refresh_role_list():
 	update_tabs(color)
 
 func _on_hero_progression_updated(hero: HeroData) -> void:
+	for child in role_list_container.get_children():
+		var panel := child as RolePanel
+		if panel and is_same(panel.hero_data, hero):
+			panel.refresh_progression_state()
 	hero_progression_updated.emit(hero)
 
 func _on_role_panel_selected(selected_panel: RolePanel):

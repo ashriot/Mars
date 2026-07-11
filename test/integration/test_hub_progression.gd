@@ -39,6 +39,8 @@ func before_each() -> void:
 
 
 func after_each() -> void:
+	for player in AudioManager._sfx_players:
+		player.stop()
 	SaveSystem.data = _saved_data
 	SaveSystem.party_roster.assign(_saved_roster)
 	SaveSystem.bits = _saved_bits
@@ -178,6 +180,72 @@ func test_skill_tree_panel_forwards_progression_once() -> void:
 	assert_true(is_same(get_signal_parameters(panel, "hero_progression_updated", 0)[0], hero))
 	assert_true(is_same(get_signal_parameters(panel, "hero_progression_updated", 1)[0], hero))
 	_free_purchase(purchase)
+	_kill_test_tweens()
+	panel.free()
+	await get_tree().process_frame
+
+
+func test_purchase_refreshes_affordability_on_matching_sibling_without_rerender() -> void:
+	var hero := HeroData.new()
+	hero.hero_id = "shared"
+	hero.hero_name = "Shared"
+	hero.current_xp = 150
+	for role_id in ["first", "second"]:
+		var node := RoleNode.new()
+		node.generated_id = role_id + "_1"
+		node.calculated_xp_cost = 100
+		node.stat_type = ActorStats.Stats.ATK
+		node.stat_value = 1
+		var definition := RoleDefinition.new()
+		definition.role_id = role_id
+		definition.role_name = role_id.capitalize()
+		definition.root_node = node
+		hero.role_definitions.append(definition)
+		hero.unlocked_role_ids.append(role_id)
+
+	var panel := preload("res://src/hub/skill_tree_panel.tscn").instantiate() as SkillTreePanel
+	add_child(panel)
+	panel.setup(hero)
+	var first_role_panel := panel.role_list_container.get_child(0) as RolePanel
+	var sibling_role_panel := panel.role_list_container.get_child(1) as RolePanel
+	var first_node := first_role_panel.generated_nodes.values()[0] as SkillTreeNode
+	var sibling_node := sibling_role_panel.generated_nodes.values()[0] as SkillTreeNode
+	var sibling_node_id := sibling_node.get_instance_id()
+	var role_index_before := panel.current_role_idx
+	var page_before := panel.current_page
+	assert_eq(sibling_node.state, SkillTreeNode.NodeState.AVAILABLE)
+	assert_false(sibling_node.disabled)
+	assert_eq(sibling_node.modulate, Color.WHITE)
+
+	var other_hero := HeroData.new()
+	other_hero.hero_id = "other"
+	other_hero.hero_name = "Other"
+	other_hero.current_xp = 999
+	var other_definition := RoleDefinition.new()
+	other_definition.role_id = "other"
+	other_definition.role_name = "Other"
+	other_definition.root_node = RoleNode.new()
+	var nonmatching_panel := panel.role_panel_scene.instantiate() as RolePanel
+	panel.role_list_container.add_child(nonmatching_panel)
+	nonmatching_panel.setup(other_definition, other_hero)
+	nonmatching_panel.set_expanded(false, panel.current_page, false)
+	other_hero.current_xp = 500
+	var nonmatching_xp_text_before := nonmatching_panel.xp_display.text
+	watch_signals(panel)
+
+	first_node.node_clicked.emit(first_node)
+
+	assert_eq(hero.current_xp, 50)
+	assert_eq(sibling_node.get_instance_id(), sibling_node_id)
+	assert_eq(sibling_node.state, SkillTreeNode.NodeState.AVAILABLE)
+	assert_true(sibling_node.disabled)
+	assert_ne(sibling_node.modulate, Color.WHITE)
+	assert_eq(sibling_role_panel.xp_display.text, "50 XP")
+	assert_eq(panel.current_role_idx, role_index_before)
+	assert_eq(panel.current_page, page_before)
+	assert_eq(nonmatching_panel.xp_display.text, nonmatching_xp_text_before)
+	assert_signal_emit_count(panel, "hero_progression_updated", 1)
+	assert_true(is_same(get_signal_parameters(panel, "hero_progression_updated")[0], hero))
 	_kill_test_tweens()
 	panel.free()
 	await get_tree().process_frame
