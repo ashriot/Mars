@@ -8,8 +8,10 @@ signal closed
 
 var type_tween: Tween
 var cursor_tween: Tween
+var close_tween: Tween
 var final_text_content: String = ""
 var _interaction_started := false
+var _lifecycle_generation := 0
 
 # Data for the logic handler
 var current_terminal_index: int = 0
@@ -20,6 +22,10 @@ func _ready():
 	text_label.meta_clicked.connect(_on_text_link_clicked)
 
 func setup(data: Dictionary):
+	_lifecycle_generation += 1
+	if close_tween:
+		close_tween.kill()
+		close_tween = null
 	_interaction_started = false
 	close_button.disabled = false
 	modulate.a = 1.0
@@ -124,11 +130,15 @@ func _start_typing_effect():
 	type_tween.tween_property(text_label, "visible_ratio", 1.0, duration)
 
 func _animate_close(emit_closed: bool = true):
+	var close_generation := _lifecycle_generation
 	if cursor_tween: cursor_tween.kill()
 	text_label.text = final_text_content
-	var tween = create_tween()
-	tween.tween_property(self, "modulate:a", 0.0, 0.25)
-	await tween.finished
+	close_tween = create_tween()
+	close_tween.tween_property(self, "modulate:a", 0.0, 0.25)
+	await close_tween.finished
+	if close_generation != _lifecycle_generation:
+		return
+	close_tween = null
 	hide()
 	if emit_closed:
 		closed.emit()
