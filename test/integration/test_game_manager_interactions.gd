@@ -79,6 +79,21 @@ class EndScreenDouble extends DungeonEndScreen:
 		commit_count += 1
 
 
+class AsyncEncounterManager extends GameManager:
+	var completed_count := 0
+	var presented_results: Array[RunManager.RunResult] = []
+
+	func _ready() -> void:
+		pass
+
+	func _complete_current_interaction() -> void:
+		await (Engine.get_main_loop() as SceneTree).process_frame
+		completed_count += 1
+
+	func _present_end_screen(result: RunManager.RunResult) -> void:
+		presented_results.append(result)
+
+
 func _manager() -> InteractionManagerDouble:
 	var manager := InteractionManagerDouble.new()
 	manager.dungeon_map = FakeDungeonMap.new()
@@ -520,10 +535,37 @@ func test_battle_result_distinguishes_normal_boss_and_defeat() -> void:
 	assert_eq(manager.completed_count, 1)
 
 	manager.current_encounter = boss
+	manager._encounter_resolution_started = false
 	assert_eq(manager._result_for_battle_end(true), RunManager.RunResult.SUCCESS)
 	manager.end_encounter(true)
 	assert_eq(manager.presented_results, [RunManager.RunResult.SUCCESS])
 	assert_eq(manager.completed_count, 1)
+	for player in [AudioManager._music_player_1, AudioManager._music_player_2]:
+		player.stop()
+		player.stream = null
+	AudioManager._current_music_player = null
+	AudioManager._current_track_key = ""
+	manager.free()
+
+
+func test_duplicate_normal_battle_end_is_ignored_while_completion_awaits() -> void:
+	var manager := AsyncEncounterManager.new()
+	var dungeon_map := BattleDungeonMap.new()
+	manager.dungeon_map = dungeon_map
+	manager.overlay_layer = Node.new()
+	manager.add_child(dungeon_map)
+	manager.add_child(manager.overlay_layer)
+	manager.current_encounter = Encounter.new()
+
+	manager.end_encounter(true)
+	manager.end_encounter(true)
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	assert_eq(dungeon_map.exit_visuals_count, 1)
+	assert_eq(manager.completed_count, 1)
+	assert_eq(dungeon_map.refresh_count, 1)
+	assert_eq(manager.presented_results, [])
 	for player in [AudioManager._music_player_1, AudioManager._music_player_2]:
 		player.stop()
 		player.stream = null

@@ -19,6 +19,7 @@ signal restore_failed
 
 var battle_scene: BattleScene
 var current_encounter: Encounter
+var _encounter_resolution_started := false
 var _run_end_started := false
 var _dungeon_exit_emitted := false
 
@@ -120,6 +121,7 @@ func _report_interaction_error(message: String) -> void:
 
 func _start_encounter(encounter: Encounter):
 	current_encounter = encounter
+	_encounter_resolution_started = false
 	AudioManager.play_sfx("radiate")
 	await get_tree().create_timer(0.05).timeout
 
@@ -132,9 +134,14 @@ func _start_encounter(encounter: Encounter):
 	battle_scene.battle_ended.connect(end_encounter)
 
 func end_encounter(won: bool):
+	if _encounter_resolution_started:
+		return
+	_encounter_resolution_started = true
+	var result := _result_for_battle_end(won)
+	current_encounter = null
+
 	dungeon_map.exit_battle_visuals(1.0)
 
-	var result := _result_for_battle_end(won)
 	if result == -1:
 		AudioManager.play_music("map_1", 1.0, false, true)
 		_finish_interaction(InteractionOutcome.COMPLETED)
