@@ -77,3 +77,21 @@ Use this template for future candidates:
 **Likely files affected:** `src/battle/game_manager.gd`, `src/map/dungeon_end_screen.gd`, `src/singletons/run_manager.gd`, their interaction/reward tests, and a future lifecycle controller.
 
 **Risks/open questions:** Decide whether the controller instantiates presentation or receives it, who owns the exit signal, and how asynchronous overlay cleanup is canceled during scene teardown.
+
+## Candidate: Expand component loot content and balancing
+
+**Current location:** `data/materials/`, `src/singletons/item_database.gd`, and `src/singletons/loot_manager.gd`
+
+**Observed while:** Replacing synthesized component reward IDs with registered-resource selection
+
+**Problem:** Registered component content is currently limited to weapon tier 1, so unsupported tiers and missing rarity matches fall back to sparse existing content rather than representing the requested armor, tier, and rarity combinations.
+
+**Proposed boundary:** Define the intended armor/tier component catalog and explicit selection/fallback policy, then balance the current 25% rare request branch against that content.
+
+**Why defer:** Stabilization requires every generated reward to resolve and validate; content expansion and probability changes require separate game-design decisions.
+
+**Tests protecting behavior:** `test/unit/test_loot_manager.gd` protects registered-resource selection, fallback validity, stale-entry rejection, and the current rarity threshold.
+
+**Likely files affected:** Component resources under `data/materials/`, `src/singletons/item_database.gd`, `src/singletons/loot_manager.gd`, and loot tests.
+
+**Risks/open questions:** Decide armor and tier coverage, whether fallback should preserve rarity or tier first, how absent combinations surface to players, and whether the 25% rare request probability remains appropriate after the catalog expands.

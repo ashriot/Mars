@@ -28,6 +28,14 @@ func roll_loot(tier: int, rarity_mod: int) -> Dictionary:
 
 	return _generate_loot_data(type, tier, rarity_mod)
 
+func _get_requested_component_rarity(
+	rarity_mod: int,
+	rarity_roll: float
+) -> InventoryItem.Rarity:
+	if rarity_mod >= 2 and rarity_roll > 0.75:
+		return InventoryItem.Rarity.RARE
+	return InventoryItem.Rarity.COMMON
+
 func _generate_loot_data(type: int, tier: int, rarity_mod: int) -> Dictionary:
 	var data = { "type": type, "tier": tier, "rarity": rarity_mod }
 
@@ -55,11 +63,7 @@ func _generate_loot_data(type: int, tier: int, rarity_mod: int) -> Dictionary:
 			data["amount"] = amount
 
 		LootType.COMPONENT:
-			var requested_rarity := (
-				InventoryItem.Rarity.RARE
-				if rarity_mod >= 2
-				else InventoryItem.Rarity.COMMON
-			)
+			var requested_rarity := _get_requested_component_rarity(rarity_mod, randf())
 			var id := ItemDatabase.get_component_id(tier, requested_rarity)
 			if id.is_empty():
 				push_error("LootManager: No component resources are registered.")

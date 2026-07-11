@@ -111,15 +111,21 @@ func get_random_mod_id() -> String:
 
 func get_component_id(tier: int, rarity: InventoryItem.Rarity) -> String:
 	for id in _component_ids:
-		var item := _item_registry[id] as InventoryItem
+		var item := _item_registry.get(id) as InventoryItem
+		if item == null or item.category != InventoryItem.ItemCategory.COMPONENT:
+			continue
 		if item.tier == tier and item.rarity == rarity:
 			return id
 
 	for id in _component_ids:
-		var item := _item_registry[id] as InventoryItem
+		var item := _item_registry.get(id) as InventoryItem
+		if item == null or item.category != InventoryItem.ItemCategory.COMPONENT:
+			continue
 		if item.rarity == rarity:
 			return id
 
-	if not _component_ids.is_empty():
-		return _component_ids[0]
+	for id in _component_ids:
+		var item := _item_registry.get(id) as InventoryItem
+		if item != null and item.category == InventoryItem.ItemCategory.COMPONENT:
+			return id
 	return ""
