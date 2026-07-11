@@ -1,6 +1,8 @@
 extends Control
 class_name SkillTreePanel
 
+signal hero_progression_updated(hero: HeroData)
+
 @export var role_panel_scene: PackedScene
 
 @onready var role_list_container: HBoxContainer = $RoleList
@@ -45,6 +47,7 @@ func _refresh_role_list():
 
 		panel.setup(def, current_hero)
 		panel.panel_selected.connect(_on_role_panel_selected)
+		panel.hero_progression_updated.connect(_on_hero_progression_updated)
 
 		if i == current_role_idx:
 			panel.set_expanded(true, current_page, true)
@@ -52,6 +55,9 @@ func _refresh_role_list():
 		else:
 			panel.set_expanded(false, current_page, false)
 	update_tabs(color)
+
+func _on_hero_progression_updated(hero: HeroData) -> void:
+	hero_progression_updated.emit(hero)
 
 func _on_role_panel_selected(selected_panel: RolePanel):
 	var panels = role_list_container.get_children()

@@ -2,6 +2,7 @@ extends Panel
 class_name RolePanel
 
 signal panel_selected(role_panel)
+signal hero_progression_updated(hero: HeroData)
 
 @export var node_scene: PackedScene
 
@@ -140,6 +141,9 @@ func _on_node_clicked(ui_node: SkillTreeNode):
 
 	var data = ui_node.role_node_data
 
+	if data.generated_id in hero_data.unlocked_node_ids:
+		return
+
 	if hero_data.current_xp >= data.calculated_xp_cost:
 		hero_data.spend_xp(data.calculated_xp_cost)
 		hero_data.unlock_node(data)
@@ -148,6 +152,7 @@ func _on_node_clicked(ui_node: SkillTreeNode):
 		AudioManager.play_sfx("terminal")
 		_refresh_xp_ui()
 		_update_tree_state()
+		hero_progression_updated.emit(hero_data)
 	else:
 		AudioManager.play_sfx("press")
 

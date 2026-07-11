@@ -16,6 +16,7 @@ var current_mode: int = 0 # 0=Skills, 1=Inventory
 
 func _ready():
 	hide()
+	skill_view.hero_progression_updated.connect(_on_hero_progression_updated)
 	inventory_view.hero_stats_updated.connect(_on_hero_stats_updated)
 	inventory_view.mode_changed.connect(_on_inventory_mode_changed)
 	for i in range(mode_tabs.get_child_count()):
@@ -193,6 +194,13 @@ func _on_hero_stats_updated():
 	if current_hero_idx < hero_list_container.get_child_count():
 		var panel = hero_list_container.get_child(current_hero_idx) as HeroPanel
 		panel.setup(party_roster[current_hero_idx])
+
+func _on_hero_progression_updated(hero: HeroData) -> void:
+	SaveSystem.save_current_slot()
+	for child in hero_list_container.get_children():
+		var panel := child as HeroPanel
+		if panel and panel.data == hero:
+			panel.refresh_stats()
 
 func _on_back_btn_pressed() -> void:
 	hide()
