@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/ui/navigation/action_hint_bar.gd" id="1"]
+
+[node name="ActionHintBar" type="HBoxContainer"]
+offset_left = 24.0
+offset_top = 1016.0
+offset_right = 1896.0
+offset_bottom = 1064.0
+mouse_filter = 2
+theme_override_constants/separation = 24
+alignment = 2
+script = ExtResource("1")
