@@ -3,12 +3,17 @@ extends RefCounted
 
 var _catalog: ProgressionCatalog
 var _rebuild: Callable
+var _rebuilder: ProgressionRebuilder
 var _effect_validator: Callable
 
 
 func _init(catalog: ProgressionCatalog, rebuild: Callable = Callable(), effect_validator: Callable = Callable()) -> void:
 	_catalog = catalog
-	_rebuild = rebuild if rebuild.is_valid() else ProgressionRebuilder.new(catalog).rebuild
+	if rebuild.is_valid():
+		_rebuild = rebuild
+	else:
+		_rebuilder = ProgressionRebuilder.new(catalog)
+		_rebuild = _rebuilder.rebuild
 	_effect_validator = effect_validator if effect_validator.is_valid() else _default_effect_validator
 
 

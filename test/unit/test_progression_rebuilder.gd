@@ -89,11 +89,47 @@ func test_rebuild_uses_deterministic_tree_order_and_is_idempotent() -> void:
 	assert_false(is_same(first_role, hero.battle_roles.gun))
 
 
-func test_rebuild_ignores_missing_owned_ids_and_progress_for_locked_roles() -> void:
+func test_rebuild_rejects_unknown_owned_node_without_partial_publish() -> void:
+	var hero := HeroData.new()
+	hero.role_definitions = [_definition("gun")]
+	hero.unlocked_role_ids = ["gun"]
+	hero.role_progress["gun"] = HeroRoleProgress.new(1, ["missing", "gun.root"])
+	var old_stats := ActorStats.new()
+	old_stats.attack = 77
+	hero.stats = old_stats
+	var old_roles := {"old": RoleData.new()}
+	hero.battle_roles = old_roles
+	var catalog := ProgressionCatalog.from_validated_trees([_tree("gun", [_node("gun.root", "", 1, 0, ProgressionEffect.stat("ATK", 2))])])
+
+	var result := ProgressionRebuilder.new(catalog).rebuild(hero)
+	assert_false(result.success)
+	assert_string_contains(result.error, "gun")
+	assert_string_contains(result.error, "missing")
+	assert_true(is_same(hero.stats, old_stats))
+	assert_true(is_same(hero.battle_roles, old_roles))
+
+
+func test_rebuild_rejects_unknown_role_record_without_partial_publish() -> void:
+	var hero := HeroData.new()
+	hero.role_definitions = [_definition("gun")]
+	hero.role_progress["orphan"] = HeroRoleProgress.new(1, ["orphan.root"])
+	var old_stats := ActorStats.new()
+	hero.stats = old_stats
+	var old_roles := {"old": RoleData.new()}
+	hero.battle_roles = old_roles
+	var catalog := ProgressionCatalog.from_validated_trees([_tree("gun", [_node("gun.root", "", 1, 0, ProgressionEffect.stat("ATK", 2))])])
+
+	var result := ProgressionRebuilder.new(catalog).rebuild(hero)
+	assert_false(result.success)
+	assert_string_contains(result.error, "orphan")
+	assert_true(is_same(hero.stats, old_stats))
+	assert_true(is_same(hero.battle_roles, old_roles))
+
+
+func test_rebuild_validates_but_does_not_apply_locked_role_progress() -> void:
 	var hero := HeroData.new()
 	hero.role_definitions = [_definition("gun"), _definition("blade")]
 	hero.unlocked_role_ids = ["gun"]
-	hero.role_progress["gun"] = HeroRoleProgress.new(1, ["missing", "gun.root"])
 	hero.role_progress["blade"] = HeroRoleProgress.new(1, ["blade.root"])
 	var catalog := ProgressionCatalog.from_validated_trees([
 		_tree("blade", [_node("blade.root", "", 1, 0, ProgressionEffect.stat("ATK", 100))]),
@@ -101,7 +137,7 @@ func test_rebuild_ignores_missing_owned_ids_and_progress_for_locked_roles() -> v
 	])
 
 	assert_true(ProgressionRebuilder.new(catalog).rebuild(hero).success)
-	assert_eq(hero.stats.attack, 2)
+	assert_eq(hero.stats.attack, 0)
 	assert_true(hero.battle_roles.has("gun"))
 	assert_false(hero.battle_roles.has("blade"))
 

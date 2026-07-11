@@ -174,6 +174,28 @@ func test_failed_rebuild_restores_mutated_fields_inside_existing_role() -> void:
 	assert_true(is_same(original_role.shift_action, original_shift))
 
 
+func test_real_rebuilder_rolls_back_purchase_when_saved_ownership_is_invalid() -> void:
+	var hero := _hero()
+	var definition := RoleDefinition.new()
+	definition.role_id = "gun"
+	hero.role_definitions = [definition]
+	hero.role_progress["gun"] = HeroRoleProgress.new(3, ["stale.node"], {"stale.node": 25})
+	var original_progress := hero.role_progress.gun
+	var original_stats := ActorStats.new()
+	original_stats.attack = 41
+	hero.stats = original_stats
+	var original_roles := {"old": RoleData.new()}
+	hero.battle_roles = original_roles
+
+	var result := ProgressionService.new(catalog).purchase_node(hero, "gun", "gun.root")
+
+	assert_eq(result.status, ProgressionPurchaseResult.Status.INVALID_EFFECT)
+	assert_eq(hero.current_xp, 1000)
+	assert_true(is_same(hero.role_progress.gun, original_progress))
+	assert_true(is_same(hero.stats, original_stats))
+	assert_true(is_same(hero.battle_roles, original_roles))
+
+
 func test_role_progress_save_round_trip_rejects_malformed_and_reports_revision_without_reset() -> void:
 	var hero := _hero()
 	hero.role_progress["gun"] = HeroRoleProgress.new(2, ["gun.root"], {"gun.root": 75})

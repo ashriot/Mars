@@ -22,11 +22,15 @@ func _init(catalog: ProgressionCatalog) -> void:
 func rebuild(hero: HeroData) -> RebuildResult:
 	if hero == null or _catalog == null:
 		return RebuildResult.new(false, "A hero and progression catalog are required.")
-	var next_stats := hero.build_equipment_base_stats()
-	var next_roles: Dictionary = {}
 	var definitions: Dictionary = {}
 	for definition: RoleDefinition in hero.role_definitions:
 		definitions[definition.role_id] = definition
+	var validation := _validate_saved_ownership(hero, definitions)
+	if not validation.success:
+		return validation
+
+	var next_stats := hero.build_equipment_base_stats()
+	var next_roles: Dictionary = {}
 
 	for role_id: String in _catalog.role_ids:
 		if not role_id in hero.unlocked_role_ids or not definitions.has(role_id):
@@ -45,6 +49,20 @@ func rebuild(hero: HeroData) -> RebuildResult:
 
 	hero.stats = next_stats
 	hero.battle_roles = next_roles
+	return RebuildResult.new(true)
+
+
+func _validate_saved_ownership(hero: HeroData, definitions: Dictionary) -> RebuildResult:
+	for role_id: String in hero.role_progress:
+		var tree := _catalog.get_role(role_id)
+		if tree == null:
+			return RebuildResult.new(false, "Unknown progression role record '%s'." % role_id)
+		if not definitions.has(role_id):
+			return RebuildResult.new(false, "Progression role record '%s' has no hero role definition." % role_id)
+		var progress: HeroRoleProgress = hero.role_progress[role_id]
+		for node_id: String in progress.owned_node_ids:
+			if tree.get_node(node_id) == null:
+				return RebuildResult.new(false, "Progression role '%s' owns unknown node '%s'." % [role_id, node_id])
 	return RebuildResult.new(true)
 
 
