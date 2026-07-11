@@ -118,3 +118,12 @@ func test_active_run_rejects_existing_non_dungeon_profile_resource() -> void:
 		"profile_path": "res://icon.svg",
 		"map_data": _valid_map_data(),
 	}))
+
+
+func test_reward_payload_rejects_non_string_optional_color_html() -> void:
+	var codec = _codec()
+	var data := _valid_map_data()
+	var reward_key = data.reward_memory.keys()[0]
+	data.reward_memory[reward_key].color_html = 42
+
+	assert_false(codec.is_valid_map_data(data))

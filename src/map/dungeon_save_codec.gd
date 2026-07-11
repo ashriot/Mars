@@ -149,6 +149,9 @@ static func _is_valid_reward_memory(memory: Variant) -> bool:
 		var payload: Dictionary = memory[key]
 		if not payload.has("type") or not _is_integer(payload.type):
 			return false
+		if payload.has("color_html"):
+			if not payload.color_html is String or not Color.html_is_valid(payload.color_html):
+				return false
 		match int(payload.type):
 			LOOT_BITS:
 				if not _has_integer(payload, "amount"):
