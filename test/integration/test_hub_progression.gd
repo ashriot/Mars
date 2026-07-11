@@ -299,3 +299,23 @@ func test_party_menu_real_purchase_saves_and_refreshes_only_matching_card() -> v
 	_kill_test_tweens()
 	menu.free()
 	await get_tree().process_frame
+
+
+func test_atomic_progression_purchase_survives_hero_save_round_trip() -> void:
+	var loaded := ProgressionJsonLoader.load_file("res://test/fixtures/progression/valid_role.json")
+	var catalog := ProgressionCatalog.new()
+	catalog._roles["gun"] = loaded.tree
+	var hero := HeroData.new()
+	hero.current_xp = 100
+	hero.unlocked_role_ids = ["gun"]
+	var rebuilds := [0]
+	var result := ProgressionService.new(catalog, func(_hero): rebuilds[0] += 1).purchase_node(hero, "gun", "gun.root")
+	var restored := HeroData.new()
+	var issues := restored.load_from_save_data(hero.get_save_data(), {"gun": 3})
+
+	assert_eq(result.status, ProgressionPurchaseResult.Status.PURCHASED)
+	assert_eq(rebuilds[0], 1)
+	assert_eq(issues, [])
+	assert_eq(restored.current_xp, 0)
+	assert_eq(restored.role_progress["gun"].owned_node_ids, ["gun.root"])
+	assert_eq(restored.role_progress["gun"].xp_paid_by_node, {"gun.root": 100})

@@ -14,6 +14,7 @@ class_name HeroData
 
 @export var unlocked_role_ids: Array[String] = []
 @export var unlocked_node_ids: Array[String] = []
+var role_progress: Dictionary[String, HeroRoleProgress] = {}
 
 @export var active_role_index: int = 0
 @export var injuries: int = 0
@@ -148,9 +149,17 @@ func get_save_data() -> Dictionary:
 		"armor": armor.get_save_data() if armor else {},
 		"unlocked_role_ids": unlocked_role_ids,
 		"unlocked_node_ids": unlocked_node_ids,
+		"role_progress": _role_progress_save_data(),
 	}
 
-func load_from_save_data(data: Dictionary):
+func _role_progress_save_data() -> Dictionary:
+	var saved := {}
+	for role_id in role_progress:
+		saved[role_id] = role_progress[role_id].to_save_data()
+	return saved
+
+func load_from_save_data(data: Dictionary, expected_revisions: Dictionary = {}) -> Array[String]:
+	var progression_issues: Array[String] = []
 	injuries = data.get("injuries", 0)
 	boon_focused = data.get("boon_focused", false)
 	boon_armored = data.get("boon_armored", false)
@@ -162,6 +171,23 @@ func load_from_save_data(data: Dictionary):
 	for id in loaded_node_ids:
 		unlocked_node_ids.append(str(id))
 
+	role_progress.clear()
+	var loaded_progress: Variant = data.get("role_progress", {})
+	if loaded_progress is Dictionary:
+		for role_id in loaded_progress:
+			if not role_id is String or role_id.is_empty():
+				progression_issues.append(str(role_id))
+				continue
+			var record := HeroRoleProgress.from_save_data(loaded_progress[role_id])
+			if record == null:
+				progression_issues.append(role_id)
+				continue
+			role_progress[role_id] = record
+			if expected_revisions.has(role_id) and expected_revisions[role_id] is int and record.content_revision != expected_revisions[role_id]:
+				progression_issues.append(role_id)
+	elif data.has("role_progress"):
+		progression_issues.append("role_progress")
+
 	# Load Role IDs
 	var loaded_role_ids = data.get("unlocked_role_ids", [])
 	unlocked_role_ids.clear()
@@ -170,6 +196,7 @@ func load_from_save_data(data: Dictionary):
 
 	if data.get("weapon"): weapon = Equipment.create_from_save_data(data.weapon)
 	if data.get("armor"): armor = Equipment.create_from_save_data(data.armor)
+	return progression_issues
 
 # --- XP LOGIC ---
 func gain_xp(amount: int):
