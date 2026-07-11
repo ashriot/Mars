@@ -4,7 +4,7 @@
 
 **Goal:** Make the entire title → hub → dungeon → terminal → battle → result loop playable with controller or Steam Deck while preserving seamless mouse and keyboard use.
 
-**Architecture:** A semantic input/glyph foundation owns device detection, action names, glyph lookup, repeat/deadzone behavior, cursor presentation, and contextual hints. Ordinary screens use Godot focus; the skill tree, dungeon map, and battle use focused adapters that call the same existing purchase, movement, and combat authority as mouse input.
+**Architecture:** A semantic input/glyph foundation owns device detection, action names, glyph lookup, and repeat/deadzone behavior. One global `NavigationUXLayer` above screen content owns cursor presentation, focus glow, hints, modal focus, and focus restoration for standard controls; thin skill-tree, dungeon, battle, and inventory adapters provide only the gameplay semantics the shared layer cannot infer.
 
 **Tech Stack:** Godot project metadata 4.6, Godot 4.7 test runtime, GDScript, Godot Input Map, Control focus, SVG assets, and vendored GUT 9.7.1.
 
@@ -216,7 +216,7 @@ git add project.godot src/singletons/input_manager.gd src/battle/dynamic_glyph.g
 git commit -m "feat: add semantic controller input layer"
 ```
 
-### Task 4: Add Persistent Navigation Cursor, Focus Glow, and Hint Bar
+### Task 4: Add the Global Navigation UX Layer
 
 **Files:**
 - Create: `src/ui/navigation/navigation_cursor.gd`
@@ -226,18 +226,22 @@ git commit -m "feat: add semantic controller input layer"
 - Create: `src/ui/navigation/action_hint.tscn`
 - Create: `src/ui/navigation/action_hint_bar.gd`
 - Create: `src/ui/navigation/action_hint_bar.tscn`
+- Create: `src/ui/navigation/navigation_ux_layer.gd`
+- Create: `src/ui/navigation/navigation_ux_layer.tscn`
 - Modify: `src/core/main.tscn`
 - Create: `test/unit/test_navigation_cursor.gd`
 - Create: `test/unit/test_action_hint_bar.gd`
+- Create: `test/integration/test_navigation_ux_layer.gd`
 
 **Interfaces:**
 - Produces: `NavigationCursor.CursorState`, `set_focus_target(control: Control, state := DEFAULT)`, `set_world_target(canvas_item: CanvasItem, state := TARGET)`, `clear_target()`, and `set_cursor_state(state)`.
 - Produces: `ActionHintBar.set_hints(hints: Array[Dictionary])`, where each dictionary is `{action: StringName, label: String, enabled: bool}`.
 - Produces: `NavigationFocus.apply(control)` and `NavigationFocus.clear(control)`.
+- Produces: `NavigationUXLayer.register_screen(root: Control, default_focus: Control = null)`, `unregister_screen(root: Control)`, `set_adapter(adapter: Object)`, `publish_hints(hints)`, `push_modal(root: Control, default_focus: Control)`, and `pop_modal(root: Control)`.
 
 - [ ] **Step 1: Write failing cursor and hint tests**
 
-Assert mouse mode follows injected viewport coordinates; controller mode resolves a control's center or `cursor_anchor` metadata; cursor states resolve all nine approved textures; disabled/hidden targets clear safely; hint bars show controller glyphs in controller mode, keyboard prompts in keyboard mode, and hide glyph hints in mouse mode without hiding clickable actions.
+Assert mouse mode follows injected viewport coordinates; controller mode resolves a control's center or `cursor_anchor` metadata; cursor states resolve all nine approved textures; disabled/hidden targets clear safely; hint bars show controller glyphs in controller mode, keyboard prompts in keyboard mode, and hide glyph hints in mouse mode without hiding clickable actions. The integration test registers two ordinary screens and a modal, then verifies automatic focus tracking, modal trapping, and restoration without screen-specific cursor or hint nodes.
 
 - [ ] **Step 2: Run tests and verify missing classes fail**
 
@@ -260,7 +264,7 @@ git add src/ui/navigation src/core/main.tscn test/unit/test_navigation_cursor.gd
 git commit -m "feat: add controller cursor and action hints"
 ```
 
-### Task 5: Convert Ordinary Menus, Terminals, and Modals
+### Task 5: Register Ordinary Menus, Terminals, and Modals with the UX Layer
 
 **Files:**
 - Modify: `src/core/title_screen.gd`
@@ -276,7 +280,7 @@ git commit -m "feat: add controller cursor and action hints"
 - Create: `test/integration/test_standard_focus_navigation.gd`
 
 **Interfaces:**
-- Consumes: Task 4 cursor/focus/hints.
+- Consumes: the Task 4 `NavigationUXLayer`; ordinary screens register roots/default focus and do not instantiate cursor, glow, or hint presentation themselves.
 - Produces: deterministic default focus and one-layer-at-a-time cancel behavior for standard screens.
 
 - [ ] **Step 1: Write failing integration tests**

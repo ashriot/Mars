@@ -235,9 +235,11 @@ Shift action uses its dedicated semantic binding and glyph.
 
 ## Focus Memory and Screen Adapters
 
-The shared navigation foundation owns device mode, repeat/deadzone behavior, cursor, glyph resolution, and hint presentation.
+One global `NavigationUXLayer` lives above screen content near the root viewport. It owns cursor presentation, focus glow, action hints, active-device presentation, modal focus trapping, and focus restoration. Ordinary Godot controls work through standard focus plus metadata or registration, so each screen does not recreate controller UX.
 
-Complex screens implement adapters that expose:
+The shared input foundation owns device mode, repeat/deadzone behavior, and glyph resolution. The UX layer consumes that state and presents it consistently across every screen.
+
+Complex screens implement thin adapters only where the UX layer cannot infer gameplay meaning. Skill trees provide geometric node selection, the dungeon provides eligible angular neighbors and camera actions, battle provides direct action slots and valid targets, and inventory provides valid pickup/drop rules. These adapters expose:
 
 - Current focus target.
 - Directional movement request.
