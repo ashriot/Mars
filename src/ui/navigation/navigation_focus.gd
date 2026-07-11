@@ -18,6 +18,7 @@ static func apply(control: Control) -> void:
 			"style": control.get_theme_stylebox(OVERRIDE_NAME) if control.has_theme_stylebox_override(OVERRIDE_NAME) else null,
 			"tween": null,
 		}
+		control.tree_exiting.connect(_release_state.bind(key), CONNECT_ONE_SHOT)
 	var state: Dictionary = _states[key]
 	_kill_tween(state)
 	var style := StyleBoxFlat.new()
@@ -59,4 +60,12 @@ static func _kill_tween(state: Dictionary) -> void:
 
 
 static func _forget_state(key: int) -> void:
+	_states.erase(key)
+
+
+static func _release_state(key: int) -> void:
+	if not _states.has(key):
+		return
+	var state: Dictionary = _states[key]
+	_kill_tween(state)
 	_states.erase(key)

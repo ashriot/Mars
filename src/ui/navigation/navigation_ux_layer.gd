@@ -23,8 +23,14 @@ func register_screen(root: Control, default_focus: Control = null) -> void:
 
 
 func unregister_screen(root: Control) -> void:
+	var owned_focus := is_instance_valid(_focus_target) and _screen_for(_focus_target) == root
 	_screens.erase(root)
-	ensure_valid_focus()
+	if owned_focus:
+		_clear_presentation()
+	if _modal_stack.is_empty():
+		var fallback := _registered_fallback()
+		if fallback:
+			fallback.grab_focus()
 
 
 func set_adapter(adapter: Object) -> void:
@@ -71,6 +77,9 @@ func _on_focus_changed(control: Control) -> void:
 		var fallback := _modal_default(_modal_stack.back())
 		if fallback:
 			_grab_focus_deferred(fallback)
+		return
+	if not is_instance_valid(_screen_for(control)):
+		_clear_presentation()
 		return
 	_update_focus_target(control)
 
@@ -122,6 +131,8 @@ func ensure_valid_focus() -> void:
 	var fallback := _registered_fallback()
 	if fallback:
 		fallback.grab_focus()
+	else:
+		_clear_presentation()
 
 
 func _restore_from_entry(entry: Dictionary) -> void:
@@ -197,3 +208,10 @@ func _grab_focus_deferred(control: Control) -> void:
 	_restoring_focus = true
 	control.grab_focus.call_deferred()
 	_reset_restoring.call_deferred()
+
+
+func _clear_presentation() -> void:
+	if is_instance_valid(_focus_target):
+		NavigationFocus.clear(_focus_target)
+	_focus_target = null
+	cursor.clear_target()

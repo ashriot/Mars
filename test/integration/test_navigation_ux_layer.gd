@@ -110,3 +110,40 @@ func test_unregister_prevents_restoration_into_removed_screen() -> void:
 	ux.pop_modal(modal)
 	await get_tree().process_frame
 	assert_eq(get_viewport().gui_get_focus_owner(), remaining_button)
+
+
+func test_never_registered_control_does_not_receive_global_presentation() -> void:
+	InputManager._input(_pressed_joy_button())
+	var ux = UXScene.instantiate()
+	add_child_autofree(ux)
+	var outsider := Button.new()
+	add_child_autofree(outsider)
+	outsider.grab_focus()
+	await get_tree().process_frame
+	assert_null(ux.get_focus_target())
+	assert_false(outsider.has_theme_stylebox_override(&"focus"))
+	assert_false(ux.cursor.visible)
+
+
+func test_unregister_last_screen_releases_focus_and_cursor() -> void:
+	InputManager._input(_pressed_joy_button())
+	var ux = UXScene.instantiate()
+	add_child_autofree(ux)
+	var screen := Control.new()
+	var button := Button.new()
+	screen.add_child(button)
+	add_child_autofree(screen)
+	ux.register_screen(screen, button)
+	await get_tree().process_frame
+	assert_eq(ux.get_focus_target(), button)
+	ux.unregister_screen(screen)
+	await get_tree().process_frame
+	assert_null(ux.get_focus_target())
+	assert_false(button.has_theme_stylebox_override(&"focus"))
+	assert_false(ux.cursor.visible)
+
+
+func _pressed_joy_button() -> InputEventJoypadButton:
+	var event := InputEventJoypadButton.new()
+	event.pressed = true
+	return event
