@@ -61,8 +61,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not _controller_input_allowed():
 		return
 	if event.is_action_pressed(&"confirm") and _is_targeting():
+		var viewport := get_viewport()
 		confirm_target()
-		get_viewport().set_input_as_handled()
+		if viewport:
+			viewport.set_input_as_handled()
 	elif event.is_action_pressed(&"cancel") and _is_targeting():
 		cancel_targeting()
 		get_viewport().set_input_as_handled()

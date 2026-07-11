@@ -8,7 +8,7 @@ All device checks below are intentionally unchecked until performed on the named
 - [ ] Confirm controller glyph family matches the connected device before beginning.
 - [ ] Disconnect and reconnect the active controller on the title screen, in the hub, on the dungeon map, in a terminal modal, during battle action selection, during target selection, and on the result screen; verify focus/cursor and hints recover.
 - [ ] Connect two controllers, remove the active one, and verify the remaining controller becomes authoritative without invalid focus.
-- [ ] Use an unknown/generic controller through Steam Input and verify the safe Xbox-style fallback glyphs and semantic actions.
+- [ ] Use an unknown/generic controller through Steam Input and verify the Steam Deck glyph family with an Xbox-compatible button layout and semantic actions.
 
 ## Xbox controller
 
@@ -25,14 +25,14 @@ All device checks below are intentionally unchecked until performed on the named
 ## Nintendo controller
 
 - [ ] Switch Pro/Joy-Con pair: complete the full loop and hot-plug checks.
-- [ ] Verify Nintendo-position confirm/cancel: B confirms and A cancels everywhere, including nested modals and battle targeting.
+- [ ] Verify Nintendo-position confirm/cancel: A/right confirms and B/bottom cancels everywhere, including nested modals and battle targeting.
 - [ ] Verify X/Y and shoulder/trigger glyphs and actions match Nintendo labels and positions.
 
 ## Steam Deck and Steam Input
 
 - [ ] Steam Deck controls: complete the full loop in Gaming Mode.
 - [ ] Steam Input known-device profile: glyph family and every semantic action match the selected layout.
-- [ ] Steam Input unknown/generic profile: Xbox-style fallback remains usable and internally consistent.
+- [ ] Steam Input unknown/generic profile: Steam Deck glyph-family fallback with an Xbox-compatible layout remains usable and internally consistent.
 - [ ] At native handheld resolution, cursor, focus glow, button glyphs, hint text, terminal links, skill nodes, map nodes, card targets, and result totals are readable without clipping.
 
 ## Mouse and keyboard switching

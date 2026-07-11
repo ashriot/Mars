@@ -27,6 +27,15 @@ func _exit_tree() -> void:
 	if navigation:
 		navigation.unregister_screen(self)
 
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not event.is_action_pressed(&"confirm"):
+		return
+	var focused := get_viewport().gui_get_focus_owner() as BaseButton
+	if focused and is_ancestor_of(focused) and not focused.disabled:
+		get_viewport().set_input_as_handled()
+		focused.pressed.emit()
+
 func _on_head_out_pressed() -> void:
 	RunManager.current_dungeon_tier = 1
 	RunManager.dungeon_profile = dungeon_profile

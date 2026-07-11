@@ -32,9 +32,21 @@ func _exit_tree() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	var navigation := _navigation_ux_layer()
-	if visible and navigation and navigation.is_top_modal(self) and event.is_action_pressed(&"cancel"):
+	if not visible or not navigation or not navigation.is_top_modal(self):
+		return
+	if event.is_action_pressed(&"cancel"):
 		get_viewport().set_input_as_handled()
 		_on_close_button_pressed()
+		return
+	for index in 4:
+		if event.is_action_pressed(StringName("action_%d" % (index + 1))):
+			get_viewport().set_input_as_handled()
+			_on_text_link_clicked(["opt_sec", "opt_scan", "opt_med", "opt_fin"][index] + ("_up" if _is_upgraded_choice(index) else ""))
+			return
+
+
+func _is_upgraded_choice(index: int) -> bool:
+	return (index == 0 and "opt_sec_up" in final_text_content) or (index == 1 and "opt_scan_up" in final_text_content) or (index == 2 and "opt_med_up" in final_text_content) or (index == 3 and "opt_fin_up" in final_text_content)
 
 func setup(data: Dictionary):
 	_lifecycle_generation += 1

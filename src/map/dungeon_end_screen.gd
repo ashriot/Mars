@@ -28,6 +28,13 @@ func _exit_tree() -> void:
 	if navigation:
 		navigation.pop_modal(self)
 
+
+func _unhandled_input(event: InputEvent) -> void:
+	var navigation := _navigation_ux_layer()
+	if event.is_action_pressed(&"confirm") and navigation and navigation.is_top_modal(self) and not continue_button.disabled:
+		get_viewport().set_input_as_handled()
+		continue_button.pressed.emit()
+
 func setup(result: RunManager.RunResult):
 	modulate.a = 0.0
 	_result = result

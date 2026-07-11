@@ -64,6 +64,15 @@ func _exit_tree() -> void:
 		navigation.unregister_screen(self)
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if not event.is_action_pressed(&"confirm"):
+		return
+	var focused := get_viewport().gui_get_focus_owner() as BaseButton
+	if focused and (focused == start_button or focused == continue_button or focused == load_button) and not focused.disabled:
+		get_viewport().set_input_as_handled()
+		focused.pressed.emit()
+
+
 func _configure_navigation() -> void:
 	var default_focus := continue_button if not continue_button.disabled else start_button
 	for button in [start_button, continue_button, load_button]:
