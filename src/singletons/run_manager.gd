@@ -1,6 +1,8 @@
 # RunManager.gd
 extends Node
 
+const SaveCodec = preload("res://src/map/dungeon_save_codec.gd")
+
 signal run_bits_changed(new_amount: int)
 
 enum RunResult { SUCCESS, RETREAT, DEFEAT }
@@ -86,21 +88,20 @@ func get_run_save_data() -> Dictionary:
 		"map_data": active_dungeon_map.get_save_data()
 	}
 
-func restore_run():
+func restore_run() -> bool:
 	var run_data = SaveSystem.data.get("active_run")
-	var path = run_data.get("profile_path", "")
-	if path != "" and ResourceLoader.exists(path):
-		dungeon_profile = load(path)
-
-	if not run_data:
-		push_error("Tried to restore run, but SaveSystem data has no 'active_run'!")
-		return
+	if not SaveCodec.is_valid_active_run(run_data):
+		return false
+	var restored_profile = load(run_data.profile_path)
+	if not restored_profile is DungeonProfile:
+		return false
 
 	current_run_seed = int(run_data.seed)
 	run_bits = int(run_data.get("run_bits", 0))
 	run_xp = int(run_data.get("run_xp", 0))
 	run_inventory = run_data.get("run_inventory", {})
 	current_dungeon_tier = DungeonRules.normalized_tier(int(run_data.get("tier", 1)))
+	dungeon_profile = restored_profile
 
 	run_equipment_loot.clear()
 	var saved_eq = run_data.get("run_equipment", [])
@@ -114,10 +115,13 @@ func restore_run():
 		var mod = EquipmentMod.create_from_save_data(mod_dict)
 		if mod: run_mods_loot.append(mod)
 
+	if not active_dungeon_map:
+		return false
+	seed(current_run_seed)
+	if not await active_dungeon_map.load_from_save_data(run_data.map_data):
+		return false
 	is_run_active = true
-	if active_dungeon_map:
-		seed(current_run_seed)
-		await active_dungeon_map.load_from_save_data(run_data.map_data)
+	return true
 
 func spend_bits(amount: int) -> bool:
 	if SaveSystem.bits >= amount:

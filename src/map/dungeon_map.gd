@@ -1,6 +1,8 @@
 extends Node2D
 class_name DungeonMap
 
+const SaveCodec = preload("res://src/map/dungeon_save_codec.gd")
+
 signal interaction_requested(node: MapNode)
 signal map_generation_progress(current, total)
 signal scan_performed
@@ -151,10 +153,12 @@ func _start_cursor_pulse():
 	cursor_pulse_tween.tween_property(player_cursor, "modulate", Color("e06d2b"), 0.6)
 	cursor_pulse_tween.tween_property(player_cursor, "modulate", Color("e0a684ff"), 0.6)
 
-func initialize_map():
+func initialize_map() -> bool:
 	if RunManager.is_run_active:
 		print("Resuming active run...")
-		await RunManager.restore_run()
+		if not await RunManager.restore_run():
+			push_error("DungeonMap: Active run restore failed.")
+			return false
 
 		AudioManager.play_music("map_1", 1.0, false, true)
 		hud.modulate.a = 1.0
@@ -188,24 +192,15 @@ func initialize_map():
 		current_map_state = MapState.PLAYING
 		print("Map ready.")
 	refresh_team_status()
+	return true
 
-func load_from_save_data(data: Dictionary):
-	map_length = int(data.get("width", map_length))
-	map_height = int(data.get("height", map_height))
-	var restored_types = {}
-	var saved_nodes = data.node_data
+func load_from_save_data(data: Variant) -> bool:
+	if not SaveCodec.is_valid_map_data(data):
+		return false
 
-	for key_str in saved_nodes.keys():
-		var coords = str_to_var(key_str)
-		var saved_info = saved_nodes[key_str]
-
-		if grid_nodes.has(coords):
-			var node = grid_nodes[coords]
-			node.has_been_visited = saved_info.visited
-			node.is_aware = saved_info.get("aware", false)
-			node.set_state(int(saved_info.state))
-			node.modulate.a = 1.0
-
+	map_length = int(data.width)
+	map_height = int(data.height)
+	var restored_types: Dictionary = SaveCodec.extract_node_types(data)
 	await generate_hex_grid(false, restored_types)
 
 	for key_str in data.node_data.keys():
@@ -222,7 +217,6 @@ func load_from_save_data(data: Dictionary):
 
 			node.modulate.a = 1.0
 
-	# 4. RESTORE TERMINALS & ENCOUNTERS
 	terminal_memory.clear()
 	for key in data.terminal_memory.keys():
 		var coords = str_to_var(key)
@@ -238,33 +232,32 @@ func load_from_save_data(data: Dictionary):
 		var coords = str_to_var(key)
 		reward_memory[coords] = data.reward_memory[key]
 
-	total_nodes = data.total_nodes
-	nodes_done = data.nodes_done
+	total_nodes = int(data.total_nodes)
+	nodes_done = int(data.nodes_done)
+	node_gauge.max_value = total_nodes
+	node_gauge.value = nodes_done
+	nodes_done_label.text = str(nodes_done)
+	total_nodes_label.text = str(total_nodes)
 
-	# 5. PLACE PLAYER & CAMERA
-	var player_coords = str_to_var(data.current_coords)
-	if grid_nodes.has(player_coords):
-		var target_node = grid_nodes[player_coords]
-
-		# Set logic tracking
-		current_node = target_node
-
-		player_cursor.position = target_node.position
-		player_reticle.position = target_node.position
-		camera.position = target_node.position
-		camera.zoom = Vector2.ONE
-
-		# Restore Parallax Depth
-		if parallax_bg:
-			parallax_bg.scroll_scale = _calculated_depth_scale
-
-		# Reveal neighbors
-		await _update_vision()
-
-	# 2. RESTORE GLOBAL STATE
-	current_alert = data.current_alert
-	_animate_bits_change(RunManager.run_bits)
+	current_alert = float(data.current_alert)
+	_last_alert_state = -1
 	_update_alert_visuals()
+
+	var player_coords = str_to_var(data.current_coords)
+	if not grid_nodes.has(player_coords):
+		return false
+	var target_node = grid_nodes[player_coords]
+	current_node = target_node
+	player_cursor.position = target_node.position
+	player_reticle.position = target_node.position
+	camera.position = target_node.position
+	camera.zoom = Vector2.ONE
+	if parallax_bg:
+		parallax_bg.scroll_scale = _calculated_depth_scale
+	await _update_vision()
+
+	_animate_bits_change(RunManager.run_bits)
+	return true
 
 func _setup_camera():
 	camera.make_current()

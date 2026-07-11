@@ -24,7 +24,8 @@ func _ready():
 	dungeon_map.map_generation_progress.connect(loader.update_progress)
 	dungeon_map.interaction_requested.connect(_on_map_interaction_requested)
 
-	dungeon_map.initialize_map()
+	if not await dungeon_map.initialize_map():
+		push_error("GameManager: Dungeon map initialization failed.")
 
 func _on_map_interaction_requested(node: MapNode):
 	dungeon_map.current_map_state = DungeonMap.MapState.LOCKED

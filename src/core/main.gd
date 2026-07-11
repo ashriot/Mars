@@ -1,6 +1,8 @@
 extends Node
 class_name Main
 
+const SaveCodec = preload("res://src/map/dungeon_save_codec.gd")
+
 @export var hub_scene: PackedScene
 @export var game_scene: PackedScene
 @export var title_scene: PackedScene
@@ -89,7 +91,14 @@ func _setup_dungeon():
 	current_instance.dungeon_exited.connect(return_to_hub_with_rewards)
 
 func _on_continue_requested():
-	if SaveSystem.data.active_run != null:
+	var active_run = SaveSystem.data.get("active_run")
+	if active_run != null and not SaveCodec.is_valid_active_run(active_run):
+		SaveSystem.data["active_run"] = null
+		RunManager.is_run_active = false
+		SaveSystem.save_current_slot()
+		await load_hub()
+		return
+	if active_run != null:
 		# Resume Dungeon
 		await _fade_out()
 
