@@ -69,7 +69,7 @@ Supported glyph families are:
 - Steam Controller.
 - Steam Deck.
 
-Unknown controllers fall back to Xbox-style prompts. Steam virtual-controller names prefer Steam Deck when distinguishable.
+Unknown or unrecognized controllers fall back to Steam Deck-style prompts. These retain the familiar Xbox-compatible A/B/X/Y layout while making Steam the default presentation for the game's primary PC and handheld target. Recognized Steam virtual-controller names also prefer Steam Deck prompts when distinguishable.
 
 Platform conventions govern confirm/cancel:
 
