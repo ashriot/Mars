@@ -155,10 +155,19 @@ func move_focus(direction: Vector2) -> bool:
 
 func change_page(delta: int) -> void:
 	if delta == 0: return
+	var role_panel := _current_role_panel()
+	var supported_pages := _supported_pages(role_panel)
+	if supported_pages.is_empty(): return
+	var page_index := supported_pages.find(current_page)
+	if page_index < 0:
+		current_page = _closest_supported_page(role_panel, current_page)
+		page_index = supported_pages.find(current_page)
+	var next_page: int = supported_pages[posmod(page_index + signi(delta), supported_pages.size())]
+	if next_page == current_page:
+		return
 	var anchor := _focused_position()
 	_store_focus_memory()
-	var page_count := maxi(1, tabs_container.get_child_count())
-	current_page = posmod(current_page + delta, page_count)
+	current_page = next_page
 	for child in role_list_container.get_children():
 		if child is RolePanel: child.render_tree(current_page)
 	_update_tab_visuals()
@@ -276,12 +285,7 @@ func _nearest_node_to(anchor: Vector2) -> String:
 
 
 func _closest_supported_page(panel: RolePanel, desired_page: int) -> int:
-	var pages: Array[int] = []
-	if panel and panel.tree_definition:
-		for node: ProgressionNodeDefinition in panel.tree_definition.nodes:
-			var page := (node.rank - 1) / 10
-			if page not in pages:
-				pages.append(page)
+	var pages := _supported_pages(panel)
 	if pages.is_empty():
 		return 0
 	pages.sort_custom(func(a: int, b: int) -> bool:
@@ -290,6 +294,17 @@ func _closest_supported_page(panel: RolePanel, desired_page: int) -> int:
 		return a_distance < b_distance if a_distance != b_distance else a < b
 	)
 	return pages[0]
+
+
+func _supported_pages(panel: RolePanel) -> Array[int]:
+	var pages: Array[int] = []
+	if panel and panel.tree_definition:
+		for node: ProgressionNodeDefinition in panel.tree_definition.nodes:
+			var page := (node.rank - 1) / 10
+			if page not in pages:
+				pages.append(page)
+	pages.sort()
+	return pages
 
 
 func _publish_hints(node: SkillTreeNode) -> void:

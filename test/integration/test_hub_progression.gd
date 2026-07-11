@@ -525,13 +525,42 @@ func test_shoulder_events_change_pages_and_roles_at_node_focus() -> void:
 	add_child(panel)
 	panel.setup(hero)
 	panel.focus_node("gun.root")
+	var root := panel.get_focused_node()
 	panel._unhandled_input(_action_event(&"page_next"))
-	assert_eq(panel.current_page, 1)
+	assert_eq(panel.current_page, 0)
+	assert_eq(panel.get_focused_node(), root)
+	assert_eq(get_viewport().gui_get_focus_owner(), root)
 	panel._unhandled_input(_action_event(&"section_next"))
 	assert_eq(panel.current_role_idx, 1)
 	panel.get_focused_node().release_focus()
 	panel._unhandled_input(_action_event(&"section_previous"))
 	assert_eq(panel.current_role_idx, 0, "role shoulders remain active at every focus depth")
+	panel.free()
+	await get_tree().process_frame
+
+
+func test_page_shoulder_wraps_across_supported_pages_and_focuses_nearest_node() -> void:
+	var hero := _hero()
+	hero.role_definitions.assign([_legacy_role()])
+	var tree := RoleTreeDefinition.new("gun", 3, [
+		ProgressionNodeDefinition.new("gun.root", "", 1, 1, 100, ProgressionEffect.stat("ATK", 1)),
+		ProgressionNodeDefinition.new("gun.page3.near", "gun.root", 21, 1, 100, ProgressionEffect.stat("AIM", 1)),
+		ProgressionNodeDefinition.new("gun.page3.far", "gun.root", 22, -1, 100, ProgressionEffect.stat("PRE", 1)),
+	])
+	var panel := preload("res://src/hub/skill_tree_panel.tscn").instantiate() as SkillTreePanel
+	panel.progression_catalog = ProgressionCatalog.from_validated_trees([tree])
+	add_child(panel)
+	panel.setup(hero)
+	panel.focus_node("gun.root")
+	panel._unhandled_input(_action_event(&"page_next"))
+	assert_eq(panel.current_page, 2)
+	assert_eq(panel.focused_node_id, "gun.page3.near")
+	assert_eq(get_viewport().gui_get_focus_owner(), panel.get_focused_node())
+	panel._unhandled_input(_action_event(&"page_next"))
+	assert_eq(panel.current_page, 0)
+	assert_eq(panel.focused_node_id, "gun.root")
+	panel._unhandled_input(_action_event(&"page_previous"))
+	assert_eq(panel.current_page, 2)
 	panel.free()
 	await get_tree().process_frame
 
