@@ -395,6 +395,15 @@ func _restore_controller_cursor() -> void:
 		navigation.cursor.clear_target()
 
 
+func navigation_focus_restored() -> void:
+	var navigation := _navigation_ux_layer()
+	if navigation and is_instance_valid(_controller_preview_node):
+		navigation.cursor.set_world_target(_controller_preview_node, NavigationCursor.CursorState.TARGET)
+	else:
+		_restore_controller_cursor()
+	_publish_controller_hints()
+
+
 func _controller_candidates() -> Array[MapNode]:
 	var candidates: Array[MapNode] = []
 	for value in grid_nodes.values():

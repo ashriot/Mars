@@ -2,6 +2,7 @@ extends GutTest
 
 const DUNGEON_MAP_SCENE := preload("res://src/map/dungeon_map.tscn")
 const NAVIGATION_UX_SCENE := preload("res://src/ui/navigation/navigation_ux_layer.tscn")
+const TERMINAL_SCENE := preload("res://src/map/terminal.tscn")
 
 
 func _make_map() -> DungeonMap:
@@ -232,6 +233,32 @@ func test_map_registers_global_adapter_targets_cursor_and_publishes_state_hints(
 	assert_null(navigation._adapter)
 	assert_null(navigation.cursor._target)
 	assert_eq(navigation.hint_bar.get_hint_count(), 0)
+
+
+func test_terminal_modal_temporarily_owns_cursor_then_restores_live_map_adapter() -> void:
+	InputManager._input(_joy_button())
+	var navigation := _make_navigation_ux()
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	dungeon_map.select_direction(Vector2.RIGHT)
+	var preview: MapNode = dungeon_map._controller_preview_node
+	assert_same(navigation.cursor._target, preview)
+
+	var terminal := TERMINAL_SCENE.instantiate()
+	add_child(terminal)
+	await get_tree().process_frame
+	assert_true(navigation.is_top_modal(terminal))
+	assert_eq(get_viewport().gui_get_focus_owner(), terminal.close_button)
+	assert_same(navigation.get_focus_target(), terminal.close_button)
+	assert_same(navigation.cursor._target, terminal.close_button)
+	assert_same(navigation._adapter, dungeon_map)
+
+	terminal.queue_free()
+	await get_tree().process_frame
+	assert_same(navigation._adapter, dungeon_map, "closing a modal keeps the live dungeon adapter registered")
+	assert_same(navigation.cursor._target, preview)
+	assert_eq(navigation.cursor._state, NavigationCursor.CursorState.TARGET)
+	assert_eq(_hint_actions(navigation), [&"confirm", &"cancel", &"camera_pan_right", &"zoom_in", &"zoom_out", &"recenter"])
 
 
 func _action_event(action: StringName) -> InputEventAction:

@@ -57,6 +57,8 @@ func push_modal(root: Control, default_focus: Control) -> void:
 	})
 	if _is_focusable(default_focus):
 		default_focus.grab_focus()
+		if _focus_target != default_focus:
+			_update_focus_target(default_focus)
 
 
 func pop_modal(root: Control) -> void:
@@ -79,7 +81,7 @@ func get_focus_target() -> Control:
 func _on_focus_changed(control: Control) -> void:
 	if _restoring_focus:
 		return
-	if is_instance_valid(_adapter):
+	if is_instance_valid(_adapter) and _modal_stack.is_empty():
 		return
 	_prune_state()
 	if not _modal_stack.is_empty():
@@ -129,7 +131,7 @@ func _reset_restoring() -> void:
 
 func ensure_valid_focus() -> void:
 	_prune_state()
-	if is_instance_valid(_adapter):
+	if is_instance_valid(_adapter) and _modal_stack.is_empty():
 		return
 	if not _modal_stack.is_empty():
 		var modal_root := _weak_get(_modal_stack.back().root) as Control
@@ -164,6 +166,17 @@ func _restore_from_entry(entry: Dictionary) -> void:
 	var fallback := _registered_fallback()
 	if fallback:
 		fallback.grab_focus()
+		return
+	_restore_adapter_focus()
+
+
+func _restore_adapter_focus() -> void:
+	if not is_instance_valid(_adapter):
+		_clear_presentation()
+		return
+	_focus_target = null
+	if _adapter.has_method(&"navigation_focus_restored"):
+		_adapter.call(&"navigation_focus_restored")
 
 
 func _modal_default(entry: Dictionary) -> Control:

@@ -1,6 +1,5 @@
 extends GutTest
 
-const DungeonNavigation = preload("res://src/map/dungeon_navigation.gd")
 const MAP_NODE_SCENE = preload("res://src/map/map_node.tscn")
 
 
