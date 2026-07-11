@@ -73,8 +73,11 @@ func _run_data() -> Dictionary:
 		"run_bits": 44,
 		"run_xp": 55,
 		"run_inventory": {"mat_weap_1": 3},
-		"run_equipment": [],
-		"run_mods": [],
+		"run_equipment": [{
+			"id": "pistol", "tier": 1, "rank": 2, "xp": 3,
+			"inv_shared": 0, "inv_unique": 0, "inv_stats": {}, "mods": [],
+		}],
+		"run_mods": [{"id": "health_booster", "tier": 2}],
 	}
 
 
@@ -121,5 +124,9 @@ func test_true_map_restore_commits_normalized_run_fields() -> void:
 	assert_eq(RunManager.current_dungeon_tier, DungeonRules.MIN_DUNGEON_TIER)
 	assert_true(RunManager.dungeon_profile is DungeonProfile)
 	assert_true(RunManager.is_run_active)
+	assert_eq(RunManager.run_equipment_loot.size(), 1)
+	assert_true(RunManager.run_equipment_loot[0] is Equipment)
+	assert_eq(RunManager.run_mods_loot.size(), 1)
+	assert_true(RunManager.run_mods_loot[0] is EquipmentMod)
 	assert_eq(map_double.received_data, SaveSystem.data.active_run.map_data)
 	map_double.free()

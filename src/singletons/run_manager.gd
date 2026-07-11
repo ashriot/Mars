@@ -102,13 +102,17 @@ func restore_run() -> bool:
 	var saved_eq = run_data.get("run_equipment", [])
 	for eq_dict in saved_eq:
 		var item = Equipment.create_from_save_data(eq_dict)
-		if item: restored_equipment.append(item)
+		if not item:
+			return false
+		restored_equipment.append(item)
 
 	var restored_mods: Array[EquipmentMod] = []
 	var saved_mods = run_data.get("run_mods", [])
 	for mod_dict in saved_mods:
 		var mod = EquipmentMod.create_from_save_data(mod_dict)
-		if mod: restored_mods.append(mod)
+		if not mod:
+			return false
+		restored_mods.append(mod)
 
 	if not await active_dungeon_map.load_from_save_data(run_data.map_data):
 		return false

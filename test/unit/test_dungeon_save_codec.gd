@@ -127,3 +127,68 @@ func test_reward_payload_rejects_non_string_optional_color_html() -> void:
 	data.reward_memory[reward_key].color_html = 42
 
 	assert_false(codec.is_valid_map_data(data))
+
+
+func test_map_geometry_requires_integer_dimensions_and_exact_coordinate_set() -> void:
+	var codec = _codec()
+	var fractional := _valid_map_data()
+	fractional.width = 2.5
+	assert_false(codec.is_valid_map_data(fractional))
+
+	var missing := _valid_map_data()
+	missing.node_data.erase(var_to_str(Vector2i(0, 0)))
+	assert_false(codec.is_valid_map_data(missing))
+
+	var extra := _valid_map_data()
+	extra.node_data[var_to_str(Vector2i(9, 9))] = extra.node_data.values()[0].duplicate()
+	assert_false(codec.is_valid_map_data(extra))
+
+
+func test_map_nodes_reject_values_outside_state_and_type_enums() -> void:
+	var codec = _codec()
+	var invalid_type := _valid_map_data()
+	invalid_type.node_data.values()[0].type = 99
+	assert_false(codec.is_valid_map_data(invalid_type))
+
+	var invalid_state := _valid_map_data()
+	invalid_state.node_data.values()[0].state = 99
+	assert_false(codec.is_valid_map_data(invalid_state))
+
+
+func test_active_run_validates_equipment_and_mod_resource_types() -> void:
+	var codec = _codec()
+	var valid_run := {
+		"seed": 42,
+		"tier": 1,
+		"profile_path": PROFILE_PATH,
+		"map_data": _valid_map_data(),
+		"run_equipment": [{
+			"id": "pistol", "tier": 1, "rank": 2, "xp": 3,
+			"inv_shared": 0, "inv_unique": 0, "inv_stats": {},
+			"mods": ["health_booster"],
+		}],
+		"run_mods": [{"id": "health_booster", "tier": 2}],
+	}
+	assert_true(codec.is_valid_active_run(valid_run))
+
+	for bad_equipment in [
+		{},
+		{"id": "missing_item"},
+		{"id": "health_booster"},
+		{"id": "pistol", "inv_stats": []},
+		{"id": "pistol", "mods": [42]},
+		{"id": "pistol", "tier": "one"},
+	]:
+		var run := valid_run.duplicate(true)
+		run.run_equipment = [bad_equipment]
+		assert_false(codec.is_valid_active_run(run))
+
+	for bad_mod in [
+		{},
+		{"id": "missing_item"},
+		{"id": "pistol"},
+		{"id": "health_booster", "tier": "two"},
+	]:
+		var run := valid_run.duplicate(true)
+		run.run_mods = [bad_mod]
+		assert_false(codec.is_valid_active_run(run))
