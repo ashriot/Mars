@@ -22,7 +22,7 @@ func _init(catalog: ProgressionCatalog) -> void:
 func rebuild(hero: HeroData) -> RebuildResult:
 	if hero == null or _catalog == null:
 		return RebuildResult.new(false, "A hero and progression catalog are required.")
-	var next_stats := hero.build_base_stats()
+	var next_stats := hero.build_equipment_base_stats()
 	var next_roles: Dictionary = {}
 	var definitions: Dictionary = {}
 	for definition: RoleDefinition in hero.role_definitions:

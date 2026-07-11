@@ -34,9 +34,21 @@ var current_role: RoleDefinition :
 
 
 func calculate_stats():
-	stats = build_base_stats()
+	stats = _build_equipment_stats()
 
-func build_base_stats() -> ActorStats:
+	# Apply legacy authored tree stats until progression migration is complete.
+	for role_def in role_definitions:
+		if role_def.root_node:
+			role_def.init_structure() # Ensure IDs exist
+			_process_node_stats(role_def.root_node, stats)
+	stats.aim += 10
+
+func build_equipment_base_stats() -> ActorStats:
+	var built_stats := _build_equipment_stats()
+	built_stats.aim += 10
+	return built_stats
+
+func _build_equipment_stats() -> ActorStats:
 	var built_stats := ActorStats.new()
 	built_stats.actor_name = hero_name
 
@@ -47,13 +59,6 @@ func build_base_stats() -> ActorStats:
 		var armor_stats = armor.calculate_stats()
 		_add_stats(built_stats, armor_stats)
 
-	# Apply Tree Stats
-	for role_def in role_definitions:
-		if role_def.root_node:
-			role_def.init_structure() # Ensure IDs exist
-			_process_node_stats(role_def.root_node, built_stats)
-
-	built_stats.aim += 10
 	return built_stats
 
 	#print(stats)

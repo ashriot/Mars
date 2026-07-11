@@ -117,6 +117,30 @@ func test_failed_rebuild_rolls_back_xp_and_role_record_exactly() -> void:
 	assert_eq(result.xp_paid, 0)
 
 
+func test_failed_rebuild_restores_derived_state_after_mutating_callback() -> void:
+	var hero := _hero()
+	hero.stats = ActorStats.new()
+	hero.stats.attack = 23
+	var original_stats := hero.stats
+	var original_role := RoleData.new()
+	hero.battle_roles = {"gun": original_role}
+	var original_roles := hero.battle_roles
+	var service := ProgressionService.new(catalog, func(rebuilding_hero):
+		rebuilding_hero.stats.attack = 999
+		rebuilding_hero.stats = ActorStats.new()
+		rebuilding_hero.battle_roles.clear()
+		rebuilding_hero.battle_roles["corrupt"] = RoleData.new()
+		return false
+	)
+
+	assert_eq(service.purchase_node(hero, "gun", "gun.root").status, ProgressionPurchaseResult.Status.INVALID_EFFECT)
+	assert_true(is_same(hero.stats, original_stats))
+	assert_eq(hero.stats.attack, 23)
+	assert_true(is_same(hero.battle_roles, original_roles))
+	assert_eq(hero.battle_roles.keys(), ["gun"])
+	assert_true(is_same(hero.battle_roles.gun, original_role))
+
+
 func test_role_progress_save_round_trip_rejects_malformed_and_reports_revision_without_reset() -> void:
 	var hero := _hero()
 	hero.unlocked_node_ids = ["legacy.node"]

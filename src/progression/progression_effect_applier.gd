@@ -13,14 +13,14 @@ func apply(effect: ProgressionEffect, stats: ActorStats, role: RoleData) -> bool
 			stats.add_stat(stat as ActorStats.Stats, effect.amount)
 			return true
 		ProgressionEffect.Type.ACTION:
+			if effect.amount < 1 or effect.amount > 4:
+				return false
 			var action := _load_action(effect.target)
 			if action == null:
 				return false
 			if role.actions.size() < 4:
 				role.actions.resize(4)
-			if effect.amount >= role.actions.size():
-				return false
-			role.actions[effect.amount] = action
+			role.actions[effect.amount - 1] = action
 			return true
 		ProgressionEffect.Type.PASSIVE:
 			var passive := _load_action(effect.target)

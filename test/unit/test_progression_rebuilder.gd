@@ -40,7 +40,7 @@ func test_rebuild_applies_every_effect_without_mutating_definitions() -> void:
 	assert_eq(hero.stats.attack, 3)
 	assert_eq(hero.stats.aim, 10)
 	assert_eq(hero.battle_roles.gun.actions.size(), 4)
-	assert_eq(hero.battle_roles.gun.actions[1].resource_path, ACTION_PATH)
+	assert_eq(hero.battle_roles.gun.actions[0].resource_path, ACTION_PATH)
 	assert_eq(hero.battle_roles.gun.passive.resource_path, PASSIVE_PATH)
 	assert_eq(hero.battle_roles.gun.shift_action.resource_path, SHIFT_PATH)
 	assert_true(definition.actions.is_empty())
@@ -79,12 +79,12 @@ func test_rebuild_uses_deterministic_tree_order_and_is_idempotent() -> void:
 	var rebuilder := ProgressionRebuilder.new(ProgressionCatalog.from_validated_trees([_tree("gun", nodes)]))
 
 	assert_true(rebuilder.rebuild(hero).success)
-	assert_eq(hero.battle_roles.gun.actions[1].resource_path, SHIFT_PATH)
+	assert_eq(hero.battle_roles.gun.actions[0].resource_path, SHIFT_PATH)
 	var first_stats := hero.stats
 	var first_role: RoleData = hero.battle_roles.gun
 	assert_true(rebuilder.rebuild(hero).success)
 	assert_eq(hero.stats.attack, 1)
-	assert_eq(hero.battle_roles.gun.actions[1].resource_path, SHIFT_PATH)
+	assert_eq(hero.battle_roles.gun.actions[0].resource_path, SHIFT_PATH)
 	assert_false(is_same(first_stats, hero.stats))
 	assert_false(is_same(first_role, hero.battle_roles.gun))
 
@@ -124,3 +124,39 @@ func test_failed_rebuild_is_transactional_for_invalid_resource() -> void:
 	assert_true(is_same(hero.stats, old_stats))
 	assert_eq(hero.stats.attack, 44)
 	assert_eq(hero.battle_roles, old_roles)
+
+
+func test_action_slots_are_one_based_and_bounded_to_four() -> void:
+	var applier := ProgressionEffectApplier.new()
+	var role := RoleData.new()
+	var stats := ActorStats.new()
+	assert_true(applier.apply(ProgressionEffect.action(ACTION_PATH, 1), stats, role))
+	assert_true(applier.apply(ProgressionEffect.action(SHIFT_PATH, 4), stats, role))
+	assert_eq(role.actions[0].resource_path, ACTION_PATH)
+	assert_eq(role.actions[3].resource_path, SHIFT_PATH)
+	assert_false(applier.apply(ProgressionEffect.new(ProgressionEffect.Type.ACTION, ACTION_PATH, 0), stats, role))
+	assert_false(applier.apply(ProgressionEffect.action(ACTION_PATH, 5), stats, role))
+
+
+func test_rebuild_does_not_initialize_or_traverse_legacy_role_trees() -> void:
+	var legacy_root := RoleNode.new()
+	legacy_root.generated_id = "authored-id"
+	legacy_root.rank = 27
+	legacy_root.calculated_xp_cost = 4321
+	legacy_root.type = RoleNode.RewardType.STAT
+	legacy_root.stat_type = ActorStats.Stats.ATK
+	legacy_root.stat_value = 999
+	var definition := _definition("gun")
+	definition.root_node = legacy_root
+	var hero := HeroData.new()
+	hero.role_definitions = [definition]
+	hero.unlocked_role_ids = ["gun"]
+	hero.unlocked_node_ids = ["authored-id"]
+	hero.role_progress["gun"] = HeroRoleProgress.new(1, ["gun.root"])
+	var catalog := ProgressionCatalog.from_validated_trees([_tree("gun", [_node("gun.root", "", 1, 0, ProgressionEffect.stat("ATK", 2))])])
+
+	assert_true(ProgressionRebuilder.new(catalog).rebuild(hero).success)
+	assert_eq(hero.stats.attack, 2)
+	assert_eq(legacy_root.generated_id, "authored-id")
+	assert_eq(legacy_root.rank, 27)
+	assert_eq(legacy_root.calculated_xp_cost, 4321)

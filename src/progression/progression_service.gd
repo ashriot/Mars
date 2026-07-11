@@ -38,6 +38,10 @@ func purchase_node(hero: HeroData, role_id: String, node_id: String) -> Progress
 	# Capture the exact persisted purchase state before the tentative commit.
 	var previous_xp := hero.current_xp
 	var previous_progress := progress
+	var previous_stats := hero.stats
+	var previous_stats_values := _snapshot_stats(hero.stats)
+	var previous_battle_roles := hero.battle_roles
+	var previous_battle_role_values := hero.battle_roles.duplicate()
 
 	# Commit only after every rejection path has been evaluated.
 	if progress == null:
@@ -52,6 +56,7 @@ func purchase_node(hero: HeroData, role_id: String, node_id: String) -> Progress
 	var rebuild_result: Variant = _rebuild.call(hero)
 	if not _rebuild_succeeded(rebuild_result):
 		hero.current_xp = previous_xp
+		_restore_derived_state(hero, previous_stats, previous_stats_values, previous_battle_roles, previous_battle_role_values)
 		if previous_progress == null:
 			hero.role_progress.erase(role_id)
 		else:
@@ -76,3 +81,35 @@ func _rebuild_succeeded(result: Variant) -> bool:
 	if result is ProgressionRebuilder.RebuildResult:
 		return result.success
 	return false
+
+
+func _snapshot_stats(stats: ActorStats) -> Dictionary:
+	if stats == null:
+		return {}
+	return {
+		"actor_name": stats.actor_name, "max_hp": stats.max_hp,
+		"starting_guard": stats.starting_guard, "starting_focus": stats.starting_focus,
+		"attack": stats.attack, "psyche": stats.psyche, "overload": stats.overload,
+		"speed": stats.speed, "aim": stats.aim, "precision": stats.precision,
+		"kinetic_defense": stats.kinetic_defense, "energy_defense": stats.energy_defense,
+	}
+
+
+func _restore_derived_state(hero: HeroData, previous_stats: ActorStats, previous_values: Dictionary, previous_roles: Dictionary, previous_role_values: Dictionary) -> void:
+	if previous_stats != null:
+		previous_stats.actor_name = previous_values.actor_name
+		previous_stats.max_hp = previous_values.max_hp
+		previous_stats.starting_guard = previous_values.starting_guard
+		previous_stats.starting_focus = previous_values.starting_focus
+		previous_stats.attack = previous_values.attack
+		previous_stats.psyche = previous_values.psyche
+		previous_stats.overload = previous_values.overload
+		previous_stats.speed = previous_values.speed
+		previous_stats.aim = previous_values.aim
+		previous_stats.precision = previous_values.precision
+		previous_stats.kinetic_defense = previous_values.kinetic_defense
+		previous_stats.energy_defense = previous_values.energy_defense
+	hero.stats = previous_stats
+	previous_roles.clear()
+	previous_roles.merge(previous_role_values)
+	hero.battle_roles = previous_roles
