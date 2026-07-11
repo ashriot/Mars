@@ -2,6 +2,8 @@
 extends Node
 
 const SAVE_DIR = "user://saves/"
+const TEST_SAVE_DIR = "user://test_saves/"
+const GUT_RUNNER_PATH = "addons/gut/gut_cmdln.gd"
 const SLOT_PREFIX = "slot_"
 const SLOT_EXT = ".json"
 
@@ -20,8 +22,20 @@ var inventory_equipment: Array[Equipment] = []
 var inventory_mods: Array[EquipmentMod] = []
 
 func _ready():
-	if not DirAccess.dir_exists_absolute(SAVE_DIR):
-		DirAccess.make_dir_absolute(SAVE_DIR)
+	var save_dir := _get_save_dir()
+	if not DirAccess.dir_exists_absolute(save_dir):
+		DirAccess.make_dir_absolute(save_dir)
+
+func _is_gut_process(args: PackedStringArray) -> bool:
+	for argument in args:
+		if GUT_RUNNER_PATH in argument:
+			return true
+	return false
+
+func _get_save_dir() -> String:
+	if _is_gut_process(OS.get_cmdline_args()):
+		return TEST_SAVE_DIR
+	return SAVE_DIR
 
 func save_current_slot():
 	save_game(current_slot_index)
@@ -124,7 +138,7 @@ func start_new_campaign(slot_index: int):
 	save_game(slot_index)
 
 func _get_slot_path(index: int) -> String:
-	return SAVE_DIR + SLOT_PREFIX + str(index) + SLOT_EXT
+	return _get_save_dir() + SLOT_PREFIX + str(index) + SLOT_EXT
 
 func has_save(index: int) -> bool:
 	return FileAccess.file_exists(_get_slot_path(index))
