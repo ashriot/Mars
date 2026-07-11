@@ -25,7 +25,7 @@ static func apply(control: Control) -> void:
 	_kill_tween(state)
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.15, 0.75, 1.0, 0.12)
-	style.border_color = Color(0.35, 0.9, 1.0, 0.95)
+	style.border_color = Color(1.0, 0.25, 0.25, 0.95) if control.get_meta("focus_invalid", false) else Color(0.35, 0.9, 1.0, 0.95)
 	style.set_border_width_all(2)
 	style.set_corner_radius_all(5)
 	control.add_theme_stylebox_override(OVERRIDE_NAME, style)

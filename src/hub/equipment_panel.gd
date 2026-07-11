@@ -11,6 +11,7 @@ signal mod_requested(current_item, slot_index)
 @onready var xp_label: Label = $Border/Content/XP/Gauge/Value
 @onready var xp_gauge: ProgressBar = $Border/Content/XP/Gauge
 @onready var rank_label: Label = $Border/Content/XP/Gauge/Rank
+@onready var xp_container: Control = $Border/Content/XP
 @onready var weapon_stats: GridContainer = $Border/Content/WeaponStats
 @onready var armor_stats: GridContainer = $Border/Content/ArmorStats
 @onready var mods_container: HBoxContainer = $Border/Content/Mods
@@ -24,15 +25,19 @@ var _highlight_tween: Tween
 
 
 func setup(item: Equipment):
-	equip_button.focus_mode = Control.FOCUS_ALL
-	equip_button.set_meta("cursor_state", NavigationCursor.CursorState.INTERACT)
-	tune_btn.focus_mode = Control.FOCUS_ALL
-	tune_btn.set_meta("cursor_state", NavigationCursor.CursorState.INTERACT)
 	if not item:
+		_clear_equipment()
 		name_label.text = "Empty"
 		icon_rect.texture = null
 		return
 	equipment = item
+	xp_container.show()
+	equip_button.disabled = false
+	equip_button.focus_mode = Control.FOCUS_ALL
+	equip_button.set_meta("cursor_state", NavigationCursor.CursorState.INTERACT)
+	tune_btn.disabled = false
+	tune_btn.focus_mode = Control.FOCUS_ALL
+	tune_btn.set_meta("cursor_state", NavigationCursor.CursorState.INTERACT)
 	if equipment.stats_changed.is_connected(_refresh_details):
 		equipment.stats_changed.disconnect(_refresh_details)
 
@@ -182,7 +187,31 @@ func _exit_tree():
 	if _highlight_tween: _highlight_tween.kill()
 
 func _on_equip_btn_pressed() -> void:
-	equip_requested.emit(equipment)
+	if equipment:
+		equip_requested.emit(equipment)
 
 func _on_tune_btn_pressed() -> void:
-	tune_requested.emit(equipment)
+	if equipment:
+		tune_requested.emit(equipment)
+
+
+func _clear_equipment() -> void:
+	if equipment and equipment.stats_changed.is_connected(_refresh_details):
+		equipment.stats_changed.disconnect(_refresh_details)
+	equipment = null
+	type_icon.texture = null
+	xp_container.hide()
+	xp_gauge.value = 0
+	xp_label.text = ""
+	rank_label.text = ""
+	weapon_stats.hide()
+	armor_stats.hide()
+	equip_button.disabled = true
+	equip_button.focus_mode = Control.FOCUS_NONE
+	equip_button.set_meta("cursor_state", NavigationCursor.CursorState.DISABLED)
+	tune_btn.disabled = true
+	tune_btn.focus_mode = Control.FOCUS_NONE
+	tune_btn.set_meta("cursor_state", NavigationCursor.CursorState.DISABLED)
+	for slot in mods_container.get_children():
+		if slot is ModSlot:
+			(slot as ModSlot).setup(null, false)

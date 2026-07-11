@@ -431,3 +431,113 @@ func test_reentering_hero_restores_role_page_and_stable_node_context() -> void:
 	assert_eq(panel.focused_node_id, "snp.page2")
 	panel.free()
 	await get_tree().process_frame
+
+
+func test_role_change_selects_closest_supported_page_and_keeps_focus() -> void:
+	var hero := _hero()
+	hero.unlocked_role_ids.assign(["gun", "snp"])
+	hero.role_definitions.assign([_role("gun"), _role("snp")])
+	var gun := RoleTreeDefinition.new("gun", 2, [
+		ProgressionNodeDefinition.new("gun.root", "", 1, 0, 100, ProgressionEffect.stat("ATK", 1)),
+		ProgressionNodeDefinition.new("gun.page2", "gun.root", 11, 1, 100, ProgressionEffect.stat("AIM", 1)),
+	])
+	var snp := RoleTreeDefinition.new("snp", 3, [
+		ProgressionNodeDefinition.new("snp.root", "", 1, 0, 100, ProgressionEffect.stat("ATK", 1)),
+		ProgressionNodeDefinition.new("snp.page3", "snp.root", 21, 0, 100, ProgressionEffect.stat("AIM", 1)),
+	])
+	var panel := preload("res://src/hub/skill_tree_panel.tscn").instantiate() as SkillTreePanel
+	panel.progression_catalog = ProgressionCatalog.from_validated_trees([gun, snp])
+	add_child(panel)
+	panel.setup(hero)
+	panel.change_page(1)
+	assert_eq(panel.current_page, 1)
+	panel.change_role(1)
+	assert_eq(panel.current_page, 0, "equal-distance supported pages prefer the lower page")
+	assert_eq(panel.focused_node_id, "snp.root")
+	assert_eq(get_viewport().gui_get_focus_owner(), panel.get_focused_node())
+	panel.free()
+	await get_tree().process_frame
+
+
+func test_inventory_spawn_path_retains_dragging_and_links_every_enabled_slot() -> void:
+	var party := preload("res://src/hub/party_menu.tscn").instantiate() as PartyMenu
+	add_child(party)
+	party.show()
+	var panel := party.inventory_view
+	panel.show()
+	panel.current_mode = InventoryPanel.Mode.EQUIP
+	var first := panel._spawn_grid_button(load("res://data/equipment/weapons/pistol.tres"), Equipment.Slot.WEAPON, 1) as ItemButton
+	var second := panel._spawn_grid_button(load("res://data/equipment/weapons/rifle.tres"), Equipment.Slot.WEAPON, 1) as ItemButton
+	var third := panel._spawn_grid_button(load("res://data/equipment/weapons/smg.tres"), Equipment.Slot.WEAPON, 1) as ItemButton
+	assert_eq(first.get_focus_control().get_meta("cursor_state"), NavigationCursor.CursorState.DRAGGING)
+	assert_eq(second.get_focus_control().get_meta("cursor_state"), NavigationCursor.CursorState.DRAGGING)
+	assert_eq(first.get_focus_control().focus_neighbor_bottom, first.get_focus_control().get_path_to(second.get_focus_control()))
+	assert_eq(second.get_focus_control().focus_neighbor_bottom, second.get_focus_control().get_path_to(third.get_focus_control()))
+	assert_eq(third.get_focus_control().focus_neighbor_bottom, third.get_focus_control().get_path_to(first.get_focus_control()))
+	watch_signals(second)
+	second.get_focus_control().grab_focus()
+	party._unhandled_input(_action_event(&"confirm"))
+	assert_signal_emit_count(second, "pressed", 1)
+	party.free()
+
+
+func test_equipment_panel_reuse_with_null_clears_and_disables_controller_actions() -> void:
+	var panel := preload("res://src/hub/equipment_panel.tscn").instantiate() as EquipmentPanel
+	add_child(panel)
+	panel.setup(load("res://data/equipment/weapons/pistol.tres"))
+	panel.setup(null)
+	assert_null(panel.equipment)
+	assert_true(panel.equip_button.disabled)
+	assert_true(panel.tune_btn.disabled)
+	assert_eq(panel.equip_button.focus_mode, Control.FOCUS_NONE)
+	assert_eq(panel.tune_btn.focus_mode, Control.FOCUS_NONE)
+	assert_false(panel.xp_container.visible)
+	assert_eq(panel.xp_label.text, "")
+	assert_eq(panel.rank_label.text, "")
+	watch_signals(panel)
+	panel._on_equip_btn_pressed()
+	panel._on_tune_btn_pressed()
+	assert_signal_not_emitted(panel, "equip_requested")
+	assert_signal_not_emitted(panel, "tune_requested")
+	panel.free()
+
+
+func test_invalid_mod_drop_uses_distinct_disabled_focus_glow() -> void:
+	var slot := preload("res://src/hub/mod_slot.tscn").instantiate() as ModSlot
+	add_child(slot)
+	slot.setup(null, true)
+	slot.get_focus_control().grab_focus()
+	NavigationFocus.apply(slot.get_focus_control())
+	slot.set_drop_validity(false)
+	var style := slot.get_focus_control().get_theme_stylebox("focus") as StyleBoxFlat
+	assert_eq(slot.get_focus_control().get_meta("cursor_state"), NavigationCursor.CursorState.DISABLED)
+	assert_eq(style.border_color, Color(1.0, 0.25, 0.25, 0.95))
+	NavigationFocus.clear(slot.get_focus_control())
+	slot.free()
+
+
+func test_shoulder_events_change_pages_and_roles_at_node_focus() -> void:
+	var hero := _hero()
+	hero.unlocked_role_ids.assign(["gun", "snp"])
+	hero.role_definitions.assign([_role("gun"), _role("snp")])
+	var panel := preload("res://src/hub/skill_tree_panel.tscn").instantiate() as SkillTreePanel
+	panel.progression_catalog = ProgressionCatalog.from_validated_trees([_tree(), _single_tree("snp")])
+	add_child(panel)
+	panel.setup(hero)
+	panel.focus_node("gun.root")
+	panel._unhandled_input(_action_event(&"page_next"))
+	assert_eq(panel.current_page, 1)
+	panel._unhandled_input(_action_event(&"section_next"))
+	assert_eq(panel.current_role_idx, 1)
+	panel.get_focused_node().release_focus()
+	panel._unhandled_input(_action_event(&"section_previous"))
+	assert_eq(panel.current_role_idx, 0, "role shoulders remain active at every focus depth")
+	panel.free()
+	await get_tree().process_frame
+
+
+func _action_event(action: StringName) -> InputEventAction:
+	var event := InputEventAction.new()
+	event.action = action
+	event.pressed = true
+	return event

@@ -57,6 +57,12 @@ func _on_back_pressed():
 
 func _unhandled_input(event: InputEvent) -> void:
 	var navigation := _navigation_ux_layer()
+	if visible and event.is_action_pressed(&"confirm") and (navigation == null or navigation.is_top_modal(self)):
+		var focused := get_viewport().gui_get_focus_owner() as BaseButton
+		if focused and not (focused is SkillTreeNode) and not focused.disabled and (focused == self or is_ancestor_of(focused)):
+			get_viewport().set_input_as_handled()
+			focused.pressed.emit()
+		return
 	if visible and navigation and navigation.is_top_modal(self) and event.is_action_pressed(&"cancel"):
 		get_viewport().set_input_as_handled()
 		if skill_view.visible and skill_view.cancel_focus_layer():

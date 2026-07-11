@@ -172,11 +172,19 @@ func change_page(delta: int) -> void:
 func change_role(delta: int) -> void:
 	var count := role_list_container.get_child_count()
 	if delta == 0 or count == 0: return
+	var anchor := _focused_position()
 	_store_focus_memory()
 	current_role_idx = posmod(current_role_idx + delta, count)
 	var selected := role_list_container.get_child(current_role_idx) as RolePanel
+	current_page = _closest_supported_page(selected, current_page)
 	_on_role_panel_selected(selected)
-	focus_node(_remembered_node_for_current_context())
+	var remembered := _remembered_node_for_current_context()
+	if selected.generated_nodes.has(remembered):
+		focus_node(remembered)
+	elif anchor != Vector2.INF:
+		focus_node(_nearest_node_to(anchor))
+	else:
+		focus_node("")
 
 
 func confirm_focused_node() -> void:
@@ -265,6 +273,23 @@ func _nearest_node_to(anchor: Vector2) -> String:
 			best_distance = distance
 			best_id = node_id
 	return best_id
+
+
+func _closest_supported_page(panel: RolePanel, desired_page: int) -> int:
+	var pages: Array[int] = []
+	if panel and panel.tree_definition:
+		for node: ProgressionNodeDefinition in panel.tree_definition.nodes:
+			var page := (node.rank - 1) / 10
+			if page not in pages:
+				pages.append(page)
+	if pages.is_empty():
+		return 0
+	pages.sort_custom(func(a: int, b: int) -> bool:
+		var a_distance := absi(a - desired_page)
+		var b_distance := absi(b - desired_page)
+		return a_distance < b_distance if a_distance != b_distance else a < b
+	)
+	return pages[0]
 
 
 func _publish_hints(node: SkillTreeNode) -> void:

@@ -261,9 +261,23 @@ func _spawn_grid_button(resource: Resource, slot: int, count: int) -> Control:
 	grid.add_child(btn)
 	btn.setup(resource, slot, count)
 	btn.set_dragging(current_mode != Mode.VIEW)
-	btn.set_drop_validity(not btn.disabled)
+	_refresh_grid_focus_neighbors()
 
 	return btn
+
+
+func _refresh_grid_focus_neighbors() -> void:
+	var controls: Array[BaseButton] = []
+	for child in grid.get_children():
+		if child is ItemButton:
+			var control := (child as ItemButton).get_focus_control()
+			if not control.disabled and control.focus_mode != Control.FOCUS_NONE:
+				controls.append(control)
+	for index in range(controls.size()):
+		var previous := controls[posmod(index - 1, controls.size())]
+		var next := controls[posmod(index + 1, controls.size())]
+		controls[index].focus_neighbor_top = controls[index].get_path_to(previous)
+		controls[index].focus_neighbor_bottom = controls[index].get_path_to(next)
 
 func _spawn_empty_message(msg: String):
 	var l = Label.new()
