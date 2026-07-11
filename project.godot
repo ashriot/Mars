@@ -64,22 +64,22 @@ ui_accept={
 
 nav_up={
 "deadzone": 0.25,
-"events": [Object(InputEventKey,"physical_keycode":87), Object(InputEventJoypadMotion,"axis":1,"axis_value":-1.0)]
+"events": [Object(InputEventKey,"physical_keycode":87), Object(InputEventJoypadMotion,"axis":1,"axis_value":-1.0), Object(InputEventJoypadButton,"button_index":11)]
 }
 
 nav_down={
 "deadzone": 0.25,
-"events": [Object(InputEventKey,"physical_keycode":83), Object(InputEventJoypadMotion,"axis":1,"axis_value":1.0)]
+"events": [Object(InputEventKey,"physical_keycode":83), Object(InputEventJoypadMotion,"axis":1,"axis_value":1.0), Object(InputEventJoypadButton,"button_index":12)]
 }
 
 nav_left={
 "deadzone": 0.25,
-"events": [Object(InputEventKey,"physical_keycode":65), Object(InputEventJoypadMotion,"axis":0,"axis_value":-1.0)]
+"events": [Object(InputEventKey,"physical_keycode":65), Object(InputEventJoypadMotion,"axis":0,"axis_value":-1.0), Object(InputEventJoypadButton,"button_index":13)]
 }
 
 nav_right={
 "deadzone": 0.25,
-"events": [Object(InputEventKey,"physical_keycode":68), Object(InputEventJoypadMotion,"axis":0,"axis_value":1.0)]
+"events": [Object(InputEventKey,"physical_keycode":68), Object(InputEventJoypadMotion,"axis":0,"axis_value":1.0), Object(InputEventJoypadButton,"button_index":14)]
 }
 
 confirm={
@@ -159,12 +159,12 @@ camera_pan_down={
 
 zoom_in={
 "deadzone": 0.25,
-"events": [Object(InputEventKey,"physical_keycode":61), Object(InputEventJoypadButton,"button_index":11)]
+"events": [Object(InputEventKey,"physical_keycode":61), Object(InputEventJoypadMotion,"axis":5,"axis_value":1.0)]
 }
 
 zoom_out={
 "deadzone": 0.25,
-"events": [Object(InputEventKey,"physical_keycode":45), Object(InputEventJoypadButton,"button_index":12)]
+"events": [Object(InputEventKey,"physical_keycode":45), Object(InputEventJoypadMotion,"axis":4,"axis_value":1.0)]
 }
 
 recenter={

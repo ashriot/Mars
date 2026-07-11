@@ -58,8 +58,12 @@ func update_controller_from_connected_names(device_names: Array) -> void:
 	_set_active_controller_type(type)
 
 
+func handle_joy_connection_changed(connected_device_names: Array) -> void:
+	update_controller_from_connected_names(connected_device_names)
+
+
 func _on_joy_connection_changed(_device_id: int, _connected: bool) -> void:
-	update_controller_from_connected_names(_connected_device_names())
+	handle_joy_connection_changed(_connected_device_names())
 
 
 func _connected_device_names() -> Array[String]:

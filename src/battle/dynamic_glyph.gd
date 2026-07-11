@@ -12,6 +12,8 @@ func _ready() -> void:
 
 func set_action(new_action: StringName) -> void:
 	action = new_action
+	if is_inside_tree():
+		_refresh_from_input_manager()
 
 
 func refresh(show_controller_glyph: bool, family: InputIconMap.ControllerType) -> void:
