@@ -71,6 +71,17 @@ class EndingManagerDouble extends InteractionManagerDouble:
 		presented_results.append(result)
 
 
+class ExtractionLifecycleManager extends GameManager:
+	var outcomes: Array[GameManager.InteractionOutcome] = []
+
+	func _ready() -> void:
+		pass
+
+	func _finish_interaction(outcome: InteractionOutcome) -> void:
+		outcomes.append(outcome)
+		await super._finish_interaction(outcome)
+
+
 func _manager() -> InteractionManagerDouble:
 	var manager := InteractionManagerDouble.new()
 	manager.dungeon_map = FakeDungeonMap.new()
@@ -231,6 +242,39 @@ func test_missing_and_malformed_reward_payloads_remain_retryable() -> void:
 		manager.free()
 
 
+func test_invalid_reward_resources_remain_retryable_without_granting() -> void:
+	var original_inventory := RunManager.run_inventory.duplicate(true)
+	var original_mods := RunManager.run_mods_loot.duplicate()
+	for payload in [
+		{"type": LootManager.LootType.MATERIAL, "id": "", "amount": 2},
+		{"type": LootManager.LootType.MATERIAL, "id": "missing_item", "amount": 2},
+		{"type": LootManager.LootType.MATERIAL, "id": "pistol", "amount": 2},
+		{"type": LootManager.LootType.MATERIAL, "id": "comp_weap_1_common", "amount": 2},
+		{"type": LootManager.LootType.COMPONENT, "id": "mat_weap_1", "amount": 2},
+		{"type": LootManager.LootType.EQUIPMENT, "id": "health_booster"},
+		{"type": LootManager.LootType.MOD, "id": "pistol", "tier": 2},
+	]:
+		var manager := _manager()
+		var node := _node(MapNode.NodeType.REWARD)
+		manager.dungeon_map.reward_memory[node.grid_coords] = payload
+
+		manager._on_map_interaction_requested(node)
+
+		assert_push_error("reward payload")
+		if payload.id.is_empty():
+			assert_string_contains(manager.last_error, '"id": ""')
+		else:
+			assert_string_contains(manager.last_error, str(payload.id))
+		assert_eq(RunManager.run_inventory, original_inventory)
+		assert_eq(RunManager.run_mods_loot, original_mods)
+		assert_eq(manager.completed_count, 0)
+		assert_eq(manager.canceled_count, 1)
+		node.free()
+		manager.free()
+	RunManager.run_inventory = original_inventory
+	RunManager.run_mods_loot = original_mods
+
+
 func test_valid_terminal_payload_instantiates_and_connects_terminal_without_finishing() -> void:
 	var manager := _manager()
 	manager.remove_child(manager.overlay_layer)
@@ -356,6 +400,32 @@ func test_terminal_extraction_presents_retreat_and_only_routes_run_ended() -> vo
 	assert_eq(manager.cleared_count, 0)
 	node.free()
 	manager.free()
+
+
+func test_real_terminal_extraction_close_does_not_clear_end_screen() -> void:
+	var manager := ExtractionLifecycleManager.new()
+	manager.dungeon_map = FakeDungeonMap.new()
+	manager.overlay_layer = Node.new()
+	manager.add_child(manager.dungeon_map)
+	add_child(manager.overlay_layer)
+	manager.terminal_scene_packed = load("res://src/map/terminal.tscn")
+	manager.dungeon_end_screen_scene = load("res://src/map/dungeon_end_screen.tscn")
+	var node := _node(MapNode.NodeType.TERMINAL)
+	manager.dungeon_map.current_node = node
+	manager.dungeon_map.terminal_memory[node.grid_coords] = _terminal_payload()
+
+	manager._on_map_interaction_requested(node)
+	var terminal := manager.overlay_layer.get_child(0)
+	terminal._on_text_link_clicked("opt_extract")
+	await get_tree().create_timer(0.35).timeout
+
+	assert_eq(manager.outcomes, [GameManager.InteractionOutcome.RUN_ENDED])
+	assert_eq(manager.overlay_layer.get_child_count(), 1)
+	assert_true(manager.overlay_layer.get_child(0) is DungeonEndScreen)
+	node.free()
+	manager.overlay_layer.free()
+	manager.free()
+	await get_tree().process_frame
 
 
 func test_battle_defeat_presents_defeat_and_only_routes_run_ended() -> void:

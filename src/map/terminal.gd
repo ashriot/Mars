@@ -97,7 +97,7 @@ func _on_text_link_clicked(meta):
 	AudioManager.play_sfx("terminal")
 
 	option_selected.emit(meta_str)
-	_animate_close()
+	_animate_close(false)
 
 func _start_typing_effect():
 	# Stop any existing cursor blinking
@@ -114,14 +114,17 @@ func _start_typing_effect():
 	type_tween = create_tween()
 	type_tween.tween_property(text_label, "visible_ratio", 1.0, duration)
 
-func _animate_close():
+func _animate_close(emit_closed: bool = true):
 	if cursor_tween: cursor_tween.kill()
 	text_label.text = final_text_content
 	var tween = create_tween()
 	tween.tween_property(self, "modulate:a", 0.0, 0.25)
 	await tween.finished
 	hide()
-	closed.emit()
+	if emit_closed:
+		closed.emit()
+	else:
+		queue_free()
 
 func _on_close_button_pressed() -> void:
 	_animate_close()

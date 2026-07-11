@@ -254,11 +254,25 @@ static func is_valid_reward_payload(value: Variant) -> bool:
 		LOOT_BITS:
 			return _has_integer(payload, "amount")
 		LOOT_MATERIAL, LOOT_COMPONENT:
-			return _has_string(payload, "id") and _has_integer(payload, "amount")
+			if not _has_string(payload, "id") or not _has_integer(payload, "amount"):
+				return false
+			var inventory_item := _find_item_resource(payload.id)
+			if not inventory_item is InventoryItem:
+				return false
+			var expected_category := (
+				InventoryItem.ItemCategory.MATERIAL
+				if int(payload.type) == LOOT_MATERIAL
+				else InventoryItem.ItemCategory.COMPONENT
+			)
+			return inventory_item.category == expected_category
 		LOOT_EQUIPMENT:
-			return _has_string(payload, "id")
+			return _has_string(payload, "id") and _find_item_resource(payload.id) is Equipment
 		LOOT_MOD:
-			return _has_string(payload, "id") and _has_integer(payload, "tier")
+			return (
+				_has_string(payload, "id")
+				and _has_integer(payload, "tier")
+				and _find_item_resource(payload.id) is EquipmentMod
+			)
 	return false
 
 

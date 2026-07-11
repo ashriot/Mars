@@ -142,12 +142,26 @@ func test_public_runtime_payload_validators_accept_each_valid_category() -> void
 	assert_true(codec.is_valid_encounter_payload(["attack_drones_1", false, false]))
 	for payload in [
 		{"type": 0, "amount": 12},
-		{"type": 1, "id": "material", "amount": 2},
-		{"type": 2, "id": "component", "amount": 2, "color_html": "#ff00ff"},
-		{"type": 3, "id": "equipment"},
-		{"type": 4, "id": "mod", "tier": 2},
+		{"type": 1, "id": "mat_weap_1", "amount": 2},
+		{"type": 2, "id": "comp_weap_1_common", "amount": 2, "color_html": "#ff00ff"},
+		{"type": 3, "id": "pistol"},
+		{"type": 4, "id": "health_booster", "tier": 2},
 	]:
 		assert_true(codec.is_valid_reward_payload(payload))
+
+
+func test_reward_payload_rejects_missing_and_wrong_resource_classes() -> void:
+	var codec = _codec()
+	for payload in [
+		{"type": 1, "id": "", "amount": 2},
+		{"type": 1, "id": "missing_item", "amount": 2},
+		{"type": 1, "id": "pistol", "amount": 2},
+		{"type": 1, "id": "comp_weap_1_common", "amount": 2},
+		{"type": 2, "id": "mat_weap_1", "amount": 2},
+		{"type": 3, "id": "health_booster"},
+		{"type": 4, "id": "pistol", "tier": 2},
+	]:
+		assert_false(codec.is_valid_reward_payload(payload), str(payload))
 
 
 func test_map_geometry_requires_integer_dimensions_and_exact_coordinate_set() -> void:
