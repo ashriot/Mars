@@ -44,3 +44,18 @@ func test_missing_glyph_keeps_text_and_disabled_state() -> void:
 	assert_true(bar.get_hint(0).visible)
 	assert_false(bar.get_hint(0).glyph.visible)
 	assert_false(bar.get_hint(0).enabled)
+
+
+func test_replacing_hints_removes_old_nodes_synchronously() -> void:
+	var bar = HintBarScene.instantiate()
+	add_child_autofree(bar)
+	var first: Array[Dictionary] = [
+		{action = &"confirm", label = "Accept", enabled = true},
+		{action = &"cancel", label = "Back", enabled = true},
+	]
+	bar.set_hints(first)
+	var second: Array[Dictionary] = [{action = &"action_1", label = "Use", enabled = true}]
+	bar.set_hints(second)
+	assert_eq(bar.get_child_count(), 1)
+	assert_eq(bar.get_hint_count(), 1)
+	assert_eq(bar.get_hint(0).label.text, "Use")

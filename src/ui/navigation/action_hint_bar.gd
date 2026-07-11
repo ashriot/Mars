@@ -12,7 +12,8 @@ func _ready() -> void:
 
 func set_hints(hints: Array[Dictionary]) -> void:
 	for hint in _hints:
-		hint.queue_free()
+		remove_child(hint)
+		hint.free()
 	_hints.clear()
 	for data in hints:
 		var hint := HINT_SCENE.instantiate() as ActionHint
