@@ -1,14 +1,18 @@
 class_name ProgressionCatalog
 extends RefCounted
 
-var errors: Array[ProgressionContentError] = []
+var _errors: Array[ProgressionContentError] = []
 var _roles: Dictionary[String, RoleTreeDefinition] = {}
+
+var errors: Array[ProgressionContentError]:
+	get:
+		return _errors.duplicate()
 
 
 func load_directory(path: String) -> Error:
 	var directory := DirAccess.open(path)
 	if directory == null:
-		errors = [ProgressionContentError.new(path, "", "directory", "Could not open directory.")]
+		_errors = [ProgressionContentError.new(path, "", "directory", "Could not open directory.")]
 		return ERR_CANT_OPEN
 	var filenames: Array[String] = []
 	for filename: String in directory.get_files():
@@ -28,10 +32,10 @@ func load_directory(path: String) -> Error:
 		else:
 			next_roles[result.tree.role_id] = result.tree
 	if not next_errors.is_empty():
-		errors = next_errors
+		_errors = next_errors
 		return ERR_INVALID_DATA
 	_roles = next_roles
-	errors.clear()
+	_errors.clear()
 	return OK
 
 
@@ -47,11 +51,14 @@ func get_summary(role_id: String) -> Dictionary:
 	var maximum_rank := 0
 	var branch_count := 0
 	var effect_counts := {"stat": 0, "action": 0, "passive": 0, "shift_action": 0}
-	var effect_names := ["stat", "action", "passive", "shift_action"]
 	for node: ProgressionNodeDefinition in tree.nodes:
 		total_xp += node.cost
 		maximum_rank = maxi(maximum_rank, node.rank)
-		effect_counts[effect_names[node.effect.type]] += 1
+		match node.effect.type:
+			ProgressionEffect.Type.STAT: effect_counts.stat += 1
+			ProgressionEffect.Type.ACTION: effect_counts.action += 1
+			ProgressionEffect.Type.PASSIVE: effect_counts.passive += 1
+			ProgressionEffect.Type.SHIFT_ACTION: effect_counts.shift_action += 1
 		if tree.get_children(node.id).size() > 1:
 			branch_count += 1
 	return {

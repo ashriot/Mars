@@ -72,6 +72,78 @@ func test_unreachable_nodes_are_rejected_without_partial_tree() -> void:
 	assert_string_contains(_combined_errors(result.errors).to_lower(), "unreachable")
 
 
+func test_load_result_and_catalog_diagnostics_are_defensive_and_exclusive() -> void:
+	var success = ProgressionJsonLoader.load_file(FIXTURES + "valid_role.json")
+	var exposed_success_errors: Array = success.errors
+	exposed_success_errors.append(ProgressionContentError.new("fake", "", "fake", "fake"))
+	assert_not_null(success.tree)
+	assert_eq(success.errors.size(), 0)
+	var factory_success = ProgressionJsonLoader.LoadResult.success(success.tree)
+	assert_true(is_same(factory_success.tree, success.tree))
+	assert_eq(factory_success.errors.size(), 0)
+
+	var failure = ProgressionJsonLoader.load_file(FIXTURES + "invalid_effect.json")
+	var exposed_failure_errors: Array = failure.errors
+	exposed_failure_errors.clear()
+	assert_null(failure.tree)
+	assert_gt(failure.errors.size(), 0)
+	var factory_failure = ProgressionJsonLoader.LoadResult.failure(failure.errors)
+	assert_null(factory_failure.tree)
+	assert_gt(factory_failure.errors.size(), 0)
+	var invalid_success = ProgressionJsonLoader.LoadResult.success(null)
+	var invalid_failure = ProgressionJsonLoader.LoadResult.failure([])
+	assert_null(invalid_success.tree)
+	assert_gt(invalid_success.errors.size(), 0)
+	assert_null(invalid_failure.tree)
+	assert_gt(invalid_failure.errors.size(), 0)
+
+	var catalog := ProgressionCatalog.new()
+	assert_eq(catalog.load_directory(FIXTURES), ERR_INVALID_DATA)
+	var exposed_catalog_errors: Array = catalog.errors
+	exposed_catalog_errors.clear()
+	assert_gt(catalog.errors.size(), 0)
+
+
+func test_failed_catalog_reload_preserves_previously_committed_roles() -> void:
+	var valid_directory := "user://progression_reload_valid"
+	_write_document(_valid_document(), "progression_reload_valid/gun.json")
+	var catalog := ProgressionCatalog.new()
+	assert_eq(catalog.load_directory(valid_directory), OK)
+	var committed_tree = catalog.get_role("gun")
+
+	assert_eq(catalog.load_directory(FIXTURES), ERR_INVALID_DATA)
+	assert_true(is_same(catalog.get_role("gun"), committed_tree))
+
+
+func test_catalog_rejects_duplicate_roles_and_orders_cross_file_errors_by_filename() -> void:
+	var duplicate_directory := "user://progression_duplicate_roles"
+	_write_document(_valid_document(), "progression_duplicate_roles/zeta.json")
+	_write_document(_valid_document(), "progression_duplicate_roles/alpha.json")
+	var catalog := ProgressionCatalog.new()
+	assert_eq(catalog.load_directory(duplicate_directory), ERR_INVALID_DATA)
+	assert_string_contains(_combined_errors(catalog.errors), "Duplicate role ID 'gun'")
+	assert_null(catalog.get_role("gun"))
+
+	var ordered_directory := "user://progression_ordered_errors"
+	var alpha := _valid_document()
+	alpha.nodes[0].xp_cost = 0
+	var zeta := _valid_document()
+	zeta.nodes[0].effect.stat = "LUCK"
+	_write_document(zeta, "progression_ordered_errors/zeta.json")
+	_write_document(alpha, "progression_ordered_errors/alpha.json")
+	assert_eq(catalog.load_directory(ordered_directory), ERR_INVALID_DATA)
+	assert_eq(catalog.errors[0].source_path.get_file(), "alpha.json")
+	assert_eq(catalog.errors[-1].source_path.get_file(), "zeta.json")
+
+
+func test_passive_and_shift_action_validate_expected_resource_class_independently() -> void:
+	for node_index in [2, 3]:
+		var document := _valid_document()
+		document.nodes[node_index].effect.resource = "res://data/heroes/asher/asher.tres"
+		var path := _write_document(document, "resource_class_%d.json" % node_index)
+		_assert_error(path, str(document.nodes[node_index].id), "effect.resource", "Action")
+
+
 func test_catalog_load_is_transactional_and_summary_is_deterministic() -> void:
 	var catalog := ProgressionCatalog.new()
 	assert_eq(catalog.load_directory(FIXTURES), ERR_INVALID_DATA)

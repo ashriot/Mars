@@ -8,12 +8,32 @@ const MAX_ACTION_SLOT := 4
 
 
 class LoadResult extends RefCounted:
-	var tree: RoleTreeDefinition
-	var errors: Array[ProgressionContentError] = []
+	var _tree: RoleTreeDefinition
+	var _errors: Array[ProgressionContentError] = []
 
-	func _init(loaded_tree: RoleTreeDefinition = null, load_errors: Array[ProgressionContentError] = []) -> void:
-		tree = loaded_tree
-		errors = load_errors.duplicate()
+	var tree: RoleTreeDefinition:
+		get:
+			return _tree
+
+	var errors: Array[ProgressionContentError]:
+		get:
+			return _errors.duplicate()
+
+	static func success(loaded_tree: RoleTreeDefinition) -> LoadResult:
+		var result := LoadResult.new()
+		if loaded_tree == null:
+			result._errors = [ProgressionContentError.new("", "", "tree", "Successful load requires a tree.")]
+		else:
+			result._tree = loaded_tree
+		return result
+
+	static func failure(load_errors: Array[ProgressionContentError]) -> LoadResult:
+		var result := LoadResult.new()
+		if load_errors.is_empty():
+			result._errors = [ProgressionContentError.new("", "", "errors", "Failed load requires at least one error.")]
+		else:
+			result._errors = load_errors.duplicate()
+		return result
 
 
 static func load_file(path: String) -> LoadResult:
@@ -21,21 +41,21 @@ static func load_file(path: String) -> LoadResult:
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
 		_add_error(errors, path, "", "file", "Could not open file.")
-		return LoadResult.new(null, errors)
+		return LoadResult.failure(errors)
 
 	var parser := JSON.new()
 	var parse_error := parser.parse(file.get_as_text())
 	if parse_error != OK:
 		_add_error(errors, path, "", "json", "Invalid JSON at line %d: %s" % [parser.get_error_line(), parser.get_error_message()])
-		return LoadResult.new(null, errors)
+		return LoadResult.failure(errors)
 	if not parser.data is Dictionary:
 		_add_error(errors, path, "", "document", "Top-level JSON value must be an object.")
-		return LoadResult.new(null, errors)
+		return LoadResult.failure(errors)
 
 	var document: Dictionary = parser.data
 	_validate_document(path, document, errors)
 	if not errors.is_empty():
-		return LoadResult.new(null, errors)
+		return LoadResult.failure(errors)
 
 	var nodes: Array[ProgressionNodeDefinition] = []
 	for raw_node: Dictionary in document.nodes:
@@ -47,8 +67,8 @@ static func load_file(path: String) -> LoadResult:
 	var tree := RoleTreeDefinition.new(str(document.role_id), int(document.content_revision), nodes)
 	if not tree.is_valid:
 		_add_error(errors, path, "", "nodes", tree.validation_error)
-		return LoadResult.new(null, errors)
-	return LoadResult.new(tree)
+		return LoadResult.failure(errors)
+	return LoadResult.success(tree)
 
 
 static func _validate_document(path: String, document: Dictionary, errors: Array[ProgressionContentError]) -> void:
