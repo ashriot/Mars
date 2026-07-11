@@ -5,6 +5,11 @@ const TEST_SLOT := 987653
 var _saved_data: Dictionary
 var _saved_roster: Array[HeroData]
 var _saved_slot: int
+var _saved_bits: int
+var _saved_total_xp: int
+var _saved_inventory: Dictionary
+var _saved_equipment: Array[Equipment]
+var _saved_mods: Array[EquipmentMod]
 var _test_save_path: String
 var _test_save_existed: bool
 var _test_save_bytes: PackedByteArray
@@ -14,6 +19,11 @@ func before_each() -> void:
 	_saved_data = SaveSystem.data
 	_saved_roster.assign(SaveSystem.party_roster)
 	_saved_slot = SaveSystem.current_slot_index
+	_saved_bits = SaveSystem.bits
+	_saved_total_xp = SaveSystem.total_lifetime_xp
+	_saved_inventory = SaveSystem.inventory
+	_saved_equipment.assign(SaveSystem.inventory_equipment)
+	_saved_mods.assign(SaveSystem.inventory_mods)
 	_test_save_path = SaveSystem._get_slot_path(TEST_SLOT)
 	_test_save_existed = FileAccess.file_exists(_test_save_path)
 	if _test_save_existed:
@@ -21,11 +31,21 @@ func before_each() -> void:
 	SaveSystem.current_slot_index = TEST_SLOT
 	SaveSystem.data = {}
 	SaveSystem.party_roster.clear()
+	SaveSystem.bits = 0
+	SaveSystem.total_lifetime_xp = 0
+	SaveSystem.inventory = {}
+	SaveSystem.inventory_equipment.clear()
+	SaveSystem.inventory_mods.clear()
 
 
 func after_each() -> void:
 	SaveSystem.data = _saved_data
 	SaveSystem.party_roster.assign(_saved_roster)
+	SaveSystem.bits = _saved_bits
+	SaveSystem.total_lifetime_xp = _saved_total_xp
+	SaveSystem.inventory = _saved_inventory
+	SaveSystem.inventory_equipment.assign(_saved_equipment)
+	SaveSystem.inventory_mods.assign(_saved_mods)
 	if _test_save_existed:
 		var file := FileAccess.open(_test_save_path, FileAccess.WRITE)
 		file.store_buffer(_test_save_bytes)
@@ -63,6 +83,27 @@ func _free_purchase(purchase: Dictionary) -> void:
 	(purchase.panel as RolePanel).free()
 
 
+func _displayed_stat(panel: HeroPanel, stat: ActorStats.Stats) -> String:
+	match stat:
+		ActorStats.Stats.HP: return panel.hp.text
+		ActorStats.Stats.GRD: return panel.guard.text
+		ActorStats.Stats.FOC: return panel.focus.text
+		ActorStats.Stats.ATK: return panel.atk.text
+		ActorStats.Stats.PSY: return panel.psy.text
+		ActorStats.Stats.OVR: return panel.ovr.text
+		ActorStats.Stats.SPD: return panel.spd.text
+		ActorStats.Stats.AIM: return panel.aim.text
+		ActorStats.Stats.PRE: return panel.pre.text
+		ActorStats.Stats.KIN_DEF: return panel.kin.text
+		ActorStats.Stats.NRG_DEF: return panel.nrg.text
+	return ""
+
+
+func _kill_test_tweens() -> void:
+	for tween in get_tree().get_processed_tweens():
+		tween.kill()
+
+
 func test_successful_purchase_spends_unlocks_rebuilds_and_emits_once() -> void:
 	var purchase := _make_purchase()
 	var panel: RolePanel = purchase.panel
@@ -72,24 +113,26 @@ func test_successful_purchase_spends_unlocks_rebuilds_and_emits_once() -> void:
 	panel._on_node_clicked(purchase.ui)
 
 	assert_eq(hero.current_xp, 150)
-	assert_eq(hero.unlocked_node_ids, ["test_1"])
+	assert_eq(250 - hero.current_xp, purchase.node.calculated_xp_cost)
+	assert_eq(hero.unlocked_node_ids.count("test_1"), 1)
 	assert_true(hero.battle_roles.has("test"))
 	assert_signal_emit_count(panel, "hero_progression_updated", 1)
+	assert_true(is_same(get_signal_parameters(panel, "hero_progression_updated")[0], hero))
 	_free_purchase(purchase)
 
 
-func test_stale_owned_click_spends_nothing_and_emits_nothing() -> void:
+func test_stale_double_click_spends_and_emits_only_once() -> void:
 	var purchase := _make_purchase()
 	var panel: RolePanel = purchase.panel
 	var hero: HeroData = purchase.hero
-	hero.unlocked_node_ids.append("test_1")
 	watch_signals(panel)
 
 	panel._on_node_clicked(purchase.ui)
+	panel._on_node_clicked(purchase.ui)
 
-	assert_eq(hero.current_xp, 250)
+	assert_eq(hero.current_xp, 150)
 	assert_eq(hero.unlocked_node_ids.count("test_1"), 1)
-	assert_signal_emit_count(panel, "hero_progression_updated", 0)
+	assert_signal_emit_count(panel, "hero_progression_updated", 1)
 	_free_purchase(purchase)
 
 
@@ -113,34 +156,78 @@ func test_unaffordable_click_emits_nothing() -> void:
 func test_skill_tree_panel_forwards_progression_once() -> void:
 	var purchase := _make_purchase()
 	var hero: HeroData = purchase.hero
+	var second_definition := RoleDefinition.new()
+	second_definition.role_id = "second"
+	second_definition.root_node = RoleNode.new()
+	hero.role_definitions.append(second_definition)
+	hero.unlocked_role_ids.append("second")
 	var panel := preload("res://src/hub/skill_tree_panel.tscn").instantiate() as SkillTreePanel
-	add_child_autofree(panel)
+	add_child(panel)
 	watch_signals(panel)
 
 	panel.setup(hero)
-	var spawned_role_panel := panel.role_list_container.get_child(0) as RolePanel
-	spawned_role_panel.hero_progression_updated.emit(hero)
+	assert_eq(panel.role_list_container.get_child_count(), 2)
+	var first_role_panel := panel.role_list_container.get_child(0) as RolePanel
+	var second_role_panel := panel.role_list_container.get_child(1) as RolePanel
+	assert_true(first_role_panel.hero_progression_updated.is_connected(panel._on_hero_progression_updated))
+	assert_true(second_role_panel.hero_progression_updated.is_connected(panel._on_hero_progression_updated))
+	first_role_panel.hero_progression_updated.emit(hero)
+	second_role_panel.hero_progression_updated.emit(hero)
 
-	assert_signal_emit_count(panel, "hero_progression_updated", 1)
+	assert_signal_emit_count(panel, "hero_progression_updated", 2)
+	assert_true(is_same(get_signal_parameters(panel, "hero_progression_updated", 0)[0], hero))
+	assert_true(is_same(get_signal_parameters(panel, "hero_progression_updated", 1)[0], hero))
 	_free_purchase(purchase)
+	_kill_test_tweens()
+	panel.free()
+	await get_tree().process_frame
 
 
-func test_party_menu_saves_and_refreshes_stat_card_immediately() -> void:
-	var purchase := _make_purchase()
-	var hero: HeroData = purchase.hero
-	SaveSystem.party_roster.assign([hero])
+func test_party_menu_real_purchase_saves_and_refreshes_only_matching_card() -> void:
+	var asher := load("res://data/heroes/asher/asher.tres").duplicate(true) as HeroData
+	var echo := load("res://data/heroes/echo/echo.tres").duplicate(true) as HeroData
+	asher.current_xp = 1000
+	SaveSystem.party_roster.assign([asher, echo])
 	var menu := preload("res://src/hub/party_menu.tscn").instantiate() as PartyMenu
-	add_child_autofree(menu)
+	add_child(menu)
 	menu.open()
-	var card := menu.hero_list_container.get_child(0) as HeroPanel
-	var attack_before := card.atk.text
+	var asher_card := menu.hero_list_container.get_child(0) as HeroPanel
+	var echo_card := menu.hero_list_container.get_child(1) as HeroPanel
+	var echo_values_before := [echo_card.hp.text, echo_card.atk.text, echo_card.psy.text]
+	var first_role_panel := menu.skill_view.role_list_container.get_child(0) as RolePanel
+	var second_role_panel := menu.skill_view.role_list_container.get_child(1) as RolePanel
+	first_role_panel.set_expanded(false, 0, false)
+	second_role_panel.set_expanded(true, 0, false)
+	menu.skill_view.current_role_idx = 1
+	menu.skill_view.current_page = 3
+	var role_index_before := menu.skill_view.current_role_idx
+	var page_before := menu.skill_view.current_page
+	var target_node: RoleNode
+	var target_ui: SkillTreeNode
+	for node in second_role_panel.generated_nodes:
+		if node.type == RoleNode.RewardType.STAT and not node.generated_id in asher.unlocked_node_ids:
+			target_node = node
+			target_ui = second_role_panel.generated_nodes[node]
+			break
+	assert_not_null(target_node)
+	assert_not_null(target_ui)
+	var asher_stat_before := _displayed_stat(asher_card, target_node.stat_type)
+	var xp_before := asher.current_xp
+	watch_signals(second_role_panel)
+	watch_signals(menu.skill_view)
 
-	hero.unlocked_node_ids.append("test_1")
-	hero.current_xp = 150
-	menu._on_hero_progression_updated(hero)
+	target_ui.node_clicked.emit(target_ui)
 
 	var saved := JSON.parse_string(FileAccess.get_file_as_string(_test_save_path)) as Dictionary
-	assert_eq(int(saved.heroes[0].current_xp), 150)
-	assert_eq(saved.heroes[0].unlocked_node_ids, ["test_1"])
-	assert_ne(card.atk.text, attack_before)
-	_free_purchase(purchase)
+	assert_eq(int(saved.heroes[0].current_xp), xp_before - target_node.calculated_xp_cost)
+	assert_eq(saved.heroes[0].unlocked_node_ids.count(target_node.generated_id), 1)
+	assert_ne(_displayed_stat(asher_card, target_node.stat_type), asher_stat_before)
+	assert_eq([echo_card.hp.text, echo_card.atk.text, echo_card.psy.text], echo_values_before)
+	assert_eq(menu.skill_view.current_role_idx, role_index_before)
+	assert_eq(menu.skill_view.current_page, page_before)
+	assert_signal_emit_count(second_role_panel, "hero_progression_updated", 1)
+	assert_signal_emit_count(menu.skill_view, "hero_progression_updated", 1)
+	assert_true(is_same(get_signal_parameters(menu.skill_view, "hero_progression_updated")[0], asher))
+	_kill_test_tweens()
+	menu.free()
+	await get_tree().process_frame
