@@ -310,9 +310,12 @@ func _supported_pages(panel: RolePanel) -> Array[int]:
 func _publish_hints(node: SkillTreeNode) -> void:
 	var navigation := get_tree().root.find_child("NavigationUXLayer", true, false) as NavigationUXLayer
 	if navigation:
-		navigation.publish_hints([
+		var hints: Array[Dictionary] = [
 			{action = &"confirm", label = "Upgrade" if node.is_purchasable() else "Inspect", enabled = node.is_purchasable() or node.state == SkillTreeNode.NodeState.LOCKED},
 			{action = &"cancel", label = "Back", enabled = true},
-			{action = &"page_previous", label = "Page", enabled = true},
 			{action = &"section_previous", label = "Role", enabled = true},
-		])
+		]
+		var role_panel := _current_role_panel()
+		if _supported_pages(role_panel).size() > 1:
+			hints.insert(2, {action = &"page_previous", label = "Page", enabled = true})
+		navigation.publish_hints(hints)

@@ -539,6 +539,28 @@ func test_shoulder_events_change_pages_and_roles_at_node_focus() -> void:
 	await get_tree().process_frame
 
 
+func test_single_page_role_omits_page_shoulder_hints() -> void:
+	var hero := _hero()
+	hero.role_definitions.assign([_legacy_role()])
+	var navigation := preload("res://src/ui/navigation/navigation_ux_layer.tscn").instantiate() as NavigationUXLayer
+	navigation.name = "NavigationUXLayer"
+	add_child(navigation)
+	var panel := preload("res://src/hub/skill_tree_panel.tscn").instantiate() as SkillTreePanel
+	panel.progression_catalog = ProgressionCatalog.from_validated_trees([_single_tree("gun")])
+	add_child(panel)
+	panel.setup(hero)
+	panel.focus_node("gun.root")
+	panel._publish_hints(panel.get_focused_node())
+	var actions: Array[StringName] = []
+	for index in navigation.hint_bar.get_hint_count():
+		actions.append(navigation.hint_bar.get_hint(index).action)
+	assert_does_not_have(actions, &"page_previous", "one-page roles must not advertise L1 paging")
+	assert_does_not_have(actions, &"page_next", "one-page roles must not advertise R1 paging")
+	panel.free()
+	navigation.free()
+	await get_tree().process_frame
+
+
 func test_page_shoulder_wraps_across_supported_pages_and_focuses_nearest_node() -> void:
 	var hero := _hero()
 	hero.role_definitions.assign([_legacy_role()])
