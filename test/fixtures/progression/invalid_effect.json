@@ -1,0 +1,1 @@
+{"schema_version":1,"role_id":"gun","content_revision":1,"nodes":[{"id":"gun.root","parent":null,"rank":1,"column":0,"xp_cost":100,"effect":{"type":"mystery","stat":"ATK","amount":1}}]}
