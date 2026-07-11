@@ -24,6 +24,10 @@ var _highlight_tween: Tween
 
 
 func setup(item: Equipment):
+	equip_button.focus_mode = Control.FOCUS_ALL
+	equip_button.set_meta("cursor_state", NavigationCursor.CursorState.INTERACT)
+	tune_btn.focus_mode = Control.FOCUS_ALL
+	tune_btn.set_meta("cursor_state", NavigationCursor.CursorState.INTERACT)
 	if not item:
 		name_label.text = "Empty"
 		icon_rect.texture = null
@@ -117,6 +121,7 @@ func _refresh_mods():
 
 		# 6. Setup
 		slot_ui.setup(mod_data, is_enabled)
+		slot_ui.set_drop_validity(is_enabled)
 
 		# 7. Connect Signal
 		if is_enabled:

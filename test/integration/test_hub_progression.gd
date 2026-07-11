@@ -90,6 +90,8 @@ func test_role_panel_submits_stable_ids_without_mutating_progression() -> void:
 	panel.is_currently_expanded = true
 	var ui := SkillTreeNode.new()
 	ui.node_definition = _tree().get_node("gun.root")
+	ui.state = SkillTreeNode.NodeState.AVAILABLE
+	ui.set_meta("cursor_state", NavigationCursor.CursorState.UPGRADE)
 	watch_signals(panel)
 
 	panel._on_node_clicked(ui)
@@ -170,7 +172,8 @@ func test_refresh_preserves_role_page_and_node_identity_and_updates_xp_affordabi
 	panel.refresh_progression_state(hero)
 
 	assert_eq(role_panel.xp_display.text, "50 XP")
-	assert_true(sibling.disabled)
+	assert_false(sibling.disabled)
+	assert_eq(sibling.get_meta("cursor_state"), NavigationCursor.CursorState.INTERACT)
 	assert_eq(sibling.get_instance_id(), sibling_id)
 	assert_eq(panel.current_role_idx, 0)
 	assert_eq(panel.current_page, 0)
@@ -199,7 +202,7 @@ func test_stale_double_click_runs_success_side_effects_and_tree_refresh_once() -
 	node.node_clicked.emit(node)
 
 	assert_eq(calls.count("terminal"), 1)
-	assert_eq(calls.count("press"), 1)
+	assert_eq(calls.count("press"), 0)
 	assert_eq(calls.count("save"), 1)
 	assert_eq(calls.count("stats"), 1)
 	assert_signal_emit_count(menu.skill_view, "progression_refreshed", 1)
@@ -238,7 +241,8 @@ func test_success_refreshes_all_matching_roles_and_leaves_other_hero_unchanged()
 
 	assert_eq(first.xp_display.text, "50 XP")
 	assert_eq(sibling.xp_display.text, "50 XP")
-	assert_true(sibling_node.disabled)
+	assert_false(sibling_node.disabled)
+	assert_eq(sibling_node.get_meta("cursor_state"), NavigationCursor.CursorState.DISABLED)
 	assert_eq(sibling_node.get_instance_id(), sibling_id)
 	assert_eq(other_panel.xp_display.text, other_text)
 	assert_eq(other_node.get_instance_id(), other_node_id)
@@ -298,5 +302,132 @@ func test_partial_catalog_selects_and_expands_first_rendered_role() -> void:
 	var rendered := panel.role_list_container.get_child(0) as RolePanel
 	assert_true(rendered.is_currently_expanded)
 	assert_eq(rendered.role_id, "gun")
+	panel.free()
+	await get_tree().process_frame
+
+
+func test_skill_navigation_changes_page_and_role_and_restores_stable_node() -> void:
+	var hero := _hero()
+	hero.unlocked_role_ids.assign(["gun", "snp"])
+	hero.role_definitions.assign([_role("gun"), _role("snp")])
+	var page_tree := RoleTreeDefinition.new("gun", 2, [
+		ProgressionNodeDefinition.new("gun.root", "", 1, 0, 100, ProgressionEffect.stat("ATK", 1)),
+		ProgressionNodeDefinition.new("gun.page2", "gun.root", 11, 0, 100, ProgressionEffect.stat("AIM", 1)),
+	])
+	var panel := preload("res://src/hub/skill_tree_panel.tscn").instantiate() as SkillTreePanel
+	panel.progression_catalog = ProgressionCatalog.from_validated_trees([page_tree, _single_tree("snp")])
+	add_child(panel)
+	panel.setup(hero)
+	assert_true(panel.focus_node("gun.root"))
+	panel.change_page(1)
+	assert_eq(panel.current_page, 1)
+	assert_eq(panel.focused_node_id, "gun.page2")
+	panel.change_page(-1)
+	assert_eq(panel.focused_node_id, "gun.root")
+	panel.change_role(1)
+	assert_eq(panel.current_role_idx, 1)
+	panel.change_role(-1)
+	assert_eq(panel.focused_node_id, "gun.root")
+	panel.free()
+	await get_tree().process_frame
+
+
+func test_confirm_emits_existing_purchase_signal_once_and_locked_node_is_inspectable() -> void:
+	var hero := _hero(150)
+	hero.role_definitions.assign([_legacy_role()])
+	var panel := preload("res://src/hub/skill_tree_panel.tscn").instantiate() as SkillTreePanel
+	panel.progression_catalog = ProgressionCatalog.from_validated_trees([_tree()])
+	add_child(panel)
+	panel.setup(hero)
+	assert_true(panel.focus_node("gun.left"))
+	var locked := panel.get_focused_node()
+	assert_false(locked.disabled)
+	assert_eq(locked.get_meta("cursor_state"), NavigationCursor.CursorState.INTERACT)
+	watch_signals(panel)
+	panel.confirm_focused_node()
+	assert_signal_not_emitted(panel, "purchase_requested")
+	assert_true(panel.focus_node("gun.root"))
+	panel.confirm_focused_node()
+	assert_signal_emitted_with_parameters(panel, "purchase_requested", [hero, "gun", "gun.root"])
+	assert_signal_emit_count(panel, "purchase_requested", 1)
+	assert_eq(hero.current_xp, 150)
+	assert_true(hero.role_progress.is_empty())
+	panel.free()
+	await get_tree().process_frame
+
+
+func test_inventory_and_equipment_controls_publish_controller_semantics() -> void:
+	var item := preload("res://src/hub/item_button.tscn").instantiate() as ItemButton
+	add_child(item)
+	assert_eq(item.get_focus_control().focus_mode, Control.FOCUS_ALL)
+	assert_eq(item.get_focus_control().get_meta("cursor_state"), NavigationCursor.CursorState.CAN_GRAB)
+	item.set_dragging(true)
+	assert_eq(item.get_focus_control().get_meta("cursor_state"), NavigationCursor.CursorState.DRAGGING)
+	var slot := preload("res://src/hub/mod_slot.tscn").instantiate() as ModSlot
+	add_child(slot)
+	slot.setup(null, true)
+	slot.set_drop_validity(true)
+	assert_eq(slot.get_focus_control().get_meta("cursor_state"), NavigationCursor.CursorState.INTERACT)
+	slot.set_drop_validity(false)
+	assert_eq(slot.get_focus_control().get_meta("cursor_state"), NavigationCursor.CursorState.DISABLED)
+	item.free()
+	slot.free()
+
+
+func test_cancel_moves_from_node_to_page_layer_before_leaving_skill_panel() -> void:
+	var hero := _hero()
+	hero.role_definitions.assign([_legacy_role()])
+	var panel := preload("res://src/hub/skill_tree_panel.tscn").instantiate() as SkillTreePanel
+	panel.progression_catalog = ProgressionCatalog.from_validated_trees([_tree()])
+	add_child(panel)
+	panel.setup(hero)
+	panel.focus_node("gun.root")
+	assert_true(panel.cancel_focus_layer())
+	assert_true(panel.tabs_container.get_child(panel.current_page).has_focus())
+	assert_false(panel.cancel_focus_layer())
+	panel.free()
+	await get_tree().process_frame
+
+
+func test_inventory_cancel_returns_outward_without_mutating_active_item() -> void:
+	var panel := preload("res://src/hub/inventory_panel.tscn").instantiate() as InventoryPanel
+	add_child(panel)
+	var item := Equipment.new()
+	panel.active_equipment = item
+	panel.current_mode = InventoryPanel.Mode.EQUIP
+	assert_true(panel.cancel_navigation())
+	assert_eq(panel.current_mode, InventoryPanel.Mode.VIEW)
+	assert_null(panel.active_equipment)
+	assert_false(panel.cancel_navigation())
+	panel.free()
+
+
+func test_reentering_hero_restores_role_page_and_stable_node_context() -> void:
+	var hero := _hero()
+	hero.unlocked_role_ids.assign(["gun", "snp"])
+	hero.role_definitions.assign([_role("gun"), _role("snp")])
+	var other := _hero()
+	other.hero_id = "echo"
+	other.role_definitions.assign([_legacy_role()])
+	var gun := RoleTreeDefinition.new("gun", 2, [
+		ProgressionNodeDefinition.new("gun.root", "", 1, 0, 100, ProgressionEffect.stat("ATK", 1)),
+		ProgressionNodeDefinition.new("gun.page2", "gun.root", 11, 0, 100, ProgressionEffect.stat("AIM", 1)),
+	])
+	var snp := RoleTreeDefinition.new("snp", 2, [
+		ProgressionNodeDefinition.new("snp.root", "", 1, 0, 100, ProgressionEffect.stat("ATK", 1)),
+		ProgressionNodeDefinition.new("snp.page2", "snp.root", 11, 0, 100, ProgressionEffect.stat("AIM", 1)),
+	])
+	var panel := preload("res://src/hub/skill_tree_panel.tscn").instantiate() as SkillTreePanel
+	panel.progression_catalog = ProgressionCatalog.from_validated_trees([gun, snp])
+	add_child(panel)
+	panel.setup(hero)
+	panel.change_role(1)
+	panel.change_page(1)
+	panel.focus_node("snp.page2")
+	panel.setup(other)
+	panel.setup(hero)
+	assert_eq(panel.current_role_idx, 1)
+	assert_eq(panel.current_page, 1)
+	assert_eq(panel.focused_node_id, "snp.page2")
 	panel.free()
 	await get_tree().process_frame

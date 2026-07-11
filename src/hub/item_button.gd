@@ -16,6 +16,11 @@ var disabled: bool:
 	set(value): $Button.disabled = value
 
 
+func _ready() -> void:
+	$Button.focus_mode = Control.FOCUS_ALL
+	$Button.set_meta("cursor_state", NavigationCursor.CursorState.CAN_GRAB)
+
+
 func setup(resource: Resource, slot_type: int, amount: int):
 	_item_ref = resource
 	_target_slot_context = slot_type
@@ -26,6 +31,20 @@ func setup(resource: Resource, slot_type: int, amount: int):
 	elif resource is InventoryItem:
 		_setup_item(resource)
 	update_quantity(amount)
+	$Button.focus_mode = Control.FOCUS_ALL
+	$Button.set_meta("cursor_state", NavigationCursor.CursorState.CAN_GRAB)
+
+
+func get_focus_control() -> BaseButton:
+	return $Button
+
+
+func set_dragging(is_dragging: bool) -> void:
+	$Button.set_meta("cursor_state", NavigationCursor.CursorState.DRAGGING if is_dragging else NavigationCursor.CursorState.CAN_GRAB)
+
+
+func set_drop_validity(is_valid: bool) -> void:
+	$Button.set_meta("cursor_state", NavigationCursor.CursorState.INTERACT if is_valid else NavigationCursor.CursorState.DISABLED)
 
 func update_quantity(amount: int):
 	if amount > 1:

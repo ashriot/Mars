@@ -53,6 +53,13 @@ func _close_panel():
 	_clear_grid()
 	mode_changed.emit(current_mode, null, -1)
 
+
+func cancel_navigation() -> bool:
+	if current_mode == Mode.VIEW:
+		return false
+	_close_panel()
+	return true
+
 func on_equip_requested(item: Equipment, slot_type: Equipment.Slot):
 	current_mode = Mode.EQUIP
 
@@ -253,6 +260,8 @@ func _spawn_grid_button(resource: Resource, slot: int, count: int) -> Control:
 	var btn = item_button_scene.instantiate() as ItemButton
 	grid.add_child(btn)
 	btn.setup(resource, slot, count)
+	btn.set_dragging(current_mode != Mode.VIEW)
+	btn.set_drop_validity(not btn.disabled)
 
 	return btn
 

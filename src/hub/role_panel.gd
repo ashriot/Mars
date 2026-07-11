@@ -122,8 +122,16 @@ func _on_node_clicked(ui_node: SkillTreeNode):
 		return
 	# --------------------------------
 
-	if ui_node.node_definition:
+	if ui_node.node_definition and ui_node.is_purchasable():
 		purchase_requested.emit(hero_data, role_id, ui_node.node_definition.id)
+
+
+func node_positions() -> Dictionary:
+	var positions := {}
+	for node_id: String in generated_nodes:
+		var control := generated_nodes[node_id] as Control
+		positions[node_id] = control.position + control.size * 0.5
+	return positions
 
 func _refresh_xp_ui():
 	# Use commafy if you have the util, or just str()

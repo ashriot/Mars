@@ -59,6 +59,19 @@ func _unhandled_input(event: InputEvent) -> void:
 	var navigation := _navigation_ux_layer()
 	if visible and navigation and navigation.is_top_modal(self) and event.is_action_pressed(&"cancel"):
 		get_viewport().set_input_as_handled()
+		if skill_view.visible and skill_view.cancel_focus_layer():
+			return
+		if inventory_view.visible and inventory_view.cancel_navigation():
+			return
+		var owner := get_viewport().gui_get_focus_owner()
+		var in_content := owner and (skill_view.is_ancestor_of(owner) or inventory_view.is_ancestor_of(owner))
+		if in_content:
+			var hero_panel := _get_panel_by_index(current_hero_idx)
+			if hero_panel:
+				hero_panel.focus_mode = Control.FOCUS_ALL
+				hero_panel.set_meta("cursor_state", NavigationCursor.CursorState.INTERACT)
+				hero_panel.grab_focus()
+				return
 		_close()
 
 func _refresh_hero_list():
