@@ -26,3 +26,11 @@ All verification used the preserved isolated HOME at `/private/tmp/mars-task3-ho
 
 - The rebuild callable is intentionally temporary and should be replaced by Task 4's derived-state rebuild interface.
 - Existing prototype UI still consumes `unlocked_node_ids`; this task does not migrate or translate that state by design.
+
+## Review Follow-up
+
+- Added getter-only `hero` and `resulting_xp` success payload fields. Rejections consistently expose `hero == null`, `resulting_xp == -1`, `xp_paid == 0`, and `content_revision == 0` while retaining requested role/node diagnostics.
+- Tightened strict historical parsing so every paid amount must be a positive integer. Tests cover wrong containers, empty/duplicate owned IDs, key-set mismatch, missing prices, and non-integer/zero/negative prices.
+- Replaced test access to catalog/effect internals with `ProgressionCatalog.from_validated_trees()` and an injected service effect-validator seam. The production default still requires a non-null, valid effect and loader validation is unchanged.
+- Strengthened the rebuild assertion to prove the callback observes committed XP, ownership, exact historical price, and accepted revision.
+- Review RED: focused test parse failed on the missing catalog factory and service validator argument. Review GREEN: focused unit 4/4 (80 assertions), focused integration 7/7 (50 assertions), full GUT 115/115 (819 assertions).

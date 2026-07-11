@@ -37,7 +37,7 @@ static func from_save_data(data: Variant) -> HeroRoleProgress:
 	var paid: Dictionary[String, int] = {}
 	for node_id in data.xp_paid_by_node:
 		var amount: Variant = data.xp_paid_by_node[node_id]
-		if not node_id is String or not node_id in owned or not amount is int or int(amount) < 0:
+		if not node_id is String or not node_id in owned or not amount is int or int(amount) <= 0:
 			return null
 		paid[node_id] = amount
 	if paid.size() != owned.size():

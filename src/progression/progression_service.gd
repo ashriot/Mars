@@ -3,11 +3,13 @@ extends RefCounted
 
 var _catalog: ProgressionCatalog
 var _rebuild: Callable
+var _effect_validator: Callable
 
 
-func _init(catalog: ProgressionCatalog, rebuild: Callable = Callable()) -> void:
+func _init(catalog: ProgressionCatalog, rebuild: Callable = Callable(), effect_validator: Callable = Callable()) -> void:
 	_catalog = catalog
 	_rebuild = rebuild
+	_effect_validator = effect_validator if effect_validator.is_valid() else _default_effect_validator
 
 
 func purchase_node(hero: HeroData, role_id: String, node_id: String) -> ProgressionPurchaseResult:
@@ -30,7 +32,7 @@ func purchase_node(hero: HeroData, role_id: String, node_id: String) -> Progress
 		return _result(ProgressionPurchaseResult.Status.PREREQUISITE_LOCKED, role_id, node_id)
 	if hero.current_xp < node.cost:
 		return _result(ProgressionPurchaseResult.Status.INSUFFICIENT_XP, role_id, node_id)
-	if node.effect == null or not node.effect.is_valid:
+	if not _effect_validator.call(node.effect):
 		return _result(ProgressionPurchaseResult.Status.INVALID_EFFECT, role_id, node_id)
 
 	# Commit only after every rejection path has been evaluated.
@@ -43,8 +45,12 @@ func purchase_node(hero: HeroData, role_id: String, node_id: String) -> Progress
 	progress.content_revision = tree.version
 	if _rebuild.is_valid():
 		_rebuild.call(hero)
-	return _result(ProgressionPurchaseResult.Status.PURCHASED, role_id, node_id, node.cost, tree.version)
+	return ProgressionPurchaseResult.new(ProgressionPurchaseResult.Status.PURCHASED, role_id, node_id, node.cost, tree.version, hero, hero.current_xp)
 
 
 func _result(status: ProgressionPurchaseResult.Status, role_id: String, node_id: String, paid: int = 0, revision: int = 0) -> ProgressionPurchaseResult:
 	return ProgressionPurchaseResult.new(status, role_id, node_id, paid, revision)
+
+
+func _default_effect_validator(effect: ProgressionEffect) -> bool:
+	return effect != null and effect.is_valid

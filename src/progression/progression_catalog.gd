@@ -9,6 +9,15 @@ var errors: Array[ProgressionContentError]:
 		return _errors.duplicate()
 
 
+static func from_validated_trees(trees: Array) -> ProgressionCatalog:
+	var catalog := ProgressionCatalog.new()
+	for candidate in trees:
+		if not candidate is RoleTreeDefinition or not candidate.is_valid or catalog._roles.has(candidate.role_id):
+			return null
+		catalog._roles[candidate.role_id] = candidate
+	return catalog
+
+
 func load_directory(path: String) -> Error:
 	var directory := DirAccess.open(path)
 	if directory == null:

@@ -303,8 +303,7 @@ func test_party_menu_real_purchase_saves_and_refreshes_only_matching_card() -> v
 
 func test_atomic_progression_purchase_survives_hero_save_round_trip() -> void:
 	var loaded := ProgressionJsonLoader.load_file("res://test/fixtures/progression/valid_role.json")
-	var catalog := ProgressionCatalog.new()
-	catalog._roles["gun"] = loaded.tree
+	var catalog := ProgressionCatalog.from_validated_trees([loaded.tree])
 	var hero := HeroData.new()
 	hero.current_xp = 100
 	hero.unlocked_role_ids = ["gun"]
