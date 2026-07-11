@@ -188,65 +188,78 @@ static func _is_valid_terminal_memory(memory: Variant) -> bool:
 	if not memory is Dictionary:
 		return false
 	for key in memory:
-		if not _is_serialized_coords(key) or not memory[key] is Dictionary:
-			return false
-		var payload: Dictionary = memory[key]
-		for field in ["facility_name", "session_id", "terminal_index", "bits", "alert", "upgrade_key"]:
-			if not payload.has(field):
-				return false
-		if not payload.facility_name is String or not payload.session_id is String:
-			return false
-		if not payload.upgrade_key is String:
-			return false
-		if not _is_integer(payload.terminal_index) or not _is_integer(payload.bits):
-			return false
-		if not _is_number(payload.alert):
+		if not _is_serialized_coords(key) or not is_valid_terminal_payload(memory[key]):
 			return false
 	return true
+
+
+static func is_valid_terminal_payload(value: Variant) -> bool:
+	if not value is Dictionary:
+		return false
+	var payload: Dictionary = value
+	for field in ["facility_name", "session_id", "terminal_index", "bits", "alert", "upgrade_key"]:
+		if not payload.has(field):
+			return false
+	return (
+		payload.facility_name is String
+		and payload.session_id is String
+		and payload.upgrade_key is String
+		and _is_integer(payload.terminal_index)
+		and _is_integer(payload.bits)
+		and _is_number(payload.alert)
+	)
 
 
 static func _is_valid_encounter_memory(memory: Variant) -> bool:
 	if not memory is Dictionary:
 		return false
 	for key in memory:
-		if not _is_serialized_coords(key) or not memory[key] is Array:
-			return false
-		var payload: Array = memory[key]
-		if payload.size() != 3:
-			return false
-		if not payload[0] is String or not payload[1] is bool or not payload[2] is bool:
+		if not _is_serialized_coords(key) or not is_valid_encounter_payload(memory[key]):
 			return false
 	return true
+
+
+static func is_valid_encounter_payload(value: Variant) -> bool:
+	if not value is Array:
+		return false
+	var payload: Array = value
+	return (
+		payload.size() == 3
+		and payload[0] is String
+		and not payload[0].is_empty()
+		and payload[1] is bool
+		and payload[2] is bool
+	)
 
 
 static func _is_valid_reward_memory(memory: Variant) -> bool:
 	if not memory is Dictionary:
 		return false
 	for key in memory:
-		if not _is_serialized_coords(key) or not memory[key] is Dictionary:
+		if not _is_serialized_coords(key) or not is_valid_reward_payload(memory[key]):
 			return false
-		var payload: Dictionary = memory[key]
-		if not payload.has("type") or not _is_integer(payload.type):
-			return false
-		if payload.has("color_html"):
-			if not payload.color_html is String or not Color.html_is_valid(payload.color_html):
-				return false
-		match int(payload.type):
-			LOOT_BITS:
-				if not _has_integer(payload, "amount"):
-					return false
-			LOOT_MATERIAL, LOOT_COMPONENT:
-				if not _has_string(payload, "id") or not _has_integer(payload, "amount"):
-					return false
-			LOOT_EQUIPMENT:
-				if not _has_string(payload, "id"):
-					return false
-			LOOT_MOD:
-				if not _has_string(payload, "id") or not _has_integer(payload, "tier"):
-					return false
-			_:
-				return false
 	return true
+
+
+static func is_valid_reward_payload(value: Variant) -> bool:
+	if not value is Dictionary:
+		return false
+	var payload: Dictionary = value
+	if not payload.has("type") or not _is_integer(payload.type):
+		return false
+	if payload.has("color_html"):
+		if not payload.color_html is String or not Color.html_is_valid(payload.color_html):
+			return false
+	match int(payload.type):
+		LOOT_BITS:
+			return _has_integer(payload, "amount")
+		LOOT_MATERIAL, LOOT_COMPONENT:
+			return _has_string(payload, "id") and _has_integer(payload, "amount")
+		LOOT_EQUIPMENT:
+			return _has_string(payload, "id")
+		LOOT_MOD:
+			return _has_string(payload, "id") and _has_integer(payload, "tier")
+	return false
 
 
 static func _has_string(data: Dictionary, key: String) -> bool:

@@ -129,6 +129,27 @@ func test_reward_payload_rejects_non_string_optional_color_html() -> void:
 	assert_false(codec.is_valid_map_data(data))
 
 
+func test_public_runtime_payload_validators_accept_each_valid_category() -> void:
+	var codec = _codec()
+	assert_true(codec.is_valid_terminal_payload({
+		"facility_name": "ALPHA",
+		"session_id": "session",
+		"terminal_index": 0,
+		"bits": 12,
+		"alert": 5.0,
+		"upgrade_key": "scan",
+	}))
+	assert_true(codec.is_valid_encounter_payload(["attack_drones_1", false, false]))
+	for payload in [
+		{"type": 0, "amount": 12},
+		{"type": 1, "id": "material", "amount": 2},
+		{"type": 2, "id": "component", "amount": 2, "color_html": "#ff00ff"},
+		{"type": 3, "id": "equipment"},
+		{"type": 4, "id": "mod", "tier": 2},
+	]:
+		assert_true(codec.is_valid_reward_payload(payload))
+
+
 func test_map_geometry_requires_integer_dimensions_and_exact_coordinate_set() -> void:
 	var codec = _codec()
 	var fractional := _valid_map_data()

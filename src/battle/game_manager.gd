@@ -1,6 +1,8 @@
 extends Node2D
 class_name GameManager
 
+enum InteractionOutcome { COMPLETED, CANCELED, RUN_ENDED, ERROR }
+
 signal dungeon_exited(success: bool)
 signal restore_failed
 
@@ -42,29 +44,33 @@ func _on_map_interaction_requested(node: MapNode):
 			_handle_extraction()
 
 		MapNode.NodeType.COMBAT, MapNode.NodeType.ELITE, MapNode.NodeType.BOSS:
-
-			var enc = dungeon_map.encounter_memory.get(node.grid_coords, "")
+			var enc = dungeon_map.encounter_memory.get(node.grid_coords)
+			if not DungeonSaveCodec.is_valid_encounter_payload(enc):
+				_report_interaction_error("Invalid encounter payload at %s: %s" % [node.grid_coords, enc])
+				_finish_interaction(InteractionOutcome.ERROR)
+				return
 			var enc_id = enc[0]
 			var is_elite = enc[1]
 			var is_boss = enc[2]
 
-			var encounter_res = EncounterDatabase.get_encounter_by_id(enc_id).duplicate()
+			var encounter_template := EncounterDatabase.get_encounter_by_id(enc_id)
+			if encounter_template == null:
+				_report_interaction_error("Unknown encounter ID '%s' at %s (payload: %s)" % [enc_id, node.grid_coords, enc])
+				_finish_interaction(InteractionOutcome.ERROR)
+				return
+			var encounter_res = encounter_template.duplicate()
 			encounter_res.is_elite = is_elite
 			encounter_res.is_boss = is_boss
-
-			if encounter_res:
-				_start_encounter(encounter_res)
-			else:
-				push_error("Encounter not found for ID: " + enc_id)
+			_start_encounter(encounter_res)
 
 		MapNode.NodeType.REWARD, MapNode.NodeType.REWARD_2, MapNode.NodeType.REWARD_3, MapNode.NodeType.REWARD_4:
 			_handle_reward_cache(node)
 
 		MapNode.NodeType.TERMINAL:
 			var data = dungeon_map.terminal_memory.get(node.grid_coords)
-			if not data:
-				push_error("No terminal data found for node: ", node.grid_coords)
-				_on_content_finished(true)
+			if not DungeonSaveCodec.is_valid_terminal_payload(data):
+				_report_interaction_error("Invalid terminal payload at %s: %s" % [node.grid_coords, data])
+				_finish_interaction(InteractionOutcome.ERROR)
 				return
 
 			var terminal = terminal_scene_packed.instantiate()
@@ -77,17 +83,34 @@ func _on_map_interaction_requested(node: MapNode):
 			_handle_extraction()
 
 		_:
-			_on_content_finished()
+			_finish_interaction(InteractionOutcome.COMPLETED)
 			return
 
-func _on_content_finished(should_complete_node: bool = true):
+func _finish_interaction(outcome: InteractionOutcome) -> void:
+	match outcome:
+		InteractionOutcome.COMPLETED:
+			await _complete_current_interaction()
+		InteractionOutcome.CANCELED, InteractionOutcome.ERROR:
+			_cancel_current_interaction()
+		InteractionOutcome.RUN_ENDED:
+			pass
+
+func _clear_transient_overlay() -> void:
 	for child in overlay_layer.get_children():
 		child.queue_free()
 
-	if should_complete_node:
-		await dungeon_map.complete_current_node()
-		RunManager.auto_save()
+func _complete_current_interaction() -> void:
+	_clear_transient_overlay()
+	await dungeon_map.complete_current_node()
+	RunManager.auto_save()
 	dungeon_map.unlock_input()
+
+func _cancel_current_interaction() -> void:
+	_clear_transient_overlay()
+	dungeon_map.unlock_input()
+
+func _report_interaction_error(message: String) -> void:
+	push_error("GameManager interaction error: " + message)
 
 func _start_encounter(encounter: Encounter):
 	AudioManager.play_sfx("radiate")
@@ -106,10 +129,11 @@ func end_encounter(won: bool):
 
 	if won:
 		AudioManager.play_music("map_1", 1.0, false, true)
-		_on_content_finished(true)
+		_finish_interaction(InteractionOutcome.COMPLETED)
 
 	else:
 		_show_end_screen(RunManager.RunResult.DEFEAT)
+		_finish_interaction(InteractionOutcome.RUN_ENDED)
 	dungeon_map.refresh_team_status()
 
 func _on_terminal_choice(choice_tag: String, data: Dictionary):
@@ -136,13 +160,14 @@ func _on_terminal_choice(choice_tag: String, data: Dictionary):
 
 		"opt_extract":
 			_handle_extraction()
+			return
 
-	_on_content_finished(true)
+	_finish_interaction(InteractionOutcome.COMPLETED)
 
 func _on_scan_success():
 	if dungeon_map.scan_canceled.is_connected(_on_scan_canceled):
 		dungeon_map.scan_canceled.disconnect(_on_scan_canceled)
-	_on_content_finished(true)
+	_finish_interaction(InteractionOutcome.COMPLETED)
 
 func _on_scan_canceled():
 	if dungeon_map.scan_performed.is_connected(_on_scan_success):
@@ -150,7 +175,7 @@ func _on_scan_canceled():
 	_on_map_interaction_requested(dungeon_map.current_node)
 
 func _on_terminal_closed():
-	_on_content_finished(false)
+	_finish_interaction(InteractionOutcome.CANCELED)
 
 func _handle_medical_logic(is_upgraded: bool):
 	# (Your existing medical logic is perfect, keep it here)
@@ -175,9 +200,9 @@ func _handle_medical_logic(is_upgraded: bool):
 func _handle_reward_cache(node: MapNode):
 	var loot = dungeon_map.reward_memory.get(node.grid_coords)
 
-	if not loot:
-		push_error("No loot found for node: ", node.grid_coords)
-		_on_content_finished(true)
+	if not DungeonSaveCodec.is_valid_reward_payload(loot):
+		_report_interaction_error("Invalid reward payload at %s: %s" % [node.grid_coords, loot])
+		_finish_interaction(InteractionOutcome.ERROR)
 		return
 
 	AudioManager.play_sfx("terminal")
@@ -231,7 +256,7 @@ func _handle_reward_cache(node: MapNode):
 	dungeon_map.add_child(ft)
 	ft.setup(node.global_position, msg, icon_tex, color)
 
-	_on_content_finished(true)
+	_finish_interaction(InteractionOutcome.COMPLETED)
 
 func _handle_extraction():
 	print("Extraction requested.")
@@ -246,10 +271,12 @@ func _handle_extraction():
 		result = RunManager.RunResult.SUCCESS
 
 	_show_end_screen(result)
+	_finish_interaction(InteractionOutcome.RUN_ENDED)
 
 func _on_party_wipe():
 	# This comes from the BattleManager signal "dungeon_exited(false)"
 	_show_end_screen(RunManager.RunResult.DEFEAT)
+	_finish_interaction(InteractionOutcome.RUN_ENDED)
 
 func _show_end_screen(result: RunManager.RunResult):
 	var screen = dungeon_end_screen_scene.instantiate()
