@@ -2,6 +2,13 @@ extends GutTest
 
 const FIXTURES := "res://test/fixtures/progression/"
 
+class FailingNestedCatalog extends ProgressionCatalog:
+	var blocked_suffix := ""
+	func _open_directory(path: String) -> DirAccess:
+		if not blocked_suffix.is_empty() and path.ends_with(blocked_suffix):
+			return null
+		return DirAccess.open(path)
+
 
 func test_valid_file_builds_complete_immutable_tree() -> void:
 	var result = ProgressionJsonLoader.load_file(FIXTURES + "valid_role.json")
@@ -186,6 +193,24 @@ func test_catalog_load_is_transactional_and_summary_is_deterministic() -> void:
 		"maximum_rank": 3, "branch_count": 1,
 		"effect_counts": {"stat": 1, "action": 1, "passive": 1, "shift_action": 1},
 	})
+
+func test_nested_directory_open_failure_is_reported_and_preserves_committed_roles() -> void:
+	var valid_directory := "user://progression_nested_open_valid"
+	_write_document(_valid_document(), "progression_nested_open_valid/gun.json")
+	var catalog := FailingNestedCatalog.new()
+	assert_eq(catalog.load_directory(valid_directory), OK)
+	var committed_tree := catalog.get_role("gun")
+
+	var nested_directory := "user://progression_nested_open_failure"
+	_write_document(_valid_document(), "progression_nested_open_failure/visible/gun.json")
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(nested_directory.path_join("blocked")))
+	catalog.blocked_suffix = "/blocked"
+	assert_eq(catalog.load_directory(nested_directory), ERR_CANT_OPEN)
+	assert_true(is_same(catalog.get_role("gun"), committed_tree))
+	assert_eq(catalog.errors.size(), 1)
+	if not catalog.errors.is_empty():
+		assert_eq(catalog.errors[0].source_path, nested_directory.path_join("blocked"))
+		assert_eq(catalog.errors[0].field, "directory")
 
 
 func _assert_error(path: String, node_id: String, field: String, reason: String) -> void:

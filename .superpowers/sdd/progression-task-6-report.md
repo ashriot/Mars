@@ -12,7 +12,7 @@ DONE
 - Added recursive, deterministic JSON discovery to `ProgressionCatalog` so the hero subdirectories load transactionally from `res://data/progression/`.
 - Added the `ProgressionSystem` startup composition root. It publishes catalog/service only after every file validates, and reports every content error on failure.
 - Registered `ProgressionSystem` before gameplay autoload consumers and injected its catalog/service into `PartyMenu` by default.
-- Marked legacy `RoleDefinition.root_node` as transitional compatibility; JSON is now authoritative. Task 7 removes the legacy traversal/resources.
+- Marked legacy `RoleDefinition.root_node` and `init_structure()` as deprecated, legacy-only compatibility. JSON is operationally authoritative: all new progression runtime, service, startup, and hub consumers resolve `RoleDefinition.role_id` through the catalog and a guard test prevents them from accessing legacy topology. Task 7 removes the retained legacy fields, traversal, and resources after migration.
 - Did not edit or stage the user's dirty hub scenes or other unrelated files.
 
 ## Strict TDD Evidence
@@ -21,10 +21,18 @@ RED was observed with the new production-content test before JSON/startup implem
 
 GREEN verification:
 
-- Production content plus full GUT suite: 134/134 tests passed, 1,022 assertions.
+- Production content plus full GUT suite: 138/138 tests passed, 1,759 assertions.
 - All nine JSON documents parsed successfully with `jq -e`.
 - Headless Godot editor parse completed with exit code 0.
 - `git diff --check` completed with no whitespace errors.
+
+Follow-up review verification adds:
+
+- Node-by-node parity for all seven complete legacy trees: every parent edge, rank, visual column, XP cost, effect type, stat/amount, exact resource path, and action slot.
+- Explicit approved-baseline checks for the single-root Operative and Dominator trees.
+- Exact nine-role startup/catalog ID-set checks and Action resource-class checks.
+- A deterministic nested-directory open-failure test proving diagnostics and preservation of the previously committed catalog.
+- A legacy-topology access guard over new progression and hub consumers.
 
 The macOS Godot process emits its existing system certificate lookup diagnostic; it did not affect exit status, parsing, or tests.
 
@@ -48,6 +56,7 @@ The macOS Godot process emits its existing system certificate lookup diagnostic;
 - Dominator had combat-kit metadata but no legacy progression root. Per confirmed authored intent, its valid JSON currently contains only the `Displace` action root.
 - No additional Operative or Dominator nodes were invented. Both trees remain intentionally single-node until more progression content is authored.
 - Legacy generated IDs are intentionally not retained; stable semantic JSON IDs are the new persisted identity.
+- Task 6 deliberately retains `RoleDefinition.root_node`/`init_structure()` because existing pre-migration `HeroData` still needs them. Task 7 is the planned deletion boundary; removing them in Task 6 would break the staged migration. No duplicate progression ID was added.
 
 ## Commit
 
