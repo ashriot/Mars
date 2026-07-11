@@ -8,10 +8,6 @@ enum ControllerType {
 	NINTENDO_SWITCH_2,
 	STEAM_CONTROLLER,
 	STEAM_DECK,
-	# Temporary aliases for InputManager until Task 3 replaces device-mode handling.
-	UNKNOWN = KEYBOARD_MOUSE,
-	PS = PLAYSTATION,
-	SWITCH = NINTENDO_SWITCH,
 }
 
 const FAMILY_FOLDERS := {
