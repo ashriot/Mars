@@ -26,8 +26,8 @@ func _valid_map_data() -> Dictionary:
 			"alert": 5.0,
 			"upgrade_key": "power",
 		}},
-		"encounter_memory": {entrance_key: ["encounter_1", false, false]},
-		"reward_memory": {entrance_key: {"type": 0, "amount": 12}},
+		"encounter_memory": {},
+		"reward_memory": {},
 	}
 
 
@@ -100,12 +100,14 @@ func test_container_correct_but_malformed_payload_memories_are_rejected() -> voi
 	assert_false(codec.is_valid_map_data(malformed_terminal))
 
 	var malformed_encounter := _valid_map_data()
-	var encounter_key = malformed_encounter.encounter_memory.keys()[0]
+	var encounter_key = var_to_str(Vector2i(0, 0))
+	malformed_encounter.node_data[encounter_key].type = MapNode.NodeType.COMBAT
 	malformed_encounter.encounter_memory[encounter_key] = ["encounter_1", false]
 	assert_false(codec.is_valid_map_data(malformed_encounter))
 
 	var malformed_reward := _valid_map_data()
-	var reward_key = malformed_reward.reward_memory.keys()[0]
+	var reward_key = var_to_str(Vector2i(0, 0))
+	malformed_reward.node_data[reward_key].type = MapNode.NodeType.REWARD
 	malformed_reward.reward_memory[reward_key] = {"type": 0}
 	assert_false(codec.is_valid_map_data(malformed_reward))
 
@@ -123,8 +125,9 @@ func test_active_run_rejects_existing_non_dungeon_profile_resource() -> void:
 func test_reward_payload_rejects_non_string_optional_color_html() -> void:
 	var codec = _codec()
 	var data := _valid_map_data()
-	var reward_key = data.reward_memory.keys()[0]
-	data.reward_memory[reward_key].color_html = 42
+	var reward_key = var_to_str(Vector2i(0, 0))
+	data.node_data[reward_key].type = MapNode.NodeType.REWARD
+	data.reward_memory[reward_key] = {"type": 0, "amount": 12, "color_html": 42}
 
 	assert_false(codec.is_valid_map_data(data))
 
@@ -232,3 +235,46 @@ func test_active_run_validates_equipment_and_mod_resource_types() -> void:
 		var run := valid_run.duplicate(true)
 		run.run_mods = [bad_mod]
 		assert_false(codec.is_valid_active_run(run))
+
+
+func test_payload_memories_must_be_owned_by_matching_node_types() -> void:
+	var codec = _codec()
+	var entrance_key := var_to_str(Vector2i(0, 0))
+	var terminal_key := var_to_str(Vector2i(1, 0))
+
+	var terminal_on_entrance := _valid_map_data()
+	terminal_on_entrance.terminal_memory[entrance_key] = terminal_on_entrance.terminal_memory[terminal_key].duplicate()
+	assert_false(codec.is_valid_map_data(terminal_on_entrance))
+
+	var missing_terminal := _valid_map_data()
+	missing_terminal.terminal_memory.clear()
+	assert_false(codec.is_valid_map_data(missing_terminal))
+
+	var encounter_on_reward := _valid_map_data()
+	encounter_on_reward.node_data[entrance_key].type = MapNode.NodeType.REWARD
+	encounter_on_reward.encounter_memory[entrance_key] = ["encounter_1", false, false]
+	assert_false(codec.is_valid_map_data(encounter_on_reward))
+
+	var missing_encounter := _valid_map_data()
+	missing_encounter.node_data[entrance_key].type = MapNode.NodeType.COMBAT
+	assert_false(codec.is_valid_map_data(missing_encounter))
+
+	var elite_mismatch := _valid_map_data()
+	elite_mismatch.node_data[entrance_key].type = MapNode.NodeType.ELITE
+	elite_mismatch.encounter_memory[entrance_key] = ["encounter_1", false, false]
+	assert_false(codec.is_valid_map_data(elite_mismatch))
+
+	var boss_mismatch := _valid_map_data()
+	boss_mismatch.node_data[entrance_key].type = MapNode.NodeType.BOSS
+	boss_mismatch.encounter_memory[entrance_key] = ["encounter_1", false, false]
+	assert_false(codec.is_valid_map_data(boss_mismatch))
+
+	var reward_on_combat := _valid_map_data()
+	reward_on_combat.node_data[entrance_key].type = MapNode.NodeType.COMBAT
+	reward_on_combat.encounter_memory[entrance_key] = ["encounter_1", false, false]
+	reward_on_combat.reward_memory[entrance_key] = {"type": 0, "amount": 12}
+	assert_false(codec.is_valid_map_data(reward_on_combat))
+
+	var missing_reward := _valid_map_data()
+	missing_reward.node_data[entrance_key].type = MapNode.NodeType.REWARD
+	assert_false(codec.is_valid_map_data(missing_reward))

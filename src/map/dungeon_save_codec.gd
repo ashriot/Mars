@@ -84,6 +84,8 @@ static func is_valid_map_data(data: Variant) -> bool:
 		for memory_key in memory:
 			if not data.node_data.has(memory_key):
 				return false
+	if not _payloads_match_node_types(data):
+		return false
 	return true
 
 
@@ -117,6 +119,41 @@ static func extract_node_types(data: Dictionary) -> Dictionary:
 		var coords: Vector2i = str_to_var(key)
 		restored_types[coords] = int(data.node_data[key].type)
 	return restored_types
+
+
+static func _payloads_match_node_types(data: Dictionary) -> bool:
+	for key in data.node_data:
+		var node_type: int = int(data.node_data[key].type)
+		var has_terminal: bool = data.terminal_memory.has(key)
+		var has_encounter: bool = data.encounter_memory.has(key)
+		var has_reward: bool = data.reward_memory.has(key)
+		match node_type:
+			MAP_NODE_SCRIPT.NodeType.TERMINAL:
+				if not has_terminal or has_encounter or has_reward:
+					return false
+			MAP_NODE_SCRIPT.NodeType.COMBAT:
+				if has_terminal or not has_encounter or has_reward:
+					return false
+				if data.encounter_memory[key][1] or data.encounter_memory[key][2]:
+					return false
+			MAP_NODE_SCRIPT.NodeType.ELITE:
+				if has_terminal or not has_encounter or has_reward:
+					return false
+				if not data.encounter_memory[key][1] or data.encounter_memory[key][2]:
+					return false
+			MAP_NODE_SCRIPT.NodeType.BOSS:
+				if has_terminal or not has_encounter or has_reward:
+					return false
+				if data.encounter_memory[key][1] or not data.encounter_memory[key][2]:
+					return false
+			MAP_NODE_SCRIPT.NodeType.REWARD, MAP_NODE_SCRIPT.NodeType.REWARD_2, \
+			MAP_NODE_SCRIPT.NodeType.REWARD_3, MAP_NODE_SCRIPT.NodeType.REWARD_4:
+				if has_terminal or has_encounter or not has_reward:
+					return false
+			_:
+				if has_terminal or has_encounter or has_reward:
+					return false
+	return true
 
 
 static func _expected_coordinate_keys(width: int, height: int) -> Dictionary:

@@ -68,3 +68,65 @@ func test_invalid_continue_clears_only_active_run_and_routes_to_hub() -> void:
 	assert_true(main.hub_route_invoked)
 	assert_false(main.game_scene_created)
 	main.free()
+
+
+func test_payload_owner_mismatch_is_rejected_before_game_scene() -> void:
+	var entrance_key := var_to_str(Vector2i(0, 0))
+	var terminal_key := var_to_str(Vector2i(1, 0))
+	var terminal_payload := {
+		"facility_name": "ALPHA NODE 1",
+		"session_id": "fixed-session",
+		"terminal_index": 0,
+		"bits": 12,
+		"alert": 5.0,
+		"upgrade_key": "power",
+	}
+	SaveSystem.bits = 91
+	SaveSystem.inventory = {"mat_arm_1": 7}
+	var heroes_before := SaveSystem.party_roster.duplicate()
+	var saved_heroes := []
+	for hero in heroes_before:
+		saved_heroes.append(hero.get_save_data())
+	SaveSystem.data = {
+		"active_run": {
+			"seed": 42,
+			"tier": 1,
+			"profile_path": "res://data/enemies/dungeon_profiles/first_alleyway.tres",
+			"map_data": {
+				"current_alert": 80.0,
+				"total_nodes": 2,
+				"nodes_done": 1,
+				"current_coords": terminal_key,
+				"width": 2,
+				"height": 1,
+				"node_data": {
+					entrance_key: {"state": 2, "visited": true, "aware": true, "type": MapNode.NodeType.ENTRANCE},
+					terminal_key: {"state": 1, "visited": true, "aware": true, "type": MapNode.NodeType.TERMINAL},
+				},
+				"terminal_memory": {entrance_key: terminal_payload},
+				"encounter_memory": {},
+				"reward_memory": {},
+			},
+		},
+		"permanent_marker": "keep-me",
+		"bits": 91,
+		"inventory": {"mat_arm_1": 7},
+		"heroes": saved_heroes,
+	}
+	RunManager.is_run_active = true
+	var main := MainRouteDouble.new()
+
+	await main._on_continue_requested()
+
+	assert_null(SaveSystem.data.active_run)
+	assert_eq(SaveSystem.data.permanent_marker, "keep-me")
+	assert_eq(SaveSystem.data.bits, 91)
+	assert_eq(SaveSystem.data.inventory, {"mat_arm_1": 7})
+	assert_eq(SaveSystem.data.heroes, saved_heroes)
+	assert_eq(SaveSystem.bits, 91)
+	assert_eq(SaveSystem.inventory, {"mat_arm_1": 7})
+	assert_eq(SaveSystem.party_roster, heroes_before)
+	assert_false(RunManager.is_run_active)
+	assert_true(main.hub_route_invoked)
+	assert_false(main.game_scene_created)
+	main.free()
