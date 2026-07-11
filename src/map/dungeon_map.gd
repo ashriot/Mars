@@ -2,7 +2,6 @@ extends Node2D
 class_name DungeonMap
 
 const SaveCodec = preload("res://src/map/dungeon_save_codec.gd")
-const DungeonNavigation = preload("res://src/map/dungeon_navigation.gd")
 
 signal interaction_requested(node: MapNode)
 signal map_generation_progress(current, total)
@@ -146,27 +145,38 @@ func _ready():
 		status_ui.setup(hero_data)
 	_start_cursor_pulse()
 	set_process(true)
+	var navigation := _navigation_ux_layer()
+	if navigation:
+		navigation.set_adapter(self)
 	_publish_controller_hints()
 
 
 func _exit_tree() -> void:
 	var navigation := _navigation_ux_layer()
 	if navigation:
+		if navigation._adapter == self:
+			navigation.set_adapter(null)
 		navigation.publish_hints([])
 
 
 func _navigation_ux_layer() -> NavigationUXLayer:
+	if not is_inside_tree() or get_tree() == null:
+		return null
 	return get_tree().root.find_child("NavigationUXLayer", true, false) as NavigationUXLayer
 
 
 func _publish_controller_hints() -> void:
 	var navigation := _navigation_ux_layer()
 	if navigation:
+		var enabled := current_map_state != MapState.LOADING and current_map_state != MapState.LOCKED
+		var confirm_label := "Scan" if current_map_state == MapState.TARGETING else "Move"
 		navigation.publish_hints([
-			{action = &"confirm", label = "Move / Scan", enabled = true},
-			{action = &"cancel", label = "Clear / Cancel", enabled = true},
-			{action = &"zoom_in", label = "Zoom", enabled = true},
-			{action = &"recenter", label = "Recenter", enabled = true},
+			{action = &"confirm", label = confirm_label, enabled = enabled and _controller_preview_node != null},
+			{action = &"cancel", label = "Clear / Cancel", enabled = enabled and (_controller_preview_node != null or current_map_state == MapState.TARGETING)},
+			{action = &"camera_pan_right", label = "Pan", enabled = enabled},
+			{action = &"zoom_in", label = "Zoom In", enabled = enabled},
+			{action = &"zoom_out", label = "Zoom Out", enabled = enabled},
+			{action = &"recenter", label = "Recenter", enabled = enabled},
 		])
 
 
@@ -345,6 +355,10 @@ func select_direction(direction: Vector2) -> void:
 		return
 	_controller_preview_node = selected
 	_animate_reticle_to(selected.position)
+	var navigation := _navigation_ux_layer()
+	if navigation:
+		navigation.cursor.set_world_target(selected, NavigationCursor.CursorState.TARGET)
+	_publish_controller_hints()
 
 
 func confirm_preview() -> void:
@@ -355,6 +369,8 @@ func confirm_preview() -> void:
 	var selected := _controller_preview_node
 	_controller_preview_node = null
 	_on_node_clicked(selected)
+	_restore_controller_cursor()
+	_publish_controller_hints()
 
 
 func cancel_preview() -> void:
@@ -365,6 +381,18 @@ func cancel_preview() -> void:
 		_cancel_targeting()
 	else:
 		_hide_reticle()
+	_restore_controller_cursor()
+	_publish_controller_hints()
+
+
+func _restore_controller_cursor() -> void:
+	var navigation := _navigation_ux_layer()
+	if not navigation:
+		return
+	if is_instance_valid(current_node):
+		navigation.cursor.set_world_target(current_node, NavigationCursor.CursorState.TARGET)
+	else:
+		navigation.cursor.clear_target()
 
 
 func _controller_candidates() -> Array[MapNode]:
@@ -882,6 +910,8 @@ func start_targeting_mode(radius: int):
 	pending_scan_radius = radius
 	player_reticle.visible = true
 	_start_reticle_scan_pulse()
+	_restore_controller_cursor()
+	_publish_controller_hints()
 
 	print("Targeting Mode Active. Right-click to cancel.")
 
@@ -901,6 +931,8 @@ func _cancel_targeting():
 	_controller_preview_node = null
 	_reset_reticle_visuals()
 	scan_canceled.emit()
+	_restore_controller_cursor()
+	_publish_controller_hints()
 
 func _reset_reticle_visuals():
 	if reticle_color_tween: reticle_color_tween.kill()
@@ -911,6 +943,8 @@ func unlock_input():
 	if current_map_state == MapState.TARGETING:
 		return
 	current_map_state = MapState.PLAYING
+	_restore_controller_cursor()
+	_publish_controller_hints()
 
 func _on_node_clicked(target_node: MapNode):
 	if target_node == current_node: return
@@ -937,6 +971,8 @@ func _move_player_to(target_node: MapNode, is_start: bool = false):
 	refresh_team_status()
 	current_map_state = MapState.LOCKED
 	current_node = target_node
+	_restore_controller_cursor()
+	_publish_controller_hints()
 	_move_camera_to_player(is_start)
 	player_cursor.visible = true
 

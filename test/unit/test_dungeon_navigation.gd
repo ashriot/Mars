@@ -38,3 +38,10 @@ func test_closest_by_angle_excludes_ineligible_nodes() -> void:
 func test_closest_by_angle_returns_null_for_neutral_or_no_candidates() -> void:
 	assert_null(DungeonNavigation.closest_by_angle(Vector2.ZERO, Vector2.ZERO, [_node(Vector2.RIGHT)]))
 	assert_null(DungeonNavigation.closest_by_angle(Vector2.ZERO, Vector2.RIGHT, []))
+
+
+func test_closest_by_angle_rejects_behind_origin_and_orthogonal_candidates() -> void:
+	var behind := _node(Vector2.LEFT * 10.0)
+	var above := _node(Vector2.UP * 10.0)
+
+	assert_null(DungeonNavigation.closest_by_angle(Vector2.ZERO, Vector2.RIGHT, [behind, above]))

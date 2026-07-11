@@ -34,7 +34,13 @@ func unregister_screen(root: Control) -> void:
 
 
 func set_adapter(adapter: Object) -> void:
+	if _adapter == adapter:
+		return
 	_adapter = adapter
+	if is_instance_valid(_focus_target):
+		NavigationFocus.clear(_focus_target)
+	_focus_target = null
+	cursor.clear_target()
 
 
 func publish_hints(hints: Array[Dictionary]) -> void:
@@ -72,6 +78,8 @@ func get_focus_target() -> Control:
 
 func _on_focus_changed(control: Control) -> void:
 	if _restoring_focus:
+		return
+	if is_instance_valid(_adapter):
 		return
 	_prune_state()
 	if not _modal_stack.is_empty():
@@ -121,6 +129,8 @@ func _reset_restoring() -> void:
 
 func ensure_valid_focus() -> void:
 	_prune_state()
+	if is_instance_valid(_adapter):
+		return
 	if not _modal_stack.is_empty():
 		var modal_root := _weak_get(_modal_stack.back().root) as Control
 		var owner := get_viewport().gui_get_focus_owner()

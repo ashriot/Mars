@@ -1,6 +1,7 @@
 extends GutTest
 
 const DUNGEON_MAP_SCENE := preload("res://src/map/dungeon_map.tscn")
+const NAVIGATION_UX_SCENE := preload("res://src/ui/navigation/navigation_ux_layer.tscn")
 
 
 func _make_map() -> DungeonMap:
@@ -10,6 +11,12 @@ func _make_map() -> DungeonMap:
 	dungeon_map.map_height = 1
 	await get_tree().process_frame
 	return dungeon_map
+
+
+func _make_navigation_ux() -> NavigationUXLayer:
+	var navigation := NAVIGATION_UX_SCENE.instantiate() as NavigationUXLayer
+	add_child_autofree(navigation)
+	return navigation
 
 
 func test_restore_preserves_authoritative_map_state_and_danger_vision() -> void:
@@ -133,19 +140,44 @@ func test_scan_selection_filters_hidden_candidates_and_cancel_cancels_scan() -> 
 	assert_eq(dungeon_map.pending_scan_radius, 0)
 
 
+func test_confirmed_scan_uses_existing_scan_execution_and_signal_path() -> void:
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	var nodes: Array = setup.nodes
+	nodes[2].set_state(MapNode.NodeState.HIDDEN)
+	dungeon_map.start_targeting_mode(1)
+	dungeon_map.select_direction(Vector2.RIGHT)
+	watch_signals(dungeon_map)
+
+	dungeon_map.confirm_preview()
+	assert_signal_emitted(dungeon_map, &"scan_performed")
+	assert_eq(dungeon_map.current_map_state, DungeonMap.MapState.PLAYING)
+	assert_eq(dungeon_map.pending_scan_radius, 0)
+	assert_eq(nodes[2].state, MapNode.NodeState.REVEALED)
+
+
 func test_locked_state_suppresses_selection_camera_and_confirmation() -> void:
 	var setup := await _prepare_navigation_map()
 	var dungeon_map: DungeonMap = setup.map
 	var start_node := dungeon_map.current_node
 	var start_camera := dungeon_map.camera.position
-	dungeon_map.current_map_state = DungeonMap.MapState.LOCKED
-
+	var start_zoom := dungeon_map.camera.zoom
 	dungeon_map.select_direction(Vector2.RIGHT)
-	dungeon_map.process_controller_camera(Vector2.RIGHT, 1.0)
-	dungeon_map.confirm_preview()
-	assert_null(dungeon_map._controller_preview_node)
+	var preview: MapNode = dungeon_map._controller_preview_node
+	dungeon_map.current_map_state = DungeonMap.MapState.LOCKED
+	Input.action_press(&"camera_pan_right")
+	Input.action_press(&"zoom_in")
+	Input.action_press(&"recenter")
+	dungeon_map._process(1.0)
+	Input.action_release(&"camera_pan_right")
+	Input.action_release(&"zoom_in")
+	Input.action_release(&"recenter")
+	for action: StringName in [&"nav_left", &"confirm", &"cancel", &"zoom_in", &"recenter"]:
+		dungeon_map._unhandled_input(_action_event(action))
+	assert_same(dungeon_map._controller_preview_node, preview)
 	assert_same(dungeon_map.current_node, start_node)
 	assert_eq(dungeon_map.camera.position, start_camera)
+	assert_eq(dungeon_map.camera.zoom, start_zoom)
 
 
 func test_camera_pan_is_delta_scaled_zoom_is_clamped_and_recenter_targets_current_node() -> void:
@@ -166,3 +198,57 @@ func test_camera_pan_is_delta_scaled_zoom_is_clamped_and_recenter_targets_curren
 	dungeon_map.camera.position = Vector2(9999, 9999)
 	dungeon_map.recenter_camera()
 	assert_eq(dungeon_map.camera.position, dungeon_map._get_clamped_camera_pos(dungeon_map.current_node.position, dungeon_map.camera.zoom))
+
+
+func test_map_registers_global_adapter_targets_cursor_and_publishes_state_hints() -> void:
+	InputManager._input(_joy_button())
+	var navigation := _make_navigation_ux()
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	var outsider := Button.new()
+	add_child_autofree(outsider)
+	assert_same(navigation._adapter, dungeon_map)
+
+	dungeon_map.select_direction(Vector2.RIGHT)
+	var preview: MapNode = dungeon_map._controller_preview_node
+	assert_same(navigation.cursor._target, preview)
+	assert_eq(navigation.cursor._state, NavigationCursor.CursorState.TARGET)
+	outsider.grab_focus()
+	await get_tree().process_frame
+	assert_same(navigation.cursor._target, preview, "focus changes cannot steal an active adapter's world cursor")
+	assert_eq(_hint_actions(navigation), [&"confirm", &"cancel", &"camera_pan_right", &"zoom_in", &"zoom_out", &"recenter"])
+	dungeon_map.current_map_state = DungeonMap.MapState.LOCKED
+	dungeon_map._publish_controller_hints()
+	for index in navigation.hint_bar.get_hint_count():
+		assert_false(navigation.hint_bar.get_hint(index).enabled)
+	dungeon_map.unlock_input()
+
+	dungeon_map.start_targeting_mode(1)
+	assert_eq(navigation.hint_bar.get_hint(0).label.text, "Scan")
+	dungeon_map.cancel_preview()
+	assert_same(navigation.cursor._target, dungeon_map.current_node)
+	dungeon_map.queue_free()
+	await get_tree().process_frame
+	assert_null(navigation._adapter)
+	assert_null(navigation.cursor._target)
+	assert_eq(navigation.hint_bar.get_hint_count(), 0)
+
+
+func _action_event(action: StringName) -> InputEventAction:
+	var event := InputEventAction.new()
+	event.action = action
+	event.pressed = true
+	return event
+
+
+func _joy_button() -> InputEventJoypadButton:
+	var event := InputEventJoypadButton.new()
+	event.pressed = true
+	return event
+
+
+func _hint_actions(navigation: NavigationUXLayer) -> Array[StringName]:
+	var actions: Array[StringName] = []
+	for index in navigation.hint_bar.get_hint_count():
+		actions.append(navigation.hint_bar.get_hint(index).action)
+	return actions
