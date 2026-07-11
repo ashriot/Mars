@@ -18,8 +18,15 @@ func _valid_map_data() -> Dictionary:
 			entrance_key: {"state": 2, "visited": true, "aware": true, "type": MapNode.NodeType.ENTRANCE},
 			terminal_key: {"state": 1, "visited": true, "aware": true, "type": MapNode.NodeType.TERMINAL},
 		},
-		"terminal_memory": {terminal_key: {"session_id": "fixed-session", "bits": 12}},
-		"encounter_memory": {},
+		"terminal_memory": {terminal_key: {
+			"facility_name": "ALPHA NODE 1",
+			"session_id": "fixed-session",
+			"terminal_index": 0,
+			"bits": 12,
+			"alert": 5.0,
+			"upgrade_key": "power",
+		}},
+		"encounter_memory": {entrance_key: ["encounter_1", false, false]},
 		"reward_memory": {entrance_key: {"type": 0, "amount": 12}},
 	}
 
@@ -81,5 +88,33 @@ func test_valid_active_run_accepts_existing_profile_without_optional_rewards() -
 		"seed": 42,
 		"tier": 1,
 		"profile_path": PROFILE_PATH,
+		"map_data": _valid_map_data(),
+	}))
+
+
+func test_container_correct_but_malformed_payload_memories_are_rejected() -> void:
+	var codec = _codec()
+	var malformed_terminal := _valid_map_data()
+	var terminal_key = malformed_terminal.terminal_memory.keys()[0]
+	malformed_terminal.terminal_memory[terminal_key].erase("upgrade_key")
+	assert_false(codec.is_valid_map_data(malformed_terminal))
+
+	var malformed_encounter := _valid_map_data()
+	var encounter_key = malformed_encounter.encounter_memory.keys()[0]
+	malformed_encounter.encounter_memory[encounter_key] = ["encounter_1", false]
+	assert_false(codec.is_valid_map_data(malformed_encounter))
+
+	var malformed_reward := _valid_map_data()
+	var reward_key = malformed_reward.reward_memory.keys()[0]
+	malformed_reward.reward_memory[reward_key] = {"type": 0}
+	assert_false(codec.is_valid_map_data(malformed_reward))
+
+
+func test_active_run_rejects_existing_non_dungeon_profile_resource() -> void:
+	var codec = _codec()
+	assert_false(codec.is_valid_active_run({
+		"seed": 42,
+		"tier": 1,
+		"profile_path": "res://icon.svg",
 		"map_data": _valid_map_data(),
 	}))

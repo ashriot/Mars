@@ -28,15 +28,21 @@ func test_restore_preserves_authoritative_map_state_and_danger_vision() -> void:
 
 	var saved := source.get_save_data()
 	var current_key := var_to_str(current_coords)
+	var other_key := var_to_str(coords[0])
 	saved.node_data[current_key].type = MapNode.NodeType.TERMINAL
 	saved.node_data[current_key].state = MapNode.NodeState.REVEALED
 	saved.node_data[current_key].visited = true
 	saved.node_data[current_key].aware = true
 	saved.terminal_memory[current_key] = {
+		"facility_name": "ALPHA NODE 1",
 		"session_id": "restore-session",
+		"terminal_index": 0,
 		"bits": 37,
 		"alert": 5.0,
+		"upgrade_key": "power",
 	}
+	saved.encounter_memory[other_key] = ["encounter_restore", true, false]
+	saved.reward_memory[other_key] = {"type": 0, "amount": 23}
 
 	var restored := await _make_map()
 	var did_restore: bool = await restored.load_from_save_data(saved)
@@ -48,3 +54,13 @@ func test_restore_preserves_authoritative_map_state_and_danger_vision() -> void:
 	assert_eq(restored.terminal_memory[current_coords], saved.terminal_memory[current_key])
 	assert_eq(restored.vision_range, 0)
 	assert_eq(restored.node_gauge.max_value, 2.0)
+
+	var resaved := restored.get_save_data()
+	assert_eq(resaved.current_coords, saved.current_coords)
+	assert_eq(resaved.current_alert, saved.current_alert)
+	assert_eq(resaved.total_nodes, saved.total_nodes)
+	assert_eq(resaved.nodes_done, saved.nodes_done)
+	assert_eq(resaved.node_data, saved.node_data)
+	assert_eq(resaved.terminal_memory, saved.terminal_memory)
+	assert_eq(resaved.encounter_memory, saved.encounter_memory)
+	assert_eq(resaved.reward_memory, saved.reward_memory)

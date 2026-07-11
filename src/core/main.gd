@@ -89,14 +89,21 @@ func _setup_hub():
 
 func _setup_dungeon():
 	current_instance.dungeon_exited.connect(return_to_hub_with_rewards)
+	current_instance.restore_failed.connect(_on_restore_failed)
+
+func _on_restore_failed() -> void:
+	await _reject_active_run_and_load_hub()
+
+func _reject_active_run_and_load_hub() -> void:
+	SaveSystem.data["active_run"] = null
+	RunManager.is_run_active = false
+	SaveSystem.save_current_slot()
+	await load_hub()
 
 func _on_continue_requested():
 	var active_run = SaveSystem.data.get("active_run")
 	if active_run != null and not SaveCodec.is_valid_active_run(active_run):
-		SaveSystem.data["active_run"] = null
-		RunManager.is_run_active = false
-		SaveSystem.save_current_slot()
-		await load_hub()
+		await _reject_active_run_and_load_hub()
 		return
 	if active_run != null:
 		# Resume Dungeon
@@ -107,6 +114,7 @@ func _on_continue_requested():
 		_change_content(game_scene, world_layer) # Load into Node2D Layer
 
 		current_instance.dungeon_exited.connect(return_to_hub_with_rewards)
+		current_instance.restore_failed.connect(_on_restore_failed)
 		_fade_in()
 	else:
 		load_hub()

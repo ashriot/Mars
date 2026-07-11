@@ -95,31 +95,33 @@ func restore_run() -> bool:
 	var restored_profile = load(run_data.profile_path)
 	if not restored_profile is DungeonProfile:
 		return false
+	if not active_dungeon_map:
+		return false
+
+	var restored_equipment: Array[Equipment] = []
+	var saved_eq = run_data.get("run_equipment", [])
+	for eq_dict in saved_eq:
+		var item = Equipment.create_from_save_data(eq_dict)
+		if item: restored_equipment.append(item)
+
+	var restored_mods: Array[EquipmentMod] = []
+	var saved_mods = run_data.get("run_mods", [])
+	for mod_dict in saved_mods:
+		var mod = EquipmentMod.create_from_save_data(mod_dict)
+		if mod: restored_mods.append(mod)
+
+	if not await active_dungeon_map.load_from_save_data(run_data.map_data):
+		return false
 
 	current_run_seed = int(run_data.seed)
 	run_bits = int(run_data.get("run_bits", 0))
 	run_xp = int(run_data.get("run_xp", 0))
 	run_inventory = run_data.get("run_inventory", {})
-	current_dungeon_tier = DungeonRules.normalized_tier(int(run_data.get("tier", 1)))
+	current_dungeon_tier = DungeonRules.normalized_tier(int(run_data.tier))
 	dungeon_profile = restored_profile
-
-	run_equipment_loot.clear()
-	var saved_eq = run_data.get("run_equipment", [])
-	for eq_dict in saved_eq:
-		var item = Equipment.create_from_save_data(eq_dict)
-		if item: run_equipment_loot.append(item)
-
-	run_mods_loot.clear()
-	var saved_mods = run_data.get("run_mods", [])
-	for mod_dict in saved_mods:
-		var mod = EquipmentMod.create_from_save_data(mod_dict)
-		if mod: run_mods_loot.append(mod)
-
-	if not active_dungeon_map:
-		return false
+	run_equipment_loot.assign(restored_equipment)
+	run_mods_loot.assign(restored_mods)
 	seed(current_run_seed)
-	if not await active_dungeon_map.load_from_save_data(run_data.map_data):
-		return false
 	is_run_active = true
 	return true
 

@@ -2,6 +2,7 @@ extends Node2D
 class_name GameManager
 
 signal dungeon_exited(success: bool)
+signal restore_failed
 
 @export_group("Packed Scenes")
 @export var battle_scene_packed: PackedScene
@@ -24,8 +25,13 @@ func _ready():
 	dungeon_map.map_generation_progress.connect(loader.update_progress)
 	dungeon_map.interaction_requested.connect(_on_map_interaction_requested)
 
-	if not await dungeon_map.initialize_map():
-		push_error("GameManager: Dungeon map initialization failed.")
+	_handle_map_initialization_result(await dungeon_map.initialize_map())
+
+func _handle_map_initialization_result(succeeded: bool) -> void:
+	if succeeded:
+		return
+	push_error("GameManager: Dungeon map initialization failed.")
+	restore_failed.emit.call_deferred()
 
 func _on_map_interaction_requested(node: MapNode):
 	dungeon_map.current_map_state = DungeonMap.MapState.LOCKED
