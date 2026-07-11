@@ -6,11 +6,10 @@ signal node_clicked(node_ui)
 enum NodeState { LOCKED, AVAILABLE, UNLOCKED }
 
 # State
-var role_node_data: RoleNode
+var node_definition: ProgressionNodeDefinition
+var tree_definition: RoleTreeDefinition
 var state: int = 0
-var depth: int = 0
 var hero_data: HeroData
-var role_def: RoleDefinition # <-- STORE THIS
 
 # UI References
 @onready var icon_rect: TextureRect = $Panel/Icon
@@ -24,13 +23,12 @@ var role_def: RoleDefinition # <-- STORE THIS
 @onready var arrow_right: TextureRect = $Arrows/Right
 
 
-func setup(node: RoleNode, hero: HeroData, def: RoleDefinition, current_depth: int):
-	role_node_data = node
+func setup(node: ProgressionNodeDefinition, hero: HeroData, tree: RoleTreeDefinition):
+	node_definition = node
 	hero_data = hero
-	role_def = def # Store the definition for this specific tree
-	depth = current_depth
+	tree_definition = tree
 
-	var is_owned = node.generated_id in hero.unlocked_node_ids
+	var is_owned := _is_owned(node.id)
 
 	# 1. Setup Button Visuals
 	_update_button_visuals(is_owned)
@@ -61,35 +59,18 @@ func _update_button_visuals(is_owned: bool):
 	owned_highlight.visible = is_owned
 	icon_rect.texture = null
 
-	match role_node_data.type:
-		RoleNode.RewardType.STAT:
-			label.text = ActorStats.Stats.keys()[role_node_data.stat_type] + "+%d" % role_node_data.stat_value
-			if role_node_data.stat_type in [ActorStats.Stats.AIM, ActorStats.Stats.KIN_DEF, ActorStats.Stats.NRG_DEF]:
+	match node_definition.effect.type:
+		ProgressionEffect.Type.STAT:
+			label.text = node_definition.effect.target + "+%d" % node_definition.effect.amount
+			if node_definition.effect.target in ["AIM", "KIN_DEF", "NRG_DEF"]:
 				label.text += "%"
 
-		RoleNode.RewardType.ACTION:
-			var slot = role_node_data.action_slot_index
+		ProgressionEffect.Type.ACTION, ProgressionEffect.Type.SHIFT_ACTION, ProgressionEffect.Type.PASSIVE:
+			var resource := load(node_definition.effect.target) as Action
+			label.text = resource.action_name if resource else "Unknown Action"
+			icon_rect.texture = resource.icon if resource else null
 
-			# Check if the Definition has an action in this slot
-			if slot >= 0 and slot < role_def.actions.size():
-				var resource = role_def.actions[slot]
-				if resource:
-					label.text = resource.action_name
-					icon_rect.texture = resource.icon
-			else:
-				label.text = "Unknown Action"
-
-		RoleNode.RewardType.SHIFT_ACTION:
-			var resource = role_def.shift_action
-			label.text = resource.action_name
-			icon_rect.texture = resource.icon
-
-		RoleNode.RewardType.PASSIVE:
-			var resource = role_def.passive
-			label.text = resource.action_name
-			icon_rect.texture = resource.icon
-
-	cost_label.text = str(role_node_data.calculated_xp_cost) + " XP" # Simplified formatting for now
+	cost_label.text = str(node_definition.cost) + " XP"
 
 	if is_owned:
 		state = NodeState.UNLOCKED
@@ -102,20 +83,19 @@ func _update_arrows(is_self_owned: bool):
 	arrow_left.visible = false
 	arrow_right.visible = false
 
-	# Helper to check a specific slot
-	var _check_slot = func(target_node: RoleNode, arrow: Control):
-		if target_node:
-			arrow.visible = true
-			if is_self_owned:
-				var is_child_owned = target_node.generated_id in hero_data.unlocked_node_ids
-				arrow.modulate = Color.WHITE if is_child_owned else Color.GRAY
-			else:
-				arrow.modulate = Color(1, 1, 1, 0.5)
+	for child: ProgressionNodeDefinition in tree_definition.get_children(node_definition.id):
+		var arrow: TextureRect = arrow_down
+		if child.column < node_definition.column:
+			arrow = arrow_left
+		elif child.column > node_definition.column:
+			arrow = arrow_right
+		arrow.visible = true
+		arrow.modulate = Color.WHITE if is_self_owned and _is_owned(child.id) else Color.GRAY
 
-	# Call for each slot
-	_check_slot.call(role_node_data.child_node, arrow_down)
-	_check_slot.call(role_node_data.left_node, arrow_left)
-	_check_slot.call(role_node_data.right_node, arrow_right)
+
+func _is_owned(node_id: String) -> bool:
+	var progress: HeroRoleProgress = hero_data.role_progress.get(tree_definition.role_id)
+	return progress != null and node_id in progress.owned_node_ids
 
 func _pressed():
 	node_clicked.emit(self)

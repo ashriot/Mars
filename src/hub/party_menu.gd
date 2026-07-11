@@ -13,10 +13,15 @@ class_name PartyMenu
 var party_roster: Array[HeroData] = []
 var current_hero_idx: int = 0
 var current_mode: int = 0 # 0=Skills, 1=Inventory
+var progression_service: ProgressionService
+var progression_catalog: ProgressionCatalog
+var save_progression: Callable = SaveSystem.save_current_slot
+var play_progression_audio: Callable = AudioManager.play_sfx
+var refresh_hero_stats: Callable = _refresh_matching_hero_stats
 
 func _ready():
 	hide()
-	skill_view.hero_progression_updated.connect(_on_hero_progression_updated)
+	skill_view.purchase_requested.connect(_on_purchase_requested)
 	inventory_view.hero_stats_updated.connect(_on_hero_stats_updated)
 	inventory_view.mode_changed.connect(_on_inventory_mode_changed)
 	for i in range(mode_tabs.get_child_count()):
@@ -176,6 +181,7 @@ func _update_active_view():
 		# SKILLS
 		inventory_view.hide()
 		skill_view.show()
+		skill_view.progression_catalog = progression_catalog
 		skill_view.setup(hero)
 
 	elif current_mode == 1:
@@ -195,12 +201,26 @@ func _on_hero_stats_updated():
 		var panel = hero_list_container.get_child(current_hero_idx) as HeroPanel
 		panel.setup(party_roster[current_hero_idx])
 
-func _on_hero_progression_updated(hero: HeroData) -> void:
-	SaveSystem.save_current_slot()
+func _refresh_matching_hero_stats(hero: HeroData) -> void:
 	for child in hero_list_container.get_children():
 		var panel := child as HeroPanel
 		if panel and panel.data == hero:
 			panel.refresh_stats()
+
+
+func _on_purchase_requested(hero: HeroData, role_id: String, node_id: String) -> void:
+	if progression_service == null:
+		play_progression_audio.call("press")
+		return
+	var result := progression_service.purchase_node(hero, role_id, node_id)
+	if result.status != ProgressionPurchaseResult.Status.PURCHASED:
+		play_progression_audio.call("press")
+		return
+	play_progression_audio.call("terminal")
+	save_progression.call()
+	refresh_hero_stats.call(hero)
+	if skill_view:
+		skill_view.refresh_progression_state(hero)
 
 func _on_back_btn_pressed() -> void:
 	hide()

@@ -1,7 +1,7 @@
 extends Control
 class_name SkillTreePanel
 
-signal hero_progression_updated(hero: HeroData)
+signal purchase_requested(hero: HeroData, role_id: String, node_id: String)
 
 @export var role_panel_scene: PackedScene
 
@@ -15,6 +15,7 @@ var current_hero: HeroData
 var current_hero_idx: int = 0
 var current_role_idx: int = 0
 var current_page: int = 0
+var progression_catalog: ProgressionCatalog
 
 
 func setup(hero: HeroData):
@@ -39,15 +40,17 @@ func _refresh_role_list():
 
 	var roles = current_hero.unlocked_roles
 
-	var color: Color
+	var color := Color.WHITE
 	for i in range(roles.size()):
 		var def = roles[i]
+		var tree := progression_catalog.get_role(def.role_id) if progression_catalog else null
+		if tree == null:
+			continue
 		var panel = role_panel_scene.instantiate() as RolePanel
 		role_list_container.add_child(panel)
-
-		panel.setup(def, current_hero)
+		panel.setup(def, tree, current_hero)
 		panel.panel_selected.connect(_on_role_panel_selected)
-		panel.hero_progression_updated.connect(_on_hero_progression_updated)
+		panel.purchase_requested.connect(_on_purchase_requested)
 
 		if i == current_role_idx:
 			panel.set_expanded(true, current_page, true)
@@ -56,12 +59,15 @@ func _refresh_role_list():
 			panel.set_expanded(false, current_page, false)
 	update_tabs(color)
 
-func _on_hero_progression_updated(hero: HeroData) -> void:
+func refresh_progression_state(hero: HeroData) -> void:
 	for child in role_list_container.get_children():
 		var panel := child as RolePanel
 		if panel and is_same(panel.hero_data, hero):
 			panel.refresh_progression_state()
-	hero_progression_updated.emit(hero)
+
+
+func _on_purchase_requested(hero: HeroData, role_id: String, node_id: String) -> void:
+	purchase_requested.emit(hero, role_id, node_id)
 
 func _on_role_panel_selected(selected_panel: RolePanel):
 	var panels = role_list_container.get_children()
