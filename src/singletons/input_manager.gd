@@ -81,7 +81,20 @@ func _set_active_mode(mode: InputMode) -> void:
 
 
 func _set_active_controller_type(type: InputIconMap.ControllerType) -> void:
-	if _active_controller_type == type:
+	var resolved := InputIconMap.normalize_controller_type(type)
+	_apply_family_bindings(resolved)
+	if _active_controller_type == resolved:
 		return
-	_active_controller_type = type
-	controller_type_changed.emit(type)
+	_active_controller_type = resolved
+	controller_type_changed.emit(resolved)
+
+
+func _apply_family_bindings(type: InputIconMap.ControllerType) -> void:
+	var bindings := InputIconMap.confirm_cancel_buttons(type)
+	for action: StringName in [&"confirm", &"cancel"]:
+		for event in InputMap.action_get_events(action):
+			if event is InputEventJoypadButton:
+				InputMap.action_erase_event(action, event)
+		var joy_event := InputEventJoypadButton.new()
+		joy_event.button_index = bindings[action] as JoyButton
+		InputMap.action_add_event(action, joy_event)

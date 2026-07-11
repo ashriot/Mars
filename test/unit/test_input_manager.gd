@@ -3,14 +3,20 @@ extends GutTest
 const InputManagerScript := preload("res://src/singletons/input_manager.gd")
 
 var manager: Node
+var original_confirm_events: Array[InputEvent]
+var original_cancel_events: Array[InputEvent]
 
 
 func before_each() -> void:
+	original_confirm_events = InputMap.action_get_events(&"confirm")
+	original_cancel_events = InputMap.action_get_events(&"cancel")
 	manager = InputManagerScript.new()
 
 
 func after_each() -> void:
 	manager.free()
+	_restore_action(&"confirm", original_confirm_events)
+	_restore_action(&"cancel", original_cancel_events)
 
 
 func test_key_press_switches_to_keyboard() -> void:
@@ -124,6 +130,42 @@ func test_zoom_actions_use_trigger_axes() -> void:
 	assert_true(_has_joy_axis(&"zoom_out", 4, 1.0))
 
 
+func test_controller_family_rebinds_physical_confirm_and_cancel_positions() -> void:
+	var cases := [
+		["Nintendo Switch Pro Controller", InputIconMap.ControllerType.NINTENDO_SWITCH],
+		["Nintendo Switch 2 Pro Controller", InputIconMap.ControllerType.NINTENDO_SWITCH_2],
+		["Xbox Wireless Controller", InputIconMap.ControllerType.XBOX],
+		["DualSense Wireless Controller", InputIconMap.ControllerType.PLAYSTATION],
+		["Steam Deck", InputIconMap.ControllerType.STEAM_DECK],
+	]
+	for item in cases:
+		manager.update_controller_from_connected_names([item[0]])
+		assert_eq(manager.get_active_controller_type(), item[1])
+		var expected_confirm := JOY_BUTTON_B if item[1] in [InputIconMap.ControllerType.NINTENDO_SWITCH, InputIconMap.ControllerType.NINTENDO_SWITCH_2] else JOY_BUTTON_A
+		var expected_cancel := JOY_BUTTON_A if item[1] in [InputIconMap.ControllerType.NINTENDO_SWITCH, InputIconMap.ControllerType.NINTENDO_SWITCH_2] else JOY_BUTTON_B
+		assert_eq(_joy_buttons(&"confirm"), [expected_confirm], str(item[0]))
+		assert_eq(_joy_buttons(&"cancel"), [expected_cancel], str(item[0]))
+		assert_true(InputMap.event_is_action(_joy_button(expected_confirm), &"confirm"))
+		assert_true(InputMap.event_is_action(_joy_button(expected_cancel), &"cancel"))
+
+
+func test_repeated_family_switches_keep_one_joy_binding_and_preserve_action_slots() -> void:
+	var original_action_buttons := [_joy_buttons(&"action_1"), _joy_buttons(&"action_2"), _joy_buttons(&"action_3"), _joy_buttons(&"action_4")]
+	for device_name in ["Nintendo Switch Pro Controller", "Xbox Wireless Controller", "Nintendo Switch Pro Controller", "Nintendo Switch Pro Controller"]:
+		manager.update_controller_from_connected_names([device_name])
+	assert_eq(_joy_buttons(&"confirm"), [JOY_BUTTON_B])
+	assert_eq(_joy_buttons(&"cancel"), [JOY_BUTTON_A])
+	for index in 4:
+		assert_eq(_joy_buttons(StringName("action_%d" % (index + 1))), original_action_buttons[index])
+
+
+func test_unknown_connected_name_uses_steam_fallback_bindings() -> void:
+	manager.update_controller_from_connected_names(["mystery pad"])
+	assert_eq(manager.get_active_controller_type(), InputIconMap.ControllerType.STEAM_DECK)
+	assert_eq(_joy_buttons(&"confirm"), [JOY_BUTTON_A])
+	assert_eq(_joy_buttons(&"cancel"), [JOY_BUTTON_B])
+
+
 func _pressed_key() -> InputEventKey:
 	var event := InputEventKey.new()
 	event.pressed = true
@@ -142,3 +184,24 @@ func _has_joy_axis(action: StringName, axis: int, value: float) -> bool:
 		if event is InputEventJoypadMotion and event.axis == axis and is_equal_approx(event.axis_value, value):
 			return true
 	return false
+
+
+func _joy_buttons(action: StringName) -> Array[int]:
+	var buttons: Array[int] = []
+	for event in InputMap.action_get_events(action):
+		if event is InputEventJoypadButton:
+			buttons.append(event.button_index)
+	return buttons
+
+
+func _restore_action(action: StringName, events: Array[InputEvent]) -> void:
+	InputMap.action_erase_events(action)
+	for event in events:
+		InputMap.action_add_event(action, event)
+
+
+func _joy_button(index: int) -> InputEventJoypadButton:
+	var event := InputEventJoypadButton.new()
+	event.button_index = index as JoyButton
+	event.pressed = true
+	return event

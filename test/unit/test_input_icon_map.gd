@@ -17,9 +17,16 @@ func test_each_family_resolves_confirm_cancel_and_actions() -> void:
 
 
 func test_nintendo_uses_platform_confirm_cancel_positions() -> void:
-	var family := InputIconMap.ControllerType.NINTENDO_SWITCH
-	assert_true(InputIconMap.get_glyph_path(family, &"confirm").ends_with("switch_button_a.svg"))
-	assert_true(InputIconMap.get_glyph_path(family, &"cancel").ends_with("switch_button_b.svg"))
+	for family in [InputIconMap.ControllerType.NINTENDO_SWITCH, InputIconMap.ControllerType.NINTENDO_SWITCH_2]:
+		assert_true(InputIconMap.get_glyph_path(family, &"confirm").ends_with("switch_button_a.svg"))
+		assert_true(InputIconMap.get_glyph_path(family, &"cancel").ends_with("switch_button_b.svg"))
+
+
+func test_invalid_family_falls_back_to_steam_deck() -> void:
+	assert_eq(
+		InputIconMap.get_glyph_path(99 as InputIconMap.ControllerType, &"confirm"),
+		InputIconMap.get_glyph_path(InputIconMap.ControllerType.STEAM_DECK, &"confirm")
+	)
 
 
 func test_missing_action_returns_empty_path() -> void:

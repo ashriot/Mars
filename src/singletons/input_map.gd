@@ -77,6 +77,17 @@ func runtime_controller_types() -> Array[ControllerType]:
 	]
 
 
+func normalize_controller_type(type: ControllerType) -> ControllerType:
+	return type if FAMILY_FOLDERS.has(type) else ControllerType.STEAM_DECK
+
+
+func confirm_cancel_buttons(type: ControllerType) -> Dictionary:
+	var resolved := normalize_controller_type(type)
+	if resolved in [ControllerType.NINTENDO_SWITCH, ControllerType.NINTENDO_SWITCH_2]:
+		return {&"confirm": JOY_BUTTON_B, &"cancel": JOY_BUTTON_A}
+	return {&"confirm": JOY_BUTTON_A, &"cancel": JOY_BUTTON_B}
+
+
 func get_controller_type_from_name(controller_name: String) -> ControllerType:
 	var lower_name := controller_name.to_lower()
 	if "nintendo switch 2" in lower_name or "switch 2" in lower_name:
@@ -95,7 +106,7 @@ func get_controller_type_from_name(controller_name: String) -> ControllerType:
 
 
 func get_glyph_path(type: ControllerType, action: StringName) -> String:
-	var resolved_type := type if GLYPH_FILES.has(type) else ControllerType.STEAM_DECK
+	var resolved_type := normalize_controller_type(type)
 	var family: Dictionary = GLYPH_FILES[resolved_type]
 	var file_name: String = family.get(action, "")
 	if file_name.is_empty():
