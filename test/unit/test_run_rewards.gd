@@ -1,6 +1,7 @@
 extends GutTest
 
 const RunManagerScript = preload("res://src/singletons/run_manager.gd")
+const TEST_SLOT := 987654
 
 var _saved_bits: int
 var _saved_inventory: Dictionary
@@ -20,6 +21,9 @@ var _saved_map: DungeonMap
 var _saved_profile: DungeonProfile
 var _saved_committed: bool
 var _test_map: DungeonMap
+var _test_save_path: String
+var _test_save_existed: bool
+var _test_save_bytes: PackedByteArray
 
 
 func before_each() -> void:
@@ -48,7 +52,11 @@ func before_each() -> void:
 	SaveSystem.inventory_mods.clear()
 	SaveSystem.party_roster.clear()
 	SaveSystem.data = {"active_run": {"stale": true}}
-	SaveSystem.current_slot_index = 987654
+	_test_save_path = SaveSystem._get_slot_path(TEST_SLOT)
+	_test_save_existed = FileAccess.file_exists(_test_save_path)
+	if _test_save_existed:
+		_test_save_bytes = FileAccess.get_file_as_bytes(_test_save_path)
+	SaveSystem.current_slot_index = TEST_SLOT
 	RunManager.prepare_fresh_run()
 	RunManager.is_run_active = true
 	RunManager.run_bits = 101
@@ -71,6 +79,7 @@ func after_each() -> void:
 	SaveSystem.inventory_mods.assign(_saved_mods)
 	SaveSystem.data = _saved_data
 	SaveSystem.party_roster.assign(_saved_roster)
+	_restore_test_save_file()
 	SaveSystem.current_slot_index = _saved_slot
 	RunManager.run_bits = _saved_run_bits
 	RunManager.run_xp = _saved_run_xp
@@ -78,9 +87,17 @@ func after_each() -> void:
 	RunManager.run_equipment_loot.assign(_saved_run_equipment)
 	RunManager.run_mods_loot.assign(_saved_run_mods)
 	RunManager.is_run_active = _saved_active
-	RunManager.active_dungeon_map = _saved_map
-	RunManager.dungeon_profile = _saved_profile
+	RunManager.active_dungeon_map = _saved_map if is_instance_valid(_saved_map) else null
+	RunManager.dungeon_profile = _saved_profile if is_instance_valid(_saved_profile) else null
 	RunManager._rewards_committed = _saved_committed
+
+
+func _restore_test_save_file() -> void:
+	if _test_save_existed:
+		var file := FileAccess.open(_test_save_path, FileAccess.WRITE)
+		file.store_buffer(_test_save_bytes)
+	else:
+		DirAccess.remove_absolute(_test_save_path)
 
 
 func test_reward_multiplier_matches_each_run_result() -> void:

@@ -42,13 +42,13 @@ func before_each() -> void:
 
 func after_each() -> void:
 	SaveSystem.data = _saved_data
-	RunManager.active_dungeon_map = _saved_map
+	RunManager.active_dungeon_map = _saved_map if is_instance_valid(_saved_map) else null
 	RunManager.current_run_seed = _saved_seed
 	RunManager.run_bits = _saved_bits
 	RunManager.run_xp = _saved_xp
 	RunManager.run_inventory = _saved_inventory
 	RunManager.current_dungeon_tier = _saved_tier
-	RunManager.dungeon_profile = _saved_profile
+	RunManager.dungeon_profile = _saved_profile if is_instance_valid(_saved_profile) else null
 	RunManager.is_run_active = _saved_active
 	RunManager._rewards_committed = _saved_committed
 	RunManager.run_equipment_loot.assign(_saved_equipment)
