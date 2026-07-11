@@ -354,6 +354,7 @@ func test_terminal_close_cancels_and_scan_success_completes() -> void:
 	assert_eq(manager.completed_count, 0)
 
 	manager._on_scan_success()
+	manager._on_scan_success()
 	assert_eq(manager.canceled_count, 1)
 	assert_eq(manager.completed_count, 1)
 	manager.free()
@@ -369,6 +370,7 @@ func test_scan_cancel_reopens_current_terminal_without_completion() -> void:
 	manager.dungeon_map.terminal_memory[node.grid_coords] = _terminal_payload()
 	manager.dungeon_map.scan_performed.connect(manager._on_scan_success)
 
+	manager._on_scan_canceled()
 	manager._on_scan_canceled()
 
 	assert_false(manager.dungeon_map.scan_performed.is_connected(manager._on_scan_success))

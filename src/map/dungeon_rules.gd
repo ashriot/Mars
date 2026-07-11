@@ -26,3 +26,17 @@ static func actionable_total(counts: Dictionary, has_boss: bool) -> int:
 	for count in counts.values():
 		total += int(count)
 	return total + int(has_boss)
+
+
+static func apply_medical_to_hero(hero: HeroData, upgraded: bool, boon_roll: float) -> void:
+	var was_injured := hero.injuries > 0
+	if was_injured:
+		hero.injuries = 0
+	if upgraded and not was_injured:
+		hero.boon_focused = true
+		hero.boon_armored = true
+	elif upgraded or not was_injured:
+		if boon_roll > 0.5:
+			hero.boon_focused = true
+		else:
+			hero.boon_armored = true

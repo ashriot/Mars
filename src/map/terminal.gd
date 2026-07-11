@@ -9,6 +9,7 @@ signal closed
 var type_tween: Tween
 var cursor_tween: Tween
 var final_text_content: String = ""
+var _interaction_started := false
 
 # Data for the logic handler
 var current_terminal_index: int = 0
@@ -19,6 +20,10 @@ func _ready():
 	text_label.meta_clicked.connect(_on_text_link_clicked)
 
 func setup(data: Dictionary):
+	_interaction_started = false
+	close_button.disabled = false
+	modulate.a = 1.0
+	show()
 	var upgrade_key = data.upgrade_key
 	var bits_val = data.bits
 	var alert_val = data.alert
@@ -48,7 +53,7 @@ SELECT PROTOCOL:[b]
 {opt_4}
 {opt_5}
 
-ENTER CHOICE [1-4]: _[/b]
+ENTER CHOICE [1-5]: _[/b]
 [color=#666666][SECURITY: Trace detected. Purge in T-30s.][/color]"""
 
 	var format_data = {
@@ -58,7 +63,7 @@ ENTER CHOICE [1-4]: _[/b]
 		"opt_2": opt_scan,
 		"opt_3": opt_med,
 		"opt_4": opt_fin,
-		"opt_5": "[url=opt_extract]4 -> SIGNAL EXTRACTION (TACTICAL RETREAT)[/url]"
+		"opt_5": "[url=opt_extract]5 -> SIGNAL EXTRACTION (TACTICAL RETREAT)[/url]"
 	}
 
 	final_text_content = text_body.format(format_data)
@@ -84,15 +89,19 @@ func _get_finance_text(is_upgraded: bool, amount: int) -> String:
 	var label = "INTERCEPT PAYMENT" if is_upgraded else "BIT MINE"
 	var tag = "opt_fin_up" if is_upgraded else "opt_fin"
 	var display_val = float(amount) / 10.0
-	return "[url=%s]3 -> %s (+%.1f BITS)[/url]%s" % [tag, label, display_val, suffix]
+	return "[url=%s]4 -> %s (+%.1f BITS)[/url]%s" % [tag, label, display_val, suffix]
 
 func _get_medical_text(is_upgraded: bool) -> String:
 	if is_upgraded:
-		return "[url=opt_med_up]2 -> DISPENSE ADRENALINE (HEAL + BOOST)[/url] [color=gold][UPGRADED][/color]"
+		return "[url=opt_med_up]3 -> DISPENSE ADRENALINE (HEAL + BOOST)[/url] [color=gold][UPGRADED][/color]"
 	else:
-		return "[url=opt_med]2 -> DISPENSE PAINKILLERS (HEAL INJURY)[/url]"
+		return "[url=opt_med]3 -> DISPENSE PAINKILLERS (HEAL INJURY)[/url]"
 
 func _on_text_link_clicked(meta):
+	if _interaction_started:
+		return
+	_interaction_started = true
+	close_button.disabled = true
 	var meta_str = str(meta)
 	AudioManager.play_sfx("terminal")
 
@@ -127,4 +136,8 @@ func _animate_close(emit_closed: bool = true):
 		queue_free()
 
 func _on_close_button_pressed() -> void:
+	if _interaction_started:
+		return
+	_interaction_started = true
+	close_button.disabled = true
 	_animate_close()

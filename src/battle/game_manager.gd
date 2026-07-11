@@ -22,6 +22,7 @@ var current_encounter: Encounter
 var _encounter_resolution_started := false
 var _run_end_started := false
 var _dungeon_exit_emitted := false
+var _scan_outcome_handled := false
 
 func _ready():
 	var loader = loading_screen_scene.instantiate()
@@ -160,6 +161,7 @@ func _result_for_battle_end(won: bool) -> int:
 func _on_terminal_choice(choice_tag: String, data: Dictionary):
 	match choice_tag:
 		"opt_scan", "opt_scan_up":
+			_scan_outcome_handled = false
 			var radius = 2 if choice_tag == "opt_scan_up" else 1
 
 			for child in overlay_layer.get_children():
@@ -186,11 +188,17 @@ func _on_terminal_choice(choice_tag: String, data: Dictionary):
 	_finish_interaction(InteractionOutcome.COMPLETED)
 
 func _on_scan_success():
+	if _scan_outcome_handled:
+		return
+	_scan_outcome_handled = true
 	if dungeon_map.scan_canceled.is_connected(_on_scan_canceled):
 		dungeon_map.scan_canceled.disconnect(_on_scan_canceled)
 	_finish_interaction(InteractionOutcome.COMPLETED)
 
 func _on_scan_canceled():
+	if _scan_outcome_handled:
+		return
+	_scan_outcome_handled = true
 	if dungeon_map.scan_performed.is_connected(_on_scan_success):
 		dungeon_map.scan_performed.disconnect(_on_scan_success)
 	_on_map_interaction_requested(dungeon_map.current_node)
@@ -199,22 +207,12 @@ func _on_terminal_closed():
 	_finish_interaction(InteractionOutcome.CANCELED)
 
 func _handle_medical_logic(is_upgraded: bool):
-	# (Your existing medical logic is perfect, keep it here)
-	var rng = RandomNumberGenerator.new()
+	var rng := RandomNumberGenerator.new()
 	rng.randomize()
 	for hero_data in RunManager.party_roster:
-		if hero_data.injuries > 0:
-			hero_data.injuries = 0
-			if is_upgraded:
-				if rng.randf() > 0.5: hero_data.boon_focused = true
-				else: hero_data.boon_armored = true
-		else:
-			if is_upgraded:
-				hero_data.boon_focused = true
-				hero_data.boon_armored = true
-			else:
-				if rng.randf() > 0.5: hero_data.boon_focused = true
-				else: hero_data.boon_armored = true
+		var needs_boon_roll := (hero_data.injuries > 0) == is_upgraded
+		var boon_roll := rng.randf() if needs_boon_roll else 0.0
+		DungeonRules.apply_medical_to_hero(hero_data, is_upgraded, boon_roll)
 
 	dungeon_map.refresh_team_status()
 
