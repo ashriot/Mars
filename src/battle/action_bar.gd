@@ -4,6 +4,7 @@ class_name ActionBar
 signal slide_finished
 signal action_selected(button, target)
 signal shift_button_pressed(direction)
+signal availability_changed
 
 @export var ActionButtonScene : PackedScene
 @export var battle_manager : BattleManager
@@ -131,18 +132,61 @@ func update_action_bar(hero_card: HeroCard, shifted: bool = false):
 		right_shift_ui.modulate = next_role.color
 		$RightShift/Mask/Icon.texture = next_role.icon
 		right_shift_button.disabled = active_hero.shifted_this_turn
+	availability_changed.emit()
 
 func _on_hero_focus_updated():
 	if not active_hero: return
 	for i in range(4):
 		var button = actions_ui.get_child(i) as ActionButton
 		button.update_cost(active_hero.current_focus)
+	availability_changed.emit()
 
 func _on_shift_button_pressed(direction: String):
 	shift_button_pressed.emit(direction)
 
 func _on_action_button_pressed(button: ActionButton):
 	action_selected.emit(button)
+
+
+func activate_slot(index: int) -> bool:
+	if index < 0 or index >= 4 or not actions_ui or index >= actions_ui.get_child_count():
+		return false
+	var action_button := actions_ui.get_child(index) as ActionButton
+	if action_button == null or not action_button.visible or action_button.disabled:
+		return false
+	_on_action_button_pressed(action_button)
+	return true
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if buttons_disabled or sliding or not visible or (battle_manager and battle_manager.current_state != BattleManager.State.PLAYER_ACTION) or _modal_is_open():
+		return
+	for index in 4:
+		if event.is_action_pressed(StringName("action_%d" % (index + 1))):
+			if activate_slot(index) and is_inside_tree():
+				get_viewport().set_input_as_handled()
+			return
+	if event.is_action_pressed(&"shift_action"):
+		var direction := _available_shift_direction()
+		if not direction.is_empty():
+			_on_shift_button_pressed(direction)
+			if is_inside_tree():
+				get_viewport().set_input_as_handled()
+
+
+func _available_shift_direction() -> String:
+	if right_shift_ui and right_shift_ui.visible and right_shift_button and not right_shift_button.disabled:
+		return "right"
+	if left_shift_ui and left_shift_ui.visible and left_shift_button and not left_shift_button.disabled:
+		return "left"
+	return ""
+
+
+func _modal_is_open() -> bool:
+	if not is_inside_tree() or get_tree() == null:
+		return false
+	var navigation := get_tree().root.find_child("NavigationUXLayer", true, false) as NavigationUXLayer
+	return navigation != null and not navigation._modal_stack.is_empty()
 
 func flash_panel(panel: Panel):
 	var base_color = panel.modulate
@@ -200,6 +244,9 @@ func _on_state_changed(state: BattleManager.State):
 			button.override_disabled = buttons_disabled
 	left_shift_button.disabled = buttons_disabled or active_hero.shifted_this_turn
 	right_shift_button.disabled = buttons_disabled or active_hero.shifted_this_turn
+	$LeftShift/DynamicGlyph.modulate.a = 0.33 if left_shift_button.disabled else 1.0
+	$RightShift/DynamicGlyph.modulate.a = 0.33 if right_shift_button.disabled else 1.0
+	availability_changed.emit()
 
 func slide_in(duration: float = 0.2):
 	sliding = true

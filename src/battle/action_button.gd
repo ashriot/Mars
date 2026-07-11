@@ -20,12 +20,14 @@ var override_disabled: bool :
 	set(value):
 		override_disabled = value
 		button.disabled = value
+		_refresh_disabled_presentation()
 var disabled:
 	set(value):
 		button.disabled = value or override_disabled
 		if action:
 			if not value:
 				button.disabled = user_focus < focus_cost or override_disabled
+		_refresh_disabled_presentation()
 	get: return button.disabled
 
 
@@ -47,6 +49,7 @@ func setup(_action: Action, actor: HeroCard, scaled_focus: int, color: Color):
 	focus_pips.modulate = color
 	highlight_panel.modulate = color
 	dynamic_glyph.modulate = color
+	_refresh_disabled_presentation()
 	highlight_panel.hide()
 
 func update_cost(current_focus: int):
@@ -70,3 +73,8 @@ func _on_button_pressed():
 
 func focused(value: bool):
 	highlight_panel.visible = value
+
+
+func _refresh_disabled_presentation() -> void:
+	if dynamic_glyph:
+		dynamic_glyph.modulate.a = 0.33 if button and button.disabled else 1.0
