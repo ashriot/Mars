@@ -20,6 +20,7 @@ var _saved_inventory: Dictionary
 var _saved_tier: int
 var _saved_profile: DungeonProfile
 var _saved_active: bool
+var _saved_committed: bool
 
 
 func before_each() -> void:
@@ -32,6 +33,7 @@ func before_each() -> void:
 	_saved_tier = RunManager.current_dungeon_tier
 	_saved_profile = RunManager.dungeon_profile
 	_saved_active = RunManager.is_run_active
+	_saved_committed = RunManager._rewards_committed
 
 
 func after_each() -> void:
@@ -44,6 +46,7 @@ func after_each() -> void:
 	RunManager.current_dungeon_tier = _saved_tier
 	RunManager.dungeon_profile = _saved_profile
 	RunManager.is_run_active = _saved_active
+	RunManager._rewards_committed = _saved_committed
 	RunManager.run_equipment_loot.clear()
 	RunManager.run_mods_loot.clear()
 
@@ -115,8 +118,10 @@ func test_true_map_restore_commits_normalized_run_fields() -> void:
 	map_double.restore_result = true
 	RunManager.active_dungeon_map = map_double
 	SaveSystem.data = {"active_run": _run_data()}
+	assert_true(RunManager.begin_reward_commit())
 
 	assert_true(await RunManager.restore_run())
+	assert_true(RunManager.begin_reward_commit())
 	assert_eq(RunManager.current_run_seed, 777)
 	assert_eq(RunManager.run_bits, 44)
 	assert_eq(RunManager.run_xp, 55)

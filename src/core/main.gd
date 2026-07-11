@@ -49,6 +49,7 @@ func load_hub():
 	await _switch_scene(hub_scene, _setup_hub)
 
 func start_dungeon_run():
+	RunManager.prepare_fresh_run()
 	RunManager.is_run_active = false
 	await _switch_scene(game_scene, _setup_dungeon)
 

@@ -17,6 +17,7 @@ var run_xp: int = 0
 var run_inventory: Dictionary = {}
 var run_equipment_loot: Array[Equipment] = []
 var run_mods_loot: Array[EquipmentMod] = []
+var _rewards_committed: bool = false
 
 
 var party_roster: Array[HeroData]:
@@ -88,6 +89,12 @@ func get_run_save_data() -> Dictionary:
 		"map_data": active_dungeon_map.get_save_data()
 	}
 
+func prepare_fresh_run() -> void:
+	_reset_reward_commit_guard()
+
+func _reset_reward_commit_guard() -> void:
+	_rewards_committed = false
+
 func restore_run() -> bool:
 	var run_data = SaveSystem.data.get("active_run")
 	if not SaveCodec.is_valid_active_run(run_data):
@@ -127,6 +134,7 @@ func restore_run() -> bool:
 	run_mods_loot.assign(restored_mods)
 	seed(current_run_seed)
 	is_run_active = true
+	_reset_reward_commit_guard()
 	return true
 
 func spend_bits(amount: int) -> bool:
@@ -143,13 +151,25 @@ func auto_save():
 	if is_run_active:
 		SaveSystem.save_current_slot()
 
-func commit_rewards(result: RunResult):
-	var multiplier = 0.0
-
+static func reward_multiplier(result: RunResult) -> float:
 	match result:
-		RunResult.SUCCESS: multiplier = 1.0
-		RunResult.RETREAT: multiplier = 0.5
-		RunResult.DEFEAT: multiplier = 0.0
+		RunResult.SUCCESS: return 1.0
+		RunResult.RETREAT: return 0.5
+		RunResult.DEFEAT: return 0.0
+	return 0.0
+
+static func final_reward_amount(amount: int, result: RunResult) -> int:
+	return int(amount * reward_multiplier(result))
+
+func begin_reward_commit() -> bool:
+	if _rewards_committed:
+		return false
+	_rewards_committed = true
+	return true
+
+func commit_rewards(result: RunResult) -> void:
+	if not begin_reward_commit():
+		return
 
 	if result == RunResult.SUCCESS:
 		for id in run_inventory:
@@ -160,18 +180,16 @@ func commit_rewards(result: RunResult):
 		for item in run_mods_loot:
 			SaveSystem.add_mod(item)
 	elif result == RunResult.RETREAT:
-		run_equipment_loot.clear()
-		run_mods_loot.clear()
 		for id in run_inventory:
-			var amount = floor(run_inventory[id] * 0.5)
+			var amount = final_reward_amount(run_inventory[id], result)
 			if amount > 0:
 				SaveSystem.add_inventory_item(id, amount)
 
 	# Wipe Backpack
 
 	# Calculate Finals
-	var final_bits = int(run_bits * multiplier)
-	var final_xp = int(run_xp * multiplier)
+	var final_bits := final_reward_amount(run_bits, result)
+	var final_xp := final_reward_amount(run_xp, result)
 
 	# Deposit
 	if final_bits > 0:
@@ -185,6 +203,10 @@ func commit_rewards(result: RunResult):
 	run_bits = 0
 	run_xp = 0
 	run_inventory.clear()
+	run_equipment_loot.clear()
+	run_mods_loot.clear()
+	active_dungeon_map = null
+	dungeon_profile = null
 
 	# Save immediately
-	auto_save()
+	SaveSystem.save_current_slot()
