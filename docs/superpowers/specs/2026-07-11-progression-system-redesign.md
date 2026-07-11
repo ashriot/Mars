@@ -161,7 +161,7 @@ On input:
 
 The existing sibling-affordability and exactly-once persistence behavior remains protected by integration tests.
 
-## Save State and Release Compatibility
+## Save State and Future Release Compatibility
 
 The redesigned prototype intentionally starts with a new save representation. After that boundary, ordinary content tuning remains compatible.
 
@@ -171,7 +171,7 @@ Per-role hero progression stores:
 - Owned node IDs.
 - XP actually paid for each owned node.
 
-Recording historical purchase prices prevents later cost changes from creating or destroying XP during refunds.
+Recording historical purchase prices and the accepted content revision preserves the information a future refund/reconciliation system will need. This redesign stores that information but does not implement automatic resets or refunds.
 
 Compatible minor edits include:
 
@@ -183,16 +183,16 @@ Compatible minor edits include:
 
 Minor edits do not retroactively adjust XP already paid.
 
-Structural changes require incrementing `content_revision`. On mismatch, policy is explicit rather than inferred:
+The data model reserves `content_revision` for structural changes. A future reconciliation feature should use an explicit policy rather than inferring compatibility:
 
-- Default structural policy resets only the changed role.
-- The hero receives the sum of historical XP paid for nodes reset from that role.
-- Removed node IDs are detected and refunded from their stored purchase prices.
-- Default/root unlock policy is reapplied.
-- The accepted revision is updated only after reset and rebuild succeed.
-- A deliberate hero-wide reset operation can reset and refund every role for exceptional redesigns.
+- Default structural policy should reset only the changed role.
+- The hero should receive the sum of historical XP paid for nodes reset from that role.
+- Removed node IDs should be detected and refunded from their stored purchase prices.
+- Default/root unlock policy should be reapplied.
+- The accepted revision should update only after reset and rebuild succeed.
+- A deliberate hero-wide reset operation may reset and refund every role for exceptional redesigns.
 
-Refunds are deterministic, idempotent, and logged. Repeating reconciliation must not refund twice.
+That future refund operation must be deterministic, idempotent, and logged. Until it is implemented, a content revision mismatch must be reported clearly and must not silently mutate progression.
 
 ## Authoring and Testing Workflow
 
@@ -214,10 +214,8 @@ Required automated coverage includes:
 - Deterministic effect rebuild for stats and combat kits.
 - Save round trips.
 - Cost changes without retroactive XP mutation.
-- Removed-node refund.
-- Per-role revision reset and exact refund.
-- Hero-wide reset and exact refund.
-- Reconciliation idempotency.
+- Historical purchase prices and accepted content revision survive save round trips.
+- Revision mismatch is detected and reported without silently mutating progression.
 - Hub success/failure event chain and sibling refresh.
 - Validation of every converted production role file.
 
@@ -228,7 +226,7 @@ Implementation proceeds in independently testable phases:
 1. Define JSON schema, immutable definitions, loader, validator, fixtures, and content summary.
 2. Add typed effects and deterministic effect application.
 3. Add per-role hero progression state and atomic purchase service.
-4. Add revision reconciliation and exact refunds.
+4. Detect and report revision mismatches without implementing reset/refund behavior.
 5. Migrate hub rendering and purchase feedback to the new service.
 6. Convert every existing role tree to JSON and verify behavioral parity.
 7. Switch runtime loading to JSON and intentionally reset incompatible prototype progression saves.
@@ -244,3 +242,5 @@ Implementation proceeds in independently testable phases:
 - Shared/account-wide XP.
 - Role unlocking through node purchases.
 - Broader balance design and final release economy.
+- Per-role revision reconciliation and exact XP refunds.
+- Hero-wide progression reset and refund operations.
