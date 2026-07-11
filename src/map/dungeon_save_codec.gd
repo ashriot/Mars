@@ -173,6 +173,10 @@ static func _is_valid_equipment_fields(data: Dictionary) -> bool:
 		for mod_id in data.mods:
 			if not mod_id is String:
 				return false
+			if not mod_id.is_empty():
+				var mod_resource := _find_item_resource(mod_id)
+				if mod_resource == null or not _resource_uses_script(mod_resource, EQUIPMENT_MOD_SCRIPT):
+					return false
 	return true
 
 

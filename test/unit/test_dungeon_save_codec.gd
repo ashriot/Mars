@@ -170,6 +170,9 @@ func test_active_run_validates_equipment_and_mod_resource_types() -> void:
 		"run_mods": [{"id": "health_booster", "tier": 2}],
 	}
 	assert_true(codec.is_valid_active_run(valid_run))
+	var empty_mod_slot := valid_run.duplicate(true)
+	empty_mod_slot.run_equipment[0].mods = [""]
+	assert_true(codec.is_valid_active_run(empty_mod_slot))
 
 	for bad_equipment in [
 		{},
@@ -177,6 +180,8 @@ func test_active_run_validates_equipment_and_mod_resource_types() -> void:
 		{"id": "health_booster"},
 		{"id": "pistol", "inv_stats": []},
 		{"id": "pistol", "mods": [42]},
+		{"id": "pistol", "mods": ["missing_mod"]},
+		{"id": "pistol", "mods": ["pistol"]},
 		{"id": "pistol", "tier": "one"},
 	]:
 		var run := valid_run.duplicate(true)
