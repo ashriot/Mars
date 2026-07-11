@@ -8,6 +8,10 @@ var errors: Array[ProgressionContentError]:
 	get:
 		return _errors.duplicate()
 
+var role_ids: Array[String]:
+	get:
+		return Array(_roles.keys(), TYPE_STRING, "", null)
+
 
 static func from_validated_trees(trees: Array) -> ProgressionCatalog:
 	var catalog := ProgressionCatalog.new()

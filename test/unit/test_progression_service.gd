@@ -100,6 +100,23 @@ func test_purchase_commits_price_revision_and_ownership_exactly_once() -> void:
 	_assert_rejected_without_mutation(_service().purchase_node(hero, "gun", "gun.root"), ProgressionPurchaseResult.Status.ALREADY_OWNED, hero, before_second)
 
 
+func test_failed_rebuild_rolls_back_xp_and_role_record_exactly() -> void:
+	var hero := _hero()
+	hero.role_progress["gun"] = HeroRoleProgress.new(3, ["legacy"], {"legacy": 17})
+	var original_record := hero.role_progress.gun
+	var original := hero.role_progress.gun.to_save_data()
+	var service := ProgressionService.new(catalog, func(_hero): return false)
+
+	var result := service.purchase_node(hero, "gun", "gun.root")
+
+	assert_eq(result.status, ProgressionPurchaseResult.Status.INVALID_EFFECT)
+	assert_eq(hero.current_xp, 1000)
+	assert_true(is_same(hero.role_progress.gun, original_record))
+	assert_eq(hero.role_progress.gun.to_save_data(), original)
+	assert_null(result.hero)
+	assert_eq(result.xp_paid, 0)
+
+
 func test_role_progress_save_round_trip_rejects_malformed_and_reports_revision_without_reset() -> void:
 	var hero := _hero()
 	hero.unlocked_node_ids = ["legacy.node"]

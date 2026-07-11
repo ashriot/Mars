@@ -34,23 +34,27 @@ var current_role: RoleDefinition :
 
 
 func calculate_stats():
-	stats = ActorStats.new()
-	stats.actor_name = hero_name
+	stats = build_base_stats()
+
+func build_base_stats() -> ActorStats:
+	var built_stats := ActorStats.new()
+	built_stats.actor_name = hero_name
 
 	if weapon:
 		var weapon_stats = weapon.calculate_stats()
-		_add_stats(stats, weapon_stats)
+		_add_stats(built_stats, weapon_stats)
 	if armor:
 		var armor_stats = armor.calculate_stats()
-		_add_stats(stats, armor_stats)
+		_add_stats(built_stats, armor_stats)
 
 	# Apply Tree Stats
 	for role_def in role_definitions:
 		if role_def.root_node:
 			role_def.init_structure() # Ensure IDs exist
-			_process_node_stats(role_def.root_node, stats)
+			_process_node_stats(role_def.root_node, built_stats)
 
-	stats.aim += 10
+	built_stats.aim += 10
+	return built_stats
 
 	#print(stats)
 

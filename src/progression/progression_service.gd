@@ -8,7 +8,7 @@ var _effect_validator: Callable
 
 func _init(catalog: ProgressionCatalog, rebuild: Callable = Callable(), effect_validator: Callable = Callable()) -> void:
 	_catalog = catalog
-	_rebuild = rebuild
+	_rebuild = rebuild if rebuild.is_valid() else ProgressionRebuilder.new(catalog).rebuild
 	_effect_validator = effect_validator if effect_validator.is_valid() else _default_effect_validator
 
 
@@ -35,16 +35,28 @@ func purchase_node(hero: HeroData, role_id: String, node_id: String) -> Progress
 	if not _effect_validator.call(node.effect):
 		return _result(ProgressionPurchaseResult.Status.INVALID_EFFECT, role_id, node_id)
 
+	# Capture the exact persisted purchase state before the tentative commit.
+	var previous_xp := hero.current_xp
+	var previous_progress := progress
+
 	# Commit only after every rejection path has been evaluated.
 	if progress == null:
 		progress = HeroRoleProgress.new(tree.version)
-		hero.role_progress[role_id] = progress
+	else:
+		progress = HeroRoleProgress.new(progress.content_revision, progress.owned_node_ids, progress.xp_paid_by_node)
+	hero.role_progress[role_id] = progress
 	hero.current_xp -= node.cost
 	progress.owned_node_ids.append(node.id)
 	progress.xp_paid_by_node[node.id] = node.cost
 	progress.content_revision = tree.version
-	if _rebuild.is_valid():
-		_rebuild.call(hero)
+	var rebuild_result: Variant = _rebuild.call(hero)
+	if not _rebuild_succeeded(rebuild_result):
+		hero.current_xp = previous_xp
+		if previous_progress == null:
+			hero.role_progress.erase(role_id)
+		else:
+			hero.role_progress[role_id] = previous_progress
+		return _result(ProgressionPurchaseResult.Status.INVALID_EFFECT, role_id, node_id)
 	return ProgressionPurchaseResult.new(ProgressionPurchaseResult.Status.PURCHASED, role_id, node_id, node.cost, tree.version, hero, hero.current_xp)
 
 
@@ -54,3 +66,13 @@ func _result(status: ProgressionPurchaseResult.Status, role_id: String, node_id:
 
 func _default_effect_validator(effect: ProgressionEffect) -> bool:
 	return effect != null and effect.is_valid
+
+
+func _rebuild_succeeded(result: Variant) -> bool:
+	if result == null:
+		return true
+	if result is bool:
+		return result
+	if result is ProgressionRebuilder.RebuildResult:
+		return result.success
+	return false
