@@ -167,8 +167,20 @@ func before_each() -> void:
 
 func after_each() -> void:
 	for tween in get_tree().get_processed_tweens(): tween.kill()
-	_restore_state(snapshot)
-	_remove_slot(TEST_SLOT)
+	_finish_state_isolation(snapshot)
+
+
+func test_teardown_preserves_preexisting_slot_one_and_sentinel_bytes() -> void:
+	var slot_one_bytes := "slot-one-before-loop".to_utf8_buffer()
+	var sentinel_bytes := "dedicated-sentinel-before-loop".to_utf8_buffer()
+	_write_slot_bytes(1, slot_one_bytes)
+	_write_slot_bytes(TEST_SLOT, sentinel_bytes)
+	var seeded := _snapshot_state()
+	_write_slot_bytes(1, "mutated-one".to_utf8_buffer())
+	_write_slot_bytes(TEST_SLOT, "mutated-sentinel".to_utf8_buffer())
+	_finish_state_isolation(seeded)
+	assert_eq(FileAccess.get_file_as_bytes(SaveSystem._get_slot_path(1)), slot_one_bytes)
+	assert_eq(FileAccess.get_file_as_bytes(SaveSystem._get_slot_path(TEST_SLOT)), sentinel_bytes)
 
 
 func test_controller_events_route_the_complete_playable_loop() -> void:
@@ -286,6 +298,10 @@ func _restore_state(s: Dictionary) -> void:
 	_restore_file(1, s.slot1); _restore_file(TEST_SLOT, s.test_slot)
 
 
+func _finish_state_isolation(state: Dictionary) -> void:
+	_restore_state(state)
+
+
 func _file_snapshot(slot: int) -> Dictionary:
 	var path := SaveSystem._get_slot_path(slot)
 	return {"exists":FileAccess.file_exists(path), "bytes":FileAccess.get_file_as_bytes(path) if FileAccess.file_exists(path) else PackedByteArray()}
@@ -296,6 +312,11 @@ func _restore_file(slot: int, state: Dictionary) -> void:
 	if state.exists:
 		var file := FileAccess.open(SaveSystem._get_slot_path(slot), FileAccess.WRITE)
 		file.store_buffer(state.bytes)
+
+
+func _write_slot_bytes(slot: int, bytes: PackedByteArray) -> void:
+	var file := FileAccess.open(SaveSystem._get_slot_path(slot), FileAccess.WRITE)
+	file.store_buffer(bytes)
 
 
 func _remove_slot(slot: int) -> void:
