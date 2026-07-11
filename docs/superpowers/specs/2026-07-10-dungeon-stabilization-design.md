@@ -156,7 +156,7 @@ Random medical outcomes should accept controlled randomness in tests so assertio
 
 ## Testing Strategy
 
-Add GUT 9.6.x as the Godot 4.6-compatible test framework. Tests should focus on rules, state transitions, and serialization rather than animation timing, audio playback, or exact visual presentation.
+The verified test environment uses the official GUT `godot_4_7` branch snapshot at runtime version 9.7.1 and runs automated tests with Godot 4.7, while production project metadata remains Godot 4.6. See `addons/gut/VENDORED.md` for the pinned source and harness details. Tests should focus on rules, state transitions, and serialization rather than animation timing, audio playback, or exact visual presentation.
 
 ### Pure rule coverage
 

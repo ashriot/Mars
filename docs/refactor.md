@@ -24,38 +24,56 @@ Use this template for future candidates:
 **Risks/open questions:** Decisions required before refactoring
 ```
 
-## Candidate: Extract procedural map generation
+## Candidate: Separate save serialization from map geometry
 
-**Current location:** `src/map/dungeon_map.gd`, especially `_distribute_node_types()` and `generate_hex_grid()`
+**Current location:** `src/map/dungeon_save_codec.gd`, especially `_expected_coordinate_keys()` and `extract_node_types()`, and `src/map/dungeon_map.gd` grid construction and save/restore methods
 
-**Observed while:** Reviewing node-count and restore defects
+**Observed while:** Stabilizing authoritative map restore and rejecting malformed active-run data
 
-**Problem:** Random layout generation, live scene creation, HUD progress, and serialized run state share one script.
+**Problem:** The save codec duplicates the live map's hex-coordinate geometry to validate an exact coordinate set, so serialization validation can drift from the code that constructs the map it validates.
 
-**Proposed boundary:** The pure count seam now lives in `src/map/dungeon_rules.gd`. Full extraction remains a `DungeonGenerator` that accepts dimensions, profile multipliers, endpoint rules, and a seed, then returns plain map data.
+**Proposed boundary:** Give one map-geometry component ownership of valid coordinate enumeration, and keep the codec responsible only for serialized shape/type validation and conversion across the persistence boundary.
 
-**Why defer:** The pure count seam stabilizes current generation without moving scene construction; extracting random placement, scene construction, and progress signaling remains a separate architectural change.
+**Why defer:** The duplicated calculation is currently covered and changing geometry ownership is not required to make restore deterministic or malformed saves safe.
 
-**Tests protecting behavior:** `test/unit/test_dungeon_rules.gd` covers tier normalization, loot scaling, one-time multiplier application, terminal minimums, and actionable totals. Seed determinism and payload/type correspondence still need coverage before full extraction.
+**Tests protecting behavior:** `test/unit/test_dungeon_save_codec.gd` protects coordinate completeness, coordinate conversion, node enums, and malformed memories; `test/integration/test_dungeon_restore.gd` protects authoritative node restoration and round-trip serialization.
 
-**Likely files affected:** `src/map/dungeon_map.gd`, a future generator script, and dungeon generation tests.
+**Likely files affected:** `src/map/dungeon_save_codec.gd`, `src/map/dungeon_map.gd`, a future map-geometry helper, and the codec/restore tests.
 
-**Risks/open questions:** Decide whether generated map data should be a typed `Resource` or immutable dictionaries.
+**Risks/open questions:** The geometry API must preserve odd-row offsets and exact serialized coordinate keys; decide whether dimensions alone fully define valid coordinates for every future map shape.
 
-## Candidate: Separate run presentation from run lifecycle
+## Candidate: Replace loosely shaped interaction payloads with typed resources
+
+**Current location:** `src/map/dungeon_save_codec.gd` payload validators, `src/map/dungeon_map.gd` terminal/encounter/reward memories, and `src/battle/game_manager.gd` interaction handlers
+
+**Observed while:** Adding defensive validation for missing and malformed terminal, encounter, and reward payloads
+
+**Problem:** Terminal dictionaries, encounter arrays, and reward dictionaries encode required fields by convention, forcing the codec and every runtime consumer to repeat shape checks and string/index access.
+
+**Proposed boundary:** Introduce typed terminal, encounter, and reward payload resources with explicit serialization constructors that return a validated object or a contextual failure.
+
+**Why defer:** Runtime validation already prevents crashes and accidental node consumption; changing persisted and generated payload representations would be a cross-cutting migration outside stabilization.
+
+**Tests protecting behavior:** `test/unit/test_dungeon_save_codec.gd` covers every accepted payload category and malformed variants; `test/integration/test_game_manager_interactions.gd` covers retry-safe errors and valid interaction dispatch; `test/unit/test_terminal.gd` protects terminal option presentation.
+
+**Likely files affected:** `src/map/dungeon_save_codec.gd`, `src/map/dungeon_map.gd`, `src/battle/game_manager.gd`, `src/map/terminal.gd`, loot generation code, and new payload resource scripts.
+
+**Risks/open questions:** Define stable serialized forms, resource identity/duplication rules, and compatibility policy before replacing dictionaries and arrays.
+
+## Candidate: Separate GameManager orchestration from run lifecycle and presentation
 
 **Current location:** `src/battle/game_manager.gd`, `src/map/dungeon_end_screen.gd`, and `src/singletons/run_manager.gd`
 
-**Observed while:** Reviewing duplicate cleanup and reward-commit paths
+**Observed while:** Stabilizing one-shot Success, Retreat, Defeat, terminal extraction, boss victory, and result confirmation
 
-**Problem:** Screen lifecycle, map locking, outcome selection, and reward commitment are coordinated through callbacks across three scripts.
+**Problem:** `GameManager` dispatches every node interaction and battle while also owning the run-end guard, transient-overlay cleanup, result-screen creation, confirmation handling, and exit emission across callbacks shared with `DungeonEndScreen` and `RunManager`.
 
-**Proposed boundary:** A non-autoload run lifecycle object with explicit `begin_end(result)` and `confirm_end()` transitions.
+**Proposed boundary:** Keep interaction orchestration in `GameManager`, but move guarded `begin_end(result)` and `confirm_end()` transitions plus result presentation ownership into a non-autoload run lifecycle controller.
 
-**Why defer:** A guarded `GameManager` transition fixes correctness with a smaller change.
+**Why defer:** The guarded transitions now make current behavior idempotent; moving scene ownership and signals would broaden the stabilization change without correcting another observed defect.
 
-**Tests protecting behavior:** One-shot Success, Retreat, Defeat, and reward commitment tests.
+**Tests protecting behavior:** `test/integration/test_game_manager_interactions.gd` protects one-shot Success, Retreat, Defeat, overlay cleanup, and exit emission; `test/unit/test_run_rewards.gd` protects result-specific and idempotent reward settlement.
 
-**Likely files affected:** The three current scripts plus a future lifecycle script.
+**Likely files affected:** `src/battle/game_manager.gd`, `src/map/dungeon_end_screen.gd`, `src/singletons/run_manager.gd`, their interaction/reward tests, and a future lifecycle controller.
 
-**Risks/open questions:** Decide whether confirmation belongs to the controller or remains a screen signal.
+**Risks/open questions:** Decide whether the controller instantiates presentation or receives it, who owns the exit signal, and how asynchronous overlay cleanup is canceled during scene teardown.
