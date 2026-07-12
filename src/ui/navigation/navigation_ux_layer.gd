@@ -75,11 +75,32 @@ func remove_modal(root: Control) -> void:
 		if _weak_get(_modal_stack[index].root) != root:
 			continue
 		var owns_focus := is_instance_valid(_focus_target) and (_focus_target == root or root.is_ancestor_of(_focus_target))
+		_redirect_stale_restores(index, root)
 		_modal_stack.remove_at(index)
 		if owns_focus:
 			_clear_presentation()
 			hint_bar.set_hints([])
 		return
+
+
+func _redirect_stale_restores(removed_index: int, removed_root: Control) -> void:
+	var removed_entry: Dictionary = _modal_stack[removed_index]
+	var replacement := _weak_get(removed_entry.restore) as Control
+	if _belongs_to(replacement, removed_root):
+		replacement = null
+	var replacement_screen := _weak_get(removed_entry.restore_screen) as Control
+	if not is_instance_valid(replacement_screen) or not _screens.has(replacement_screen) or _belongs_to(replacement_screen, removed_root):
+		replacement_screen = null
+	for index in range(removed_index + 1, _modal_stack.size()):
+		var restore := _weak_get(_modal_stack[index].restore) as Control
+		if not _belongs_to(restore, removed_root):
+			continue
+		_modal_stack[index].restore = weakref(replacement) if is_instance_valid(replacement) else null
+		_modal_stack[index].restore_screen = weakref(replacement_screen) if is_instance_valid(replacement_screen) else null
+
+
+func _belongs_to(control: Control, root: Control) -> bool:
+	return is_instance_valid(control) and is_instance_valid(root) and (control == root or root.is_ancestor_of(control))
 
 
 func is_top_modal(root: Control) -> bool:

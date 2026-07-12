@@ -53,28 +53,53 @@ func test_remove_modal_discards_owned_presentation_without_restoring_screen() ->
 	assert_ne(ux.get_focus_target(), prior_screen_focus)
 
 
-func test_remove_nested_modal_preserves_outer_modal_presentation() -> void:
+func test_remove_lower_modal_scrubs_descendant_restore_before_inner_pop() -> void:
+	await _assert_removed_lower_modal_is_not_restored(false)
+
+
+func test_remove_lower_modal_scrubs_root_restore_before_inner_pop() -> void:
+	await _assert_removed_lower_modal_is_not_restored(true)
+
+
+func _assert_removed_lower_modal_is_not_restored(restore_root: bool) -> void:
 	var ux = UXScene.instantiate()
 	add_child_autofree(ux)
+	var screen := Control.new()
+	var screen_button := Button.new()
+	screen.add_child(screen_button)
+	add_child_autofree(screen)
+	var screen_hints: Array[Dictionary] = [{action = &"confirm", label = "Screen", enabled = true}]
+	screen_button.focus_entered.connect(func() -> void: ux.publish_hints(screen_hints))
+	ux.register_screen(screen, screen_button)
+	await get_tree().process_frame
 	var outer := Control.new()
+	outer.focus_mode = Control.FOCUS_ALL
 	var outer_button := Button.new()
 	outer.add_child(outer_button)
-	add_child_autofree(outer)
+	screen.add_child(outer)
 	var inner := Control.new()
 	var inner_button := Button.new()
 	inner.add_child(inner_button)
-	add_child_autofree(inner)
-	ux.push_modal(outer, outer_button)
+	screen.add_child(inner)
+	var outer_focus: Control = outer if restore_root else outer_button
+	ux.push_modal(outer, outer_focus)
 	var outer_hints: Array[Dictionary] = [{action = &"confirm", label = "Outer", enabled = true}]
 	ux.publish_hints(outer_hints)
 	ux.push_modal(inner, inner_button)
+	var inner_hints: Array[Dictionary] = [{action = &"cancel", label = "Inner", enabled = true}]
+	ux.publish_hints(inner_hints)
 	await get_tree().process_frame
 
 	ux.remove_modal(outer)
 
 	assert_true(ux.is_top_modal(inner))
 	assert_eq(ux.get_focus_target(), inner_button)
-	assert_eq(ux.hint_bar.get_hint(0).label.text, "Outer")
+	assert_eq(ux.hint_bar.get_hint(0).label.text, "Inner")
+	ux.pop_modal(inner)
+	await get_tree().process_frame
+	assert_eq(ux.get_focus_target(), screen_button)
+	assert_ne(get_viewport().gui_get_focus_owner(), outer_focus)
+	assert_eq(ux.hint_bar.get_hint(0).label.text, "Screen")
 
 
 func test_party_menu_tree_teardown_does_not_restore_hub_or_publish_hints() -> void:
