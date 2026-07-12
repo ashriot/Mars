@@ -5,6 +5,7 @@ const TitleScene = preload("res://src/core/title_screen.tscn")
 const TerminalScene = preload("res://src/map/terminal.tscn")
 const ResultScene = preload("res://src/map/dungeon_end_screen.tscn")
 const HubScene = preload("res://src/hub/hub.tscn")
+const PartyScene = preload("res://src/hub/party_menu.tscn")
 var _saved_roster: Array[HeroData] = []
 
 
@@ -45,6 +46,20 @@ func test_disabled_and_hidden_choices_are_excluded_from_navigation() -> void:
 	ux.ensure_valid_focus()
 	await get_tree().process_frame
 	assert_ne(get_viewport().gui_get_focus_owner(), title.load_button)
+
+
+func test_party_menu_authored_focus_neighbors_resolve_from_each_control() -> void:
+	var party := PartyScene.instantiate() as PartyMenu
+	add_child_autofree(party)
+	var skills := party.get_node("Header/ModeTabs/Skills") as Button
+	var inventory := party.get_node("Header/ModeTabs/Inventory") as Button
+	var back := party.get_node("BackBtn") as Button
+	assert_eq(skills.get_node_or_null(skills.focus_neighbor_left), back)
+	assert_eq(skills.get_node_or_null(skills.focus_neighbor_right), inventory)
+	assert_eq(inventory.get_node_or_null(inventory.focus_neighbor_left), skills)
+	assert_eq(inventory.get_node_or_null(inventory.focus_neighbor_right), back)
+	assert_eq(back.get_node_or_null(back.focus_neighbor_top), skills)
+	assert_eq(back.get_node_or_null(back.focus_neighbor_bottom), skills)
 
 
 func test_nested_party_and_terminal_cancel_only_top_and_restore_each_layer() -> void:

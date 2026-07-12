@@ -91,8 +91,8 @@ offset_top = 477.0
 offset_right = 331.0
 offset_bottom = 525.0
 grow_vertical = 2
-focus_neighbor_top = NodePath("Header/ModeTabs/Skills")
-focus_neighbor_bottom = NodePath("Header/ModeTabs/Skills")
+focus_neighbor_top = NodePath("../Header/ModeTabs/Skills")
+focus_neighbor_bottom = NodePath("../Header/ModeTabs/Skills")
 focus_mode = 2
 text = "<BACK"
 
