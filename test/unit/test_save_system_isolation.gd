@@ -183,7 +183,9 @@ func test_load_game_reports_catalog_revision_mismatch_without_reset_or_refund() 
 
 func test_new_campaign_and_unlocked_hero_receive_fresh_starting_progress() -> void:
 	ProgressionSystem.catalog = _fresh_default_catalog()
+	var original_roster_reference := SaveSystem.party_roster
 	assert_true(SaveSystem.start_new_campaign(1))
+	assert_true(is_same(SaveSystem.party_roster, original_roster_reference))
 	assert_false(SaveSystem.party_roster.is_empty())
 	var asher: HeroData = SaveSystem.party_roster[0]
 	assert_eq(asher.role_progress.gun.owned_node_ids, ["gun.root", "gun.fusion_ammo"])
@@ -220,3 +222,19 @@ func test_failed_fresh_initialization_does_not_commit_campaign_or_unlocked_hero(
 	var before_unlock := SaveSystem.party_roster.duplicate()
 	assert_false(SaveSystem.unlock_hero("asher"))
 	assert_eq(SaveSystem.party_roster, before_unlock)
+
+
+func test_title_screen_new_game_signal_follows_campaign_creation_result_exactly() -> void:
+	var loaded := ProgressionJsonLoader.load_file("res://test/fixtures/progression/valid_role.json")
+	assert_true(loaded.errors.is_empty())
+	var title := TitleScreen.new()
+	watch_signals(title)
+
+	ProgressionSystem.catalog = ProgressionCatalog.from_validated_trees([loaded.tree])
+	title._on_new_game_pressed()
+	assert_signal_not_emitted(title, "new_game_requested")
+
+	ProgressionSystem.catalog = _fresh_default_catalog()
+	title._on_new_game_pressed()
+	assert_signal_emit_count(title, "new_game_requested", 1)
+	title.free()

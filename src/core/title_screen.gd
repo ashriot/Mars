@@ -100,7 +100,8 @@ func _grab_focus_if_valid(control: Control) -> void:
 
 func _on_new_game_pressed():
 	# 1. Initialize Data
-	SaveSystem.start_new_campaign(1)
+	if not SaveSystem.start_new_campaign(1):
+		return
 
 	# 2. Signal Main to handle the transition
 	new_game_requested.emit()

@@ -160,7 +160,8 @@ func start_new_campaign(slot_index: int) -> bool:
 		fresh_roster.append(hero)
 
 	current_slot_index = slot_index
-	party_roster = fresh_roster
+	party_roster.clear()
+	party_roster.append_array(fresh_roster)
 
 	# Default Bits
 	bits = 100
