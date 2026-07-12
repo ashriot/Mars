@@ -62,42 +62,47 @@ func test_every_rejection_leaves_xp_and_progress_unchanged() -> void:
 		var result := _service().purchase_node(entry[0], entry[1], entry[2])
 		_assert_rejected_without_mutation(result, entry[3], hero, before)
 
-	var prerequisite_before := _snapshot(hero)
-	_assert_rejected_without_mutation(_service().purchase_node(hero, "gun", "gun.action"), ProgressionPurchaseResult.Status.PREREQUISITE_LOCKED, hero, prerequisite_before)
-
-	var poor := _hero(99)
+	var poor := _hero(199)
 	var poor_before := _snapshot(poor)
-	_assert_rejected_without_mutation(_service().purchase_node(poor, "gun", "gun.root"), ProgressionPurchaseResult.Status.INSUFFICIENT_XP, poor, poor_before)
+	_assert_rejected_without_mutation(_service().purchase_node(poor, "gun", "gun.coordinate"), ProgressionPurchaseResult.Status.INSUFFICIENT_XP, poor, poor_before)
 
 	var mismatched := _hero()
 	mismatched.role_progress["gun"] = HeroRoleProgress.new(2)
 	var mismatch_before := _snapshot(mismatched)
-	_assert_rejected_without_mutation(_service().purchase_node(mismatched, "gun", "gun.root"), ProgressionPurchaseResult.Status.REVISION_MISMATCH, mismatched, mismatch_before)
+	_assert_rejected_without_mutation(_service().purchase_node(mismatched, "gun", "gun.coordinate"), ProgressionPurchaseResult.Status.REVISION_MISMATCH, mismatched, mismatch_before)
 
 	var invalid := _hero()
 	var invalid_before := _snapshot(invalid)
-	_assert_rejected_without_mutation(_service(func(_effect): return false).purchase_node(invalid, "gun", "gun.root"), ProgressionPurchaseResult.Status.INVALID_EFFECT, invalid, invalid_before)
+	_assert_rejected_without_mutation(_service(func(_effect): return false).purchase_node(invalid, "gun", "gun.coordinate"), ProgressionPurchaseResult.Status.INVALID_EFFECT, invalid, invalid_before)
 
 
 func test_purchase_commits_price_revision_and_ownership_exactly_once() -> void:
 	var hero := _hero()
-	var result := _service().purchase_node(hero, "gun", "gun.root")
+	var result := _service().purchase_node(hero, "gun", "gun.coordinate")
 	assert_eq(result.status, ProgressionPurchaseResult.Status.PURCHASED)
 	assert_eq(result.role_id, "gun")
-	assert_eq(result.node_id, "gun.root")
-	assert_eq(result.xp_paid, 100)
+	assert_eq(result.node_id, "gun.coordinate")
+	assert_eq(result.xp_paid, 200)
 	assert_eq(result.content_revision, 3)
 	assert_true(is_same(result.hero, hero))
-	assert_eq(result.resulting_xp, 900)
-	assert_eq(hero.current_xp, 900)
-	assert_eq(hero.role_progress.gun.owned_node_ids, ["gun.root"])
-	assert_eq(hero.role_progress.gun.xp_paid_by_node, {"gun.root": 100})
+	assert_eq(result.resulting_xp, 800)
+	assert_eq(hero.current_xp, 800)
+	assert_eq(hero.role_progress.gun.owned_node_ids, ["gun.coordinate"])
+	assert_eq(hero.role_progress.gun.xp_paid_by_node, {"gun.coordinate": 200})
 	assert_eq(hero.role_progress.gun.content_revision, 3)
 	assert_eq(rebuild_count, 1)
-	assert_eq(rebuild_observation, {"xp": 900, "owned": ["gun.root"], "paid": {"gun.root": 100}, "revision": 3})
+	assert_eq(rebuild_observation, {"xp": 800, "owned": ["gun.coordinate"], "paid": {"gun.coordinate": 200}, "revision": 3})
 
 	var before_second := _snapshot(hero)
-	_assert_rejected_without_mutation(_service().purchase_node(hero, "gun", "gun.root"), ProgressionPurchaseResult.Status.ALREADY_OWNED, hero, before_second)
+	_assert_rejected_without_mutation(_service().purchase_node(hero, "gun", "gun.coordinate"), ProgressionPurchaseResult.Status.ALREADY_OWNED, hero, before_second)
+
+
+func test_purchase_rejects_structural_and_starting_nodes_before_xp_or_prerequisites() -> void:
+	var hero := _hero(0)
+	var structural_before := _snapshot(hero)
+	_assert_rejected_without_mutation(_service().purchase_node(hero, "gun", "gun.anchor"), ProgressionPurchaseResult.Status.NODE_NOT_FOUND, hero, structural_before)
+	var starting_before := _snapshot(hero)
+	_assert_rejected_without_mutation(_service().purchase_node(hero, "gun", "gun.root"), ProgressionPurchaseResult.Status.ALREADY_OWNED, hero, starting_before)
 
 
 func test_failed_rebuild_rolls_back_xp_and_role_record_exactly() -> void:
@@ -107,7 +112,7 @@ func test_failed_rebuild_rolls_back_xp_and_role_record_exactly() -> void:
 	var original := hero.role_progress.gun.to_save_data()
 	var service := ProgressionService.new(catalog, func(_hero): return false)
 
-	var result := service.purchase_node(hero, "gun", "gun.root")
+	var result := service.purchase_node(hero, "gun", "gun.coordinate")
 
 	assert_eq(result.status, ProgressionPurchaseResult.Status.INVALID_EFFECT)
 	assert_eq(hero.current_xp, 1000)
@@ -133,7 +138,7 @@ func test_failed_rebuild_restores_derived_state_after_mutating_callback() -> voi
 		return false
 	)
 
-	assert_eq(service.purchase_node(hero, "gun", "gun.root").status, ProgressionPurchaseResult.Status.INVALID_EFFECT)
+	assert_eq(service.purchase_node(hero, "gun", "gun.coordinate").status, ProgressionPurchaseResult.Status.INVALID_EFFECT)
 	assert_true(is_same(hero.stats, original_stats))
 	assert_eq(hero.stats.attack, 23)
 	assert_true(is_same(hero.battle_roles, original_roles))
@@ -164,7 +169,7 @@ func test_failed_rebuild_restores_mutated_fields_inside_existing_role() -> void:
 		return false
 	)
 
-	assert_eq(service.purchase_node(hero, "gun", "gun.root").status, ProgressionPurchaseResult.Status.INVALID_EFFECT)
+	assert_eq(service.purchase_node(hero, "gun", "gun.coordinate").status, ProgressionPurchaseResult.Status.INVALID_EFFECT)
 	assert_true(is_same(hero.battle_roles, original_roles))
 	assert_true(is_same(hero.battle_roles.gun, original_role))
 	assert_true(is_same(original_role.source_definition, definition))
@@ -187,7 +192,7 @@ func test_real_rebuilder_rolls_back_purchase_when_saved_ownership_is_invalid() -
 	var original_roles := {"old": RoleData.new()}
 	hero.battle_roles = original_roles
 
-	var result := ProgressionService.new(catalog).purchase_node(hero, "gun", "gun.root")
+	var result := ProgressionService.new(catalog).purchase_node(hero, "gun", "gun.coordinate")
 
 	assert_eq(result.status, ProgressionPurchaseResult.Status.INVALID_EFFECT)
 	assert_eq(hero.current_xp, 1000)
@@ -233,9 +238,9 @@ func test_role_progress_parser_rejects_every_malformed_boundary() -> void:
 		{"content_revision": 3, "owned_node_ids": ["gun.root"], "xp_paid_by_node": {"gun.root": "100"}},
 		{"content_revision": 3.5, "owned_node_ids": ["gun.root"], "xp_paid_by_node": {"gun.root": 100}},
 		{"content_revision": 3, "owned_node_ids": ["gun.root"], "xp_paid_by_node": {"gun.root": 100.5}},
-		{"content_revision": 3, "owned_node_ids": ["gun.root"], "xp_paid_by_node": {"gun.root": 0}},
 		{"content_revision": 3, "owned_node_ids": ["gun.root"], "xp_paid_by_node": {"gun.root": -1}},
 	]
 	assert_not_null(HeroRoleProgress.from_save_data(valid))
+	assert_not_null(HeroRoleProgress.from_save_data({"content_revision": 3, "owned_node_ids": ["gun.root"], "xp_paid_by_node": {"gun.root": 0}}))
 	for shape in malformed:
 		assert_null(HeroRoleProgress.from_save_data(shape), str(shape))

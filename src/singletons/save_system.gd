@@ -152,9 +152,14 @@ func start_new_campaign(slot_index: int):
 
 	# Default Party
 	party_roster.clear()
-	party_roster.append(load("res://data/heroes/asher/asher.tres").duplicate())
-	party_roster.append(load("res://data/heroes/echo/echo.tres").duplicate())
-	party_roster.append(load("res://data/heroes/sands/sands.tres").duplicate())
+	for path in [
+		"res://data/heroes/asher/asher.tres",
+		"res://data/heroes/echo/echo.tres",
+		"res://data/heroes/sands/sands.tres",
+	]:
+		var hero: HeroData = load(path).duplicate()
+		ProgressionSystem.initialize_fresh_hero(hero)
+		party_roster.append(hero)
 
 	# Default Bits
 	bits = 100
@@ -185,8 +190,9 @@ func distribute_combat_xp(amount: int):
 func unlock_hero(hero_id: String):
 	var path_to_base = "res://data/heroes/" + hero_id + "/" + hero_id + ".tres"
 	if ResourceLoader.exists(path_to_base):
-		var new_hero = load(path_to_base).duplicate()
+		var new_hero: HeroData = load(path_to_base).duplicate()
 		new_hero.current_xp = total_lifetime_xp
+		ProgressionSystem.initialize_fresh_hero(new_hero)
 		party_roster.append(new_hero)
 		print(new_hero.hero_name, " joined the party with ", total_lifetime_xp, " XP!")
 

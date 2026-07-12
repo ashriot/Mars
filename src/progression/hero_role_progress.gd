@@ -37,7 +37,7 @@ static func from_save_data(data: Variant) -> HeroRoleProgress:
 	var paid: Dictionary[String, int] = {}
 	for node_id in data.xp_paid_by_node:
 		var amount: Variant = data.xp_paid_by_node[node_id]
-		if not node_id is String or not node_id in owned or not _is_positive_integral_number(amount):
+		if not node_id is String or not node_id in owned or not _is_non_negative_integral_number(amount):
 			return null
 		paid[node_id] = int(amount)
 	if paid.size() != owned.size():
@@ -49,3 +49,9 @@ static func _is_positive_integral_number(value: Variant) -> bool:
 	if value is int:
 		return value > 0
 	return value is float and value > 0.0 and value == floor(value)
+
+
+static func _is_non_negative_integral_number(value: Variant) -> bool:
+	if value is int:
+		return value >= 0
+	return value is float and value >= 0.0 and value == floor(value)

@@ -186,3 +186,16 @@ func test_precision_stat_effect_updates_precision() -> void:
 	assert_true(result.success)
 	assert_eq(hero.stats.precision, 6)
 	assert_eq(hero.stats.get_stat(ActorStats.Stats.PRE), 6)
+
+
+func test_rebuild_skips_structural_anchor_and_applies_starting_effects() -> void:
+	var loaded := ProgressionJsonLoader.load_file("res://test/fixtures/progression/valid_role.json")
+	assert_true(loaded.errors.is_empty())
+	var hero := HeroData.new()
+	hero.role_definitions = [_definition("gun")]
+	hero.unlocked_role_ids = ["gun"]
+	hero.role_progress["gun"] = HeroRoleProgress.new(3, ["gun.root", "gun.fusion_ammo"], {"gun.root": 0, "gun.fusion_ammo": 0})
+	var result := ProgressionRebuilder.new(ProgressionCatalog.from_validated_trees([loaded.tree])).rebuild(hero)
+	assert_true(result.success, result.error)
+	assert_eq(hero.battle_roles.gun.actions[0].resource_path, ACTION_PATH)
+	assert_eq(hero.battle_roles.gun.actions[1].resource_path, "res://data/heroes/asher/actions/fusion_ammo.tres")

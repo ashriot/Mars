@@ -43,6 +43,8 @@ func rebuild(hero: HeroData) -> RebuildResult:
 			var ordered_nodes := tree.nodes
 			ordered_nodes.sort_custom(_node_comes_before)
 			for node: ProgressionNodeDefinition in ordered_nodes:
+				if node.is_structural:
+					continue
 				if node.id in progress.owned_node_ids and not _applier.apply(node.effect, next_stats, role):
 					return RebuildResult.new(false, "Invalid effect for owned node '%s'." % node.id)
 		next_roles[role_id] = role

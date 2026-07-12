@@ -28,13 +28,21 @@ func purchase_node(hero: HeroData, role_id: String, node_id: String) -> Progress
 	var node := tree.get_node(node_id)
 	if node == null:
 		return _result(ProgressionPurchaseResult.Status.NODE_NOT_FOUND, role_id, node_id)
+	if node.is_structural:
+		return _result(ProgressionPurchaseResult.Status.NODE_NOT_FOUND, role_id, node_id)
+	if node.starting_owned:
+		return _result(ProgressionPurchaseResult.Status.ALREADY_OWNED, role_id, node_id)
+	if node.cost <= 0:
+		return _result(ProgressionPurchaseResult.Status.INVALID_EFFECT, role_id, node_id)
 	var progress: HeroRoleProgress = hero.role_progress.get(role_id)
 	if progress != null and progress.content_revision != tree.version:
 		return _result(ProgressionPurchaseResult.Status.REVISION_MISMATCH, role_id, node_id)
 	if progress != null and node_id in progress.owned_node_ids:
 		return _result(ProgressionPurchaseResult.Status.ALREADY_OWNED, role_id, node_id)
-	if not node.parent_id.is_empty() and (progress == null or not node.parent_id in progress.owned_node_ids):
-		return _result(ProgressionPurchaseResult.Status.PREREQUISITE_LOCKED, role_id, node_id)
+	if not node.parent_id.is_empty():
+		var parent := tree.get_node(node.parent_id)
+		if parent == null or (not parent.is_structural and (progress == null or not node.parent_id in progress.owned_node_ids)):
+			return _result(ProgressionPurchaseResult.Status.PREREQUISITE_LOCKED, role_id, node_id)
 	if hero.current_xp < node.cost:
 		return _result(ProgressionPurchaseResult.Status.INSUFFICIENT_XP, role_id, node_id)
 	if not _effect_validator.call(node.effect):

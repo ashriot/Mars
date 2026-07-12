@@ -17,6 +17,7 @@ var _saved_inventory_equipment: Array[Equipment]
 var _saved_inventory_mods: Array[EquipmentMod]
 var _saved_run_active: bool
 var _saved_last_load_issues: Array[String]
+var _saved_progression_catalog: ProgressionCatalog
 
 
 func before_each() -> void:
@@ -34,6 +35,7 @@ func before_each() -> void:
 	_saved_inventory_mods = SaveSystem.inventory_mods.duplicate()
 	_saved_run_active = RunManager.is_run_active
 	_saved_last_load_issues = SaveSystem.last_load_issues.duplicate()
+	_saved_progression_catalog = ProgressionSystem.catalog
 
 
 func after_each() -> void:
@@ -49,6 +51,7 @@ func after_each() -> void:
 	SaveSystem.inventory_mods = _saved_inventory_mods
 	RunManager.is_run_active = _saved_run_active
 	SaveSystem.last_load_issues = _saved_last_load_issues
+	ProgressionSystem.catalog = _saved_progression_catalog
 
 
 func _restore_file(path: String, existed: bool, bytes: PackedByteArray) -> void:
@@ -149,3 +152,23 @@ func test_load_game_reports_catalog_revision_mismatch_without_reset_or_refund() 
 	var expected := "Hero 'asher' role 'gun': saved progression revision %d does not match content revision %d; progression was preserved without reset or refund." % [gun_revision + 1, gun_revision]
 	assert_eq(SaveSystem.last_load_issues, [expected])
 	assert_push_warning(expected)
+
+
+func test_new_campaign_and_unlocked_hero_receive_fresh_starting_progress() -> void:
+	var loaded := ProgressionJsonLoader.load_file("res://test/fixtures/progression/valid_role.json")
+	assert_true(loaded.errors.is_empty())
+	var snp_tree := RoleTreeDefinition.new("snp", 1, [
+		ProgressionNodeDefinition.role_anchor("snp.anchor", 1, 0),
+		ProgressionNodeDefinition.progression("snp.first", "snp.anchor", 1, -1, 0, ProgressionEffect.action("res://data/heroes/asher/actions/double_tap.tres", 1), true),
+		ProgressionNodeDefinition.progression("snp.second", "snp.anchor", 1, 1, 0, ProgressionEffect.action("res://data/heroes/asher/actions/fusion_ammo.tres", 2), true),
+	])
+	assert_true(snp_tree.is_valid, snp_tree.validation_error)
+	ProgressionSystem.catalog = ProgressionCatalog.from_validated_trees([loaded.tree, snp_tree])
+	SaveSystem.start_new_campaign(1)
+	assert_false(SaveSystem.party_roster.is_empty())
+	var asher: HeroData = SaveSystem.party_roster[0]
+	assert_eq(asher.role_progress.gun.owned_node_ids, ["gun.root", "gun.fusion_ammo"])
+	var before := SaveSystem.party_roster.size()
+	SaveSystem.unlock_hero("asher")
+	assert_eq(SaveSystem.party_roster.size(), before + 1)
+	assert_eq(SaveSystem.party_roster[-1].role_progress.gun.xp_paid_by_node, {"gun.root": 0, "gun.fusion_ammo": 0})

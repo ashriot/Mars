@@ -17,6 +17,12 @@ func get_content_revisions() -> Dictionary:
 	return revisions
 
 
+func initialize_fresh_hero(hero: HeroData) -> bool:
+	if catalog == null:
+		return false
+	return ProgressionInitializer.initialize_hero(hero, catalog).success
+
+
 func _ready() -> void:
 	var loaded_catalog := ProgressionCatalog.new()
 	var result := loaded_catalog.load_directory(CONTENT_ROOT)
