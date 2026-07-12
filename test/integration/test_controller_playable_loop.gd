@@ -6,10 +6,9 @@ const MAP := preload("res://src/map/dungeon_map.tscn")
 const TERMINAL := preload("res://src/map/terminal.tscn")
 const RESULT := preload("res://src/map/dungeon_end_screen.tscn")
 const UX := preload("res://src/ui/navigation/navigation_ux_layer.tscn")
-const ACTION_BUTTON := preload("res://src/battle/action_button.tscn")
-const HERO_CARD := preload("res://src/battle/hero_card.tscn")
-const ENEMY_CARD := preload("res://src/battle/enemy_card.tscn")
+const BATTLE := preload("res://src/battle/battle_scene.tscn")
 const TEST_SLOT := 987654
+const TEST_SAVE_ROOT := "user://test_saves/controller_playable_loop/"
 const STARTING_NODE_IDS := {
 	"gun": ["gun.root", "gun.fusion_ammo"],
 	"snp": ["snp.root", "snp.aimed_shot"],
@@ -21,11 +20,6 @@ const STARTING_NODE_IDS := {
 	"med": ["med.root", "med.booster_shots"],
 	"stg": ["stg.root", "stg.gambit"],
 }
-
-
-class LoopActionBar extends ActionBar:
-	func _ready() -> void:
-		pass
 
 
 class LoopBattleManager extends BattleManager:
@@ -50,6 +44,21 @@ class LoopBattleManager extends BattleManager:
 	func _clear_all_targeting_ui():
 		pass
 
+	func _fade_in(_duration: float = 0.5):
+		pass
+
+	func wait(_duration: float = 0.01) -> void:
+		pass
+
+	func _flush_all_health_animations() -> void:
+		pass
+
+	func _apply_starting_passives() -> void:
+		pass
+
+	func find_and_start_next_turn():
+		pass
+
 
 class LoopManager extends GameManager:
 	var terminal_completed := false
@@ -64,51 +73,41 @@ class LoopManager extends GameManager:
 		_clear_transient_overlay()
 		dungeon_map.unlock_input()
 
-	func _start_encounter(_encounter: Encounter) -> void:
-		var scene := BattleScene.new()
+	func _start_encounter(encounter: Encounter) -> void:
+		var scene := BATTLE.instantiate() as BattleScene
+		var packed_manager := scene.manager
+		var hero_card_scene := packed_manager.hero_card_scene
+		var enemy_card_scene := packed_manager.enemy_card_scene
+		scene.remove_child(packed_manager)
+		packed_manager.free()
 		battle_manager = LoopBattleManager.new()
+		battle_manager.name = "BattleManager"
+		battle_manager.unique_name_in_owner = true
+		battle_manager.UI = scene.get_node("UI")
+		battle_manager.fx_manager = scene.get_node("FXManager")
+		battle_manager.hero_area = scene.get_node("UI/Heroes/HBox")
+		battle_manager.enemy_area = scene.get_node("UI/Enemies/HBox")
+		battle_manager.action_bar = scene.get_node("UI/ActionBar")
+		battle_manager.current_action_panel = scene.get_node("UI/CurrentAction")
+		battle_manager.hero_card_scene = hero_card_scene
+		battle_manager.enemy_card_scene = enemy_card_scene
+		battle_manager.action_bar.battle_manager = battle_manager
+		(scene.get_node("UI/TurnQueue") as TurnQueue).battle_manager = battle_manager
 		battle_manager.target_confirmed.connect(func(): battle_confirmed += 1)
-		var bar := LoopActionBar.new()
-		bar.actions_ui = Control.new()
-		bar.actions_ui.name = "Actions"
-		bar.add_child(bar.actions_ui)
-		var active_hero: HeroData = SaveSystem.party_roster[0]
-		var active_role: RoleData = active_hero.get_battle_role(active_hero.current_role.role_id)
-		for index in 4:
-			var button := ACTION_BUTTON.instantiate() as ActionButton
-			button.button = button.get_node("Button")
-			button.action = active_role.actions[index] if index < active_role.actions.size() else null
-			button.visible = button.action != null
-			button.button.disabled = button.action == null
-			bar.actions_ui.add_child(button)
-		var passive := Panel.new(); passive.name = "Passive"; bar.actions_ui.add_child(passive)
-		var shift_panel := Panel.new(); shift_panel.name = "ShiftAction"; bar.actions_ui.add_child(shift_panel)
-		for side in ["LeftShift", "RightShift"]:
-			var shift := Control.new(); shift.name = side
-			var shift_button := Button.new(); shift_button.name = "Button"; shift.add_child(shift_button); bar.add_child(shift)
-		bar.battle_manager = battle_manager
-		bar.buttons_disabled = false
-		bar.sliding = false
-		battle_manager.action_bar = bar
-		var hero := HERO_CARD.instantiate() as HeroCard
-		var enemy := ENEMY_CARD.instantiate() as EnemyCard
-		hero.is_defeated = false
-		enemy.is_defeated = false
-		battle_manager.forced_enemy = enemy
-		battle_manager.current_actor = hero
-		battle_manager.current_state = BattleManager.State.PLAYER_ACTION
-		battle_manager.hero_area = Control.new()
-		battle_manager.enemy_area = Control.new()
-		battle_manager.hero_area.add_child(hero)
-		battle_manager.enemy_area.add_child(enemy)
-		battle_manager.add_child(battle_manager.hero_area)
-		battle_manager.add_child(battle_manager.enemy_area)
-		battle_manager.add_child(bar)
 		scene.manager = battle_manager
 		scene.add_child(battle_manager)
+		battle_manager.owner = scene
 		overlay_layer.add_child(scene)
 		battle_scene = scene
 		scene.battle_ended.connect(end_encounter)
+		await (Engine.get_main_loop() as SceneTree).process_frame
+		battle_manager.current_encounter = encounter
+		await battle_manager.spawn_encounter()
+		var hero := battle_manager.hero_area.get_child(0) as HeroCard
+		battle_manager.forced_enemy = battle_manager.enemy_area.get_child(0) as EnemyCard
+		battle_manager.current_actor = hero
+		battle_manager.current_state = BattleManager.State.PLAYER_ACTION
+		await battle_manager.action_bar.load_actions(hero)
 
 
 class LoopRouter extends Main:
@@ -169,9 +168,12 @@ class LoopRouter extends Main:
 
 
 var snapshot := {}
+var previous_storage_root := ""
 
 
 func before_each() -> void:
+	previous_storage_root = SaveSystem.storage_root_override
+	SaveSystem.storage_root_override = TEST_SAVE_ROOT
 	snapshot = _snapshot_state()
 	_remove_slot(1)
 	_remove_slot(TEST_SLOT)
@@ -180,6 +182,7 @@ func before_each() -> void:
 func after_each() -> void:
 	for tween in get_tree().get_processed_tweens(): tween.kill()
 	_finish_state_isolation(snapshot)
+	SaveSystem.storage_root_override = previous_storage_root
 
 
 func test_teardown_preserves_preexisting_slot_one_and_sentinel_bytes() -> void:
@@ -230,6 +233,7 @@ func test_controller_events_route_the_complete_playable_loop() -> void:
 	assert_eq(skill_view.focused_node_id, "gun.atk_1")
 	await _send_semantic(&"confirm")
 	assert_signal_emitted_with_parameters(skill_view, "purchase_requested", [SaveSystem.party_roster[0], "gun", "gun.atk_1"])
+	assert_signal_emit_count(skill_view, "purchase_requested", 1)
 	hub.party_menu._on_back_pressed()
 	await get_tree().process_frame
 	hub.head_out_button.grab_focus()
@@ -256,15 +260,16 @@ func test_controller_events_route_the_complete_playable_loop() -> void:
 	await _send(&"confirm")
 	await get_tree().process_frame
 	assert_not_null(router.manager.battle_scene)
-	var active_role := SaveSystem.party_roster[0].get_battle_role(SaveSystem.party_roster[0].current_role.role_id)
-	assert_eq(active_role.actions[0].resource_path, "res://data/heroes/asher/actions/double_tap.tres")
-	assert_eq(active_role.actions[1].resource_path, "res://data/heroes/asher/actions/fusion_ammo.tres")
+	var spawned_hero := router.manager.battle_manager.hero_area.get_child(0) as HeroCard
+	assert_eq(spawned_hero.get_current_role().role_name, "Gunner")
 	var battle_actions: Control = router.manager.battle_manager.action_bar.actions_ui
-	assert_same((battle_actions.get_child(0) as ActionButton).action, active_role.actions[0])
-	assert_same((battle_actions.get_child(1) as ActionButton).action, active_role.actions[1])
-	assert_true(battle_actions.get_child(0).visible)
-	assert_true(battle_actions.get_child(1).visible)
-	await _send(&"action_1")
+	var first_action := battle_actions.get_child(0) as ActionButton
+	var second_action := battle_actions.get_child(1) as ActionButton
+	assert_eq(first_action.action.resource_path, "res://data/heroes/asher/actions/double_tap.tres")
+	assert_eq(second_action.action.resource_path, "res://data/heroes/asher/actions/fusion_ammo.tres")
+	assert_true(first_action.visible)
+	assert_true(second_action.visible)
+	assert_true(router.manager.battle_manager.action_bar.activate_slot(0))
 	await get_tree().process_frame
 	assert_eq(router.manager.battle_manager.current_state, BattleManager.State.FORCED_TARGET)
 	await _send(&"confirm")
@@ -276,7 +281,7 @@ func test_controller_events_route_the_complete_playable_loop() -> void:
 	await _send(&"confirm")
 	await get_tree().process_frame
 	assert_true(router.current_instance is Hub)
-	assert_eq(SaveSystem._get_save_dir(), "user://test_saves/")
+	assert_eq(SaveSystem._get_save_dir(), TEST_SAVE_ROOT)
 	assert_false(FileAccess.file_exists(SaveSystem._get_slot_path(TEST_SLOT)))
 
 

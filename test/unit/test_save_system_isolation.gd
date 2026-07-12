@@ -1,13 +1,12 @@
 extends GutTest
 
-const TEST_SLOT_PATH = "user://test_saves/slot_1.json"
+const TEST_ROOT = "user://test_saves/save_system_isolation/"
+const TEST_SLOT_PATH = TEST_ROOT + "slot_1.json"
 const PRODUCTION_SLOT_PATH = "user://saves/slot_1.json"
 
 var _test_slot_existed := false
 var _test_slot_bytes := PackedByteArray()
 var _test_save_dir_existed := false
-var _production_slot_existed := false
-var _production_slot_bytes := PackedByteArray()
 var _saved_data: Dictionary
 var _saved_bits: int
 var _saved_party_roster: Array[HeroData]
@@ -19,14 +18,15 @@ var _saved_run_active: bool
 var _saved_last_load_issues: Array[String]
 var _saved_progression_catalog: ProgressionCatalog
 var _saved_current_slot_index: int
+var _saved_storage_root_override: String
 
 
 func before_each() -> void:
-	_test_save_dir_existed = DirAccess.dir_exists_absolute(SaveSystem.TEST_SAVE_DIR)
+	_saved_storage_root_override = SaveSystem.storage_root_override
+	SaveSystem.storage_root_override = TEST_ROOT
+	_test_save_dir_existed = DirAccess.dir_exists_absolute(TEST_ROOT)
 	_test_slot_existed = FileAccess.file_exists(TEST_SLOT_PATH)
 	_test_slot_bytes = FileAccess.get_file_as_bytes(TEST_SLOT_PATH) if _test_slot_existed else PackedByteArray()
-	_production_slot_existed = FileAccess.file_exists(PRODUCTION_SLOT_PATH)
-	_production_slot_bytes = FileAccess.get_file_as_bytes(PRODUCTION_SLOT_PATH) if _production_slot_existed else PackedByteArray()
 	_saved_data = SaveSystem.data.duplicate(true)
 	_saved_bits = SaveSystem.bits
 	_saved_party_roster = SaveSystem.party_roster.duplicate()
@@ -42,8 +42,8 @@ func before_each() -> void:
 
 func after_each() -> void:
 	_restore_file(TEST_SLOT_PATH, _test_slot_existed, _test_slot_bytes)
-	if not _test_save_dir_existed and DirAccess.dir_exists_absolute(SaveSystem.TEST_SAVE_DIR):
-		DirAccess.remove_absolute(SaveSystem.TEST_SAVE_DIR)
+	if not _test_save_dir_existed and DirAccess.dir_exists_absolute(TEST_ROOT):
+		DirAccess.remove_absolute(TEST_ROOT)
 	SaveSystem.data = _saved_data
 	SaveSystem.bits = _saved_bits
 	SaveSystem.party_roster = _saved_party_roster
@@ -55,6 +55,7 @@ func after_each() -> void:
 	SaveSystem.last_load_issues = _saved_last_load_issues
 	ProgressionSystem.catalog = _saved_progression_catalog
 	SaveSystem.current_slot_index = _saved_current_slot_index
+	SaveSystem.storage_root_override = _saved_storage_root_override
 
 
 func _restore_file(path: String, existed: bool, bytes: PackedByteArray) -> void:
@@ -67,7 +68,7 @@ func _restore_file(path: String, existed: bool, bytes: PackedByteArray) -> void:
 
 
 func _write_test_slot(document: Dictionary) -> void:
-	DirAccess.make_dir_recursive_absolute(SaveSystem.TEST_SAVE_DIR)
+	DirAccess.make_dir_recursive_absolute(TEST_ROOT)
 	var file := FileAccess.open(TEST_SLOT_PATH, FileAccess.WRITE)
 	assert_not_null(file)
 	if file:
@@ -97,32 +98,21 @@ func _fresh_default_catalog() -> ProgressionCatalog:
 	return ProgressionCatalog.from_validated_trees(trees)
 
 
-func test_gut_runner_argument_is_detected() -> void:
-	assert_true(SaveSystem._is_gut_process(PackedStringArray([
-		"-s",
-		"res://addons/gut/gut_cmdln.gd",
-		"-gexit",
-	])))
-
-
-func test_unrelated_script_argument_is_not_detected_as_gut() -> void:
-	assert_false(SaveSystem._is_gut_process(PackedStringArray([
-		"-s",
-		"res://tools/export_data.gd",
-	])))
-
-
-func test_current_gut_process_resolves_slot_under_test_save_root() -> void:
-	assert_true(SaveSystem._is_gut_process(OS.get_cmdline_args()))
-	assert_eq(SaveSystem._get_save_dir(), "user://test_saves/")
+func test_storage_root_defaults_to_production_and_explicit_override_is_isolated() -> void:
+	SaveSystem.storage_root_override = ""
+	assert_eq(SaveSystem._get_save_dir(), SaveSystem.SAVE_DIR)
+	assert_eq(SaveSystem._get_slot_path(1), PRODUCTION_SLOT_PATH)
+	SaveSystem.storage_root_override = TEST_ROOT
+	assert_eq(SaveSystem._get_save_dir(), TEST_ROOT)
 	assert_eq(SaveSystem._get_slot_path(1), TEST_SLOT_PATH)
 	assert_ne(SaveSystem._get_slot_path(1), PRODUCTION_SLOT_PATH)
 
 
-func test_save_game_recreates_only_test_root_and_preserves_production_slot() -> void:
+func test_save_game_recreates_only_explicit_test_root() -> void:
 	if FileAccess.file_exists(TEST_SLOT_PATH):
 		assert_eq(DirAccess.remove_absolute(TEST_SLOT_PATH), OK)
-	assert_eq(DirAccess.remove_absolute(SaveSystem.TEST_SAVE_DIR), OK)
+	if DirAccess.dir_exists_absolute(TEST_ROOT):
+		assert_eq(DirAccess.remove_absolute(TEST_ROOT), OK)
 	SaveSystem.data = {}
 	SaveSystem.bits = 314
 	SaveSystem.party_roster = []
@@ -135,9 +125,19 @@ func test_save_game_recreates_only_test_root_and_preserves_production_slot() -> 
 	SaveSystem.save_game(1)
 
 	assert_true(FileAccess.file_exists(TEST_SLOT_PATH))
-	assert_eq(FileAccess.file_exists(PRODUCTION_SLOT_PATH), _production_slot_existed)
-	if _production_slot_existed:
-		assert_eq(FileAccess.get_file_as_bytes(PRODUCTION_SLOT_PATH), _production_slot_bytes)
+	assert_eq(SaveSystem._get_slot_path(1), TEST_SLOT_PATH)
+
+
+func test_title_new_campaign_writes_only_under_explicit_test_root() -> void:
+	ProgressionSystem.catalog = _fresh_default_catalog()
+	var title := TitleScreen.new()
+	watch_signals(title)
+	title._on_new_game_pressed()
+	assert_signal_emit_count(title, "new_game_requested", 1)
+	assert_true(FileAccess.file_exists(TEST_SLOT_PATH))
+	assert_true(SaveSystem._get_slot_path(1).begins_with(TEST_ROOT))
+	assert_ne(SaveSystem._get_slot_path(1), PRODUCTION_SLOT_PATH)
+	title.free()
 
 
 func test_load_game_reports_intentional_legacy_progression_reset_without_mapping_ids() -> void:

@@ -2,12 +2,11 @@
 extends Node
 
 const SAVE_DIR = "user://saves/"
-const TEST_SAVE_DIR = "user://test_saves/"
-const GUT_RUNNER_PATH = "addons/gut/gut_cmdln.gd"
 const SLOT_PREFIX = "slot_"
 const SLOT_EXT = ".json"
 
 var current_slot_index: int = 1
+var storage_root_override: String = ""
 
 # --- GLOBAL DATA ---
 var bits: int = 0
@@ -27,16 +26,8 @@ func _ready():
 	if not DirAccess.dir_exists_absolute(save_dir):
 		DirAccess.make_dir_absolute(save_dir)
 
-func _is_gut_process(args: PackedStringArray) -> bool:
-	for argument in args:
-		if GUT_RUNNER_PATH in argument:
-			return true
-	return false
-
 func _get_save_dir() -> String:
-	if _is_gut_process(OS.get_cmdline_args()):
-		return TEST_SAVE_DIR
-	return SAVE_DIR
+	return storage_root_override if not storage_root_override.is_empty() else SAVE_DIR
 
 func save_current_slot():
 	save_game(current_slot_index)
@@ -123,7 +114,7 @@ func load_game(slot_index: int) -> bool:
 			var path_to_base = "res://data/heroes/" + hero_id + "/" + hero_id + ".tres"
 
 			if ResourceLoader.exists(path_to_base):
-				var hero_obj = load(path_to_base).duplicate()
+				var hero_obj = load(path_to_base).duplicate(true)
 				var hero_issues: Array[String] = hero_obj.load_from_save_data(hero_dict, expected_revisions)
 				for issue: String in hero_issues:
 					_report_hero_load_issue(hero_id, issue)
@@ -154,7 +145,7 @@ func start_new_campaign(slot_index: int) -> bool:
 		"res://data/heroes/echo/echo.tres",
 		"res://data/heroes/sands/sands.tres",
 	]:
-		var hero: HeroData = load(path).duplicate()
+		var hero: HeroData = load(path).duplicate(true)
 		if not ProgressionSystem.initialize_fresh_hero(hero):
 			return false
 		fresh_roster.append(hero)
@@ -193,7 +184,7 @@ func distribute_combat_xp(amount: int):
 func unlock_hero(hero_id: String) -> bool:
 	var path_to_base = "res://data/heroes/" + hero_id + "/" + hero_id + ".tres"
 	if ResourceLoader.exists(path_to_base):
-		var new_hero: HeroData = load(path_to_base).duplicate()
+		var new_hero: HeroData = load(path_to_base).duplicate(true)
 		new_hero.current_xp = total_lifetime_xp
 		if not ProgressionSystem.initialize_fresh_hero(new_hero):
 			return false

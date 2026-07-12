@@ -2,14 +2,18 @@ extends GutTest
 
 var calls: Array = []
 const TEST_SLOT := 987654
+const TEST_SAVE_ROOT := "user://test_saves/hub_progression/"
 var saved_roster: Array[HeroData] = []
 var saved_slot: int
+var saved_storage_root: String
 
 
 func before_each() -> void:
 	calls.clear()
 	saved_roster.assign(SaveSystem.party_roster)
 	saved_slot = SaveSystem.current_slot_index
+	saved_storage_root = SaveSystem.storage_root_override
+	SaveSystem.storage_root_override = TEST_SAVE_ROOT
 	SaveSystem.current_slot_index = TEST_SLOT
 	SaveSystem.party_roster.clear()
 
@@ -22,6 +26,7 @@ func after_each() -> void:
 	SaveSystem.party_roster.assign(saved_roster)
 	SaveSystem.current_slot_index = saved_slot
 	DirAccess.remove_absolute(SaveSystem._get_slot_path(TEST_SLOT))
+	SaveSystem.storage_root_override = saved_storage_root
 
 
 func _tree() -> RoleTreeDefinition:
