@@ -3,6 +3,7 @@ class_name RolePanel
 
 signal panel_selected(role_panel)
 signal purchase_requested(hero: HeroData, role_id: String, node_id: String)
+signal node_focused(node_id: String)
 
 @export var node_scene: PackedScene
 @export var anchor_scene: PackedScene
@@ -96,7 +97,12 @@ func _spawn_node(data_node: ProgressionNodeDefinition) -> void:
 	else:
 		ui_node.setup(data_node, hero_data, tree_definition)
 		ui_node.node_clicked.connect(_on_node_clicked)
+	ui_node.focus_entered.connect(_on_generated_node_focused.bind(data_node.id))
 	generated_nodes[data_node.id] = ui_node
+
+
+func _on_generated_node_focused(node_id: String) -> void:
+	node_focused.emit(node_id)
 
 func _update_tree_state():
 	if tree_definition:

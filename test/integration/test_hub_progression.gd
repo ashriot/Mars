@@ -144,13 +144,16 @@ func test_role_panel_renders_focusable_starting_role_header_geometry() -> void:
 	var first := panel.generated_nodes["gun.start1"] as SkillTreeNode
 	var second := panel.generated_nodes["gun.start2"] as SkillTreeNode
 	var paid := panel.generated_nodes["gun.root"] as SkillTreeNode
+	var header_center := Vector2(panel.expanded_x / 2.0 - 10.0, 25.0)
 
-	assert_eq(anchor.position.x + anchor.size.x * 0.5, panel.expanded_x / 2.0 - 10.0)
-	assert_eq(first.position.y, anchor.position.y)
-	assert_eq(second.position.y, anchor.position.y)
-	assert_lt(first.position.x, anchor.position.x)
-	assert_gt(second.position.x, anchor.position.x)
-	assert_eq(paid.position.y - anchor.position.y, float(panel.VERTICAL_SPACING))
+	assert_eq(anchor.size, Vector2(250, 50))
+	assert_eq(first.size, Vector2(250, 50))
+	assert_eq(second.size, Vector2(250, 50))
+	assert_eq(paid.size, Vector2(250, 50))
+	assert_eq(panel.node_positions()["gun.anchor"], header_center)
+	assert_eq(panel.node_positions()["gun.start1"], header_center + Vector2.LEFT * panel.HORIZONTAL_SPACING)
+	assert_eq(panel.node_positions()["gun.start2"], header_center + Vector2.RIGHT * panel.HORIZONTAL_SPACING)
+	assert_eq(panel.node_positions()["gun.root"], header_center + Vector2.DOWN * panel.VERTICAL_SPACING)
 	for control: Control in [anchor, first, second, paid]:
 		assert_eq(control.focus_mode, Control.FOCUS_ALL)
 	assert_eq(anchor.get_node("Label").text, "Gunner")
@@ -189,6 +192,56 @@ func test_role_header_navigation_and_confirmation_suppress_non_paid_purchases() 
 	assert_true(panel.move_focus(Vector2.DOWN))
 	assert_eq(panel.focused_node_id, "gun.root")
 	panel.confirm_focused_node()
+	assert_signal_emit_count(panel, "purchase_requested", 1)
+	assert_signal_emitted_with_parameters(panel, "purchase_requested", [hero, "gun", "gun.root"])
+	panel.free()
+	await get_tree().process_frame
+
+
+func test_real_focus_events_update_stable_id_before_navigation_and_page_restoration() -> void:
+	var hero := _hero(150)
+	hero.role_definitions.assign([_legacy_role()])
+	var tree := _tree_with_paid("gun", 2, [
+		ProgressionNodeDefinition.progression("gun.root", "gun.anchor", 2, 0, 100, ProgressionEffect.stat("ATK", 1)),
+		ProgressionNodeDefinition.progression("gun.page2", "gun.root", 11, 0, 100, ProgressionEffect.stat("AIM", 1)),
+	])
+	var panel := preload("res://src/hub/skill_tree_panel.tscn").instantiate() as SkillTreePanel
+	panel.progression_catalog = ProgressionCatalog.from_validated_trees([tree])
+	add_child(panel)
+	panel.setup(hero)
+	var starting := panel._current_role_panel().generated_nodes["gun.start1"] as SkillTreeNode
+
+	starting.grab_focus()
+	assert_eq(panel.focused_node_id, "gun.start1")
+	assert_true(panel.move_focus(Vector2.RIGHT))
+	assert_eq(panel.focused_node_id, "gun.anchor")
+	panel.change_page(1)
+	assert_eq(panel.focused_node_id, "gun.page2")
+	panel.change_page(-1)
+	assert_eq(panel.focused_node_id, "gun.anchor")
+	assert_eq(get_viewport().gui_get_focus_owner(), panel.get_focused_node())
+	panel.free()
+	await get_tree().process_frame
+
+
+func test_rendered_button_activation_only_requests_purchase_for_paid_available_node() -> void:
+	var hero := _hero(150)
+	hero.role_definitions.assign([_legacy_role()])
+	var panel := preload("res://src/hub/skill_tree_panel.tscn").instantiate() as SkillTreePanel
+	panel.progression_catalog = ProgressionCatalog.from_validated_trees([_tree()])
+	add_child(panel)
+	panel.setup(hero)
+	var role_panel := panel._current_role_panel()
+	var anchor := role_panel.generated_nodes["gun.anchor"] as Button
+	var starting := role_panel.generated_nodes["gun.start1"] as SkillTreeNode
+	var paid := role_panel.generated_nodes["gun.root"] as SkillTreeNode
+	watch_signals(panel)
+
+	anchor.pressed.emit()
+	assert_signal_not_emitted(panel, "purchase_requested")
+	starting._pressed()
+	assert_signal_not_emitted(panel, "purchase_requested")
+	paid._pressed()
 	assert_signal_emit_count(panel, "purchase_requested", 1)
 	assert_signal_emitted_with_parameters(panel, "purchase_requested", [hero, "gun", "gun.root"])
 	panel.free()
@@ -525,9 +578,17 @@ func test_role_change_selects_closest_supported_page_and_keeps_focus() -> void:
 	panel.setup(hero)
 	panel.change_page(1)
 	assert_eq(panel.current_page, 1)
+	var source_center := panel._current_role_panel().node_positions()["gun.page2"] as Vector2
 	panel.change_role(1)
 	assert_eq(panel.current_page, 0, "equal-distance supported pages prefer the lower page")
 	assert_eq(panel.focused_node_id, "snp.start2")
+	var target_positions := panel._current_role_panel().node_positions()
+	assert_eq(target_positions["snp.start2"], source_center, "the starting skill occupies the exact prior screen coordinate")
+	assert_lt(
+		(target_positions["snp.start2"] as Vector2).distance_squared_to(source_center),
+		(target_positions["snp.root"] as Vector2).distance_squared_to(source_center),
+		"nearest-focus restoration must choose the zero-distance starting skill over the paid root",
+	)
 	assert_eq(get_viewport().gui_get_focus_owner(), panel.get_focused_node())
 	panel.free()
 	await get_tree().process_frame

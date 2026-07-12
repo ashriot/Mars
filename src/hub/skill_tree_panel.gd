@@ -61,6 +61,7 @@ func _refresh_role_list():
 		panel.setup(def, tree, current_hero)
 		panel.panel_selected.connect(_on_role_panel_selected)
 		panel.purchase_requested.connect(_on_purchase_requested)
+		panel.node_focused.connect(_on_role_node_focused.bind(panel))
 
 		if rendered_index == current_role_idx:
 			panel.set_expanded(true, current_page, true)
@@ -80,6 +81,16 @@ func refresh_progression_state(hero: HeroData) -> void:
 
 func _on_purchase_requested(hero: HeroData, role_id: String, node_id: String) -> void:
 	purchase_requested.emit(hero, role_id, node_id)
+
+
+func _on_role_node_focused(node_id: String, role_panel: RolePanel) -> void:
+	if role_panel != _current_role_panel() or focused_node_id == node_id:
+		return
+	focused_node_id = node_id
+	_focus_memory[_memory_key()] = node_id
+	var node := role_panel.generated_nodes.get(node_id) as Control
+	if node:
+		_publish_hints(node)
 
 func _on_role_panel_selected(selected_panel: RolePanel):
 	var panels = role_list_container.get_children()
