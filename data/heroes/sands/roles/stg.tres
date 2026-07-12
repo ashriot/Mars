@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="RoleDefinition" format=3 uid="uid://04db8hw78o7b"]
 
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="1_t5fm0"]
-[ext_resource type="Resource" uid="uid://b8pnoaxst6nos" path="res://data/heroes/sands/actions/direct.tres" id="2_t5fm0"]
+[ext_resource type="Resource" uid="uid://b8pnoaxst6nos" path="res://data/heroes/sands/actions/tempo.tres" id="2_t5fm0"]
 [ext_resource type="Resource" uid="uid://dvu18ot3ev1rk" path="res://data/heroes/sands/actions/gambit.tres" id="3_0nyo5"]
 [ext_resource type="Resource" uid="uid://bix1u2ymtt11k" path="res://data/heroes/sands/actions/advantage.tres" id="4_xrfyu"]
 [ext_resource type="Resource" uid="uid://bxthusds0tx8p" path="res://data/heroes/sands/actions/checkmate.tres" id="5_3sym7"]

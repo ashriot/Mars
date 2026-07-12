@@ -17,7 +17,7 @@ metadata/_custom_type_script = "uid://d0eibi4b735ay"
 
 [sub_resource type="Resource" id="Resource_hsppm"]
 script = ExtResource("2_im8ar")
-trigger_type = 7
+trigger_type = 6
 effects_to_run = Array[ExtResource("4_e8n1q")]([SubResource("Resource_ot216")])
 metadata/_custom_type_script = "uid://cdugd6pnm6py"
 
@@ -25,7 +25,7 @@ metadata/_custom_type_script = "uid://cdugd6pnm6py"
 script = ExtResource("1_dvsv7")
 condition_name = "Reverberate"
 icon = ExtResource("1_5yysf")
-description = "The next time this enemy takes {nrg} damage, it takes an additional {nrg} hit."
+description = "The next time this enemy takes {kin} damage, it takes a {nrg} hit."
 condition_type = 1
 triggers = Array[ExtResource("2_im8ar")]([SubResource("Resource_hsppm")])
 remove_on_triggers = Array[int]([7])

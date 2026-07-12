@@ -18,7 +18,7 @@ metadata/_custom_type_script = "uid://bhblyd70hrd4m"
 
 [resource]
 script = ExtResource("2_2liql")
-action_name = "Direct"
+action_name = "Tempo"
 icon = ExtResource("4_ypl63")
 description = "Grants an ally {foc}{foc} and boost their next turn by 25%."
 target_type = 6
