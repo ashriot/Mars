@@ -131,7 +131,7 @@ func focus_node(node_id: String) -> bool:
 	var target_id := node_id
 	if not role_panel.generated_nodes.has(target_id):
 		target_id = _nearest_node_id(role_panel)
-	var target := role_panel.generated_nodes.get(target_id) as SkillTreeNode
+	var target := role_panel.generated_nodes.get(target_id) as Control
 	if target == null:
 		return false
 	focused_node_id = target_id
@@ -141,9 +141,9 @@ func focus_node(node_id: String) -> bool:
 	return true
 
 
-func get_focused_node() -> SkillTreeNode:
+func get_focused_node() -> Control:
 	var panel := _current_role_panel()
-	return panel.generated_nodes.get(focused_node_id) as SkillTreeNode if panel else null
+	return panel.generated_nodes.get(focused_node_id) as Control if panel else null
 
 
 func move_focus(direction: Vector2) -> bool:
@@ -198,7 +198,7 @@ func change_role(delta: int) -> void:
 
 func confirm_focused_node() -> void:
 	var node := get_focused_node()
-	if node and node.is_purchasable():
+	if node is SkillTreeNode and node.is_purchasable():
 		_on_purchase_requested(current_hero, _current_role_panel().role_id, node.node_definition.id)
 
 
@@ -307,11 +307,13 @@ func _supported_pages(panel: RolePanel) -> Array[int]:
 	return pages
 
 
-func _publish_hints(node: SkillTreeNode) -> void:
+func _publish_hints(node: Control) -> void:
 	var navigation := get_tree().root.find_child("NavigationUXLayer", true, false) as NavigationUXLayer
 	if navigation:
+		var purchasable: bool = node is SkillTreeNode and node.is_purchasable()
+		var inspectable: bool = not (node is SkillTreeNode) or node.state == SkillTreeNode.NodeState.LOCKED
 		var hints: Array[Dictionary] = [
-			{action = &"confirm", label = "Upgrade" if node.is_purchasable() else "Inspect", enabled = node.is_purchasable() or node.state == SkillTreeNode.NodeState.LOCKED},
+			{action = &"confirm", label = "Upgrade" if purchasable else "Inspect", enabled = purchasable or inspectable},
 			{action = &"cancel", label = "Back", enabled = true},
 			{action = &"section_previous", label = "Role", enabled = true},
 		]

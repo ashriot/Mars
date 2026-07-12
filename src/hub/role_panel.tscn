@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=3 uid="uid://xpuok17oufft"]
+[gd_scene load_steps=5 format=3 uid="uid://xpuok17oufft"]
 
 [ext_resource type="Script" uid="uid://b5mb18febmqwh" path="res://src/hub/role_panel.gd" id="1_n8shc"]
 [ext_resource type="PackedScene" uid="uid://cqsffo424v35" path="res://src/hub/skill_tree_node.tscn" id="2_13wgo"]
+[ext_resource type="PackedScene" path="res://src/hub/role_anchor_node.tscn" id="3_anchor"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_13wgo"]
 bg_color = Color(0.6, 0.6, 0.6, 0)
@@ -23,6 +24,7 @@ offset_right = 900.0
 offset_bottom = 900.0
 script = ExtResource("1_n8shc")
 node_scene = ExtResource("2_13wgo")
+anchor_scene = ExtResource("3_anchor")
 
 [node name="Header" type="Panel" parent="."]
 layout_mode = 1

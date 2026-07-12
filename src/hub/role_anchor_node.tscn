@@ -1,0 +1,127 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://src/hub/role_anchor_node.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://jdpryp48lvvd" path="res://assets/graphics/icons/textures/chevron_h.png" id="2"]
+
+[sub_resource type="StyleBoxFlat" id="AnchorPanel"]
+bg_color = Color(0.12, 0.12, 0.12, 0.92)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="CompressedTexture2D" id="ChevronDown"]
+load_path = "res://.godot/imported/chevron_v.png-8f022842b24a3d3a0a8d7eeaac311663.ctex"
+
+[node name="RoleAnchorNode" type="Button"]
+custom_minimum_size = Vector2(250, 50)
+offset_right = 250.0
+offset_bottom = 50.0
+focus_mode = 2
+script = ExtResource("1")
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_right = 50.0
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("AnchorPanel")
+
+[node name="Icon" type="TextureRect" parent="Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 50.0
+offset_bottom = 30.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 24
+text = "ROLE"
+horizontal_alignment = 1
+vertical_alignment = 1
+uppercase = true
+
+[node name="Description" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 50.0
+offset_top = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 12
+text = "ROLE DESCRIPTION"
+horizontal_alignment = 1
+vertical_alignment = 1
+text_overrun_behavior = 3
+
+[node name="Arrows" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Left" type="TextureRect" parent="Arrows"]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = -40.0
+offset_top = -15.0
+offset_right = -10.0
+offset_bottom = 15.0
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2")
+expand_mode = 1
+
+[node name="Down" type="TextureRect" parent="Arrows"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -15.0
+offset_top = 5.0
+offset_right = 15.0
+offset_bottom = 35.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+texture = SubResource("ChevronDown")
+expand_mode = 1
+
+[node name="Right" type="TextureRect" parent="Arrows"]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = 10.0
+offset_top = -15.0
+offset_right = 40.0
+offset_bottom = 15.0
+grow_horizontal = 0
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2")
+expand_mode = 1
+flip_h = true

@@ -5,6 +5,7 @@ signal panel_selected(role_panel)
 signal purchase_requested(hero: HeroData, role_id: String, node_id: String)
 
 @export var node_scene: PackedScene
+@export var anchor_scene: PackedScene
 
 @onready var header_label: Label = $Header/Label
 @onready var role_name_label: Label = $Content/RoleName
@@ -81,13 +82,20 @@ func _clear_tree():
 		child.queue_free()
 
 func _spawn_node(data_node: ProgressionNodeDefinition) -> void:
-	var ui_node := node_scene.instantiate() as SkillTreeNode
+	var ui_node: Control
+	if data_node.kind == ProgressionNodeDefinition.NodeKind.ROLE_ANCHOR:
+		ui_node = anchor_scene.instantiate() as Control
+	else:
+		ui_node = node_scene.instantiate() as SkillTreeNode
 	node_layer.add_child(ui_node)
 	ui_node.position = Vector2(expanded_x / 2.0 - 10.0 + data_node.column * HORIZONTAL_SPACING, ((data_node.rank - 1) % 10) * VERTICAL_SPACING)
 	ui_node.position.x -= ui_node.size.x / 2
 	ui_node.pivot_offset = ui_node.size / 2
-	ui_node.setup(data_node, hero_data, tree_definition)
-	ui_node.node_clicked.connect(_on_node_clicked)
+	if data_node.kind == ProgressionNodeDefinition.NodeKind.ROLE_ANCHOR:
+		ui_node.setup(def, tree_definition)
+	else:
+		ui_node.setup(data_node, hero_data, tree_definition)
+		ui_node.node_clicked.connect(_on_node_clicked)
 	generated_nodes[data_node.id] = ui_node
 
 func _update_tree_state():
@@ -105,9 +113,12 @@ func refresh_progression_state() -> void:
 
 
 func _update_node_state(node: ProgressionNodeDefinition) -> void:
+	if node.is_structural:
+		return
 	var progress: HeroRoleProgress = hero_data.role_progress.get(role_id)
-	var is_owned := progress != null and node.id in progress.owned_node_ids
-	var parent_unlocked := node.parent_id.is_empty() or (progress != null and node.parent_id in progress.owned_node_ids)
+	var is_owned := node.starting_owned or (progress != null and node.id in progress.owned_node_ids)
+	var parent := tree_definition.get_node(node.parent_id)
+	var parent_unlocked := node.parent_id.is_empty() or (parent != null and parent.is_structural) or (progress != null and node.parent_id in progress.owned_node_ids)
 	var ui_node := generated_nodes[node.id] as SkillTreeNode
 	ui_node.set_availability(not is_owned and parent_unlocked, hero_data.current_xp >= node.cost)
 	ui_node._update_arrows(is_owned)

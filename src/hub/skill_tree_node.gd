@@ -24,8 +24,9 @@ func setup(node: ProgressionNodeDefinition, hero: HeroData, tree: RoleTreeDefini
 	hero_data = hero
 	tree_definition = tree
 	focus_mode = Control.FOCUS_ALL
-	_update_button_visuals(_is_owned(node.id))
-	_update_arrows(_is_owned(node.id))
+	var is_owned := node.starting_owned or _is_owned(node.id)
+	_update_button_visuals(is_owned)
+	_update_arrows(is_owned)
 
 
 func set_availability(is_available: bool, can_afford: bool):

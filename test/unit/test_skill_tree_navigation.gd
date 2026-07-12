@@ -22,3 +22,17 @@ func test_invalid_inputs_and_no_candidate_return_empty_id() -> void:
 	assert_eq(SkillTreeNavigation.find_directional_candidate("", Vector2.RIGHT, {}), "")
 	assert_eq(SkillTreeNavigation.find_directional_candidate("current", Vector2.ZERO, {"current": Vector2.ZERO}), "")
 	assert_eq(SkillTreeNavigation.find_directional_candidate("current", Vector2.RIGHT, {"current": Vector2.ZERO, "left": Vector2.LEFT}), "")
+
+
+func test_role_header_exact_geometric_directions() -> void:
+	var positions := {
+		"gun.anchor": Vector2(0, 0),
+		"gun.start1": Vector2(-300, 0),
+		"gun.start2": Vector2(300, 0),
+		"gun.root": Vector2(0, 90),
+	}
+	assert_eq(SkillTreeNavigation.find_directional_candidate("gun.anchor", Vector2.LEFT, positions), "gun.start1")
+	assert_eq(SkillTreeNavigation.find_directional_candidate("gun.anchor", Vector2.RIGHT, positions), "gun.start2")
+	assert_eq(SkillTreeNavigation.find_directional_candidate("gun.anchor", Vector2.DOWN, positions), "gun.root")
+	assert_eq(SkillTreeNavigation.find_directional_candidate("gun.start1", Vector2.RIGHT, positions), "gun.anchor")
+	assert_eq(SkillTreeNavigation.find_directional_candidate("gun.start2", Vector2.LEFT, positions), "gun.anchor")

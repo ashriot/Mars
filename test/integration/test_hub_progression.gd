@@ -26,9 +26,12 @@ func after_each() -> void:
 
 func _tree() -> RoleTreeDefinition:
 	return RoleTreeDefinition.new("gun", 3, [
-		ProgressionNodeDefinition.new("gun.root", "", 1, 0, 100, ProgressionEffect.stat("ATK", 1)),
-		ProgressionNodeDefinition.new("gun.left", "gun.root", 2, -1, 100, ProgressionEffect.stat("AIM", 2)),
-		ProgressionNodeDefinition.new("gun.right", "gun.root", 2, 1, 100, ProgressionEffect.stat("PRE", 2)),
+		ProgressionNodeDefinition.role_anchor("gun.anchor", 1, 0),
+		ProgressionNodeDefinition.progression("gun.start1", "gun.anchor", 1, -1, 0, ProgressionEffect.action("res://data/heroes/asher/actions/double_tap.tres", 1), true),
+		ProgressionNodeDefinition.progression("gun.start2", "gun.anchor", 1, 1, 0, ProgressionEffect.action("res://data/heroes/asher/actions/fusion_ammo.tres", 2), true),
+		ProgressionNodeDefinition.progression("gun.root", "gun.anchor", 2, 0, 100, ProgressionEffect.stat("ATK", 1)),
+		ProgressionNodeDefinition.progression("gun.left", "gun.root", 3, -1, 100, ProgressionEffect.stat("AIM", 2)),
+		ProgressionNodeDefinition.progression("gun.right", "gun.root", 3, 1, 100, ProgressionEffect.stat("PRE", 2)),
 	])
 
 
@@ -55,9 +58,19 @@ func _role(role_id: String) -> RoleDefinition:
 
 
 func _single_tree(role_id: String, cost: int = 100) -> RoleTreeDefinition:
-	return RoleTreeDefinition.new(role_id, 1, [
-		ProgressionNodeDefinition.new(role_id + ".root", "", 1, 0, cost, ProgressionEffect.stat("ATK", 1)),
+	return _tree_with_paid(role_id, 1, [
+		ProgressionNodeDefinition.progression(role_id + ".root", role_id + ".anchor", 2, 0, cost, ProgressionEffect.stat("ATK", 1)),
 	])
+
+
+func _tree_with_paid(role_id: String, version: int, paid_nodes: Array[ProgressionNodeDefinition]) -> RoleTreeDefinition:
+	var nodes: Array[ProgressionNodeDefinition] = [
+		ProgressionNodeDefinition.role_anchor(role_id + ".anchor", 1, 0),
+		ProgressionNodeDefinition.progression(role_id + ".start1", role_id + ".anchor", 1, -1, 0, ProgressionEffect.action("res://data/heroes/asher/actions/double_tap.tres", 1), true),
+		ProgressionNodeDefinition.progression(role_id + ".start2", role_id + ".anchor", 1, 1, 0, ProgressionEffect.action("res://data/heroes/asher/actions/fusion_ammo.tres", 2), true),
+	]
+	nodes.append_array(paid_nodes)
+	return RoleTreeDefinition.new(role_id, version, nodes)
 
 
 func _record_save() -> void:
@@ -112,11 +125,72 @@ func test_role_panel_renders_explicit_rank_column_and_indexed_links() -> void:
 	var left := panel.generated_nodes["gun.left"] as SkillTreeNode
 	var right := panel.generated_nodes["gun.right"] as SkillTreeNode
 
-	assert_eq(root.position.y, 0.0)
+	assert_eq(root.position.y, float(panel.VERTICAL_SPACING))
 	assert_lt(left.position.x, root.position.x)
 	assert_gt(right.position.x, root.position.x)
 	assert_true(root.arrow_left.visible)
 	assert_true(root.arrow_right.visible)
+	panel.free()
+
+
+func test_role_panel_renders_focusable_starting_role_header_geometry() -> void:
+	var role := _legacy_role()
+	role.description = "Reliable ranged pressure."
+	var panel := preload("res://src/hub/role_panel.tscn").instantiate() as RolePanel
+	add_child(panel)
+	panel.setup(role, _tree(), _hero())
+	panel.set_expanded(true, 0, false)
+	var anchor := panel.generated_nodes["gun.anchor"] as Button
+	var first := panel.generated_nodes["gun.start1"] as SkillTreeNode
+	var second := panel.generated_nodes["gun.start2"] as SkillTreeNode
+	var paid := panel.generated_nodes["gun.root"] as SkillTreeNode
+
+	assert_eq(anchor.position.x + anchor.size.x * 0.5, panel.expanded_x / 2.0 - 10.0)
+	assert_eq(first.position.y, anchor.position.y)
+	assert_eq(second.position.y, anchor.position.y)
+	assert_lt(first.position.x, anchor.position.x)
+	assert_gt(second.position.x, anchor.position.x)
+	assert_eq(paid.position.y - anchor.position.y, float(panel.VERTICAL_SPACING))
+	for control: Control in [anchor, first, second, paid]:
+		assert_eq(control.focus_mode, Control.FOCUS_ALL)
+	assert_eq(anchor.get_node("Label").text, "Gunner")
+	assert_false(anchor.has_node("XpCost"))
+	assert_eq(anchor.get_meta("cursor_state"), NavigationCursor.CursorState.INTERACT)
+	assert_true(anchor.get_node("Arrows/Left").visible)
+	assert_true(anchor.get_node("Arrows/Right").visible)
+	assert_true(anchor.get_node("Arrows/Down").visible)
+	assert_false(first.cost_label.visible)
+	assert_false(second.cost_label.visible)
+	panel.free()
+
+
+func test_role_header_navigation_and_confirmation_suppress_non_paid_purchases() -> void:
+	var hero := _hero(150)
+	hero.role_definitions.assign([_legacy_role()])
+	var panel := preload("res://src/hub/skill_tree_panel.tscn").instantiate() as SkillTreePanel
+	panel.progression_catalog = ProgressionCatalog.from_validated_trees([_tree()])
+	add_child(panel)
+	panel.setup(hero)
+	watch_signals(panel)
+
+	assert_true(panel.focus_node("gun.anchor"))
+	panel.confirm_focused_node()
+	assert_signal_not_emitted(panel, "purchase_requested")
+	assert_true(panel.move_focus(Vector2.LEFT))
+	assert_eq(panel.focused_node_id, "gun.start1")
+	panel.confirm_focused_node()
+	assert_signal_not_emitted(panel, "purchase_requested")
+	assert_true(panel.move_focus(Vector2.RIGHT))
+	assert_eq(panel.focused_node_id, "gun.anchor")
+	assert_true(panel.move_focus(Vector2.RIGHT))
+	assert_eq(panel.focused_node_id, "gun.start2")
+	assert_true(panel.move_focus(Vector2.LEFT))
+	assert_eq(panel.focused_node_id, "gun.anchor")
+	assert_true(panel.move_focus(Vector2.DOWN))
+	assert_eq(panel.focused_node_id, "gun.root")
+	panel.confirm_focused_node()
+	assert_signal_emit_count(panel, "purchase_requested", 1)
+	assert_signal_emitted_with_parameters(panel, "purchase_requested", [hero, "gun", "gun.root"])
 	panel.free()
 	await get_tree().process_frame
 
@@ -310,8 +384,8 @@ func test_skill_navigation_changes_page_and_role_and_restores_stable_node() -> v
 	var hero := _hero()
 	hero.unlocked_role_ids.assign(["gun", "snp"])
 	hero.role_definitions.assign([_role("gun"), _role("snp")])
-	var page_tree := RoleTreeDefinition.new("gun", 2, [
-		ProgressionNodeDefinition.new("gun.root", "", 1, 0, 100, ProgressionEffect.stat("ATK", 1)),
+	var page_tree := _tree_with_paid("gun", 2, [
+		ProgressionNodeDefinition.progression("gun.root", "gun.anchor", 2, 0, 100, ProgressionEffect.stat("ATK", 1)),
 		ProgressionNodeDefinition.new("gun.page2", "gun.root", 11, 0, 100, ProgressionEffect.stat("AIM", 1)),
 	])
 	var panel := preload("res://src/hub/skill_tree_panel.tscn").instantiate() as SkillTreePanel
@@ -409,12 +483,12 @@ func test_reentering_hero_restores_role_page_and_stable_node_context() -> void:
 	var other := _hero()
 	other.hero_id = "echo"
 	other.role_definitions.assign([_legacy_role()])
-	var gun := RoleTreeDefinition.new("gun", 2, [
-		ProgressionNodeDefinition.new("gun.root", "", 1, 0, 100, ProgressionEffect.stat("ATK", 1)),
+	var gun := _tree_with_paid("gun", 2, [
+		ProgressionNodeDefinition.progression("gun.root", "gun.anchor", 2, 0, 100, ProgressionEffect.stat("ATK", 1)),
 		ProgressionNodeDefinition.new("gun.page2", "gun.root", 11, 0, 100, ProgressionEffect.stat("AIM", 1)),
 	])
-	var snp := RoleTreeDefinition.new("snp", 2, [
-		ProgressionNodeDefinition.new("snp.root", "", 1, 0, 100, ProgressionEffect.stat("ATK", 1)),
+	var snp := _tree_with_paid("snp", 2, [
+		ProgressionNodeDefinition.progression("snp.root", "snp.anchor", 2, 0, 100, ProgressionEffect.stat("ATK", 1)),
 		ProgressionNodeDefinition.new("snp.page2", "snp.root", 11, 0, 100, ProgressionEffect.stat("AIM", 1)),
 	])
 	var panel := preload("res://src/hub/skill_tree_panel.tscn").instantiate() as SkillTreePanel
@@ -437,12 +511,12 @@ func test_role_change_selects_closest_supported_page_and_keeps_focus() -> void:
 	var hero := _hero()
 	hero.unlocked_role_ids.assign(["gun", "snp"])
 	hero.role_definitions.assign([_role("gun"), _role("snp")])
-	var gun := RoleTreeDefinition.new("gun", 2, [
-		ProgressionNodeDefinition.new("gun.root", "", 1, 0, 100, ProgressionEffect.stat("ATK", 1)),
+	var gun := _tree_with_paid("gun", 2, [
+		ProgressionNodeDefinition.progression("gun.root", "gun.anchor", 2, 0, 100, ProgressionEffect.stat("ATK", 1)),
 		ProgressionNodeDefinition.new("gun.page2", "gun.root", 11, 1, 100, ProgressionEffect.stat("AIM", 1)),
 	])
-	var snp := RoleTreeDefinition.new("snp", 3, [
-		ProgressionNodeDefinition.new("snp.root", "", 1, 0, 100, ProgressionEffect.stat("ATK", 1)),
+	var snp := _tree_with_paid("snp", 3, [
+		ProgressionNodeDefinition.progression("snp.root", "snp.anchor", 2, 0, 100, ProgressionEffect.stat("ATK", 1)),
 		ProgressionNodeDefinition.new("snp.page3", "snp.root", 21, 0, 100, ProgressionEffect.stat("AIM", 1)),
 	])
 	var panel := preload("res://src/hub/skill_tree_panel.tscn").instantiate() as SkillTreePanel
@@ -453,7 +527,7 @@ func test_role_change_selects_closest_supported_page_and_keeps_focus() -> void:
 	assert_eq(panel.current_page, 1)
 	panel.change_role(1)
 	assert_eq(panel.current_page, 0, "equal-distance supported pages prefer the lower page")
-	assert_eq(panel.focused_node_id, "snp.root")
+	assert_eq(panel.focused_node_id, "snp.start2")
 	assert_eq(get_viewport().gui_get_focus_owner(), panel.get_focused_node())
 	panel.free()
 	await get_tree().process_frame
@@ -563,8 +637,8 @@ func test_single_page_role_omits_page_shoulder_hints() -> void:
 func test_page_shoulder_wraps_across_supported_pages_and_focuses_nearest_node() -> void:
 	var hero := _hero()
 	hero.role_definitions.assign([_legacy_role()])
-	var tree := RoleTreeDefinition.new("gun", 3, [
-		ProgressionNodeDefinition.new("gun.root", "", 1, 1, 100, ProgressionEffect.stat("ATK", 1)),
+	var tree := _tree_with_paid("gun", 3, [
+		ProgressionNodeDefinition.progression("gun.root", "gun.anchor", 2, 1, 100, ProgressionEffect.stat("ATK", 1)),
 		ProgressionNodeDefinition.new("gun.page3.near", "gun.root", 21, 1, 100, ProgressionEffect.stat("AIM", 1)),
 		ProgressionNodeDefinition.new("gun.page3.far", "gun.root", 22, -1, 100, ProgressionEffect.stat("PRE", 1)),
 	])
