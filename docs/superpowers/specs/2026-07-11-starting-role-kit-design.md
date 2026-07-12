@@ -104,6 +104,8 @@ Moving the former second skill into the header removes it from the paid path.
 - The first paid node is rank 2 and normally costs 200 XP.
 - Current mature trees may end at rank 9 after reflow. The missing rank-10 stat boost or capstone is intentionally deferred as future balance content.
 
+For the two incomplete trees, the first paid rank-2 node is explicitly a broad stat increase: Operator receives `HP +5`, and Dominator receives `PSY +1`. First paid nodes should use broadly useful `HP`, `ATK`, or `PSY` effects rather than specialized stats such as `PRE`.
+
 The reflow preserves node IDs and relative branch relationships. Only the former second skill's position/parent and affected rank/cost values change.
 
 ## Presentation and Interaction
