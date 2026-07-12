@@ -13,7 +13,18 @@ func _definition(role_id: String) -> RoleDefinition:
 
 
 func _tree(role_id: String, nodes: Array[ProgressionNodeDefinition]) -> RoleTreeDefinition:
-	return RoleTreeDefinition.new(role_id, 1, nodes)
+	var anchor_id := role_id + ".anchor"
+	var schema_v2_nodes: Array[ProgressionNodeDefinition] = [
+		ProgressionNodeDefinition.role_anchor(anchor_id, 1, 0),
+		ProgressionNodeDefinition.progression(role_id + ".start1", anchor_id, 1, -1, 0, ProgressionEffect.action(ACTION_PATH, 1), true),
+		ProgressionNodeDefinition.progression(role_id + ".start2", anchor_id, 1, 1, 0, ProgressionEffect.action(SHIFT_PATH, 2), true),
+	]
+	for node: ProgressionNodeDefinition in nodes:
+		var parent_id := anchor_id if node.parent_id.is_empty() else node.parent_id
+		schema_v2_nodes.append(ProgressionNodeDefinition.progression(
+			node.id, parent_id, node.rank, node.column, node.cost, node.effect, node.starting_owned,
+		))
+	return RoleTreeDefinition.new(role_id, 1, schema_v2_nodes)
 
 
 func _node(id: String, parent: String, rank: int, column: int, effect: ProgressionEffect) -> ProgressionNodeDefinition:

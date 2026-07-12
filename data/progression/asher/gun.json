@@ -1,17 +1,40 @@
 {
-  "content_revision": 1,
+  "content_revision": 2,
   "nodes": [
     {
-      "column": 0,
+      "id": "gun.anchor",
+      "node_kind": "role_anchor",
+      "parent": null,
+      "rank": 1,
+      "column": 0
+    },
+    {
+      "column": -1,
       "effect": {
         "resource": "res://data/heroes/asher/actions/double_tap.tres",
         "slot": 1,
         "type": "action"
       },
       "id": "gun.root",
-      "parent": null,
+      "parent": "gun.anchor",
       "rank": 1,
-      "xp_cost": 100
+      "xp_cost": 0,
+      "node_kind": "progression",
+      "starting_owned": true
+    },
+    {
+      "column": 1,
+      "effect": {
+        "resource": "res://data/heroes/asher/actions/fusion_ammo.tres",
+        "slot": 2,
+        "type": "action"
+      },
+      "id": "gun.fusion_ammo",
+      "parent": "gun.anchor",
+      "rank": 1,
+      "xp_cost": 0,
+      "node_kind": "progression",
+      "starting_owned": true
     },
     {
       "column": 0,
@@ -21,7 +44,7 @@
         "type": "stat"
       },
       "id": "gun.atk_1",
-      "parent": "gun.root",
+      "parent": "gun.anchor",
       "rank": 2,
       "xp_cost": 200
     },
@@ -76,26 +99,14 @@
     {
       "column": 0,
       "effect": {
-        "resource": "res://data/heroes/asher/actions/fusion_ammo.tres",
-        "slot": 2,
-        "type": "action"
-      },
-      "id": "gun.fusion_ammo",
-      "parent": "gun.spd_1",
-      "rank": 5,
-      "xp_cost": 500
-    },
-    {
-      "column": 0,
-      "effect": {
         "amount": 1,
         "stat": "PSY",
         "type": "stat"
       },
       "id": "gun.psy_1",
-      "parent": "gun.fusion_ammo",
-      "rank": 6,
-      "xp_cost": 600
+      "parent": "gun.spd_1",
+      "rank": 5,
+      "xp_cost": 500
     },
     {
       "column": 0,
@@ -106,8 +117,8 @@
       },
       "id": "gun.hp_5_2",
       "parent": "gun.psy_1",
-      "rank": 7,
-      "xp_cost": 700
+      "rank": 6,
+      "xp_cost": 600
     },
     {
       "column": -1,
@@ -118,8 +129,8 @@
       },
       "id": "gun.hp_10_3",
       "parent": "gun.hp_5_2",
-      "rank": 7,
-      "xp_cost": 1050
+      "rank": 6,
+      "xp_cost": 900
     },
     {
       "column": 0,
@@ -130,8 +141,8 @@
       },
       "id": "gun.spd_1_2",
       "parent": "gun.hp_5_2",
-      "rank": 8,
-      "xp_cost": 800
+      "rank": 7,
+      "xp_cost": 700
     },
     {
       "column": 0,
@@ -142,8 +153,8 @@
       },
       "id": "gun.atk_1_2",
       "parent": "gun.spd_1_2",
-      "rank": 9,
-      "xp_cost": 900
+      "rank": 8,
+      "xp_cost": 800
     },
     {
       "column": -1,
@@ -154,8 +165,8 @@
       },
       "id": "gun.atk_2",
       "parent": "gun.atk_1_2",
-      "rank": 9,
-      "xp_cost": 1350
+      "rank": 8,
+      "xp_cost": 1200
     },
     {
       "column": -1,
@@ -166,8 +177,8 @@
       },
       "id": "gun.atk_2_2",
       "parent": "gun.atk_2",
-      "rank": 10,
-      "xp_cost": 1500
+      "rank": 9,
+      "xp_cost": 1350
     },
     {
       "column": 0,
@@ -177,8 +188,8 @@
       },
       "id": "gun.bullet_time",
       "parent": "gun.atk_1_2",
-      "rank": 10,
-      "xp_cost": 1000
+      "rank": 9,
+      "xp_cost": 900
     },
     {
       "column": 1,
@@ -189,8 +200,8 @@
       },
       "id": "gun.spd_2",
       "parent": "gun.spd_1_2",
-      "rank": 8,
-      "xp_cost": 1200
+      "rank": 7,
+      "xp_cost": 1050
     },
     {
       "column": 1,
@@ -201,8 +212,8 @@
       },
       "id": "gun.spd_2_2",
       "parent": "gun.spd_2",
-      "rank": 9,
-      "xp_cost": 1350
+      "rank": 8,
+      "xp_cost": 1200
     },
     {
       "column": 1,
@@ -213,10 +224,10 @@
       },
       "id": "gun.psy_2",
       "parent": "gun.psy_1",
-      "rank": 6,
-      "xp_cost": 900
+      "rank": 5,
+      "xp_cost": 750
     }
   ],
   "role_id": "gun",
-  "schema_version": 1
+  "schema_version": 2
 }

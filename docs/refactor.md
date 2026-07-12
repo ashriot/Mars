@@ -30,6 +30,8 @@ Role topology, prerequisites, layout, costs, and typed rewards now come exclusiv
 
 Revision mismatches are reported while preserving the saved record and XP history. They do not trigger an automatic reset, refund, or reconciliation.
 
+The starting-kit reflow intentionally leaves Gunner, Kinetic, and Psionic progression open at rank 10. Their former second actions moved into the zero-cost rank-1 kit, shifting the existing rank-6-through-10 content to ranks 5 through 9. No replacement rank-10 stat boost or capstone is defined until a later balance/content pass.
+
 ## Candidate: Reconcile progression content revisions
 
 **Current location:** `src/progression/hero_role_progress.gd`, `src/scripts/data/hero_data.gd`, and `src/progression/progression_service.gd`

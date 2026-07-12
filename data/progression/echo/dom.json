@@ -1,19 +1,54 @@
 {
-  "content_revision": 1,
+  "content_revision": 2,
   "nodes": [
     {
-      "column": 0,
+      "id": "dom.anchor",
+      "node_kind": "role_anchor",
+      "parent": null,
+      "rank": 1,
+      "column": 0
+    },
+    {
+      "column": -1,
       "effect": {
         "resource": "res://data/heroes/echo/actions/displace.tres",
         "slot": 1,
         "type": "action"
       },
       "id": "dom.root",
-      "parent": null,
+      "parent": "dom.anchor",
       "rank": 1,
-      "xp_cost": 100
+      "xp_cost": 0,
+      "node_kind": "progression",
+      "starting_owned": true
+    },
+    {
+      "id": "dom.feedback",
+      "node_kind": "progression",
+      "starting_owned": true,
+      "parent": "dom.anchor",
+      "rank": 1,
+      "column": 1,
+      "xp_cost": 0,
+      "effect": {
+        "resource": "res://data/heroes/echo/actions/feedback.tres",
+        "slot": 2,
+        "type": "action"
+      }
+    },
+    {
+      "id": "dom.psy_1",
+      "parent": "dom.anchor",
+      "rank": 2,
+      "column": 0,
+      "xp_cost": 200,
+      "effect": {
+        "amount": 1,
+        "stat": "PSY",
+        "type": "stat"
+      }
     }
   ],
   "role_id": "dom",
-  "schema_version": 1
+  "schema_version": 2
 }

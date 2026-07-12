@@ -1,29 +1,40 @@
 {
-  "content_revision": 1,
+  "content_revision": 2,
   "nodes": [
     {
-      "column": 0,
+      "id": "med.anchor",
+      "node_kind": "role_anchor",
+      "parent": null,
+      "rank": 1,
+      "column": 0
+    },
+    {
+      "column": -1,
       "effect": {
         "resource": "res://data/heroes/sands/actions/immunize.tres",
         "slot": 1,
         "type": "action"
       },
       "id": "med.root",
-      "parent": null,
+      "parent": "med.anchor",
       "rank": 1,
-      "xp_cost": 100
+      "xp_cost": 0,
+      "node_kind": "progression",
+      "starting_owned": true
     },
     {
-      "column": 0,
+      "column": 1,
       "effect": {
         "resource": "res://data/heroes/sands/actions/booster_shots.tres",
         "slot": 2,
         "type": "action"
       },
       "id": "med.booster_shots",
-      "parent": "med.root",
-      "rank": 2,
-      "xp_cost": 200
+      "parent": "med.anchor",
+      "rank": 1,
+      "xp_cost": 0,
+      "node_kind": "progression",
+      "starting_owned": true
     },
     {
       "column": 0,
@@ -33,9 +44,9 @@
         "type": "action"
       },
       "id": "med.auto_shields",
-      "parent": "med.booster_shots",
-      "rank": 3,
-      "xp_cost": 300
+      "parent": "med.anchor",
+      "rank": 2,
+      "xp_cost": 200
     },
     {
       "column": 0,
@@ -46,8 +57,8 @@
       },
       "id": "med.bastion",
       "parent": "med.auto_shields",
-      "rank": 4,
-      "xp_cost": 400
+      "rank": 3,
+      "xp_cost": 300
     },
     {
       "column": 0,
@@ -57,8 +68,8 @@
       },
       "id": "med.triage",
       "parent": "med.bastion",
-      "rank": 5,
-      "xp_cost": 500
+      "rank": 4,
+      "xp_cost": 400
     },
     {
       "column": 0,
@@ -68,10 +79,10 @@
       },
       "id": "med.apply_painkillers",
       "parent": "med.triage",
-      "rank": 6,
-      "xp_cost": 600
+      "rank": 5,
+      "xp_cost": 500
     }
   ],
   "role_id": "med",
-  "schema_version": 1
+  "schema_version": 2
 }

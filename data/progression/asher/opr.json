@@ -1,19 +1,54 @@
 {
-  "content_revision": 1,
+  "content_revision": 2,
   "nodes": [
     {
-      "column": 0,
+      "id": "opr.anchor",
+      "node_kind": "role_anchor",
+      "parent": null,
+      "rank": 1,
+      "column": 0
+    },
+    {
+      "column": -1,
       "effect": {
         "resource": "res://data/heroes/asher/actions/coordinate.tres",
         "slot": 1,
         "type": "action"
       },
       "id": "opr.root",
-      "parent": null,
+      "parent": "opr.anchor",
       "rank": 1,
-      "xp_cost": 100
+      "xp_cost": 0,
+      "node_kind": "progression",
+      "starting_owned": true
+    },
+    {
+      "id": "opr.decoy",
+      "node_kind": "progression",
+      "starting_owned": true,
+      "parent": "opr.anchor",
+      "rank": 1,
+      "column": 1,
+      "xp_cost": 0,
+      "effect": {
+        "resource": "res://data/heroes/asher/actions/decoy.tres",
+        "slot": 2,
+        "type": "action"
+      }
+    },
+    {
+      "id": "opr.hp_5",
+      "parent": "opr.anchor",
+      "rank": 2,
+      "column": 0,
+      "xp_cost": 200,
+      "effect": {
+        "amount": 5,
+        "stat": "HP",
+        "type": "stat"
+      }
     }
   ],
   "role_id": "opr",
-  "schema_version": 1
+  "schema_version": 2
 }

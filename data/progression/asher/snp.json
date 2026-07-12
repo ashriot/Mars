@@ -1,17 +1,40 @@
 {
-  "content_revision": 1,
+  "content_revision": 2,
   "nodes": [
     {
-      "column": 0,
+      "id": "snp.anchor",
+      "node_kind": "role_anchor",
+      "parent": null,
+      "rank": 1,
+      "column": 0
+    },
+    {
+      "column": -1,
       "effect": {
         "resource": "res://data/heroes/asher/actions/mark_target.tres",
         "slot": 1,
         "type": "action"
       },
       "id": "snp.root",
-      "parent": null,
+      "parent": "snp.anchor",
       "rank": 1,
-      "xp_cost": 100
+      "xp_cost": 0,
+      "node_kind": "progression",
+      "starting_owned": true
+    },
+    {
+      "column": 1,
+      "effect": {
+        "resource": "res://data/heroes/asher/actions/aimed_shot.tres",
+        "slot": 2,
+        "type": "action"
+      },
+      "id": "snp.aimed_shot",
+      "parent": "snp.anchor",
+      "rank": 1,
+      "xp_cost": 0,
+      "node_kind": "progression",
+      "starting_owned": true
     },
     {
       "column": 0,
@@ -21,7 +44,7 @@
         "type": "stat"
       },
       "id": "snp.hp_5",
-      "parent": "snp.root",
+      "parent": "snp.anchor",
       "rank": 2,
       "xp_cost": 200
     },
@@ -84,20 +107,8 @@
       "parent": "snp.atk_1",
       "rank": 4,
       "xp_cost": 400
-    },
-    {
-      "column": 0,
-      "effect": {
-        "resource": "res://data/heroes/asher/actions/aimed_shot.tres",
-        "slot": 2,
-        "type": "action"
-      },
-      "id": "snp.aimed_shot",
-      "parent": "snp.ovr_1",
-      "rank": 5,
-      "xp_cost": 500
     }
   ],
   "role_id": "snp",
-  "schema_version": 1
+  "schema_version": 2
 }

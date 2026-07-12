@@ -1,30 +1,41 @@
 extends GutTest
 
 const CONTENT_ROOT := "res://data/progression/"
+const STARTING_KITS := {
+	"gun": ["double_tap.tres", "fusion_ammo.tres"],
+	"opr": ["coordinate.tres", "decoy.tres"],
+	"snp": ["mark_target.tres", "aimed_shot.tres"],
+	"dom": ["displace.tres", "feedback.tres"],
+	"kin": ["telekinesis.tres", "rejuvenate.tres"],
+	"psi": ["focused_bolt.tres", "energy_barrier.tres"],
+	"med": ["immunize.tres", "booster_shots.tres"],
+	"stg": ["tempo.tres", "gambit.tres"],
+	"van": ["draw_fire.tres", "overwatch.tres"],
+}
 const EXPECTED := {
-	"gun": {"hero":"asher", "nodes":18, "xp":13900, "effects":{"stat":15,"action":2,"passive":1,"shift_action":0}},
-	"snp": {"hero":"asher", "nodes":8, "xp":3300, "effects":{"stat":6,"action":2,"passive":0,"shift_action":0}},
-	"opr": {"hero":"asher", "nodes":1, "xp":100, "effects":{"stat":0,"action":1,"passive":0,"shift_action":0}},
-	"kin": {"hero":"echo", "nodes":17, "xp":12550, "effects":{"stat":14,"action":3,"passive":0,"shift_action":0}},
-	"psi": {"hero":"echo", "nodes":18, "xp":13150, "effects":{"stat":15,"action":3,"passive":0,"shift_action":0}},
-	"dom": {"hero":"echo", "nodes":1, "xp":100, "effects":{"stat":0,"action":1,"passive":0,"shift_action":0}},
-	"med": {"hero":"sands", "nodes":6, "xp":2100, "effects":{"stat":0,"action":4,"passive":1,"shift_action":1}},
-	"stg": {"hero":"sands", "nodes":6, "xp":2100, "effects":{"stat":0,"action":4,"passive":1,"shift_action":1}},
-	"van": {"hero":"sands", "nodes":6, "xp":2100, "effects":{"stat":0,"action":4,"passive":1,"shift_action":1}},
+	"gun": {"hero":"asher", "nodes":19, "xp":11900, "effects":{"stat":15,"action":2,"passive":1,"shift_action":0}},
+	"snp": {"hero":"asher", "nodes":9, "xp":2700, "effects":{"stat":6,"action":2,"passive":0,"shift_action":0}},
+	"opr": {"hero":"asher", "nodes":4, "xp":200, "effects":{"stat":1,"action":2,"passive":0,"shift_action":0}},
+	"kin": {"hero":"echo", "nodes":18, "xp":10700, "effects":{"stat":14,"action":3,"passive":0,"shift_action":0}},
+	"psi": {"hero":"echo", "nodes":19, "xp":11300, "effects":{"stat":15,"action":3,"passive":0,"shift_action":0}},
+	"dom": {"hero":"echo", "nodes":4, "xp":200, "effects":{"stat":1,"action":2,"passive":0,"shift_action":0}},
+	"med": {"hero":"sands", "nodes":7, "xp":1400, "effects":{"stat":0,"action":4,"passive":1,"shift_action":1}},
+	"stg": {"hero":"sands", "nodes":7, "xp":1400, "effects":{"stat":0,"action":4,"passive":1,"shift_action":1}},
+	"van": {"hero":"sands", "nodes":7, "xp":1400, "effects":{"stat":0,"action":4,"passive":1,"shift_action":1}},
 }
 
 # Stable IDs are authored semantic names: role.root, then reward/resource names;
 # repeated stat rewards receive a deterministic numeric suffix.
 const EXPECTED_IDS := {
-	"gun": ["gun.root","gun.atk_1","gun.hp_5","gun.hp_10","gun.hp_10_2","gun.spd_1","gun.fusion_ammo","gun.psy_1","gun.hp_5_2","gun.hp_10_3","gun.spd_1_2","gun.atk_1_2","gun.atk_2","gun.atk_2_2","gun.bullet_time","gun.spd_2","gun.spd_2_2","gun.psy_2"],
-	"snp": ["snp.root","snp.hp_5","snp.atk_1","snp.atk_2","snp.atk_2_2","snp.aim_1","snp.ovr_1","snp.aimed_shot"],
-	"opr": ["opr.root"],
-	"kin": ["kin.root","kin.hp_5","kin.psy_1","kin.psy_2","kin.psy_2_2","kin.spd_1","kin.rejuvenate","kin.atk_1","kin.hp_10","kin.hp_10_2","kin.spd_1_2","kin.psy_1_2","kin.psy_2_3","kin.psy_2_4","kin.pain_transfer","kin.spd_2","kin.atk_2"],
-	"psi": ["psi.root","psi.hp_5","psi.atk_1","psi.atk_2","psi.atk_2_2","psi.ovr_1","psi.energy_barrier","psi.psy_1","psi.hp_5_2","psi.hp_10","psi.ovr_1_2","psi.atk_1_2","psi.atk_2_3","psi.atk_2_4","psi.reverberate","psi.ovr_2","psi.psy_2","psi.ovr_2_2"],
-	"dom": ["dom.root"],
-	"med": ["med.root","med.booster_shots","med.auto_shields","med.bastion","med.triage","med.apply_painkillers"],
-	"stg": ["stg.root","stg.gambit","stg.advantage","stg.checkmate","stg.opening_move","stg.fianchetto"],
-	"van": ["van.root","van.overwatch","van.focus_fire","van.phalanx","van.return_fire","van.opening_salvo"],
+	"gun": ["gun.anchor","gun.root","gun.fusion_ammo","gun.atk_1","gun.hp_5","gun.hp_10","gun.hp_10_2","gun.spd_1","gun.psy_1","gun.hp_5_2","gun.hp_10_3","gun.spd_1_2","gun.atk_1_2","gun.atk_2","gun.atk_2_2","gun.bullet_time","gun.spd_2","gun.spd_2_2","gun.psy_2"],
+	"snp": ["snp.anchor","snp.root","snp.aimed_shot","snp.hp_5","snp.atk_1","snp.atk_2","snp.atk_2_2","snp.aim_1","snp.ovr_1"],
+	"opr": ["opr.anchor","opr.root","opr.decoy","opr.hp_5"],
+	"kin": ["kin.anchor","kin.root","kin.rejuvenate","kin.hp_5","kin.psy_1","kin.psy_2","kin.psy_2_2","kin.spd_1","kin.atk_1","kin.hp_10","kin.hp_10_2","kin.spd_1_2","kin.psy_1_2","kin.psy_2_3","kin.psy_2_4","kin.pain_transfer","kin.spd_2","kin.atk_2"],
+	"psi": ["psi.anchor","psi.root","psi.energy_barrier","psi.hp_5","psi.atk_1","psi.atk_2","psi.atk_2_2","psi.ovr_1","psi.psy_1","psi.hp_5_2","psi.hp_10","psi.ovr_1_2","psi.atk_1_2","psi.atk_2_3","psi.atk_2_4","psi.reverberate","psi.ovr_2","psi.psy_2","psi.ovr_2_2"],
+	"dom": ["dom.anchor","dom.root","dom.feedback","dom.psy_1"],
+	"med": ["med.anchor","med.root","med.booster_shots","med.auto_shields","med.bastion","med.triage","med.apply_painkillers"],
+	"stg": ["stg.anchor","stg.root","stg.gambit","stg.advantage","stg.checkmate","stg.opening_move","stg.fianchetto"],
+	"van": ["van.anchor","van.root","van.overwatch","van.focus_fire","van.phalanx","van.return_fire","van.opening_salvo"],
 }
 
 func test_every_production_role_is_valid_and_matches_authored_summary() -> void:
@@ -36,7 +47,7 @@ func test_every_production_role_is_valid_and_matches_authored_summary() -> void:
 		assert_not_null(result.tree, path)
 		if result.tree == null: continue
 		assert_eq(result.tree.role_id, role_id)
-		assert_eq(result.tree.root_id, role_id + ".root")
+		assert_eq(result.tree.root_id, role_id + ".anchor")
 		assert_eq(result.tree.nodes.map(func(node): return node.id), EXPECTED_IDS[role_id])
 		var catalog := ProgressionCatalog.from_validated_trees([result.tree])
 		var summary := catalog.get_summary(role_id)
@@ -44,20 +55,73 @@ func test_every_production_role_is_valid_and_matches_authored_summary() -> void:
 		assert_eq(summary.total_xp, expected.xp, role_id)
 		assert_eq(summary.effect_counts, expected.effects, role_id)
 
+func test_every_production_role_fulfills_the_starting_kit_contract() -> void:
+	for role_id: String in STARTING_KITS:
+		var hero_id: String = EXPECTED[role_id].hero
+		var path := CONTENT_ROOT.path_join(hero_id).path_join(role_id + ".json")
+		var document: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(path))
+		assert_eq(int(document.schema_version), 2, role_id)
+		var nodes: Array = document.nodes
+		var anchors := nodes.filter(func(node): return node.get("node_kind", "progression") == "role_anchor")
+		assert_eq(anchors.size(), 1, role_id)
+		if anchors.size() != 1: continue
+		var anchor: Dictionary = anchors[0]
+		assert_eq(anchor.id, role_id + ".anchor", role_id)
+		assert_eq(anchor.parent, null, role_id)
+		assert_eq(int(anchor.rank), 1, role_id)
+		assert_eq(int(anchor.column), 0, role_id)
+
+		var starting := nodes.filter(func(node): return node.get("starting_owned", false) == true)
+		starting.sort_custom(func(a, b): return int(a.effect.slot) < int(b.effect.slot))
+		assert_eq(starting.size(), 2, role_id)
+		for index in mini(starting.size(), 2):
+			var node: Dictionary = starting[index]
+			assert_eq(node.parent, anchor.id, node.id)
+			assert_eq(int(node.rank), 1, node.id)
+			assert_eq(int(node.column), -1 if index == 0 else 1, node.id)
+			assert_eq(int(node.xp_cost), 0, node.id)
+			assert_eq(int(node.effect.slot), index + 1, node.id)
+			assert_true(str(node.effect.resource).ends_with(STARTING_KITS[role_id][index]), node.id)
+
+		var paid := nodes.filter(func(node): return node.get("node_kind", "progression") == "progression" and not node.get("starting_owned", false))
+		paid.sort_custom(func(a, b): return int(a.rank) < int(b.rank))
+		assert_false(paid.is_empty(), role_id)
+		if paid.is_empty(): continue
+		assert_eq(int(paid[0].rank), 2, role_id)
+		assert_eq(paid[0].parent, anchor.id, role_id)
+		if str(paid[0].effect.type) == "stat":
+			assert_true(str(paid[0].effect.stat) in ["HP", "ATK", "PSY"], role_id)
+		var paid_ranks := {}
+		for node: Dictionary in paid:
+			paid_ranks[int(node.rank)] = true
+			var multiplier := 150 if int(node.column) != 0 else 100
+			assert_eq(int(node.xp_cost), int(node.rank) * multiplier, node.id)
+		for rank in range(2, int(paid[-1].rank) + 1):
+			assert_true(paid_ranks.has(rank), "%s paid rank %d" % [role_id, rank])
+
+		var result := ProgressionJsonLoader.load_file(path)
+		assert_eq(result.errors.size(), 0, path)
+		assert_not_null(result.tree, path)
+
+	_assert_first_paid_stat("opr", "opr.hp_5", "HP", 5)
+	_assert_first_paid_stat("dom", "dom.psy_1", "PSY", 1)
+
+func test_runtime_content_and_fixtures_have_no_legacy_operator_skill_references() -> void:
+	var legacy_name := "in" + "spire"
+	for root in ["res://data", "res://src", "res://test"]:
+		_assert_tree_excludes_tokens(root, [legacy_name, legacy_name.capitalize(), legacy_name.to_upper()])
+
 func test_all_non_stat_rewards_reference_explicit_action_resources() -> void:
 	for role_id: String in EXPECTED:
 		var expected: Dictionary = EXPECTED[role_id]
 		var result := ProgressionJsonLoader.load_file(CONTENT_ROOT.path_join(expected.hero).path_join(role_id + ".json"))
 		if result.tree == null: continue
 		for node: ProgressionNodeDefinition in result.tree.nodes:
+			if node.is_structural: continue
 			if node.effect.type != ProgressionEffect.Type.STAT:
 				assert_true(node.effect.target.begins_with("res://data/heroes/"), node.id)
 				assert_true(ResourceLoader.exists(node.effect.target), node.id)
 				assert_true(ResourceLoader.load(node.effect.target) is Action, node.id)
-
-func test_confirmed_single_root_roles_are_explicit_approved_baselines() -> void:
-	_assert_single_action_root("opr", "asher", "res://data/heroes/asher/actions/coordinate.tres")
-	_assert_single_action_root("dom", "echo", "res://data/heroes/echo/actions/displace.tres")
 
 func test_catalog_recursively_loads_all_nine_production_roles() -> void:
 	var catalog := ProgressionCatalog.new()
@@ -112,9 +176,20 @@ func test_production_content_has_no_legacy_progression_references() -> void:
 	assert_true(_is_legacy_nested_role_resource("res://data/heroes/new_hero/roles/new_role/node.tres"))
 	assert_false(_is_legacy_nested_role_resource("res://data/heroes/new_hero/roles/new_role.tres"))
 
-func _assert_single_action_root(role_id: String, hero_id: String, resource_path: String) -> void:
+func _assert_first_paid_stat(role_id: String, node_id: String, stat: String, amount: int) -> void:
+	var hero_id: String = EXPECTED[role_id].hero
 	var document: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(CONTENT_ROOT.path_join(hero_id).path_join(role_id + ".json")))
-	_assert_node_arrays_match(document.nodes, [{"column":0, "effect":{"resource":resource_path, "slot":1, "type":"action"}, "id":role_id + ".root", "parent":null, "rank":1, "xp_cost":100}], role_id)
+	var paid: Array = document.nodes.filter(func(node): return node.has("xp_cost") and int(node.xp_cost) > 0)
+	paid.sort_custom(func(a, b): return int(a.rank) < int(b.rank))
+	assert_false(paid.is_empty(), role_id)
+	if paid.is_empty(): return
+	var first_paid: Dictionary = paid[0]
+	assert_eq(first_paid.id, node_id, role_id)
+	assert_eq(int(first_paid.rank), 2, role_id)
+	assert_eq(int(first_paid.xp_cost), 200, role_id)
+	assert_eq(str(first_paid.effect.type), "stat", role_id)
+	assert_eq(str(first_paid.effect.stat), stat, role_id)
+	assert_eq(int(first_paid.effect.amount), amount, role_id)
 
 func _assert_node_arrays_match(actual_nodes: Array, expected_nodes: Array, role_id: String) -> void:
 	assert_eq(actual_nodes.size(), expected_nodes.size(), role_id)
