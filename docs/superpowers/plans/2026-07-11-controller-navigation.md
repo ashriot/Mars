@@ -4,7 +4,7 @@
 
 **Goal:** Make the entire title → hub → dungeon → terminal → battle → result loop playable with controller or Steam Deck while preserving seamless mouse and keyboard use.
 
-**Architecture:** A semantic input/glyph foundation owns device detection, action names, glyph lookup, and repeat/deadzone behavior. One global `NavigationUXLayer` above screen content owns cursor presentation, focus glow, hints, modal focus, and focus restoration for standard controls; thin skill-tree, dungeon, battle, and inventory adapters provide only the gameplay semantics the shared layer cannot infer.
+**Architecture:** A semantic input/glyph foundation owns device detection, action names, glyph lookup, and repeat/deadzone behavior. One global `NavigationUXLayer` above screen content owns cursor presentation, focus scaling, hints, modal focus, and focus restoration for standard controls; thin skill-tree, dungeon, battle, and inventory adapters provide only the gameplay semantics the shared layer cannot infer.
 
 **Tech Stack:** Godot project metadata 4.6, Godot 4.7 test runtime, GDScript, Godot Input Map, Control focus, SVG assets, and vendored GUT 9.7.1.
 
@@ -251,9 +251,9 @@ Run both focused files. Expected: parse/load failure for the new classes.
 
 Use `mouse_filter = Control.MOUSE_FILTER_IGNORE`, process after layout, and tween snapped targets for 0.08 seconds. Mouse targets update directly. World targets use `get_global_transform_with_canvas()`; never call `warp_mouse()`.
 
-- [ ] **Step 4: Implement focus glow and semantic hints**
+- [ ] **Step 4: Implement focus scaling and semantic hints**
 
-Focus glow adds/removes one theme style override and a subtle scale tween without changing owned/affordable/disabled colors. Each hint resolves its texture through `InputIconMap`; missing textures leave a text label rather than crashing.
+Focus presentation uses only a subtle scale tween and preserves all authored theme overrides and owned/affordable/disabled colors. Each hint resolves its texture through `InputIconMap`; missing textures leave a text label rather than crashing.
 
 - [ ] **Step 5: Attach global UI, test, and commit**
 
@@ -347,7 +347,7 @@ Set focus on generated `SkillTreeNode` controls, call the existing `purchase_req
 
 Use `UPGRADE` for affordable purchasable nodes, `INTERACT` for inspection, and `DISABLED` for unavailable purchase; publish confirm/cancel/page/section actions. Do not implement refund behavior—only keep the reserved semantic action unused.
 
-Inventory/equipment controls use `INTERACT`, `CAN_GRAB`, and `DRAGGING`; valid drop targets receive the focus glow and invalid targets receive the disabled glow. Confirm calls the existing item/slot click handlers so equipment authority remains unchanged, and cancel returns a held item before moving outward in the focus hierarchy.
+Inventory/equipment controls use `INTERACT`, `CAN_GRAB`, `DRAGGING`, and `DISABLED` cursor states without adding button focus borders. Confirm calls the existing item/slot click handlers so equipment authority remains unchanged, and cancel returns a held item before moving outward in the focus hierarchy.
 
 - [ ] **Step 6: Run hub tests/full suite and commit**
 

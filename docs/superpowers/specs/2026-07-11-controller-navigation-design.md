@@ -134,7 +134,7 @@ Equipment pickup/drop uses open/closed hand states. Compatible and incompatible 
 
 Cursor state is requested semantically through an interface or metadata; controls do not reference cursor textures directly.
 
-Focused controls also receive a distinct animated edge/glow and subtle scale treatment. Cursor presence does not replace focus accessibility. Focus visuals must remain distinguishable from owned, selected, affordable, disabled, and hovered states without relying solely on color.
+Focused controls receive only a subtle scale treatment alongside the custom cursor. The global navigation layer does not replace or add a focus border/glow, so authored button, owned, affordable, disabled, selected, and hovered styling remains untouched.
 
 ## Contextual Hint Bar
 
@@ -235,7 +235,7 @@ Shift action uses its dedicated semantic binding and glyph.
 
 ## Focus Memory and Screen Adapters
 
-One global `NavigationUXLayer` lives above screen content near the root viewport. It owns cursor presentation, focus glow, action hints, active-device presentation, modal focus trapping, and focus restoration. Ordinary Godot controls work through standard focus plus metadata or registration, so each screen does not recreate controller UX.
+One global `NavigationUXLayer` lives above screen content near the root viewport. It owns cursor presentation, focus scaling, action hints, active-device presentation, modal focus trapping, and focus restoration. Ordinary Godot controls work through standard focus plus metadata or registration, so each screen does not recreate controller UX.
 
 The shared input foundation owns device mode, repeat/deadzone behavior, and glyph resolution. The UX layer consumes that state and presents it consistently across every screen.
 
@@ -286,7 +286,7 @@ Manual verification covers Xbox, PlayStation, Nintendo, and Steam Deck/Steam Inp
 1. Normalize/commit curated assets and remove generated repository noise.
 2. Repair `dynamic_glyph.gd` and introduce semantic glyph resolution.
 3. Add semantic Input Map actions, device modes, and platform mappings.
-4. Add persistent cursor, semantic cursor states, focus glow, and hint bar.
+4. Add persistent cursor, semantic cursor states, focus scaling, and hint bar.
 5. Convert ordinary menus, terminals, and modals.
 6. Implement hub hierarchy and geometric skill-tree navigation.
 7. Implement dungeon angular navigation and camera controls.

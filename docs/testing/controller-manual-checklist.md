@@ -33,7 +33,7 @@ All device checks below are intentionally unchecked until performed on the named
 - [ ] Steam Deck controls: complete the full loop in Gaming Mode.
 - [ ] Steam Input known-device profile: glyph family and every semantic action match the selected layout.
 - [ ] Steam Input unknown/generic profile: Steam Deck glyph-family fallback with an Xbox-compatible layout remains usable and internally consistent.
-- [ ] At native handheld resolution, cursor, focus glow, button glyphs, hint text, terminal links, skill nodes, map nodes, card targets, and result totals are readable without clipping.
+- [ ] At native handheld resolution, cursor, focused-button scaling, button glyphs, hint text, terminal links, skill nodes, map nodes, card targets, and result totals are readable without clipping.
 
 ## Mouse and keyboard switching
 

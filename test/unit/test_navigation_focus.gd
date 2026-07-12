@@ -10,6 +10,7 @@ func test_clear_restores_original_visual_state_and_focus_override() -> void:
 	original_style.bg_color = Color.RED
 	control.add_theme_stylebox_override(&"focus", original_style)
 	NavigationFocus.apply(control)
+	assert_same(control.get_theme_stylebox(&"focus"), original_style, "logical focus does not replace authored button styling")
 	NavigationFocus.clear(control)
 	await get_tree().create_timer(0.1).timeout
 	assert_eq(control.scale, Vector2(1.4, 0.8))
@@ -25,6 +26,7 @@ func test_repeated_apply_and_clear_restore_controls_without_existing_override() 
 	control.pivot_offset = Vector2(3, 5)
 	NavigationFocus.apply(control)
 	NavigationFocus.apply(control)
+	assert_false(control.has_theme_stylebox_override(&"focus"), "scale is the only global focus treatment")
 	NavigationFocus.clear(control)
 	NavigationFocus.clear(control)
 	await get_tree().create_timer(0.1).timeout

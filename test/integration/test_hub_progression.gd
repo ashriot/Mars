@@ -502,16 +502,15 @@ func test_equipment_panel_reuse_with_null_clears_and_disables_controller_actions
 	panel.free()
 
 
-func test_invalid_mod_drop_uses_distinct_disabled_focus_glow() -> void:
+func test_invalid_mod_drop_uses_disabled_cursor_without_focus_override() -> void:
 	var slot := preload("res://src/hub/mod_slot.tscn").instantiate() as ModSlot
 	add_child(slot)
 	slot.setup(null, true)
 	slot.get_focus_control().grab_focus()
 	NavigationFocus.apply(slot.get_focus_control())
 	slot.set_drop_validity(false)
-	var style := slot.get_focus_control().get_theme_stylebox("focus") as StyleBoxFlat
 	assert_eq(slot.get_focus_control().get_meta("cursor_state"), NavigationCursor.CursorState.DISABLED)
-	assert_eq(style.border_color, Color(1.0, 0.25, 0.25, 0.95))
+	assert_false(slot.get_focus_control().has_theme_stylebox_override(&"focus"))
 	NavigationFocus.clear(slot.get_focus_control())
 	slot.free()
 

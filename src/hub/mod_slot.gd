@@ -59,6 +59,5 @@ func get_focus_control() -> BaseButton:
 
 func set_drop_validity(is_valid: bool) -> void:
 	button.set_meta("cursor_state", NavigationCursor.CursorState.INTERACT if is_valid else NavigationCursor.CursorState.DISABLED)
-	button.set_meta("focus_invalid", not is_valid)
 	if button.has_focus():
 		NavigationFocus.apply(button)
