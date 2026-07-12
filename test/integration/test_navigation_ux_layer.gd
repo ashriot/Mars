@@ -3,6 +3,38 @@ extends GutTest
 const UXScene = preload("res://src/ui/navigation/navigation_ux_layer.tscn")
 const HubScene = preload("res://src/hub/hub.tscn")
 
+var saved_input_mode: InputManager.InputMode
+var saved_cursor_behavior: InputManager.CursorBehavior
+var saved_expected_warp_position: Vector2
+var saved_expected_warp_deadline_ms: int
+
+
+class RecordingCursor extends NavigationCursor:
+	signal physical_warped(position: Vector2)
+	var warped_positions: Array[Vector2] = []
+	var expected_positions_at_warp: Array[Vector2] = []
+
+	func _warp_mouse(position: Vector2) -> void:
+		warped_positions.append(position)
+		expected_positions_at_warp.append(InputManager._expected_warp_position)
+		physical_warped.emit(position)
+
+
+func before_each() -> void:
+	saved_input_mode = InputManager._active_mode
+	saved_cursor_behavior = InputManager._cursor_behavior
+	saved_expected_warp_position = InputManager._expected_warp_position
+	saved_expected_warp_deadline_ms = InputManager._expected_warp_deadline_ms
+
+
+func after_each() -> void:
+	InputManager._expected_warp_position = Vector2.INF
+	InputManager._expected_warp_deadline_ms = 0
+	InputManager._active_mode = saved_input_mode
+	InputManager._cursor_behavior = saved_cursor_behavior
+	InputManager._expected_warp_position = saved_expected_warp_position
+	InputManager._expected_warp_deadline_ms = saved_expected_warp_deadline_ms
+
 
 func test_top_modal_query_tracks_nested_ownership() -> void:
 	var ux = UXScene.instantiate()
@@ -209,6 +241,14 @@ func test_registered_screens_track_focus_and_modal_restores_it() -> void:
 func test_modal_pop_synchronizes_cursor_to_restored_screen_focus() -> void:
 	var ux := UXScene.instantiate() as NavigationUXLayer
 	add_child_autofree(ux)
+	var original_cursor := ux.cursor
+	original_cursor.set_process(false)
+	ux.remove_child(original_cursor)
+	original_cursor.free()
+	var cursor := RecordingCursor.new()
+	ux.add_child(cursor)
+	ux.cursor = cursor
+	cursor.set_process(false)
 	var screen := Control.new()
 	var restored := Button.new()
 	restored.position = Vector2(120, 70)
@@ -225,10 +265,16 @@ func test_modal_pop_synchronizes_cursor_to_restored_screen_focus() -> void:
 	await get_tree().process_frame
 	InputManager._set_cursor_behavior(InputManager.CursorBehavior.SNAPPED)
 	ux.pop_modal(modal)
-	await get_tree().process_frame
+	cursor.set_process(true)
+	var recorded_warp: Vector2 = await cursor.physical_warped
+	cursor.set_process(false)
 	var destination := restored.get_global_transform_with_canvas() * (restored.size * 0.5)
 	assert_eq(ux.get_focus_target(), restored)
-	assert_eq(InputManager._expected_warp_position, destination)
+	assert_eq(recorded_warp, destination)
+	assert_eq(cursor.warped_positions, [destination])
+	assert_eq(cursor.expected_positions_at_warp, [destination], "expect_mouse_warp runs before the physical warp seam")
+	await get_tree().process_frame
+	cursor.set_process(true)
 
 
 func test_invalid_prior_focus_restores_registered_default_or_descendant() -> void:

@@ -6,6 +6,7 @@ class TestCursor extends NavigationCursor:
 	static var last_mode := Input.MOUSE_MODE_VISIBLE
 	var simulated_mouse_mode := Input.MOUSE_MODE_VISIBLE
 	var warped_positions: Array[Vector2] = []
+	var expected_positions_at_warp: Array[Vector2] = []
 
 	func _get_mouse_mode() -> Input.MouseMode:
 		return simulated_mouse_mode
@@ -16,6 +17,7 @@ class TestCursor extends NavigationCursor:
 
 	func _warp_mouse(position: Vector2) -> void:
 		warped_positions.append(position)
+		expected_positions_at_warp.append(InputManager._expected_warp_position)
 
 
 func test_cursor_hides_os_pointer_while_active_and_restores_it_on_exit() -> void:
@@ -57,6 +59,7 @@ func test_snapped_target_uses_control_center_and_anchor_metadata() -> void:
 	cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2.ZERO, true)
 	assert_eq(cursor.position, Vector2(70, 50))
 	assert_eq(cursor.warped_positions, [Vector2(70, 50)])
+	assert_eq(cursor.expected_positions_at_warp, [Vector2(70, 50)])
 	assert_eq(InputManager._expected_warp_position, Vector2(70, 50))
 	target.set_meta("cursor_anchor", Vector2(10, 12))
 	cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2(70, 50), true)

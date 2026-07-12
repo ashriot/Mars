@@ -10,7 +10,6 @@ var saved_input_mode: InputManager.InputMode
 var saved_cursor_behavior: InputManager.CursorBehavior
 var saved_expected_warp_position: Vector2
 var saved_expected_warp_deadline_ms: int
-var saved_mouse_position: Vector2
 
 
 class RecordingCursor extends NavigationCursor:
@@ -19,7 +18,6 @@ class RecordingCursor extends NavigationCursor:
 
 	func _warp_mouse(position: Vector2) -> void:
 		warped_positions.append(position)
-		Input.warp_mouse(position)
 		physical_warped.emit(position)
 
 
@@ -32,7 +30,6 @@ func before_each() -> void:
 	saved_cursor_behavior = InputManager._cursor_behavior
 	saved_expected_warp_position = InputManager._expected_warp_position
 	saved_expected_warp_deadline_ms = InputManager._expected_warp_deadline_ms
-	saved_mouse_position = get_viewport().get_mouse_position()
 	SaveSystem.storage_root_override = TEST_SAVE_ROOT
 	SaveSystem.current_slot_index = TEST_SLOT
 	SaveSystem.party_roster.clear()
@@ -49,7 +46,6 @@ func after_each() -> void:
 	SaveSystem.storage_root_override = saved_storage_root
 	InputManager._expected_warp_position = Vector2.INF
 	InputManager._expected_warp_deadline_ms = 0
-	Input.warp_mouse(saved_mouse_position)
 	InputManager._active_mode = saved_input_mode
 	InputManager._cursor_behavior = saved_cursor_behavior
 	InputManager._expected_warp_position = saved_expected_warp_position
@@ -735,7 +731,6 @@ func test_keyboard_and_controller_skill_navigation_synchronize_cursor_through_in
 	panel.focus_node("gun.start1")
 	await get_tree().create_timer(0.35).timeout
 	cursor.warped_positions.clear()
-	Input.warp_mouse(Vector2.ZERO)
 	cursor.set_process(true)
 	var keyboard := InputEventKey.new()
 	keyboard.physical_keycode = KEY_D
