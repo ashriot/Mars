@@ -1,6 +1,17 @@
 extends GutTest
 
 const HintBarScene = preload("res://src/ui/navigation/action_hint_bar.tscn")
+const HintScene = preload("res://src/ui/navigation/action_hint.tscn")
+
+
+func test_hint_can_be_configured_before_entering_tree() -> void:
+	var hint := HintScene.instantiate() as ActionHint
+	hint.configure({action = &"confirm", label = "Select", enabled = false})
+	add_child_autofree(hint)
+	await get_tree().process_frame
+	assert_eq(hint.action, &"confirm")
+	assert_eq(hint.label.text, "Select")
+	assert_almost_eq(hint.modulate.a, 0.45, 0.001)
 
 
 func test_controller_mode_shows_controller_glyphs() -> void:

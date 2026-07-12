@@ -34,7 +34,7 @@ func _ready():
 func _exit_tree() -> void:
 	var navigation := _navigation_ux_layer()
 	if navigation:
-		navigation.pop_modal(self)
+		navigation.remove_modal(self)
 
 func open():
 	party_roster = SaveSystem.party_roster

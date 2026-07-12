@@ -1,6 +1,7 @@
 extends GutTest
 
 const UXScene = preload("res://src/ui/navigation/navigation_ux_layer.tscn")
+const HubScene = preload("res://src/hub/hub.tscn")
 
 
 func test_top_modal_query_tracks_nested_ownership() -> void:
@@ -22,6 +23,85 @@ func test_top_modal_query_tracks_nested_ownership() -> void:
 	assert_true(ux.is_top_modal(inner))
 	ux.pop_modal(inner)
 	assert_true(ux.is_top_modal(outer))
+
+
+func test_remove_modal_discards_owned_presentation_without_restoring_screen() -> void:
+	var ux = UXScene.instantiate()
+	add_child_autofree(ux)
+	var screen := Control.new()
+	var prior_screen_focus := Button.new()
+	screen.add_child(prior_screen_focus)
+	add_child_autofree(screen)
+	ux.register_screen(screen, prior_screen_focus)
+	await get_tree().process_frame
+	var modal := Control.new()
+	var modal_button := Button.new()
+	modal.add_child(modal_button)
+	add_child_autofree(modal)
+	ux.push_modal(modal, modal_button)
+	var modal_hints: Array[Dictionary] = [{action = &"cancel", label = "Back", enabled = true}]
+	ux.publish_hints(modal_hints)
+	await get_tree().process_frame
+
+	ux.remove_modal(modal)
+
+	assert_false(ux.is_top_modal(modal))
+	assert_ne(ux.get_focus_target(), prior_screen_focus)
+	assert_eq(ux.hint_bar.get_hint_count(), 0)
+	ux.remove_modal(modal)
+	ux.pop_modal(modal)
+	assert_ne(ux.get_focus_target(), prior_screen_focus)
+
+
+func test_remove_nested_modal_preserves_outer_modal_presentation() -> void:
+	var ux = UXScene.instantiate()
+	add_child_autofree(ux)
+	var outer := Control.new()
+	var outer_button := Button.new()
+	outer.add_child(outer_button)
+	add_child_autofree(outer)
+	var inner := Control.new()
+	var inner_button := Button.new()
+	inner.add_child(inner_button)
+	add_child_autofree(inner)
+	ux.push_modal(outer, outer_button)
+	var outer_hints: Array[Dictionary] = [{action = &"confirm", label = "Outer", enabled = true}]
+	ux.publish_hints(outer_hints)
+	ux.push_modal(inner, inner_button)
+	await get_tree().process_frame
+
+	ux.remove_modal(outer)
+
+	assert_true(ux.is_top_modal(inner))
+	assert_eq(ux.get_focus_target(), inner_button)
+	assert_eq(ux.hint_bar.get_hint(0).label.text, "Outer")
+
+
+func test_party_menu_tree_teardown_does_not_restore_hub_or_publish_hints() -> void:
+	var ux := UXScene.instantiate() as NavigationUXLayer
+	ux.name = "NavigationUXLayer"
+	add_child_autofree(ux)
+	var saved_roster: Array[HeroData] = []
+	saved_roster.assign(SaveSystem.party_roster)
+	var hero := load("res://data/heroes/asher/asher.tres").duplicate(true) as HeroData
+	SaveSystem.party_roster.assign([hero])
+	var hub := HubScene.instantiate() as Hub
+	add_child_autofree(hub)
+	await get_tree().process_frame
+	var party := hub.party_menu
+	party.open()
+	await get_tree().process_frame
+	assert_true(ux.is_top_modal(party))
+
+	hub.remove_child(party)
+	await get_tree().process_frame
+
+	assert_false(ux.is_top_modal(party))
+	assert_ne(ux.get_focus_target(), hub.head_out_button)
+	assert_eq(ux.hint_bar.get_hint_count(), 0)
+	assert_engine_error_count(0)
+	party.free()
+	SaveSystem.party_roster.assign(saved_roster)
 
 
 func test_registered_screens_track_focus_and_modal_restores_it() -> void:

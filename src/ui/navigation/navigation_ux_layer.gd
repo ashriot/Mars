@@ -69,6 +69,19 @@ func pop_modal(root: Control) -> void:
 	_restore_from_entry(entry)
 
 
+func remove_modal(root: Control) -> void:
+	_prune_state()
+	for index in range(_modal_stack.size() - 1, -1, -1):
+		if _weak_get(_modal_stack[index].root) != root:
+			continue
+		var owns_focus := is_instance_valid(_focus_target) and (_focus_target == root or root.is_ancestor_of(_focus_target))
+		_modal_stack.remove_at(index)
+		if owns_focus:
+			_clear_presentation()
+			hint_bar.set_hints([])
+		return
+
+
 func is_top_modal(root: Control) -> bool:
 	_prune_state()
 	return not _modal_stack.is_empty() and _weak_get(_modal_stack.back().root) == root
