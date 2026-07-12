@@ -6,15 +6,21 @@ const TEST_SAVE_ROOT := "user://test_saves/hub_progression/"
 var saved_roster: Array[HeroData] = []
 var saved_slot: int
 var saved_storage_root: String
+var saved_input_mode: InputManager.InputMode
+var saved_cursor_behavior: InputManager.CursorBehavior
+var saved_expected_warp_position: Vector2
+var saved_expected_warp_deadline_ms: int
+var saved_mouse_position: Vector2
 
 
 class RecordingCursor extends NavigationCursor:
+	signal physical_warped(position: Vector2)
 	var warped_positions: Array[Vector2] = []
 
 	func _warp_mouse(position: Vector2) -> void:
 		warped_positions.append(position)
 		Input.warp_mouse(position)
-		set_process(false)
+		physical_warped.emit(position)
 
 
 func before_each() -> void:
@@ -22,6 +28,11 @@ func before_each() -> void:
 	saved_roster.assign(SaveSystem.party_roster)
 	saved_slot = SaveSystem.current_slot_index
 	saved_storage_root = SaveSystem.storage_root_override
+	saved_input_mode = InputManager._active_mode
+	saved_cursor_behavior = InputManager._cursor_behavior
+	saved_expected_warp_position = InputManager._expected_warp_position
+	saved_expected_warp_deadline_ms = InputManager._expected_warp_deadline_ms
+	saved_mouse_position = get_viewport().get_mouse_position()
 	SaveSystem.storage_root_override = TEST_SAVE_ROOT
 	SaveSystem.current_slot_index = TEST_SLOT
 	SaveSystem.party_roster.clear()
@@ -36,6 +47,13 @@ func after_each() -> void:
 	SaveSystem.current_slot_index = saved_slot
 	DirAccess.remove_absolute(SaveSystem._get_slot_path(TEST_SLOT))
 	SaveSystem.storage_root_override = saved_storage_root
+	InputManager._expected_warp_position = Vector2.INF
+	InputManager._expected_warp_deadline_ms = 0
+	Input.warp_mouse(saved_mouse_position)
+	InputManager._active_mode = saved_input_mode
+	InputManager._cursor_behavior = saved_cursor_behavior
+	InputManager._expected_warp_position = saved_expected_warp_position
+	InputManager._expected_warp_deadline_ms = saved_expected_warp_deadline_ms
 
 
 func _tree() -> RoleTreeDefinition:
@@ -723,15 +741,15 @@ func test_keyboard_and_controller_skill_navigation_synchronize_cursor_through_in
 	keyboard.physical_keycode = KEY_D
 	keyboard.pressed = true
 	get_viewport().push_input(keyboard)
-	await get_tree().process_frame
-	await get_tree().physics_frame
+	var keyboard_warp: Vector2 = await cursor.physical_warped
+	cursor.set_process(false)
 	var keyboard_target := panel.get_focused_node()
 	var keyboard_anchor: Vector2 = keyboard_target.get_meta("cursor_anchor", keyboard_target.size * 0.5)
 	var keyboard_destination := keyboard_target.get_global_transform_with_canvas() * keyboard_anchor
 	assert_eq(panel.focused_node_id, "gun.anchor")
 	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.KEYBOARD_MOUSE)
 	assert_eq(InputManager.get_cursor_behavior(), InputManager.CursorBehavior.SNAPPED)
-	assert_eq(InputManager._expected_warp_position, keyboard_destination)
+	assert_eq(keyboard_warp, keyboard_destination)
 	assert_eq(cursor.warped_positions, [keyboard_destination])
 	var synthetic_warp := InputEventMouseMotion.new()
 	synthetic_warp.position = keyboard_destination
@@ -750,16 +768,18 @@ func test_keyboard_and_controller_skill_navigation_synchronize_cursor_through_in
 	controller.button_index = JOY_BUTTON_DPAD_LEFT
 	controller.pressed = true
 	get_viewport().push_input(controller)
-	await get_tree().process_frame
-	await get_tree().physics_frame
+	var controller_warp: Vector2 = await cursor.physical_warped
+	cursor.set_process(false)
 	var controller_target := panel.get_focused_node()
 	var controller_anchor: Vector2 = controller_target.get_meta("cursor_anchor", controller_target.size * 0.5)
 	var controller_destination := controller_target.get_global_transform_with_canvas() * controller_anchor
 	assert_eq(panel.focused_node_id, "gun.anchor")
 	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.CONTROLLER)
 	assert_eq(InputManager.get_cursor_behavior(), InputManager.CursorBehavior.SNAPPED)
-	assert_eq(InputManager._expected_warp_position, controller_destination)
+	assert_eq(controller_warp, controller_destination)
 	assert_eq(cursor.warped_positions, [controller_destination])
+	await get_tree().process_frame
+	cursor.set_process(true)
 	panel.free()
 	navigation.free()
 	await get_tree().process_frame
