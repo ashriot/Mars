@@ -113,19 +113,90 @@ func test_controller_preview_retains_on_neutral_and_confirm_uses_validated_move(
 	assert_ne(preview, nodes[0])
 
 
-func test_controller_candidates_filter_hidden_completed_unreachable_and_cancel_clears() -> void:
+func test_controller_candidates_allow_adjacent_completed_and_filter_invalid_destinations() -> void:
 	var setup := await _prepare_navigation_map()
 	var dungeon_map: DungeonMap = setup.map
 	var nodes: Array = setup.nodes
 	nodes[2].set_state(MapNode.NodeState.COMPLETED)
+	nodes[2].has_been_visited = true
 
-	dungeon_map.select_direction(Vector2.RIGHT)
-	assert_null(dungeon_map._controller_preview_node)
-	nodes[2].set_state(MapNode.NodeState.REVEALED)
 	dungeon_map.select_direction(Vector2.RIGHT)
 	assert_same(dungeon_map._controller_preview_node, nodes[2])
 	dungeon_map.cancel_preview()
 	assert_null(dungeon_map._controller_preview_node)
+
+	nodes[2].set_state(MapNode.NodeState.HIDDEN)
+	assert_false(dungeon_map._is_controller_candidate(nodes[2]))
+	assert_false(dungeon_map._is_controller_candidate(nodes[1]))
+	assert_false(dungeon_map._is_controller_candidate(nodes[3]))
+
+
+func test_mouse_and_controller_normal_traversal_destinations_match() -> void:
+	var cases := [
+		{state = MapNode.NodeState.REVEALED, expected = true},
+		{state = MapNode.NodeState.COMPLETED, expected = true},
+		{state = MapNode.NodeState.HIDDEN, expected = false},
+	]
+	for case: Dictionary in cases:
+		var setup := await _prepare_navigation_map()
+		var dungeon_map: DungeonMap = setup.map
+		var nodes: Array = setup.nodes
+		var target: MapNode = nodes[2]
+		target.set_state(case.state)
+
+		assert_eq(
+			dungeon_map._is_controller_candidate(target),
+			dungeon_map._is_normal_traversal_destination(target),
+		)
+		assert_eq(dungeon_map._is_controller_candidate(target), case.expected)
+
+		var starting_node: MapNode = dungeon_map.current_node
+		dungeon_map._on_node_clicked(target)
+		assert_eq(dungeon_map.current_node == target, case.expected)
+		if not case.expected:
+			assert_same(dungeon_map.current_node, starting_node)
+
+
+func test_completed_revisit_adds_half_alert_without_requesting_interaction() -> void:
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	var nodes: Array = setup.nodes
+	var completed: MapNode = nodes[2]
+	completed.set_state(MapNode.NodeState.COMPLETED)
+	completed.has_been_visited = true
+	for node: MapNode in nodes:
+		node.is_aware = true
+	dungeon_map._calculate_alert_gain()
+	dungeon_map.current_alert = 10.0
+	var baseline := dungeon_map.current_alert
+	watch_signals(dungeon_map)
+
+	dungeon_map._on_node_clicked(completed)
+	await get_tree().process_frame
+
+	assert_almost_eq(dungeon_map.current_alert, baseline + dungeon_map.current_move_cost / 2.0, 0.001)
+	assert_signal_not_emitted(dungeon_map, "interaction_requested")
+
+
+func test_revealed_unvisited_move_adds_full_alert_and_requests_interaction() -> void:
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	var nodes: Array = setup.nodes
+	var target: MapNode = nodes[2]
+	target.set_state(MapNode.NodeState.REVEALED)
+	target.has_been_visited = false
+	for node: MapNode in nodes:
+		node.is_aware = true
+	dungeon_map._calculate_alert_gain()
+	dungeon_map.current_alert = 10.0
+	var baseline := dungeon_map.current_alert
+	watch_signals(dungeon_map)
+
+	dungeon_map._on_node_clicked(target)
+	await get_tree().process_frame
+
+	assert_almost_eq(dungeon_map.current_alert, baseline + dungeon_map.current_move_cost, 0.001)
+	assert_signal_emit_count(dungeon_map, "interaction_requested", 1)
 
 
 func test_scan_selection_filters_hidden_candidates_and_cancel_cancels_scan() -> void:

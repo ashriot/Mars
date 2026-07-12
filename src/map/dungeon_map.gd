@@ -415,13 +415,17 @@ func _controller_candidates() -> Array[MapNode]:
 
 
 func _is_controller_candidate(node: MapNode) -> bool:
-	if node == null or node == current_node or node.state == MapNode.NodeState.HIDDEN:
-		return false
 	if current_map_state == MapState.TARGETING:
-		return true
-	return current_map_state == MapState.PLAYING \
-		and node.state == MapNode.NodeState.REVEALED \
-		and _get_hex_distance(current_node.grid_coords, node.grid_coords) == 1
+		return node != null and node != current_node and node.state != MapNode.NodeState.HIDDEN
+	return _is_normal_traversal_destination(node)
+
+
+func _is_normal_traversal_destination(node: MapNode) -> bool:
+	if node == null or current_node == null or node == current_node or current_map_state != MapState.PLAYING:
+		return false
+	if node.state != MapNode.NodeState.REVEALED and node.state != MapNode.NodeState.COMPLETED:
+		return false
+	return _get_hex_distance(current_node.grid_coords, node.grid_coords) == 1
 
 
 func process_controller_camera(direction: Vector2, delta: float) -> void:
@@ -967,12 +971,7 @@ func _on_node_clicked(target_node: MapNode):
 		scan_performed.emit()
 		return
 
-	if current_map_state != MapState.PLAYING: return
-	if target_node.state != MapNode.NodeState.REVEALED: return
-
-	var dist = _get_hex_distance(current_node.grid_coords, target_node.grid_coords)
-	if dist > 1:
-		print("Too far! Dist: ", dist)
+	if not _is_normal_traversal_destination(target_node):
 		return
 	_move_player_to(target_node)
 
