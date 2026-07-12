@@ -93,7 +93,10 @@ func _redirect_stale_restores(removed_index: int, removed_root: Control) -> void
 		replacement_screen = null
 	for index in range(removed_index + 1, _modal_stack.size()):
 		var restore := _weak_get(_modal_stack[index].restore) as Control
-		if not _belongs_to(restore, removed_root):
+		var restore_screen := _weak_get(_modal_stack[index].restore_screen) as Control
+		var restore_is_removed := _belongs_to(restore, removed_root)
+		var restore_screen_is_removed := _belongs_to(restore_screen, removed_root)
+		if not restore_is_removed and not restore_screen_is_removed:
 			continue
 		_modal_stack[index].restore = weakref(replacement) if is_instance_valid(replacement) else null
 		_modal_stack[index].restore_screen = weakref(replacement_screen) if is_instance_valid(replacement_screen) else null

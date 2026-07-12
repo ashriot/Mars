@@ -61,6 +61,50 @@ func test_remove_lower_modal_scrubs_root_restore_before_inner_pop() -> void:
 	await _assert_removed_lower_modal_is_not_restored(true)
 
 
+func test_remove_lower_modal_scrubs_owned_restore_screen_when_restore_expired() -> void:
+	var ux = UXScene.instantiate()
+	add_child_autofree(ux)
+	var prior_screen := Control.new()
+	var prior_button := Button.new()
+	prior_screen.add_child(prior_button)
+	add_child_autofree(prior_screen)
+	var prior_hints: Array[Dictionary] = [{action = &"confirm", label = "Prior", enabled = true}]
+	prior_button.focus_entered.connect(func() -> void: ux.publish_hints(prior_hints))
+	ux.register_screen(prior_screen, prior_button)
+	var outer := Control.new()
+	var saved_restore := Button.new()
+	var outer_fallback := Button.new()
+	outer.add_child(saved_restore)
+	outer.add_child(outer_fallback)
+	add_child_autofree(outer)
+	ux.register_screen(outer, outer_fallback)
+	prior_button.grab_focus()
+	await get_tree().process_frame
+	ux.push_modal(outer, saved_restore)
+	var outer_hints: Array[Dictionary] = [{action = &"confirm", label = "Outer", enabled = true}]
+	ux.publish_hints(outer_hints)
+	var inner := Control.new()
+	var inner_button := Button.new()
+	inner.add_child(inner_button)
+	add_child_autofree(inner)
+	ux.push_modal(inner, inner_button)
+	var inner_hints: Array[Dictionary] = [{action = &"cancel", label = "Inner", enabled = true}]
+	ux.publish_hints(inner_hints)
+	saved_restore.free()
+	await get_tree().process_frame
+	assert_false(is_instance_valid(saved_restore))
+
+	ux.remove_modal(outer)
+
+	assert_eq(ux.get_focus_target(), inner_button)
+	assert_eq(ux.hint_bar.get_hint(0).label.text, "Inner")
+	ux.pop_modal(inner)
+	await get_tree().process_frame
+	assert_eq(ux.get_focus_target(), prior_button)
+	assert_ne(get_viewport().gui_get_focus_owner(), outer_fallback)
+	assert_eq(ux.hint_bar.get_hint(0).label.text, "Prior")
+
+
 func _assert_removed_lower_modal_is_not_restored(restore_root: bool) -> void:
 	var ux = UXScene.instantiate()
 	add_child_autofree(ux)
