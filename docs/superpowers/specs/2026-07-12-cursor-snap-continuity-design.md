@@ -40,6 +40,18 @@ Controller focus navigation uses the same physical-mouse synchronization. When t
 
 Controller glyphs remain visible until genuine mouse or keyboard input changes the input family. Ignoring a synthetic warp event must not change controller mode or hide controller hints.
 
+## Cursor Appearance Policy
+
+Map navigation and combat navigation always use the default `pointer_c.svg` appearance, even when the cursor is snapped to a map node, combat target, action button, or restored focus target.
+
+- Dungeon-map calls that target preview/current nodes use `CursorState.DEFAULT`, not `CursorState.TARGET`.
+- Battle calls that target the active combat selection use `CursorState.DEFAULT`, not `CursorState.TARGET`.
+- Entering, leaving, or restoring focus to map/combat resets the cursor appearance to default.
+- Clearing a map/combat cursor target cannot leave a crosshair or other specialized appearance active for the next phase.
+- Targeting, movement validation, preview selection, and combat action behavior remain unchanged.
+
+Specialized appearances should be rare and tied to direct manipulation with a clear physical metaphor. Future equipment/item drag-and-drop may use open-hand, closed-hand, or other explicit manipulation states. Ordinary map traversal, combat selection, buttons, and passive inspection use the default pointer.
+
 ## Ownership
 
 - `InputManager` classifies input family and distinguishes genuine mouse motion from a pending programmatic warp.
@@ -57,5 +69,8 @@ Automated tests verify:
 - Repeated processing of an unchanged target does not repeatedly warp.
 - Invalid targets clear safely without warping.
 - Page/role changes and modal restoration synchronize to the restored focus target.
+- Map preview/current-node snapping uses the default pointer.
+- Combat target/action snapping uses the default pointer.
+- Map-to-combat and combat-to-map transitions cannot retain `CursorState.TARGET` or the crosshair texture.
 
 Focused input-manager, navigation-cursor, navigation-UX, hub navigation, and full GUT tests must pass. The unrelated local `project.godot` modification remains outside this work.
