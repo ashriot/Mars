@@ -62,6 +62,38 @@ func test_party_menu_authored_focus_neighbors_resolve_from_each_control() -> voi
 	assert_eq(back.get_node_or_null(back.focus_neighbor_bottom), skills)
 
 
+func test_party_tabs_arrow_and_wasd_move_focus_and_cursor_to_same_destination() -> void:
+	var ux := _add_ux()
+	var hero := load("res://data/heroes/asher/asher.tres").duplicate(true) as HeroData
+	SaveSystem.party_roster.assign([hero])
+	var hub := HubScene.instantiate() as Hub
+	add_child_autofree(hub)
+	await get_tree().process_frame
+	hub.party_menu.open()
+	await get_tree().process_frame
+	var skills := hub.party_menu.get_node("Header/ModeTabs/Skills") as Button
+	var inventory := hub.party_menu.get_node("Header/ModeTabs/Inventory") as Button
+
+	var destinations: Array[Vector2] = []
+	for event: InputEventKey in [_key(KEY_RIGHT), _physical_key(KEY_D)]:
+		skills.grab_focus()
+		InputManager._set_cursor_behavior(InputManager.CursorBehavior.FREE)
+		get_viewport().push_input(event)
+		await get_tree().process_frame
+		assert_same(get_viewport().gui_get_focus_owner(), inventory)
+		assert_same(ux.get_focus_target(), inventory)
+		assert_same(ux.cursor._target, inventory)
+		assert_eq(InputManager.get_active_mode(), InputManager.InputMode.KEYBOARD_MOUSE)
+		assert_eq(InputManager.get_cursor_behavior(), InputManager.CursorBehavior.SNAPPED)
+		destinations.append(ux.cursor._target_position())
+		event.pressed = false
+		get_viewport().push_input(event)
+		await get_tree().process_frame
+
+	assert_eq(destinations.size(), 2)
+	assert_eq(destinations[0], destinations[1])
+
+
 func test_nested_party_and_terminal_cancel_only_top_and_restore_each_layer() -> void:
 	var ux := _add_ux()
 	var hero := load("res://data/heroes/asher/asher.tres").duplicate(true) as HeroData
@@ -120,5 +152,19 @@ func _add_ux() -> NavigationUXLayer:
 func _cancel_event() -> InputEventAction:
 	var event := InputEventAction.new()
 	event.action = &"cancel"
+	event.pressed = true
+	return event
+
+
+func _key(keycode: Key) -> InputEventKey:
+	var event := InputEventKey.new()
+	event.keycode = keycode
+	event.pressed = true
+	return event
+
+
+func _physical_key(keycode: Key) -> InputEventKey:
+	var event := InputEventKey.new()
+	event.physical_keycode = keycode
 	event.pressed = true
 	return event

@@ -272,6 +272,35 @@ func test_camera_pan_is_delta_scaled_zoom_is_clamped_and_recenter_targets_curren
 	assert_eq(dungeon_map.camera.position, dungeon_map._get_clamped_camera_pos(dungeon_map.current_node.position, dungeon_map.camera.zoom))
 
 
+func test_arrow_keys_drive_all_camera_directions_without_selecting_nodes() -> void:
+	var cases := [
+		[KEY_LEFT, &"camera_pan_left", Vector2.LEFT],
+		[KEY_RIGHT, &"camera_pan_right", Vector2.RIGHT],
+		[KEY_UP, &"camera_pan_up", Vector2.UP],
+		[KEY_DOWN, &"camera_pan_down", Vector2.DOWN],
+	]
+	for item: Array in cases:
+		var arrow := _physical_key(item[0])
+		assert_true(arrow.is_action(item[1]), str(item[1]))
+		assert_eq(
+			InputMap.event_is_action(arrow, &"nav_left")
+			or InputMap.event_is_action(arrow, &"nav_right")
+			or InputMap.event_is_action(arrow, &"nav_up")
+			or InputMap.event_is_action(arrow, &"nav_down"),
+			false,
+			"camera arrows do not select nodes",
+		)
+		Input.parse_input_event(arrow)
+		await get_tree().process_frame
+		assert_eq(
+			Input.get_vector(&"camera_pan_left", &"camera_pan_right", &"camera_pan_up", &"camera_pan_down"),
+			item[2],
+		)
+		arrow.pressed = false
+		Input.parse_input_event(arrow)
+		await get_tree().process_frame
+
+
 func test_map_registers_global_adapter_targets_cursor_and_publishes_state_hints() -> void:
 	InputManager._input(_joy_button())
 	var navigation := _make_navigation_ux()
@@ -355,6 +384,13 @@ func _action_event(action: StringName) -> InputEventAction:
 
 func _joy_button() -> InputEventJoypadButton:
 	var event := InputEventJoypadButton.new()
+	event.pressed = true
+	return event
+
+
+func _physical_key(keycode: Key) -> InputEventKey:
+	var event := InputEventKey.new()
+	event.physical_keycode = keycode
 	event.pressed = true
 	return event
 
