@@ -91,11 +91,13 @@ func test_same_physical_destination_does_not_repeat_warp_but_changed_target_warp
 	second.size = Vector2(40, 20)
 	add_child_autofree(second)
 	cursor.set_focus_target(first)
+	cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2.ZERO, true)
+	assert_eq(cursor.warped_positions, [Vector2(70, 50)])
 	cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2(70, 50), true)
-	assert_true(cursor.warped_positions.is_empty())
+	assert_eq(cursor.warped_positions, [Vector2(70, 50)])
 	cursor.set_focus_target(second)
 	cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2(70, 50), true)
-	assert_eq(cursor.warped_positions, [Vector2(220, 90)])
+	assert_eq(cursor.warped_positions, [Vector2(70, 50), Vector2(220, 90)])
 
 
 func test_world_target_uses_canvas_transform() -> void:

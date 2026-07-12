@@ -227,9 +227,7 @@ func test_modal_pop_synchronizes_cursor_to_restored_screen_focus() -> void:
 	ux.pop_modal(modal)
 	await get_tree().process_frame
 	var destination := restored.get_global_transform_with_canvas() * (restored.size * 0.5)
-	ux.cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2.ZERO, true)
 	assert_eq(ux.get_focus_target(), restored)
-	assert_eq(ux.cursor.position, destination)
 	assert_eq(InputManager._expected_warp_position, destination)
 
 

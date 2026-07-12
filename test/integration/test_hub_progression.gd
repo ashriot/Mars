@@ -8,6 +8,15 @@ var saved_slot: int
 var saved_storage_root: String
 
 
+class RecordingCursor extends NavigationCursor:
+	var warped_positions: Array[Vector2] = []
+
+	func _warp_mouse(position: Vector2) -> void:
+		warped_positions.append(position)
+		Input.warp_mouse(position)
+		set_process(false)
+
+
 func before_each() -> void:
 	calls.clear()
 	saved_roster.assign(SaveSystem.party_roster)
@@ -686,47 +695,71 @@ func test_shoulder_events_change_pages_and_roles_at_node_focus() -> void:
 	await get_tree().process_frame
 
 
-func test_keyboard_and_controller_skill_navigation_synchronize_cursor_without_changing_keyboard_family() -> void:
+func test_keyboard_and_controller_skill_navigation_synchronize_cursor_through_input_pipeline() -> void:
 	var hero := _hero()
 	hero.role_definitions.assign([_legacy_role()])
 	var navigation := preload("res://src/ui/navigation/navigation_ux_layer.tscn").instantiate() as NavigationUXLayer
 	navigation.name = "NavigationUXLayer"
 	add_child(navigation)
+	var original_cursor := navigation.cursor
+	original_cursor.set_process(false)
+	navigation.remove_child(original_cursor)
+	original_cursor.free()
+	var cursor := RecordingCursor.new()
+	navigation.add_child(cursor)
+	navigation.cursor = cursor
+	cursor.set_process(false)
 	var panel := preload("res://src/hub/skill_tree_panel.tscn").instantiate() as SkillTreePanel
 	panel.progression_catalog = ProgressionCatalog.from_validated_trees([_tree()])
 	add_child(panel)
 	panel.setup(hero)
 	navigation.register_screen(panel, panel.get_focused_node())
 	panel.focus_node("gun.start1")
-	await get_tree().process_frame
+	await get_tree().create_timer(0.35).timeout
+	cursor.warped_positions.clear()
+	Input.warp_mouse(Vector2.ZERO)
+	cursor.set_process(true)
 	var keyboard := InputEventKey.new()
 	keyboard.physical_keycode = KEY_D
 	keyboard.pressed = true
-	InputManager._input(keyboard)
-	panel._unhandled_input(_action_event(&"nav_right"))
+	get_viewport().push_input(keyboard)
 	await get_tree().process_frame
+	await get_tree().physics_frame
 	var keyboard_target := panel.get_focused_node()
 	var keyboard_anchor: Vector2 = keyboard_target.get_meta("cursor_anchor", keyboard_target.size * 0.5)
 	var keyboard_destination := keyboard_target.get_global_transform_with_canvas() * keyboard_anchor
-	navigation.cursor.update_position_for_behavior(InputManager.get_cursor_behavior(), Vector2.ZERO, true)
 	assert_eq(panel.focused_node_id, "gun.anchor")
 	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.KEYBOARD_MOUSE)
+	assert_eq(InputManager.get_cursor_behavior(), InputManager.CursorBehavior.SNAPPED)
 	assert_eq(InputManager._expected_warp_position, keyboard_destination)
+	assert_eq(cursor.warped_positions, [keyboard_destination])
+	var synthetic_warp := InputEventMouseMotion.new()
+	synthetic_warp.position = keyboard_destination
+	synthetic_warp.global_position = keyboard_destination
+	synthetic_warp.relative = keyboard_destination
+	InputManager.expect_mouse_warp(keyboard_destination)
+	Input.parse_input_event(synthetic_warp)
+	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.KEYBOARD_MOUSE)
+	assert_eq(InputManager.get_cursor_behavior(), InputManager.CursorBehavior.SNAPPED)
 	panel.focus_node("gun.start2")
 	await get_tree().process_frame
+	await get_tree().process_frame
+	cursor.warped_positions.clear()
+	cursor.set_process(true)
 	var controller := InputEventJoypadButton.new()
 	controller.button_index = JOY_BUTTON_DPAD_LEFT
 	controller.pressed = true
-	InputManager._input(controller)
-	panel._unhandled_input(_action_event(&"nav_left"))
+	get_viewport().push_input(controller)
 	await get_tree().process_frame
+	await get_tree().physics_frame
 	var controller_target := panel.get_focused_node()
 	var controller_anchor: Vector2 = controller_target.get_meta("cursor_anchor", controller_target.size * 0.5)
 	var controller_destination := controller_target.get_global_transform_with_canvas() * controller_anchor
-	navigation.cursor.update_position_for_behavior(InputManager.get_cursor_behavior(), Vector2.ZERO, true)
 	assert_eq(panel.focused_node_id, "gun.anchor")
 	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.CONTROLLER)
+	assert_eq(InputManager.get_cursor_behavior(), InputManager.CursorBehavior.SNAPPED)
 	assert_eq(InputManager._expected_warp_position, controller_destination)
+	assert_eq(cursor.warped_positions, [controller_destination])
 	panel.free()
 	navigation.free()
 	await get_tree().process_frame
