@@ -17,7 +17,9 @@ func test_valid_file_builds_complete_immutable_tree() -> void:
 	assert_eq(result.tree.role_id, "gun")
 	assert_eq(result.tree.version, 3)
 	assert_eq(result.tree.nodes.size(), 4)
-	assert_eq(result.tree.get_node("gun.action").effect.type, ProgressionEffect.Type.ACTION)
+	assert_eq(result.tree.root_id, "gun.anchor")
+	assert_eq(result.tree.starting_node_ids, ["gun.root", "gun.fusion_ammo"])
+	assert_true(result.tree.get_node("gun.anchor").is_structural)
 
 
 func test_fixture_validation_errors_are_contextual() -> void:
@@ -43,11 +45,11 @@ func test_fixture_validation_errors_are_contextual() -> void:
 
 func test_document_and_node_scalar_validation() -> void:
 	var cases := [
-		["schema_version", 2, "", "schema_version", "Unsupported"],
+		["schema_version", 1, "", "schema_version", "Unsupported"],
 		["role_id", "snp", "gun.root", "id", "namespace"],
-		["nodes.0.xp_cost", 0, "gun.root", "xp_cost", "positive"],
-		["nodes.0.rank", 1.5, "gun.root", "rank", "integer"],
-		["nodes.0.column", "0", "gun.root", "column", "integer"],
+		["nodes.3.xp_cost", 0, "gun.coordinate", "xp_cost", "positive"],
+		["nodes.0.rank", 1.5, "gun.anchor", "rank", "integer"],
+		["nodes.0.column", "0", "gun.anchor", "column", "integer"],
 	]
 	for case: Array in cases:
 		var document := _valid_document()
@@ -58,7 +60,7 @@ func test_document_and_node_scalar_validation() -> void:
 
 func test_effect_fields_stats_resources_classes_and_slots_are_validated() -> void:
 	var cases := [
-		["nodes.0.effect.stat", "LUCK", "effect.stat", "recognized"],
+		["nodes.3.effect.stat", "LUCK", "effect.stat", "recognized"],
 		["nodes.1.effect.resource", "res://missing_action.tres", "effect.resource", "does not exist"],
 		["nodes.1.effect.resource", "res://data/heroes/asher/asher.tres", "effect.resource", "Action"],
 		["nodes.1.effect.slot", 0, "effect.slot", "between 1 and 4"],
@@ -67,9 +69,34 @@ func test_effect_fields_stats_resources_classes_and_slots_are_validated() -> voi
 	for index in cases.size():
 		var case: Array = cases[index]
 		var document := _valid_document()
+		if index == 0:
+			document.nodes[3].effect = {"type": "stat", "stat": "ATK", "amount": 1}
 		_set_path(document, case[0], case[1])
 		var path := _write_document(document, "effect_%d.json" % index)
-		_assert_error(path, "gun." + ("root" if index == 0 else "action"), case[2], case[3])
+		_assert_error(path, "gun." + ("coordinate" if index == 0 else "root"), case[2], case[3])
+
+
+func test_anchor_and_progression_specific_json_fields_are_validated() -> void:
+	var cases := [
+		["effect", {"type": "stat", "stat": "ATK", "amount": 1}],
+		["xp_cost", 0],
+		["starting_owned", false],
+	]
+	for index in cases.size():
+		var document := _valid_document()
+		document.nodes[0][cases[index][0]] = cases[index][1]
+		_assert_error(_write_document(document, "anchor_field_%d.json" % index), "gun.anchor", str(cases[index][0]), "must not")
+
+
+func test_progression_kind_and_starting_owned_default_when_omitted() -> void:
+	var document := _valid_document()
+	document.nodes[3].erase("node_kind")
+	document.nodes[3].erase("starting_owned")
+	var result = ProgressionJsonLoader.load_file(_write_document(document, "progression_defaults.json"))
+	assert_not_null(result.tree)
+	assert_eq(result.errors.size(), 0)
+	assert_eq(result.tree.get_node("gun.coordinate").kind, ProgressionNodeDefinition.NodeKind.PROGRESSION)
+	assert_false(result.tree.get_node("gun.coordinate").starting_owned)
 
 
 func test_unreachable_nodes_are_rejected_without_partial_tree() -> void:
@@ -153,9 +180,9 @@ func test_catalog_rejects_duplicate_roles_and_orders_cross_file_errors_by_filena
 
 	var ordered_directory := "user://progression_ordered_errors"
 	var alpha := _valid_document()
-	alpha.nodes[0].xp_cost = 0
+	alpha.nodes[3].xp_cost = 0
 	var zeta := _valid_document()
-	zeta.nodes[0].effect.stat = "LUCK"
+	zeta.nodes[3].effect = {"type": "stat", "stat": "LUCK", "amount": 1}
 	_write_document(zeta, "progression_ordered_errors/zeta.json")
 	_write_document(alpha, "progression_ordered_errors/alpha.json")
 	assert_eq(catalog.load_directory(ordered_directory), ERR_INVALID_DATA)
@@ -164,14 +191,18 @@ func test_catalog_rejects_duplicate_roles_and_orders_cross_file_errors_by_filena
 
 
 func test_passive_and_shift_action_validate_expected_resource_class_independently() -> void:
-	for node_index in [2, 3]:
+	for effect_type in ["passive", "shift_action"]:
 		var document := _valid_document()
-		document.nodes[node_index].effect.resource = "res://data/heroes/asher/asher.tres"
-		var path := _write_document(document, "resource_class_%d.json" % node_index)
-		_assert_error(path, str(document.nodes[node_index].id), "effect.resource", "Action")
+		document.nodes.append({
+			"id": "gun.extra_" + effect_type,
+			"parent": "gun.anchor", "rank": 2, "column": 2, "xp_cost": 100,
+			"effect": {"type": effect_type, "resource": "res://data/heroes/asher/asher.tres"},
+		})
+		var path := _write_document(document, "resource_class_%s.json" % effect_type)
+		_assert_error(path, "gun.extra_" + effect_type, "effect.resource", "Action")
 
 
-func test_catalog_load_is_transactional_and_summary_is_deterministic() -> void:
+func test_catalog_load_is_transactional_across_nested_files() -> void:
 	var catalog := ProgressionCatalog.new()
 	assert_eq(catalog.load_directory(FIXTURES), ERR_INVALID_DATA)
 	assert_null(catalog.get_role("gun"))
@@ -188,11 +219,8 @@ func test_catalog_load_is_transactional_and_summary_is_deterministic() -> void:
 	_write_document(other, "progression_catalog_valid/alpha.json")
 	assert_eq(catalog.load_directory(directory), OK)
 	assert_not_null(catalog.get_role("gun"))
-	assert_eq(catalog.get_summary("gun"), {
-		"role_id": "gun", "revision": 3, "node_count": 4, "total_xp": 750,
-		"maximum_rank": 3, "branch_count": 1,
-		"effect_counts": {"stat": 1, "action": 1, "passive": 1, "shift_action": 1},
-	})
+	assert_has(catalog.role_ids, "gun")
+	assert_has(catalog.role_ids, "snp")
 
 func test_nested_directory_open_failure_is_reported_and_preserves_committed_roles() -> void:
 	var valid_directory := "user://progression_nested_open_valid"

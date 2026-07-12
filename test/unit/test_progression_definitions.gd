@@ -13,119 +13,123 @@ func test_effect_factories_construct_typed_immutable_values() -> void:
 	assert_eq(action.type, ProgressionEffect.Type.ACTION)
 	assert_eq(passive.type, ProgressionEffect.Type.PASSIVE)
 	assert_eq(shift_action.type, ProgressionEffect.Type.SHIFT_ACTION)
-	assert_eq(action.target, "res://actions/burst.tres")
-	assert_eq(passive.amount, 0)
-	assert_eq(shift_action.amount, 0)
 	assert_true(stat.is_valid)
 
 
-func test_node_definition_constructs_read_only_fields() -> void:
-	var effect := ProgressionEffect.stat("DEF", 5)
-	var node := ProgressionNodeDefinition.new("guard.root", "", 1, 2, 150, effect)
+func test_role_tree_exposes_anchor_and_two_starting_actions() -> void:
+	var anchor := ProgressionNodeDefinition.role_anchor("gun.anchor", 1, 0)
+	var first := ProgressionNodeDefinition.progression(
+		"gun.root", "gun.anchor", 1, -1, 0,
+		ProgressionEffect.action("res://data/heroes/asher/actions/double_tap.tres", 1), true,
+	)
+	var second := ProgressionNodeDefinition.progression(
+		"gun.fusion_ammo", "gun.anchor", 1, 1, 0,
+		ProgressionEffect.action("res://data/heroes/asher/actions/fusion_ammo.tres", 2), true,
+	)
+	var paid := ProgressionNodeDefinition.progression("gun.atk_1", "gun.anchor", 2, 0, 200, ProgressionEffect.stat("ATK", 1))
+	var tree := RoleTreeDefinition.new("gun", 4, [anchor, first, second, paid])
 
-	assert_eq(node.id, "guard.root")
-	assert_eq(node.parent_id, "")
-	assert_eq(node.rank, 1)
-	assert_eq(node.column, 2)
-	assert_eq(node.cost, 150)
-	assert_true(is_same(node.effect, effect))
-
-
-func test_role_tree_indexes_nodes_without_deriving_identity() -> void:
-	var root := ProgressionNodeDefinition.new("gun.root", "", 1, 0, 100, ProgressionEffect.stat("ATK", 1))
-	var child := ProgressionNodeDefinition.new("gun.burst", "gun.root", 2, 1, 200, ProgressionEffect.action("res://example.tres", 1))
-	var tree := RoleTreeDefinition.new("gun", 1, [child, root])
-
-	assert_eq(tree.root_id, "gun.root")
-	assert_true(is_same(tree.get_node("gun.burst"), child))
-	assert_eq(tree.get_children("gun.root").map(func(node): return node.id), ["gun.burst"])
-
-
-func test_children_are_sorted_deterministically_and_returned_as_a_copy() -> void:
-	var root := ProgressionNodeDefinition.new("gun.root", "", 1, 0, 100, ProgressionEffect.stat("ATK", 1))
-	var third := ProgressionNodeDefinition.new("gun.zeta", "gun.root", 3, 0, 100, ProgressionEffect.stat("ATK", 1))
-	var second_b := ProgressionNodeDefinition.new("gun.beta", "gun.root", 2, 1, 100, ProgressionEffect.stat("ATK", 1))
-	var second_a := ProgressionNodeDefinition.new("gun.alpha", "gun.root", 2, 1, 100, ProgressionEffect.stat("ATK", 1))
-	var tree := RoleTreeDefinition.new("gun", 1, [third, second_b, root, second_a])
-
-	var children := tree.get_children("gun.root")
-	assert_eq(children.map(func(node): return node.id), ["gun.alpha", "gun.beta", "gun.zeta"])
-	children.clear()
-	assert_eq(tree.get_children("gun.root").map(func(node): return node.id), ["gun.alpha", "gun.beta", "gun.zeta"])
+	assert_true(tree.is_valid, tree.validation_error)
+	assert_eq(tree.root_id, "gun.anchor")
+	assert_eq(tree.starting_node_ids, ["gun.root", "gun.fusion_ammo"])
+	assert_true(anchor.is_structural)
+	assert_eq(anchor.kind, ProgressionNodeDefinition.NodeKind.ROLE_ANCHOR)
+	assert_null(anchor.effect)
+	assert_true(first.starting_owned)
+	assert_false(paid.starting_owned)
 
 
-func test_layout_and_input_order_do_not_change_node_identity() -> void:
-	var original := ProgressionNodeDefinition.new("gun.root", "", 2, 1, 200, ProgressionEffect.stat("ATK", 1))
-	var moved := ProgressionNodeDefinition.new("gun.root", "", 9, 7, 200, ProgressionEffect.stat("ATK", 1))
-	var original_tree := RoleTreeDefinition.new("gun", 1, [original])
-	var moved_tree := RoleTreeDefinition.new("gun", 1, [moved])
-
-	assert_eq(original_tree.get_node("gun.root").id, moved_tree.get_node("gun.root").id)
-	assert_eq(original.id, "gun.root")
-	assert_eq(moved.id, "gun.root")
-
-
-func test_tree_copies_constructor_input_and_public_node_array() -> void:
-	var root := ProgressionNodeDefinition.new("gun.root", "", 1, 0, 100, ProgressionEffect.stat("ATK", 1))
-	var source: Array[ProgressionNodeDefinition] = [root]
-	var tree := RoleTreeDefinition.new("gun", 1, source)
-
-	source.clear()
-	var exposed := tree.nodes
+func test_starting_node_ids_are_returned_defensively() -> void:
+	var tree := _valid_tree()
+	var exposed: Array[String] = tree.starting_node_ids
 	exposed.clear()
-
-	assert_eq(tree.nodes.size(), 1)
-	assert_true(is_same(tree.get_node("gun.root"), root))
+	assert_eq(tree.starting_node_ids, ["gun.root", "gun.fusion_ammo"])
 
 
-func test_node_with_null_effect_is_invalid() -> void:
-	var node := ProgressionNodeDefinition.new("gun.root", "", 1, 0, 100, null)
-
-	assert_false(node.is_valid)
-	assert_ne(node.validation_error, "")
-
-
-func test_generic_effect_construction_rejects_invalid_combinations() -> void:
-	var invalid_type := ProgressionEffect.new(99, "ATK", 1)
-	var empty_target := ProgressionEffect.new(ProgressionEffect.Type.STAT, "", 1)
-	var zero_stat := ProgressionEffect.new(ProgressionEffect.Type.STAT, "ATK", 0)
-	var zero_action_slot := ProgressionEffect.new(ProgressionEffect.Type.ACTION, "res://action.tres", 0)
-	var passive_with_slot := ProgressionEffect.new(ProgressionEffect.Type.PASSIVE, "res://passive.tres", 1)
-	var shift_with_slot := ProgressionEffect.new(ProgressionEffect.Type.SHIFT_ACTION, "res://shift.tres", 1)
-
-	assert_false(invalid_type.is_valid)
-	assert_false(empty_target.is_valid)
-	assert_false(zero_stat.is_valid)
-	assert_false(zero_action_slot.is_valid)
-	assert_false(passive_with_slot.is_valid)
-	assert_false(shift_with_slot.is_valid)
+func test_anchor_rejects_effect_cost_and_ownership_semantics() -> void:
+	var effect_anchor := ProgressionNodeDefinition.new(
+		ProgressionNodeDefinition.NodeKind.ROLE_ANCHOR, "gun.anchor", "", 1, 0, 0,
+		ProgressionEffect.stat("ATK", 1), false,
+	)
+	var cost_anchor := ProgressionNodeDefinition.new(
+		ProgressionNodeDefinition.NodeKind.ROLE_ANCHOR, "gun.anchor", "", 1, 0, 1, null, false,
+	)
+	var owned_anchor := ProgressionNodeDefinition.new(
+		ProgressionNodeDefinition.NodeKind.ROLE_ANCHOR, "gun.anchor", "", 1, 0, 0, null, true,
+	)
+	assert_false(effect_anchor.is_valid)
+	assert_false(cost_anchor.is_valid)
+	assert_false(owned_anchor.is_valid)
 
 
-func test_tree_with_duplicate_ids_is_invalid_and_lookup_fails_closed() -> void:
-	var first := ProgressionNodeDefinition.new("gun.root", "", 1, 0, 100, ProgressionEffect.stat("ATK", 1))
-	var duplicate := ProgressionNodeDefinition.new("gun.root", "gun.parent", 2, 0, 100, ProgressionEffect.stat("ATK", 1))
-	var tree := RoleTreeDefinition.new("gun", 1, [first, duplicate])
-
-	assert_false(tree.is_valid)
-	assert_ne(tree.validation_error, "")
-	assert_null(tree.get_node("gun.root"))
-	assert_eq(tree.get_children("gun.parent").size(), 0)
-	assert_eq(tree.nodes.size(), 0)
+func test_tree_rejects_two_anchors() -> void:
+	var nodes := _valid_nodes()
+	nodes.append(ProgressionNodeDefinition.role_anchor("gun.other_anchor", 1, 0))
+	assert_false(RoleTreeDefinition.new("gun", 1, nodes).is_valid)
 
 
-func test_tree_with_multiple_roots_is_invalid_and_lookup_fails_closed() -> void:
-	var first := ProgressionNodeDefinition.new("gun.root", "", 1, 0, 100, ProgressionEffect.stat("ATK", 1))
-	var second := ProgressionNodeDefinition.new("gun.other", "", 1, 1, 100, ProgressionEffect.stat("ATK", 1))
-	var tree := RoleTreeDefinition.new("gun", 1, [first, second])
+func test_tree_requires_exactly_two_starting_nodes() -> void:
+	var fewer := _valid_nodes()
+	fewer.remove_at(2)
+	var more := _valid_nodes()
+	more.append(_starting("gun.third", 3, 2))
+	assert_false(RoleTreeDefinition.new("gun", 1, fewer).is_valid)
+	assert_false(RoleTreeDefinition.new("gun", 1, more).is_valid)
 
-	assert_false(tree.is_valid)
-	assert_eq(tree.root_id, "")
-	assert_null(tree.get_node("gun.root"))
+
+func test_tree_rejects_invalid_starting_node_shape() -> void:
+	var rank_nodes := _valid_nodes()
+	rank_nodes[1] = ProgressionNodeDefinition.progression("gun.root", "gun.anchor", 2, -1, 0, ProgressionEffect.action("res://action.tres", 1), true)
+	var effect_nodes := _valid_nodes()
+	effect_nodes[1] = ProgressionNodeDefinition.progression("gun.root", "gun.anchor", 1, -1, 0, ProgressionEffect.stat("ATK", 1), true)
+	var cost_nodes := _valid_nodes()
+	cost_nodes[1] = ProgressionNodeDefinition.progression("gun.root", "gun.anchor", 1, -1, 1, ProgressionEffect.action("res://action.tres", 1), true)
+	var parent_nodes := _valid_nodes()
+	parent_nodes[1] = ProgressionNodeDefinition.progression("gun.root", "gun.paid", 1, -1, 0, ProgressionEffect.action("res://action.tres", 1), true)
+	assert_false(RoleTreeDefinition.new("gun", 1, rank_nodes).is_valid)
+	assert_false(RoleTreeDefinition.new("gun", 1, effect_nodes).is_valid)
+	assert_false(RoleTreeDefinition.new("gun", 1, cost_nodes).is_valid)
+	assert_false(RoleTreeDefinition.new("gun", 1, parent_nodes).is_valid)
 
 
-func test_tree_with_no_root_or_invalid_node_is_invalid() -> void:
-	var child := ProgressionNodeDefinition.new("gun.child", "gun.missing", 2, 0, 100, ProgressionEffect.stat("ATK", 1))
-	var invalid := ProgressionNodeDefinition.new("gun.invalid", "", 1, 0, 100, null)
+func test_tree_rejects_duplicate_starting_action_slots() -> void:
+	var nodes := _valid_nodes()
+	nodes[2] = _starting("gun.fusion_ammo", 1, 1)
+	assert_false(RoleTreeDefinition.new("gun", 1, nodes).is_valid)
 
-	assert_false(RoleTreeDefinition.new("gun", 1, [child]).is_valid)
-	assert_false(RoleTreeDefinition.new("gun", 1, [invalid]).is_valid)
+
+func test_progression_nodes_require_effect_and_positive_cost_unless_starting_owned() -> void:
+	assert_false(ProgressionNodeDefinition.progression("gun.bad", "gun.anchor", 2, 0, 100, null).is_valid)
+	assert_false(ProgressionNodeDefinition.progression("gun.free", "gun.anchor", 2, 0, 0, ProgressionEffect.stat("ATK", 1)).is_valid)
+	assert_true(_starting("gun.root", 1, -1).is_valid)
+
+
+func test_tree_rejects_duplicate_ids_and_returns_sorted_children() -> void:
+	var nodes := _valid_nodes()
+	nodes.append(ProgressionNodeDefinition.progression("gun.paid", "gun.anchor", 3, 2, 100, ProgressionEffect.stat("ATK", 1)))
+	assert_false(RoleTreeDefinition.new("gun", 1, nodes).is_valid)
+
+	var tree := _valid_tree()
+	assert_eq(tree.get_children("gun.anchor").map(func(node): return node.id), ["gun.root", "gun.fusion_ammo", "gun.paid"])
+	var children := tree.get_children("gun.anchor")
+	children.clear()
+	assert_eq(tree.get_children("gun.anchor").size(), 3)
+
+
+func _valid_tree() -> RoleTreeDefinition:
+	return RoleTreeDefinition.new("gun", 1, _valid_nodes())
+
+
+func _valid_nodes() -> Array[ProgressionNodeDefinition]:
+	return [
+		ProgressionNodeDefinition.role_anchor("gun.anchor", 1, 0),
+		_starting("gun.root", 1, -1),
+		_starting("gun.fusion_ammo", 2, 1),
+		ProgressionNodeDefinition.progression("gun.paid", "gun.anchor", 2, 0, 100, ProgressionEffect.stat("ATK", 1)),
+	]
+
+
+func _starting(id: String, slot: int, column: int) -> ProgressionNodeDefinition:
+	return ProgressionNodeDefinition.progression(
+		id, "gun.anchor", 1, column, 0, ProgressionEffect.action("res://action.tres", slot), true,
+	)

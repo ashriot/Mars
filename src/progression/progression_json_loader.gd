@@ -1,7 +1,7 @@
 class_name ProgressionJsonLoader
 extends RefCounted
 
-const SUPPORTED_SCHEMA_VERSION := 1
+const SUPPORTED_SCHEMA_VERSION := 2
 const VALID_STATS := ["HP", "GRD", "FOC", "ATK", "PSY", "OVR", "SPD", "AIM", "PRE", "KIN_DEF", "NRG_DEF"]
 const MIN_ACTION_SLOT := 1
 const MAX_ACTION_SLOT := 4
@@ -63,11 +63,15 @@ static func load_file(path: String) -> LoadResult:
 
 	var nodes: Array[ProgressionNodeDefinition] = []
 	for raw_node: Dictionary in document.nodes:
-		var effect := _construct_effect(raw_node.effect)
-		var parent_id := "" if raw_node.parent == null else str(raw_node.parent)
-		nodes.append(ProgressionNodeDefinition.new(
-			str(raw_node.id), parent_id, int(raw_node.rank), int(raw_node.column), int(raw_node.xp_cost), effect,
-		))
+		if raw_node.get("node_kind", "progression") == "role_anchor":
+			nodes.append(ProgressionNodeDefinition.role_anchor(str(raw_node.id), int(raw_node.rank), int(raw_node.column)))
+		else:
+			var effect := _construct_effect(raw_node.effect)
+			var parent_id := "" if raw_node.parent == null else str(raw_node.parent)
+			nodes.append(ProgressionNodeDefinition.progression(
+				str(raw_node.id), parent_id, int(raw_node.rank), int(raw_node.column),
+				int(raw_node.xp_cost), effect, bool(raw_node.get("starting_owned", false)),
+			))
 	var tree := RoleTreeDefinition.new(str(document.role_id), int(document.content_revision), nodes)
 	if not tree.is_valid:
 		_add_error(errors, path, "", "nodes", tree.validation_error)
@@ -110,10 +114,23 @@ static func _validate_document(path: String, document: Dictionary, errors: Array
 			roots.append(node_id)
 		_validate_integer(path, node_id, node, "rank", errors)
 		_validate_integer(path, node_id, node, "column", errors)
-		_validate_integer(path, node_id, node, "xp_cost", errors)
-		if _is_integer(node.get("xp_cost")) and int(node.xp_cost) <= 0:
-			_add_error(errors, path, node_id, "xp_cost", "XP cost must be positive.")
-		_validate_effect(path, node_id, node.get("effect"), errors)
+		var node_kind: Variant = node.get("node_kind", "progression")
+		if not node_kind is String or not node_kind in ["progression", "role_anchor"]:
+			_add_error(errors, path, node_id, "node_kind", "Node kind must be 'progression' or 'role_anchor'.")
+		elif node_kind == "role_anchor":
+			for forbidden_field in ["effect", "xp_cost", "starting_owned"]:
+				if node.has(forbidden_field):
+					_add_error(errors, path, node_id, forbidden_field, "Role anchor must not include this field.")
+		else:
+			_validate_integer(path, node_id, node, "xp_cost", errors)
+			if node.has("starting_owned") and not node.starting_owned is bool:
+				_add_error(errors, path, node_id, "starting_owned", "Field must be a boolean.")
+			var starting_owned: bool = node.get("starting_owned", false) == true
+			if _is_integer(node.get("xp_cost")) and (int(node.xp_cost) < 0 or (int(node.xp_cost) == 0 and not starting_owned)):
+				_add_error(errors, path, node_id, "xp_cost", "XP cost must be positive unless the node is starting-owned.")
+			if _is_integer(node.get("xp_cost")) and starting_owned and int(node.xp_cost) != 0:
+				_add_error(errors, path, node_id, "xp_cost", "Starting-owned XP cost must be zero.")
+			_validate_effect(path, node_id, node.get("effect"), errors)
 
 	if roots.size() != 1:
 		_add_error(errors, path, "", "nodes", "Role tree must have exactly one root; found %d." % roots.size())
