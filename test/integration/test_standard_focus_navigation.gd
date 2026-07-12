@@ -77,10 +77,16 @@ func test_party_tabs_arrow_and_wasd_move_focus_and_cursor_to_same_destination() 
 	var destinations: Array[Vector2] = []
 	for event: InputEventKey in [_key(KEY_RIGHT), _physical_key(KEY_D)]:
 		skills.grab_focus()
+		await get_tree().process_frame
+		var focus_transitions: Array[Control] = []
+		var record_focus := func(control: Control) -> void: focus_transitions.append(control)
+		get_viewport().gui_focus_changed.connect(record_focus)
 		InputManager._set_cursor_behavior(InputManager.CursorBehavior.FREE)
 		get_viewport().push_input(event)
 		await get_tree().process_frame
+		get_viewport().gui_focus_changed.disconnect(record_focus)
 		assert_same(get_viewport().gui_get_focus_owner(), inventory)
+		assert_eq(focus_transitions, [inventory], "one focus transition per key press")
 		assert_same(ux.get_focus_target(), inventory)
 		assert_same(ux.cursor._target, inventory)
 		assert_eq(InputManager.get_active_mode(), InputManager.InputMode.KEYBOARD_MOUSE)

@@ -76,7 +76,17 @@ func test_joy_axis_at_quarter_is_controller_input() -> void:
 
 
 func test_arrow_and_wasd_navigation_select_snapped_keyboard_mouse() -> void:
-	for event: InputEventKey in [_key(KEY_RIGHT), _physical_key(KEY_D)]:
+	var cases: Array[InputEventKey] = [
+		_key(KEY_LEFT),
+		_key(KEY_RIGHT),
+		_key(KEY_UP),
+		_key(KEY_DOWN),
+		_physical_key(KEY_A),
+		_physical_key(KEY_D),
+		_physical_key(KEY_W),
+		_physical_key(KEY_S),
+	]
+	for event: InputEventKey in cases:
 		manager._set_cursor_behavior(manager.CursorBehavior.FREE)
 		manager._input(event)
 		assert_eq(manager.get_active_mode(), manager.InputMode.KEYBOARD_MOUSE)

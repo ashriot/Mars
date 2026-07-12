@@ -274,31 +274,38 @@ func test_camera_pan_is_delta_scaled_zoom_is_clamped_and_recenter_targets_curren
 
 func test_arrow_keys_drive_all_camera_directions_without_selecting_nodes() -> void:
 	var cases := [
-		[KEY_LEFT, &"camera_pan_left", Vector2.LEFT],
-		[KEY_RIGHT, &"camera_pan_right", Vector2.RIGHT],
-		[KEY_UP, &"camera_pan_up", Vector2.UP],
-		[KEY_DOWN, &"camera_pan_down", Vector2.DOWN],
+		[KEY_LEFT, Vector2.LEFT],
+		[KEY_RIGHT, Vector2.RIGHT],
+		[KEY_UP, Vector2.UP],
+		[KEY_DOWN, Vector2.DOWN],
 	]
 	for item: Array in cases:
+		var setup := await _prepare_navigation_map()
+		var dungeon_map: DungeonMap = setup.map
+		dungeon_map.camera.zoom = Vector2(10.0, 10.0)
+		dungeon_map.camera.position = dungeon_map._get_clamped_camera_pos(Vector2.ZERO, dungeon_map.camera.zoom)
+		dungeon_map.select_direction(Vector2.RIGHT)
+		var start_camera := dungeon_map.camera.position
+		var start_node := dungeon_map.current_node
+		var start_preview := dungeon_map._controller_preview_node
+		var start_selection := dungeon_map.player_cursor.position
 		var arrow := _physical_key(item[0])
-		assert_true(arrow.is_action(item[1]), str(item[1]))
-		assert_eq(
-			InputMap.event_is_action(arrow, &"nav_left")
-			or InputMap.event_is_action(arrow, &"nav_right")
-			or InputMap.event_is_action(arrow, &"nav_up")
-			or InputMap.event_is_action(arrow, &"nav_down"),
-			false,
-			"camera arrows do not select nodes",
-		)
 		Input.parse_input_event(arrow)
 		await get_tree().process_frame
-		assert_eq(
-			Input.get_vector(&"camera_pan_left", &"camera_pan_right", &"camera_pan_up", &"camera_pan_down"),
-			item[2],
-		)
-		arrow.pressed = false
-		Input.parse_input_event(arrow)
+		dungeon_map._process(0.1)
+		var end_camera := dungeon_map.camera.position
+		var release := arrow.duplicate() as InputEventKey
+		release.pressed = false
+		Input.parse_input_event(release)
 		await get_tree().process_frame
+
+		var displacement := end_camera - start_camera
+		var direction: Vector2 = item[1]
+		assert_gt(displacement.dot(direction), 0.0, "arrow pans the real camera in its signed direction")
+		assert_almost_eq(displacement.cross(direction), 0.0, 0.01, "arrow does not pan across the requested axis")
+		assert_same(dungeon_map.current_node, start_node, "arrow does not change the current node")
+		assert_same(dungeon_map._controller_preview_node, start_preview, "arrow does not change controller preview")
+		assert_eq(dungeon_map.player_cursor.position, start_selection, "arrow does not change controller selection")
 
 
 func test_map_registers_global_adapter_targets_cursor_and_publishes_state_hints() -> void:
