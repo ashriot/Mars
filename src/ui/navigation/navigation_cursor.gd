@@ -26,12 +26,16 @@ var _last_warp_target_id := 0
 func _ready() -> void:
 	_previous_mouse_mode = _get_mouse_mode()
 	_set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+	if not InputManager.cursor_behavior_changed.is_connected(_on_cursor_behavior_changed):
+		InputManager.cursor_behavior_changed.connect(_on_cursor_behavior_changed)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	set_process_priority(100)
 	set_cursor_state(_state)
 
 
 func _exit_tree() -> void:
+	if InputManager.cursor_behavior_changed.is_connected(_on_cursor_behavior_changed):
+		InputManager.cursor_behavior_changed.disconnect(_on_cursor_behavior_changed)
 	_set_mouse_mode(_previous_mouse_mode)
 
 
@@ -98,6 +102,11 @@ func _warp_mouse(position: Vector2) -> void:
 func _reset_warp_dedupe() -> void:
 	_last_warp_destination = Vector2.INF
 	_last_warp_target_id = 0
+
+
+func _on_cursor_behavior_changed(behavior: InputManager.CursorBehavior) -> void:
+	if behavior == InputManager.CursorBehavior.FREE:
+		_reset_warp_dedupe()
 
 
 func _is_valid_target() -> bool:

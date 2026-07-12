@@ -107,6 +107,44 @@ func test_same_physical_destination_does_not_repeat_warp_but_changed_target_warp
 	assert_eq(cursor.warped_positions, [Vector2(70, 50), Vector2(220, 90), Vector2(220, 90)])
 
 
+func test_same_frame_free_then_snapped_input_resets_warp_dedupe_before_process() -> void:
+	var saved_mode := InputManager._active_mode
+	var saved_behavior := InputManager._cursor_behavior
+	var saved_expected_position := InputManager._expected_warp_position
+	var saved_expected_deadline := InputManager._expected_warp_deadline_ms
+	var cursor := TestCursor.new()
+	add_child(cursor)
+	var target := Button.new()
+	target.position = Vector2(20, 30)
+	target.size = Vector2(100, 40)
+	add_child(target)
+	cursor.set_focus_target(target)
+	InputManager._set_cursor_behavior(InputManager.CursorBehavior.SNAPPED)
+	cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2.ZERO, true)
+	assert_eq(cursor.warped_positions, [Vector2(70, 50)])
+	var mouse := InputEventMouseMotion.new()
+	mouse.position = Vector2(10, 10)
+	mouse.relative = Vector2(10, 10)
+	InputManager._input(mouse)
+	assert_eq(InputManager.get_cursor_behavior(), InputManager.CursorBehavior.FREE)
+	var navigation := InputEventKey.new()
+	navigation.physical_keycode = KEY_D
+	navigation.pressed = true
+	InputManager._input(navigation)
+	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.KEYBOARD_MOUSE)
+	assert_eq(InputManager.get_cursor_behavior(), InputManager.CursorBehavior.SNAPPED)
+	cursor.update_position_for_behavior(InputManager.get_cursor_behavior(), mouse.position, true)
+	assert_eq(cursor.warped_positions, [Vector2(70, 50), Vector2(70, 50)])
+	cursor.update_position_for_behavior(InputManager.get_cursor_behavior(), mouse.position, true)
+	assert_eq(cursor.warped_positions, [Vector2(70, 50), Vector2(70, 50)])
+	target.free()
+	cursor.free()
+	InputManager._active_mode = saved_mode
+	InputManager._cursor_behavior = saved_behavior
+	InputManager._expected_warp_position = saved_expected_position
+	InputManager._expected_warp_deadline_ms = saved_expected_deadline
+
+
 func test_world_target_uses_canvas_transform() -> void:
 	var cursor = CursorScript.new()
 	add_child_autofree(cursor)
