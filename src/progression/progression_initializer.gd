@@ -26,9 +26,15 @@ static func initialize_hero(hero: HeroData, catalog: ProgressionCatalog) -> Prog
 	var original_progress := hero.role_progress.duplicate()
 	for role_id: String in hero.unlocked_role_ids:
 		if not initialize_role(hero, role_id, catalog):
-			hero.role_progress = original_progress
+			_restore_progress(hero.role_progress, original_progress)
 			return ProgressionRebuilder.RebuildResult.new(false, "Could not initialize progression role '%s'." % role_id)
 	var result := ProgressionRebuilder.new(catalog).rebuild(hero)
 	if not result.success:
-		hero.role_progress = original_progress
+		_restore_progress(hero.role_progress, original_progress)
 	return result
+
+
+static func _restore_progress(target: Dictionary[String, HeroRoleProgress], snapshot: Dictionary) -> void:
+	target.clear()
+	for role_id: String in snapshot:
+		target[role_id] = snapshot[role_id]

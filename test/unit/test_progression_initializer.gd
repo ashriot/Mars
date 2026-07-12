@@ -59,8 +59,12 @@ func test_initialize_hero_initializes_all_unlocked_known_roles_once_and_rebuilds
 func test_initialize_hero_rolls_back_new_records_when_rebuild_fails() -> void:
 	var hero := _hero()
 	hero.role_progress["orphan"] = HeroRoleProgress.new(1, ["orphan.node"], {"orphan.node": 9})
+	var original_reference := hero.role_progress
 	var original := hero.role_progress.duplicate()
 	var result := ProgressionInitializer.initialize_hero(hero, _catalog())
 	assert_false(result.success)
+	assert_true(is_same(hero.role_progress, original_reference))
+	assert_true(is_same(original_reference, hero.role_progress))
 	assert_eq(hero.role_progress, original)
+	assert_eq(original_reference, original)
 	assert_false(hero.role_progress.has("gun"))

@@ -48,10 +48,10 @@ static func from_save_data(data: Variant) -> HeroRoleProgress:
 static func _is_positive_integral_number(value: Variant) -> bool:
 	if value is int:
 		return value > 0
-	return value is float and value > 0.0 and value == floor(value)
+	return value is float and is_finite(value) and value > 0.0 and value < 9223372036854775808.0 and value == floor(value)
 
 
 static func _is_non_negative_integral_number(value: Variant) -> bool:
 	if value is int:
 		return value >= 0
-	return value is float and value >= 0.0 and value == floor(value)
+	return value is float and is_finite(value) and value >= 0.0 and value < 9223372036854775808.0 and value == floor(value)

@@ -147,19 +147,20 @@ func _report_hero_load_issue(hero_id: String, issue: String) -> void:
 	last_load_issues.append(message)
 	push_warning(message)
 
-func start_new_campaign(slot_index: int):
-	current_slot_index = slot_index
-
-	# Default Party
-	party_roster.clear()
+func start_new_campaign(slot_index: int) -> bool:
+	var fresh_roster: Array[HeroData] = []
 	for path in [
 		"res://data/heroes/asher/asher.tres",
 		"res://data/heroes/echo/echo.tres",
 		"res://data/heroes/sands/sands.tres",
 	]:
 		var hero: HeroData = load(path).duplicate()
-		ProgressionSystem.initialize_fresh_hero(hero)
-		party_roster.append(hero)
+		if not ProgressionSystem.initialize_fresh_hero(hero):
+			return false
+		fresh_roster.append(hero)
+
+	current_slot_index = slot_index
+	party_roster = fresh_roster
 
 	# Default Bits
 	bits = 100
@@ -171,6 +172,7 @@ func start_new_campaign(slot_index: int):
 	}
 
 	save_game(slot_index)
+	return true
 
 func _get_slot_path(index: int) -> String:
 	return _get_save_dir() + SLOT_PREFIX + str(index) + SLOT_EXT
@@ -187,14 +189,17 @@ func distribute_combat_xp(amount: int):
 		hero.gain_xp(amount)
 
 # --- PARTY MANAGEMENT (The Catch-Up Mechanic) ---
-func unlock_hero(hero_id: String):
+func unlock_hero(hero_id: String) -> bool:
 	var path_to_base = "res://data/heroes/" + hero_id + "/" + hero_id + ".tres"
 	if ResourceLoader.exists(path_to_base):
 		var new_hero: HeroData = load(path_to_base).duplicate()
 		new_hero.current_xp = total_lifetime_xp
-		ProgressionSystem.initialize_fresh_hero(new_hero)
+		if not ProgressionSystem.initialize_fresh_hero(new_hero):
+			return false
 		party_roster.append(new_hero)
 		print(new_hero.hero_name, " joined the party with ", total_lifetime_xp, " XP!")
+		return true
+	return false
 
 func add_inventory_item(id: String, amount: int):
 	if not inventory.has(id):

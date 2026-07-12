@@ -105,6 +105,22 @@ func test_purchase_rejects_structural_and_starting_nodes_before_xp_or_prerequisi
 	_assert_rejected_without_mutation(_service().purchase_node(hero, "gun", "gun.root"), ProgressionPurchaseResult.Status.ALREADY_OWNED, hero, starting_before)
 
 
+func test_purchase_rejects_unowned_non_structural_paid_parent() -> void:
+	var nodes: Array[ProgressionNodeDefinition] = [
+		ProgressionNodeDefinition.role_anchor("gun.anchor", 1, 0),
+		ProgressionNodeDefinition.progression("gun.first", "gun.anchor", 1, -1, 0, ProgressionEffect.action("res://data/heroes/asher/actions/double_tap.tres", 1), true),
+		ProgressionNodeDefinition.progression("gun.second", "gun.anchor", 1, 1, 0, ProgressionEffect.action("res://data/heroes/asher/actions/fusion_ammo.tres", 2), true),
+		ProgressionNodeDefinition.progression("gun.parent", "gun.anchor", 2, 0, 100, ProgressionEffect.stat("ATK", 1)),
+		ProgressionNodeDefinition.progression("gun.child", "gun.parent", 3, 0, 100, ProgressionEffect.stat("ATK", 1)),
+	]
+	var tree := RoleTreeDefinition.new("gun", 1, nodes)
+	assert_true(tree.is_valid, tree.validation_error)
+	var hero := _hero()
+	var before := _snapshot(hero)
+	var result := ProgressionService.new(ProgressionCatalog.from_validated_trees([tree])).purchase_node(hero, "gun", "gun.child")
+	_assert_rejected_without_mutation(result, ProgressionPurchaseResult.Status.PREREQUISITE_LOCKED, hero, before)
+
+
 func test_failed_rebuild_rolls_back_xp_and_role_record_exactly() -> void:
 	var hero := _hero()
 	hero.role_progress["gun"] = HeroRoleProgress.new(3, ["legacy"], {"legacy": 17})
@@ -239,6 +255,9 @@ func test_role_progress_parser_rejects_every_malformed_boundary() -> void:
 		{"content_revision": 3.5, "owned_node_ids": ["gun.root"], "xp_paid_by_node": {"gun.root": 100}},
 		{"content_revision": 3, "owned_node_ids": ["gun.root"], "xp_paid_by_node": {"gun.root": 100.5}},
 		{"content_revision": 3, "owned_node_ids": ["gun.root"], "xp_paid_by_node": {"gun.root": -1}},
+		{"content_revision": 3, "owned_node_ids": ["gun.root"], "xp_paid_by_node": {"gun.root": INF}},
+		{"content_revision": 3, "owned_node_ids": ["gun.root"], "xp_paid_by_node": {"gun.root": NAN}},
+		{"content_revision": 3, "owned_node_ids": ["gun.root"], "xp_paid_by_node": {"gun.root": 1.0e30}},
 	]
 	assert_not_null(HeroRoleProgress.from_save_data(valid))
 	assert_not_null(HeroRoleProgress.from_save_data({"content_revision": 3, "owned_node_ids": ["gun.root"], "xp_paid_by_node": {"gun.root": 0}}))

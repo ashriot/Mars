@@ -18,6 +18,7 @@ var _saved_inventory_mods: Array[EquipmentMod]
 var _saved_run_active: bool
 var _saved_last_load_issues: Array[String]
 var _saved_progression_catalog: ProgressionCatalog
+var _saved_current_slot_index: int
 
 
 func before_each() -> void:
@@ -36,6 +37,7 @@ func before_each() -> void:
 	_saved_run_active = RunManager.is_run_active
 	_saved_last_load_issues = SaveSystem.last_load_issues.duplicate()
 	_saved_progression_catalog = ProgressionSystem.catalog
+	_saved_current_slot_index = SaveSystem.current_slot_index
 
 
 func after_each() -> void:
@@ -52,6 +54,7 @@ func after_each() -> void:
 	RunManager.is_run_active = _saved_run_active
 	SaveSystem.last_load_issues = _saved_last_load_issues
 	ProgressionSystem.catalog = _saved_progression_catalog
+	SaveSystem.current_slot_index = _saved_current_slot_index
 
 
 func _restore_file(path: String, existed: bool, bytes: PackedByteArray) -> void:
@@ -69,6 +72,29 @@ func _write_test_slot(document: Dictionary) -> void:
 	assert_not_null(file)
 	if file:
 		file.store_string(JSON.stringify(document))
+
+
+func _fresh_default_catalog() -> ProgressionCatalog:
+	var trees: Array[RoleTreeDefinition] = []
+	var seen := {}
+	for hero_path in [
+		"res://data/heroes/asher/asher.tres",
+		"res://data/heroes/echo/echo.tres",
+		"res://data/heroes/sands/sands.tres",
+	]:
+		var hero: HeroData = load(hero_path)
+		for role_id: String in hero.unlocked_role_ids:
+			if seen.has(role_id):
+				continue
+			seen[role_id] = true
+			var first_id := "gun.root" if role_id == "gun" else "%s.first" % role_id
+			var second_id := "gun.fusion_ammo" if role_id == "gun" else "%s.second" % role_id
+			trees.append(RoleTreeDefinition.new(role_id, 3, [
+				ProgressionNodeDefinition.role_anchor("%s.anchor" % role_id, 1, 0),
+				ProgressionNodeDefinition.progression(first_id, "%s.anchor" % role_id, 1, -1, 0, ProgressionEffect.action("res://data/heroes/asher/actions/double_tap.tres", 1), true),
+				ProgressionNodeDefinition.progression(second_id, "%s.anchor" % role_id, 1, 1, 0, ProgressionEffect.action("res://data/heroes/asher/actions/fusion_ammo.tres", 2), true),
+			]))
+	return ProgressionCatalog.from_validated_trees(trees)
 
 
 func test_gut_runner_argument_is_detected() -> void:
@@ -131,6 +157,7 @@ func test_load_game_reports_intentional_legacy_progression_reset_without_mapping
 
 
 func test_load_game_reports_catalog_revision_mismatch_without_reset_or_refund() -> void:
+	ProgressionSystem.catalog = _fresh_default_catalog()
 	var gun_revision: int = ProgressionSystem.catalog.get_role("gun").version
 	_write_test_slot({"heroes": [{
 		"hero_id": "asher",
@@ -155,16 +182,8 @@ func test_load_game_reports_catalog_revision_mismatch_without_reset_or_refund() 
 
 
 func test_new_campaign_and_unlocked_hero_receive_fresh_starting_progress() -> void:
-	var loaded := ProgressionJsonLoader.load_file("res://test/fixtures/progression/valid_role.json")
-	assert_true(loaded.errors.is_empty())
-	var snp_tree := RoleTreeDefinition.new("snp", 1, [
-		ProgressionNodeDefinition.role_anchor("snp.anchor", 1, 0),
-		ProgressionNodeDefinition.progression("snp.first", "snp.anchor", 1, -1, 0, ProgressionEffect.action("res://data/heroes/asher/actions/double_tap.tres", 1), true),
-		ProgressionNodeDefinition.progression("snp.second", "snp.anchor", 1, 1, 0, ProgressionEffect.action("res://data/heroes/asher/actions/fusion_ammo.tres", 2), true),
-	])
-	assert_true(snp_tree.is_valid, snp_tree.validation_error)
-	ProgressionSystem.catalog = ProgressionCatalog.from_validated_trees([loaded.tree, snp_tree])
-	SaveSystem.start_new_campaign(1)
+	ProgressionSystem.catalog = _fresh_default_catalog()
+	assert_true(SaveSystem.start_new_campaign(1))
 	assert_false(SaveSystem.party_roster.is_empty())
 	var asher: HeroData = SaveSystem.party_roster[0]
 	assert_eq(asher.role_progress.gun.owned_node_ids, ["gun.root", "gun.fusion_ammo"])
@@ -172,3 +191,32 @@ func test_new_campaign_and_unlocked_hero_receive_fresh_starting_progress() -> vo
 	SaveSystem.unlock_hero("asher")
 	assert_eq(SaveSystem.party_roster.size(), before + 1)
 	assert_eq(SaveSystem.party_roster[-1].role_progress.gun.xp_paid_by_node, {"gun.root": 0, "gun.fusion_ammo": 0})
+
+
+func test_failed_fresh_initialization_does_not_commit_campaign_or_unlocked_hero() -> void:
+	var loaded := ProgressionJsonLoader.load_file("res://test/fixtures/progression/valid_role.json")
+	assert_true(loaded.errors.is_empty())
+	# The fixture has gun but intentionally lacks Asher's other unlocked role, snp.
+	ProgressionSystem.catalog = ProgressionCatalog.from_validated_trees([loaded.tree])
+	var sentinel := HeroData.new()
+	SaveSystem.party_roster = [sentinel]
+	SaveSystem.data = {"sentinel": true}
+	SaveSystem.current_slot_index = 7
+	SaveSystem.bits = 42
+	var slot_existed := FileAccess.file_exists(TEST_SLOT_PATH)
+	var slot_bytes := FileAccess.get_file_as_bytes(TEST_SLOT_PATH) if slot_existed else PackedByteArray()
+
+	assert_false(SaveSystem.start_new_campaign(1))
+
+	assert_eq(SaveSystem.party_roster.size(), 1)
+	assert_true(is_same(SaveSystem.party_roster[0], sentinel))
+	assert_eq(SaveSystem.data, {"sentinel": true})
+	assert_eq(SaveSystem.current_slot_index, 7)
+	assert_eq(SaveSystem.bits, 42)
+	assert_eq(FileAccess.file_exists(TEST_SLOT_PATH), slot_existed)
+	if slot_existed:
+		assert_eq(FileAccess.get_file_as_bytes(TEST_SLOT_PATH), slot_bytes)
+
+	var before_unlock := SaveSystem.party_roster.duplicate()
+	assert_false(SaveSystem.unlock_hero("asher"))
+	assert_eq(SaveSystem.party_roster, before_unlock)
