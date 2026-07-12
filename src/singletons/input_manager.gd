@@ -8,6 +8,7 @@ const JOY_AXIS_THRESHOLD := 0.25
 const WARP_POSITION_TOLERANCE := 2.0
 const WARP_SUPPRESSION_MS := 100
 const NAVIGATION_ACTIONS: Array[StringName] = [
+	&"ui_left", &"ui_right", &"ui_up", &"ui_down",
 	&"nav_left", &"nav_right", &"nav_up", &"nav_down",
 	&"confirm", &"cancel", &"page_left", &"page_right",
 	&"role_left", &"role_right",

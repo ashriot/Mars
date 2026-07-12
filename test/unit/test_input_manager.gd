@@ -75,13 +75,12 @@ func test_joy_axis_at_quarter_is_controller_input() -> void:
 	assert_eq(manager.get_active_mode(), manager.InputMode.CONTROLLER)
 
 
-func test_navigation_key_selects_snapped_without_changing_input_family() -> void:
-	var event := InputEventKey.new()
-	event.physical_keycode = KEY_W
-	event.pressed = true
-	manager._input(event)
-	assert_eq(manager.get_active_mode(), manager.InputMode.KEYBOARD_MOUSE)
-	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)
+func test_arrow_and_wasd_navigation_select_snapped_keyboard_mouse() -> void:
+	for event: InputEventKey in [_key(KEY_RIGHT), _physical_key(KEY_D)]:
+		manager._set_cursor_behavior(manager.CursorBehavior.FREE)
+		manager._input(event)
+		assert_eq(manager.get_active_mode(), manager.InputMode.KEYBOARD_MOUSE)
+		assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)
 
 
 func test_controller_button_and_axis_select_snapped() -> void:
@@ -257,6 +256,47 @@ func test_required_semantic_actions_exist() -> void:
 		assert_true(InputMap.has_action(action), str(action))
 
 
+func test_standard_ui_directions_include_arrows_wasd_and_controller_defaults() -> void:
+	var expected := {
+		&"ui_left": [KEY_LEFT, KEY_A, JOY_BUTTON_DPAD_LEFT, JOY_AXIS_LEFT_X, -1.0],
+		&"ui_right": [KEY_RIGHT, KEY_D, JOY_BUTTON_DPAD_RIGHT, JOY_AXIS_LEFT_X, 1.0],
+		&"ui_up": [KEY_UP, KEY_W, JOY_BUTTON_DPAD_UP, JOY_AXIS_LEFT_Y, -1.0],
+		&"ui_down": [KEY_DOWN, KEY_S, JOY_BUTTON_DPAD_DOWN, JOY_AXIS_LEFT_Y, 1.0],
+	}
+	for action: StringName in expected:
+		var values: Array = expected[action]
+		assert_true(_has_logical_key(action, values[0]), "%s arrow" % action)
+		assert_true(_has_physical_key(action, values[1]), "%s WASD" % action)
+		assert_true(_has_joy_button(action, values[2]), "%s D-pad" % action)
+		assert_true(_has_joy_axis(action, values[3], values[4]), "%s stick" % action)
+
+
+func test_custom_navigation_keeps_arrows_out_and_wasd_in() -> void:
+	var expected := {
+		&"nav_left": [KEY_LEFT, KEY_A],
+		&"nav_right": [KEY_RIGHT, KEY_D],
+		&"nav_up": [KEY_UP, KEY_W],
+		&"nav_down": [KEY_DOWN, KEY_S],
+	}
+	for action: StringName in expected:
+		assert_false(_has_logical_key(action, expected[action][0]), "%s excludes arrow" % action)
+		assert_true(_has_physical_key(action, expected[action][1]), "%s keeps WASD" % action)
+
+
+func test_dungeon_camera_uses_matching_arrow_keys_without_nav_overlap() -> void:
+	var expected := {
+		&"camera_pan_left": KEY_LEFT,
+		&"camera_pan_right": KEY_RIGHT,
+		&"camera_pan_up": KEY_UP,
+		&"camera_pan_down": KEY_DOWN,
+	}
+	for action: StringName in expected:
+		assert_true(_has_physical_key(action, expected[action]), str(action))
+		var arrow := _physical_key(expected[action])
+		for nav_action: StringName in [&"nav_left", &"nav_right", &"nav_up", &"nav_down"]:
+			assert_false(arrow.is_action(nav_action), "%s does not trigger %s" % [action, nav_action])
+
+
 func test_navigation_actions_include_dpad_buttons() -> void:
 	var expected := {&"nav_up": 11, &"nav_down": 12, &"nav_left": 13, &"nav_right": 14}
 	for action in expected:
@@ -306,6 +346,34 @@ func test_unknown_connected_name_uses_steam_fallback_bindings() -> void:
 
 func _pressed_key() -> InputEventKey:
 	var event := InputEventKey.new()
+	event.pressed = true
+	return event
+
+
+func _has_logical_key(action: StringName, keycode: Key) -> bool:
+	for event in InputMap.action_get_events(action):
+		if event is InputEventKey and event.keycode == keycode:
+			return true
+	return false
+
+
+func _has_physical_key(action: StringName, keycode: Key) -> bool:
+	for event in InputMap.action_get_events(action):
+		if event is InputEventKey and event.physical_keycode == keycode:
+			return true
+	return false
+
+
+func _key(keycode: Key) -> InputEventKey:
+	var event := InputEventKey.new()
+	event.keycode = keycode
+	event.pressed = true
+	return event
+
+
+func _physical_key(keycode: Key) -> InputEventKey:
+	var event := InputEventKey.new()
+	event.physical_keycode = keycode
 	event.pressed = true
 	return event
 
