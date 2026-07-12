@@ -1,76 +1,76 @@
 {
   "content_revision": 1,
   "nodes": [
-    {
-      "column": 0,
-      "effect": {
-        "resource": "res://data/heroes/sands/actions/direct.tres",
-        "slot": 1,
-        "type": "action"
-      },
-      "id": "stg.root",
-      "parent": null,
-      "rank": 1,
-      "xp_cost": 100
-    },
-    {
-      "column": 0,
-      "effect": {
-        "resource": "res://data/heroes/sands/actions/gambit.tres",
-        "slot": 2,
-        "type": "action"
-      },
-      "id": "stg.gambit",
-      "parent": "stg.root",
-      "rank": 2,
-      "xp_cost": 200
-    },
-    {
-      "column": 0,
-      "effect": {
-        "resource": "res://data/heroes/sands/actions/advantage.tres",
-        "slot": 3,
-        "type": "action"
-      },
-      "id": "stg.advantage",
-      "parent": "stg.gambit",
-      "rank": 3,
-      "xp_cost": 300
-    },
-    {
-      "column": 0,
-      "effect": {
-        "resource": "res://data/heroes/sands/actions/checkmate.tres",
-        "slot": 4,
-        "type": "action"
-      },
-      "id": "stg.checkmate",
-      "parent": "stg.advantage",
-      "rank": 4,
-      "xp_cost": 400
-    },
-    {
-      "column": 0,
-      "effect": {
-        "resource": "res://data/heroes/sands/actions/opening_move.tres",
-        "type": "shift_action"
-      },
-      "id": "stg.opening_move",
-      "parent": "stg.checkmate",
-      "rank": 5,
-      "xp_cost": 500
-    },
-    {
-      "column": 0,
-      "effect": {
-        "resource": "res://data/heroes/sands/actions/fianchetto.tres",
-        "type": "passive"
-      },
-      "id": "stg.fianchetto",
-      "parent": "stg.opening_move",
-      "rank": 6,
-      "xp_cost": 600
-    }
+	{
+	  "column": 0,
+	  "effect": {
+		"resource": "res://data/heroes/sands/actions/tempo.tres",
+		"slot": 1,
+		"type": "action"
+	  },
+	  "id": "stg.root",
+	  "parent": null,
+	  "rank": 1,
+	  "xp_cost": 100
+	},
+	{
+	  "column": 0,
+	  "effect": {
+		"resource": "res://data/heroes/sands/actions/gambit.tres",
+		"slot": 2,
+		"type": "action"
+	  },
+	  "id": "stg.gambit",
+	  "parent": "stg.root",
+	  "rank": 2,
+	  "xp_cost": 200
+	},
+	{
+	  "column": 0,
+	  "effect": {
+		"resource": "res://data/heroes/sands/actions/advantage.tres",
+		"slot": 3,
+		"type": "action"
+	  },
+	  "id": "stg.advantage",
+	  "parent": "stg.gambit",
+	  "rank": 3,
+	  "xp_cost": 300
+	},
+	{
+	  "column": 0,
+	  "effect": {
+		"resource": "res://data/heroes/sands/actions/checkmate.tres",
+		"slot": 4,
+		"type": "action"
+	  },
+	  "id": "stg.checkmate",
+	  "parent": "stg.advantage",
+	  "rank": 4,
+	  "xp_cost": 400
+	},
+	{
+	  "column": 0,
+	  "effect": {
+		"resource": "res://data/heroes/sands/actions/opening_move.tres",
+		"type": "shift_action"
+	  },
+	  "id": "stg.opening_move",
+	  "parent": "stg.checkmate",
+	  "rank": 5,
+	  "xp_cost": 500
+	},
+	{
+	  "column": 0,
+	  "effect": {
+		"resource": "res://data/heroes/sands/actions/fianchetto.tres",
+		"type": "passive"
+	  },
+	  "id": "stg.fianchetto",
+	  "parent": "stg.opening_move",
+	  "rank": 6,
+	  "xp_cost": 600
+	}
   ],
   "role_id": "stg",
   "schema_version": 1

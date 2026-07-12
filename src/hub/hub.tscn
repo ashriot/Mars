@@ -210,7 +210,6 @@ custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
 focus_neighbor_top = NodePath("../HeadOut")
 focus_neighbor_bottom = NodePath("../Button2")
-focus_mode = 2
 theme_override_font_sizes/font_size = 48
 text = "TERMINAL ACCESS"
 
@@ -219,7 +218,6 @@ custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
 focus_neighbor_top = NodePath("../Button")
 focus_neighbor_bottom = NodePath("../Button3")
-focus_mode = 2
 theme_override_font_sizes/font_size = 48
 text = "CHECK STATUS"
 
@@ -228,7 +226,6 @@ custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
 focus_neighbor_top = NodePath("../Button2")
 focus_neighbor_bottom = NodePath("../Button4")
-focus_mode = 2
 theme_override_font_sizes/font_size = 48
 text = "RUN TRAINING EXE"
 
@@ -237,7 +234,6 @@ custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
 focus_neighbor_top = NodePath("../Button3")
 focus_neighbor_bottom = NodePath("../Button5")
-focus_mode = 2
 theme_override_font_sizes/font_size = 48
 text = "ACCESS BANKING"
 
@@ -246,7 +242,6 @@ custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
 focus_neighbor_top = NodePath("../Button4")
 focus_neighbor_bottom = NodePath("../HeadOut")
-focus_mode = 2
 theme_override_font_sizes/font_size = 48
 text = "CONTACT MILO"
 
@@ -255,7 +250,6 @@ custom_minimum_size = Vector2(200, 70)
 layout_mode = 2
 focus_neighbor_top = NodePath("../Button5")
 focus_neighbor_bottom = NodePath("../Button")
-focus_mode = 2
 theme_override_font_sizes/font_size = 48
 text = "HEAD OUT"
 
