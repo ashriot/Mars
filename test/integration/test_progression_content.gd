@@ -26,16 +26,132 @@ const EXPECTED := {
 
 # Stable IDs are authored semantic names: role.root, then reward/resource names;
 # repeated stat rewards receive a deterministic numeric suffix.
-const EXPECTED_IDS := {
-	"gun": ["gun.anchor","gun.root","gun.fusion_ammo","gun.atk_1","gun.hp_5","gun.hp_10","gun.hp_10_2","gun.spd_1","gun.psy_1","gun.hp_5_2","gun.hp_10_3","gun.spd_1_2","gun.atk_1_2","gun.atk_2","gun.atk_2_2","gun.bullet_time","gun.spd_2","gun.spd_2_2","gun.psy_2"],
-	"snp": ["snp.anchor","snp.root","snp.aimed_shot","snp.hp_5","snp.atk_1","snp.atk_2","snp.atk_2_2","snp.aim_1","snp.ovr_1"],
-	"opr": ["opr.anchor","opr.root","opr.decoy","opr.hp_5"],
-	"kin": ["kin.anchor","kin.root","kin.rejuvenate","kin.hp_5","kin.psy_1","kin.psy_2","kin.psy_2_2","kin.spd_1","kin.atk_1","kin.hp_10","kin.hp_10_2","kin.spd_1_2","kin.psy_1_2","kin.psy_2_3","kin.psy_2_4","kin.pain_transfer","kin.spd_2","kin.atk_2"],
-	"psi": ["psi.anchor","psi.root","psi.energy_barrier","psi.hp_5","psi.atk_1","psi.atk_2","psi.atk_2_2","psi.ovr_1","psi.psy_1","psi.hp_5_2","psi.hp_10","psi.ovr_1_2","psi.atk_1_2","psi.atk_2_3","psi.atk_2_4","psi.reverberate","psi.ovr_2","psi.psy_2","psi.ovr_2_2"],
-	"dom": ["dom.anchor","dom.root","dom.feedback","dom.psy_1"],
-	"med": ["med.anchor","med.root","med.booster_shots","med.auto_shields","med.bastion","med.triage","med.apply_painkillers"],
-	"stg": ["stg.anchor","stg.root","stg.gambit","stg.advantage","stg.checkmate","stg.opening_move","stg.fianchetto"],
-	"van": ["van.anchor","van.root","van.overwatch","van.focus_fire","van.phalanx","van.return_fire","van.opening_salvo"],
+# Independently authored compact node rows:
+# [id, parent, rank, column, xp_cost, node_kind, starting_owned, exact_effect]
+const AUTHORED_NODES := {
+"gun": [
+	["gun.anchor", null, 1, 0, null, "role_anchor", false, null],
+	["gun.root", "gun.anchor", 1, -1, 0, "progression", true, {"resource":"res://data/heroes/asher/actions/double_tap.tres","slot":1,"type":"action"}],
+	["gun.fusion_ammo", "gun.anchor", 1, 1, 0, "progression", true, {"resource":"res://data/heroes/asher/actions/fusion_ammo.tres","slot":2,"type":"action"}],
+	["gun.atk_1", "gun.anchor", 2, 0, 200, "progression", false, {"amount":1,"stat":"ATK","type":"stat"}],
+	["gun.hp_5", "gun.atk_1", 3, 0, 300, "progression", false, {"amount":5,"stat":"HP","type":"stat"}],
+	["gun.hp_10", "gun.hp_5", 3, -1, 450, "progression", false, {"amount":10,"stat":"HP","type":"stat"}],
+	["gun.hp_10_2", "gun.hp_10", 4, -1, 600, "progression", false, {"amount":10,"stat":"HP","type":"stat"}],
+	["gun.spd_1", "gun.hp_5", 4, 0, 400, "progression", false, {"amount":1,"stat":"SPD","type":"stat"}],
+	["gun.psy_1", "gun.spd_1", 5, 0, 500, "progression", false, {"amount":1,"stat":"PSY","type":"stat"}],
+	["gun.hp_5_2", "gun.psy_1", 6, 0, 600, "progression", false, {"amount":5,"stat":"HP","type":"stat"}],
+	["gun.hp_10_3", "gun.hp_5_2", 6, -1, 900, "progression", false, {"amount":10,"stat":"HP","type":"stat"}],
+	["gun.spd_1_2", "gun.hp_5_2", 7, 0, 700, "progression", false, {"amount":1,"stat":"SPD","type":"stat"}],
+	["gun.atk_1_2", "gun.spd_1_2", 8, 0, 800, "progression", false, {"amount":1,"stat":"ATK","type":"stat"}],
+	["gun.atk_2", "gun.atk_1_2", 8, -1, 1200, "progression", false, {"amount":2,"stat":"ATK","type":"stat"}],
+	["gun.atk_2_2", "gun.atk_2", 9, -1, 1350, "progression", false, {"amount":2,"stat":"ATK","type":"stat"}],
+	["gun.bullet_time", "gun.atk_1_2", 9, 0, 900, "progression", false, {"resource":"res://data/heroes/asher/actions/bullet_time.tres","type":"passive"}],
+	["gun.spd_2", "gun.spd_1_2", 7, 1, 1050, "progression", false, {"amount":2,"stat":"SPD","type":"stat"}],
+	["gun.spd_2_2", "gun.spd_2", 8, 1, 1200, "progression", false, {"amount":2,"stat":"SPD","type":"stat"}],
+	["gun.psy_2", "gun.psy_1", 5, 1, 750, "progression", false, {"amount":2,"stat":"PSY","type":"stat"}],
+],
+"opr": [
+	["opr.anchor", null, 1, 0, null, "role_anchor", false, null],
+	["opr.root", "opr.anchor", 1, -1, 0, "progression", true, {"resource":"res://data/heroes/asher/actions/coordinate.tres","slot":1,"type":"action"}],
+	["opr.decoy", "opr.anchor", 1, 1, 0, "progression", true, {"resource":"res://data/heroes/asher/actions/decoy.tres","slot":2,"type":"action"}],
+	["opr.hp_5", "opr.anchor", 2, 0, 200, "progression", false, {"amount":5,"stat":"HP","type":"stat"}],
+],
+"snp": [
+	["snp.anchor", null, 1, 0, null, "role_anchor", false, null],
+	["snp.root", "snp.anchor", 1, -1, 0, "progression", true, {"resource":"res://data/heroes/asher/actions/mark_target.tres","slot":1,"type":"action"}],
+	["snp.aimed_shot", "snp.anchor", 1, 1, 0, "progression", true, {"resource":"res://data/heroes/asher/actions/aimed_shot.tres","slot":2,"type":"action"}],
+	["snp.hp_5", "snp.anchor", 2, 0, 200, "progression", false, {"amount":5,"stat":"HP","type":"stat"}],
+	["snp.atk_1", "snp.hp_5", 3, 0, 300, "progression", false, {"amount":1,"stat":"ATK","type":"stat"}],
+	["snp.atk_2", "snp.atk_1", 3, -1, 450, "progression", false, {"amount":2,"stat":"ATK","type":"stat"}],
+	["snp.atk_2_2", "snp.atk_2", 4, -1, 600, "progression", false, {"amount":2,"stat":"ATK","type":"stat"}],
+	["snp.aim_1", "snp.atk_2_2", 5, -1, 750, "progression", false, {"amount":1,"stat":"AIM","type":"stat"}],
+	["snp.ovr_1", "snp.atk_1", 4, 0, 400, "progression", false, {"amount":1,"stat":"OVR","type":"stat"}],
+],
+"dom": [
+	["dom.anchor", null, 1, 0, null, "role_anchor", false, null],
+	["dom.root", "dom.anchor", 1, -1, 0, "progression", true, {"resource":"res://data/heroes/echo/actions/displace.tres","slot":1,"type":"action"}],
+	["dom.feedback", "dom.anchor", 1, 1, 0, "progression", true, {"resource":"res://data/heroes/echo/actions/feedback.tres","slot":2,"type":"action"}],
+	["dom.psy_1", "dom.anchor", 2, 0, 200, "progression", false, {"amount":1,"stat":"PSY","type":"stat"}],
+],
+"kin": [
+	["kin.anchor", null, 1, 0, null, "role_anchor", false, null],
+	["kin.root", "kin.anchor", 1, -1, 0, "progression", true, {"resource":"res://data/heroes/echo/actions/telekinesis.tres","slot":1,"type":"action"}],
+	["kin.rejuvenate", "kin.anchor", 1, 1, 0, "progression", true, {"resource":"res://data/heroes/echo/actions/rejuvenate.tres","slot":2,"type":"action"}],
+	["kin.hp_5", "kin.anchor", 2, 0, 200, "progression", false, {"amount":5,"stat":"HP","type":"stat"}],
+	["kin.psy_1", "kin.hp_5", 3, 0, 300, "progression", false, {"amount":1,"stat":"PSY","type":"stat"}],
+	["kin.psy_2", "kin.psy_1", 3, -1, 450, "progression", false, {"amount":2,"stat":"PSY","type":"stat"}],
+	["kin.psy_2_2", "kin.psy_2", 4, -1, 600, "progression", false, {"amount":2,"stat":"PSY","type":"stat"}],
+	["kin.spd_1", "kin.psy_1", 4, 0, 400, "progression", false, {"amount":1,"stat":"SPD","type":"stat"}],
+	["kin.atk_1", "kin.spd_1", 5, 0, 500, "progression", false, {"amount":1,"stat":"ATK","type":"stat"}],
+	["kin.hp_10", "kin.atk_1", 6, 0, 600, "progression", false, {"amount":10,"stat":"HP","type":"stat"}],
+	["kin.hp_10_2", "kin.hp_10", 6, -1, 900, "progression", false, {"amount":10,"stat":"HP","type":"stat"}],
+	["kin.spd_1_2", "kin.hp_10", 7, 0, 700, "progression", false, {"amount":1,"stat":"SPD","type":"stat"}],
+	["kin.psy_1_2", "kin.spd_1_2", 8, 0, 800, "progression", false, {"amount":1,"stat":"PSY","type":"stat"}],
+	["kin.psy_2_3", "kin.psy_1_2", 8, -1, 1200, "progression", false, {"amount":2,"stat":"PSY","type":"stat"}],
+	["kin.psy_2_4", "kin.psy_2_3", 9, -1, 1350, "progression", false, {"amount":2,"stat":"PSY","type":"stat"}],
+	["kin.pain_transfer", "kin.psy_1_2", 9, 0, 900, "progression", false, {"resource":"res://data/heroes/echo/actions/pain_transfer.tres","slot":3,"type":"action"}],
+	["kin.spd_2", "kin.spd_1_2", 7, 1, 1050, "progression", false, {"amount":2,"stat":"SPD","type":"stat"}],
+	["kin.atk_2", "kin.atk_1", 5, 1, 750, "progression", false, {"amount":2,"stat":"ATK","type":"stat"}],
+],
+"psi": [
+	["psi.anchor", null, 1, 0, null, "role_anchor", false, null],
+	["psi.root", "psi.anchor", 1, -1, 0, "progression", true, {"resource":"res://data/heroes/echo/actions/focused_bolt.tres","slot":1,"type":"action"}],
+	["psi.energy_barrier", "psi.anchor", 1, 1, 0, "progression", true, {"resource":"res://data/heroes/echo/actions/energy_barrier.tres","slot":2,"type":"action"}],
+	["psi.hp_5", "psi.anchor", 2, 0, 200, "progression", false, {"amount":5,"stat":"HP","type":"stat"}],
+	["psi.atk_1", "psi.hp_5", 3, 0, 300, "progression", false, {"amount":1,"stat":"ATK","type":"stat"}],
+	["psi.atk_2", "psi.atk_1", 3, -1, 450, "progression", false, {"amount":2,"stat":"ATK","type":"stat"}],
+	["psi.atk_2_2", "psi.atk_2", 4, -1, 600, "progression", false, {"amount":2,"stat":"ATK","type":"stat"}],
+	["psi.ovr_1", "psi.atk_1", 4, 0, 400, "progression", false, {"amount":1,"stat":"OVR","type":"stat"}],
+	["psi.psy_1", "psi.ovr_1", 5, 0, 500, "progression", false, {"amount":1,"stat":"PSY","type":"stat"}],
+	["psi.hp_5_2", "psi.psy_1", 6, 0, 600, "progression", false, {"amount":5,"stat":"HP","type":"stat"}],
+	["psi.hp_10", "psi.hp_5_2", 6, -1, 900, "progression", false, {"amount":10,"stat":"HP","type":"stat"}],
+	["psi.ovr_1_2", "psi.hp_5_2", 7, 0, 700, "progression", false, {"amount":1,"stat":"OVR","type":"stat"}],
+	["psi.atk_1_2", "psi.ovr_1_2", 8, 0, 800, "progression", false, {"amount":1,"stat":"ATK","type":"stat"}],
+	["psi.atk_2_3", "psi.atk_1_2", 8, -1, 1200, "progression", false, {"amount":2,"stat":"ATK","type":"stat"}],
+	["psi.atk_2_4", "psi.atk_2_3", 9, -1, 1350, "progression", false, {"amount":2,"stat":"ATK","type":"stat"}],
+	["psi.reverberate", "psi.atk_1_2", 9, 0, 900, "progression", false, {"resource":"res://data/heroes/echo/actions/reverberate.tres","slot":3,"type":"action"}],
+	["psi.ovr_2", "psi.ovr_1_2", 7, 1, 1050, "progression", false, {"amount":2,"stat":"OVR","type":"stat"}],
+	["psi.psy_2", "psi.psy_1", 5, 1, 750, "progression", false, {"amount":2,"stat":"PSY","type":"stat"}],
+	["psi.ovr_2_2", "psi.ovr_1", 4, 1, 600, "progression", false, {"amount":2,"stat":"OVR","type":"stat"}],
+],
+"med": [
+	["med.anchor", null, 1, 0, null, "role_anchor", false, null],
+	["med.root", "med.anchor", 1, -1, 0, "progression", true, {"resource":"res://data/heroes/sands/actions/immunize.tres","slot":1,"type":"action"}],
+	["med.booster_shots", "med.anchor", 1, 1, 0, "progression", true, {"resource":"res://data/heroes/sands/actions/booster_shots.tres","slot":2,"type":"action"}],
+	["med.auto_shields", "med.anchor", 2, 0, 200, "progression", false, {"resource":"res://data/heroes/sands/actions/auto_shields.tres","slot":3,"type":"action"}],
+	["med.bastion", "med.auto_shields", 3, 0, 300, "progression", false, {"resource":"res://data/heroes/sands/actions/bastion.tres","slot":4,"type":"action"}],
+	["med.triage", "med.bastion", 4, 0, 400, "progression", false, {"resource":"res://data/heroes/sands/actions/triage.tres","type":"shift_action"}],
+	["med.apply_painkillers", "med.triage", 5, 0, 500, "progression", false, {"resource":"res://data/heroes/sands/actions/apply_painkillers.tres","type":"passive"}],
+],
+"stg": [
+	["stg.anchor", null, 1, 0, null, "role_anchor", false, null],
+	["stg.root", "stg.anchor", 1, -1, 0, "progression", true, {"resource":"res://data/heroes/sands/actions/tempo.tres","slot":1,"type":"action"}],
+	["stg.gambit", "stg.anchor", 1, 1, 0, "progression", true, {"resource":"res://data/heroes/sands/actions/gambit.tres","slot":2,"type":"action"}],
+	["stg.advantage", "stg.anchor", 2, 0, 200, "progression", false, {"resource":"res://data/heroes/sands/actions/advantage.tres","slot":3,"type":"action"}],
+	["stg.checkmate", "stg.advantage", 3, 0, 300, "progression", false, {"resource":"res://data/heroes/sands/actions/checkmate.tres","slot":4,"type":"action"}],
+	["stg.opening_move", "stg.checkmate", 4, 0, 400, "progression", false, {"resource":"res://data/heroes/sands/actions/opening_move.tres","type":"shift_action"}],
+	["stg.fianchetto", "stg.opening_move", 5, 0, 500, "progression", false, {"resource":"res://data/heroes/sands/actions/fianchetto.tres","type":"passive"}],
+],
+"van": [
+	["van.anchor", null, 1, 0, null, "role_anchor", false, null],
+	["van.root", "van.anchor", 1, -1, 0, "progression", true, {"resource":"res://data/heroes/sands/actions/draw_fire.tres","slot":1,"type":"action"}],
+	["van.overwatch", "van.anchor", 1, 1, 0, "progression", true, {"resource":"res://data/heroes/sands/actions/overwatch.tres","slot":2,"type":"action"}],
+	["van.focus_fire", "van.anchor", 2, 0, 200, "progression", false, {"resource":"res://data/heroes/sands/actions/focus_fire.tres","slot":3,"type":"action"}],
+	["van.phalanx", "van.focus_fire", 3, 0, 300, "progression", false, {"resource":"res://data/heroes/sands/actions/phalanx.tres","slot":4,"type":"action"}],
+	["van.return_fire", "van.phalanx", 4, 0, 400, "progression", false, {"resource":"res://data/heroes/sands/actions/return_fire.tres","type":"passive"}],
+	["van.opening_salvo", "van.return_fire", 5, 0, 500, "progression", false, {"resource":"res://data/heroes/sands/actions/opening_salvo.tres","type":"shift_action"}],
+],
+}
+const FIRST_PAID := {
+	"gun": ["gun.atk_1", {"amount":1, "stat":"ATK", "type":"stat"}],
+	"opr": ["opr.hp_5", {"amount":5, "stat":"HP", "type":"stat"}],
+	"snp": ["snp.hp_5", {"amount":5, "stat":"HP", "type":"stat"}],
+	"dom": ["dom.psy_1", {"amount":1, "stat":"PSY", "type":"stat"}],
+	"kin": ["kin.hp_5", {"amount":5, "stat":"HP", "type":"stat"}],
+	"psi": ["psi.hp_5", {"amount":5, "stat":"HP", "type":"stat"}],
+	"med": ["med.auto_shields", {"resource":"res://data/heroes/sands/actions/auto_shields.tres", "slot":3, "type":"action"}],
+	"stg": ["stg.advantage", {"resource":"res://data/heroes/sands/actions/advantage.tres", "slot":3, "type":"action"}],
+	"van": ["van.focus_fire", {"resource":"res://data/heroes/sands/actions/focus_fire.tres", "slot":3, "type":"action"}],
 }
 
 func test_every_production_role_is_valid_and_matches_authored_summary() -> void:
@@ -48,7 +164,6 @@ func test_every_production_role_is_valid_and_matches_authored_summary() -> void:
 		if result.tree == null: continue
 		assert_eq(result.tree.role_id, role_id)
 		assert_eq(result.tree.root_id, role_id + ".anchor")
-		assert_eq(result.tree.nodes.map(func(node): return node.id), EXPECTED_IDS[role_id])
 		var catalog := ProgressionCatalog.from_validated_trees([result.tree])
 		var summary := catalog.get_summary(role_id)
 		assert_eq(summary.node_count, expected.nodes, role_id)
@@ -61,7 +176,9 @@ func test_every_production_role_fulfills_the_starting_kit_contract() -> void:
 		var path := CONTENT_ROOT.path_join(hero_id).path_join(role_id + ".json")
 		var document: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(path))
 		assert_eq(int(document.schema_version), 2, role_id)
+		assert_eq(int(document.content_revision), 2, role_id)
 		var nodes: Array = document.nodes
+		_assert_authored_node_contract(nodes, AUTHORED_NODES[role_id], role_id)
 		var anchors := nodes.filter(func(node): return node.get("node_kind", "progression") == "role_anchor")
 		assert_eq(anchors.size(), 1, role_id)
 		if anchors.size() != 1: continue
@@ -89,8 +206,8 @@ func test_every_production_role_fulfills_the_starting_kit_contract() -> void:
 		if paid.is_empty(): continue
 		assert_eq(int(paid[0].rank), 2, role_id)
 		assert_eq(paid[0].parent, anchor.id, role_id)
-		if str(paid[0].effect.type) == "stat":
-			assert_true(str(paid[0].effect.stat) in ["HP", "ATK", "PSY"], role_id)
+		assert_eq(str(paid[0].id), str(FIRST_PAID[role_id][0]), role_id)
+		_assert_exact_effect(paid[0].effect, FIRST_PAID[role_id][1], "%s first paid" % role_id)
 		var paid_ranks := {}
 		for node: Dictionary in paid:
 			paid_ranks[int(node.rank)] = true
@@ -102,9 +219,6 @@ func test_every_production_role_fulfills_the_starting_kit_contract() -> void:
 		var result := ProgressionJsonLoader.load_file(path)
 		assert_eq(result.errors.size(), 0, path)
 		assert_not_null(result.tree, path)
-
-	_assert_first_paid_stat("opr", "opr.hp_5", "HP", 5)
-	_assert_first_paid_stat("dom", "dom.psy_1", "PSY", 1)
 
 func test_runtime_content_and_fixtures_have_no_legacy_operator_skill_references() -> void:
 	var legacy_name := "in" + "spire"
@@ -176,42 +290,37 @@ func test_production_content_has_no_legacy_progression_references() -> void:
 	assert_true(_is_legacy_nested_role_resource("res://data/heroes/new_hero/roles/new_role/node.tres"))
 	assert_false(_is_legacy_nested_role_resource("res://data/heroes/new_hero/roles/new_role.tres"))
 
-func _assert_first_paid_stat(role_id: String, node_id: String, stat: String, amount: int) -> void:
-	var hero_id: String = EXPECTED[role_id].hero
-	var document: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(CONTENT_ROOT.path_join(hero_id).path_join(role_id + ".json")))
-	var paid: Array = document.nodes.filter(func(node): return node.has("xp_cost") and int(node.xp_cost) > 0)
-	paid.sort_custom(func(a, b): return int(a.rank) < int(b.rank))
-	assert_false(paid.is_empty(), role_id)
-	if paid.is_empty(): return
-	var first_paid: Dictionary = paid[0]
-	assert_eq(first_paid.id, node_id, role_id)
-	assert_eq(int(first_paid.rank), 2, role_id)
-	assert_eq(int(first_paid.xp_cost), 200, role_id)
-	assert_eq(str(first_paid.effect.type), "stat", role_id)
-	assert_eq(str(first_paid.effect.stat), stat, role_id)
-	assert_eq(int(first_paid.effect.amount), amount, role_id)
-
-func _assert_node_arrays_match(actual_nodes: Array, expected_nodes: Array, role_id: String) -> void:
-	assert_eq(actual_nodes.size(), expected_nodes.size(), role_id)
-	for index in mini(actual_nodes.size(), expected_nodes.size()):
+func _assert_authored_node_contract(actual_nodes: Array, expected_rows: Array, role_id: String) -> void:
+	assert_eq(actual_nodes.size(), expected_rows.size(), role_id)
+	for index in mini(actual_nodes.size(), expected_rows.size()):
 		var actual: Dictionary = actual_nodes[index]
-		var expected: Dictionary = expected_nodes[index]
-		var context := "%s node %d (%s)" % [role_id, index, expected.id]
-		assert_eq(str(actual.id), str(expected.id), context)
-		assert_eq(actual.parent, expected.parent, context)
-		assert_eq(int(actual.rank), int(expected.rank), context)
-		assert_eq(int(actual.column), int(expected.column), context)
-		assert_eq(int(actual.xp_cost), int(expected.xp_cost), context)
-		assert_eq(str(actual.effect.type), str(expected.effect.type), context)
-		match str(expected.effect.type):
-			"stat":
-				assert_eq(str(actual.effect.stat), str(expected.effect.stat), context)
-				assert_eq(int(actual.effect.amount), int(expected.effect.amount), context)
-			"action":
-				assert_eq(str(actual.effect.resource), str(expected.effect.resource), context)
-				assert_eq(int(actual.effect.slot), int(expected.effect.slot), context)
-			"passive", "shift_action":
-				assert_eq(str(actual.effect.resource), str(expected.effect.resource), context)
+		var expected: Array = expected_rows[index]
+		var context := "%s node %d (%s)" % [role_id, index, expected[0]]
+		assert_eq(str(actual.id), str(expected[0]), context)
+		assert_eq(actual.parent, expected[1], context)
+		assert_eq(int(actual.rank), int(expected[2]), context)
+		assert_eq(int(actual.column), int(expected[3]), context)
+		assert_eq(actual.has("xp_cost"), expected[4] != null, context)
+		if expected[4] != null:
+			assert_eq(int(actual.xp_cost), int(expected[4]), context)
+		assert_eq(str(actual.get("node_kind", "progression")), str(expected[5]), context)
+		assert_eq(bool(actual.get("starting_owned", false)), bool(expected[6]), context)
+		_assert_exact_effect(actual.get("effect"), expected[7], context)
+
+func _assert_exact_effect(actual: Variant, expected: Variant, context: String) -> void:
+	assert_eq(actual == null, expected == null, context)
+	if actual == null or expected == null: return
+	assert_eq(actual.size(), expected.size(), context)
+	assert_eq(str(actual.type), str(expected.type), context)
+	match str(expected.type):
+		"stat":
+			assert_eq(str(actual.stat), str(expected.stat), context)
+			assert_eq(int(actual.amount), int(expected.amount), context)
+		"action":
+			assert_eq(str(actual.resource), str(expected.resource), context)
+			assert_eq(int(actual.slot), int(expected.slot), context)
+		"passive", "shift_action":
+			assert_eq(str(actual.resource), str(expected.resource), context)
 
 func _assert_no_legacy_topology_access(root: String) -> void:
 	var directory := DirAccess.open(root)
