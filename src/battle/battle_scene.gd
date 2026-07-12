@@ -214,7 +214,7 @@ func _update_cursor() -> void:
 	if not navigation:
 		return
 	if is_instance_valid(_controller_target):
-		navigation.cursor.set_focus_target(_controller_target, NavigationCursor.CursorState.TARGET)
+		navigation.cursor.set_focus_target(_controller_target, NavigationCursor.CursorState.DEFAULT)
 	else:
 		navigation.cursor.clear_target()
 

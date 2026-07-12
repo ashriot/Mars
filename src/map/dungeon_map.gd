@@ -357,7 +357,7 @@ func select_direction(direction: Vector2) -> void:
 	_animate_reticle_to(selected.position)
 	var navigation := _navigation_ux_layer()
 	if navigation:
-		navigation.cursor.set_world_target(selected, NavigationCursor.CursorState.TARGET)
+		navigation.cursor.set_world_target(selected, NavigationCursor.CursorState.DEFAULT)
 	_publish_controller_hints()
 
 
@@ -390,7 +390,7 @@ func _restore_controller_cursor() -> void:
 	if not navigation:
 		return
 	if is_instance_valid(current_node):
-		navigation.cursor.set_world_target(current_node, NavigationCursor.CursorState.TARGET)
+		navigation.cursor.set_world_target(current_node, NavigationCursor.CursorState.DEFAULT)
 	else:
 		navigation.cursor.clear_target()
 
@@ -398,7 +398,7 @@ func _restore_controller_cursor() -> void:
 func navigation_focus_restored() -> void:
 	var navigation := _navigation_ux_layer()
 	if navigation and is_instance_valid(_controller_preview_node):
-		navigation.cursor.set_world_target(_controller_preview_node, NavigationCursor.CursorState.TARGET)
+		navigation.cursor.set_world_target(_controller_preview_node, NavigationCursor.CursorState.DEFAULT)
 	else:
 		_restore_controller_cursor()
 	_publish_controller_hints()

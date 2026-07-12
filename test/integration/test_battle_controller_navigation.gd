@@ -137,6 +137,16 @@ func test_target_navigation_filters_invalid_cards_and_uses_geometry() -> void:
 	assert_same(scene._controller_target, right, "edge navigation cycles through valid targets")
 
 
+func test_battle_target_change_keeps_default_cursor_appearance() -> void:
+	var fixture := await _navigation_fixture()
+	var scene: BattleScene = fixture.scene
+	fixture.enemy.is_valid_target = true
+	scene._set_controller_target(fixture.enemy)
+	assert_same(fixture.ux.cursor._target, fixture.enemy)
+	assert_eq(fixture.ux.cursor._state, NavigationCursor.CursorState.DEFAULT)
+	assert_eq(fixture.ux.cursor.texture.resource_path.get_file(), "pointer_c.svg")
+
+
 func test_held_direction_repeats_after_delay() -> void:
 	var fixture := _battle_fixture()
 	var scene: TrackingBattleScene = fixture.scene
@@ -263,6 +273,22 @@ func test_top_modal_suppresses_battle_input_and_restores_adapter_cursor() -> voi
 	await get_tree().process_frame
 	assert_same(ux._adapter, scene)
 	assert_same(ux.cursor._target, manager.current_actor)
+	assert_eq(ux.cursor._state, NavigationCursor.CursorState.DEFAULT)
+	assert_eq(ux.cursor.texture.resource_path.get_file(), "pointer_c.svg")
+
+
+func test_battle_phase_restore_clears_specialized_cursor_appearance() -> void:
+	var fixture := await _navigation_fixture()
+	var scene: BattleScene = fixture.scene
+	var manager: TrackingBattleManager = fixture.manager
+	var ux: NavigationUXLayer = fixture.ux
+	ux.cursor.set_cursor_state(NavigationCursor.CursorState.TARGET)
+	ux.cursor.clear_target()
+	manager.current_state = BattleManager.State.PLAYER_ACTION
+	scene.navigation_focus_restored()
+	assert_same(ux.cursor._target, manager.current_actor)
+	assert_eq(ux.cursor._state, NavigationCursor.CursorState.DEFAULT)
+	assert_eq(ux.cursor.texture.resource_path.get_file(), "pointer_c.svg")
 
 
 func test_battle_adapter_teardown_clears_global_cursor_hints_and_refs() -> void:

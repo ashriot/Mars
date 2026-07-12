@@ -57,6 +57,7 @@ func set_world_target(canvas_item: CanvasItem, state: CursorState = CursorState.
 
 func clear_target() -> void:
 	_target = null
+	set_cursor_state(CursorState.DEFAULT)
 	hide()
 
 

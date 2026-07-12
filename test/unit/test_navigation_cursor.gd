@@ -145,6 +145,21 @@ func test_hidden_or_disabled_focus_target_clears_safely() -> void:
 	assert_false(cursor.visible)
 
 
+func test_clear_target_resets_default_and_specialized_controls_can_set_state_again() -> void:
+	var cursor = CursorScript.new()
+	add_child_autofree(cursor)
+	var target := Button.new()
+	add_child_autofree(target)
+	cursor.set_focus_target(target, CursorScript.CursorState.TARGET)
+	cursor.clear_target()
+	assert_null(cursor._target)
+	assert_eq(cursor._state, CursorScript.CursorState.DEFAULT)
+	assert_eq(cursor.texture.resource_path.get_file(), "pointer_c.svg")
+	cursor.set_focus_target(target, CursorScript.CursorState.CAN_GRAB)
+	assert_eq(cursor._state, CursorScript.CursorState.CAN_GRAB)
+	assert_eq(cursor.texture.resource_path.get_file(), "hand_open.svg")
+
+
 func test_off_tree_target_clears_without_warping() -> void:
 	var cursor := TestCursor.new()
 	add_child_autofree(cursor)

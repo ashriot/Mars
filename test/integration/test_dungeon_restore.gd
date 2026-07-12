@@ -213,7 +213,8 @@ func test_map_registers_global_adapter_targets_cursor_and_publishes_state_hints(
 	dungeon_map.select_direction(Vector2.RIGHT)
 	var preview: MapNode = dungeon_map._controller_preview_node
 	assert_same(navigation.cursor._target, preview)
-	assert_eq(navigation.cursor._state, NavigationCursor.CursorState.TARGET)
+	assert_eq(navigation.cursor._state, NavigationCursor.CursorState.DEFAULT)
+	assert_eq(navigation.cursor.texture.resource_path.get_file(), "pointer_c.svg")
 	outsider.grab_focus()
 	await get_tree().process_frame
 	assert_same(navigation.cursor._target, preview, "focus changes cannot steal an active adapter's world cursor")
@@ -257,8 +258,22 @@ func test_terminal_modal_temporarily_owns_cursor_then_restores_live_map_adapter(
 	await get_tree().process_frame
 	assert_same(navigation._adapter, dungeon_map, "closing a modal keeps the live dungeon adapter registered")
 	assert_same(navigation.cursor._target, preview)
-	assert_eq(navigation.cursor._state, NavigationCursor.CursorState.TARGET)
+	assert_eq(navigation.cursor._state, NavigationCursor.CursorState.DEFAULT)
+	assert_eq(navigation.cursor.texture.resource_path.get_file(), "pointer_c.svg")
 	assert_eq(_hint_actions(navigation), [&"confirm", &"cancel", &"camera_pan_right", &"zoom_in", &"zoom_out", &"recenter"])
+
+
+func test_map_adapter_restore_clears_specialized_cursor_appearance() -> void:
+	InputManager._input(_joy_button())
+	var navigation := _make_navigation_ux()
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	navigation.cursor.set_cursor_state(NavigationCursor.CursorState.TARGET)
+	navigation.cursor.clear_target()
+	dungeon_map.navigation_focus_restored()
+	assert_same(navigation.cursor._target, dungeon_map.current_node)
+	assert_eq(navigation.cursor._state, NavigationCursor.CursorState.DEFAULT)
+	assert_eq(navigation.cursor.texture.resource_path.get_file(), "pointer_c.svg")
 
 
 func _action_event(action: StringName) -> InputEventAction:
