@@ -56,7 +56,7 @@ func test_all_non_stat_rewards_reference_explicit_action_resources() -> void:
 				assert_true(ResourceLoader.load(node.effect.target) is Action, node.id)
 
 func test_confirmed_single_root_roles_are_explicit_approved_baselines() -> void:
-	_assert_single_action_root("opr", "asher", "res://data/heroes/asher/actions/inspire.tres")
+	_assert_single_action_root("opr", "asher", "res://data/heroes/asher/actions/coordinate.tres")
 	_assert_single_action_root("dom", "echo", "res://data/heroes/echo/actions/displace.tres")
 
 func test_catalog_recursively_loads_all_nine_production_roles() -> void:

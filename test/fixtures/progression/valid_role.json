@@ -5,7 +5,7 @@
   "nodes": [
     {"id":"gun.root","parent":null,"rank":1,"column":0,"xp_cost":100,"effect":{"type":"stat","stat":"ATK","amount":1}},
     {"id":"gun.action","parent":"gun.root","rank":2,"column":-1,"xp_cost":200,"effect":{"type":"action","resource":"res://data/heroes/asher/actions/double_tap.tres","slot":1}},
-    {"id":"gun.passive","parent":"gun.root","rank":2,"column":1,"xp_cost":150,"effect":{"type":"passive","resource":"res://data/heroes/asher/actions/inspire.tres"}},
+    {"id":"gun.passive","parent":"gun.root","rank":2,"column":1,"xp_cost":150,"effect":{"type":"passive","resource":"res://data/heroes/asher/actions/coordinate.tres"}},
     {"id":"gun.shift","parent":"gun.action","rank":3,"column":-1,"xp_cost":300,"effect":{"type":"shift_action","resource":"res://data/heroes/asher/actions/bullet_time.tres"}}
   ]
 }

@@ -146,7 +146,7 @@ func test_failed_rebuild_restores_mutated_fields_inside_existing_role() -> void:
 	var definition := RoleDefinition.new()
 	definition.role_id = "gun"
 	var original_action: Action = load("res://data/heroes/asher/actions/double_tap.tres")
-	var original_passive: Action = load("res://data/heroes/asher/actions/inspire.tres")
+	var original_passive: Action = load("res://data/heroes/asher/actions/coordinate.tres")
 	var original_shift: Action = load("res://data/heroes/asher/actions/bullet_time.tres")
 	var original_role := RoleData.new()
 	original_role.source_definition = definition

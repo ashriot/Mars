@@ -4,7 +4,7 @@
     {
       "column": 0,
       "effect": {
-        "resource": "res://data/heroes/asher/actions/inspire.tres",
+        "resource": "res://data/heroes/asher/actions/coordinate.tres",
         "slot": 1,
         "type": "action"
       },

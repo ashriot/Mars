@@ -1,7 +1,7 @@
 extends GutTest
 
 const ACTION_PATH := "res://data/heroes/asher/actions/double_tap.tres"
-const PASSIVE_PATH := "res://data/heroes/asher/actions/inspire.tres"
+const PASSIVE_PATH := "res://data/heroes/asher/actions/coordinate.tres"
 const SHIFT_PATH := "res://data/heroes/asher/actions/bullet_time.tres"
 
 

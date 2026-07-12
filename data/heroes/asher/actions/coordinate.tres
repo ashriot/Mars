@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="Action" load_steps=7 format=3 uid="uid://dwd1ggnmfyj7t"]
+[gd_resource type="Resource" script_class="Action" format=3 uid="uid://dwd1ggnmfyj7t"]
 
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_pemm2"]
-[ext_resource type="Resource" uid="uid://ctdi5u7voy8qv" path="res://data/heroes/asher/conditions/inspire.tres" id="2_vuios"]
+[ext_resource type="Resource" uid="uid://ctdi5u7voy8qv" path="res://data/heroes/asher/conditions/coordinate.tres" id="2_vuios"]
 [ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://src/scripts/action_effects/effect_apply_condition.gd" id="3_2wv4c"]
-[ext_resource type="Texture2D" uid="uid://2w4bw8peb3st" path="res://assets/graphics/icons/skills/inspiration.png" id="4_duxui"]
+[ext_resource type="Texture2D" uid="uid://lwqga2lnip1k" path="res://assets/graphics/icons/skills/team-idea.png" id="4_t5pcn"]
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="5_e6x5o"]
 
 [sub_resource type="Resource" id="Resource_c25em"]
@@ -13,8 +13,8 @@ metadata/_custom_type_script = "uid://dggojfw8tmpnk"
 
 [resource]
 script = ExtResource("5_e6x5o")
-action_name = "Inspire"
-icon = ExtResource("4_duxui")
+action_name = "Coordinate"
+icon = ExtResource("4_t5pcn")
 description = "Ally gains[p][i]Buff: Your next {foc} cost is reduced by half (rounded down.)"
 target_type = 6
 effects = Array[ExtResource("1_pemm2")]([SubResource("Resource_c25em")])
