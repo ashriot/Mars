@@ -42,7 +42,7 @@ func _set_mouse_mode(mode: Input.MouseMode) -> void:
 
 
 func _process(_delta: float) -> void:
-	update_position_for_mode(InputManager.get_active_mode(), get_viewport().get_mouse_position())
+	update_position_for_behavior(InputManager.get_cursor_behavior(), get_viewport().get_mouse_position())
 
 
 func set_focus_target(control: Control, state: CursorState = CursorState.DEFAULT) -> void:
@@ -65,8 +65,8 @@ func set_cursor_state(state: CursorState) -> void:
 	texture = load("res://assets/graphics/glyphs/cursors/outline/%s" % STATE_FILES[state]) as Texture2D
 
 
-func update_position_for_mode(mode: InputManager.InputMode, mouse_position: Vector2, immediate := false) -> void:
-	if mode == InputManager.InputMode.KEYBOARD_MOUSE:
+func update_position_for_behavior(behavior: InputManager.CursorBehavior, mouse_position: Vector2, immediate := false) -> void:
+	if behavior == InputManager.CursorBehavior.FREE:
 		_move_to(mouse_position, true)
 		show()
 		return
@@ -75,7 +75,14 @@ func update_position_for_mode(mode: InputManager.InputMode, mouse_position: Vect
 		return
 	var destination := _target_position()
 	_move_to(destination, immediate)
+	if mouse_position.distance_to(destination) > InputManager.WARP_POSITION_TOLERANCE:
+		InputManager.expect_mouse_warp(destination)
+		_warp_mouse(destination)
 	show()
+
+
+func _warp_mouse(position: Vector2) -> void:
+	Input.warp_mouse(position)
 
 
 func _is_valid_target() -> bool:

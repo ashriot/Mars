@@ -206,6 +206,33 @@ func test_registered_screens_track_focus_and_modal_restores_it() -> void:
 	assert_eq(screen_two.find_children("*ActionHint*", "", true, false).size(), 0)
 
 
+func test_modal_pop_synchronizes_cursor_to_restored_screen_focus() -> void:
+	var ux := UXScene.instantiate() as NavigationUXLayer
+	add_child_autofree(ux)
+	var screen := Control.new()
+	var restored := Button.new()
+	restored.position = Vector2(120, 70)
+	restored.size = Vector2(80, 30)
+	screen.add_child(restored)
+	add_child_autofree(screen)
+	ux.register_screen(screen, restored)
+	await get_tree().process_frame
+	var modal := Control.new()
+	var modal_button := Button.new()
+	modal.add_child(modal_button)
+	add_child_autofree(modal)
+	ux.push_modal(modal, modal_button)
+	await get_tree().process_frame
+	InputManager._set_cursor_behavior(InputManager.CursorBehavior.SNAPPED)
+	ux.pop_modal(modal)
+	await get_tree().process_frame
+	var destination := restored.get_global_transform_with_canvas() * (restored.size * 0.5)
+	ux.cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2.ZERO, true)
+	assert_eq(ux.get_focus_target(), restored)
+	assert_eq(ux.cursor.position, destination)
+	assert_eq(InputManager._expected_warp_position, destination)
+
+
 func test_invalid_prior_focus_restores_registered_default_or_descendant() -> void:
 	var ux = UXScene.instantiate()
 	add_child_autofree(ux)

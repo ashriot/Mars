@@ -686,6 +686,52 @@ func test_shoulder_events_change_pages_and_roles_at_node_focus() -> void:
 	await get_tree().process_frame
 
 
+func test_keyboard_and_controller_skill_navigation_synchronize_cursor_without_changing_keyboard_family() -> void:
+	var hero := _hero()
+	hero.role_definitions.assign([_legacy_role()])
+	var navigation := preload("res://src/ui/navigation/navigation_ux_layer.tscn").instantiate() as NavigationUXLayer
+	navigation.name = "NavigationUXLayer"
+	add_child(navigation)
+	var panel := preload("res://src/hub/skill_tree_panel.tscn").instantiate() as SkillTreePanel
+	panel.progression_catalog = ProgressionCatalog.from_validated_trees([_tree()])
+	add_child(panel)
+	panel.setup(hero)
+	navigation.register_screen(panel, panel.get_focused_node())
+	panel.focus_node("gun.start1")
+	await get_tree().process_frame
+	var keyboard := InputEventKey.new()
+	keyboard.physical_keycode = KEY_D
+	keyboard.pressed = true
+	InputManager._input(keyboard)
+	panel._unhandled_input(_action_event(&"nav_right"))
+	await get_tree().process_frame
+	var keyboard_target := panel.get_focused_node()
+	var keyboard_anchor: Vector2 = keyboard_target.get_meta("cursor_anchor", keyboard_target.size * 0.5)
+	var keyboard_destination := keyboard_target.get_global_transform_with_canvas() * keyboard_anchor
+	navigation.cursor.update_position_for_behavior(InputManager.get_cursor_behavior(), Vector2.ZERO, true)
+	assert_eq(panel.focused_node_id, "gun.anchor")
+	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.KEYBOARD_MOUSE)
+	assert_eq(InputManager._expected_warp_position, keyboard_destination)
+	panel.focus_node("gun.start2")
+	await get_tree().process_frame
+	var controller := InputEventJoypadButton.new()
+	controller.button_index = JOY_BUTTON_DPAD_LEFT
+	controller.pressed = true
+	InputManager._input(controller)
+	panel._unhandled_input(_action_event(&"nav_left"))
+	await get_tree().process_frame
+	var controller_target := panel.get_focused_node()
+	var controller_anchor: Vector2 = controller_target.get_meta("cursor_anchor", controller_target.size * 0.5)
+	var controller_destination := controller_target.get_global_transform_with_canvas() * controller_anchor
+	navigation.cursor.update_position_for_behavior(InputManager.get_cursor_behavior(), Vector2.ZERO, true)
+	assert_eq(panel.focused_node_id, "gun.anchor")
+	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.CONTROLLER)
+	assert_eq(InputManager._expected_warp_position, controller_destination)
+	panel.free()
+	navigation.free()
+	await get_tree().process_frame
+
+
 func test_single_page_role_omits_page_shoulder_hints() -> void:
 	var hero := _hero()
 	hero.role_definitions.assign([_legacy_role()])
