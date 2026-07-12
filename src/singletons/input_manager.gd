@@ -1,15 +1,27 @@
 extends Node
 
 enum InputMode { KEYBOARD_MOUSE, CONTROLLER }
+enum CursorBehavior { FREE, SNAPPED }
 
 const MOUSE_MOTION_THRESHOLD := 3.0
 const JOY_AXIS_THRESHOLD := 0.25
+const WARP_POSITION_TOLERANCE := 2.0
+const WARP_SUPPRESSION_MS := 100
+const NAVIGATION_ACTIONS: Array[StringName] = [
+	&"nav_left", &"nav_right", &"nav_up", &"nav_down",
+	&"confirm", &"cancel", &"page_left", &"page_right",
+	&"role_left", &"role_right",
+]
 
 signal input_mode_changed(mode: InputMode)
 signal controller_type_changed(type: InputIconMap.ControllerType)
+signal cursor_behavior_changed(behavior: CursorBehavior)
 
 var _active_mode := InputMode.KEYBOARD_MOUSE
 var _active_controller_type := InputIconMap.ControllerType.STEAM_DECK
+var _cursor_behavior := CursorBehavior.FREE
+var _expected_warp_position := Vector2.INF
+var _expected_warp_deadline_ms := 0
 
 
 func _ready() -> void:
@@ -18,13 +30,21 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion and _suppress_expected_mouse_warp(event):
+		return
 	if not is_meaningful_event(event):
 		return
 	if event is InputEventJoypadButton or event is InputEventJoypadMotion:
 		_set_active_mode(InputMode.CONTROLLER)
+		_set_cursor_behavior(CursorBehavior.SNAPPED)
 		_set_active_controller_type(InputIconMap.get_controller_type_from_name(Input.get_joy_name(event.device)))
-	elif event is InputEventKey or event is InputEventMouseButton or event is InputEventMouseMotion:
+	elif event is InputEventKey:
 		_set_active_mode(InputMode.KEYBOARD_MOUSE)
+		if _is_navigation_key(event):
+			_set_cursor_behavior(CursorBehavior.SNAPPED)
+	elif event is InputEventMouseButton or event is InputEventMouseMotion:
+		_set_active_mode(InputMode.KEYBOARD_MOUSE)
+		_set_cursor_behavior(CursorBehavior.FREE)
 
 
 func get_active_mode() -> InputMode:
@@ -33,6 +53,15 @@ func get_active_mode() -> InputMode:
 
 func get_active_controller_type() -> InputIconMap.ControllerType:
 	return _active_controller_type
+
+
+func get_cursor_behavior() -> CursorBehavior:
+	return _cursor_behavior
+
+
+func expect_mouse_warp(position: Vector2) -> void:
+	_expected_warp_position = position
+	_expected_warp_deadline_ms = _now_ms() + WARP_SUPPRESSION_MS
 
 
 func is_meaningful_event(event: InputEvent) -> bool:
@@ -78,6 +107,13 @@ func _set_active_mode(mode: InputMode) -> void:
 	input_mode_changed.emit(mode)
 
 
+func _set_cursor_behavior(behavior: CursorBehavior) -> void:
+	if _cursor_behavior == behavior:
+		return
+	_cursor_behavior = behavior
+	cursor_behavior_changed.emit(behavior)
+
+
 func _set_active_controller_type(type: InputIconMap.ControllerType) -> void:
 	var resolved := InputIconMap.normalize_controller_type(type)
 	_apply_family_bindings(resolved)
@@ -96,3 +132,24 @@ func _apply_family_bindings(type: InputIconMap.ControllerType) -> void:
 		var joy_event := InputEventJoypadButton.new()
 		joy_event.button_index = bindings[action] as JoyButton
 		InputMap.action_add_event(action, joy_event)
+
+
+func _is_navigation_key(event: InputEventKey) -> bool:
+	for action in NAVIGATION_ACTIONS:
+		if InputMap.has_action(action) and event.is_action(action):
+			return true
+	return false
+
+
+func _suppress_expected_mouse_warp(event: InputEventMouseMotion) -> bool:
+	if _expected_warp_position == Vector2.INF:
+		return false
+	var matches := _now_ms() <= _expected_warp_deadline_ms \
+		and event.position.distance_to(_expected_warp_position) <= WARP_POSITION_TOLERANCE
+	_expected_warp_position = Vector2.INF
+	_expected_warp_deadline_ms = 0
+	return matches
+
+
+func _now_ms() -> int:
+	return Time.get_ticks_msec()
