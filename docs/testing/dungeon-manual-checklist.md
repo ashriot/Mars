@@ -12,7 +12,7 @@
 - [x] Headless editor import/parse check run against gameplay commit `41555e2`.
 - [x] Repository diff whitespace check run before the docs-only verification commit.
 
-Latest durable automated result: Godot 4.7 with GUT 9.7.1 completed 142/142 tests and 4,519 assertions; the headless editor check was clean. The only allowed log output was the documented macOS CA warning, expected test-construction warnings, and GUT-captured `[ExpectedError]` cases. These checks do not replace the interactive crawl below.
+The current automated-test baseline and canonical commands are documented in [Testing](README.md). Complete automated checks do not replace the interactive crawl below.
 
 ## Manual verification completed
 
