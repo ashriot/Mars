@@ -27,11 +27,17 @@ var root_id: String:
 
 var starting_node_ids: Array[String]:
 	get:
-		return _starting_node_ids.duplicate() if _is_valid else []
+		if not _is_valid:
+			var empty: Array[String] = []
+			return empty
+		return _starting_node_ids.duplicate()
 
 var nodes: Array[ProgressionNodeDefinition]:
 	get:
-		return _nodes.duplicate() if _is_valid else []
+		if not _is_valid:
+			var empty: Array[ProgressionNodeDefinition] = []
+			return empty
+		return _nodes.duplicate()
 
 var is_valid: bool:
 	get:

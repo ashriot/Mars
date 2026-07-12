@@ -181,10 +181,16 @@ func test_invalid_trees_fail_closed_for_public_access() -> void:
 	var duplicate_tree := RoleTreeDefinition.new("gun", 1, duplicate_nodes)
 	assert_false(duplicate_tree.is_valid)
 	assert_eq(duplicate_tree.root_id, "")
-	assert_eq(duplicate_tree.starting_node_ids, [])
-	assert_eq(duplicate_tree.nodes, [])
+	var starting_ids: Array[String] = duplicate_tree.starting_node_ids
+	var exposed_nodes: Array[ProgressionNodeDefinition] = duplicate_tree.nodes
+	var exposed_children: Array[ProgressionNodeDefinition] = duplicate_tree.get_children("gun.anchor")
+	assert_true(starting_ids.is_typed())
+	assert_true(exposed_nodes.is_typed())
+	assert_true(exposed_children.is_typed())
+	assert_eq(starting_ids, [])
+	assert_eq(exposed_nodes, [])
+	assert_eq(exposed_children, [])
 	assert_null(duplicate_tree.get_node("gun.root"))
-	assert_eq(duplicate_tree.get_children("gun.anchor"), [])
 
 	var invalid_nodes := _valid_nodes()
 	invalid_nodes[3] = ProgressionNodeDefinition.progression("gun.paid", "gun.anchor", 2, 0, 100, null)
