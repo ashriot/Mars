@@ -3,6 +3,7 @@ extends GutTest
 const TEST_ROOT = "user://test_saves/save_system_isolation/"
 const TEST_SLOT_PATH = TEST_ROOT + "slot_1.json"
 const PRODUCTION_SLOT_PATH = "user://saves/slot_1.json"
+const PRISTINE_NESTED_ROOT = "user://test_saves/save_system_pristine/nested/root"
 
 var _test_slot_existed := false
 var _test_slot_bytes := PackedByteArray()
@@ -41,6 +42,7 @@ func before_each() -> void:
 
 
 func after_each() -> void:
+	_remove_pristine_nested_root()
 	_restore_file(TEST_SLOT_PATH, _test_slot_existed, _test_slot_bytes)
 	if not _test_save_dir_existed and DirAccess.dir_exists_absolute(TEST_ROOT):
 		DirAccess.remove_absolute(TEST_ROOT)
@@ -75,6 +77,15 @@ func _write_test_slot(document: Dictionary) -> void:
 		file.store_string(JSON.stringify(document))
 
 
+func _remove_pristine_nested_root() -> void:
+	var slot_path := PRISTINE_NESTED_ROOT.path_join("slot_42.json")
+	if FileAccess.file_exists(slot_path):
+		DirAccess.remove_absolute(slot_path)
+	for path in [PRISTINE_NESTED_ROOT, PRISTINE_NESTED_ROOT.get_base_dir(), PRISTINE_NESTED_ROOT.get_base_dir().get_base_dir()]:
+		if DirAccess.dir_exists_absolute(path):
+			DirAccess.remove_absolute(path)
+
+
 func _fresh_default_catalog() -> ProgressionCatalog:
 	var trees: Array[RoleTreeDefinition] = []
 	var seen := {}
@@ -106,6 +117,24 @@ func test_storage_root_defaults_to_production_and_explicit_override_is_isolated(
 	assert_eq(SaveSystem._get_save_dir(), TEST_ROOT)
 	assert_eq(SaveSystem._get_slot_path(1), TEST_SLOT_PATH)
 	assert_ne(SaveSystem._get_slot_path(1), PRODUCTION_SLOT_PATH)
+	SaveSystem.storage_root_override = TEST_ROOT.trim_suffix("/")
+	assert_eq(SaveSystem._get_save_dir(), TEST_ROOT.trim_suffix("/"))
+	assert_eq(SaveSystem._get_slot_path(1), TEST_SLOT_PATH)
+
+
+func test_save_game_creates_brand_new_nested_override_without_trailing_slash() -> void:
+	_remove_pristine_nested_root()
+	SaveSystem.storage_root_override = PRISTINE_NESTED_ROOT
+	SaveSystem.data = {}
+	SaveSystem.party_roster = []
+	SaveSystem.inventory_equipment = []
+	SaveSystem.inventory_mods = []
+	RunManager.is_run_active = false
+
+	SaveSystem.save_game(42)
+
+	assert_true(FileAccess.file_exists(PRISTINE_NESTED_ROOT.path_join("slot_42.json")))
+	assert_eq(SaveSystem._get_slot_path(42), PRISTINE_NESTED_ROOT.path_join("slot_42.json"))
 
 
 func test_save_game_recreates_only_explicit_test_root() -> void:

@@ -24,7 +24,7 @@ var last_load_issues: Array[String] = []
 func _ready():
 	var save_dir := _get_save_dir()
 	if not DirAccess.dir_exists_absolute(save_dir):
-		DirAccess.make_dir_absolute(save_dir)
+		DirAccess.make_dir_recursive_absolute(save_dir)
 
 func _get_save_dir() -> String:
 	return storage_root_override if not storage_root_override.is_empty() else SAVE_DIR
@@ -62,7 +62,7 @@ func save_game(slot_index: int):
 
 	var save_dir := _get_save_dir()
 	if not DirAccess.dir_exists_absolute(save_dir):
-		var dir_error := DirAccess.make_dir_absolute(save_dir)
+		var dir_error := DirAccess.make_dir_recursive_absolute(save_dir)
 		if dir_error != OK:
 			push_error("SaveSystem: Failed to create save directory: %s" % save_dir)
 			return
@@ -167,7 +167,7 @@ func start_new_campaign(slot_index: int) -> bool:
 	return true
 
 func _get_slot_path(index: int) -> String:
-	return _get_save_dir() + SLOT_PREFIX + str(index) + SLOT_EXT
+	return _get_save_dir().path_join(SLOT_PREFIX + str(index) + SLOT_EXT)
 
 func has_save(index: int) -> bool:
 	return FileAccess.file_exists(_get_slot_path(index))
