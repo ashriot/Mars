@@ -29,7 +29,7 @@ Every role tree begins with one visual row:
 | Hero | Role | Starting Skill 1 | Starting Skill 2 |
 |---|---|---|---|
 | Asher | Gunner (`gun`) | Double Tap | Fusion Ammo |
-| Asher | Operator (`opr`) | Inspire | Decoy |
+| Asher | Operator (`opr`) | Coordinate | Decoy |
 | Asher | Sniper (`snp`) | Mark Target | Aimed Shot |
 | Echo | Dominator (`dom`) | Displace | Feedback |
 | Echo | Kinetic (`kin`) | Telekinesis | Rejuvenate |
