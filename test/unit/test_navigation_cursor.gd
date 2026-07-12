@@ -2,6 +2,26 @@ extends GutTest
 
 const CursorScript = preload("res://src/ui/navigation/navigation_cursor.gd")
 
+class TestCursor extends NavigationCursor:
+	static var last_mode := Input.MOUSE_MODE_VISIBLE
+	var simulated_mouse_mode := Input.MOUSE_MODE_VISIBLE
+
+	func _get_mouse_mode() -> Input.MouseMode:
+		return simulated_mouse_mode
+
+	func _set_mouse_mode(mode: Input.MouseMode) -> void:
+		simulated_mouse_mode = mode
+		last_mode = mode
+
+
+func test_cursor_hides_os_pointer_while_active_and_restores_it_on_exit() -> void:
+	TestCursor.last_mode = Input.MOUSE_MODE_VISIBLE
+	var cursor := TestCursor.new()
+	add_child(cursor)
+	assert_eq(TestCursor.last_mode, Input.MOUSE_MODE_HIDDEN)
+	cursor.free()
+	assert_eq(TestCursor.last_mode, Input.MOUSE_MODE_VISIBLE)
+
 
 func test_cursor_states_resolve_all_approved_textures() -> void:
 	var cursor = CursorScript.new()

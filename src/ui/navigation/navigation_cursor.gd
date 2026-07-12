@@ -18,12 +18,27 @@ const STATE_FILES := {
 var _target: CanvasItem
 var _state := CursorState.DEFAULT
 var _position_tween: Tween
+var _previous_mouse_mode := Input.MOUSE_MODE_VISIBLE
 
 
 func _ready() -> void:
+	_previous_mouse_mode = _get_mouse_mode()
+	_set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	set_process_priority(100)
 	set_cursor_state(_state)
+
+
+func _exit_tree() -> void:
+	_set_mouse_mode(_previous_mouse_mode)
+
+
+func _get_mouse_mode() -> Input.MouseMode:
+	return Input.mouse_mode
+
+
+func _set_mouse_mode(mode: Input.MouseMode) -> void:
+	Input.mouse_mode = mode
 
 
 func _process(_delta: float) -> void:
