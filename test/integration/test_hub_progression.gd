@@ -145,13 +145,16 @@ func test_role_panel_renders_focusable_starting_role_header_geometry() -> void:
 	add_child(panel)
 	panel.setup(role, _tree(), _hero())
 	panel.set_expanded(true, 0, false)
-	var anchor := panel.generated_nodes["gun.anchor"] as Button
+	var anchor := panel.generated_nodes["gun.anchor"] as RoleAnchorNode
 	var first := panel.generated_nodes["gun.start1"] as SkillTreeNode
 	var second := panel.generated_nodes["gun.start2"] as SkillTreeNode
 	var paid := panel.generated_nodes["gun.root"] as SkillTreeNode
 	var header_center := Vector2(panel.expanded_x / 2.0 - 10.0, 25.0)
 
 	assert_eq(anchor.size, Vector2(250, 50))
+	assert_eq(anchor.custom_minimum_size, Vector2(250, 50))
+	assert_null(anchor.get_node_or_null("Description"))
+	assert_eq(anchor.label.vertical_alignment, VERTICAL_ALIGNMENT_CENTER)
 	assert_eq(first.size, Vector2(250, 50))
 	assert_eq(second.size, Vector2(250, 50))
 	assert_eq(paid.size, Vector2(250, 50))
@@ -241,14 +244,19 @@ func test_rendered_button_activation_only_requests_purchase_for_paid_available_n
 	var starting := role_panel.generated_nodes["gun.start1"] as SkillTreeNode
 	var paid := role_panel.generated_nodes["gun.root"] as SkillTreeNode
 	watch_signals(panel)
+	assert_false(paid.toggle_mode)
+	assert_false(starting.toggle_mode)
 
 	anchor.pressed.emit()
 	assert_signal_not_emitted(panel, "purchase_requested")
 	starting._pressed()
+	assert_false(starting.button_pressed)
 	assert_signal_not_emitted(panel, "purchase_requested")
 	paid._pressed()
+	assert_false(paid.button_pressed)
 	assert_signal_emit_count(panel, "purchase_requested", 1)
 	assert_signal_emitted_with_parameters(panel, "purchase_requested", [hero, "gun", "gun.root"])
+	assert_true(starting.owned_highlight.visible)
 	panel.free()
 	await get_tree().process_frame
 

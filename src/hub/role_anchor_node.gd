@@ -7,7 +7,6 @@ var node_id: String = ""
 
 @onready var icon_rect: TextureRect = $Panel/Icon
 @onready var label: Label = $Label
-@onready var description_label: Label = $Description
 @onready var arrow_left: TextureRect = $Arrows/Left
 @onready var arrow_down: TextureRect = $Arrows/Down
 @onready var arrow_right: TextureRect = $Arrows/Right
@@ -21,7 +20,6 @@ func setup(role: RoleDefinition, tree: RoleTreeDefinition) -> void:
 	set_meta("cursor_state", NavigationCursor.CursorState.INTERACT)
 	icon_rect.texture = role.icon
 	label.text = role.role_name
-	description_label.text = role.description
 	_update_arrows()
 
 
