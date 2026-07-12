@@ -144,11 +144,13 @@ func _is_navigation_key(event: InputEventKey) -> bool:
 func _suppress_expected_mouse_warp(event: InputEventMouseMotion) -> bool:
 	if _expected_warp_position == Vector2.INF:
 		return false
-	var matches := _now_ms() <= _expected_warp_deadline_ms \
-		and event.position.distance_to(_expected_warp_position) <= WARP_POSITION_TOLERANCE
+	var within_deadline := _now_ms() <= _expected_warp_deadline_ms
+	var matches := within_deadline and event.position.distance_to(_expected_warp_position) <= WARP_POSITION_TOLERANCE
+	if matches:
+		return true
 	_expected_warp_position = Vector2.INF
 	_expected_warp_deadline_ms = 0
-	return matches
+	return false
 
 
 func _now_ms() -> int:

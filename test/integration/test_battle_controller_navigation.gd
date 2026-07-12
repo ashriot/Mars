@@ -282,8 +282,7 @@ func test_battle_phase_restore_clears_specialized_cursor_appearance() -> void:
 	var scene: BattleScene = fixture.scene
 	var manager: TrackingBattleManager = fixture.manager
 	var ux: NavigationUXLayer = fixture.ux
-	ux.cursor.set_cursor_state(NavigationCursor.CursorState.TARGET)
-	ux.cursor.clear_target()
+	ux.cursor.set_world_target(manager.current_actor, NavigationCursor.CursorState.TARGET)
 	manager.current_state = BattleManager.State.PLAYER_ACTION
 	scene.navigation_focus_restored()
 	assert_same(ux.cursor._target, manager.current_actor)

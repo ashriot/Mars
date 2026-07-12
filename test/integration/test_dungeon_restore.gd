@@ -268,8 +268,7 @@ func test_map_adapter_restore_clears_specialized_cursor_appearance() -> void:
 	var navigation := _make_navigation_ux()
 	var setup := await _prepare_navigation_map()
 	var dungeon_map: DungeonMap = setup.map
-	navigation.cursor.set_cursor_state(NavigationCursor.CursorState.TARGET)
-	navigation.cursor.clear_target()
+	navigation.cursor.set_world_target(dungeon_map.current_node, NavigationCursor.CursorState.TARGET)
 	dungeon_map.navigation_focus_restored()
 	assert_same(navigation.cursor._target, dungeon_map.current_node)
 	assert_eq(navigation.cursor._state, NavigationCursor.CursorState.DEFAULT)

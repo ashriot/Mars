@@ -19,6 +19,8 @@ var _target: CanvasItem
 var _state := CursorState.DEFAULT
 var _position_tween: Tween
 var _previous_mouse_mode := Input.MOUSE_MODE_VISIBLE
+var _last_warp_destination := Vector2.INF
+var _last_warp_target_id := 0
 
 
 func _ready() -> void:
@@ -57,6 +59,7 @@ func set_world_target(canvas_item: CanvasItem, state: CursorState = CursorState.
 
 func clear_target() -> void:
 	_target = null
+	_reset_warp_dedupe()
 	set_cursor_state(CursorState.DEFAULT)
 	hide()
 
@@ -68,6 +71,7 @@ func set_cursor_state(state: CursorState) -> void:
 
 func update_position_for_behavior(behavior: InputManager.CursorBehavior, mouse_position: Vector2, immediate := false) -> void:
 	if behavior == InputManager.CursorBehavior.FREE:
+		_reset_warp_dedupe()
 		_move_to(mouse_position, true)
 		show()
 		return
@@ -76,7 +80,12 @@ func update_position_for_behavior(behavior: InputManager.CursorBehavior, mouse_p
 		return
 	var destination := _target_position()
 	_move_to(destination, immediate)
-	if mouse_position.distance_to(destination) > InputManager.WARP_POSITION_TOLERANCE:
+	var target_id := _target.get_instance_id()
+	var already_requested := _last_warp_target_id == target_id \
+		and _last_warp_destination.distance_to(destination) <= InputManager.WARP_POSITION_TOLERANCE
+	if not already_requested and mouse_position.distance_to(destination) > InputManager.WARP_POSITION_TOLERANCE:
+		_last_warp_target_id = target_id
+		_last_warp_destination = destination
 		InputManager.expect_mouse_warp(destination)
 		_warp_mouse(destination)
 	show()
@@ -84,6 +93,11 @@ func update_position_for_behavior(behavior: InputManager.CursorBehavior, mouse_p
 
 func _warp_mouse(position: Vector2) -> void:
 	Input.warp_mouse(position)
+
+
+func _reset_warp_dedupe() -> void:
+	_last_warp_destination = Vector2.INF
+	_last_warp_target_id = 0
 
 
 func _is_valid_target() -> bool:

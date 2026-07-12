@@ -140,6 +140,39 @@ func test_expected_warp_motion_within_tolerance_preserves_controller_and_snapped
 	manager._input(synthetic)
 	assert_eq(manager.get_active_mode(), manager.InputMode.CONTROLLER)
 	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)
+	assert_eq(manager._expected_warp_position, Vector2(300, 200))
+	var duplicate := synthetic.duplicate() as InputEventMouseMotion
+	duplicate.position = Vector2(299.5, 200.5)
+	manager._input(duplicate)
+	assert_eq(manager.get_active_mode(), manager.InputMode.CONTROLLER)
+	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)
+	assert_eq(manager._expected_warp_deadline_ms, 500 + manager.WARP_SUPPRESSION_MS, "duplicates do not extend the deadline")
+	var genuine := synthetic.duplicate() as InputEventMouseMotion
+	genuine.position = Vector2(310, 200)
+	manager._input(genuine)
+	assert_eq(manager.get_active_mode(), manager.InputMode.KEYBOARD_MOUSE)
+	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.FREE)
+	assert_eq(manager._expected_warp_position, Vector2.INF)
+	assert_eq(manager._expected_warp_deadline_ms, 0)
+
+
+func test_expected_warp_exact_deadline_is_suppressed_and_expiry_clears_payload() -> void:
+	manager.now_ms = 500
+	manager._set_active_mode(manager.InputMode.CONTROLLER)
+	manager._set_cursor_behavior(manager.CursorBehavior.SNAPPED)
+	manager.expect_mouse_warp(Vector2(300, 200))
+	manager.now_ms = 500 + manager.WARP_SUPPRESSION_MS
+	var boundary := InputEventMouseMotion.new()
+	boundary.position = Vector2(300, 200)
+	boundary.relative = Vector2(8, 0)
+	manager._input(boundary)
+	assert_eq(manager.get_active_mode(), manager.InputMode.CONTROLLER)
+	assert_eq(manager._expected_warp_position, Vector2(300, 200))
+	manager.now_ms += 1
+	manager._input(boundary)
+	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.FREE)
+	assert_eq(manager._expected_warp_position, Vector2.INF)
+	assert_eq(manager._expected_warp_deadline_ms, 0)
 
 
 func test_motion_outside_expected_warp_tolerance_is_genuine_mouse_input() -> void:
@@ -153,6 +186,8 @@ func test_motion_outside_expected_warp_tolerance_is_genuine_mouse_input() -> voi
 	manager._input(motion)
 	assert_eq(manager.get_active_mode(), manager.InputMode.KEYBOARD_MOUSE)
 	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.FREE)
+	assert_eq(manager._expected_warp_position, Vector2.INF)
+	assert_eq(manager._expected_warp_deadline_ms, 0)
 
 
 func test_expired_warp_expectation_cannot_suppress_real_mouse_input() -> void:

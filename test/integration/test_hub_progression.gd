@@ -750,12 +750,18 @@ func test_keyboard_and_controller_skill_navigation_synchronize_cursor_through_in
 	synthetic_warp.position = keyboard_destination
 	synthetic_warp.global_position = keyboard_destination
 	synthetic_warp.relative = keyboard_destination
-	InputManager.expect_mouse_warp(keyboard_destination)
 	Input.parse_input_event(synthetic_warp)
 	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.KEYBOARD_MOUSE)
 	assert_eq(InputManager.get_cursor_behavior(), InputManager.CursorBehavior.SNAPPED)
-	panel.focus_node("gun.start2")
+	var genuine_mouse := InputEventMouseMotion.new()
+	genuine_mouse.position = keyboard_destination + Vector2(10, 0)
+	genuine_mouse.relative = Vector2(10, 0)
+	Input.parse_input_event(genuine_mouse)
+	cursor.set_process(true)
 	await get_tree().process_frame
+	await get_tree().process_frame
+	cursor.set_process(false)
+	panel.focus_node("gun.start2")
 	await get_tree().process_frame
 	cursor.warped_positions.clear()
 	cursor.set_process(true)
