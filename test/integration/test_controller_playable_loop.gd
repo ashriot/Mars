@@ -9,8 +9,18 @@ const UX := preload("res://src/ui/navigation/navigation_ux_layer.tscn")
 const ACTION_BUTTON := preload("res://src/battle/action_button.tscn")
 const HERO_CARD := preload("res://src/battle/hero_card.tscn")
 const ENEMY_CARD := preload("res://src/battle/enemy_card.tscn")
-const TEST_ACTION := preload("res://data/heroes/asher/actions/double_tap.tres")
 const TEST_SLOT := 987654
+const STARTING_NODE_IDS := {
+	"gun": ["gun.root", "gun.fusion_ammo"],
+	"snp": ["snp.root", "snp.aimed_shot"],
+	"opr": ["opr.root", "opr.decoy"],
+	"psi": ["psi.root", "psi.energy_barrier"],
+	"kin": ["kin.root", "kin.rejuvenate"],
+	"dom": ["dom.root", "dom.feedback"],
+	"van": ["van.root", "van.overwatch"],
+	"med": ["med.root", "med.booster_shots"],
+	"stg": ["stg.root", "stg.gambit"],
+}
 
 
 class LoopActionBar extends ActionBar:
@@ -62,12 +72,14 @@ class LoopManager extends GameManager:
 		bar.actions_ui = Control.new()
 		bar.actions_ui.name = "Actions"
 		bar.add_child(bar.actions_ui)
+		var active_hero: HeroData = SaveSystem.party_roster[0]
+		var active_role: RoleData = active_hero.get_battle_role(active_hero.current_role.role_id)
 		for index in 4:
 			var button := ACTION_BUTTON.instantiate() as ActionButton
 			button.button = button.get_node("Button")
-			button.action = TEST_ACTION
-			button.visible = index == 0
-			button.button.disabled = index != 0
+			button.action = active_role.actions[index] if index < active_role.actions.size() else null
+			button.visible = button.action != null
+			button.button.disabled = button.action == null
 			bar.actions_ui.add_child(button)
 		var passive := Panel.new(); passive.name = "Passive"; bar.actions_ui.add_child(passive)
 		var shift_panel := Panel.new(); shift_panel.name = "ShiftAction"; bar.actions_ui.add_child(shift_panel)
@@ -193,6 +205,34 @@ func test_controller_events_route_the_complete_playable_loop() -> void:
 	await _send(&"confirm")
 	await get_tree().process_frame
 	assert_true(router.current_instance is Hub)
+	_assert_fresh_starting_kits()
+	var hub := router.current_instance as Hub
+	SaveSystem.party_roster[0].current_xp = 200
+	(hub.get_node("Actions/Button3") as Button).grab_focus()
+	await _send(&"confirm")
+	await get_tree().process_frame
+	var skill_view := hub.party_menu.skill_view
+	watch_signals(skill_view)
+	assert_true(skill_view.focus_node("gun.anchor"))
+	await _send_semantic(&"confirm")
+	assert_signal_not_emitted(skill_view, "purchase_requested")
+	await _send_semantic(&"nav_left")
+	assert_eq(skill_view.focused_node_id, "gun.root")
+	await _send_semantic(&"confirm")
+	assert_signal_not_emitted(skill_view, "purchase_requested")
+	await _send_semantic(&"nav_right")
+	await _send_semantic(&"nav_right")
+	assert_eq(skill_view.focused_node_id, "gun.fusion_ammo")
+	await _send_semantic(&"confirm")
+	assert_signal_not_emitted(skill_view, "purchase_requested")
+	await _send_semantic(&"nav_left")
+	await _send_semantic(&"nav_down")
+	assert_eq(skill_view.focused_node_id, "gun.atk_1")
+	await _send_semantic(&"confirm")
+	assert_signal_emitted_with_parameters(skill_view, "purchase_requested", [SaveSystem.party_roster[0], "gun", "gun.atk_1"])
+	hub.party_menu._on_back_pressed()
+	await get_tree().process_frame
+	hub.head_out_button.grab_focus()
 	_assert_focus(router.current_instance.head_out_button)
 	await _send(&"confirm")
 	await get_tree().process_frame
@@ -216,6 +256,14 @@ func test_controller_events_route_the_complete_playable_loop() -> void:
 	await _send(&"confirm")
 	await get_tree().process_frame
 	assert_not_null(router.manager.battle_scene)
+	var active_role := SaveSystem.party_roster[0].get_battle_role(SaveSystem.party_roster[0].current_role.role_id)
+	assert_eq(active_role.actions[0].resource_path, "res://data/heroes/asher/actions/double_tap.tres")
+	assert_eq(active_role.actions[1].resource_path, "res://data/heroes/asher/actions/fusion_ammo.tres")
+	var battle_actions: Control = router.manager.battle_manager.action_bar.actions_ui
+	assert_same((battle_actions.get_child(0) as ActionButton).action, active_role.actions[0])
+	assert_same((battle_actions.get_child(1) as ActionButton).action, active_role.actions[1])
+	assert_true(battle_actions.get_child(0).visible)
+	assert_true(battle_actions.get_child(1).visible)
 	await _send(&"action_1")
 	await get_tree().process_frame
 	assert_eq(router.manager.battle_manager.current_state, BattleManager.State.FORCED_TARGET)
@@ -268,10 +316,30 @@ func _send(action: StringName) -> void:
 	await get_tree().process_frame
 
 
+func _send_semantic(action: StringName) -> void:
+	var event := InputEventAction.new()
+	event.action = action
+	event.pressed = true
+	get_viewport().push_input(event)
+	await get_tree().process_frame
+
+
 func _assert_focus(expected: Control) -> void:
 	assert_same(get_viewport().gui_get_focus_owner(), expected)
 	assert_true(expected.is_visible_in_tree())
 	assert_false(expected is BaseButton and expected.disabled)
+
+
+func _assert_fresh_starting_kits() -> void:
+	for hero: HeroData in SaveSystem.party_roster:
+		for role_id: String in hero.unlocked_role_ids:
+			var progress: HeroRoleProgress = hero.role_progress.get(role_id)
+			assert_not_null(progress, "%s/%s" % [hero.hero_id, role_id])
+			assert_eq(progress.owned_node_ids, STARTING_NODE_IDS[role_id], "%s/%s exact starting IDs" % [hero.hero_id, role_id])
+			assert_eq(progress.xp_paid_by_node, {
+				STARTING_NODE_IDS[role_id][0]: 0,
+				STARTING_NODE_IDS[role_id][1]: 0,
+			}, "%s/%s zero starting prices" % [hero.hero_id, role_id])
 
 
 func _snapshot_state() -> Dictionary:
