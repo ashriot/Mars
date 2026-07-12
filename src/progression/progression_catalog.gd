@@ -90,11 +90,12 @@ func get_summary(role_id: String) -> Dictionary:
 	for node: ProgressionNodeDefinition in tree.nodes:
 		total_xp += node.cost
 		maximum_rank = maxi(maximum_rank, node.rank)
-		match node.effect.type:
-			ProgressionEffect.Type.STAT: effect_counts.stat += 1
-			ProgressionEffect.Type.ACTION: effect_counts.action += 1
-			ProgressionEffect.Type.PASSIVE: effect_counts.passive += 1
-			ProgressionEffect.Type.SHIFT_ACTION: effect_counts.shift_action += 1
+		if not node.is_structural:
+			match node.effect.type:
+				ProgressionEffect.Type.STAT: effect_counts.stat += 1
+				ProgressionEffect.Type.ACTION: effect_counts.action += 1
+				ProgressionEffect.Type.PASSIVE: effect_counts.passive += 1
+				ProgressionEffect.Type.SHIFT_ACTION: effect_counts.shift_action += 1
 		if tree.get_children(node.id).size() > 1:
 			branch_count += 1
 	return {

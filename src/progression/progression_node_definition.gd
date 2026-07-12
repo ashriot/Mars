@@ -90,6 +90,9 @@ static func progression(
 
 
 func _validate() -> void:
+	if _kind not in [NodeKind.PROGRESSION, NodeKind.ROLE_ANCHOR]:
+		_validation_error = "Unsupported progression node kind."
+		return
 	if _kind == NodeKind.ROLE_ANCHOR:
 		if not _parent_id.is_empty() or _rank != 1 or _column != 0:
 			_validation_error = "Role anchors must be parentless at rank 1, column 0."

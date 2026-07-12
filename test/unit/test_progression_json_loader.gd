@@ -221,6 +221,11 @@ func test_catalog_load_is_transactional_across_nested_files() -> void:
 	assert_not_null(catalog.get_role("gun"))
 	assert_has(catalog.role_ids, "gun")
 	assert_has(catalog.role_ids, "snp")
+	assert_eq(catalog.get_summary("gun"), {
+		"role_id": "gun", "revision": 3, "node_count": 4, "total_xp": 200,
+		"maximum_rank": 2, "branch_count": 1,
+		"effect_counts": {"stat": 0, "action": 2, "passive": 1, "shift_action": 0},
+	})
 
 func test_nested_directory_open_failure_is_reported_and_preserves_committed_roles() -> void:
 	var valid_directory := "user://progression_nested_open_valid"
