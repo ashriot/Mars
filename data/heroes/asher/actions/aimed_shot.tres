@@ -23,7 +23,7 @@ metadata/_custom_type_script = "uid://b6li2ehks8bfj"
 
 [sub_resource type="Resource" id="Resource_opeli"]
 script = ExtResource("3_bv8ys")
-potency = 2.25
+potency = 2.5
 pre_hit_triggers = Array[ExtResource("3_j1mnd")]([SubResource("Resource_tq4y2")])
 metadata/_custom_type_script = "uid://d0eibi4b735ay"
 
@@ -31,7 +31,7 @@ metadata/_custom_type_script = "uid://d0eibi4b735ay"
 script = ExtResource("8_ovx2m")
 action_name = "Aimed Shot"
 icon = ExtResource("4_j1mnd")
-description = "Deals {atk*2.25} {kin} damage.[p]If target is Marked, this attack has +25% AIM."
+description = "Deals {atk*2.5} {kin} damage.[p]If target is Marked, this attack has +25% AIM."
 focus_cost = 1
 effects = Array[ExtResource("1_isrst")]([SubResource("Resource_opeli")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"
