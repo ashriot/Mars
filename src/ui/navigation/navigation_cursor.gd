@@ -51,7 +51,7 @@ func set_cursor_state(state: CursorState) -> void:
 
 
 func update_position_for_mode(mode: InputManager.InputMode, mouse_position: Vector2, immediate := false) -> void:
-	if mode == InputManager.InputMode.MOUSE:
+	if mode == InputManager.InputMode.KEYBOARD_MOUSE:
 		_move_to(mouse_position, true)
 		show()
 		return

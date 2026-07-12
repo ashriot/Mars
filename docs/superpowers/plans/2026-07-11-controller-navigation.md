@@ -205,7 +205,7 @@ In `project.godot`, define keyboard plus joypad mappings using semantic actions.
 
 - [ ] **Step 4: Implement stable mode detection**
 
-Refactor `_input(event)` to classify meaningful events, update mode immediately, update controller family only for controller events, and emit signals only on actual changes. On startup with no controller input, retain mouse mode but keep `STEAM_DECK` as the controller-family fallback. Re-check remaining connected joypads on disconnect. Connect `DynamicGlyph` to both signals and call `refresh(active_mode == InputMode.CONTROLLER, active_controller_type)`.
+Refactor `_input(event)` to classify meaningful events, update the keyboard/mouse or controller mode immediately, update controller family only for controller events, and emit signals only on actual changes. On startup with no controller input, retain keyboard/mouse mode but keep `STEAM_DECK` as the controller-family fallback. Re-check remaining connected joypads on disconnect. Connect `DynamicGlyph` to both signals and call `refresh(active_mode == InputMode.CONTROLLER, active_controller_type)`.
 
 - [ ] **Step 5: Run focused/full tests and commit**
 
@@ -241,7 +241,7 @@ git commit -m "feat: add semantic controller input layer"
 
 - [ ] **Step 1: Write failing cursor and hint tests**
 
-Assert mouse mode follows injected viewport coordinates; controller mode resolves a control's center or `cursor_anchor` metadata; cursor states resolve all nine approved textures; disabled/hidden targets clear safely; hint bars show controller glyphs in controller mode, keyboard prompts in keyboard mode, and hide glyph hints in mouse mode without hiding clickable actions. The integration test registers two ordinary screens and a modal, then verifies automatic focus tracking, modal trapping, and restoration without screen-specific cursor or hint nodes.
+Assert keyboard/mouse mode follows injected viewport coordinates; controller mode resolves a control's center or `cursor_anchor` metadata; cursor states resolve all nine approved textures; disabled/hidden targets clear safely; hint bars show controller glyphs in controller mode and hide entirely in keyboard/mouse mode without hiding actual clickable UI controls. The integration test registers two ordinary screens and a modal, then verifies automatic focus tracking, modal trapping, and restoration without screen-specific cursor or hint nodes.
 
 - [ ] **Step 2: Run tests and verify missing classes fail**
 

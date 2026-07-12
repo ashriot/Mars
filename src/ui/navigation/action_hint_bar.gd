@@ -24,6 +24,7 @@ func set_hints(hints: Array[Dictionary]) -> void:
 
 
 func refresh(mode: InputManager.InputMode, controller_type: InputIconMap.ControllerType) -> void:
+	visible = mode == InputManager.InputMode.CONTROLLER
 	for hint in _hints:
 		hint.refresh(mode, controller_type)
 

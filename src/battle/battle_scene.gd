@@ -143,7 +143,7 @@ func _on_battle_state_changed(_state: BattleManager.State) -> void:
 
 
 func _on_input_mode_changed(mode: InputManager.InputMode) -> void:
-	if mode != InputManager.InputMode.MOUSE:
+	if mode == InputManager.InputMode.CONTROLLER:
 		return
 	if is_instance_valid(_controller_target) and _controller_target is EnemyCard:
 		manager._on_enemy_unhovered(_controller_target as EnemyCard)

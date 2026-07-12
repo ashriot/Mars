@@ -38,7 +38,7 @@ All device checks below are intentionally unchecked until performed on the named
 ## Mouse and keyboard switching
 
 - [ ] Move the mouse by 1–3 pixels in controller mode; incidental jitter does not steal controller mode or hide controller presentation.
-- [ ] Move the mouse deliberately beyond the jitter threshold; mouse mode activates without warping the pointer.
+- [ ] Use the keyboard or move the mouse deliberately beyond the jitter threshold; keyboard/mouse mode activates without warping the pointer and hides non-clickable hint-bar text.
 - [ ] Alternate mouse movement/click and controller input rapidly at least ten times on every major screen; the latest meaningful input wins and focus/cursor never becomes stale.
 - [ ] Switch keyboard → controller → mouse while a modal is open; focus remains trapped inside the top modal.
 - [ ] After mouse hover leaves a battle target or dungeon node, controller input restores a valid semantic cursor without selecting anything.

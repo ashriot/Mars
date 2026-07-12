@@ -37,10 +37,10 @@ func test_controller_target_uses_control_center_and_anchor_metadata() -> void:
 	assert_eq(cursor.position, Vector2(30, 42))
 
 
-func test_mouse_mode_uses_injected_viewport_coordinates_without_warping() -> void:
+func test_keyboard_mouse_mode_uses_injected_viewport_coordinates_without_warping() -> void:
 	var cursor = CursorScript.new()
 	add_child_autofree(cursor)
-	cursor.update_position_for_mode(InputManager.InputMode.MOUSE, Vector2(321, 123), true)
+	cursor.update_position_for_mode(InputManager.InputMode.KEYBOARD_MOUSE, Vector2(321, 123), true)
 	assert_eq(cursor.position, Vector2(321, 123))
 	var source := FileAccess.get_file_as_string("res://src/ui/navigation/navigation_cursor.gd")
 	assert_eq(source.find("warp_mouse"), -1, "cursor implementation has no OS-warp call")

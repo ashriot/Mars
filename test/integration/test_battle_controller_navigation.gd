@@ -184,7 +184,7 @@ func test_mouse_mode_clears_synthetic_controller_hover_without_selecting() -> vo
 	var manager: TrackingBattleManager = fixture.manager
 	var first: EnemyCard = fixture.first
 	scene._controller_target = first
-	scene._on_input_mode_changed(InputManager.InputMode.MOUSE)
+	scene._on_input_mode_changed(InputManager.InputMode.KEYBOARD_MOUSE)
 	assert_eq(manager.enemy_unhover_count, 1)
 	assert_same(scene._controller_target, manager.current_actor)
 	assert_eq(scene.cursor_update_count, 1, "semantic cursor target returns to the active hero")

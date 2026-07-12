@@ -15,7 +15,6 @@ func configure(data: Dictionary) -> void:
 
 
 func refresh(mode: InputManager.InputMode, controller_type: InputIconMap.ControllerType) -> void:
-	var family := InputIconMap.ControllerType.KEYBOARD_MOUSE if mode == InputManager.InputMode.KEYBOARD else controller_type
-	var resolved := InputIconMap.get_glyph(family, action) if mode != InputManager.InputMode.MOUSE else null
+	var resolved := InputIconMap.get_glyph(controller_type, action) if mode == InputManager.InputMode.CONTROLLER else null
 	glyph.texture = resolved
 	glyph.visible = resolved != null

@@ -1,6 +1,6 @@
 extends Node
 
-enum InputMode { MOUSE, KEYBOARD, CONTROLLER }
+enum InputMode { KEYBOARD_MOUSE, CONTROLLER }
 
 const MOUSE_MOTION_THRESHOLD := 3.0
 const JOY_AXIS_THRESHOLD := 0.25
@@ -8,7 +8,7 @@ const JOY_AXIS_THRESHOLD := 0.25
 signal input_mode_changed(mode: InputMode)
 signal controller_type_changed(type: InputIconMap.ControllerType)
 
-var _active_mode := InputMode.MOUSE
+var _active_mode := InputMode.KEYBOARD_MOUSE
 var _active_controller_type := InputIconMap.ControllerType.STEAM_DECK
 
 
@@ -23,10 +23,8 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventJoypadButton or event is InputEventJoypadMotion:
 		_set_active_mode(InputMode.CONTROLLER)
 		_set_active_controller_type(InputIconMap.get_controller_type_from_name(Input.get_joy_name(event.device)))
-	elif event is InputEventKey:
-		_set_active_mode(InputMode.KEYBOARD)
-	elif event is InputEventMouseButton or event is InputEventMouseMotion:
-		_set_active_mode(InputMode.MOUSE)
+	elif event is InputEventKey or event is InputEventMouseButton or event is InputEventMouseMotion:
+		_set_active_mode(InputMode.KEYBOARD_MOUSE)
 
 
 func get_active_mode() -> InputMode:

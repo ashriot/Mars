@@ -19,19 +19,19 @@ func after_each() -> void:
 	_restore_action(&"cancel", original_cancel_events)
 
 
-func test_key_press_switches_to_keyboard() -> void:
+func test_key_press_switches_to_keyboard_mouse() -> void:
 	var event := InputEventKey.new()
 	event.pressed = true
 	manager._input(event)
-	assert_eq(manager.get_active_mode(), manager.InputMode.KEYBOARD)
+	assert_eq(manager.get_active_mode(), manager.InputMode.KEYBOARD_MOUSE)
 
 
-func test_mouse_button_switches_to_mouse() -> void:
+func test_mouse_button_switches_to_keyboard_mouse() -> void:
 	manager._input(_pressed_key())
 	var event := InputEventMouseButton.new()
 	event.pressed = true
 	manager._input(event)
-	assert_eq(manager.get_active_mode(), manager.InputMode.MOUSE)
+	assert_eq(manager.get_active_mode(), manager.InputMode.KEYBOARD_MOUSE)
 
 
 func test_mouse_motion_above_three_pixels_is_meaningful() -> void:
@@ -91,11 +91,13 @@ func test_connect_and_reconnect_update_controller_family() -> void:
 
 func test_mode_and_family_signals_emit_only_on_actual_changes() -> void:
 	watch_signals(manager)
+	manager._input(_joy_button(JOY_BUTTON_A))
+	manager._input(_joy_button(JOY_BUTTON_A))
 	manager._input(_pressed_key())
 	manager._input(_pressed_key())
 	manager.update_controller_from_connected_names(["DualSense Wireless Controller"])
 	manager.update_controller_from_connected_names(["DualSense Wireless Controller"])
-	assert_signal_emit_count(manager, "input_mode_changed", 1)
+	assert_signal_emit_count(manager, "input_mode_changed", 2)
 	assert_signal_emit_count(manager, "controller_type_changed", 1)
 
 

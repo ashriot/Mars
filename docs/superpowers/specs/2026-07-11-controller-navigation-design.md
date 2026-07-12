@@ -46,7 +46,7 @@ Required actions include:
 
 `InputManager` owns:
 
-- Active input mode: mouse, keyboard, or controller.
+- Active presentation mode: keyboard/mouse or controller.
 - Active controller family.
 - Meaningful mouse-motion threshold.
 - Stick deadzones and directional-repeat timing.
@@ -79,7 +79,7 @@ Platform conventions govern confirm/cancel:
 
 The semantic meaning remains `confirm` and `cancel`; device mappings and glyphs provide the platform-specific physical buttons.
 
-Mouse movement beyond a small threshold switches to mouse mode. Tiny sensor/jitter movement does not steal the active mode. Any meaningful controller input switches immediately to controller mode. Keyboard input switches to keyboard mode.
+Mouse movement beyond a small threshold or meaningful keyboard input switches to keyboard/mouse mode. Tiny sensor/jitter movement does not steal the active mode. Any meaningful controller input switches immediately to controller mode.
 
 ## Curated Input Glyphs
 
@@ -112,7 +112,7 @@ The game displays an in-game `NavigationCursor` continuously.
 
 It never warps the OS pointer. Its target source changes by input mode:
 
-- Mouse mode: follows the real pointer freely.
+- Keyboard/mouse mode: follows the real pointer freely.
 - Keyboard/controller mode: snaps or tweens to the active semantic focus target.
 - Dungeon targeting: follows the selected map-node reticle.
 
@@ -148,7 +148,7 @@ Page Previous  Previous Page
 Page Next      Next Page
 ```
 
-In controller mode the hint bar renders the appropriate glyph family immediately. In mouse mode controller glyph hints hide, while corresponding clickable UI controls remain visible. Keyboard mode may show key prompts.
+In controller mode the hint bar renders the appropriate glyph family immediately. In keyboard/mouse mode the non-clickable hint bar hides entirely, while actual clickable UI controls remain visible.
 
 Hint availability reacts to state. An unavailable action is omitted or visibly disabled rather than showing a misleading active prompt.
 
