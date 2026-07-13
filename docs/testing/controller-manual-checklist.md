@@ -58,13 +58,15 @@ All device checks below are intentionally unchecked until performed on the named
 
 ## Dungeon map and terminal
 
-- [ ] Preview navigation selects only revealed, reachable, incomplete nodes and never moves the authoritative player marker before confirm.
-- [ ] Cancel clears node preview and restores the cursor to the current node.
-- [ ] Confirmed movement uses the previewed node and locks input during resolution.
+- [ ] Slowly rotate the left stick around the current node; the reticle snaps only to eligible adjacent revealed/completed nodes, changes once per clear directional choice, and does not flicker at boundaries.
+- [ ] Release the stick; confirmation disables immediately, the reticle returns to the current node, briefly remains visible, and fades out.
+- [ ] Hold a direction and tap confirm repeatedly across completed nodes; each move reevaluates from the new node without requiring stick recentering, while new interactions still lock input.
+- [ ] Use the controller D-pad as a digital fallback and verify it selects the same eligible destinations.
+- [ ] Switch to keyboard-and-mouse mode; WASD/arrows do not preview or move between nodes, while mouse hover/click immediately owns the reticle and traversal.
+- [ ] Enter scan targeting, rotate among non-hidden targets, release to clear the pending target without consuming the scan, then confirm and cancel through their existing paths.
 - [ ] Hold pan in all four directions; movement is smooth, delta-scaled, and clamped.
 - [ ] Zoom in/out with L2/R2 or displayed triggers; limits clamp and no input leaks through a locked map/modal.
 - [ ] Recenter returns the camera to the current node at minimum, middle, and maximum zoom.
-- [ ] Enter scan targeting, skip hidden/ineligible targets as designed, confirm a scan, and cancel a scan without consuming it.
 - [ ] Open a terminal from the fixed map path; focus/cursor moves to the terminal, all five links can be selected, and a choice fires once.
 - [ ] Terminal cancel/close returns to the live map adapter, prior preview/current node, and correct map hints.
 

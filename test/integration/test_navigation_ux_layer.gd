@@ -57,6 +57,20 @@ func test_top_modal_query_tracks_nested_ownership() -> void:
 	assert_true(ux.is_top_modal(outer))
 
 
+func test_open_modal_query_tracks_stack_presence() -> void:
+	var ux = UXScene.instantiate()
+	add_child_autofree(ux)
+	var modal := Control.new()
+	var button := Button.new()
+	modal.add_child(button)
+	add_child_autofree(modal)
+	assert_false(ux.has_open_modal())
+	ux.push_modal(modal, button)
+	assert_true(ux.has_open_modal())
+	ux.pop_modal(modal)
+	assert_false(ux.has_open_modal())
+
+
 func test_remove_modal_discards_owned_presentation_without_restoring_screen() -> void:
 	var ux = UXScene.instantiate()
 	add_child_autofree(ux)

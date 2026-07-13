@@ -186,6 +186,10 @@ func _process(delta: float) -> void:
 	if current_map_state == MapState.LOADING or current_map_state == MapState.LOCKED:
 		_clear_controller_navigation(true)
 		return
+	var navigation := _navigation_ux_layer()
+	if navigation and navigation.has_open_modal():
+		_clear_controller_navigation(false)
+		return
 	var direction := Input.get_vector(&"nav_left", &"nav_right", &"nav_up", &"nav_down")
 	if InputManager.get_active_mode() == InputManager.InputMode.CONTROLLER:
 		_reconcile_controller_navigation(direction)
@@ -322,8 +326,9 @@ func _unhandled_input(event):
 	if current_map_state == MapState.LOADING or current_map_state == MapState.LOCKED:
 		return
 	if event.is_action_pressed(&"confirm"):
-		confirm_preview()
-		get_viewport().set_input_as_handled()
+		if InputManager.get_active_mode() == InputManager.InputMode.CONTROLLER:
+			confirm_preview()
+			get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed(&"cancel"):
 		cancel_preview()
@@ -421,7 +426,7 @@ func cancel_preview() -> void:
 
 func _clear_navigation_cursor() -> void:
 	var navigation := _navigation_ux_layer()
-	if navigation:
+	if navigation and not navigation.has_open_modal():
 		navigation.cursor.clear_target()
 
 
@@ -1443,6 +1448,13 @@ func _count_group_neighbors(coord: Vector2i, group: Array) -> int:
 	return count
 
 func _on_node_hovered(hovered_node: MapNode):
+	if InputManager.get_active_mode() == InputManager.InputMode.KEYBOARD_MOUSE:
+		var had_preview := _controller_direction_engaged or _controller_preview_node != null
+		_controller_direction_engaged = false
+		_controller_preview_node = null
+		if had_preview:
+			_clear_navigation_cursor()
+			_publish_controller_hints()
 	if current_map_state != MapState.PLAYING and current_map_state != MapState.TARGETING:
 		return
 	if current_map_state == MapState.TARGETING:

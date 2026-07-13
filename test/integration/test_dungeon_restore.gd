@@ -109,6 +109,59 @@ func test_controller_neutral_clears_preview_and_returns_reticle_to_current_node(
 	assert_false(dungeon_map.player_reticle.visible)
 
 
+func test_keyboard_mode_does_not_preview_or_confirm_dungeon_nodes() -> void:
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	var start := dungeon_map.current_node
+	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
+	InputManager._set_cursor_behavior(InputManager.CursorBehavior.SNAPPED)
+	Input.action_press(&"nav_right")
+	dungeon_map._process(0.016)
+	Input.action_release(&"nav_right")
+	assert_null(dungeon_map._controller_preview_node)
+	dungeon_map._unhandled_input(_action_event(&"confirm"))
+	assert_same(dungeon_map.current_node, start)
+
+
+func test_mouse_hover_takes_reticle_ownership_after_controller_preview() -> void:
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	var nodes: Array = setup.nodes
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	dungeon_map._reconcile_controller_navigation(Vector2.RIGHT)
+	assert_not_null(dungeon_map._controller_preview_node)
+	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
+	InputManager._set_cursor_behavior(InputManager.CursorBehavior.FREE)
+	dungeon_map._on_node_hovered(nodes[0])
+	dungeon_map._process(0.016)
+	assert_null(dungeon_map._controller_preview_node)
+	assert_eq(dungeon_map.player_reticle.position, nodes[0].position)
+
+
+func test_controller_confirm_event_moves_to_previewed_node() -> void:
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	dungeon_map._reconcile_controller_navigation(Vector2.RIGHT)
+	var preview := dungeon_map._controller_preview_node
+	assert_not_null(preview)
+	dungeon_map._unhandled_input(_action_event(&"confirm"))
+	assert_same(dungeon_map.current_node, preview)
+
+
+func test_keyboard_confirm_event_cannot_consume_controller_preview() -> void:
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	dungeon_map._reconcile_controller_navigation(Vector2.RIGHT)
+	var preview := dungeon_map._controller_preview_node
+	var start := dungeon_map.current_node
+	assert_not_null(preview)
+	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
+	dungeon_map._unhandled_input(_action_event(&"confirm"))
+	assert_same(dungeon_map.current_node, start)
+	assert_same(dungeon_map._controller_preview_node, preview)
+
+
 func test_held_direction_is_reevaluated_after_completed_node_movement() -> void:
 	var setup := await _prepare_navigation_map()
 	var dungeon_map: DungeonMap = setup.map
@@ -236,7 +289,13 @@ func test_scan_selection_filters_hidden_candidates_and_cancel_cancels_scan() -> 
 	var nodes: Array = setup.nodes
 	nodes[2].set_state(MapNode.NodeState.HIDDEN)
 	dungeon_map.start_targeting_mode(1)
-	dungeon_map.select_direction(Vector2.RIGHT)
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	dungeon_map._reconcile_controller_navigation(Vector2.RIGHT)
+	assert_not_null(dungeon_map._controller_preview_node)
+	dungeon_map._reconcile_controller_navigation(Vector2.ZERO)
+	assert_null(dungeon_map._controller_preview_node)
+	assert_eq(dungeon_map.current_map_state, DungeonMap.MapState.TARGETING)
+	dungeon_map._reconcile_controller_navigation(Vector2.RIGHT)
 	assert_same(dungeon_map._controller_preview_node, nodes[3])
 	dungeon_map.cancel_preview()
 	assert_eq(dungeon_map.current_map_state, DungeonMap.MapState.PLAYING)
@@ -249,7 +308,13 @@ func test_confirmed_scan_uses_existing_scan_execution_and_signal_path() -> void:
 	var nodes: Array = setup.nodes
 	nodes[2].set_state(MapNode.NodeState.HIDDEN)
 	dungeon_map.start_targeting_mode(1)
-	dungeon_map.select_direction(Vector2.RIGHT)
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	dungeon_map._reconcile_controller_navigation(Vector2.RIGHT)
+	assert_not_null(dungeon_map._controller_preview_node)
+	dungeon_map._reconcile_controller_navigation(Vector2.ZERO)
+	assert_null(dungeon_map._controller_preview_node)
+	assert_eq(dungeon_map.current_map_state, DungeonMap.MapState.TARGETING)
+	dungeon_map._reconcile_controller_navigation(Vector2.RIGHT)
 	watch_signals(dungeon_map)
 
 	dungeon_map.confirm_preview()
@@ -257,6 +322,22 @@ func test_confirmed_scan_uses_existing_scan_execution_and_signal_path() -> void:
 	assert_eq(dungeon_map.current_map_state, DungeonMap.MapState.PLAYING)
 	assert_eq(dungeon_map.pending_scan_radius, 0)
 	assert_eq(nodes[2].state, MapNode.NodeState.REVEALED)
+
+
+func test_dungeon_navigation_actions_keep_controller_dpad_fallback() -> void:
+	var expected := {
+		&"nav_up": JOY_BUTTON_DPAD_UP,
+		&"nav_down": JOY_BUTTON_DPAD_DOWN,
+		&"nav_left": JOY_BUTTON_DPAD_LEFT,
+		&"nav_right": JOY_BUTTON_DPAD_RIGHT,
+	}
+	for action: StringName in expected:
+		var found := false
+		for event: InputEvent in InputMap.action_get_events(action):
+			if event is InputEventJoypadButton and event.button_index == expected[action]:
+				found = true
+				break
+		assert_true(found, "%s keeps its controller D-pad event" % action)
 
 
 func test_locked_state_suppresses_selection_camera_and_confirmation() -> void:
@@ -384,16 +465,20 @@ func test_terminal_modal_temporarily_owns_cursor_then_restores_live_map_adapter(
 	var navigation := _make_navigation_ux()
 	var setup := await _prepare_navigation_map()
 	var dungeon_map: DungeonMap = setup.map
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
 	Input.action_press(&"nav_right")
 	dungeon_map._process(0.016)
-	var preview: MapNode = dungeon_map._controller_preview_node
-	assert_not_null(preview)
+	assert_not_null(dungeon_map._controller_preview_node)
 	assert_null(navigation.cursor._target, "map preview uses its reticle, not the global cursor")
 
 	var terminal := TERMINAL_SCENE.instantiate()
 	add_child(terminal)
 	await get_tree().process_frame
+	dungeon_map._process(0.016)
 	assert_true(navigation.is_top_modal(terminal))
+	assert_null(dungeon_map._controller_preview_node)
+	dungeon_map._process(0.016)
+	assert_null(dungeon_map._controller_preview_node, "held input cannot navigate behind modal")
 	assert_eq(get_viewport().gui_get_focus_owner(), terminal.close_button)
 	assert_same(navigation.get_focus_target(), terminal.close_button)
 	assert_same(navigation.cursor._target, terminal.close_button)
@@ -401,9 +486,10 @@ func test_terminal_modal_temporarily_owns_cursor_then_restores_live_map_adapter(
 
 	terminal.queue_free()
 	await get_tree().process_frame
+	dungeon_map._process(0.016)
 	assert_same(navigation._adapter, dungeon_map, "closing a modal keeps the live dungeon adapter registered")
 	assert_null(navigation.cursor._target)
-	assert_same(dungeon_map._controller_preview_node, preview)
+	assert_not_null(dungeon_map._controller_preview_node, "held input resumes after modal closes")
 	assert_eq(navigation.cursor._state, NavigationCursor.CursorState.DEFAULT)
 	assert_false(navigation.cursor.visible)
 	assert_eq(_hint_actions(navigation), [&"confirm", &"cancel", &"camera_pan_right", &"zoom_in", &"zoom_out", &"recenter"])
@@ -430,7 +516,6 @@ func test_map_cursor_shows_for_free_mouse_then_hides_for_keyboard_navigation() -
 	dungeon_map.select_direction(Vector2.RIGHT)
 	navigation.cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2.ZERO, true)
 	assert_false(navigation.cursor.visible)
-	var preview := dungeon_map._controller_preview_node
 
 	var motion := InputEventMouseMotion.new()
 	motion.position = Vector2(240, 180)
@@ -446,7 +531,8 @@ func test_map_cursor_shows_for_free_mouse_then_hides_for_keyboard_navigation() -
 	InputManager._input(navigation_key)
 	navigation.cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, motion.position, true)
 	assert_false(navigation.cursor.visible)
-	assert_same(dungeon_map._controller_preview_node, preview)
+	dungeon_map._process(0.016)
+	assert_null(dungeon_map._controller_preview_node)
 
 
 func _action_event(action: StringName) -> InputEventAction:
