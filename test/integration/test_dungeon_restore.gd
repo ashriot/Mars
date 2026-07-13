@@ -332,45 +332,68 @@ func test_revealed_unvisited_move_adds_full_alert_and_requests_interaction() -> 
 	assert_signal_emit_count(dungeon_map, "interaction_requested", 1)
 
 
-func test_scan_selection_filters_hidden_candidates_and_cancel_cancels_scan() -> void:
+func test_scan_starts_at_current_node_with_free_cursor_and_snapped_reticle() -> void:
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	dungeon_map.start_targeting_mode(1)
+	assert_true(dungeon_map.scan_controller.active)
+	assert_eq(dungeon_map.scan_controller.position, dungeon_map.current_node.position)
+	assert_true(dungeon_map.scanner_cursor.visible)
+	assert_same(dungeon_map._controller_preview_node, dungeon_map.current_node)
+	assert_eq(dungeon_map.player_reticle.position, dungeon_map.current_node.position)
+
+
+func test_scan_cursor_moves_continuously_without_confirming() -> void:
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	dungeon_map.start_targeting_mode(1)
+	var start: Vector2 = dungeon_map.scan_controller.position
+	var current := dungeon_map.current_node
+	dungeon_map._process_scan_navigation(Vector2.RIGHT, Vector2.ZERO, 0.1)
+	assert_gt(dungeon_map.scan_controller.position.x, start.x)
+	assert_same(dungeon_map.current_node, current)
+	assert_eq(dungeon_map.current_map_state, DungeonMap.MapState.TARGETING)
+
+
+func test_controller_can_scan_hidden_hex_without_changing_party_or_alert() -> void:
 	var setup := await _prepare_navigation_map()
 	var dungeon_map: DungeonMap = setup.map
 	var nodes: Array = setup.nodes
-	nodes[2].set_state(MapNode.NodeState.HIDDEN)
-	dungeon_map.start_targeting_mode(1)
+	var hidden: MapNode = nodes[2]
+	hidden.set_state(MapNode.NodeState.HIDDEN)
+	var party_node := dungeon_map.current_node
+	var alert := dungeon_map.current_alert
 	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
-	dungeon_map._reconcile_controller_navigation(Vector2.RIGHT)
-	assert_not_null(dungeon_map._controller_preview_node)
-	dungeon_map._reconcile_controller_navigation(Vector2.ZERO)
-	assert_null(dungeon_map._controller_preview_node)
-	assert_eq(dungeon_map.current_map_state, DungeonMap.MapState.TARGETING)
-	dungeon_map._reconcile_controller_navigation(Vector2.RIGHT)
-	assert_same(dungeon_map._controller_preview_node, nodes[3])
-	dungeon_map.cancel_preview()
-	assert_eq(dungeon_map.current_map_state, DungeonMap.MapState.PLAYING)
-	assert_eq(dungeon_map.pending_scan_radius, 0)
-
-
-func test_confirmed_scan_uses_existing_scan_execution_and_signal_path() -> void:
-	var setup := await _prepare_navigation_map()
-	var dungeon_map: DungeonMap = setup.map
-	var nodes: Array = setup.nodes
-	nodes[2].set_state(MapNode.NodeState.HIDDEN)
 	dungeon_map.start_targeting_mode(1)
-	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
-	dungeon_map._reconcile_controller_navigation(Vector2.RIGHT)
-	assert_not_null(dungeon_map._controller_preview_node)
-	dungeon_map._reconcile_controller_navigation(Vector2.ZERO)
-	assert_null(dungeon_map._controller_preview_node)
-	assert_eq(dungeon_map.current_map_state, DungeonMap.MapState.TARGETING)
-	dungeon_map._reconcile_controller_navigation(Vector2.RIGHT)
+	dungeon_map.scan_controller.set_position(hidden.position)
+	dungeon_map._sync_scan_selection()
+	assert_same(dungeon_map._controller_preview_node, hidden)
 	watch_signals(dungeon_map)
-
-	dungeon_map.confirm_preview()
+	dungeon_map._unhandled_input(_action_event(&"confirm"))
+	assert_eq(dungeon_map.current_map_state, DungeonMap.MapState.LOCKED)
+	await get_tree().create_timer(0.3).timeout
 	assert_signal_emitted(dungeon_map, &"scan_performed")
+	assert_eq(hidden.state, MapNode.NodeState.REVEALED)
+	assert_same(dungeon_map.current_node, party_node)
+	assert_eq(dungeon_map.current_alert, alert)
+
+
+func test_mouse_can_hover_and_click_hidden_scan_center() -> void:
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	var hidden: MapNode = setup.nodes[2]
+	hidden.set_state(MapNode.NodeState.HIDDEN)
+	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
+	dungeon_map.start_targeting_mode(1)
+	dungeon_map._on_node_hovered(hidden)
+	assert_same(dungeon_map._controller_preview_node, hidden)
+	assert_eq(dungeon_map.player_reticle.position, hidden.position)
+	dungeon_map._on_node_clicked(hidden)
+	await get_tree().create_timer(0.3).timeout
+	assert_eq(hidden.state, MapNode.NodeState.REVEALED)
 	assert_eq(dungeon_map.current_map_state, DungeonMap.MapState.PLAYING)
-	assert_eq(dungeon_map.pending_scan_radius, 0)
-	assert_eq(nodes[2].state, MapNode.NodeState.REVEALED)
 
 
 func test_dungeon_navigation_actions_keep_controller_dpad_fallback() -> void:
