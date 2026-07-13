@@ -12,6 +12,7 @@ const NAVIGATION_ACTIONS: Array[StringName] = [
 	&"nav_left", &"nav_right", &"nav_up", &"nav_down",
 	&"confirm", &"cancel", &"page_left", &"page_right",
 	&"role_left", &"role_right",
+	&"action_1", &"action_2", &"action_3", &"action_4",
 ]
 
 signal input_mode_changed(mode: InputMode)

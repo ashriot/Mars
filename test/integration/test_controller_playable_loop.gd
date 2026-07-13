@@ -279,7 +279,8 @@ func test_controller_events_route_the_complete_playable_loop() -> void:
 	await _send(&"nav_right")
 	assert_ne(router.manager.battle_scene._controller_target, previous_target)
 	assert_same(router.manager.battle_scene._controller_target, router.manager.battle_manager.forced_enemy)
-	assert_null(navigation_ux.cursor._target)
+	assert_same(navigation_ux.cursor._target, router.manager.battle_manager.forced_enemy)
+	assert_eq(navigation_ux.cursor._state, NavigationCursor.CursorState.DEFAULT)
 	await _send(&"confirm")
 	await get_tree().process_frame
 	assert_eq(router.manager.battle_confirmed, 1)

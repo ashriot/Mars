@@ -3,6 +3,7 @@ class_name ActionBar
 
 signal slide_finished
 signal action_selected(button, target)
+signal action_cancelled
 signal shift_button_pressed(direction)
 signal availability_changed
 
@@ -159,10 +160,19 @@ func activate_slot(index: int) -> bool:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if buttons_disabled or sliding or not visible or (battle_manager and (battle_manager.current_state != BattleManager.State.PLAYER_ACTION or battle_manager.current_action != null)) or _modal_is_open():
+	if buttons_disabled or sliding or not visible or (battle_manager and battle_manager.current_state != BattleManager.State.PLAYER_ACTION) or _modal_is_open():
 		return
 	for index in 4:
 		if event.is_action_pressed(StringName("action_%d" % (index + 1))):
+			var action_button := actions_ui.get_child(index) as ActionButton if actions_ui and index < actions_ui.get_child_count() else null
+			if battle_manager and battle_manager.current_action != null:
+				if event.is_action_pressed(&"confirm") or event.is_action_pressed(&"cancel"):
+					return
+				if action_button == battle_manager.focused_button:
+					action_cancelled.emit()
+					if is_inside_tree():
+						get_viewport().set_input_as_handled()
+					return
 			if activate_slot(index) and is_inside_tree():
 				get_viewport().set_input_as_handled()
 			return

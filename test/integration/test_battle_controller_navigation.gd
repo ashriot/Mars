@@ -32,6 +32,7 @@ class TrackingBattleManager extends BattleManager:
 
 	func _on_action_button_pressed(button: ActionButton):
 		action_select_count += 1
+		focused_button = button
 		current_action = button.action
 		if forced_target:
 			forced_target.is_valid_target = true
@@ -137,42 +138,101 @@ func test_target_navigation_filters_invalid_cards_and_uses_geometry() -> void:
 	assert_same(scene._controller_target, right, "edge navigation cycles through valid targets")
 
 
-func test_battle_target_change_uses_highlight_without_world_cursor() -> void:
+func test_standard_right_direction_changes_battle_target() -> void:
+	var fixture := _battle_fixture()
+	var scene: BattleScene = fixture.scene
+	var first: EnemyCard = fixture.first
+	var right: EnemyCard = fixture.right
+	scene._controller_target = first
+	Input.action_press(&"ui_right")
+	scene._process(0.0)
+	Input.action_release(&"ui_right")
+	assert_same(scene._controller_target, right)
+
+
+func test_battle_target_change_snaps_target_cursor_to_selected_actor() -> void:
 	var fixture := await _navigation_fixture()
 	var scene: BattleScene = fixture.scene
 	var manager: TrackingBattleManager = fixture.manager
+	manager.current_action = Action.new()
 	fixture.enemy.is_valid_target = true
 	scene._set_controller_target(fixture.enemy)
 	assert_same(scene._controller_target, fixture.enemy)
 	assert_eq(manager.enemy_hover_count, 1)
-	assert_null(fixture.ux.cursor._target)
+	assert_same(fixture.ux.cursor._target, fixture.enemy)
 	assert_eq(fixture.ux.cursor._state, NavigationCursor.CursorState.DEFAULT)
+	assert_eq(fixture.ux.cursor.texture.resource_path.get_file(), "pointer_c.svg")
 	fixture.ux.cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2.ZERO, true)
-	assert_false(fixture.ux.cursor.visible)
+	assert_true(fixture.ux.cursor.visible)
 
 
-func test_battle_free_mouse_shows_cursor_and_keyboard_navigation_hides_it() -> void:
+func test_self_targeting_refresh_places_cursor_on_active_hero() -> void:
 	var fixture := await _navigation_fixture()
 	var scene: BattleScene = fixture.scene
-	InputManager._input(_pressed_key())
-	InputManager._set_cursor_behavior(InputManager.CursorBehavior.SNAPPED)
+	var manager: TrackingBattleManager = fixture.manager
+	manager.current_action = Action.new()
+	manager.current_action.target_type = Action.TargetType.SELF
+	fixture.hero.is_valid_target = true
+	fixture.enemy.is_valid_target = false
+	scene._controller_target = fixture.hero
+	fixture.ux.cursor.clear_target()
+	scene._refresh_targeting()
+	assert_same(scene._controller_target, fixture.hero)
+	assert_same(fixture.ux.cursor._target, fixture.hero)
+	assert_eq(fixture.ux.cursor._state, NavigationCursor.CursorState.DEFAULT)
+
+
+func test_selected_action_hotkey_toggles_targeting_off() -> void:
+	var fixture := await _navigation_fixture()
+	var scene: BattleScene = fixture.scene
+	var manager: TrackingBattleManager = fixture.manager
+	var bar: ActionBar = fixture.bar
+	bar._unhandled_input(_action_event(&"action_1"))
+	assert_not_null(manager.current_action)
+	assert_same(manager.focused_button, bar.actions_ui.get_child(0))
+	bar._unhandled_input(_action_event(&"action_1"))
+	assert_null(manager.current_action)
+	assert_null(manager.focused_button)
+	assert_eq(manager.current_state, BattleManager.State.PLAYER_ACTION)
+	assert_eq(manager.clear_count, 1)
+	assert_same(scene._controller_target, manager.current_actor)
+
+
+func test_different_action_hotkey_replaces_current_selection() -> void:
+	var fixture := await _navigation_fixture()
+	var manager: TrackingBattleManager = fixture.manager
+	var bar: ActionBar = fixture.bar
+	var second := bar.actions_ui.get_child(1) as ActionButton
+	second.button.disabled = false
+	bar._unhandled_input(_action_event(&"action_1"))
+	bar._unhandled_input(_action_event(&"action_2"))
+	assert_eq(manager.action_select_count, 2)
+	assert_same(manager.current_action, second.action)
+	assert_same(manager.focused_button, second)
+
+
+func test_battle_action_hotkey_snaps_then_free_mouse_continues_from_target() -> void:
+	var fixture := await _navigation_fixture()
+	var scene: BattleScene = fixture.scene
+	var manager: TrackingBattleManager = fixture.manager
+	manager.current_action = Action.new()
+	fixture.enemy.is_valid_target = true
+	InputManager._set_cursor_behavior(InputManager.CursorBehavior.FREE)
+	InputManager._input(_physical_key(KEY_1))
+	assert_eq(InputManager.get_cursor_behavior(), InputManager.CursorBehavior.SNAPPED)
 	scene._set_controller_target(fixture.enemy)
-	fixture.ux.cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2.ZERO, true)
-	assert_false(fixture.ux.cursor.visible)
+	var target_position: Vector2 = fixture.enemy.global_position + fixture.enemy.size * 0.5
+	fixture.ux.cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2(20, 20), true)
+	assert_eq(fixture.ux.cursor.position, target_position)
+	assert_true(fixture.ux.cursor.visible)
 
 	var motion := InputEventMouseMotion.new()
-	motion.position = Vector2(300, 220)
+	motion.position = target_position + Vector2(12, 0)
 	motion.relative = Vector2(12, 0)
 	InputManager._input(motion)
 	fixture.ux.cursor.update_position_for_behavior(InputManager.CursorBehavior.FREE, motion.position, true)
+	assert_eq(fixture.ux.cursor.position, motion.position)
 	assert_true(fixture.ux.cursor.visible)
-
-	var key := InputEventKey.new()
-	key.physical_keycode = KEY_D
-	key.pressed = true
-	InputManager._input(key)
-	fixture.ux.cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, motion.position, true)
-	assert_false(fixture.ux.cursor.visible)
 	assert_same(scene._controller_target, fixture.enemy)
 
 
@@ -243,6 +303,18 @@ func test_action_button_glyph_dims_with_disabled_state() -> void:
 	assert_lt(action_button.dynamic_glyph.modulate.a, 1.0)
 	action_button.disabled = false
 	assert_eq(action_button.dynamic_glyph.modulate.a, 1.0)
+
+
+func test_action_button_glyph_has_opaque_backing_below_texture() -> void:
+	var action_button := ActionButtonScene.instantiate() as ActionButton
+	add_child_autofree(action_button)
+	await get_tree().process_frame
+	var backing := action_button.get_node_or_null("GlyphBacking") as Panel
+	assert_not_null(backing)
+	assert_lt(backing.get_index(), action_button.dynamic_glyph.get_index())
+	var style := backing.get_theme_stylebox("panel") as StyleBoxFlat
+	assert_not_null(style)
+	assert_eq(style.bg_color.a, 1.0)
 
 
 func test_real_action_buttons_switch_between_keyboard_and_controller_glyphs() -> void:
@@ -441,6 +513,13 @@ func _joy_button_zero() -> InputEventJoypadButton:
 func _pressed_key() -> InputEventKey:
 	var event := InputEventKey.new()
 	event.keycode = KEY_F12
+	event.pressed = true
+	return event
+
+
+func _physical_key(keycode: Key) -> InputEventKey:
+	var event := InputEventKey.new()
+	event.physical_keycode = keycode
 	event.pressed = true
 	return event
 

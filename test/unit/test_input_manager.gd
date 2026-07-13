@@ -93,6 +93,14 @@ func test_arrow_and_wasd_navigation_select_snapped_keyboard_mouse() -> void:
 		assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)
 
 
+func test_keyboard_action_hotkeys_select_snapped_keyboard_mouse() -> void:
+	for keycode in [KEY_1, KEY_2, KEY_3, KEY_4]:
+		manager._set_cursor_behavior(manager.CursorBehavior.FREE)
+		manager._input(_physical_key(keycode))
+		assert_eq(manager.get_active_mode(), manager.InputMode.KEYBOARD_MOUSE)
+		assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)
+
+
 func test_controller_button_and_axis_select_snapped() -> void:
 	manager._input(_joy_button(JOY_BUTTON_A))
 	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)

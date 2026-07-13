@@ -16,6 +16,7 @@ func _ready():
 	manager.battle_state_changed.connect(_on_battle_state_changed)
 	if manager.action_bar:
 		manager.action_bar.action_selected.connect(_on_action_selected)
+		manager.action_bar.action_cancelled.connect(cancel_targeting)
 		manager.action_bar.availability_changed.connect(_publish_controller_hints)
 	InputManager.input_mode_changed.connect(_on_input_mode_changed)
 	var navigation := _navigation_ux_layer()
@@ -36,7 +37,7 @@ func _process(delta: float) -> void:
 	if not _controller_input_allowed():
 		_last_controller_direction = Vector2.ZERO
 		return
-	var direction := Input.get_vector(&"nav_left", &"nav_right", &"nav_up", &"nav_down")
+	var direction := Input.get_vector(&"ui_left", &"ui_right", &"ui_up", &"ui_down")
 	process_controller_direction(direction, delta)
 
 
@@ -158,6 +159,8 @@ func _refresh_targeting() -> void:
 		var candidates := _valid_controller_targets()
 		if not candidates.is_empty() and not candidates.has(_controller_target):
 			_set_controller_target(candidates[0])
+		else:
+			_update_cursor()
 	else:
 		_controller_target = manager.current_actor
 		_update_cursor()
@@ -212,7 +215,10 @@ func _restore_controller_target() -> void:
 func _update_cursor() -> void:
 	var navigation := _navigation_ux_layer()
 	if navigation:
-		navigation.cursor.clear_target()
+		if _is_targeting() and is_instance_valid(_controller_target):
+			navigation.cursor.set_world_target(_controller_target, NavigationCursor.CursorState.DEFAULT)
+		else:
+			navigation.cursor.clear_target()
 
 
 func _publish_controller_hints() -> void:
