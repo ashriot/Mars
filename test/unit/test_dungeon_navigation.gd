@@ -44,3 +44,45 @@ func test_closest_by_angle_rejects_behind_origin_and_orthogonal_candidates() -> 
 	var above := _node(Vector2.UP * 10.0)
 
 	assert_null(DungeonNavigation.closest_by_angle(Vector2.ZERO, Vector2.RIGHT, [behind, above]))
+
+
+func test_stable_angle_selection_retains_current_candidate_near_boundary() -> void:
+	var lower := _node(Vector2.RIGHT.rotated(deg_to_rad(-30.0)) * 100.0)
+	var upper := _node(Vector2.RIGHT.rotated(deg_to_rad(30.0)) * 100.0)
+	var near_boundary := Vector2.RIGHT.rotated(deg_to_rad(2.0))
+	assert_same(
+		DungeonNavigation.closest_by_angle_stable(
+			Vector2.ZERO, near_boundary, [lower, upper], lower, 0.05
+		),
+		lower,
+	)
+
+
+func test_stable_angle_selection_switches_for_clear_intent() -> void:
+	var lower := _node(Vector2.RIGHT.rotated(deg_to_rad(-30.0)) * 100.0)
+	var upper := _node(Vector2.RIGHT.rotated(deg_to_rad(30.0)) * 100.0)
+	var clear_upper := Vector2.RIGHT.rotated(deg_to_rad(15.0))
+	assert_same(
+		DungeonNavigation.closest_by_angle_stable(
+			Vector2.ZERO, clear_upper, [lower, upper], lower, 0.05
+		),
+		upper,
+	)
+
+
+func test_stable_angle_selection_does_not_retain_invalid_current() -> void:
+	var behind := _node(Vector2.LEFT * 100.0)
+	var ahead := _node(Vector2.RIGHT * 100.0)
+	assert_same(
+		DungeonNavigation.closest_by_angle_stable(
+			Vector2.ZERO, Vector2.RIGHT, [behind, ahead], behind, 0.05
+		),
+		ahead,
+	)
+	behind.navigation_eligible = false
+	assert_same(
+		DungeonNavigation.closest_by_angle_stable(
+			Vector2.ZERO, Vector2.RIGHT, [behind, ahead], behind, 0.05
+		),
+		ahead,
+	)

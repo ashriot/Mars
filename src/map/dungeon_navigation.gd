@@ -33,6 +33,30 @@ static func closest_by_angle(origin: Vector2, direction: Vector2, candidates: Ar
 	return best
 
 
+static func closest_by_angle_stable(
+	origin: Vector2,
+	direction: Vector2,
+	candidates: Array[MapNode],
+	current: MapNode,
+	switch_margin: float = 0.05,
+) -> MapNode:
+	var best := closest_by_angle(origin, direction, candidates)
+	if best == null or current == null or best == current or not current.navigation_eligible:
+		return best
+	var normalized_direction := direction.normalized()
+	var current_offset := current.position - origin
+	var best_offset := best.position - origin
+	if current_offset.is_zero_approx() or best_offset.is_zero_approx():
+		return best
+	var current_alignment := current_offset.normalized().dot(normalized_direction)
+	if current_alignment <= 0.0:
+		return best
+	var best_alignment := best_offset.normalized().dot(normalized_direction)
+	if best_alignment < current_alignment + switch_margin:
+		return current
+	return best
+
+
 static func _coordinates_before(a: MapNode, b: MapNode) -> bool:
 	return a.grid_coords.x < b.grid_coords.x or (
 		a.grid_coords.x == b.grid_coords.x and a.grid_coords.y < b.grid_coords.y
