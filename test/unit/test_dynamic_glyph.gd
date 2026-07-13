@@ -45,12 +45,13 @@ func test_controller_mode_shows_controller_texture() -> void:
 	assert_null(glyph.get_node_or_null("KeyboardLabel"))
 
 
-func test_shift_keyboard_mode_uses_kenney_texture() -> void:
+func test_directional_shift_keyboard_mode_uses_kenney_textures() -> void:
 	var glyph := DynamicGlyph.new()
 	add_child_autofree(glyph)
-	glyph.set_action(&"shift_action")
-	glyph.refresh(false, InputIconMap.ControllerType.XBOX)
-	assert_eq(glyph.texture_normal.resource_path.get_file(), "keyboard_shift.svg")
+	glyph.set_action(&"shift_left")
+	assert_true(glyph.texture_normal.resource_path.ends_with("keyboard_q.svg"))
+	glyph.set_action(&"shift_right")
+	assert_true(glyph.texture_normal.resource_path.ends_with("keyboard_e.svg"))
 
 
 func test_set_action_refreshes_immediately_inside_tree() -> void:

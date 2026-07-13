@@ -267,11 +267,18 @@ func test_required_semantic_actions_exist() -> void:
 	for action in [
 		&"nav_up", &"nav_down", &"nav_left", &"nav_right", &"confirm", &"cancel",
 		&"page_previous", &"page_next", &"section_previous", &"section_next",
-		&"action_1", &"action_2", &"action_3", &"action_4", &"shift_action",
+		&"action_1", &"action_2", &"action_3", &"action_4", &"shift_left", &"shift_right",
 		&"camera_pan_left", &"camera_pan_right", &"camera_pan_up", &"camera_pan_down",
 		&"zoom_in", &"zoom_out", &"recenter", &"refund_progression",
 	]:
 		assert_true(InputMap.has_action(action), str(action))
+
+
+func test_combat_shift_actions_use_directional_keys_and_triggers() -> void:
+	assert_true(_has_physical_key(&"shift_left", KEY_Q))
+	assert_true(_has_joy_axis(&"shift_left", JOY_AXIS_TRIGGER_LEFT, 1.0))
+	assert_true(_has_physical_key(&"shift_right", KEY_E))
+	assert_true(_has_joy_axis(&"shift_right", JOY_AXIS_TRIGGER_RIGHT, 1.0))
 
 
 func test_standard_ui_directions_include_arrows_wasd_and_controller_defaults() -> void:

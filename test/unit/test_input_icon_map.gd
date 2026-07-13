@@ -12,7 +12,7 @@ func test_each_controller_family_resolves_confirm_cancel_and_actions() -> void:
 	for family in InputIconMap.runtime_controller_types():
 		if family == InputIconMap.ControllerType.KEYBOARD_MOUSE:
 			continue
-		for action in [&"confirm", &"cancel", &"action_1", &"action_2", &"action_3", &"action_4", &"shift_action"]:
+		for action in [&"confirm", &"cancel", &"action_1", &"action_2", &"action_3", &"action_4", &"shift_left", &"shift_right"]:
 			var path := InputIconMap.get_glyph_path(family, action)
 			assert_ne(path, "", "%s %s" % [family, action])
 			assert_true(ResourceLoader.exists(path), path)
@@ -28,7 +28,8 @@ func test_keyboard_battle_actions_resolve_kenney_textures() -> void:
 		&"action_2": "keyboard_2.svg",
 		&"action_3": "keyboard_3.svg",
 		&"action_4": "keyboard_4.svg",
-		&"shift_action": "keyboard_shift.svg",
+		&"shift_left": "keyboard_q.svg",
+		&"shift_right": "keyboard_e.svg",
 	}
 	for action: StringName in expected:
 		var path := InputIconMap.get_glyph_path(InputIconMap.ControllerType.KEYBOARD_MOUSE, action)
