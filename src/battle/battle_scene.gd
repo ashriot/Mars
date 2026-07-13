@@ -223,21 +223,10 @@ func _update_cursor() -> void:
 
 func _publish_controller_hints() -> void:
 	var navigation := _navigation_ux_layer()
-	if not navigation or not manager:
+	if not navigation:
 		return
-	var hints: Array[Dictionary] = []
-	if manager.current_state == BattleManager.State.PLAYER_ACTION and manager.current_action == null and manager.action_bar:
-		for index in 4:
-			var button := manager.action_bar.actions_ui.get_child(index) as ActionButton if index < manager.action_bar.actions_ui.get_child_count() else null
-			if button and button.visible and not button.disabled:
-				hints.append({action = StringName("action_%d" % (index + 1)), label = button.label.text, enabled = true})
-		var shift_direction := manager.action_bar._available_shift_direction()
-		if not shift_direction.is_empty():
-			hints.append({action = &"shift_action", label = "Shift", enabled = true})
-	if _is_targeting():
-		hints.append({action = &"confirm", label = "Select", enabled = is_instance_valid(_controller_target)})
-		hints.append({action = &"cancel", label = "Cancel", enabled = true})
-	navigation.publish_hints(hints)
+	# Combat controls carry their own input glyphs; the global hint panel is redundant here.
+	navigation.publish_hints([])
 
 
 func _controller_input_allowed() -> bool:

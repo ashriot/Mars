@@ -367,18 +367,17 @@ func test_real_shift_controls_switch_between_keyboard_and_controller_glyphs() ->
 		assert_null(glyph.get_node_or_null("KeyboardLabel"))
 
 
-func test_hints_omit_disabled_hidden_and_missing_direct_actions() -> void:
+func test_combat_clears_global_hints_during_action_selection() -> void:
 	var fixture := await _navigation_fixture()
 	var scene: BattleScene = fixture.scene
 	var ux: NavigationUXLayer = fixture.ux
+	ux.publish_hints([{action = &"confirm", label = "Previous Screen", enabled = true}])
+	assert_eq(ux.hint_bar.get_hint_count(), 1)
 	scene._publish_controller_hints()
-	var actions: Array[StringName] = []
-	for index in ux.hint_bar.get_hint_count():
-		actions.append(ux.hint_bar.get_hint(index).action)
-	assert_eq(actions, [&"action_1"], "only visible enabled direct actions are hinted")
+	assert_eq(ux.hint_bar.get_hint_count(), 0, "combat buttons already display their own input glyphs")
 
 
-func test_targeting_hints_omit_actions_that_action_bar_rejects() -> void:
+func test_combat_keeps_global_hints_hidden_during_targeting() -> void:
 	var fixture := await _navigation_fixture()
 	var scene: BattleScene = fixture.scene
 	var manager: TrackingBattleManager = fixture.manager
@@ -386,11 +385,10 @@ func test_targeting_hints_omit_actions_that_action_bar_rejects() -> void:
 	manager.current_action = Action.new()
 	fixture.enemy.is_valid_target = true
 	scene._controller_target = fixture.enemy
+	ux.publish_hints([{action = &"cancel", label = "Previous Screen", enabled = true}])
+	assert_eq(ux.hint_bar.get_hint_count(), 1)
 	scene._publish_controller_hints()
-	var actions: Array[StringName] = []
-	for index in ux.hint_bar.get_hint_count():
-		actions.append(ux.hint_bar.get_hint(index).action)
-	assert_eq(actions, [&"confirm", &"cancel"])
+	assert_eq(ux.hint_bar.get_hint_count(), 0, "targeting remains readable without a redundant global panel")
 
 
 func test_physical_button_zero_selects_then_distinct_press_confirms() -> void:
