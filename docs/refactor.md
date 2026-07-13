@@ -50,6 +50,24 @@ The starting-kit reflow intentionally leaves Gunner, Kinetic, and Psionic progre
 
 **Risks/open questions:** Decide treatment of removed nodes, prerequisite changes, cost changes, partial-role refunds, hero-wide resets, and whether reconciliation requires explicit player confirmation.
 
+## Candidate: Decompose dungeon exploration orchestration
+
+**Current location:** src/map/dungeon_map.gd, with scan geometry extracted to src/map/dungeon_scan_controller.gd
+
+**Observed while:** Restoring free scan movement and proportional smart-camera following
+
+**Problem:** DungeonMap still owns generation, traversal, scan lifecycle, camera/zoom policy, reveal animation, interactions, HUD updates, alert rules, and save restoration in one large script.
+
+**Proposed boundary:** Continue extracting independently tested exploration components after DungeonScanController: general camera policy, traversal state, reveal/vision, and map generation/geometry. DungeonMap should orchestrate those components and scene presentation rather than implement every rule.
+
+**Why defer:** Free scanning needs only the scan-specific seam; reorganizing unrelated stable systems would mix refactoring with behavior repair.
+
+**Tests protecting behavior:** test_dungeon_scan_controller.gd protects scan geometry; test_dungeon_navigation.gd protects traversal direction; test_dungeon_restore.gd protects live map state, camera, scan, backtracking, and restoration.
+
+**Likely files affected:** src/map/dungeon_map.gd, future focused helpers under src/map/, dungeon unit/integration tests, and map scene wiring.
+
+**Risks/open questions:** Preserve asynchronous interaction ownership, camera clamping across zoom/background modes, exact save geometry, modal precedence, and authoritative current-node state while extracting responsibilities.
+
 ## Candidate: Separate save serialization from map geometry
 
 **Current location:** `src/map/dungeon_save_codec.gd`, especially `_expected_coordinate_keys()` and `extract_node_types()`, and `src/map/dungeon_map.gd` grid construction and save/restore methods

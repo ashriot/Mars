@@ -63,7 +63,13 @@ All device checks below are intentionally unchecked until performed on the named
 - [ ] Hold a direction and tap confirm repeatedly across completed nodes; each move reevaluates from the new node without requiring stick recentering, while new interactions still lock input.
 - [ ] Use the controller D-pad as a digital fallback and verify it selects the same eligible destinations.
 - [ ] Switch to keyboard-and-mouse mode; WASD/arrows do not preview or move between nodes, while mouse hover/click immediately owns the reticle and traversal.
-- [ ] Enter scan targeting, rotate among non-hidden targets, release to clear the pending target without consuming the scan, then confirm and cancel through their existing paths.
+- [ ] Enter scan targeting with a controller; the free scanner cursor starts at the party while the hex reticle independently marks the nearest scan center.
+- [ ] Hold and rotate the left stick through cardinal and diagonal directions; cursor speed is smooth, continuous, zoom-consistent, and requires no confirm presses.
+- [ ] Scan a distant hidden hex; confirm uses the displayed family glyph, reveals around that hidden center, briefly locks input, and leaves the camera at the scanned region.
+- [ ] Keep the scanner inside the central camera box, then cross each boundary; the camera stays still inside and smoothly follows outside without cutting off scanner input.
+- [ ] Manually pan with the right stick while the scanner is neutral; resume left-stick motion and verify the camera smoothly reacquires while right-stick pan cannot fight it.
+- [ ] Hover/click hidden scan centers with the mouse, switch back to controller, and verify the free cursor resumes from the last hovered hex without a jump.
+- [ ] Verify semantic confirm/cancel and D-pad fallback on the connected controller family.
 - [ ] Hold pan in all four directions; movement is smooth, delta-scaled, and clamped.
 - [ ] Zoom in/out with L2/R2 or displayed triggers; limits clamp and no input leaks through a locked map/modal.
 - [ ] Recenter returns the camera to the current node at minimum, middle, and maximum zoom.

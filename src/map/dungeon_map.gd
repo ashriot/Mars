@@ -504,6 +504,20 @@ func _process_scan_navigation(
 		return
 	scan_controller.move(direction, delta, camera.zoom)
 	_sync_scan_selection()
+	_approach_scan_camera(delta)
+
+
+func _approach_scan_camera(delta: float) -> void:
+	var desired := scan_controller.desired_camera_position(
+		camera.position,
+		get_viewport_rect().size,
+		camera.zoom,
+	)
+	var weight := 1.0 - exp(-scan_camera_follow_response * maxf(delta, 0.0))
+	camera.position = _get_clamped_camera_pos(
+		camera.position.lerp(desired, weight),
+		camera.zoom,
+	)
 
 
 func _is_normal_traversal_destination(node: MapNode) -> bool:
