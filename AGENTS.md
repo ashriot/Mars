@@ -38,7 +38,11 @@ Testing instructions: [`docs/testing/README.md`](docs/testing/README.md).
 - Use explicit test storage overrides or temporary directories for every save-related test, and restore any fixture state during teardown.
 - Run focused tests while iterating, then scale final verification to the risk and reach of the change.
 - Run the complete suite for cross-cutting runtime, save, progression, navigation, input, or scene changes.
+- Treat test and assertion totals as diagnostics, not targets; coverage quality and distinct protected behavior matter more than raw counts.
+- Add automated coverage for gameplay rules, state transitions, persistence, softlocks, and observed regressions; prefer assertions at public behavior boundaries over private implementation details.
+- Avoid duplicate integration scenarios and brittle timing assertions; consolidate overlapping coverage during refactors instead of growing the suite indefinitely.
 - Use the relevant manual checklist for visual, controller, touch, scene-transition, or full-loop behavior that automation cannot establish.
+- Prefer manual acceptance for control feel, animation polish, and purely visual presentation unless a stable automated seam protects meaningful behavior.
 - Expected test errors and documented engine shutdown diagnostics are acceptable only when assertions pass and the process exits successfully; parser errors, crashes, and unexpected failures are not.
 
 ## Documentation
