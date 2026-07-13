@@ -4,9 +4,6 @@ extends RefCounted
 const MIN_ZOOM := 0.001
 
 var cursor_speed := 600.0
-# Task 4 migration bridge for existing DungeonMap callers. Camera policy now belongs to
-# DungeonCameraController; remove this compatibility property when DungeonMap is wired to it.
-var dead_zone_ratio := Vector2(0.6, 0.6)
 var active := false
 var position := Vector2.ZERO
 var selected_node: MapNode
@@ -58,31 +55,6 @@ func select_nearest(nodes: Array[MapNode]) -> MapNode:
 			best_distance = distance
 	selected_node = best
 	return best
-
-
-# Task 4 migration bridge for existing DungeonMap and integration-test callers. New camera
-# behavior must use DungeonCameraController.desired_scanner_position() instead.
-func desired_camera_position(
-	camera_position: Vector2,
-	viewport_size: Vector2,
-	zoom: Vector2,
-) -> Vector2:
-	var safe_zoom := Vector2(
-		maxf(absf(zoom.x), MIN_ZOOM),
-		maxf(absf(zoom.y), MIN_ZOOM),
-	)
-	var half_dead_world := viewport_size * dead_zone_ratio * 0.5 / safe_zoom
-	var offset := position - camera_position
-	var target := camera_position
-	if offset.x < -half_dead_world.x:
-		target.x = position.x + half_dead_world.x
-	elif offset.x > half_dead_world.x:
-		target.x = position.x - half_dead_world.x
-	if offset.y < -half_dead_world.y:
-		target.y = position.y + half_dead_world.y
-	elif offset.y > half_dead_world.y:
-		target.y = position.y - half_dead_world.y
-	return target
 
 
 static func bounds_for_nodes(nodes: Array[MapNode]) -> Rect2:

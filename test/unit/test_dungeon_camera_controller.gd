@@ -141,6 +141,21 @@ func test_party_zoom_tweens_zoom_and_hybrid_position() -> void:
 	assert_eq(camera.position, controller.hybrid_position(Vector2(300, 150), final_zoom, Vector2(900, 600)))
 
 
+func test_zoom_stays_at_max_when_cover_zoom_exceeds_configured_range() -> void:
+	var fixture := _fixture()
+	var controller: DungeonCameraController = fixture.controller
+	var camera: Camera2D = fixture.camera
+	controller.max_zoom = 1.5
+	camera.zoom = Vector2.ONE * controller.max_zoom
+	var final_zoom := controller.zoom_by(
+		0.25,
+		Vector2.ZERO,
+		Vector2.ZERO,
+		Vector2(10000, 10000),
+	)
+	assert_eq(final_zoom, Vector2.ONE * controller.max_zoom)
+
+
 func test_scanner_zoom_reframes_immediately_and_tweens_only_zoom() -> void:
 	var fixture := _fixture()
 	var controller: DungeonCameraController = fixture.controller

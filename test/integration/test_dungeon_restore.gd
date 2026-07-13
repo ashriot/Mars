@@ -338,6 +338,10 @@ func test_scan_starts_at_current_node_with_free_cursor_and_snapped_reticle() -> 
 	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
 	dungeon_map.start_targeting_mode(1)
 	assert_true(dungeon_map.scan_controller.active)
+	assert_eq(
+		dungeon_map.camera_controller.focus_mode,
+		DungeonCameraController.FocusMode.SCANNER,
+	)
 	assert_eq(dungeon_map.scan_controller.position, dungeon_map.current_node.position)
 	assert_true(dungeon_map.scanner_cursor.visible)
 	assert_same(dungeon_map._controller_preview_node, dungeon_map.current_node)
@@ -547,7 +551,8 @@ func test_scanner_keeps_moving_while_camera_reacquires_after_manual_pan() -> voi
 	dungeon_map._process_scan_navigation(Vector2.LEFT, Vector2.ZERO, 0.016)
 	assert_lt(dungeon_map.scan_controller.position.x, cursor_before.x)
 	assert_lt(dungeon_map.camera.position.x, camera_after_pan.x)
-	var current_desired := dungeon_map.scan_controller.desired_camera_position(
+	var current_desired: Vector2 = dungeon_map.camera_controller.desired_scanner_position(
+		dungeon_map.scan_controller.position,
 		camera_after_pan,
 		dungeon_map.get_viewport_rect().size,
 		dungeon_map.camera.zoom,
@@ -587,7 +592,8 @@ func test_scan_camera_approach_uses_exponential_response_without_overshoot_and_c
 	dungeon_map.start_targeting_mode(1)
 	dungeon_map.scan_controller.set_position(setup.nodes[3].position)
 	var start := dungeon_map.camera.position
-	var desired := dungeon_map.scan_controller.desired_camera_position(
+	var desired: Vector2 = dungeon_map.camera_controller.desired_scanner_position(
+		dungeon_map.scan_controller.position,
 		start,
 		dungeon_map.get_viewport_rect().size,
 		dungeon_map.camera.zoom,
@@ -609,7 +615,8 @@ func test_scan_camera_approach_uses_exponential_response_without_overshoot_and_c
 
 	dungeon_map.camera.position = Vector2.ZERO
 	dungeon_map.scan_controller.position = Vector2(100000, 100000)
-	var edge_desired := dungeon_map.scan_controller.desired_camera_position(
+	var edge_desired: Vector2 = dungeon_map.camera_controller.desired_scanner_position(
+		dungeon_map.scan_controller.position,
 		dungeon_map.camera.position,
 		dungeon_map.get_viewport_rect().size,
 		dungeon_map.camera.zoom,
@@ -634,7 +641,8 @@ func test_scan_zoom_reframes_distant_stationary_scanner_without_party_pull() -> 
 	var final_zoom_value := minf(dungeon_map.camera.zoom.x + 1.0, dungeon_map.max_zoom)
 	var final_zoom := Vector2.ONE * final_zoom_value
 	var expected := dungeon_map._get_clamped_camera_pos(
-		dungeon_map.scan_controller.desired_camera_position(
+		dungeon_map.camera_controller.desired_scanner_position(
+			dungeon_map.scan_controller.position,
 			dungeon_map.camera.position,
 			dungeon_map.get_viewport_rect().size,
 			final_zoom,
@@ -860,6 +868,10 @@ func test_map_registers_global_adapter_preserves_preview_without_world_cursor_an
 	dungeon_map.start_targeting_mode(1)
 	assert_eq(navigation.hint_bar.get_hint(0).label.text, "Scan")
 	dungeon_map.cancel_preview()
+	assert_eq(
+		dungeon_map.camera_controller.focus_mode,
+		DungeonCameraController.FocusMode.PARTY,
+	)
 	assert_null(navigation.cursor._target)
 	assert_null(dungeon_map._controller_preview_node)
 	assert_false(dungeon_map.player_reticle.visible)

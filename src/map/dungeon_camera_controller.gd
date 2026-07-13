@@ -76,7 +76,7 @@ func zoom_by(
 	viewport_size: Vector2,
 ) -> Vector2:
 	cancel_motion()
-	var minimum_allowed := maxf(min_zoom, cover_zoom(viewport_size).x)
+	var minimum_allowed := minf(maxf(min_zoom, cover_zoom(viewport_size).x), max_zoom)
 	var next_value := clampf(_camera.zoom.x + step, minimum_allowed, max_zoom)
 	var final_zoom := Vector2.ONE * next_value
 	if focus_mode == FocusMode.SCANNER:

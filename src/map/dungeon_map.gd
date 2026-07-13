@@ -104,6 +104,7 @@ var _last_alert_state: int = -1
 var _controller_preview_node: MapNode = null
 var _controller_direction_engaged := false
 var scan_controller := DungeonScanController.new()
+var camera_controller := DungeonCameraController.new()
 
 # --- Hex Values ---
 var hex_size: float = 50.0
@@ -122,7 +123,6 @@ var cursor_pulse_tween: Tween
 var cursor_move_tween: Tween
 var warning_tween: Tween
 var alert_tween: Tween
-var _zoom_tween: Tween
 var reticle_move_tween: Tween
 var reticle_color_tween: Tween
 
@@ -162,6 +162,7 @@ func _ready():
 
 
 func _exit_tree() -> void:
+	camera_controller.cancel_motion()
 	var navigation := _navigation_ux_layer()
 	if navigation:
 		if navigation._adapter == self:
@@ -332,8 +333,20 @@ func load_from_save_data(data: Variant) -> bool:
 	_animate_bits_change(RunManager.run_bits)
 	return true
 
-func _setup_camera():
+func _setup_camera() -> void:
 	camera.make_current()
+	add_child(camera_controller)
+	camera_controller.configure(camera, bg_sprite, parallax_bg)
+	_sync_camera_tuning()
+
+
+func _sync_camera_tuning() -> void:
+	camera_controller.pan_speed = camera_pan_speed
+	camera_controller.min_zoom = min_zoom
+	camera_controller.max_zoom = max_zoom
+	camera_controller.smooth_speed = camera_smooth_speed
+	camera_controller.scanner_dead_zone_ratio = Vector2.ONE * scan_dead_zone_ratio
+	camera_controller.scanner_follow_response = scan_camera_follow_response
 
 func _unhandled_input(event):
 	if _event_input_is_suppressed():
@@ -508,15 +521,11 @@ func _process_scan_navigation(
 
 
 func _approach_scan_camera(delta: float) -> void:
-	var desired := scan_controller.desired_camera_position(
-		camera.position,
+	_sync_camera_tuning()
+	camera_controller.follow_scanner(
+		scan_controller.position,
+		delta,
 		get_viewport_rect().size,
-		camera.zoom,
-	)
-	var weight := 1.0 - exp(-scan_camera_follow_response * maxf(delta, 0.0))
-	camera.position = _get_clamped_camera_pos(
-		camera.position.lerp(desired, weight),
-		camera.zoom,
 	)
 
 
@@ -529,16 +538,15 @@ func _is_normal_traversal_destination(node: MapNode) -> bool:
 func process_controller_camera(direction: Vector2, delta: float) -> void:
 	if current_map_state == MapState.LOADING or current_map_state == MapState.LOCKED or direction.is_zero_approx():
 		return
-	camera.position = _get_clamped_camera_pos(
-		camera.position + direction.normalized() * camera_pan_speed * delta * camera.zoom.x,
-		camera.zoom
-	)
+	_sync_camera_tuning()
+	camera_controller.pan(direction, delta, get_viewport_rect().size)
 
 
 func recenter_camera() -> void:
 	if current_map_state == MapState.LOADING or current_map_state == MapState.LOCKED or current_node == null:
 		return
-	camera.position = _get_clamped_camera_pos(current_node.position, camera.zoom)
+	_sync_camera_tuning()
+	camera_controller.recenter(current_node.position, get_viewport_rect().size)
 
 
 func _event_input_is_suppressed() -> bool:
@@ -592,36 +600,7 @@ func _input(event):
 			#_on_node_clicked(_selected_node_for_controller)
 
 func _get_clamped_camera_pos(target_pos: Vector2, zoom_level: Vector2) -> Vector2:
-	var vp_size = get_viewport_rect().size
-	var visible_world_size = vp_size / zoom_level
-	var bg_size = bg_sprite.texture.get_size() * bg_sprite.scale
-	var p_scale = Vector2.ONE
-
-	if parallax_bg and parallax_bg.scroll_scale != Vector2.ZERO:
-		p_scale = parallax_bg.scroll_scale
-
-	var effective_bg_size = bg_size / p_scale
-	var half_bg = effective_bg_size / 3.0
-	var half_view = visible_world_size / 3.0
-	var center = Vector2.ZERO
-	var min_x = center.x - half_bg.x + half_view.x
-	var max_x = center.x + half_bg.x - half_view.x
-	var min_y = center.y - half_bg.y + half_view.y
-	var max_y = center.y + half_bg.y - half_view.y
-
-	if min_x > max_x:
-		min_x = center.x
-		max_x = center.x
-	if min_y > max_y:
-		min_y = center.y
-		max_y = center.y
-
-	# 6. Clamp
-	var clamped_pos = Vector2()
-	clamped_pos.x = clamp(target_pos.x, min_x, max_x)
-	clamped_pos.y = clamp(target_pos.y, min_y, max_y)
-
-	return clamped_pos
+	return camera_controller.clamp_position(target_pos, zoom_level, get_viewport_rect().size)
 
 func _generate_static_terminal_data(coords: Vector2i, index: int):
 	var scalar = RunManager.get_loot_scalar()
@@ -1028,8 +1007,9 @@ func start_targeting_mode(radius: int) -> void:
 	current_map_state = MapState.TARGETING
 	pending_scan_radius = radius
 	scan_controller.cursor_speed = scan_cursor_speed
-	scan_controller.dead_zone_ratio = Vector2.ONE * scan_dead_zone_ratio
 	var origin := current_node.position if current_node else Vector2.ZERO
+	_sync_camera_tuning()
+	camera_controller.set_focus_mode(DungeonCameraController.FocusMode.SCANNER)
 	scan_controller.begin(origin, DungeonScanController.bounds_for_nodes(_map_nodes()))
 	scanner_cursor.visible = InputManager.get_active_mode() == InputManager.InputMode.CONTROLLER
 	_sync_scan_selection()
@@ -1052,6 +1032,7 @@ func _cancel_targeting() -> void:
 	pending_scan_radius = 0
 	_controller_preview_node = null
 	scan_controller.stop()
+	camera_controller.set_focus_mode(DungeonCameraController.FocusMode.PARTY)
 	scanner_cursor.visible = false
 	_reset_reticle_visuals()
 	scan_canceled.emit()
@@ -1091,6 +1072,7 @@ func _finish_scan_target(target_node: MapNode) -> void:
 	pending_scan_radius = 0
 	_controller_preview_node = null
 	scan_controller.stop()
+	camera_controller.set_focus_mode(DungeonCameraController.FocusMode.PARTY)
 	scanner_cursor.visible = false
 	_reset_reticle_visuals()
 	_clear_navigation_cursor()
@@ -1231,82 +1213,39 @@ func _set_alert_display_value(val: float):
 	alert_gauge.value = val
 	alert_label.text = str(roundi(val)) + "%"
 
-func _zoom_camera(step: float):
-	if not camera: return
-	if _zoom_tween and _zoom_tween.is_running(): _zoom_tween.kill()
-
-	var limit_zoom_vec = _get_cover_zoom_level()
-	var min_allowed = max(min_zoom, limit_zoom_vec.x) # The "Wide" limit
-	var max_allowed = max_zoom         # The "Close" limit (e.g. 2.5)
-
-	# 1. Apply Zoom
-	var current_z = camera.zoom.x
-	var new_z = clamp(current_z + step, min_allowed, max_allowed)
-	var final_zoom := Vector2(new_z, new_z)
-
-	if current_map_state == MapState.TARGETING and scan_controller.active:
-		camera.position = _get_clamped_camera_pos(
-			scan_controller.desired_camera_position(
-				camera.position,
-				get_viewport_rect().size,
-				final_zoom,
-			),
-			final_zoom,
-		)
-
-	# 2. Tween it
-	_zoom_tween = create_tween().set_parallel(true)
-	_zoom_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	var duration = 0.3
-
-	_zoom_tween.tween_property(camera, "zoom", final_zoom, duration)
-	if current_map_state == MapState.TARGETING and scan_controller.active:
+func _zoom_camera(step: float) -> void:
+	if not camera:
 		return
+	_sync_camera_tuning()
+	var party_position := current_node.position if current_node else Vector2.ZERO
+	camera_controller.zoom_by(
+		step,
+		party_position,
+		scan_controller.position,
+		get_viewport_rect().size,
+	)
 
-	# 3. Update Position (The Hybrid Logic)
-	# We calculate where the camera *should* be at the NEW zoom level
-	var target_pos = _calculate_hybrid_position(Vector2(new_z, new_z))
 
-	_zoom_tween.tween_property(camera, "position", target_pos, duration)
-
-func _move_camera_to_player(force_center: bool):
-	if _zoom_tween and _zoom_tween.is_running():
-		_zoom_tween.kill()
-
-	var target_pos = _calculate_hybrid_position(camera.zoom)
-
-	if force_center:
-		camera.position = target_pos
-		return
-
-	var tween = create_tween()
-	tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	tween.tween_property(camera, "position", target_pos, camera_smooth_speed)
+func _move_camera_to_player(force_center: bool) -> void:
+	_sync_camera_tuning()
+	var party_position := current_node.position if current_node else Vector2.ZERO
+	camera_controller.move_to_party(
+		party_position,
+		force_center,
+		get_viewport_rect().size,
+	)
 
 func _calculate_hybrid_position(at_zoom: Vector2) -> Vector2:
-	if not current_node: return Vector2.ZERO
-
-	var limit_zoom = _get_cover_zoom_level().x
-	var lock_threshold = 1.0
-
-	var influence = remap(at_zoom.x, limit_zoom, lock_threshold, 0.0, 1.0)
-
-	influence = clamp(influence, 0.0, 1.0)
-	var target_pos = lerp(Vector2.ZERO, current_node.position, influence)
-
-	return target_pos
+	if not current_node:
+		return Vector2.ZERO
+	return camera_controller.hybrid_position(
+		current_node.position,
+		at_zoom,
+		get_viewport_rect().size,
+	)
 
 func _get_cover_zoom_level() -> Vector2:
-	var vp_size = get_viewport_rect().size
-
-	var bg_current_size = bg_sprite.texture.get_size() * bg_sprite.scale
-
-	var x_ratio = vp_size.x / bg_current_size.x
-	var y_ratio = vp_size.y / bg_current_size.y
-
-	var zoom_val = max(x_ratio, y_ratio)
-
-	return Vector2(zoom_val, zoom_val) * 1.02
+	return camera_controller.cover_zoom(get_viewport_rect().size)
 
 func execute_camera_scan(center_node: MapNode, radius: int):
 	AudioManager.play_sfx("radiate")
