@@ -33,10 +33,11 @@ Run this sequence once over USB and once over Bluetooth. Fill in both rows befor
 
 - [ ] Enter scan targeting and verify the free cursor starts at the party while the hex reticle independently marks the nearest scan center.
 - [ ] Hold and rotate the left stick through cardinal and diagonal directions at minimum, middle, and maximum zoom; movement is smooth, continuous, and consistent at every zoom level.
-- [ ] Move onto a distant hidden hex and press Cross; the Cross glyph is displayed, the hidden center is revealed, input is briefly locked, and the camera remains at the scanned region after the reveal.
-- [ ] Press Circle to cancel scan targeting; the Circle glyph is displayed and no scan is performed.
+- [ ] Move onto a distant hidden hex and press Cross; the Cross glyph is displayed, the reveal continues while scanner, traversal, and camera input are locked for 0.25 seconds, and the camera remains at the scanned region after the reveal.
+- [ ] Immediately after the 0.25-second lock ends, perform ordinary traversal; normal movement and alert interaction resume, and the existing traversal camera behavior recenters or follows the party as designed.
+- [ ] Re-enter scan targeting and press Circle to cancel; the Circle glyph is displayed and no scan is performed.
 - [ ] Re-enter scan targeting and use the D-pad; each direction moves the free cursor as a digital fallback and the reticle follows the nearest eligible center.
-- [ ] At minimum, middle, and maximum zoom, keep the scanner inside the proportional central camera box and then cross every boundary; the camera stays still inside, follows smoothly outside, and does not interrupt scanner movement.
+- [ ] At minimum, middle, and maximum zoom, keep the scanner inside the camera dead zone: the central (middle) 60% of the viewport on both axes. Cross each boundary and verify the camera stays still inside, begins following after the boundary is crossed, follows smoothly outside, and does not interrupt scanner movement.
 - [ ] With the scanner neutral, manually pan with the right stick; resume left-stick movement and verify the camera smoothly reacquires while right-stick pan does not fight scanner following.
 - [ ] Hover or click a hidden scan center with the mouse, then move the left stick; controller mode resumes from the last hovered hex without a cursor jump.
 - [ ] Confirm another distant hidden scan and verify input returns after the brief reveal lock while the camera remains at the scanned region.
