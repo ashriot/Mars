@@ -19,6 +19,7 @@ var _background: Sprite2D
 var _parallax: Parallax2D
 var _zoom_tween: Tween
 var _position_tween: Tween
+var _zoom_position_takeover := false
 
 
 func configure(
@@ -79,6 +80,7 @@ func zoom_by(
 	viewport_size: Vector2,
 ) -> Vector2:
 	cancel_motion()
+	_zoom_position_takeover = false
 	var minimum_allowed := minf(maxf(min_zoom, cover_zoom(viewport_size).x), max_zoom)
 	var next_value := clampf(_camera.zoom.x + step, minimum_allowed, max_zoom)
 	var final_zoom := Vector2.ONE * next_value
@@ -124,6 +126,7 @@ func _cancel_zoom_motion() -> void:
 	if _zoom_tween and _zoom_tween.is_running():
 		_zoom_tween.kill()
 	_zoom_tween = null
+	_zoom_position_takeover = false
 
 
 func _cancel_position_motion() -> void:
@@ -134,7 +137,8 @@ func _cancel_position_motion() -> void:
 
 func _apply_zoom_and_clamp(zoom_value: Vector2, viewport_size: Vector2) -> void:
 	_camera.zoom = zoom_value
-	_camera.position = clamp_position(_camera.position, zoom_value, viewport_size)
+	if _zoom_position_takeover:
+		_camera.position = clamp_position(_camera.position, zoom_value, viewport_size)
 
 
 func desired_scanner_position(
@@ -164,6 +168,7 @@ func desired_scanner_position(
 func follow_scanner(scanner_position: Vector2, delta: float, viewport_size: Vector2) -> Vector2:
 	if focus_mode != FocusMode.SCANNER:
 		return _camera.position
+	_enable_zoom_position_takeover()
 	var desired := desired_scanner_position(
 		scanner_position, _camera.position, viewport_size, _camera.zoom
 	)
@@ -217,5 +222,11 @@ func recenter(party_position: Vector2, viewport_size: Vector2) -> Vector2:
 
 func apply_manual_position_candidate(candidate: Vector2, viewport_size: Vector2) -> Vector2:
 	_cancel_position_motion()
+	_enable_zoom_position_takeover()
 	_camera.position = clamp_position(candidate, _camera.zoom, viewport_size)
 	return _camera.position
+
+
+func _enable_zoom_position_takeover() -> void:
+	if _zoom_tween and _zoom_tween.is_running():
+		_zoom_position_takeover = true

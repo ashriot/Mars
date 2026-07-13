@@ -177,6 +177,28 @@ func test_party_zoom_tweens_zoom_and_hybrid_position() -> void:
 	assert_eq(camera.position, controller.hybrid_position(Vector2(300, 150), final_zoom, Vector2(900, 600)))
 
 
+func test_uninterrupted_party_zoom_retains_unclamped_hybrid_destination() -> void:
+	var fixture := _fixture()
+	var controller: DungeonCameraController = fixture.controller
+	var camera: Camera2D = fixture.camera
+	var viewport_size := Vector2(900, 600)
+	var party_position := Vector2(100000, 50000)
+	controller.max_zoom = 1.5
+	controller.set_focus_mode(DungeonCameraController.FocusMode.PARTY)
+	var final_zoom := controller.zoom_by(0.5, party_position, Vector2.ZERO, viewport_size)
+	var expected_position := controller.hybrid_position(party_position, final_zoom, viewport_size)
+	assert_ne(
+		expected_position,
+		controller.clamp_position(expected_position, final_zoom, viewport_size),
+		"fixture keeps the exact hybrid destination outside camera bounds",
+	)
+
+	await get_tree().create_timer(DungeonCameraController.ZOOM_TWEEN_DURATION + 0.05).timeout
+
+	assert_eq(camera.zoom, final_zoom)
+	assert_eq(camera.position, expected_position)
+
+
 func test_zoom_stays_at_max_when_cover_zoom_exceeds_configured_range() -> void:
 	var fixture := _fixture()
 	var controller: DungeonCameraController = fixture.controller
@@ -212,6 +234,46 @@ func test_scanner_zoom_reframes_immediately_and_tweens_only_zoom() -> void:
 	await get_tree().create_timer(DungeonCameraController.ZOOM_TWEEN_DURATION + 0.05).timeout
 	assert_eq(camera.zoom, final_zoom)
 	assert_eq(camera.position, followed_position)
+
+
+func test_uninterrupted_scanner_zoom_retains_final_zoom_reframe_at_every_tick() -> void:
+	var fixture := _fixture()
+	var controller: DungeonCameraController = fixture.controller
+	var camera: Camera2D = fixture.camera
+	var viewport_size := Vector2(900, 600)
+	controller.max_zoom = 1.5
+	controller.set_focus_mode(DungeonCameraController.FocusMode.SCANNER)
+	var final_zoom := controller.zoom_by(
+		0.5,
+		Vector2.ZERO,
+		Vector2(100000, 0),
+		viewport_size,
+	)
+	var expected_position := controller.clamp_position(
+		controller.desired_scanner_position(
+			Vector2(100000, 0),
+			Vector2.ZERO,
+			viewport_size,
+			final_zoom,
+		),
+		final_zoom,
+		viewport_size,
+	)
+	assert_ne(
+		expected_position,
+		controller.clamp_position(expected_position, Vector2.ONE, viewport_size),
+		"fixture's final-zoom reframe is outside the initial-zoom bounds",
+	)
+	assert_eq(camera.position, expected_position)
+
+	await get_tree().process_frame
+	assert_eq(camera.position, expected_position)
+	await get_tree().create_timer(DungeonCameraController.ZOOM_TWEEN_DURATION * 0.5).timeout
+	assert_eq(camera.position, expected_position)
+	await get_tree().create_timer(DungeonCameraController.ZOOM_TWEEN_DURATION * 0.5 + 0.05).timeout
+
+	assert_eq(camera.zoom, final_zoom)
+	assert_eq(camera.position, expected_position)
 
 
 func test_new_zoom_replaces_previous_camera_owned_motion() -> void:
@@ -333,3 +395,27 @@ func test_party_zoom_then_scanner_follow_keeps_zoom_and_releases_position() -> v
 	await get_tree().create_timer(DungeonCameraController.ZOOM_TWEEN_DURATION + 0.05).timeout
 	assert_eq(camera.zoom, final_zoom)
 	assert_eq(camera.position, followed_position)
+
+
+func test_scanner_zoom_out_then_follow_reclamps_retained_position_at_final_zoom() -> void:
+	var fixture := _fixture()
+	var controller: DungeonCameraController = fixture.controller
+	var camera: Camera2D = fixture.camera
+	var viewport_size := Vector2(900, 600)
+	camera.zoom = Vector2(1.5, 1.5)
+	controller.scanner_dead_zone_ratio = Vector2(0.1, 0.1)
+	controller.set_focus_mode(DungeonCameraController.FocusMode.SCANNER)
+	var final_zoom := controller.zoom_by(
+		-0.5,
+		Vector2.ZERO,
+		Vector2.ZERO,
+		viewport_size,
+	)
+	var followed_position := controller.follow_scanner(Vector2(100000, 0), 100.0, viewport_size)
+	var expected_final := controller.clamp_position(followed_position, final_zoom, viewport_size)
+	assert_ne(followed_position, expected_final, "zoom-out fixture tightens the camera bounds")
+
+	await get_tree().create_timer(DungeonCameraController.ZOOM_TWEEN_DURATION + 0.05).timeout
+
+	assert_eq(camera.zoom, final_zoom)
+	assert_eq(camera.position, expected_final)
