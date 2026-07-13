@@ -176,20 +176,23 @@ func _unhandled_input(event: InputEvent) -> void:
 			if activate_slot(index) and is_inside_tree():
 				get_viewport().set_input_as_handled()
 			return
-	if event.is_action_pressed(&"shift_action"):
-		var direction := _available_shift_direction()
-		if not direction.is_empty():
-			_on_shift_button_pressed(direction)
-			if is_inside_tree():
-				get_viewport().set_input_as_handled()
+	if event.is_action_pressed(&"shift_left"):
+		if activate_shift("left") and is_inside_tree():
+			get_viewport().set_input_as_handled()
+		return
+	if event.is_action_pressed(&"shift_right"):
+		if activate_shift("right") and is_inside_tree():
+			get_viewport().set_input_as_handled()
+		return
 
 
-func _available_shift_direction() -> String:
-	if right_shift_ui and right_shift_ui.visible and right_shift_button and not right_shift_button.disabled:
-		return "right"
-	if left_shift_ui and left_shift_ui.visible and left_shift_button and not left_shift_button.disabled:
-		return "left"
-	return ""
+func activate_shift(direction: String) -> bool:
+	var shift_ui: Control = left_shift_ui if direction == "left" else right_shift_ui if direction == "right" else null
+	var shift_button: Button = left_shift_button if direction == "left" else right_shift_button if direction == "right" else null
+	if shift_ui == null or not shift_ui.visible or shift_button == null or shift_button.disabled:
+		return false
+	_on_shift_button_pressed(direction)
+	return true
 
 
 func _modal_is_open() -> bool:

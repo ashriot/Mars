@@ -52,3 +52,8 @@ func test_invalid_family_falls_back_to_steam_deck() -> void:
 
 func test_missing_action_returns_empty_path() -> void:
 	assert_eq(InputIconMap.get_glyph_path(InputIconMap.ControllerType.XBOX, &"not_real"), "")
+
+
+func test_legacy_combat_shift_glyph_is_removed() -> void:
+	for family in InputIconMap.runtime_controller_types():
+		assert_eq(InputIconMap.get_glyph_path(family, &"shift_action"), "", str(family))

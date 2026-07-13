@@ -99,7 +99,7 @@ func test_semantic_actions_activate_matching_slots_without_gui_focus() -> void:
 	assert_signal_emit_count(bar, "action_selected", 4)
 
 
-func test_shift_binding_uses_existing_available_shift_direction() -> void:
+func test_directional_shift_actions_activate_only_their_matching_available_side() -> void:
 	var bar := ActionBar.new()
 	bar.buttons_disabled = false
 	bar.sliding = false
@@ -112,14 +112,20 @@ func test_shift_binding_uses_existing_available_shift_direction() -> void:
 	bar.left_shift_ui.add_child(bar.left_shift_button)
 	bar.right_shift_ui.add_child(bar.right_shift_button)
 	autofree(bar)
-	bar.left_shift_ui.visible = false
-	bar.right_shift_ui.visible = true
 	watch_signals(bar)
-	bar._unhandled_input(_action_event(&"shift_action"))
+
+	bar._unhandled_input(_action_event(&"shift_left"))
+	assert_signal_emitted_with_parameters(bar, "shift_button_pressed", ["left"])
+	bar._unhandled_input(_action_event(&"shift_right"))
 	assert_signal_emitted_with_parameters(bar, "shift_button_pressed", ["right"])
+	assert_signal_emit_count(bar, "shift_button_pressed", 2, "both cards may show the same role")
+
+	bar.left_shift_ui.visible = false
+	bar._unhandled_input(_action_event(&"shift_left"))
+	assert_signal_emit_count(bar, "shift_button_pressed", 2, "left never falls back to right")
 	bar.right_shift_button.disabled = true
-	bar._unhandled_input(_action_event(&"shift_action"))
-	assert_signal_emit_count(bar, "shift_button_pressed", 1)
+	bar._unhandled_input(_action_event(&"shift_right"))
+	assert_signal_emit_count(bar, "shift_button_pressed", 2, "right never falls back to left")
 
 
 func test_target_navigation_filters_invalid_cards_and_uses_geometry() -> void:
@@ -347,24 +353,16 @@ func test_real_shift_controls_switch_between_keyboard_and_controller_glyphs() ->
 	bar.battle_manager = manager
 	add_child_autofree(bar)
 	await get_tree().process_frame
-	var shift_glyphs: Array[DynamicGlyph] = [
-		bar.get_node("LeftShift/DynamicGlyph") as DynamicGlyph,
-		bar.get_node("RightShift/DynamicGlyph") as DynamicGlyph,
-	]
+	var left_glyph := bar.get_node("LeftShift/DynamicGlyph") as DynamicGlyph
+	var right_glyph := bar.get_node("RightShift/DynamicGlyph") as DynamicGlyph
 
 	InputManager._input(_pressed_key())
-	for glyph: DynamicGlyph in shift_glyphs:
-		assert_eq(glyph.texture_normal.resource_path.get_file(), "keyboard_shift.svg")
-		assert_null(glyph.get_node_or_null("KeyboardLabel"))
+	assert_eq(left_glyph.texture_normal.resource_path.get_file(), "keyboard_q.svg")
+	assert_eq(right_glyph.texture_normal.resource_path.get_file(), "keyboard_e.svg")
 
 	InputManager._input(_pressed_joy_button())
-	var expected_trigger := InputIconMap.get_glyph(
-		InputManager.get_active_controller_type(),
-		&"shift_action",
-	)
-	for glyph: DynamicGlyph in shift_glyphs:
-		assert_same(glyph.texture_normal, expected_trigger)
-		assert_null(glyph.get_node_or_null("KeyboardLabel"))
+	assert_same(left_glyph.texture_normal, InputIconMap.get_glyph(InputManager.get_active_controller_type(), &"shift_left"))
+	assert_same(right_glyph.texture_normal, InputIconMap.get_glyph(InputManager.get_active_controller_type(), &"shift_right"))
 
 
 func test_combat_clears_global_hints_during_action_selection() -> void:

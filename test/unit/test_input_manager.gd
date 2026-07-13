@@ -281,6 +281,10 @@ func test_combat_shift_actions_use_directional_keys_and_triggers() -> void:
 	assert_true(_has_joy_axis(&"shift_right", JOY_AXIS_TRIGGER_RIGHT, 1.0))
 
 
+func test_legacy_combat_shift_action_is_removed() -> void:
+	assert_false(InputMap.has_action(&"shift_action"))
+
+
 func test_standard_ui_directions_include_arrows_wasd_and_controller_defaults() -> void:
 	var expected := {
 		&"ui_left": [KEY_LEFT, KEY_A, JOY_BUTTON_DPAD_LEFT, JOY_AXIS_LEFT_X, -1.0],
