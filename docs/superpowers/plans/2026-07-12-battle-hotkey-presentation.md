@@ -1,331 +1,388 @@
-# Battle Hotkey Presentation Implementation Plan
+# Battle Hotkeys and World-Cursor Policy Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Show `1–4` and `SHIFT` on battle controls in keyboard/mouse mode while preserving controller-family glyph textures and all existing battle input behavior.
+**Goal:** Replace temporary battle hotkey text with five official Kenney textures and stop the global cursor from snapping to dungeon or combat world objects.
 
-**Architecture:** `InputIconMap` becomes the authoritative source for semantic keyboard labels. `DynamicGlyph` keeps its existing texture-button footprint, creates one centered child label, and switches exclusively between keyboard text and controller texture when input mode changes.
+**Architecture:** `InputIconMap` and texture-only `DynamicGlyph` handle both keyboard and controller prompts. `DungeonMap` and `BattleScene` retain logical selection/reticle/highlight state but always clear the global cursor target, letting existing free/snapped behavior show the cursor only after meaningful mouse motion.
 
-**Tech Stack:** Godot 4.6.3, GDScript, GUT 9.6.1, existing controller SVG assets.
+**Tech Stack:** Godot 4.6.3, GDScript, GUT 9.6.1, Kenney Input Prompts 1.5 (CC0).
 
 ## Global Constraints
 
-- Keyboard/mouse ability slots show exactly `1`, `2`, `3`, and `4`.
-- Both shift controls show exactly `SHIFT` in keyboard/mouse mode.
-- Controller mode continues using existing family-specific face-button and trigger textures.
-- Exactly one presentation is visible: keyboard label or controller texture, never both.
-- Disabled/unaffordable controls keep the hotkey visible at the existing 0.33 opacity.
-- Mode and controller-family changes refresh immediately without moving or reflowing the action bar.
-- Unknown actions clear both presentations and hide safely.
-- Do not add image assets or parse `InputMap` display strings at runtime.
-- Do not change battle bindings, execution, targeting, focus navigation, clicking, or cursor behavior.
-- Keep the staged 1,000-XP hero changes staged and untouched; keep the generated GUT theme normalization unstaged.
+- Keyboard battle prompts use official `keyboard_1.svg`, `keyboard_2.svg`, `keyboard_3.svg`, `keyboard_4.svg`, and `keyboard_shift.svg` textures.
+- Restore only those five Kenney source SVGs; do not restore the full pack or commit `.import` sidecars.
+- `DynamicGlyph` is texture-only in both keyboard/mouse and controller modes; remove the temporary text-label implementation.
+- All controller-family action and shift mappings remain unchanged.
+- Dungeon reticles/previews and combat actor highlights remain authoritative world-selection feedback.
+- Dungeon and combat never assign map nodes or actor cards to `NavigationCursor`.
+- Meaningful mouse motion shows the free cursor; subsequent keyboard/controller navigation hides it because no world target exists.
+- Cursor snapping on title, hub, terminal, result, and other real UI controls remains unchanged.
+- Do not change bindings, movement, targeting, combat execution, map interactions, click behavior, or modal ownership.
+- Keep the staged 1,000-XP hero resources staged and untouched; keep the generated GUT theme normalization unstaged.
+- Every commit must use `git commit --only` with explicit task paths.
 
 ---
 
-### Task 1: Add Keyboard Labels to DynamicGlyph
+### Task 1: Restore Kenney Hotkey Textures
 
 **Files:**
+- Create: `assets/graphics/glyphs/keyboard_mouse/vector/keyboard_1.svg`
+- Create: `assets/graphics/glyphs/keyboard_mouse/vector/keyboard_2.svg`
+- Create: `assets/graphics/glyphs/keyboard_mouse/vector/keyboard_3.svg`
+- Create: `assets/graphics/glyphs/keyboard_mouse/vector/keyboard_4.svg`
+- Create: `assets/graphics/glyphs/keyboard_mouse/vector/keyboard_shift.svg`
 - Modify: `src/singletons/input_map.gd`
 - Modify: `src/battle/dynamic_glyph.gd`
-- Test: `test/unit/test_input_icon_map.gd`
-- Test: `test/unit/test_dynamic_glyph.gd`
+- Modify: `test/unit/test_glyph_assets.gd`
+- Modify: `test/unit/test_input_icon_map.gd`
+- Modify: `test/unit/test_dynamic_glyph.gd`
+- Modify: `test/integration/test_battle_controller_navigation.gd`
 
 **Interfaces:**
-- Produces: `InputIconMap.get_keyboard_label(action: StringName) -> String`.
-- Produces: `DynamicGlyph.keyboard_label: Label` after `_ready()` or `refresh()`.
-- Preserves: `DynamicGlyph.refresh(show_controller_glyph: bool, family: InputIconMap.ControllerType)`.
+- Preserves: `InputIconMap.get_glyph_path(type, action) -> String` and `get_glyph(type, action) -> Texture2D`.
+- Preserves: `DynamicGlyph.refresh(show_controller_glyph: bool, family: InputIconMap.ControllerType)`; `false` resolves keyboard textures, `true` resolves the supplied controller family.
+- Removes: `InputIconMap.KEYBOARD_LABELS`, `get_keyboard_label()`, and `DynamicGlyph.keyboard_label`.
 
-- [ ] **Step 1: Add failing keyboard-label map tests**
+- [ ] **Step 1: Replace text-label expectations with failing texture expectations**
 
-Add to `test/unit/test_input_icon_map.gd`:
+In `test/unit/test_input_icon_map.gd`, delete `test_battle_keyboard_labels_match_live_bindings`. Extend the family test so every non-keyboard controller resolves `confirm`, `cancel`, `action_1`–`action_4`, and `shift_action`. Add:
 
 ```gdscript
-func test_battle_keyboard_labels_match_live_bindings() -> void:
-	assert_eq(InputIconMap.get_keyboard_label(&"action_1"), "1")
-	assert_eq(InputIconMap.get_keyboard_label(&"action_2"), "2")
-	assert_eq(InputIconMap.get_keyboard_label(&"action_3"), "3")
-	assert_eq(InputIconMap.get_keyboard_label(&"action_4"), "4")
-	assert_eq(InputIconMap.get_keyboard_label(&"shift_action"), "SHIFT")
-	assert_eq(InputIconMap.get_keyboard_label(&"not_real"), "")
+func test_keyboard_battle_actions_resolve_kenney_textures() -> void:
+	var expected := {
+		&"action_1": "keyboard_1.svg",
+		&"action_2": "keyboard_2.svg",
+		&"action_3": "keyboard_3.svg",
+		&"action_4": "keyboard_4.svg",
+		&"shift_action": "keyboard_shift.svg",
+	}
+	for action: StringName in expected:
+		var path := InputIconMap.get_glyph_path(InputIconMap.ControllerType.KEYBOARD_MOUSE, action)
+		assert_true(path.ends_with(expected[action]), str(action))
+		assert_true(ResourceLoader.exists(path), path)
 ```
 
-Rename `test_each_family_resolves_confirm_cancel_and_actions` to `test_each_controller_family_resolves_confirm_cancel_and_actions` and skip `ControllerType.KEYBOARD_MOUSE` inside its family loop. Add a separate assertion that keyboard confirm/cancel texture paths still resolve. This makes the existing test reflect the new split: controller combat actions use textures, keyboard combat actions use labels.
-
-- [ ] **Step 2: Replace the obsolete non-controller DynamicGlyph test with presentation tests**
-
-In `test/unit/test_dynamic_glyph.gd`, replace `test_non_controller_mode_hides_glyph` with:
+In `test/unit/test_glyph_assets.gd`, add:
 
 ```gdscript
-func test_keyboard_mouse_mode_shows_label_without_texture() -> void:
+const BATTLE_KEYBOARD_GLYPHS := [
+	"keyboard_1.svg", "keyboard_2.svg", "keyboard_3.svg", "keyboard_4.svg", "keyboard_shift.svg",
+]
+
+
+func test_battle_keyboard_glyph_sources_are_curated() -> void:
+	for file_name: String in BATTLE_KEYBOARD_GLYPHS:
+		assert_true(
+			FileAccess.file_exists("res://assets/graphics/glyphs/keyboard_mouse/vector/%s" % file_name),
+			file_name,
+		)
+```
+
+- [ ] **Step 2: Rewrite DynamicGlyph tests for texture-only presentation**
+
+Remove every `keyboard_label` assertion from `test/unit/test_dynamic_glyph.gd`. Add/retain these behaviors:
+
+```gdscript
+func test_keyboard_mouse_mode_shows_keyboard_texture() -> void:
 	var glyph := DynamicGlyph.new()
 	add_child_autofree(glyph)
 	glyph.set_action(&"action_2")
 	glyph.refresh(false, InputIconMap.ControllerType.XBOX)
 	assert_true(glyph.visible)
-	assert_true(glyph.keyboard_label.visible)
-	assert_eq(glyph.keyboard_label.text, "2")
-	assert_null(glyph.texture_normal)
+	assert_eq(glyph.texture_normal.resource_path.get_file(), "keyboard_2.svg")
+	assert_null(glyph.get_node_or_null("KeyboardLabel"))
 
 
-func test_controller_mode_shows_texture_without_keyboard_label() -> void:
+func test_controller_mode_shows_controller_texture() -> void:
 	var glyph := DynamicGlyph.new()
 	add_child_autofree(glyph)
 	glyph.set_action(&"action_2")
 	glyph.refresh(true, InputIconMap.ControllerType.XBOX)
-	assert_true(glyph.visible)
-	assert_false(glyph.keyboard_label.visible)
-	assert_not_null(glyph.texture_normal)
+	assert_eq(glyph.texture_normal.resource_path.get_file(), "xbox_button_b.svg")
+	assert_null(glyph.get_node_or_null("KeyboardLabel"))
 
 
-func test_shift_keyboard_label_fits_shared_presentation() -> void:
+func test_shift_keyboard_mode_uses_kenney_texture() -> void:
 	var glyph := DynamicGlyph.new()
 	add_child_autofree(glyph)
 	glyph.set_action(&"shift_action")
 	glyph.refresh(false, InputIconMap.ControllerType.XBOX)
-	assert_eq(glyph.keyboard_label.text, "SHIFT")
-	assert_true(glyph.keyboard_label.visible)
+	assert_eq(glyph.texture_normal.resource_path.get_file(), "keyboard_shift.svg")
 ```
 
-Update the missing-action test to assert both representations are cleared:
+The unknown-action test asserts hidden plus all textures null in both keyboard and controller modes. The mode-signal test starts controller, asserts a controller texture, sends a keyboard event, asserts `keyboard_1.svg`, then sends controller input and asserts the controller texture returns.
 
-```gdscript
-assert_false(glyph.visible)
-assert_false(glyph.keyboard_label.visible)
-assert_null(glyph.texture_normal)
-```
+- [ ] **Step 3: Update real battle presentation tests**
 
-Update `test_input_manager_mode_signal_refreshes_glyph` so it uses `action_1`, begins in controller mode, then sends a keyboard event and asserts controller texture cleared plus keyboard text `1` visible. Add the inverse transition by sending a joypad event and asserting text hidden plus texture restored.
+In `test/integration/test_battle_controller_navigation.gd`, change the four action-button keyboard assertions to exact `keyboard_1.svg`–`keyboard_4.svg` texture filenames and assert no `KeyboardLabel` child. Change both shift keyboard assertions to `keyboard_shift.svg`. Keep exact controller texture/trigger assertions and disabled opacity; disabled keyboard mode now asserts `texture_normal.resource_path.get_file() == "keyboard_1.svg"`.
 
-- [ ] **Step 3: Run focused unit tests and observe RED**
+- [ ] **Step 4: Run focused tests and observe RED**
 
 ```bash
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect glyph_assets -gexit
 HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect input_icon_map -gexit
 HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect dynamic_glyph -gexit
 ```
 
-Expected: `get_keyboard_label` and `keyboard_label` do not exist, and keyboard mode still hides the control.
+Expected: the five sources and keyboard mappings are missing, and `DynamicGlyph` still creates the temporary label.
 
-- [ ] **Step 4: Add the authoritative keyboard label map**
+- [ ] **Step 5: Retrieve and verify the official archive**
 
-In `src/singletons/input_map.gd`, remove `action_1` through `action_4` from the `ControllerType.KEYBOARD_MOUSE` entry in `GLYPH_FILES`; retain its existing confirm and cancel textures. Add:
-
-```gdscript
-const KEYBOARD_LABELS := {
-	&"action_1": "1",
-	&"action_2": "2",
-	&"action_3": "3",
-	&"action_4": "4",
-	&"shift_action": "SHIFT",
-}
-
-
-func get_keyboard_label(action: StringName) -> String:
-	return KEYBOARD_LABELS.get(action, "")
+```bash
+curl -L https://www.kenney.nl/media/pages/assets/input-prompts/8de120163f-1777890371/kenney_input-prompts_1.5.zip -o /tmp/kenney_input-prompts_1.5.zip
+shasum -a 256 /tmp/kenney_input-prompts_1.5.zip
 ```
 
-Do not alter any controller-family mapping.
+Expected SHA-256:
 
-- [ ] **Step 5: Give DynamicGlyph one centered keyboard label**
-
-Add:
-
-```gdscript
-var keyboard_label: Label
-
-
-func _ensure_keyboard_label() -> void:
-	if is_instance_valid(keyboard_label):
-		return
-	keyboard_label = Label.new()
-	keyboard_label.name = "KeyboardLabel"
-	keyboard_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	keyboard_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	keyboard_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	keyboard_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	keyboard_label.add_theme_font_size_override("font_size", 18)
-	add_child(keyboard_label)
+```text
+ac2fcf599080b0f3ba2d174c9474db6df1a0e96ff0662580e2da79a122ab78a1
 ```
 
-Call `_ensure_keyboard_label()` at the start of `_ready()` and `refresh()` so tests and runtime-created instances share one path.
+- [ ] **Step 6: Extract only five source SVGs**
 
-Replace the presentation logic with:
+```bash
+rm -rf /tmp/kenney-battle-hotkeys
+mkdir -p /tmp/kenney-battle-hotkeys
+unzip -j /tmp/kenney_input-prompts_1.5.zip \
+  'Keyboard & Mouse/Vector/keyboard_1.svg' \
+  'Keyboard & Mouse/Vector/keyboard_2.svg' \
+  'Keyboard & Mouse/Vector/keyboard_3.svg' \
+  'Keyboard & Mouse/Vector/keyboard_4.svg' \
+  'Keyboard & Mouse/Vector/keyboard_shift.svg' \
+  -d /tmp/kenney-battle-hotkeys
+cp /tmp/kenney-battle-hotkeys/*.svg assets/graphics/glyphs/keyboard_mouse/vector/
+```
+
+Confirm exactly five new source files with `git status --short assets/graphics/glyphs/keyboard_mouse/vector`.
+
+- [ ] **Step 7: Restore keyboard texture mappings and remove temporary label data**
+
+In `InputIconMap.GLYPH_FILES[ControllerType.KEYBOARD_MOUSE]`, keep confirm/cancel and add:
+
+```gdscript
+&"action_1": "keyboard_1.svg", &"action_2": "keyboard_2.svg",
+&"action_3": "keyboard_3.svg", &"action_4": "keyboard_4.svg",
+&"shift_action": "keyboard_shift.svg",
+```
+
+Delete `KEYBOARD_LABELS` and `get_keyboard_label()`.
+
+- [ ] **Step 8: Return DynamicGlyph to texture-only mode selection**
+
+Delete `keyboard_label`, `_ensure_keyboard_label()`, and all label branches. Implement:
 
 ```gdscript
 func refresh(show_controller_glyph: bool, family: InputIconMap.ControllerType) -> void:
-	_ensure_keyboard_label()
-	if show_controller_glyph:
-		keyboard_label.hide()
-		var glyph := InputIconMap.get_glyph(family, action)
-		if glyph == null:
-			_clear_presentation()
-			return
-		_set_texture(glyph)
-		show()
+	var resolved_family := family if show_controller_glyph else InputIconMap.ControllerType.KEYBOARD_MOUSE
+	var glyph := InputIconMap.get_glyph(resolved_family, action)
+	if glyph == null:
+		_clear_texture()
 		return
-
-	_clear_texture()
-	var label_text := InputIconMap.get_keyboard_label(action)
-	if label_text.is_empty():
-		_clear_presentation()
-		return
-	keyboard_label.text = label_text
-	keyboard_label.show()
-	show()
-
-
-func _set_texture(glyph: Texture2D) -> void:
 	texture_normal = glyph
 	texture_pressed = glyph
 	texture_disabled = glyph
+	show()
 
 
 func _clear_texture() -> void:
 	texture_normal = null
 	texture_pressed = null
 	texture_disabled = null
-
-
-func _clear_presentation() -> void:
-	_clear_texture()
-	keyboard_label.text = ""
-	keyboard_label.hide()
 	hide()
 ```
 
-Remove the old `_clear_texture()` implementation that also hid the whole control. Keep signal connections and `_refresh_from_input_manager()` unchanged.
+Keep all existing mode/family signal connections and `set_action()` refresh behavior.
 
-- [ ] **Step 6: Run focused units and confirm GREEN**
+- [ ] **Step 9: Run focused hotkey verification and commit**
 
 ```bash
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" --editor --quit
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect glyph_assets -gexit
 HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect input_icon_map -gexit
 HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect dynamic_glyph -gexit
-```
-
-Expected: exact labels pass; keyboard and controller presentations are mutually exclusive; mode and family refresh tests pass.
-
-- [ ] **Step 7: Commit only Task 1 files**
-
-```bash
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect battle_controller_navigation -gexit
 git diff --check
-git add src/singletons/input_map.gd src/battle/dynamic_glyph.gd test/unit/test_input_icon_map.gd test/unit/test_dynamic_glyph.gd
-git commit --only src/singletons/input_map.gd src/battle/dynamic_glyph.gd test/unit/test_input_icon_map.gd test/unit/test_dynamic_glyph.gd -m "feat: show keyboard battle hotkeys"
 ```
 
-Using `--only` is mandatory because the three 1,000-XP hero resources are already staged and must not enter this commit.
+Stage only the five SVGs and six named source/test files. Do not stage generated `.import` files. Commit with `git commit --only <the eleven explicit paths> -m "fix: use Kenney battle hotkey glyphs"` so staged hero resources remain excluded.
 
 ---
 
-### Task 2: Verify Real Ability and Shift Presentations
+### Task 2: Remove Dungeon World-Cursor Targets
 
 **Files:**
-- Modify: `test/integration/test_battle_controller_navigation.gd`
+- Modify: `src/map/dungeon_map.gd`
+- Modify: `test/integration/test_dungeon_restore.gd`
 
 **Interfaces:**
-- Consumes: `InputIconMap.get_keyboard_label()` and `DynamicGlyph.keyboard_label` from Task 1.
-- Verifies: four real `ActionButton` instances and both real `ActionBar` shift glyphs switch presentation without affecting input execution.
+- Preserves: `_controller_preview_node`, current node, reticle animation, hints, terminal modal cursor ownership, and `navigation_focus_restored()`.
+- Changes: the live map adapter always leaves `NavigationCursor._target == null`.
 
-- [ ] **Step 1: Add real ability-slot presentation coverage**
+- [ ] **Step 1: Rewrite map cursor regressions before production changes**
 
-Add:
+Update the map adapter test to assert that selecting a preview preserves `_controller_preview_node` and reticle state but leaves `navigation.cursor._target` null and hidden in snapped mode. Update cancel/scan restore assertions to expect null cursor target while current node/preview remain correct.
 
-```gdscript
-func test_real_action_buttons_switch_between_keyboard_labels_and_controller_glyphs() -> void:
-	InputManager._input(_pressed_joy_button())
-	var buttons: Array[ActionButton] = []
-	for index in 4:
-		var button := ActionButtonScene.instantiate() as ActionButton
-		button.glyph_action = StringName("action_%d" % (index + 1))
-		add_child_autofree(button)
-		buttons.append(button)
-	await get_tree().process_frame
-
-	InputManager._input(_pressed_key())
-	for index in 4:
-		assert_eq(buttons[index].dynamic_glyph.keyboard_label.text, str(index + 1))
-		assert_true(buttons[index].dynamic_glyph.keyboard_label.visible)
-		assert_null(buttons[index].dynamic_glyph.texture_normal)
-
-	InputManager._input(_pressed_joy_button())
-	for button: ActionButton in buttons:
-		assert_false(button.dynamic_glyph.keyboard_label.visible)
-		assert_not_null(button.dynamic_glyph.texture_normal)
-```
-
-Use an ordinary pressed key that does not activate a semantic battle action. Reuse or add `_pressed_key()` and `_pressed_joy_button()` helpers.
-
-- [ ] **Step 2: Add real ActionBar shift coverage**
-
-Instantiate `res://src/battle/action_bar.tscn` with a minimal `TrackingBattleManager` assigned before adding it to the tree:
+Update the terminal test:
 
 ```gdscript
-func test_real_shift_controls_switch_between_shift_label_and_trigger() -> void:
-	InputManager._input(_pressed_joy_button())
-	var manager := TrackingBattleManager.new()
-	add_child_autofree(manager)
-	var bar := preload("res://src/battle/action_bar.tscn").instantiate() as ActionBar
-	bar.battle_manager = manager
-	add_child_autofree(bar)
-	await get_tree().process_frame
-	var shift_glyphs: Array[DynamicGlyph] = [
-		bar.get_node("LeftShift/DynamicGlyph") as DynamicGlyph,
-		bar.get_node("RightShift/DynamicGlyph") as DynamicGlyph,
-	]
-
-	InputManager._input(_pressed_key())
-	for glyph: DynamicGlyph in shift_glyphs:
-		assert_eq(glyph.keyboard_label.text, "SHIFT")
-		assert_true(glyph.keyboard_label.visible)
-		assert_null(glyph.texture_normal)
-
-	InputManager._input(_pressed_joy_button())
-	for glyph: DynamicGlyph in shift_glyphs:
-		assert_false(glyph.keyboard_label.visible)
-		assert_not_null(glyph.texture_normal)
+assert_null(navigation.cursor._target, "map preview uses its reticle, not the global cursor")
+# terminal opens
+assert_same(navigation.cursor._target, terminal.close_button)
+# terminal closes
+assert_same(navigation._adapter, dungeon_map)
+assert_null(navigation.cursor._target)
+assert_same(dungeon_map._controller_preview_node, preview)
 ```
 
-If the minimal manager requires its `battle_state_changed` signal only, use the existing `TrackingBattleManager`; do not add production constructors or test-only hooks.
+Rename the specialized-appearance test to `test_map_adapter_restore_clears_world_cursor_target` and assert `cursor._target == null`, cursor state DEFAULT, and hidden after `navigation_focus_restored()`.
 
-- [ ] **Step 3: Confirm disabled presentation remains dimmed in keyboard mode**
+- [ ] **Step 2: Add free-mouse/snapped-navigation visibility coverage**
 
-Extend `test_action_button_glyph_dims_with_disabled_state`:
+Using the real navigation layer and map fixture:
 
 ```gdscript
-InputManager._input(_pressed_key())
-action_button.dynamic_glyph.set_action(&"action_1")
-action_button.disabled = true
-assert_true(action_button.dynamic_glyph.keyboard_label.visible)
-assert_eq(action_button.dynamic_glyph.keyboard_label.text, "1")
-assert_lt(action_button.dynamic_glyph.modulate.a, 1.0)
-action_button.disabled = false
-assert_eq(action_button.dynamic_glyph.modulate.a, 1.0)
+InputManager._set_cursor_behavior(InputManager.CursorBehavior.SNAPPED)
+dungeon_map.select_direction(Vector2.RIGHT)
+navigation.cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2.ZERO, true)
+assert_false(navigation.cursor.visible)
+var preview := dungeon_map._controller_preview_node
+
+var motion := InputEventMouseMotion.new()
+motion.position = Vector2(240, 180)
+motion.relative = Vector2(10, 0)
+InputManager._input(motion)
+navigation.cursor.update_position_for_behavior(InputManager.CursorBehavior.FREE, motion.position, true)
+assert_true(navigation.cursor.visible)
+assert_eq(navigation.cursor.position, motion.position)
+
+var navigation_key := InputEventKey.new()
+navigation_key.physical_keycode = KEY_D
+navigation_key.pressed = true
+InputManager._input(navigation_key)
+navigation.cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, motion.position, true)
+assert_false(navigation.cursor.visible)
+assert_same(dungeon_map._controller_preview_node, preview)
 ```
 
-- [ ] **Step 4: Run focused battle verification**
+- [ ] **Step 3: Run focused map test and observe RED**
+
+```bash
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect dungeon_restore -gexit
+```
+
+Expected: map preview/restore still assigns world cursor targets.
+
+- [ ] **Step 4: Clear instead of assigning map world targets**
+
+In `select_direction()`, retain preview selection and reticle animation, then call `navigation.cursor.clear_target()` instead of `set_world_target()`.
+
+Replace `_restore_controller_cursor()` with `_clear_navigation_cursor()`:
+
+```gdscript
+func _clear_navigation_cursor() -> void:
+	var navigation := _navigation_ux_layer()
+	if navigation:
+		navigation.cursor.clear_target()
+```
+
+Update `confirm_preview()`, `cancel_preview()`, and `navigation_focus_restored()` to call `_clear_navigation_cursor()`. `navigation_focus_restored()` must not branch on preview/current node; it clears the cursor and republishes hints.
+
+- [ ] **Step 5: Run focused map verification and commit**
+
+```bash
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect dungeon_restore -gexit
+git diff --check
+git add src/map/dungeon_map.gd test/integration/test_dungeon_restore.gd
+git commit --only src/map/dungeon_map.gd test/integration/test_dungeon_restore.gd -m "fix: keep cursor off dungeon world targets"
+```
+
+---
+
+### Task 3: Remove Combat World-Cursor Targets and Verify Everything
+
+**Files:**
+- Modify: `src/battle/battle_scene.gd`
+- Modify: `test/integration/test_battle_controller_navigation.gd`
+- Modify: `test/integration/test_controller_playable_loop.gd`
+
+**Interfaces:**
+- Preserves: `_controller_target`, hover/highlight calls, geometry navigation, confirm/cancel, hints, modal cursor ownership, and adapter restoration.
+- Changes: the live battle adapter always leaves `NavigationCursor._target == null`.
+
+- [ ] **Step 1: Rewrite battle cursor expectations before production changes**
+
+Rename `test_battle_target_change_keeps_default_cursor_appearance` to `test_battle_target_change_uses_highlight_without_world_cursor`. After `_set_controller_target(enemy)`, assert logical target and hover count remain correct, but `ux.cursor._target == null` and snapped cursor is hidden.
+
+Update modal restore and phase restore tests so the modal button owns the cursor while open, then closing/restoring battle leaves cursor target null and DEFAULT. Preserve assertions that `_controller_target` returns to the correct actor/enemy and hints restore.
+
+In the playable-loop test, add assertions after battle begins and after target navigation that the battle manager/scene logical selection changes while the global cursor target stays null.
+
+- [ ] **Step 2: Add combat mouse-show/navigation-hide coverage**
+
+Using `_navigation_fixture()`:
+
+```gdscript
+InputManager._set_cursor_behavior(InputManager.CursorBehavior.SNAPPED)
+scene._set_controller_target(fixture.enemy)
+ux.cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2.ZERO, true)
+assert_false(ux.cursor.visible)
+
+var motion := InputEventMouseMotion.new()
+motion.position = Vector2(300, 220)
+motion.relative = Vector2(12, 0)
+InputManager._input(motion)
+ux.cursor.update_position_for_behavior(InputManager.CursorBehavior.FREE, motion.position, true)
+assert_true(ux.cursor.visible)
+
+var key := InputEventKey.new()
+key.physical_keycode = KEY_D
+key.pressed = true
+InputManager._input(key)
+ux.cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, motion.position, true)
+assert_false(ux.cursor.visible)
+assert_same(scene._controller_target, fixture.enemy)
+```
+
+- [ ] **Step 3: Run focused battle tests and observe RED**
 
 ```bash
 HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect battle_controller_navigation -gexit
 HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect controller_playable_loop -gexit
 ```
 
-Expected: real slots show `1–4` then controller textures; shift controls show `SHIFT` then triggers; disabled opacity passes; battle execution tests remain unchanged and green.
+Expected: battle target/restore still assigns actor cards to the global cursor.
 
-- [ ] **Step 5: Run editor and full-suite verification**
+- [ ] **Step 4: Clear combat world targets without changing logical selection**
+
+Replace `BattleScene._update_cursor()` with:
+
+```gdscript
+func _update_cursor() -> void:
+	var navigation := _navigation_ux_layer()
+	if navigation:
+		navigation.cursor.clear_target()
+```
+
+Do not change `_controller_target`, `_set_controller_target()`, `_restore_controller_target()`, hover/highlight calls, confirm/cancel, or hints.
+
+- [ ] **Step 5: Run focused and full verification**
 
 ```bash
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect battle_controller_navigation -gexit
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect controller_playable_loop -gexit
 HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" --editor --quit
 HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gexit
 git diff --check
 git status --short
 ```
 
-Expected: editor exits 0; the full suite has zero failing tests; no parser errors or crashes; staged hero resources remain staged and GUT theme remains unstaged.
+Expected: focused and full suites pass with zero failures; UI cursor tests remain green; editor exits 0; no parser errors/crashes; hero resources remain staged and GUT theme remains unstaged.
 
-- [ ] **Step 6: Commit only the integration test**
+- [ ] **Step 6: Commit only combat cursor files**
 
 ```bash
-git add test/integration/test_battle_controller_navigation.gd
-git commit --only test/integration/test_battle_controller_navigation.gd -m "test: cover battle hotkey presentation"
+git add src/battle/battle_scene.gd test/integration/test_battle_controller_navigation.gd test/integration/test_controller_playable_loop.gd
+git commit --only src/battle/battle_scene.gd test/integration/test_battle_controller_navigation.gd test/integration/test_controller_playable_loop.gd -m "fix: keep cursor off combat world targets"
 ```
-
-Using `--only` is mandatory so the staged XP resources remain outside the commit.
