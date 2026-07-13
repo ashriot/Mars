@@ -5,6 +5,7 @@ const CursorScript = preload("res://src/ui/navigation/navigation_cursor.gd")
 class TestCursor extends NavigationCursor:
 	static var last_mode := Input.MOUSE_MODE_VISIBLE
 	var simulated_mouse_mode := Input.MOUSE_MODE_VISIBLE
+	var set_modes: Array[Input.MouseMode] = []
 	var warped_positions: Array[Vector2] = []
 	var expected_positions_at_warp: Array[Vector2] = []
 
@@ -14,15 +15,26 @@ class TestCursor extends NavigationCursor:
 	func _set_mouse_mode(mode: Input.MouseMode) -> void:
 		simulated_mouse_mode = mode
 		last_mode = mode
+		set_modes.append(mode)
 
 	func _warp_mouse(position: Vector2) -> void:
 		warped_positions.append(position)
 		expected_positions_at_warp.append(InputManager._expected_warp_position)
 
 
-func test_cursor_hides_os_pointer_while_active_and_restores_it_on_exit() -> void:
+func test_cursor_leaves_os_pointer_visible_by_default() -> void:
 	TestCursor.last_mode = Input.MOUSE_MODE_VISIBLE
 	var cursor := TestCursor.new()
+	add_child(cursor)
+	assert_eq(cursor.set_modes, [])
+	cursor.free()
+	assert_eq(TestCursor.last_mode, Input.MOUSE_MODE_VISIBLE)
+
+
+func test_cursor_can_hide_os_pointer_when_explicitly_enabled() -> void:
+	TestCursor.last_mode = Input.MOUSE_MODE_VISIBLE
+	var cursor := TestCursor.new()
+	cursor.hide_os_cursor = true
 	add_child(cursor)
 	assert_eq(TestCursor.last_mode, Input.MOUSE_MODE_HIDDEN)
 	cursor.free()

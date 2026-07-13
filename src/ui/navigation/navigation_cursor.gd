@@ -15,6 +15,8 @@ const STATE_FILES := {
 	CursorState.MODIFY: "cursor_cogs.svg",
 }
 
+@export var hide_os_cursor := false
+
 var _target: CanvasItem
 var _state := CursorState.DEFAULT
 var _position_tween: Tween
@@ -25,7 +27,8 @@ var _last_warp_target_id := 0
 
 func _ready() -> void:
 	_previous_mouse_mode = _get_mouse_mode()
-	_set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+	if hide_os_cursor:
+		_set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 	if not InputManager.cursor_behavior_changed.is_connected(_on_cursor_behavior_changed):
 		InputManager.cursor_behavior_changed.connect(_on_cursor_behavior_changed)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -36,7 +39,8 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	if InputManager.cursor_behavior_changed.is_connected(_on_cursor_behavior_changed):
 		InputManager.cursor_behavior_changed.disconnect(_on_cursor_behavior_changed)
-	_set_mouse_mode(_previous_mouse_mode)
+	if hide_os_cursor:
+		_set_mouse_mode(_previous_mouse_mode)
 
 
 func _get_mouse_mode() -> Input.MouseMode:
