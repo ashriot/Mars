@@ -9,8 +9,6 @@
 [ext_resource type="PackedScene" uid="uid://1g2fulrngrw0" path="res://src/map/hero_status.tscn" id="7_31sxc"]
 [ext_resource type="Texture2D" uid="uid://effqffihjqv1" path="res://assets/graphics/icons/map/cursor.png" id="7_ssagv"]
 [ext_resource type="Texture2D" uid="uid://bisawn8s4sru6" path="res://assets/graphics/icons/map/night.png" id="10_kyrvh"]
-[ext_resource type="Texture2D" path="res://assets/graphics/glyphs/cursors/outline/cross_small.svg" id="scanner_cursor"]
-
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_gftom"]
 shader = ExtResource("5_gftom")
 shader_parameter/blur_amount = 0.0
@@ -132,15 +130,6 @@ texture = ExtResource("2_1a5qu")
 [node name="Grid" type="Node2D" parent="."]
 
 [node name="Player" type="Node2D" parent="."]
-
-[node name="ScannerCursor" type="Node2D" parent="Player"]
-visible = false
-z_index = 12
-
-[node name="Sprite" type="Sprite2D" parent="Player/ScannerCursor"]
-modulate = Color(0.117647, 0.564706, 1, 1)
-scale = Vector2(0.6, 0.6)
-texture = ExtResource("scanner_cursor")
 
 [node name="Reticle" type="Node2D" parent="Player"]
 

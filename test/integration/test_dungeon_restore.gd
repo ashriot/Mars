@@ -102,6 +102,12 @@ func _prepare_navigation_map() -> Dictionary:
 	return {map = dungeon_map, nodes = nodes}
 
 
+func test_dungeon_scene_has_no_secondary_scan_cursor() -> void:
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	assert_null(dungeon_map.get_node_or_null("Player/ScannerCursor"))
+
+
 func test_controller_neutral_clears_preview_and_returns_reticle_to_current_node() -> void:
 	var setup := await _prepare_navigation_map()
 	var dungeon_map: DungeonMap = setup.map
