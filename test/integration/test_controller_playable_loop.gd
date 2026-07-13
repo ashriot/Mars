@@ -260,6 +260,9 @@ func test_controller_events_route_the_complete_playable_loop() -> void:
 	await _send(&"confirm")
 	await get_tree().process_frame
 	assert_not_null(router.manager.battle_scene)
+	var navigation_ux := router.get_node("NavigationUXLayer") as NavigationUXLayer
+	assert_same(router.manager.battle_scene._controller_target, router.manager.battle_manager.current_actor)
+	assert_null(navigation_ux.cursor._target)
 	var spawned_hero := router.manager.battle_manager.hero_area.get_child(0) as HeroCard
 	assert_eq(spawned_hero.get_current_role().role_name, "Gunner")
 	var battle_actions: Control = router.manager.battle_manager.action_bar.actions_ui
@@ -269,9 +272,14 @@ func test_controller_events_route_the_complete_playable_loop() -> void:
 	assert_eq(second_action.action.resource_path, "res://data/heroes/asher/actions/fusion_ammo.tres")
 	assert_true(first_action.visible)
 	assert_true(second_action.visible)
+	var previous_target := router.manager.battle_scene._controller_target
 	assert_true(router.manager.battle_manager.action_bar.activate_slot(0))
 	await get_tree().process_frame
 	assert_eq(router.manager.battle_manager.current_state, BattleManager.State.FORCED_TARGET)
+	await _send(&"nav_right")
+	assert_ne(router.manager.battle_scene._controller_target, previous_target)
+	assert_same(router.manager.battle_scene._controller_target, router.manager.battle_manager.forced_enemy)
+	assert_null(navigation_ux.cursor._target)
 	await _send(&"confirm")
 	await get_tree().process_frame
 	assert_eq(router.manager.battle_confirmed, 1)

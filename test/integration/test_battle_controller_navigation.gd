@@ -137,14 +137,43 @@ func test_target_navigation_filters_invalid_cards_and_uses_geometry() -> void:
 	assert_same(scene._controller_target, right, "edge navigation cycles through valid targets")
 
 
-func test_battle_target_change_keeps_default_cursor_appearance() -> void:
+func test_battle_target_change_uses_highlight_without_world_cursor() -> void:
 	var fixture := await _navigation_fixture()
 	var scene: BattleScene = fixture.scene
+	var manager: TrackingBattleManager = fixture.manager
 	fixture.enemy.is_valid_target = true
 	scene._set_controller_target(fixture.enemy)
-	assert_same(fixture.ux.cursor._target, fixture.enemy)
+	assert_same(scene._controller_target, fixture.enemy)
+	assert_eq(manager.enemy_hover_count, 1)
+	assert_null(fixture.ux.cursor._target)
 	assert_eq(fixture.ux.cursor._state, NavigationCursor.CursorState.DEFAULT)
-	assert_eq(fixture.ux.cursor.texture.resource_path.get_file(), "pointer_c.svg")
+	fixture.ux.cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2.ZERO, true)
+	assert_false(fixture.ux.cursor.visible)
+
+
+func test_battle_free_mouse_shows_cursor_and_keyboard_navigation_hides_it() -> void:
+	var fixture := await _navigation_fixture()
+	var scene: BattleScene = fixture.scene
+	InputManager._input(_pressed_key())
+	InputManager._set_cursor_behavior(InputManager.CursorBehavior.SNAPPED)
+	scene._set_controller_target(fixture.enemy)
+	fixture.ux.cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2.ZERO, true)
+	assert_false(fixture.ux.cursor.visible)
+
+	var motion := InputEventMouseMotion.new()
+	motion.position = Vector2(300, 220)
+	motion.relative = Vector2(12, 0)
+	InputManager._input(motion)
+	fixture.ux.cursor.update_position_for_behavior(InputManager.CursorBehavior.FREE, motion.position, true)
+	assert_true(fixture.ux.cursor.visible)
+
+	var key := InputEventKey.new()
+	key.physical_keycode = KEY_D
+	key.pressed = true
+	InputManager._input(key)
+	fixture.ux.cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, motion.position, true)
+	assert_false(fixture.ux.cursor.visible)
+	assert_same(scene._controller_target, fixture.enemy)
 
 
 func test_held_direction_repeats_after_delay() -> void:
@@ -319,6 +348,7 @@ func test_top_modal_suppresses_battle_input_and_restores_adapter_cursor() -> voi
 	ux.push_modal(modal, modal_button)
 	await get_tree().process_frame
 	assert_same(ux.get_focus_target(), modal_button)
+	assert_same(ux.cursor._target, modal_button)
 	fixture.bar._unhandled_input(_action_event(&"action_1"))
 	scene._unhandled_input(_action_event(&"confirm"))
 	assert_eq(manager.action_select_count, 0)
@@ -326,7 +356,8 @@ func test_top_modal_suppresses_battle_input_and_restores_adapter_cursor() -> voi
 	ux.pop_modal(modal)
 	await get_tree().process_frame
 	assert_same(ux._adapter, scene)
-	assert_same(ux.cursor._target, manager.current_actor)
+	assert_same(scene._controller_target, manager.current_actor)
+	assert_null(ux.cursor._target)
 	assert_eq(ux.cursor._state, NavigationCursor.CursorState.DEFAULT)
 	assert_eq(ux.cursor.texture.resource_path.get_file(), "pointer_c.svg")
 
@@ -339,7 +370,8 @@ func test_battle_phase_restore_clears_specialized_cursor_appearance() -> void:
 	ux.cursor.set_world_target(manager.current_actor, NavigationCursor.CursorState.TARGET)
 	manager.current_state = BattleManager.State.PLAYER_ACTION
 	scene.navigation_focus_restored()
-	assert_same(ux.cursor._target, manager.current_actor)
+	assert_same(scene._controller_target, manager.current_actor)
+	assert_null(ux.cursor._target)
 	assert_eq(ux.cursor._state, NavigationCursor.CursorState.DEFAULT)
 	assert_eq(ux.cursor.texture.resource_path.get_file(), "pointer_c.svg")
 

@@ -211,11 +211,7 @@ func _restore_controller_target() -> void:
 
 func _update_cursor() -> void:
 	var navigation := _navigation_ux_layer()
-	if not navigation:
-		return
-	if is_instance_valid(_controller_target):
-		navigation.cursor.set_focus_target(_controller_target, NavigationCursor.CursorState.DEFAULT)
-	else:
+	if navigation:
 		navigation.cursor.clear_target()
 
 
