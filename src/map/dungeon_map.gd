@@ -336,7 +336,7 @@ func _setup_camera():
 	camera.make_current()
 
 func _unhandled_input(event):
-	if current_map_state == MapState.LOADING or current_map_state == MapState.LOCKED:
+	if _event_input_is_suppressed():
 		return
 	if event.is_action_pressed(&"confirm"):
 		if InputManager.get_active_mode() == InputManager.InputMode.CONTROLLER:
@@ -541,8 +541,15 @@ func recenter_camera() -> void:
 	camera.position = _get_clamped_camera_pos(current_node.position, camera.zoom)
 
 
-func _input(event):
+func _event_input_is_suppressed() -> bool:
 	if current_map_state == MapState.LOADING or current_map_state == MapState.LOCKED:
+		return true
+	var navigation := _navigation_ux_layer()
+	return navigation != null and navigation.has_open_modal()
+
+
+func _input(event):
+	if _event_input_is_suppressed():
 		return
 
 	# 1. MOUSE WHEEL (Your existing logic)
@@ -1235,13 +1242,26 @@ func _zoom_camera(step: float):
 	# 1. Apply Zoom
 	var current_z = camera.zoom.x
 	var new_z = clamp(current_z + step, min_allowed, max_allowed)
+	var final_zoom := Vector2(new_z, new_z)
+
+	if current_map_state == MapState.TARGETING and scan_controller.active:
+		camera.position = _get_clamped_camera_pos(
+			scan_controller.desired_camera_position(
+				camera.position,
+				get_viewport_rect().size,
+				final_zoom,
+			),
+			final_zoom,
+		)
 
 	# 2. Tween it
 	_zoom_tween = create_tween().set_parallel(true)
 	_zoom_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	var duration = 0.3
 
-	_zoom_tween.tween_property(camera, "zoom", Vector2(new_z, new_z), duration)
+	_zoom_tween.tween_property(camera, "zoom", final_zoom, duration)
+	if current_map_state == MapState.TARGETING and scan_controller.active:
+		return
 
 	# 3. Update Position (The Hybrid Logic)
 	# We calculate where the camera *should* be at the NEW zoom level

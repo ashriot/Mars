@@ -29,7 +29,7 @@ This restoration does not add pathfinding or multi-node automatic travel. Player
 
 ## Targeting Mode
 
-Targeting/scanning remains separate from normal traversal. Its existing rule—any non-hidden eligible scan target—does not change.
+Targeting/scanning remains separate from normal traversal. Under free scanning, every generated hex is an eligible scan center, including hidden, current, and completed hexes.
 
 ## Testing
 

@@ -78,7 +78,7 @@ Run this sequence once over USB and once over Bluetooth. Fill in both rows befor
 
 ## Dungeon map and terminal
 
-- [ ] Slowly rotate the left stick around the current node; the reticle snaps only to eligible adjacent revealed/completed nodes, changes once per clear directional choice, and does not flicker at boundaries.
+- [ ] Slowly rotate the left stick around the current node; the reticle snaps only to eligible adjacent hidden/revealed/completed nodes, changes once per clear directional choice, and does not flicker at boundaries.
 - [ ] Release the stick; confirmation disables immediately, the reticle returns to the current node, briefly remains visible, and fades out.
 - [ ] Hold a direction and tap confirm repeatedly across completed nodes; each move reevaluates from the new node without requiring stick recentering, while new interactions still lock input.
 - [ ] Use the controller D-pad as a digital fallback and verify it selects the same eligible destinations.

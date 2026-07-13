@@ -458,6 +458,61 @@ func test_scan_selection_resynchronizes_after_modal_closes_with_neutral_input() 
 	assert_eq(dungeon_map.camera.position, camera_position)
 
 
+func test_open_modal_suppresses_active_scan_events_until_it_closes() -> void:
+	InputManager._input(_joy_button())
+	var navigation := _make_navigation_ux()
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	var selected: MapNode = setup.nodes[3]
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	dungeon_map.camera.zoom = Vector2(2.0, 2.0)
+	dungeon_map.camera.position = dungeon_map._get_clamped_camera_pos(
+		selected.position,
+		dungeon_map.camera.zoom,
+	)
+	dungeon_map.start_targeting_mode(2)
+	dungeon_map.scan_controller.set_position(selected.position)
+	dungeon_map._sync_scan_selection()
+
+	var terminal := TERMINAL_SCENE.instantiate()
+	add_child(terminal)
+	await get_tree().process_frame
+	assert_true(navigation.is_top_modal(terminal))
+
+	var state_before := dungeon_map.current_map_state
+	var radius_before := dungeon_map.pending_scan_radius
+	var active_before := dungeon_map.scan_controller.active
+	var cursor_before := dungeon_map.scan_controller.position
+	var selection_before := dungeon_map._controller_preview_node
+	var zoom_before := dungeon_map.camera.zoom
+	var camera_before := dungeon_map.camera.position
+	for action: StringName in [&"zoom_in", &"recenter", &"cancel"]:
+		dungeon_map._unhandled_input(_action_event(action))
+	var wheel := InputEventMouseButton.new()
+	wheel.button_index = MOUSE_BUTTON_WHEEL_DOWN
+	wheel.pressed = true
+	dungeon_map._input(wheel)
+	var magnify := InputEventMagnifyGesture.new()
+	magnify.factor = 1.5
+	dungeon_map._input(magnify)
+	var pan := InputEventPanGesture.new()
+	pan.delta = Vector2(8.0, -5.0)
+	dungeon_map._input(pan)
+
+	assert_eq(dungeon_map.current_map_state, state_before)
+	assert_eq(dungeon_map.pending_scan_radius, radius_before)
+	assert_eq(dungeon_map.scan_controller.active, active_before)
+	assert_eq(dungeon_map.scan_controller.position, cursor_before)
+	assert_same(dungeon_map._controller_preview_node, selection_before)
+	assert_eq(dungeon_map.camera.zoom, zoom_before)
+	assert_eq(dungeon_map.camera.position, camera_before)
+
+	terminal.queue_free()
+	await get_tree().process_frame
+	dungeon_map._process(0.016)
+	assert_same(dungeon_map._controller_preview_node, selected)
+
+
 func test_scan_neutral_allows_manual_pan_but_scanner_motion_suppresses_it() -> void:
 	var setup := await _prepare_navigation_map()
 	var dungeon_map: DungeonMap = setup.map
@@ -564,6 +619,70 @@ func test_scan_camera_approach_uses_exponential_response_without_overshoot_and_c
 	assert_ne(unclamped, clamped, "fixture reaches the camera clamp edge")
 	dungeon_map._approach_scan_camera(delta)
 	assert_eq(dungeon_map.camera.position, clamped)
+
+
+func test_scan_zoom_reframes_distant_stationary_scanner_without_party_pull() -> void:
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	var distant: MapNode = setup.nodes[3]
+	dungeon_map.max_zoom = 5.0
+	dungeon_map.camera.zoom = Vector2(4.0, 4.0)
+	dungeon_map.camera.position = dungeon_map.current_node.position
+	dungeon_map.start_targeting_mode(1)
+	dungeon_map.scan_controller.set_position(distant.position)
+	dungeon_map._sync_scan_selection()
+	var final_zoom_value := minf(dungeon_map.camera.zoom.x + 1.0, dungeon_map.max_zoom)
+	var final_zoom := Vector2.ONE * final_zoom_value
+	var expected := dungeon_map._get_clamped_camera_pos(
+		dungeon_map.scan_controller.desired_camera_position(
+			dungeon_map.camera.position,
+			dungeon_map.get_viewport_rect().size,
+			final_zoom,
+		),
+		final_zoom,
+	)
+	var party_target := dungeon_map._calculate_hybrid_position(final_zoom)
+	assert_ne(expected, party_target, "fixture distinguishes scanner framing from party framing")
+
+	dungeon_map._zoom_camera(1.0)
+
+	assert_eq(dungeon_map.camera.position, expected)
+	await get_tree().create_timer(0.35).timeout
+	assert_eq(dungeon_map.camera.zoom, final_zoom)
+	assert_eq(dungeon_map.camera.position, expected)
+	var half_dead_world := (
+		dungeon_map.get_viewport_rect().size
+		* dungeon_map.scan_dead_zone_ratio
+		* 0.5
+		/ final_zoom
+	)
+	var scanner_offset := dungeon_map.scan_controller.position - dungeon_map.camera.position
+	assert_true(absf(scanner_offset.x) <= half_dead_world.x + 0.001)
+	assert_true(absf(scanner_offset.y) <= half_dead_world.y + 0.001)
+
+
+func test_scan_movement_keeps_camera_position_ownership_during_zoom_tween() -> void:
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	dungeon_map.max_zoom = 5.0
+	dungeon_map.camera.zoom = Vector2(4.0, 4.0)
+	dungeon_map.camera.position = dungeon_map.current_node.position
+	dungeon_map.scan_dead_zone_ratio = 0.1
+	dungeon_map.start_targeting_mode(1)
+	dungeon_map.scan_controller.set_position(setup.nodes[2].position)
+	dungeon_map._sync_scan_selection()
+	dungeon_map._zoom_camera(1.0)
+	var cursor_before := dungeon_map.scan_controller.position
+	var camera_before_follow := dungeon_map.camera.position
+
+	dungeon_map._process_scan_navigation(Vector2.RIGHT, Vector2.ZERO, 0.5)
+
+	assert_gt(dungeon_map.scan_controller.position.x, cursor_before.x)
+	assert_ne(dungeon_map.camera.position, camera_before_follow)
+	var camera_after_follow := dungeon_map.camera.position
+	await get_tree().create_timer(0.35).timeout
+	assert_eq(dungeon_map.camera.position, camera_after_follow)
 
 
 func test_scan_confirmation_briefly_locks_input_and_keeps_camera_at_scan_region() -> void:
