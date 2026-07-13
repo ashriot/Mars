@@ -2,6 +2,17 @@ extends GutTest
 
 const FAMILIES := ["keyboard_mouse", "nintendo_switch", "nintendo_switch_2", "playstation", "steam_controller", "steam_deck", "xbox"]
 const CURSORS := ["pointer_c", "hand_point", "hand_open", "hand_closed", "tool_hammer", "cursor_disabled", "busy_circle", "cross_small", "cursor_cogs"]
+const BATTLE_KEYBOARD_GLYPHS := [
+	"keyboard_1.svg", "keyboard_2.svg", "keyboard_3.svg", "keyboard_4.svg", "keyboard_shift.svg",
+]
+
+
+func test_battle_keyboard_glyph_sources_are_curated() -> void:
+	for file_name: String in BATTLE_KEYBOARD_GLYPHS:
+		assert_true(
+			FileAccess.file_exists("res://assets/graphics/glyphs/keyboard_mouse/vector/%s" % file_name),
+			file_name,
+		)
 
 func test_runtime_glyph_folders_are_lowercase_svg_only() -> void:
 	var glyph_root := DirAccess.open("res://assets/graphics/glyphs")

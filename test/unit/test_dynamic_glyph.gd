@@ -5,10 +5,16 @@ func test_missing_action_hides_without_error() -> void:
 	var glyph := DynamicGlyph.new()
 	add_child_autofree(glyph)
 	glyph.set_action(&"not_real")
+	glyph.refresh(false, InputIconMap.ControllerType.XBOX)
+	assert_false(glyph.visible)
+	assert_null(glyph.texture_normal)
+	assert_null(glyph.texture_pressed)
+	assert_null(glyph.texture_disabled)
 	glyph.refresh(true, InputIconMap.ControllerType.XBOX)
 	assert_false(glyph.visible)
-	assert_false(glyph.keyboard_label.visible)
 	assert_null(glyph.texture_normal)
+	assert_null(glyph.texture_pressed)
+	assert_null(glyph.texture_disabled)
 
 
 func test_known_action_shows_controller_texture() -> void:
@@ -20,34 +26,31 @@ func test_known_action_shows_controller_texture() -> void:
 	assert_not_null(glyph.texture_normal)
 
 
-func test_keyboard_mouse_mode_shows_label_without_texture() -> void:
+func test_keyboard_mouse_mode_shows_keyboard_texture() -> void:
 	var glyph := DynamicGlyph.new()
 	add_child_autofree(glyph)
 	glyph.set_action(&"action_2")
 	glyph.refresh(false, InputIconMap.ControllerType.XBOX)
 	assert_true(glyph.visible)
-	assert_true(glyph.keyboard_label.visible)
-	assert_eq(glyph.keyboard_label.text, "2")
-	assert_null(glyph.texture_normal)
+	assert_eq(glyph.texture_normal.resource_path.get_file(), "keyboard_2.svg")
+	assert_null(glyph.get_node_or_null("KeyboardLabel"))
 
 
-func test_controller_mode_shows_texture_without_keyboard_label() -> void:
+func test_controller_mode_shows_controller_texture() -> void:
 	var glyph := DynamicGlyph.new()
 	add_child_autofree(glyph)
 	glyph.set_action(&"action_2")
 	glyph.refresh(true, InputIconMap.ControllerType.XBOX)
-	assert_true(glyph.visible)
-	assert_false(glyph.keyboard_label.visible)
-	assert_not_null(glyph.texture_normal)
+	assert_eq(glyph.texture_normal.resource_path.get_file(), "xbox_button_b.svg")
+	assert_null(glyph.get_node_or_null("KeyboardLabel"))
 
 
-func test_shift_keyboard_label_fits_shared_presentation() -> void:
+func test_shift_keyboard_mode_uses_kenney_texture() -> void:
 	var glyph := DynamicGlyph.new()
 	add_child_autofree(glyph)
 	glyph.set_action(&"shift_action")
 	glyph.refresh(false, InputIconMap.ControllerType.XBOX)
-	assert_eq(glyph.keyboard_label.text, "SHIFT")
-	assert_true(glyph.keyboard_label.visible)
+	assert_eq(glyph.texture_normal.resource_path.get_file(), "keyboard_shift.svg")
 
 
 func test_set_action_refreshes_immediately_inside_tree() -> void:
@@ -66,19 +69,16 @@ func test_input_manager_mode_signal_refreshes_glyph() -> void:
 	glyph.action = &"action_1"
 	add_child_autofree(glyph)
 	assert_true(glyph.visible)
-	assert_not_null(glyph.texture_normal)
-	assert_false(glyph.keyboard_label.visible)
+	var controller_texture := glyph.texture_normal
+	assert_not_null(controller_texture)
 	var key := InputEventKey.new()
 	key.pressed = true
 	InputManager._input(key)
 	assert_true(glyph.visible)
-	assert_null(glyph.texture_normal)
-	assert_true(glyph.keyboard_label.visible)
-	assert_eq(glyph.keyboard_label.text, "1")
+	assert_eq(glyph.texture_normal.resource_path.get_file(), "keyboard_1.svg")
 	InputManager._input(_pressed_joy_button())
 	assert_true(glyph.visible)
-	assert_not_null(glyph.texture_normal)
-	assert_false(glyph.keyboard_label.visible)
+	assert_same(glyph.texture_normal, controller_texture)
 
 
 func test_input_manager_family_signal_refreshes_glyph_texture() -> void:
