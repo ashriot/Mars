@@ -1,105 +1,133 @@
-# Battle Hotkey Presentation Design
+# Battle Hotkeys and World-Cursor Policy Design
 
 ## Goal
 
-Make battle ability controls discoverable in both input modes. Ability and shift controls show their actual keyboard hotkey in keyboard/mouse mode and the correct device-family glyph in controller mode.
+Use the polished Kenney input-prompt textures for battle hotkeys and restrict snapped cursor movement to actual UI controls. Dungeon and combat navigation use their existing reticles/highlights instead of moving the cursor through world space.
 
-## Current Behavior
+## Corrected Context
 
-Battle input is already functional:
+Battle input was already functional and `DynamicGlyph` was already the correct texture presentation mechanism. The first implementation on this branch incorrectly replaced keyboard textures with plain text labels, producing the small `1` and `2` seen over the battle controls.
 
-- `action_1` through `action_4` select the four ability slots;
-- `shift_action` activates the available shift;
-- targeting uses semantic navigation, confirm, and cancel.
+The curated keyboard asset directory no longer contains number or Shift sources, although Godot's import cache proves those Kenney assets were previously imported. The official Kenney Input Prompts 1.5 pack contains the required keyboard SVGs and is CC0 licensed.
 
-The presentation is incomplete. `DynamicGlyph` clears and hides itself whenever the active mode is keyboard/mouse. Controller input therefore reveals face-button/trigger glyphs, while keyboard and mouse users see no indication that abilities are bound to `1`, `2`, `3`, and `4`.
+Map and battle adapters also explicitly assign `NavigationCursor` targets to map nodes and actor cards. That causes the pointer to fly between world objects even though both systems already have dedicated selection feedback.
 
-The existing keyboard entry in `InputIconMap.GLYPH_FILES` is also stale for combat actions: it maps them to Space/A/S/D assets rather than the live 1–4 bindings. The deliberately filtered keyboard asset set does not contain number-key or Shift-key icons.
+## Hotkey Presentation
 
-## Presentation Contract
+Restore exactly these five source SVGs from the official Kenney Input Prompts 1.5 archive:
 
-### Keyboard and Mouse
+- `keyboard_1.svg`
+- `keyboard_2.svg`
+- `keyboard_3.svg`
+- `keyboard_4.svg`
+- `keyboard_shift.svg`
 
-- Ability slot 1 shows `1`.
-- Ability slot 2 shows `2`.
-- Ability slot 3 shows `3`.
-- Ability slot 4 shows `4`.
-- Both left and right shift controls show `SHIFT` because they share `shift_action` and only the currently legal direction is enabled/visible.
-- Labels remain visible on disabled or unaffordable controls but inherit the existing 0.33 disabled opacity.
-- Mouse click behavior is unchanged.
+Place them in `assets/graphics/glyphs/keyboard_mouse/vector/`. Do not restore the full 1,500-file pack or commit generated `.import` sidecars.
 
-### Controller
+`InputIconMap.GLYPH_FILES[KEYBOARD_MOUSE]` maps:
 
-- Ability slots continue to show the existing controller-family face-button textures.
-- Shift controls continue to show the existing controller-family trigger textures.
-- Xbox, PlayStation, Nintendo Switch, Nintendo Switch 2, Steam Controller, and Steam Deck mappings remain unchanged.
-- Switching controller family refreshes the visible texture immediately.
+- `action_1` → `keyboard_1.svg`;
+- `action_2` → `keyboard_2.svg`;
+- `action_3` → `keyboard_3.svg`;
+- `action_4` → `keyboard_4.svg`;
+- `shift_action` → `keyboard_shift.svg`.
 
-### Mode Switching
+Keyboard confirm/cancel textures remain unchanged. Every controller-family face-button and trigger mapping remains unchanged.
 
-- Meaningful keyboard or mouse input replaces the controller texture with the keyboard label immediately.
-- Meaningful controller input hides the keyboard label and restores the current controller texture immediately.
-- The control occupies the same authored footprint in both modes, so the action bar does not reflow or move.
-- Unknown/unmapped actions clear both presentations and hide safely.
+`DynamicGlyph` remains texture-only. In controller mode it resolves the active controller family; in keyboard/mouse mode it resolves `ControllerType.KEYBOARD_MOUSE`. Unknown actions clear textures and hide safely. The temporary `KEYBOARD_LABELS`, `get_keyboard_label()`, and child `Label` implementation are removed.
 
-## Architecture
+Disabled or unavailable controls retain the existing texture and inherit the current 0.33 opacity. Mode and controller-family changes refresh immediately without changing the authored layout.
 
-`InputIconMap` owns semantic input presentation data. Add an immutable keyboard label map for only the battle actions:
+## Cursor Ownership Policy
 
-```gdscript
-const KEYBOARD_LABELS := {
-	&"action_1": "1",
-	&"action_2": "2",
-	&"action_3": "3",
-	&"action_4": "4",
-	&"shift_action": "SHIFT",
-}
-```
+### UI Screens
 
-Expose `get_keyboard_label(action: StringName) -> String`. This avoids parsing `InputMap` event text at runtime and makes the displayed contract explicit and testable. The obsolete keyboard combat entries in `GLYPH_FILES` are removed; keyboard confirm/cancel mappings may remain for other presentation consumers.
+The cursor may snap to interactive `Control` nodes on:
 
-`DynamicGlyph` remains the single battle presentation control. It keeps its existing controller texture behavior and owns one centered child `Label` for keyboard text. The label is created or resolved once, ignores mouse input, fills the existing control bounds, and uses a compact font size that fits `SHIFT`. `DynamicGlyph.refresh()` chooses exactly one representation:
+- title screen;
+- hub and nested hub panels;
+- terminal modals;
+- result screens;
+- other true menu/modal UI governed by `NavigationUXLayer`.
 
-- controller mode: keyboard label hidden, controller texture shown;
-- keyboard/mouse mode: textures cleared, mapped keyboard label shown;
-- unmapped action: both cleared and the control hidden.
+Existing modal ownership, focus restoration, and UI cursor synchronization remain unchanged.
 
-No new bitmap or SVG assets are added. No action-button layout or input-handling code changes.
+### Dungeon Map
+
+Dungeon navigation continues to use:
+
+- the player marker for current position;
+- the reticle for preview and scan selection;
+- node state and highlights for eligibility.
+
+Selecting, cancelling, confirming, restoring the map after a terminal, or restoring a preview never assigns a world target to `NavigationCursor`. The live map adapter clears the cursor target instead.
+
+### Combat
+
+Combat navigation continues to use:
+
+- actor hover/highlight presentation;
+- action-button textures;
+- targeting validity states.
+
+Changing, restoring, cancelling, or confirming a controller target never assigns an actor card to `NavigationCursor`. The live battle adapter clears the cursor target instead. The logical `_controller_target` remains unchanged and continues driving selection and execution.
+
+### Visibility and Input Mode
+
+When the map or battle owns navigation:
+
+- keyboard/controller navigation has no valid cursor target, so snapped behavior hides the cursor;
+- meaningful mouse motion switches to free behavior, and the cursor immediately reappears at the real mouse position;
+- subsequent keyboard/controller navigation switches back to snapped behavior and hides it again;
+- world selection state is never inferred from cursor position.
+
+This behavior uses the existing `NavigationCursor.clear_target()` plus `InputManager` free/snapped transitions. It does not add timers, idle detection, or a second cursor system.
+
+## Architecture and Boundaries
+
+- `InputIconMap` owns all texture paths.
+- `DynamicGlyph` displays textures only.
+- `DungeonMap` owns map reticle/preview state and always clears global cursor targeting.
+- `BattleScene` owns logical actor selection/highlighting and always clears global cursor targeting.
+- `NavigationUXLayer` continues snapping to real UI controls and restoring modal/UI focus.
+- `NavigationCursor` and `InputManager` require no new public API.
+
+No battle bindings, targeting rules, map movement, combat execution, click handling, or controller mappings change.
 
 ## Testing
 
-Unit coverage must verify:
+Automated coverage must verify:
 
-- exact keyboard labels for `action_1` through `action_4` and `shift_action`;
-- unmapped actions return an empty label;
-- keyboard/mouse mode shows text and no controller texture;
-- controller mode shows texture and hides text;
-- mode changes refresh immediately in both directions;
-- controller family changes still replace the texture;
-- unmapped actions hide safely;
-- disabled ActionButton presentation dims the visible keyboard label/control exactly as it dims controller glyphs.
-
-Integration coverage must instantiate the real action bar or action buttons and confirm slots 1–4 display `1–4` in keyboard/mouse mode, then switch to controller mode and confirm all four use textures with no residual text. Both real shift controls must show `SHIFT` in keyboard/mouse mode and the family trigger in controller mode.
-
-The complete battle-controller and playable-loop tests remain green to prove presentation changes do not alter input execution.
+- all five restored Kenney SVGs exist and are the only newly restored keyboard source assets;
+- keyboard action/shift mappings resolve those exact resource paths;
+- every controller family still resolves all four actions plus `shift_action`;
+- `DynamicGlyph` shows a keyboard texture in keyboard/mouse mode and the correct family texture in controller mode;
+- no child keyboard label exists or remains visible;
+- unknown actions hide safely;
+- disabled action glyphs remain visible and dimmed;
+- real action buttons and both real shift controls switch between exact keyboard and controller textures;
+- map preview, cancel, terminal close/restore, and adapter restoration leave the global cursor without a world target while retaining reticle/current/preview state;
+- battle target changes, cancel, modal close/restore, and adapter restoration leave the global cursor without an actor target while retaining logical target/highlight behavior;
+- meaningful mouse motion in map and battle makes the free cursor visible again, and a subsequent navigation event hides it without changing world selection;
+- title, hub, terminal, and result UI cursor tests remain green.
 
 ## Verification
 
 Completion requires:
 
-1. focused `test_dynamic_glyph.gd` passes;
-2. focused battle controller integration tests pass;
-3. full GUT suite passes with zero failing tests;
-4. headless editor import exits successfully;
-5. `git diff --check` passes;
-6. only `InputIconMap`, `DynamicGlyph`, their tests, and this feature's documentation are committed.
+1. focused glyph, map, battle, and navigation tests pass under Godot 4.6.3/GUT 9.6.1;
+2. the complete suite passes with zero failures;
+3. headless editor import exits successfully;
+4. `git diff --check` passes;
+5. only the five Kenney SVGs, input/glyph code, map/battle cursor ownership, tests, and revised documentation are committed.
 
-The staged 1,000-XP hero-resource changes and unstaged GUT theme normalization are unrelated and must remain untouched.
+The staged 1,000-XP hero resources and unstaged GUT theme normalization remain untouched and outside feature commits.
 
 ## Out of Scope
 
-- Changing battle bindings or execution behavior.
-- Adding focus navigation across ability buttons.
-- Reintroducing filtered keyboard number/Shift image assets.
-- Showing general non-clickable action hints in keyboard/mouse mode.
-- Changing the cursor during combat.
+- Changing battle or map controls.
+- Removing mouse clicking from map or combat.
+- Hiding the mouse pointer while it is actively being used.
+- Changing UI cursor snapping on title, hub, terminal, or result screens.
+- Restoring the complete Kenney asset pack.
+- Adding idle timers or cursor fade animations.
