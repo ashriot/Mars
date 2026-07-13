@@ -1,71 +1,99 @@
 class_name DungeonScanController
 extends RefCounted
 
-const MIN_ZOOM := 0.001
+const REPEAT_DELAY := 0.32
+const REPEAT_INTERVAL := 0.12
+const DIRECTION_CHANGE_DOT := 0.99
 
-var cursor_speed := 600.0
 var active := false
-var position := Vector2.ZERO
 var selected_node: MapNode
-var _bounds := Rect2()
+var _last_direction := Vector2.ZERO
+var _direction_hold_time := 0.0
 
 
-func begin(origin: Vector2, bounds: Rect2) -> void:
+func begin(origin: MapNode) -> void:
 	active = true
-	_bounds = bounds
-	set_position(origin)
+	selected_node = origin
+	_reset_repeat()
 
 
 func stop() -> void:
 	active = false
 	selected_node = null
+	_reset_repeat()
 
 
-func set_position(value: Vector2) -> Vector2:
-	var end := _bounds.position + _bounds.size
-	position = Vector2(
-		clampf(value.x, _bounds.position.x, end.x),
-		clampf(value.y, _bounds.position.y, end.y),
+func set_selected(node: MapNode) -> MapNode:
+	selected_node = node
+	_reset_repeat()
+	return selected_node
+
+
+func process_direction(
+	direction: Vector2,
+	nodes: Array[MapNode],
+	delta: float,
+) -> MapNode:
+	if not active or selected_node == null:
+		return selected_node
+	if direction.is_zero_approx():
+		_reset_repeat()
+		return selected_node
+	var normalized := direction.normalized()
+	var changed := (
+		_last_direction.is_zero_approx()
+		or normalized.dot(_last_direction.normalized()) < DIRECTION_CHANGE_DOT
 	)
-	return position
+	if changed:
+		_step(normalized, nodes)
+		_direction_hold_time = 0.0
+	else:
+		_direction_hold_time += maxf(delta, 0.0)
+		if _direction_hold_time >= REPEAT_DELAY:
+			_step(normalized, nodes)
+			_direction_hold_time = REPEAT_DELAY - REPEAT_INTERVAL
+	_last_direction = normalized
+	return selected_node
 
 
-func move(direction: Vector2, delta: float, zoom: Vector2) -> Vector2:
-	if not active or direction.is_zero_approx() or delta <= 0.0:
-		return position
-	var limited := direction.limit_length(1.0)
-	var safe_zoom := Vector2(
-		maxf(absf(zoom.x), MIN_ZOOM),
-		maxf(absf(zoom.y), MIN_ZOOM),
-	)
-	return set_position(position + limited * cursor_speed * delta / safe_zoom)
-
-
-func select_nearest(nodes: Array[MapNode]) -> MapNode:
+func _step(direction: Vector2, nodes: Array[MapNode]) -> void:
 	var best: MapNode
-	var best_distance := INF
-	for node: MapNode in nodes:
-		if node == null:
+	var best_alignment := -INF
+	for candidate: MapNode in nodes:
+		if candidate == null or candidate == selected_node:
 			continue
-		var distance := position.distance_squared_to(node.position)
-		if best == null or distance < best_distance or (
-			distance == best_distance and _coordinates_before(node, best)
+		if _hex_distance(selected_node.grid_coords, candidate.grid_coords) != 1:
+			continue
+		var offset := candidate.position - selected_node.position
+		if offset.is_zero_approx():
+			continue
+		var alignment := offset.normalized().dot(direction)
+		if alignment <= 0.0:
+			continue
+		if best == null or alignment > best_alignment or (
+			is_equal_approx(alignment, best_alignment) and _coordinates_before(candidate, best)
 		):
-			best = node
-			best_distance = distance
-	selected_node = best
-	return best
+			best = candidate
+			best_alignment = alignment
+	if best != null:
+		selected_node = best
 
 
-static func bounds_for_nodes(nodes: Array[MapNode]) -> Rect2:
-	if nodes.is_empty():
-		return Rect2(Vector2.ZERO, Vector2.ZERO)
-	var minimum := nodes[0].position
-	var maximum := nodes[0].position
-	for node: MapNode in nodes:
-		minimum = minimum.min(node.position)
-		maximum = maximum.max(node.position)
-	return Rect2(minimum, maximum - minimum)
+func _reset_repeat() -> void:
+	_last_direction = Vector2.ZERO
+	_direction_hold_time = 0.0
+
+
+static func _hex_distance(a: Vector2i, b: Vector2i) -> int:
+	var ac := _offset_to_cube(a)
+	var bc := _offset_to_cube(b)
+	return maxi(abs(ac.x - bc.x), maxi(abs(ac.y - bc.y), abs(ac.z - bc.z)))
+
+
+static func _offset_to_cube(hex: Vector2i) -> Vector3i:
+	var q := hex.x - (hex.y + (hex.y & 1)) / 2
+	var r := hex.y
+	return Vector3i(q, r, -q - r)
 
 
 static func _coordinates_before(a: MapNode, b: MapNode) -> bool:
