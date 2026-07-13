@@ -9,6 +9,13 @@ class MinimalActionBar extends ActionBar:
 		pass
 
 
+class PausingShiftActionBar extends MinimalActionBar:
+	signal continue_slide_out
+
+	func slide_out(_duration: float = 0.2):
+		await continue_slide_out
+
+
 class TrackingBattleScene extends BattleScene:
 	var cursor_update_count := 0
 
@@ -126,6 +133,48 @@ func test_directional_shift_actions_activate_only_their_matching_available_side(
 	bar.right_shift_button.disabled = true
 	bar._unhandled_input(_action_event(&"shift_right"))
 	assert_signal_emit_count(bar, "shift_button_pressed", 2, "right never falls back to left")
+
+
+func test_directional_shift_fully_supersedes_selected_action_before_role_ui_loads() -> void:
+	var manager := BattleManager.new()
+	var bar := PausingShiftActionBar.new()
+	var shift_ui := Control.new()
+	var shift_button := Button.new()
+	shift_ui.add_child(shift_button)
+	bar.right_shift_ui = shift_ui
+	bar.right_shift_button = shift_button
+	bar.add_child(shift_ui)
+	bar.battle_manager = manager
+	manager.action_bar = bar
+	bar.shift_button_pressed.connect(manager._on_shift_button_pressed)
+
+	var current_action_panel := PanelContainer.new()
+	manager.current_action_panel = current_action_panel
+	var hero := HeroCard.new()
+	manager.current_actor = hero
+	manager.current_state = BattleManager.State.PLAYER_ACTION
+	var action_button := ActionButtonScene.instantiate() as ActionButton
+	action_button.action = Action.new()
+	add_child_autofree(action_button)
+	await get_tree().process_frame
+	autofree(manager)
+	autofree(bar)
+	autofree(hero)
+	autofree(current_action_panel)
+
+	manager._focus_button(action_button)
+	manager.current_action = action_button.action
+	current_action_panel.show()
+	assert_same(manager.current_action, action_button.action)
+	assert_same(manager.focused_button, action_button)
+	assert_true(action_button.highlight_panel.visible)
+	assert_true(current_action_panel.visible)
+
+	assert_true(bar.activate_shift("right"))
+	assert_null(manager.current_action)
+	assert_null(manager.focused_button)
+	assert_false(action_button.highlight_panel.visible)
+	assert_false(current_action_panel.visible)
 
 
 func test_target_navigation_filters_invalid_cards_and_uses_geometry() -> void:

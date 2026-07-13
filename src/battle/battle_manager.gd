@@ -446,6 +446,11 @@ func _on_shift_button_pressed(direction: String):
 	var current_hero = current_actor as HeroCard
 	if current_state in [State.LOADING, State.FORCED_TARGET]: return
 	_clear_all_targeting_ui()
+	if focused_button:
+		focused_button.focused(false)
+		focused_button = null
+	if current_action_panel:
+		current_action_panel.hide()
 	change_state(State.LOADING)
 	current_action = null
 	AudioManager.play_sfx("radiate")
