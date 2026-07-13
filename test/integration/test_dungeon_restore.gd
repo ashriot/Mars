@@ -226,7 +226,7 @@ func test_locked_interaction_reselects_after_unlock_without_stick_reset() -> voi
 	assert_same(dungeon_map._controller_preview_node, nodes[3])
 
 
-func test_controller_candidates_allow_adjacent_completed_and_filter_invalid_destinations() -> void:
+func test_controller_candidates_allow_adjacent_hidden_revealed_and_completed_destinations() -> void:
 	var setup := await _prepare_navigation_map()
 	var dungeon_map: DungeonMap = setup.map
 	var nodes: Array = setup.nodes
@@ -239,16 +239,16 @@ func test_controller_candidates_allow_adjacent_completed_and_filter_invalid_dest
 	assert_null(dungeon_map._controller_preview_node)
 
 	nodes[2].set_state(MapNode.NodeState.HIDDEN)
-	assert_false(dungeon_map._is_controller_candidate(nodes[2]))
-	assert_false(dungeon_map._is_controller_candidate(nodes[1]))
-	assert_false(dungeon_map._is_controller_candidate(nodes[3]))
+	assert_true(dungeon_map._is_controller_candidate(nodes[2]))
+	assert_false(dungeon_map._is_controller_candidate(nodes[1]), "current node is not a destination")
+	assert_false(dungeon_map._is_controller_candidate(nodes[3]), "non-adjacent node is not a destination")
 
 
 func test_mouse_and_controller_normal_traversal_destinations_match() -> void:
 	var cases := [
 		{state = MapNode.NodeState.REVEALED, expected = true},
 		{state = MapNode.NodeState.COMPLETED, expected = true},
-		{state = MapNode.NodeState.HIDDEN, expected = false},
+		{state = MapNode.NodeState.HIDDEN, expected = true},
 	]
 	for case: Dictionary in cases:
 		var setup := await _prepare_navigation_map()
@@ -268,6 +268,26 @@ func test_mouse_and_controller_normal_traversal_destinations_match() -> void:
 		assert_eq(dungeon_map.current_node == target, case.expected)
 		if not case.expected:
 			assert_same(dungeon_map.current_node, starting_node)
+
+
+func test_zero_visibility_can_move_into_hidden_adjacent_hex_and_continue_exploring() -> void:
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	var nodes: Array = setup.nodes
+	var hidden: MapNode = nodes[2]
+	hidden.set_state(MapNode.NodeState.HIDDEN)
+	hidden.is_aware = false
+	dungeon_map.vision_range = 0
+	dungeon_map.current_alert = DungeonMap.ALERT_MED_THRESHOLD
+	watch_signals(dungeon_map)
+
+	assert_true(dungeon_map._is_controller_candidate(hidden))
+	dungeon_map._on_node_clicked(hidden)
+
+	assert_same(dungeon_map.current_node, hidden)
+	assert_true(hidden.has_been_visited)
+	assert_eq(hidden.state, MapNode.NodeState.REVEALED)
+	assert_signal_emitted_with_parameters(dungeon_map, &"interaction_requested", [hidden])
 
 
 func test_completed_revisit_adds_half_alert_without_requesting_interaction() -> void:

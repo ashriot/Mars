@@ -6,6 +6,12 @@ Restore scanning as free map-space targeting. Ordinary dungeon traversal remains
 
 This design supersedes the scan-targeting portions of the continuous dungeon controller navigation design. Its traversal behavior remains authoritative and unchanged.
 
+## Prerequisite: Hidden-Hex Traversal Restoration
+
+Before implementing free scan targeting, restore the original ordinary traversal rule: during `PLAYING`, any adjacent generated hex is a valid movement destination regardless of whether it is `HIDDEN`, `REVEALED`, or `COMPLETED`. This prerequisite fixes the zero-visibility exploration softlock caused by controller navigation filtering movement to visible nodes.
+
+Hidden-hex traversal is distinct from hidden-hex scan targeting. Traversal moves the party, applies the existing movement alert cost and first-visit behavior, reveals from the destination, and may request its interaction. Scan targeting chooses a reveal center without moving the party or changing movement alert.
+
 ## Interaction Model
 
 Entering scan mode initializes a virtual scanner at the party's current node.

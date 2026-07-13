@@ -6,12 +6,13 @@ Restore the dungeon map's original backtracking behavior after controller-naviga
 
 ## Traversal Rules
 
-During normal `PLAYING` map state, an adjacent node is a valid movement destination when its state is either:
+During normal `PLAYING` map state, an adjacent node is a valid movement destination when its state is:
 
+- `HIDDEN`: unknown content that becomes revealed as the party enters it.
 - `REVEALED`: newly available content that may trigger its interaction after movement.
 - `COMPLETED`: previously visited content used for backtracking.
 
-`HIDDEN` nodes remain invalid movement destinations. The current node remains excluded, and movement remains limited to hex distance 1.
+Correction (2026-07-13): adjacent `HIDDEN`, `REVEALED`, and `COMPLETED` nodes are valid movement destinations. The earlier claim that `HIDDEN` nodes were invalid was a controller-navigation regression, not the original traversal rule. The current node remains excluded, and movement remains limited to hex distance 1.
 
 Mouse clicking and keyboard/controller directional selection use the same eligibility rule. A destination must not be valid for one input method and rejected by the other.
 
@@ -36,7 +37,7 @@ Automated regressions verify:
 
 - Controller/keyboard directional navigation can preview and confirm an adjacent completed node.
 - Mouse clicking can move to the same adjacent completed node.
-- Hidden, current, and non-adjacent nodes remain invalid.
+- Hidden, revealed, and completed adjacent nodes are valid; current and non-adjacent nodes remain invalid.
 - Moving backward to a visited node adds exactly half the configured movement alert cost.
 - Completed-node backtracking emits no interaction request.
 - Revealed-node forward movement continues to emit its interaction normally.

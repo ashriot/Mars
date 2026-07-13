@@ -454,8 +454,6 @@ func _is_controller_candidate(node: MapNode) -> bool:
 func _is_normal_traversal_destination(node: MapNode) -> bool:
 	if node == null or current_node == null or node == current_node or current_map_state != MapState.PLAYING:
 		return false
-	if node.state != MapNode.NodeState.REVEALED and node.state != MapNode.NodeState.COMPLETED:
-		return false
 	return _get_hex_distance(current_node.grid_coords, node.grid_coords) == 1
 
 
