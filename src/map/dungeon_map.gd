@@ -104,7 +104,7 @@ var _last_alert_state: int = -1
 var _controller_preview_node: MapNode = null
 var _controller_direction_engaged := false
 var scan_controller := DungeonScanController.new()
-var camera_controller := DungeonCameraController.new()
+var camera_controller: DungeonCameraController
 
 # --- Hex Values ---
 var hex_size: float = 50.0
@@ -335,6 +335,8 @@ func load_from_save_data(data: Variant) -> bool:
 
 func _setup_camera() -> void:
 	camera.make_current()
+	if camera_controller == null:
+		camera_controller = DungeonCameraController.new()
 	add_child(camera_controller)
 	camera_controller.configure(camera, bg_sprite, parallax_bg)
 	_sync_camera_tuning()

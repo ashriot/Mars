@@ -1,6 +1,16 @@
 extends GutTest
 
 
+func test_freeing_off_tree_dungeon_map_leaves_no_live_camera_controller() -> void:
+	var dungeon_map := DungeonMap.new()
+	var controller := dungeon_map.camera_controller
+	dungeon_map.free()
+
+	assert_false(is_instance_valid(controller))
+	if is_instance_valid(controller):
+		controller.free()
+
+
 func _fixture() -> Dictionary:
 	var controller := DungeonCameraController.new()
 	var camera := Camera2D.new()
