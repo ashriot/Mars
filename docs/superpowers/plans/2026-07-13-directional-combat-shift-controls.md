@@ -102,9 +102,9 @@ Copy the unchanged source contents from:
 
 to the matching runtime filenames. Do not redraw them. Retain the .import sidecars Godot generates.
 
-- [ ] **Step 4: Replace the shared project input action**
+- [ ] **Step 4: Add the directional project input actions**
 
-Replace the shift_action block in project.godot with:
+Add these blocks in project.godot and retain the existing shift_action block through Task 1 so the last unmigrated ActionBar consumer remains functional:
 
 ~~~ini
 shift_left={
@@ -123,7 +123,7 @@ shift_right={
 
 - [ ] **Step 5: Add exact directional glyph mappings**
 
-Preserve all other dictionary entries and replace shift_action as follows:
+Preserve all other dictionary entries, including the temporary shift_action mapping, and add:
 
 ~~~gdscript
 ControllerType.KEYBOARD_MOUSE: {&"shift_left": "keyboard_q.svg", &"shift_right": "keyboard_e.svg"}
@@ -149,13 +149,17 @@ git commit -m "feat: add directional combat shift inputs"
 ### Task 2: Deterministic Action-Bar Routing
 
 **Files:**
+- Modify: project.godot:184-207
+- Modify: src/singletons/input_map.gd:20-73
 - Modify: src/battle/action_bar.gd:163-193
 - Modify: src/battle/action_bar.tscn:370-384,484-501
 - Modify: test/integration/test_battle_controller_navigation.gd:102-122,342-367
+- Modify: test/unit/test_input_icon_map.gd:10-40
+- Modify: test/unit/test_input_manager.gd:266-284
 
 **Interfaces:**
 - Consumes: shift_left, shift_right, Task 1 glyph mappings, and shift_button_pressed(direction: String).
-- Produces: ActionBar.activate_shift(direction: String) -> bool.
+- Produces: ActionBar.activate_shift(direction: String) -> bool and removal of the obsolete shift_action semantic input/glyph mapping after its final consumers are migrated.
 
 - [ ] **Step 1: Write the failing routing test**
 
@@ -203,13 +207,28 @@ assert_same(left_glyph.texture_normal, InputIconMap.get_glyph(InputManager.get_a
 assert_same(right_glyph.texture_normal, InputIconMap.get_glyph(InputManager.get_active_controller_type(), &"shift_right"))
 ~~~
 
+Add final migration assertions:
+
+~~~gdscript
+# test/unit/test_input_manager.gd
+func test_legacy_combat_shift_action_is_removed() -> void:
+	assert_false(InputMap.has_action(&"shift_action"))
+
+# test/unit/test_input_icon_map.gd
+func test_legacy_combat_shift_glyph_is_removed() -> void:
+	for family in InputIconMap.runtime_controller_types():
+		assert_eq(InputIconMap.get_glyph_path(family, &"shift_action"), "", str(family))
+~~~
+
 - [ ] **Step 2: Run the battle suite and verify RED**
 
 ~~~bash
 HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect battle_controller_navigation -gexit
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect input_icon_map -gexit
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect input_manager -gexit
 ~~~
 
-Expected: new semantic events do not emit shifts and both scene glyphs still reference the removed shared action.
+Expected: new semantic events do not emit shifts, both scene glyphs still reference the shared action, and the legacy-removal assertions fail.
 
 - [ ] **Step 3: Implement directional activation**
 
@@ -245,7 +264,11 @@ action = &"shift_left"
 action = &"shift_right"
 ~~~
 
-- [ ] **Step 5: Run battle and playable-loop verification**
+- [ ] **Step 5: Remove the migrated legacy semantic action**
+
+Delete the shift_action block from project.godot and delete the shift_action entry from every controller-family dictionary in src/singletons/input_map.gd. Do not change progression data or code that uses the same string to describe shift-action rewards; those are a separate domain concept.
+
+- [ ] **Step 6: Run battle and playable-loop verification**
 
 ~~~bash
 HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect battle_controller_navigation -gexit
@@ -254,7 +277,7 @@ HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headles
 
 Expected: both suites pass, embedded glyphs work, and the global combat hint bar remains empty.
 
-- [ ] **Step 6: Run full verification**
+- [ ] **Step 7: Run full verification**
 
 ~~~bash
 HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" --editor --quit
@@ -264,7 +287,7 @@ git diff --check
 
 Expected: import exits 0, all GUT tests pass, and diff check exits 0. Documented macOS certificate and Godot shutdown leak diagnostics are accepted only when test counts and exit status are successful.
 
-- [ ] **Step 7: Perform manual DualSense acceptance**
+- [ ] **Step 8: Perform manual DualSense acceptance**
 
 1. Verify left and right cards display L2 and R2.
 2. Verify L2 activates only the left role and R2 only the right role.
@@ -272,12 +295,12 @@ Expected: import exits 0, all GUT tests pass, and diff check exits 0. Documented
 4. In keyboard/mouse mode, verify Q/E glyphs and matching activation.
 5. Verify clicking either role card still works.
 
-- [ ] **Step 8: Commit after manual acceptance**
+- [ ] **Step 9: Commit after manual acceptance**
 
 The integration test already contains an approved uncommitted hint-panel regression. Review the complete diff before staging and keep that fix intact:
 
 ~~~bash
-git diff -- src/battle/action_bar.gd src/battle/action_bar.tscn test/integration/test_battle_controller_navigation.gd
-git add src/battle/action_bar.gd src/battle/action_bar.tscn test/integration/test_battle_controller_navigation.gd
+git diff -- project.godot src/singletons/input_map.gd src/battle/action_bar.gd src/battle/action_bar.tscn test/integration/test_battle_controller_navigation.gd test/unit/test_input_icon_map.gd test/unit/test_input_manager.gd
+git add project.godot src/singletons/input_map.gd src/battle/action_bar.gd src/battle/action_bar.tscn test/integration/test_battle_controller_navigation.gd test/unit/test_input_icon_map.gd test/unit/test_input_manager.gd
 git commit -m "fix: align combat controls with embedded glyphs"
 ~~~
