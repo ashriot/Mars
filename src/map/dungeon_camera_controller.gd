@@ -2,6 +2,7 @@ class_name DungeonCameraController
 extends Node
 
 const MIN_ZOOM := 0.001
+const ZOOM_TWEEN_DURATION := 0.3
 
 enum FocusMode { PARTY, SCANNER }
 
@@ -9,10 +10,14 @@ var pan_speed := 600.0
 var scanner_dead_zone_ratio := Vector2(0.6, 0.6)
 var scanner_follow_response := 8.0
 var focus_mode := FocusMode.PARTY
+var min_zoom := 0.5
+var max_zoom := 1.5
+var smooth_speed := 0.3
 
 var _camera: Camera2D
 var _background: Sprite2D
 var _parallax: Parallax2D
+var _motion_tween: Tween
 
 
 func configure(
@@ -27,6 +32,80 @@ func configure(
 
 func set_focus_mode(mode: FocusMode) -> void:
 	focus_mode = mode
+
+
+func cover_zoom(viewport_size: Vector2) -> Vector2:
+	var background_size := _background.texture.get_size() * _background.scale
+	var zoom_value := maxf(
+		viewport_size.x / background_size.x,
+		viewport_size.y / background_size.y,
+	)
+	return Vector2.ONE * zoom_value * 1.02
+
+
+func hybrid_position(
+	party_position: Vector2,
+	at_zoom: Vector2,
+	viewport_size: Vector2,
+) -> Vector2:
+	var limit_zoom := cover_zoom(viewport_size).x
+	var influence := clampf(remap(at_zoom.x, limit_zoom, 1.0, 0.0, 1.0), 0.0, 1.0)
+	return Vector2.ZERO.lerp(party_position, influence)
+
+
+func move_to_party(
+	party_position: Vector2,
+	force_center: bool,
+	viewport_size: Vector2,
+) -> void:
+	cancel_motion()
+	set_focus_mode(FocusMode.PARTY)
+	var target := hybrid_position(party_position, _camera.zoom, viewport_size)
+	if force_center:
+		_camera.position = target
+		return
+	_motion_tween = create_tween()
+	_motion_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_motion_tween.tween_property(_camera, "position", target, smooth_speed)
+
+
+func zoom_by(
+	step: float,
+	party_position: Vector2,
+	scanner_position: Vector2,
+	viewport_size: Vector2,
+) -> Vector2:
+	cancel_motion()
+	var minimum_allowed := maxf(min_zoom, cover_zoom(viewport_size).x)
+	var next_value := clampf(_camera.zoom.x + step, minimum_allowed, max_zoom)
+	var final_zoom := Vector2.ONE * next_value
+	if focus_mode == FocusMode.SCANNER:
+		_camera.position = clamp_position(
+			desired_scanner_position(scanner_position, _camera.position, viewport_size, final_zoom),
+			final_zoom,
+			viewport_size,
+		)
+	_motion_tween = create_tween().set_parallel(true)
+	_motion_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_motion_tween.tween_property(_camera, "zoom", final_zoom, ZOOM_TWEEN_DURATION)
+	if focus_mode == FocusMode.PARTY:
+		_motion_tween.tween_property(
+			_camera,
+			"position",
+			hybrid_position(party_position, final_zoom, viewport_size),
+			ZOOM_TWEEN_DURATION,
+		)
+	return final_zoom
+
+
+func cancel_motion() -> void:
+	if _motion_tween and _motion_tween.is_running():
+		_motion_tween.kill()
+	_motion_tween = null
+
+
+func has_active_motion() -> bool:
+	return _motion_tween != null and _motion_tween.is_running()
 
 
 func desired_scanner_position(
