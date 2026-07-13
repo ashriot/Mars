@@ -577,15 +577,12 @@ func _input(event):
 
 	# 3. TWO-FINGER SCROLL (Trackpad Panning)
 	elif event is InputEventPanGesture:
-		# Use the delta to move the camera directly
-		# You might need to multiply by camera.zoom.x to keep panning speed consistent
-		var pan_velocity = event.delta * 20.0 * camera.zoom.x
-		camera.position += pan_velocity
-
-		# Clamp the position so they don't pan off the map
-		# (Reuse your existing clamp logic helper if you have one exposed,
-		#  or rely on the _zoom_camera/move logic to fix it later)
-		camera.position = _get_clamped_camera_pos(camera.position, camera.zoom)
+		var pan_event := event as InputEventPanGesture
+		var candidate: Vector2 = camera.position + pan_event.delta * 20.0 * camera.zoom.x
+		camera_controller.apply_manual_position_candidate(
+			candidate,
+			get_viewport_rect().size,
+		)
 
 	#if event.is_action_pressed("ui_right"):
 		## 1. Find the neighbor to the right of 'current_node'

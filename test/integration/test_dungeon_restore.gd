@@ -801,6 +801,35 @@ func test_camera_pan_is_delta_scaled_zoom_is_clamped_and_recenter_targets_curren
 	assert_eq(dungeon_map.camera.position, dungeon_map._get_clamped_camera_pos(dungeon_map.current_node.position, dungeon_map.camera.zoom))
 
 
+func test_trackpad_pan_during_party_zoom_retains_gesture_position() -> void:
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	dungeon_map.max_zoom = 5.0
+	dungeon_map.camera.zoom = Vector2(4.0, 4.0)
+	dungeon_map.camera.position = Vector2.ZERO
+	dungeon_map._zoom_camera(1.0)
+	var position_before_gesture := dungeon_map.camera.position
+	var pan := InputEventPanGesture.new()
+	pan.delta = Vector2(8.0, -5.0)
+	var expected := dungeon_map._get_clamped_camera_pos(
+		position_before_gesture + pan.delta * 20.0 * dungeon_map.camera.zoom.x,
+		dungeon_map.camera.zoom,
+	)
+	assert_ne(
+		expected,
+		dungeon_map._calculate_hybrid_position(Vector2(5.0, 5.0)),
+		"fixture distinguishes the gesture from the stale party target",
+	)
+
+	dungeon_map._input(pan)
+	assert_eq(dungeon_map.camera.position, expected)
+
+	await get_tree().create_timer(DungeonCameraController.ZOOM_TWEEN_DURATION + 0.05).timeout
+
+	assert_eq(dungeon_map.camera.zoom, Vector2(5.0, 5.0))
+	assert_eq(dungeon_map.camera.position, expected)
+
+
 func test_battle_visuals_cancel_camera_motion_and_restore_party_focus() -> void:
 	var setup := await _prepare_navigation_map()
 	var dungeon_map: DungeonMap = setup.map

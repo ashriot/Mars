@@ -253,6 +253,28 @@ func test_party_zoom_then_manual_pan_keeps_zoom_and_releases_position() -> void:
 	assert_eq(camera.position, panned_position)
 
 
+func test_zoom_out_then_manual_pan_reclamps_retained_position_at_final_zoom() -> void:
+	var fixture := _fixture()
+	var controller: DungeonCameraController = fixture.controller
+	var camera: Camera2D = fixture.camera
+	var viewport_size := Vector2(900, 600)
+	camera.zoom = Vector2(1.5, 1.5)
+	var final_zoom := controller.zoom_by(
+		-0.5,
+		Vector2.ZERO,
+		Vector2.ZERO,
+		viewport_size,
+	)
+	var panned_position := controller.pan(Vector2.RIGHT, 100.0, viewport_size)
+	var expected_final := controller.clamp_position(panned_position, final_zoom, viewport_size)
+	assert_ne(panned_position, expected_final, "zoom-out fixture tightens the camera bounds")
+
+	await get_tree().create_timer(DungeonCameraController.ZOOM_TWEEN_DURATION + 0.05).timeout
+
+	assert_eq(camera.zoom, final_zoom)
+	assert_eq(camera.position, expected_final)
+
+
 func test_party_zoom_then_recenter_keeps_zoom_and_releases_position() -> void:
 	var fixture := _fixture()
 	var controller: DungeonCameraController = fixture.controller
@@ -269,6 +291,28 @@ func test_party_zoom_then_recenter_keeps_zoom_and_releases_position() -> void:
 	await get_tree().create_timer(DungeonCameraController.ZOOM_TWEEN_DURATION + 0.05).timeout
 	assert_eq(camera.zoom, final_zoom)
 	assert_eq(camera.position, recentered_position)
+
+
+func test_zoom_out_then_recenter_reclamps_retained_position_at_final_zoom() -> void:
+	var fixture := _fixture()
+	var controller: DungeonCameraController = fixture.controller
+	var camera: Camera2D = fixture.camera
+	var viewport_size := Vector2(900, 600)
+	camera.zoom = Vector2(1.5, 1.5)
+	var final_zoom := controller.zoom_by(
+		-0.5,
+		Vector2.ZERO,
+		Vector2.ZERO,
+		viewport_size,
+	)
+	var recentered_position := controller.recenter(Vector2(100000, 0), viewport_size)
+	var expected_final := controller.clamp_position(recentered_position, final_zoom, viewport_size)
+	assert_ne(recentered_position, expected_final, "zoom-out fixture tightens the camera bounds")
+
+	await get_tree().create_timer(DungeonCameraController.ZOOM_TWEEN_DURATION + 0.05).timeout
+
+	assert_eq(camera.zoom, final_zoom)
+	assert_eq(camera.position, expected_final)
 
 
 func test_party_zoom_then_scanner_follow_keeps_zoom_and_releases_position() -> void:

@@ -88,9 +88,6 @@ func zoom_by(
 			final_zoom,
 			viewport_size,
 		)
-	_zoom_tween = create_tween()
-	_zoom_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	_zoom_tween.tween_property(_camera, "zoom", final_zoom, ZOOM_TWEEN_DURATION)
 	if focus_mode == FocusMode.PARTY:
 		_position_tween = create_tween()
 		_position_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
@@ -100,6 +97,14 @@ func zoom_by(
 			hybrid_position(party_position, final_zoom, viewport_size),
 			ZOOM_TWEEN_DURATION,
 		)
+	_zoom_tween = create_tween()
+	_zoom_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_zoom_tween.tween_method(
+		_apply_zoom_and_clamp.bind(viewport_size),
+		_camera.zoom,
+		final_zoom,
+		ZOOM_TWEEN_DURATION,
+	)
 	return final_zoom
 
 
@@ -125,6 +130,11 @@ func _cancel_position_motion() -> void:
 	if _position_tween and _position_tween.is_running():
 		_position_tween.kill()
 	_position_tween = null
+
+
+func _apply_zoom_and_clamp(zoom_value: Vector2, viewport_size: Vector2) -> void:
+	_camera.zoom = zoom_value
+	_camera.position = clamp_position(_camera.position, zoom_value, viewport_size)
 
 
 func desired_scanner_position(
@@ -197,13 +207,15 @@ func clamp_position(
 func pan(direction: Vector2, delta: float, viewport_size: Vector2) -> Vector2:
 	if direction.is_zero_approx() or delta <= 0.0:
 		return _camera.position
-	_cancel_position_motion()
 	var target := _camera.position + direction.normalized() * pan_speed * delta * _camera.zoom.x
-	_camera.position = clamp_position(target, _camera.zoom, viewport_size)
-	return _camera.position
+	return apply_manual_position_candidate(target, viewport_size)
 
 
 func recenter(party_position: Vector2, viewport_size: Vector2) -> Vector2:
+	return apply_manual_position_candidate(party_position, viewport_size)
+
+
+func apply_manual_position_candidate(candidate: Vector2, viewport_size: Vector2) -> Vector2:
 	_cancel_position_motion()
-	_camera.position = clamp_position(party_position, _camera.zoom, viewport_size)
+	_camera.position = clamp_position(candidate, _camera.zoom, viewport_size)
 	return _camera.position
