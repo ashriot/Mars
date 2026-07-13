@@ -355,9 +355,7 @@ func select_direction(direction: Vector2) -> void:
 		return
 	_controller_preview_node = selected
 	_animate_reticle_to(selected.position)
-	var navigation := _navigation_ux_layer()
-	if navigation:
-		navigation.cursor.set_world_target(selected, NavigationCursor.CursorState.DEFAULT)
+	_clear_navigation_cursor()
 	_publish_controller_hints()
 
 
@@ -369,7 +367,7 @@ func confirm_preview() -> void:
 	var selected := _controller_preview_node
 	_controller_preview_node = null
 	_on_node_clicked(selected)
-	_restore_controller_cursor()
+	_clear_navigation_cursor()
 	_publish_controller_hints()
 
 
@@ -381,26 +379,18 @@ func cancel_preview() -> void:
 		_cancel_targeting()
 	else:
 		_hide_reticle()
-	_restore_controller_cursor()
+	_clear_navigation_cursor()
 	_publish_controller_hints()
 
 
-func _restore_controller_cursor() -> void:
+func _clear_navigation_cursor() -> void:
 	var navigation := _navigation_ux_layer()
-	if not navigation:
-		return
-	if is_instance_valid(current_node):
-		navigation.cursor.set_world_target(current_node, NavigationCursor.CursorState.DEFAULT)
-	else:
+	if navigation:
 		navigation.cursor.clear_target()
 
 
 func navigation_focus_restored() -> void:
-	var navigation := _navigation_ux_layer()
-	if navigation and is_instance_valid(_controller_preview_node):
-		navigation.cursor.set_world_target(_controller_preview_node, NavigationCursor.CursorState.DEFAULT)
-	else:
-		_restore_controller_cursor()
+	_clear_navigation_cursor()
 	_publish_controller_hints()
 
 
@@ -923,7 +913,7 @@ func start_targeting_mode(radius: int):
 	pending_scan_radius = radius
 	player_reticle.visible = true
 	_start_reticle_scan_pulse()
-	_restore_controller_cursor()
+	_clear_navigation_cursor()
 	_publish_controller_hints()
 
 	print("Targeting Mode Active. Right-click to cancel.")
@@ -944,7 +934,7 @@ func _cancel_targeting():
 	_controller_preview_node = null
 	_reset_reticle_visuals()
 	scan_canceled.emit()
-	_restore_controller_cursor()
+	_clear_navigation_cursor()
 	_publish_controller_hints()
 
 func _reset_reticle_visuals():
@@ -956,7 +946,7 @@ func unlock_input():
 	if current_map_state == MapState.TARGETING:
 		return
 	current_map_state = MapState.PLAYING
-	_restore_controller_cursor()
+	_clear_navigation_cursor()
 	_publish_controller_hints()
 
 func _on_node_clicked(target_node: MapNode):
@@ -979,7 +969,7 @@ func _move_player_to(target_node: MapNode, is_start: bool = false):
 	refresh_team_status()
 	current_map_state = MapState.LOCKED
 	current_node = target_node
-	_restore_controller_cursor()
+	_clear_navigation_cursor()
 	_publish_controller_hints()
 	_move_camera_to_player(is_start)
 	player_cursor.visible = true

@@ -308,7 +308,7 @@ func test_arrow_keys_drive_all_camera_directions_without_selecting_nodes() -> vo
 		assert_eq(dungeon_map.player_cursor.position, start_selection, "arrow does not change controller selection")
 
 
-func test_map_registers_global_adapter_targets_cursor_and_publishes_state_hints() -> void:
+func test_map_registers_global_adapter_preserves_preview_without_world_cursor_and_publishes_state_hints() -> void:
 	InputManager._input(_joy_button())
 	var navigation := _make_navigation_ux()
 	var setup := await _prepare_navigation_map()
@@ -319,12 +319,15 @@ func test_map_registers_global_adapter_targets_cursor_and_publishes_state_hints(
 
 	dungeon_map.select_direction(Vector2.RIGHT)
 	var preview: MapNode = dungeon_map._controller_preview_node
-	assert_same(navigation.cursor._target, preview)
+	assert_not_null(preview)
+	assert_true(dungeon_map.player_reticle.visible)
+	assert_null(navigation.cursor._target)
 	assert_eq(navigation.cursor._state, NavigationCursor.CursorState.DEFAULT)
-	assert_eq(navigation.cursor.texture.resource_path.get_file(), "pointer_c.svg")
+	assert_false(navigation.cursor.visible)
 	outsider.grab_focus()
 	await get_tree().process_frame
-	assert_same(navigation.cursor._target, preview, "focus changes cannot steal an active adapter's world cursor")
+	assert_null(navigation.cursor._target, "focus changes cannot assign an active adapter's world cursor")
+	assert_same(dungeon_map._controller_preview_node, preview)
 	assert_eq(_hint_actions(navigation), [&"confirm", &"cancel", &"camera_pan_right", &"zoom_in", &"zoom_out", &"recenter"])
 	dungeon_map.current_map_state = DungeonMap.MapState.LOCKED
 	dungeon_map._publish_controller_hints()
@@ -335,7 +338,9 @@ func test_map_registers_global_adapter_targets_cursor_and_publishes_state_hints(
 	dungeon_map.start_targeting_mode(1)
 	assert_eq(navigation.hint_bar.get_hint(0).label.text, "Scan")
 	dungeon_map.cancel_preview()
-	assert_same(navigation.cursor._target, dungeon_map.current_node)
+	assert_null(navigation.cursor._target)
+	assert_null(dungeon_map._controller_preview_node)
+	assert_false(dungeon_map.player_reticle.visible)
 	dungeon_map.queue_free()
 	await get_tree().process_frame
 	assert_null(navigation._adapter)
@@ -350,7 +355,7 @@ func test_terminal_modal_temporarily_owns_cursor_then_restores_live_map_adapter(
 	var dungeon_map: DungeonMap = setup.map
 	dungeon_map.select_direction(Vector2.RIGHT)
 	var preview: MapNode = dungeon_map._controller_preview_node
-	assert_same(navigation.cursor._target, preview)
+	assert_null(navigation.cursor._target, "map preview uses its reticle, not the global cursor")
 
 	var terminal := TERMINAL_SCENE.instantiate()
 	add_child(terminal)
@@ -364,22 +369,50 @@ func test_terminal_modal_temporarily_owns_cursor_then_restores_live_map_adapter(
 	terminal.queue_free()
 	await get_tree().process_frame
 	assert_same(navigation._adapter, dungeon_map, "closing a modal keeps the live dungeon adapter registered")
-	assert_same(navigation.cursor._target, preview)
+	assert_null(navigation.cursor._target)
+	assert_same(dungeon_map._controller_preview_node, preview)
 	assert_eq(navigation.cursor._state, NavigationCursor.CursorState.DEFAULT)
-	assert_eq(navigation.cursor.texture.resource_path.get_file(), "pointer_c.svg")
+	assert_false(navigation.cursor.visible)
 	assert_eq(_hint_actions(navigation), [&"confirm", &"cancel", &"camera_pan_right", &"zoom_in", &"zoom_out", &"recenter"])
 
 
-func test_map_adapter_restore_clears_specialized_cursor_appearance() -> void:
+func test_map_adapter_restore_clears_world_cursor_target() -> void:
 	InputManager._input(_joy_button())
 	var navigation := _make_navigation_ux()
 	var setup := await _prepare_navigation_map()
 	var dungeon_map: DungeonMap = setup.map
 	navigation.cursor.set_world_target(dungeon_map.current_node, NavigationCursor.CursorState.TARGET)
 	dungeon_map.navigation_focus_restored()
-	assert_same(navigation.cursor._target, dungeon_map.current_node)
+	assert_null(navigation.cursor._target)
 	assert_eq(navigation.cursor._state, NavigationCursor.CursorState.DEFAULT)
-	assert_eq(navigation.cursor.texture.resource_path.get_file(), "pointer_c.svg")
+	assert_false(navigation.cursor.visible)
+
+
+func test_map_cursor_shows_for_free_mouse_then_hides_for_keyboard_navigation() -> void:
+	var navigation := _make_navigation_ux()
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	InputManager._set_cursor_behavior(InputManager.CursorBehavior.SNAPPED)
+	dungeon_map.select_direction(Vector2.RIGHT)
+	navigation.cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2.ZERO, true)
+	assert_false(navigation.cursor.visible)
+	var preview := dungeon_map._controller_preview_node
+
+	var motion := InputEventMouseMotion.new()
+	motion.position = Vector2(240, 180)
+	motion.relative = Vector2(10, 0)
+	InputManager._input(motion)
+	navigation.cursor.update_position_for_behavior(InputManager.CursorBehavior.FREE, motion.position, true)
+	assert_true(navigation.cursor.visible)
+	assert_eq(navigation.cursor.position, motion.position)
+
+	var navigation_key := InputEventKey.new()
+	navigation_key.physical_keycode = KEY_D
+	navigation_key.pressed = true
+	InputManager._input(navigation_key)
+	navigation.cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, motion.position, true)
+	assert_false(navigation.cursor.visible)
+	assert_same(dungeon_map._controller_preview_node, preview)
 
 
 func _action_event(action: StringName) -> InputEventAction:
