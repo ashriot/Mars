@@ -392,13 +392,19 @@ func _file_snapshot(slot: int) -> Dictionary:
 func _restore_file(slot: int, state: Dictionary) -> void:
 	_remove_slot(slot)
 	if state.exists:
+		DirAccess.make_dir_recursive_absolute(SaveSystem._get_save_dir())
 		var file := FileAccess.open(SaveSystem._get_slot_path(slot), FileAccess.WRITE)
-		file.store_buffer(state.bytes)
+		assert_not_null(file)
+		if file:
+			file.store_buffer(state.bytes)
 
 
 func _write_slot_bytes(slot: int, bytes: PackedByteArray) -> void:
+	DirAccess.make_dir_recursive_absolute(SaveSystem._get_save_dir())
 	var file := FileAccess.open(SaveSystem._get_slot_path(slot), FileAccess.WRITE)
-	file.store_buffer(bytes)
+	assert_not_null(file)
+	if file:
+		file.store_buffer(bytes)
 
 
 func _remove_slot(slot: int) -> void:
