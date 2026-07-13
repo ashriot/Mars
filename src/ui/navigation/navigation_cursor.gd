@@ -90,7 +90,11 @@ func update_position_for_behavior(behavior: InputManager.CursorBehavior, mouse_p
 
 
 func _warp_mouse(position: Vector2) -> void:
-	Input.warp_mouse(position)
+	_warp_viewport_mouse(get_viewport(), position)
+
+
+func _warp_viewport_mouse(viewport: Viewport, position: Vector2) -> void:
+	viewport.warp_mouse(position)
 
 
 func _reset_warp_dedupe() -> void:

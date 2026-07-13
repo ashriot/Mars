@@ -17,6 +17,15 @@ class TestCursor extends NavigationCursor:
 		expected_positions_at_warp.append(InputManager._expected_warp_position)
 
 
+class ViewportWarpCursor extends NavigationCursor:
+	var warped_viewports: Array[Viewport] = []
+	var warped_positions: Array[Vector2] = []
+
+	func _warp_viewport_mouse(viewport: Viewport, position: Vector2) -> void:
+		warped_viewports.append(viewport)
+		warped_positions.append(position)
+
+
 func test_cursor_forces_os_pointer_visible_by_default() -> void:
 	TestCursor.last_mode = Input.MOUSE_MODE_HIDDEN
 	var cursor := TestCursor.new()
@@ -63,6 +72,19 @@ func test_snapped_target_uses_control_center_and_anchor_metadata() -> void:
 	cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2(70, 50), true)
 	assert_eq(cursor.position, Vector2(30, 42))
 	assert_eq(cursor.warped_positions, [Vector2(70, 50), Vector2(30, 42)])
+
+
+func test_snapped_target_warps_through_owning_viewport_coordinates() -> void:
+	var cursor := ViewportWarpCursor.new()
+	add_child_autofree(cursor)
+	var target := Control.new()
+	target.position = Vector2(200, 120)
+	target.size = Vector2(80, 40)
+	add_child_autofree(target)
+	cursor.set_focus_target(target)
+	cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2.ZERO, true)
+	assert_eq(cursor.warped_viewports, [cursor.get_viewport()])
+	assert_eq(cursor.warped_positions, [Vector2(240, 140)])
 
 
 func test_free_behavior_continues_from_synchronized_mouse_position_with_real_delta() -> void:
