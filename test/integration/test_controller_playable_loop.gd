@@ -243,10 +243,16 @@ func test_controller_events_route_the_complete_playable_loop() -> void:
 	await get_tree().process_frame
 	assert_true(router.current_instance is LoopManager)
 	var map := router.manager.dungeon_map
-	await _send(&"nav_right")
+	var controller_input := InputEventJoypadButton.new()
+	controller_input.pressed = true
+	InputManager._input(controller_input)
+	Input.action_press(&"nav_right")
+	await get_tree().process_frame
 	assert_not_null(map._controller_preview_node)
 	assert_eq(map._controller_preview_node.type, MapNode.NodeType.TERMINAL)
 	await _send(&"confirm")
+	Input.action_release(&"nav_right")
+	await get_tree().process_frame
 	await get_tree().process_frame
 	var terminal := router.manager.overlay_layer.get_child(0)
 	assert_eq(terminal.get_script(), load("res://src/map/terminal.gd"))
@@ -255,9 +261,12 @@ func test_controller_events_route_the_complete_playable_loop() -> void:
 	await get_tree().process_frame
 	assert_true(router.manager.terminal_completed)
 	map.navigation_focus_restored()
-	await _send(&"nav_right")
+	Input.action_press(&"nav_right")
+	await get_tree().process_frame
 	assert_eq(map._controller_preview_node.type, MapNode.NodeType.COMBAT)
 	await _send(&"confirm")
+	Input.action_release(&"nav_right")
+	await get_tree().process_frame
 	await get_tree().process_frame
 	assert_not_null(router.manager.battle_scene)
 	var navigation_ux := router.get_node("NavigationUXLayer") as NavigationUXLayer

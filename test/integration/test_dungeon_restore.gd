@@ -95,22 +95,53 @@ func _prepare_navigation_map() -> Dictionary:
 	return {map = dungeon_map, nodes = nodes}
 
 
-func test_controller_preview_retains_on_neutral_and_confirm_uses_validated_move() -> void:
+func test_controller_neutral_clears_preview_and_returns_reticle_to_current_node() -> void:
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	dungeon_map._reconcile_controller_navigation(Vector2.RIGHT)
+	assert_not_null(dungeon_map._controller_preview_node)
+	dungeon_map._reconcile_controller_navigation(Vector2.ZERO)
+	assert_null(dungeon_map._controller_preview_node)
+	assert_true(dungeon_map.player_reticle.visible)
+	await get_tree().create_timer(0.2).timeout
+	assert_eq(dungeon_map.player_reticle.position, dungeon_map.current_node.position)
+	await get_tree().create_timer(0.5).timeout
+	assert_false(dungeon_map.player_reticle.visible)
+
+
+func test_held_direction_is_reevaluated_after_completed_node_movement() -> void:
 	var setup := await _prepare_navigation_map()
 	var dungeon_map: DungeonMap = setup.map
 	var nodes: Array = setup.nodes
-	var cursor_start := dungeon_map.player_cursor.position
-
-	dungeon_map.select_direction(Vector2.RIGHT)
-	var preview: MapNode = dungeon_map._controller_preview_node
-	assert_not_null(preview)
-	assert_eq(dungeon_map.player_cursor.position, cursor_start)
-	dungeon_map.select_direction(Vector2.ZERO)
-	assert_same(dungeon_map._controller_preview_node, preview)
+	for index in [2, 3]:
+		nodes[index].set_state(MapNode.NodeState.COMPLETED)
+		nodes[index].has_been_visited = true
+		nodes[index].is_aware = true
+	dungeon_map._reconcile_controller_navigation(Vector2.RIGHT)
+	assert_same(dungeon_map._controller_preview_node, nodes[2])
 	dungeon_map.confirm_preview()
-	assert_same(dungeon_map.current_node, preview)
+	assert_same(dungeon_map.current_node, nodes[2])
+	assert_eq(dungeon_map.current_map_state, DungeonMap.MapState.PLAYING)
+	dungeon_map._reconcile_controller_navigation(Vector2.RIGHT)
+	assert_same(dungeon_map._controller_preview_node, nodes[3])
+	dungeon_map.confirm_preview()
+	assert_same(dungeon_map.current_node, nodes[3])
+
+
+func test_locked_interaction_reselects_after_unlock_without_stick_reset() -> void:
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	var nodes: Array = setup.nodes
+	dungeon_map._reconcile_controller_navigation(Vector2.RIGHT)
+	dungeon_map.confirm_preview()
+	assert_same(dungeon_map.current_node, nodes[2])
 	assert_eq(dungeon_map.current_map_state, DungeonMap.MapState.LOCKED)
-	assert_ne(preview, nodes[0])
+	assert_null(dungeon_map._controller_preview_node)
+	dungeon_map._reconcile_controller_navigation(Vector2.RIGHT)
+	assert_null(dungeon_map._controller_preview_node)
+	dungeon_map.unlock_input()
+	dungeon_map._reconcile_controller_navigation(Vector2.RIGHT)
+	assert_same(dungeon_map._controller_preview_node, nodes[3])
 
 
 func test_controller_candidates_allow_adjacent_completed_and_filter_invalid_destinations() -> void:
@@ -235,7 +266,6 @@ func test_locked_state_suppresses_selection_camera_and_confirmation() -> void:
 	var start_camera := dungeon_map.camera.position
 	var start_zoom := dungeon_map.camera.zoom
 	dungeon_map.select_direction(Vector2.RIGHT)
-	var preview: MapNode = dungeon_map._controller_preview_node
 	dungeon_map.current_map_state = DungeonMap.MapState.LOCKED
 	Input.action_press(&"camera_pan_right")
 	Input.action_press(&"zoom_in")
@@ -246,7 +276,7 @@ func test_locked_state_suppresses_selection_camera_and_confirmation() -> void:
 	Input.action_release(&"recenter")
 	for action: StringName in [&"nav_left", &"confirm", &"cancel", &"zoom_in", &"recenter"]:
 		dungeon_map._unhandled_input(_action_event(action))
-	assert_same(dungeon_map._controller_preview_node, preview)
+	assert_null(dungeon_map._controller_preview_node)
 	assert_same(dungeon_map.current_node, start_node)
 	assert_eq(dungeon_map.camera.position, start_camera)
 	assert_eq(dungeon_map.camera.zoom, start_zoom)
@@ -287,7 +317,6 @@ func test_arrow_keys_drive_all_camera_directions_without_selecting_nodes() -> vo
 		dungeon_map.select_direction(Vector2.RIGHT)
 		var start_camera := dungeon_map.camera.position
 		var start_node := dungeon_map.current_node
-		var start_preview := dungeon_map._controller_preview_node
 		var start_selection := dungeon_map.player_cursor.position
 		var arrow := _physical_key(item[0])
 		Input.parse_input_event(arrow)
@@ -304,7 +333,7 @@ func test_arrow_keys_drive_all_camera_directions_without_selecting_nodes() -> vo
 		assert_gt(displacement.dot(direction), 0.0, "arrow pans the real camera in its signed direction")
 		assert_almost_eq(displacement.cross(direction), 0.0, 0.01, "arrow does not pan across the requested axis")
 		assert_same(dungeon_map.current_node, start_node, "arrow does not change the current node")
-		assert_same(dungeon_map._controller_preview_node, start_preview, "arrow does not change controller preview")
+		assert_null(dungeon_map._controller_preview_node, "keyboard mode clears controller preview")
 		assert_eq(dungeon_map.player_cursor.position, start_selection, "arrow does not change controller selection")
 
 
@@ -317,7 +346,8 @@ func test_map_registers_global_adapter_preserves_preview_without_world_cursor_an
 	add_child_autofree(outsider)
 	assert_same(navigation._adapter, dungeon_map)
 
-	dungeon_map.select_direction(Vector2.RIGHT)
+	Input.action_press(&"nav_right")
+	dungeon_map._process(0.016)
 	var preview: MapNode = dungeon_map._controller_preview_node
 	assert_not_null(preview)
 	assert_true(dungeon_map.player_reticle.visible)
@@ -328,6 +358,7 @@ func test_map_registers_global_adapter_preserves_preview_without_world_cursor_an
 	await get_tree().process_frame
 	assert_null(navigation.cursor._target, "focus changes cannot assign an active adapter's world cursor")
 	assert_same(dungeon_map._controller_preview_node, preview)
+	Input.action_release(&"nav_right")
 	assert_eq(_hint_actions(navigation), [&"confirm", &"cancel", &"camera_pan_right", &"zoom_in", &"zoom_out", &"recenter"])
 	dungeon_map.current_map_state = DungeonMap.MapState.LOCKED
 	dungeon_map._publish_controller_hints()
@@ -353,8 +384,10 @@ func test_terminal_modal_temporarily_owns_cursor_then_restores_live_map_adapter(
 	var navigation := _make_navigation_ux()
 	var setup := await _prepare_navigation_map()
 	var dungeon_map: DungeonMap = setup.map
-	dungeon_map.select_direction(Vector2.RIGHT)
+	Input.action_press(&"nav_right")
+	dungeon_map._process(0.016)
 	var preview: MapNode = dungeon_map._controller_preview_node
+	assert_not_null(preview)
 	assert_null(navigation.cursor._target, "map preview uses its reticle, not the global cursor")
 
 	var terminal := TERMINAL_SCENE.instantiate()
@@ -374,6 +407,7 @@ func test_terminal_modal_temporarily_owns_cursor_then_restores_live_map_adapter(
 	assert_eq(navigation.cursor._state, NavigationCursor.CursorState.DEFAULT)
 	assert_false(navigation.cursor.visible)
 	assert_eq(_hint_actions(navigation), [&"confirm", &"cancel", &"camera_pan_right", &"zoom_in", &"zoom_out", &"recenter"])
+	Input.action_release(&"nav_right")
 
 
 func test_map_adapter_restore_clears_world_cursor_target() -> void:

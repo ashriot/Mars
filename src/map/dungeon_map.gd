@@ -13,6 +13,8 @@ enum AlertState { SAFE, CAUTION, DANGER }
 
 const ALERT_LOW_THRESHOLD = 26
 const ALERT_MED_THRESHOLD = 75
+const CONTROLLER_CANDIDATE_SWITCH_MARGIN := 0.05
+const RETICLE_CENTER_HOLD_SECONDS := 0.25
 
 const NODE_DENSITY = {
 	"terminal": 2.0,
@@ -93,7 +95,7 @@ var encounter_memory: Dictionary = {}
 var reward_memory: Dictionary = {}
 var _last_alert_state: int = -1
 var _controller_preview_node: MapNode = null
-var _last_controller_direction: Vector2 = Vector2.ZERO
+var _controller_direction_engaged := false
 
 # --- Hex Values ---
 var hex_size: float = 50.0
@@ -182,15 +184,18 @@ func _publish_controller_hints() -> void:
 
 func _process(delta: float) -> void:
 	if current_map_state == MapState.LOADING or current_map_state == MapState.LOCKED:
+		_clear_controller_navigation(true)
 		return
-	var selection_direction := Input.get_vector(&"nav_left", &"nav_right", &"nav_up", &"nav_down")
-	if not selection_direction.is_zero_approx() and (
-		_last_controller_direction.is_zero_approx()
-		or selection_direction.normalized().dot(_last_controller_direction.normalized()) < 0.99
-	):
-		select_direction(selection_direction)
-	_last_controller_direction = selection_direction
-	var pan_direction := Input.get_vector(&"camera_pan_left", &"camera_pan_right", &"camera_pan_up", &"camera_pan_down")
+	var direction := Input.get_vector(&"nav_left", &"nav_right", &"nav_up", &"nav_down")
+	if InputManager.get_active_mode() == InputManager.InputMode.CONTROLLER:
+		_reconcile_controller_navigation(direction)
+	else:
+		_clear_controller_navigation(
+			InputManager.get_cursor_behavior() == InputManager.CursorBehavior.SNAPPED
+		)
+	var pan_direction := Input.get_vector(
+		&"camera_pan_left", &"camera_pan_right", &"camera_pan_up", &"camera_pan_down"
+	)
 	process_controller_camera(pan_direction, delta)
 
 func _start_cursor_pulse():
@@ -345,16 +350,47 @@ func _unhandled_input(event):
 
 
 func select_direction(direction: Vector2) -> void:
-	if current_map_state == MapState.LOADING or current_map_state == MapState.LOCKED:
+	_reconcile_controller_navigation(direction)
+
+
+func _reconcile_controller_navigation(direction: Vector2) -> void:
+	if current_map_state == MapState.LOADING or current_map_state == MapState.LOCKED or current_node == null:
+		_clear_controller_navigation(true)
 		return
-	if direction.is_zero_approx() or current_node == null:
+	if direction.is_zero_approx():
+		_clear_controller_navigation(true)
 		return
-	var candidates: Array[MapNode] = _controller_candidates()
-	var selected := DungeonNavigation.closest_by_angle(current_node.position, direction, candidates)
-	if selected == null:
+	_controller_direction_engaged = true
+	var selected := DungeonNavigation.closest_by_angle_stable(
+		current_node.position,
+		direction,
+		_controller_candidates(),
+		_controller_preview_node,
+		CONTROLLER_CANDIDATE_SWITCH_MARGIN,
+	)
+	if selected == _controller_preview_node:
 		return
 	_controller_preview_node = selected
-	_animate_reticle_to(selected.position)
+	if selected == null:
+		_return_reticle_to_current()
+	else:
+		if current_map_state == MapState.TARGETING:
+			_start_reticle_scan_pulse()
+		_animate_reticle_to(selected.position)
+	_clear_navigation_cursor()
+	_publish_controller_hints()
+
+
+func _clear_controller_navigation(return_to_current: bool) -> void:
+	var had_state := _controller_direction_engaged or _controller_preview_node != null
+	_controller_direction_engaged = false
+	_controller_preview_node = null
+	if not had_state:
+		return
+	if return_to_current:
+		_return_reticle_to_current()
+	else:
+		_hide_reticle()
 	_clear_navigation_cursor()
 	_publish_controller_hints()
 
@@ -939,6 +975,8 @@ func _cancel_targeting():
 
 func _reset_reticle_visuals():
 	if reticle_color_tween: reticle_color_tween.kill()
+	if reticle_move_tween and reticle_move_tween.is_running():
+		reticle_move_tween.kill()
 	player_reticle.modulate = Color.ORANGE
 	player_reticle.visible = false
 
@@ -1420,9 +1458,10 @@ func _on_node_hovered(hovered_node: MapNode):
 			_hide_reticle()
 
 func _animate_reticle_to(target_pos: Vector2, animate: bool = true):
-	player_reticle.visible = true
 	if reticle_move_tween and reticle_move_tween.is_running():
 		reticle_move_tween.kill()
+	player_reticle.visible = true
+	player_reticle.modulate.a = 1.0
 
 	if animate:
 		reticle_move_tween = create_tween()
@@ -1435,18 +1474,39 @@ func _animate_reticle_to(target_pos: Vector2, animate: bool = true):
 		if current_map_state != MapState.TARGETING:
 			player_reticle.modulate.a = 1.0
 
-func _hide_reticle():
-	if not player_reticle.visible: return
+func _return_reticle_to_current() -> void:
+	if current_node == null:
+		_hide_reticle()
+		return
+	if reticle_move_tween and reticle_move_tween.is_running():
+		reticle_move_tween.kill()
+	if reticle_color_tween and reticle_color_tween.is_running():
+		reticle_color_tween.kill()
+	player_reticle.visible = true
+	player_reticle.modulate.a = 1.0
+	reticle_move_tween = create_tween()
+	reticle_move_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	reticle_move_tween.tween_property(player_reticle, "position", current_node.position, 0.15)
+	reticle_move_tween.tween_interval(RETICLE_CENTER_HOLD_SECONDS)
+	reticle_move_tween.tween_property(player_reticle, "modulate:a", 0.0, 0.2)
+	reticle_move_tween.finished.connect(func() -> void:
+		player_reticle.visible = false
+		player_reticle.modulate = Color.ORANGE
+	)
+
+
+func _hide_reticle() -> void:
+	if not player_reticle.visible:
+		return
 	if reticle_move_tween and reticle_move_tween.is_running():
 		reticle_move_tween.kill()
 	if reticle_color_tween and reticle_color_tween.is_running():
 		reticle_color_tween.kill()
 
-	var tween = create_tween()
-	tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	tween.tween_property(player_reticle, "modulate:a", 0.0, 0.2)
-
-	tween.finished.connect(func():
+	reticle_move_tween = create_tween()
+	reticle_move_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	reticle_move_tween.tween_property(player_reticle, "modulate:a", 0.0, 0.2)
+	reticle_move_tween.finished.connect(func() -> void:
 		player_reticle.visible = false
 		player_reticle.modulate = Color.ORANGE
 	)
