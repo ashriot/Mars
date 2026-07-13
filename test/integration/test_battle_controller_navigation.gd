@@ -202,14 +202,65 @@ func test_mouse_mode_clears_synthetic_controller_hover_without_selecting() -> vo
 
 
 func test_action_button_glyph_dims_with_disabled_state() -> void:
+	InputManager._input(_pressed_joy_button())
 	var action_button := ActionButtonScene.instantiate() as ActionButton
-	action_button.button = action_button.get_node("Button")
-	action_button.dynamic_glyph = action_button.get_node("DynamicGlyph")
-	autofree(action_button)
+	add_child_autofree(action_button)
+	await get_tree().process_frame
+	InputManager._input(_pressed_key())
+	action_button.dynamic_glyph.set_action(&"action_1")
 	action_button.disabled = true
+	assert_true(action_button.dynamic_glyph.keyboard_label.visible)
+	assert_eq(action_button.dynamic_glyph.keyboard_label.text, "1")
 	assert_lt(action_button.dynamic_glyph.modulate.a, 1.0)
 	action_button.disabled = false
 	assert_eq(action_button.dynamic_glyph.modulate.a, 1.0)
+
+
+func test_real_action_buttons_switch_between_keyboard_labels_and_controller_glyphs() -> void:
+	InputManager._input(_pressed_joy_button())
+	var buttons: Array[ActionButton] = []
+	for index in 4:
+		var button := ActionButtonScene.instantiate() as ActionButton
+		button.glyph_action = StringName("action_%d" % (index + 1))
+		add_child_autofree(button)
+		buttons.append(button)
+	await get_tree().process_frame
+
+	InputManager._input(_pressed_key())
+	for index in 4:
+		assert_eq(buttons[index].dynamic_glyph.keyboard_label.text, str(index + 1))
+		assert_true(buttons[index].dynamic_glyph.keyboard_label.visible)
+		assert_null(buttons[index].dynamic_glyph.texture_normal)
+
+	InputManager._input(_pressed_joy_button())
+	for button: ActionButton in buttons:
+		assert_false(button.dynamic_glyph.keyboard_label.visible)
+		assert_not_null(button.dynamic_glyph.texture_normal)
+
+
+func test_real_shift_controls_switch_between_shift_label_and_trigger() -> void:
+	InputManager._input(_pressed_joy_button())
+	var manager := TrackingBattleManager.new()
+	add_child_autofree(manager)
+	var bar := preload("res://src/battle/action_bar.tscn").instantiate() as ActionBar
+	bar.battle_manager = manager
+	add_child_autofree(bar)
+	await get_tree().process_frame
+	var shift_glyphs: Array[DynamicGlyph] = [
+		bar.get_node("LeftShift/DynamicGlyph") as DynamicGlyph,
+		bar.get_node("RightShift/DynamicGlyph") as DynamicGlyph,
+	]
+
+	InputManager._input(_pressed_key())
+	for glyph: DynamicGlyph in shift_glyphs:
+		assert_eq(glyph.keyboard_label.text, "SHIFT")
+		assert_true(glyph.keyboard_label.visible)
+		assert_null(glyph.texture_normal)
+
+	InputManager._input(_pressed_joy_button())
+	for glyph: DynamicGlyph in shift_glyphs:
+		assert_false(glyph.keyboard_label.visible)
+		assert_not_null(glyph.texture_normal)
 
 
 func test_hints_omit_disabled_hidden_and_missing_direct_actions() -> void:
@@ -348,6 +399,19 @@ func _action_event(action: StringName) -> InputEventAction:
 func _joy_button_zero() -> InputEventJoypadButton:
 	var event := InputEventJoypadButton.new()
 	event.button_index = JOY_BUTTON_A
+	event.pressed = true
+	return event
+
+
+func _pressed_key() -> InputEventKey:
+	var event := InputEventKey.new()
+	event.keycode = KEY_F12
+	event.pressed = true
+	return event
+
+
+func _pressed_joy_button() -> InputEventJoypadButton:
+	var event := InputEventJoypadButton.new()
 	event.pressed = true
 	return event
 
