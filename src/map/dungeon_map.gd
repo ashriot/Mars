@@ -43,7 +43,6 @@ const PENALTY_BOSS_MOVE = 2.0
 @onready var grid: Node2D = $Grid
 @onready var player_cursor: Node2D = $Player/Cursor
 @onready var player_reticle: Node2D = $Player/Reticle
-@onready var scanner_cursor: Node2D = $Player/ScannerCursor
 
 @onready var team_status := $CanvasLayer/HUD/TeamStatus/VBox
 @onready var bits_found: Label = $CanvasLayer/HUD/BitsFound/Value
@@ -75,7 +74,6 @@ const PENALTY_BOSS_MOVE = 2.0
 @export var camera_pan_speed: float = 600.0
 
 @export_group("Scanner")
-@export var scan_cursor_speed := 600.0
 @export_range(0.1, 0.9, 0.05) var scan_dead_zone_ratio := 0.6
 @export var scan_camera_follow_response := 8.0
 
@@ -195,12 +193,10 @@ func _publish_controller_hints() -> void:
 func _process(delta: float) -> void:
 	if current_map_state == MapState.LOADING or current_map_state == MapState.LOCKED:
 		_clear_controller_navigation(true)
-		scanner_cursor.visible = false
 		return
 	var navigation := _navigation_ux_layer()
 	if navigation and navigation.has_open_modal():
 		_clear_controller_navigation(false)
-		scanner_cursor.visible = false
 		return
 	var direction := Input.get_vector(&"nav_left", &"nav_right", &"nav_up", &"nav_down")
 	var pan_direction := Input.get_vector(
@@ -487,18 +483,18 @@ func _map_nodes() -> Array[MapNode]:
 	return nodes
 
 
-func _sync_scan_selection() -> void:
-	scanner_cursor.position = scan_controller.position
-	var selected := scan_controller.select_nearest(_map_nodes())
+func _sync_scan_selection(animate := true) -> bool:
+	var selected := scan_controller.selected_node
 	if selected == _controller_preview_node:
-		return
+		return false
 	_controller_preview_node = selected
 	if selected:
-		_animate_reticle_to(selected.position, false)
+		_animate_reticle_to(selected.position, animate)
 	else:
 		_hide_reticle()
 	_clear_navigation_cursor()
 	_publish_controller_hints()
+	return true
 
 
 func _process_scan_navigation(
@@ -508,25 +504,26 @@ func _process_scan_navigation(
 ) -> void:
 	if not scan_controller.active:
 		return
-	var controller_mode := InputManager.get_active_mode() == InputManager.InputMode.CONTROLLER
-	scanner_cursor.visible = controller_mode
 	if _controller_preview_node == null:
-		_sync_scan_selection()
-	if not controller_mode:
-		process_controller_camera(pan_direction, delta)
-		return
-	if direction.is_zero_approx():
-		process_controller_camera(pan_direction, delta)
-		return
-	scan_controller.move(direction, delta, camera.zoom)
-	_sync_scan_selection()
-	_approach_scan_camera(delta)
+		_sync_scan_selection(false)
+	var selection_moved := false
+	if InputManager.get_active_mode() == InputManager.InputMode.CONTROLLER:
+		var before := scan_controller.selected_node
+		scan_controller.process_direction(direction, _map_nodes(), delta)
+		selection_moved = scan_controller.selected_node != before
+		if selection_moved:
+			_sync_scan_selection()
+	process_controller_camera(pan_direction, delta)
+	if selection_moved and pan_direction.is_zero_approx():
+		_approach_scan_camera(delta)
 
 
 func _approach_scan_camera(delta: float) -> void:
+	if scan_controller.selected_node == null:
+		return
 	_sync_camera_tuning()
 	camera_controller.follow_scanner(
-		scan_controller.position,
+		scan_controller.selected_node.position,
 		delta,
 		get_viewport_rect().size,
 	)
@@ -1009,13 +1006,10 @@ func start_targeting_mode(radius: int) -> void:
 	_controller_preview_node = null
 	current_map_state = MapState.TARGETING
 	pending_scan_radius = radius
-	scan_controller.cursor_speed = scan_cursor_speed
-	var origin := current_node.position if current_node else Vector2.ZERO
 	_sync_camera_tuning()
 	camera_controller.set_focus_mode(DungeonCameraController.FocusMode.SCANNER)
-	scan_controller.begin(origin, DungeonScanController.bounds_for_nodes(_map_nodes()))
-	scanner_cursor.visible = InputManager.get_active_mode() == InputManager.InputMode.CONTROLLER
-	_sync_scan_selection()
+	scan_controller.begin(current_node)
+	_sync_scan_selection(false)
 	_start_reticle_scan_pulse()
 	_clear_navigation_cursor()
 	_publish_controller_hints()
@@ -1036,7 +1030,11 @@ func _cancel_targeting() -> void:
 	_controller_preview_node = null
 	scan_controller.stop()
 	camera_controller.set_focus_mode(DungeonCameraController.FocusMode.PARTY)
-	scanner_cursor.visible = false
+	camera_controller.move_to_party(
+		current_node.position,
+		false,
+		get_viewport_rect().size,
+	)
 	_reset_reticle_visuals()
 	scan_canceled.emit()
 	_clear_navigation_cursor()
@@ -1076,7 +1074,6 @@ func _finish_scan_target(target_node: MapNode) -> void:
 	_controller_preview_node = null
 	scan_controller.stop()
 	camera_controller.set_focus_mode(DungeonCameraController.FocusMode.PARTY)
-	scanner_cursor.visible = false
 	_reset_reticle_visuals()
 	_clear_navigation_cursor()
 	_publish_controller_hints()
@@ -1084,6 +1081,11 @@ func _finish_scan_target(target_node: MapNode) -> void:
 	await get_tree().create_timer(SCAN_REVEAL_LOCK_SECONDS).timeout
 	if not is_inside_tree():
 		return
+	camera_controller.move_to_party(
+		current_node.position,
+		false,
+		get_viewport_rect().size,
+	)
 	current_map_state = MapState.PLAYING
 	scan_performed.emit()
 	_publish_controller_hints()
@@ -1221,10 +1223,13 @@ func _zoom_camera(step: float) -> void:
 		return
 	_sync_camera_tuning()
 	var party_position := current_node.position if current_node else Vector2.ZERO
+	var scanner_position := party_position
+	if scan_controller.selected_node != null:
+		scanner_position = scan_controller.selected_node.position
 	camera_controller.zoom_by(
 		step,
 		party_position,
-		scan_controller.position,
+		scanner_position,
 		get_viewport_rect().size,
 	)
 
@@ -1508,12 +1513,8 @@ func _on_node_hovered(hovered_node: MapNode) -> void:
 	if current_map_state != MapState.PLAYING and current_map_state != MapState.TARGETING:
 		return
 	if current_map_state == MapState.TARGETING:
-		scan_controller.set_position(hovered_node.position)
-		scanner_cursor.position = scan_controller.position
-		scanner_cursor.visible = false
-		_controller_preview_node = hovered_node
-		_animate_reticle_to(hovered_node.position, false)
-		_publish_controller_hints()
+		scan_controller.set_selected(hovered_node)
+		_sync_scan_selection(false)
 		return
 	if current_map_state == MapState.PLAYING:
 		var dist = _get_hex_distance(current_node.grid_coords, hovered_node.grid_coords)
