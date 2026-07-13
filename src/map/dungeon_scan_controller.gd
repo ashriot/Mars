@@ -50,7 +50,7 @@ func select_nearest(nodes: Array[MapNode]) -> MapNode:
 			continue
 		var distance := position.distance_squared_to(node.position)
 		if best == null or distance < best_distance or (
-			is_equal_approx(distance, best_distance) and _coordinates_before(node, best)
+			distance == best_distance and _coordinates_before(node, best)
 		):
 			best = node
 			best_distance = distance
@@ -68,10 +68,6 @@ func desired_camera_position(
 		maxf(absf(zoom.y), MIN_ZOOM),
 	)
 	var half_dead_world := viewport_size * dead_zone_ratio * 0.5 / safe_zoom
-	half_dead_world = Vector2(
-		roundf(half_dead_world.x * 1000.0) / 1000.0,
-		roundf(half_dead_world.y * 1000.0) / 1000.0,
-	)
 	var offset := position - camera_position
 	var target := camera_position
 	if offset.x < -half_dead_world.x:

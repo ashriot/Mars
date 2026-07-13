@@ -48,6 +48,14 @@ func test_nearest_selection_includes_hidden_and_breaks_ties_by_coordinates() -> 
 	assert_eq(low_hidden.state, MapNode.NodeState.HIDDEN)
 
 
+func test_nearest_selection_prefers_strictly_nearer_node_before_coordinates() -> void:
+	var controller := DungeonScanController.new()
+	var nearer := await _node(Vector2(10, 0), Vector2i(2, 0))
+	var farther_with_lower_coordinates := await _node(Vector2(10.00002, 0), Vector2i(1, 0))
+	controller.begin(Vector2.ZERO, Rect2(-100, -100, 200, 200))
+	assert_same(controller.select_nearest([nearer, farther_with_lower_coordinates]), nearer)
+
+
 func test_empty_selection_returns_null() -> void:
 	var controller := DungeonScanController.new()
 	controller.begin(Vector2.ZERO, Rect2(Vector2.ZERO, Vector2.ZERO))
@@ -66,10 +74,12 @@ func test_camera_stays_still_inside_proportional_dead_zone() -> void:
 func test_camera_moves_minimum_distance_to_dead_zone_boundary() -> void:
 	var controller := DungeonScanController.new()
 	controller.begin(Vector2(400, -300), Rect2(-1000, -1000, 2000, 2000))
-	assert_eq(
-		controller.desired_camera_position(Vector2.ZERO, Vector2(1000, 800), Vector2.ONE),
-		Vector2(100, -60),
+	var target := controller.desired_camera_position(
+		Vector2.ZERO,
+		Vector2(1000, 800),
+		Vector2.ONE,
 	)
+	assert_almost_eq(target.distance_to(Vector2(100, -60)), 0.0, 0.001)
 
 
 func test_camera_dead_zone_scales_with_zoom_and_viewport() -> void:
@@ -84,3 +94,22 @@ func test_camera_dead_zone_scales_with_zoom_and_viewport() -> void:
 		controller.desired_camera_position(Vector2.ZERO, Vector2(2000, 800), Vector2.ONE),
 		Vector2.ZERO,
 	)
+
+
+func test_camera_fractional_dead_zone_preserves_inside_and_outside_boundary() -> void:
+	var controller := DungeonScanController.new()
+	var viewport_size := Vector2(1001, 800)
+	var zoom := Vector2(1.7, 1.7)
+	var boundary := viewport_size.x * 0.6 * 0.5 / zoom.x
+	controller.begin(
+		Vector2(boundary - 0.00003, 0),
+		Rect2(-1000, -1000, 2000, 2000),
+	)
+	assert_eq(
+		controller.desired_camera_position(Vector2.ZERO, viewport_size, zoom),
+		Vector2.ZERO,
+	)
+	controller.set_position(Vector2(boundary + 0.00003, 0))
+	var outside_target := controller.desired_camera_position(Vector2.ZERO, viewport_size, zoom)
+	assert_gt(outside_target.x, 0.0)
+	assert_almost_eq(outside_target.x, 0.00003, 0.0001)
