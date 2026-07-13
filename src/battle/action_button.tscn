@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://d0wglriavtij"]
+[gd_scene format=3 uid="uid://d0wglriavtij"]
 
 [ext_resource type="Script" uid="uid://bs7vlao78wiht" path="res://src/battle/action_button.gd" id="1_juqvx"]
 [ext_resource type="Script" uid="uid://m4vn3jl6sqd6" path="res://src/core/rich_tooltip.gd" id="2_83fjm"]
@@ -25,18 +25,18 @@ corner_radius_top_right = 17
 corner_radius_bottom_right = 17
 corner_radius_bottom_left = 17
 
-[node name="ActionButton" type="Control"]
+[node name="ActionButton" type="Control" unique_id=367843294]
 self_modulate = Color(1.5720325, 1.5720325, 1.5720325, 1)
 custom_minimum_size = Vector2(320, 86)
 layout_mode = 3
 anchors_preset = 0
 script = ExtResource("1_juqvx")
 
-[node name="RichTooltip" type="Node" parent="."]
+[node name="RichTooltip" type="Node" parent="." unique_id=1067820139]
 script = ExtResource("2_83fjm")
 metadata/_custom_type_script = "uid://m4vn3jl6sqd6"
 
-[node name="Button" type="Button" parent="."]
+[node name="Button" type="Button" parent="." unique_id=844554821]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -46,7 +46,7 @@ grow_vertical = 2
 mouse_filter = 1
 theme_override_font_sizes/font_size = 30
 
-[node name="Mask" type="Panel" parent="."]
+[node name="Mask" type="Panel" parent="." unique_id=1813624578]
 clip_children = 1
 custom_minimum_size = Vector2(86, 86)
 layout_mode = 1
@@ -60,7 +60,7 @@ grow_vertical = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_mvr6q")
 
-[node name="Icon" type="TextureRect" parent="Mask"]
+[node name="Icon" type="TextureRect" parent="Mask" unique_id=1764508100]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -75,7 +75,7 @@ mouse_filter = 2
 texture = ExtResource("2_pk42m")
 expand_mode = 1
 
-[node name="Title" type="Label" parent="."]
+[node name="Title" type="Label" parent="." unique_id=1352330137]
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
@@ -98,7 +98,7 @@ theme_override_font_sizes/font_size = 36
 text = "Action Name"
 horizontal_alignment = 2
 
-[node name="Highlight" type="Panel" parent="."]
+[node name="Highlight" type="Panel" parent="." unique_id=456776420]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -113,7 +113,7 @@ grow_vertical = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_pk42m")
 
-[node name="FocusPips" type="HBoxContainer" parent="."]
+[node name="FocusPips" type="HBoxContainer" parent="." unique_id=558257687]
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -128,43 +128,43 @@ theme_override_constants/separation = 0
 alignment = 2
 metadata/_edit_group_ = true
 
-[node name="Bolt" type="TextureRect" parent="FocusPips"]
+[node name="Bolt" type="TextureRect" parent="FocusPips" unique_id=432517064]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("4_83fjm")
 
-[node name="Bolt2" type="TextureRect" parent="FocusPips"]
+[node name="Bolt2" type="TextureRect" parent="FocusPips" unique_id=585180661]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("4_83fjm")
 
-[node name="Bolt3" type="TextureRect" parent="FocusPips"]
+[node name="Bolt3" type="TextureRect" parent="FocusPips" unique_id=344442081]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("4_83fjm")
 
-[node name="Bolt4" type="TextureRect" parent="FocusPips"]
+[node name="Bolt4" type="TextureRect" parent="FocusPips" unique_id=1633320098]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("4_83fjm")
 
-[node name="Bolt5" type="TextureRect" parent="FocusPips"]
+[node name="Bolt5" type="TextureRect" parent="FocusPips" unique_id=252432941]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("4_83fjm")
 
-[node name="Bolt6" type="TextureRect" parent="FocusPips"]
+[node name="Bolt6" type="TextureRect" parent="FocusPips" unique_id=1333406182]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("4_83fjm")
 
-[node name="DynamicGlyph" type="TextureButton" parent="."]
+[node name="DynamicGlyph" type="TextureButton" parent="." unique_id=1165596810]
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
