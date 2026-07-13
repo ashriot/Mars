@@ -258,9 +258,13 @@ func test_real_shift_controls_switch_between_shift_label_and_trigger() -> void:
 		assert_null(glyph.texture_normal)
 
 	InputManager._input(_pressed_joy_button())
+	var expected_trigger := InputIconMap.get_glyph(
+		InputManager.get_active_controller_type(),
+		&"shift_action",
+	)
 	for glyph: DynamicGlyph in shift_glyphs:
 		assert_false(glyph.keyboard_label.visible)
-		assert_not_null(glyph.texture_normal)
+		assert_same(glyph.texture_normal, expected_trigger)
 
 
 func test_hints_omit_disabled_hidden_and_missing_direct_actions() -> void:
