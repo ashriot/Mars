@@ -368,6 +368,8 @@ func _unhandled_input(event):
 
 
 func select_direction(direction: Vector2) -> void:
+	if current_map_state == MapState.TARGETING:
+		return
 	_reconcile_controller_navigation(direction)
 
 
@@ -492,6 +494,8 @@ func _process_scan_navigation(
 		return
 	var controller_mode := InputManager.get_active_mode() == InputManager.InputMode.CONTROLLER
 	scanner_cursor.visible = controller_mode
+	if _controller_preview_node == null:
+		_sync_scan_selection()
 	if not controller_mode:
 		process_controller_camera(pan_direction, delta)
 		return
@@ -1529,6 +1533,7 @@ func _on_node_hovered(hovered_node: MapNode) -> void:
 		return
 	if current_map_state == MapState.TARGETING:
 		scan_controller.set_position(hovered_node.position)
+		scanner_cursor.position = scan_controller.position
 		scanner_cursor.visible = false
 		_controller_preview_node = hovered_node
 		_animate_reticle_to(hovered_node.position, false)

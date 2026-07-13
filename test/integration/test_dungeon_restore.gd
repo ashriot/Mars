@@ -396,6 +396,68 @@ func test_mouse_can_hover_and_click_hidden_scan_center() -> void:
 	assert_eq(dungeon_map.current_map_state, DungeonMap.MapState.PLAYING)
 
 
+func test_mouse_scan_hover_preserves_cursor_position_when_controller_resumes() -> void:
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	var hovered: MapNode = setup.nodes[2]
+	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
+	dungeon_map.start_targeting_mode(1)
+	dungeon_map._on_node_hovered(hovered)
+
+	assert_false(dungeon_map.scanner_cursor.visible)
+	assert_eq(dungeon_map.scanner_cursor.position, hovered.position)
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	dungeon_map._process_scan_navigation(Vector2.ZERO, Vector2.ZERO, 0.016)
+	assert_true(dungeon_map.scanner_cursor.visible)
+	assert_eq(dungeon_map.scanner_cursor.position, hovered.position)
+
+
+func test_select_direction_does_not_replace_active_free_scan_selection() -> void:
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	var selected: MapNode = setup.nodes[2]
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	dungeon_map.start_targeting_mode(1)
+	dungeon_map.scan_controller.set_position(selected.position)
+	dungeon_map._sync_scan_selection()
+
+	dungeon_map.select_direction(Vector2.RIGHT)
+
+	assert_same(dungeon_map._controller_preview_node, selected)
+	assert_eq(dungeon_map.scan_controller.position, selected.position)
+	assert_eq(dungeon_map.player_reticle.position, selected.position)
+
+
+func test_scan_selection_resynchronizes_after_modal_closes_with_neutral_input() -> void:
+	InputManager._input(_joy_button())
+	var navigation := _make_navigation_ux()
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	var selected: MapNode = setup.nodes[2]
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	dungeon_map.start_targeting_mode(1)
+	dungeon_map.scan_controller.set_position(selected.position)
+	dungeon_map._sync_scan_selection()
+	var cursor_position := dungeon_map.scan_controller.position
+	var camera_position := dungeon_map.camera.position
+
+	var terminal := TERMINAL_SCENE.instantiate()
+	add_child(terminal)
+	await get_tree().process_frame
+	dungeon_map._process(0.016)
+	assert_true(navigation.is_top_modal(terminal))
+	assert_null(dungeon_map._controller_preview_node)
+
+	terminal.queue_free()
+	await get_tree().process_frame
+	dungeon_map._process(0.016)
+
+	assert_same(dungeon_map._controller_preview_node, selected)
+	assert_eq(dungeon_map.scan_controller.position, cursor_position)
+	assert_eq(dungeon_map.scanner_cursor.position, cursor_position)
+	assert_eq(dungeon_map.camera.position, camera_position)
+
+
 func test_dungeon_navigation_actions_keep_controller_dpad_fallback() -> void:
 	var expected := {
 		&"nav_up": JOY_BUTTON_DPAD_UP,
