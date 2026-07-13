@@ -51,8 +51,12 @@ static func closest_by_angle_stable(
 	var current_alignment := current_offset.normalized().dot(normalized_direction)
 	if current_alignment <= 0.0:
 		return best
-	var best_alignment := best_offset.normalized().dot(normalized_direction)
-	if best_alignment < current_alignment + switch_margin:
+	var current_direction := current_offset.normalized()
+	var best_direction := best_offset.normalized()
+	var best_alignment := best_direction.dot(normalized_direction)
+	var maximum_alignment_advantage := 1.0 - clampf(current_direction.dot(best_direction), -1.0, 1.0)
+	var effective_switch_margin := minf(switch_margin, maximum_alignment_advantage * 0.5)
+	if best_alignment < current_alignment + effective_switch_margin:
 		return current
 	return best
 

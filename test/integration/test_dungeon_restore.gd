@@ -5,6 +5,13 @@ const NAVIGATION_UX_SCENE := preload("res://src/ui/navigation/navigation_ux_laye
 const TERMINAL_SCENE := preload("res://src/map/terminal.tscn")
 
 
+func after_each() -> void:
+	for action: StringName in [
+		&"nav_right", &"camera_pan_right", &"zoom_in", &"recenter",
+	]:
+		Input.action_release(action)
+
+
 func _make_map() -> DungeonMap:
 	var dungeon_map := DUNGEON_MAP_SCENE.instantiate() as DungeonMap
 	add_child_autofree(dungeon_map)
@@ -179,6 +186,28 @@ func test_held_direction_is_reevaluated_after_completed_node_movement() -> void:
 	assert_same(dungeon_map._controller_preview_node, nodes[3])
 	dungeon_map.confirm_preview()
 	assert_same(dungeon_map.current_node, nodes[3])
+
+
+func test_held_mapped_direction_and_repeated_controller_confirms_traverse_completed_chain() -> void:
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	var nodes: Array = setup.nodes
+	for node: MapNode in nodes:
+		node.set_state(MapNode.NodeState.COMPLETED)
+		node.has_been_visited = true
+		node.is_aware = true
+	dungeon_map.current_node = nodes[0]
+	dungeon_map.player_cursor.position = nodes[0].position
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	Input.action_press(&"nav_right")
+
+	for index in range(1, nodes.size()):
+		dungeon_map._process(0.016)
+		assert_same(dungeon_map._controller_preview_node, nodes[index])
+		dungeon_map._unhandled_input(_controller_confirm_event())
+		assert_same(dungeon_map.current_node, nodes[index])
+
+	Input.action_release(&"nav_right")
 
 
 func test_locked_interaction_reselects_after_unlock_without_stick_reset() -> void:
@@ -544,6 +573,13 @@ func _action_event(action: StringName) -> InputEventAction:
 
 func _joy_button() -> InputEventJoypadButton:
 	var event := InputEventJoypadButton.new()
+	event.pressed = true
+	return event
+
+
+func _controller_confirm_event() -> InputEventJoypadButton:
+	var event := InputEventJoypadButton.new()
+	event.button_index = JOY_BUTTON_A
 	event.pressed = true
 	return event
 

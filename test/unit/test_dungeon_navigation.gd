@@ -70,6 +70,30 @@ func test_stable_angle_selection_switches_for_clear_intent() -> void:
 	)
 
 
+func test_stable_angle_selection_retains_close_candidate_through_boundary_noise() -> void:
+	var lower := _node(Vector2.RIGHT.rotated(deg_to_rad(-2.0)) * 100.0)
+	var upper := _node(Vector2.RIGHT.rotated(deg_to_rad(2.0)) * 100.0)
+	var noisy_upper := Vector2.RIGHT.rotated(deg_to_rad(0.25))
+	assert_same(
+		DungeonNavigation.closest_by_angle_stable(
+			Vector2.ZERO, noisy_upper, [lower, upper], lower, 0.05
+		),
+		lower,
+	)
+
+
+func test_stable_angle_selection_switches_when_aimed_directly_at_close_candidate() -> void:
+	var lower := _node(Vector2.RIGHT.rotated(deg_to_rad(-2.0)) * 100.0)
+	var upper := _node(Vector2.RIGHT.rotated(deg_to_rad(2.0)) * 100.0)
+	var direct_upper := Vector2.RIGHT.rotated(deg_to_rad(2.0))
+	assert_same(
+		DungeonNavigation.closest_by_angle_stable(
+			Vector2.ZERO, direct_upper, [lower, upper], lower, 0.05
+		),
+		upper,
+	)
+
+
 func test_stable_angle_selection_does_not_retain_invalid_current() -> void:
 	var behind := _node(Vector2.LEFT * 100.0)
 	var ahead := _node(Vector2.RIGHT * 100.0)
