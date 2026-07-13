@@ -7,6 +7,7 @@ func test_missing_action_hides_without_error() -> void:
 	glyph.set_action(&"not_real")
 	glyph.refresh(true, InputIconMap.ControllerType.XBOX)
 	assert_false(glyph.visible)
+	assert_false(glyph.keyboard_label.visible)
 	assert_null(glyph.texture_normal)
 
 
@@ -19,12 +20,34 @@ func test_known_action_shows_controller_texture() -> void:
 	assert_not_null(glyph.texture_normal)
 
 
-func test_non_controller_mode_hides_glyph() -> void:
+func test_keyboard_mouse_mode_shows_label_without_texture() -> void:
 	var glyph := DynamicGlyph.new()
 	add_child_autofree(glyph)
-	glyph.set_action(&"confirm")
+	glyph.set_action(&"action_2")
 	glyph.refresh(false, InputIconMap.ControllerType.XBOX)
-	assert_false(glyph.visible)
+	assert_true(glyph.visible)
+	assert_true(glyph.keyboard_label.visible)
+	assert_eq(glyph.keyboard_label.text, "2")
+	assert_null(glyph.texture_normal)
+
+
+func test_controller_mode_shows_texture_without_keyboard_label() -> void:
+	var glyph := DynamicGlyph.new()
+	add_child_autofree(glyph)
+	glyph.set_action(&"action_2")
+	glyph.refresh(true, InputIconMap.ControllerType.XBOX)
+	assert_true(glyph.visible)
+	assert_false(glyph.keyboard_label.visible)
+	assert_not_null(glyph.texture_normal)
+
+
+func test_shift_keyboard_label_fits_shared_presentation() -> void:
+	var glyph := DynamicGlyph.new()
+	add_child_autofree(glyph)
+	glyph.set_action(&"shift_action")
+	glyph.refresh(false, InputIconMap.ControllerType.XBOX)
+	assert_eq(glyph.keyboard_label.text, "SHIFT")
+	assert_true(glyph.keyboard_label.visible)
 
 
 func test_set_action_refreshes_immediately_inside_tree() -> void:
@@ -40,13 +63,22 @@ func test_set_action_refreshes_immediately_inside_tree() -> void:
 func test_input_manager_mode_signal_refreshes_glyph() -> void:
 	InputManager._input(_pressed_joy_button())
 	var glyph := DynamicGlyph.new()
-	glyph.action = &"confirm"
+	glyph.action = &"action_1"
 	add_child_autofree(glyph)
 	assert_true(glyph.visible)
+	assert_not_null(glyph.texture_normal)
+	assert_false(glyph.keyboard_label.visible)
 	var key := InputEventKey.new()
 	key.pressed = true
 	InputManager._input(key)
-	assert_false(glyph.visible)
+	assert_true(glyph.visible)
+	assert_null(glyph.texture_normal)
+	assert_true(glyph.keyboard_label.visible)
+	assert_eq(glyph.keyboard_label.text, "1")
+	InputManager._input(_pressed_joy_button())
+	assert_true(glyph.visible)
+	assert_not_null(glyph.texture_normal)
+	assert_false(glyph.keyboard_label.visible)
 
 
 func test_input_manager_family_signal_refreshes_glyph_texture() -> void:

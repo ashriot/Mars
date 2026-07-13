@@ -8,12 +8,27 @@ func test_controller_detection_and_fallback() -> void:
 	assert_eq(InputIconMap.get_controller_type_from_name("mystery pad"), InputIconMap.ControllerType.STEAM_DECK)
 
 
-func test_each_family_resolves_confirm_cancel_and_actions() -> void:
+func test_each_controller_family_resolves_confirm_cancel_and_actions() -> void:
 	for family in InputIconMap.runtime_controller_types():
+		if family == InputIconMap.ControllerType.KEYBOARD_MOUSE:
+			continue
 		for action in [&"confirm", &"cancel", &"action_1", &"action_2", &"action_3", &"action_4"]:
 			var path := InputIconMap.get_glyph_path(family, action)
 			assert_ne(path, "", "%s %s" % [family, action])
 			assert_true(ResourceLoader.exists(path), path)
+	for action in [&"confirm", &"cancel"]:
+		var path := InputIconMap.get_glyph_path(InputIconMap.ControllerType.KEYBOARD_MOUSE, action)
+		assert_ne(path, "", "keyboard %s" % action)
+		assert_true(ResourceLoader.exists(path), path)
+
+
+func test_battle_keyboard_labels_match_live_bindings() -> void:
+	assert_eq(InputIconMap.get_keyboard_label(&"action_1"), "1")
+	assert_eq(InputIconMap.get_keyboard_label(&"action_2"), "2")
+	assert_eq(InputIconMap.get_keyboard_label(&"action_3"), "3")
+	assert_eq(InputIconMap.get_keyboard_label(&"action_4"), "4")
+	assert_eq(InputIconMap.get_keyboard_label(&"shift_action"), "SHIFT")
+	assert_eq(InputIconMap.get_keyboard_label(&"not_real"), "")
 
 
 func test_nintendo_uses_platform_confirm_cancel_positions() -> void:

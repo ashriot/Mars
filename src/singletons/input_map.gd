@@ -23,8 +23,6 @@ const FAMILY_FOLDERS := {
 const GLYPH_FILES := {
 	ControllerType.KEYBOARD_MOUSE: {
 		&"confirm": "keyboard_enter.svg", &"cancel": "keyboard_escape.svg",
-		&"action_1": "keyboard_space.svg", &"action_2": "keyboard_a.svg",
-		&"action_3": "keyboard_s.svg", &"action_4": "keyboard_d.svg",
 	},
 	ControllerType.XBOX: {
 		&"confirm": "xbox_button_a.svg", &"cancel": "xbox_button_b.svg",
@@ -62,6 +60,14 @@ const GLYPH_FILES := {
 		&"action_3": "steamdeck_button_x.svg", &"action_4": "steamdeck_button_y.svg",
 		&"shift_action": "steamdeck_button_l2.svg",
 	},
+}
+
+const KEYBOARD_LABELS := {
+	&"action_1": "1",
+	&"action_2": "2",
+	&"action_3": "3",
+	&"action_4": "4",
+	&"shift_action": "SHIFT",
 }
 
 
@@ -119,3 +125,7 @@ func get_glyph(type: ControllerType, action: StringName) -> Texture2D:
 	if path.is_empty() or not ResourceLoader.exists(path):
 		return null
 	return load(path) as Texture2D
+
+
+func get_keyboard_label(action: StringName) -> String:
+	return KEYBOARD_LABELS.get(action, "")
