@@ -17,7 +17,8 @@ var smooth_speed := 0.3
 var _camera: Camera2D
 var _background: Sprite2D
 var _parallax: Parallax2D
-var _motion_tween: Tween
+var _zoom_tween: Tween
+var _position_tween: Tween
 
 
 func configure(
@@ -31,6 +32,8 @@ func configure(
 
 
 func set_focus_mode(mode: FocusMode) -> void:
+	if mode == FocusMode.SCANNER:
+		_cancel_position_motion()
 	focus_mode = mode
 
 
@@ -64,9 +67,9 @@ func move_to_party(
 	if force_center:
 		_camera.position = target
 		return
-	_motion_tween = create_tween()
-	_motion_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	_motion_tween.tween_property(_camera, "position", target, smooth_speed)
+	_position_tween = create_tween()
+	_position_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_position_tween.tween_property(_camera, "position", target, smooth_speed)
 
 
 func zoom_by(
@@ -85,11 +88,13 @@ func zoom_by(
 			final_zoom,
 			viewport_size,
 		)
-	_motion_tween = create_tween().set_parallel(true)
-	_motion_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	_motion_tween.tween_property(_camera, "zoom", final_zoom, ZOOM_TWEEN_DURATION)
+	_zoom_tween = create_tween()
+	_zoom_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_zoom_tween.tween_property(_camera, "zoom", final_zoom, ZOOM_TWEEN_DURATION)
 	if focus_mode == FocusMode.PARTY:
-		_motion_tween.tween_property(
+		_position_tween = create_tween()
+		_position_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		_position_tween.tween_property(
 			_camera,
 			"position",
 			hybrid_position(party_position, final_zoom, viewport_size),
@@ -99,13 +104,27 @@ func zoom_by(
 
 
 func cancel_motion() -> void:
-	if _motion_tween and _motion_tween.is_running():
-		_motion_tween.kill()
-	_motion_tween = null
+	_cancel_zoom_motion()
+	_cancel_position_motion()
 
 
 func has_active_motion() -> bool:
-	return _motion_tween != null and _motion_tween.is_running()
+	return (
+		(_zoom_tween != null and _zoom_tween.is_running())
+		or (_position_tween != null and _position_tween.is_running())
+	)
+
+
+func _cancel_zoom_motion() -> void:
+	if _zoom_tween and _zoom_tween.is_running():
+		_zoom_tween.kill()
+	_zoom_tween = null
+
+
+func _cancel_position_motion() -> void:
+	if _position_tween and _position_tween.is_running():
+		_position_tween.kill()
+	_position_tween = null
 
 
 func desired_scanner_position(
@@ -178,11 +197,13 @@ func clamp_position(
 func pan(direction: Vector2, delta: float, viewport_size: Vector2) -> Vector2:
 	if direction.is_zero_approx() or delta <= 0.0:
 		return _camera.position
+	_cancel_position_motion()
 	var target := _camera.position + direction.normalized() * pan_speed * delta * _camera.zoom.x
 	_camera.position = clamp_position(target, _camera.zoom, viewport_size)
 	return _camera.position
 
 
 func recenter(party_position: Vector2, viewport_size: Vector2) -> Vector2:
+	_cancel_position_motion()
 	_camera.position = clamp_position(party_position, _camera.zoom, viewport_size)
 	return _camera.position
