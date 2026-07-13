@@ -69,3 +69,50 @@ func test_recenter_clamps_party_position_at_current_zoom() -> void:
 	var expected := controller.clamp_position(Vector2(100000, -100000), camera.zoom, Vector2(900, 600))
 	assert_eq(controller.recenter(Vector2(100000, -100000), Vector2(900, 600)), expected)
 	assert_eq(camera.position, expected)
+
+
+func test_scanner_dead_zone_scales_with_viewport_and_zoom() -> void:
+	var fixture := _fixture()
+	var controller: DungeonCameraController = fixture.controller
+	controller.scanner_dead_zone_ratio = Vector2(0.6, 0.6)
+	assert_eq(
+		controller.desired_scanner_position(Vector2(250, 200), Vector2.ZERO, Vector2(1000, 800), Vector2.ONE),
+		Vector2.ZERO,
+	)
+	assert_eq(
+		controller.desired_scanner_position(Vector2(200, 0), Vector2.ZERO, Vector2(1000, 800), Vector2(2, 2)),
+		Vector2(50, 0),
+	)
+	assert_eq(
+		controller.desired_scanner_position(Vector2(350, 0), Vector2.ZERO, Vector2(2000, 800), Vector2.ONE),
+		Vector2.ZERO,
+	)
+
+
+func test_follow_scanner_uses_exponential_response_without_overshoot() -> void:
+	var fixture := _fixture()
+	var controller: DungeonCameraController = fixture.controller
+	var camera: Camera2D = fixture.camera
+	controller.scanner_dead_zone_ratio = Vector2(0.1, 0.1)
+	controller.scanner_follow_response = 8.0
+	controller.set_focus_mode(DungeonCameraController.FocusMode.SCANNER)
+	var scanner := Vector2(400, 300)
+	var desired := controller.desired_scanner_position(
+		scanner, camera.position, Vector2(1000, 800), camera.zoom
+	)
+	var expected := controller.clamp_position(
+		camera.position.lerp(desired, 1.0 - exp(-8.0 * 0.125)),
+		camera.zoom,
+		Vector2(1000, 800),
+	)
+	assert_eq(controller.follow_scanner(scanner, 0.125, Vector2(1000, 800)), expected)
+	assert_gt(camera.position.distance_to(desired), 0.0)
+
+
+func test_party_focus_does_not_follow_scanner() -> void:
+	var fixture := _fixture()
+	var controller: DungeonCameraController = fixture.controller
+	var camera: Camera2D = fixture.camera
+	controller.set_focus_mode(DungeonCameraController.FocusMode.PARTY)
+	assert_eq(controller.follow_scanner(Vector2(400, 300), 1.0, Vector2(1000, 800)), Vector2.ZERO)
+	assert_eq(camera.position, Vector2.ZERO)

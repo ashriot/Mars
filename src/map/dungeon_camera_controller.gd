@@ -3,7 +3,12 @@ extends Node
 
 const MIN_ZOOM := 0.001
 
+enum FocusMode { PARTY, SCANNER }
+
 var pan_speed := 600.0
+var scanner_dead_zone_ratio := Vector2(0.6, 0.6)
+var scanner_follow_response := 8.0
+var focus_mode := FocusMode.PARTY
 
 var _camera: Camera2D
 var _background: Sprite2D
@@ -18,6 +23,47 @@ func configure(
 	_camera = camera_node
 	_background = background_node
 	_parallax = parallax_node
+
+
+func set_focus_mode(mode: FocusMode) -> void:
+	focus_mode = mode
+
+
+func desired_scanner_position(
+	scanner_position: Vector2,
+	camera_position: Vector2,
+	viewport_size: Vector2,
+	zoom_level: Vector2,
+) -> Vector2:
+	var safe_zoom := Vector2(
+		maxf(absf(zoom_level.x), MIN_ZOOM),
+		maxf(absf(zoom_level.y), MIN_ZOOM),
+	)
+	var half_dead_world := viewport_size * scanner_dead_zone_ratio * 0.5 / safe_zoom
+	var offset := scanner_position - camera_position
+	var target := camera_position
+	if offset.x < -half_dead_world.x:
+		target.x = scanner_position.x + half_dead_world.x
+	elif offset.x > half_dead_world.x:
+		target.x = scanner_position.x - half_dead_world.x
+	if offset.y < -half_dead_world.y:
+		target.y = scanner_position.y + half_dead_world.y
+	elif offset.y > half_dead_world.y:
+		target.y = scanner_position.y - half_dead_world.y
+	return target
+
+
+func follow_scanner(scanner_position: Vector2, delta: float, viewport_size: Vector2) -> Vector2:
+	if focus_mode != FocusMode.SCANNER:
+		return _camera.position
+	var desired := desired_scanner_position(
+		scanner_position, _camera.position, viewport_size, _camera.zoom
+	)
+	var weight := 1.0 - exp(-scanner_follow_response * maxf(delta, 0.0))
+	_camera.position = clamp_position(
+		_camera.position.lerp(desired, weight), _camera.zoom, viewport_size
+	)
+	return _camera.position
 
 
 func clamp_position(
