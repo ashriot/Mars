@@ -265,6 +265,7 @@ func test_uninterrupted_scanner_zoom_retains_final_zoom_reframe_at_every_tick() 
 		"fixture's final-zoom reframe is outside the initial-zoom bounds",
 	)
 	assert_eq(camera.position, expected_position)
+	controller.set_focus_mode(DungeonCameraController.FocusMode.SCANNER)
 
 	await get_tree().process_frame
 	assert_eq(camera.position, expected_position)
@@ -274,6 +275,32 @@ func test_uninterrupted_scanner_zoom_retains_final_zoom_reframe_at_every_tick() 
 
 	assert_eq(camera.zoom, final_zoom)
 	assert_eq(camera.position, expected_position)
+
+
+func test_party_zoom_out_then_scanner_focus_reclamps_retained_position_at_final_zoom() -> void:
+	var fixture := _fixture()
+	var controller: DungeonCameraController = fixture.controller
+	var camera: Camera2D = fixture.camera
+	var viewport_size := Vector2(900, 600)
+	camera.zoom = Vector2(1.5, 1.5)
+	camera.position = controller.clamp_position(Vector2(100000, 0), camera.zoom, viewport_size)
+	controller.set_focus_mode(DungeonCameraController.FocusMode.PARTY)
+	var final_zoom := controller.zoom_by(
+		-0.5,
+		Vector2(100000, 0),
+		Vector2.ZERO,
+		viewport_size,
+	)
+	await get_tree().create_timer(DungeonCameraController.ZOOM_TWEEN_DURATION * 0.5).timeout
+	controller.set_focus_mode(DungeonCameraController.FocusMode.SCANNER)
+	var retained_position := camera.position
+	var expected_final := controller.clamp_position(retained_position, final_zoom, viewport_size)
+	assert_ne(retained_position, expected_final, "zoom-out fixture tightens the camera bounds")
+
+	await get_tree().create_timer(DungeonCameraController.ZOOM_TWEEN_DURATION * 0.5 + 0.05).timeout
+
+	assert_eq(camera.zoom, final_zoom)
+	assert_eq(camera.position, expected_final)
 
 
 func test_new_zoom_replaces_previous_camera_owned_motion() -> void:

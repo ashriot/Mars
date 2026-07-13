@@ -33,8 +33,9 @@ func configure(
 
 
 func set_focus_mode(mode: FocusMode) -> void:
-	if mode == FocusMode.SCANNER:
+	if focus_mode == FocusMode.PARTY and mode == FocusMode.SCANNER:
 		_cancel_position_motion()
+		_enable_zoom_position_takeover()
 	focus_mode = mode
 
 
