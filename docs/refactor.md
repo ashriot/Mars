@@ -50,15 +50,21 @@ The starting-kit reflow intentionally leaves Gunner, Kinetic, and Psionic progre
 
 **Risks/open questions:** Decide treatment of removed nodes, prerequisite changes, cost changes, partial-role refunds, hero-wide resets, and whether reconciliation requires explicit player confirmation.
 
+## Completed boundary: Dungeon camera policy
+
+`DungeonCameraController` now owns dungeon camera clamping, manual pan and recenter, party and scanner follow calculations, bounded zoom, explicit focus mode, and camera-owned tween cancellation. `DungeonMap` retains input and modal gates, gameplay authority, battle/background presentation, and thin compatibility delegates. `DungeonScanController` now contains scanner movement and selection only.
+
+The broader dungeon decomposition remains open. Traversal state, reveal/vision, and shared map geometry are the next evidence-backed candidates; they should not be combined without their own approved scope.
+
 ## Candidate: Decompose dungeon exploration orchestration
 
-**Current location:** src/map/dungeon_map.gd, with scan geometry extracted to src/map/dungeon_scan_controller.gd
+**Current location:** src/map/dungeon_map.gd, with scan movement and selection extracted to src/map/dungeon_scan_controller.gd and camera policy extracted to src/map/dungeon_camera_controller.gd
 
 **Observed while:** Restoring free scan movement and proportional smart-camera following
 
-**Problem:** DungeonMap still owns generation, traversal, scan lifecycle, camera/zoom policy, reveal animation, interactions, HUD updates, alert rules, and save restoration in one large script.
+**Problem:** DungeonMap still owns generation, traversal, scan lifecycle, reveal animation, interactions, HUD updates, alert rules, and save restoration in one large script.
 
-**Proposed boundary:** Continue extracting independently tested exploration components after DungeonScanController: general camera policy, traversal state, reveal/vision, and map generation/geometry. DungeonMap should orchestrate those components and scene presentation rather than implement every rule.
+**Proposed boundary:** Continue extracting independently tested exploration components after the focused scan and camera controllers: traversal state, reveal/vision, and shared map generation/geometry. DungeonMap should orchestrate those components and scene presentation rather than implement every rule.
 
 **Why defer:** Free scanning needs only the scan-specific seam; reorganizing unrelated stable systems would mix refactoring with behavior repair.
 

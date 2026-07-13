@@ -162,7 +162,8 @@ func _ready():
 
 
 func _exit_tree() -> void:
-	camera_controller.cancel_motion()
+	if is_instance_valid(camera_controller):
+		camera_controller.cancel_motion()
 	var navigation := _navigation_ux_layer()
 	if navigation:
 		if navigation._adapter == self:
@@ -910,6 +911,7 @@ func _update_bits_text(val: float):
 	bits_found.text = "%.1f" % (val / 10.0)
 
 func enter_battle_visuals(duration: float = 1.5):
+	camera_controller.cancel_motion()
 	# 1. Save state
 	_pre_battle_zoom = camera.zoom
 	_pre_battle_camera_pos = camera.position
@@ -944,6 +946,8 @@ func battle_ended():
 	exit_battle_visuals()
 
 func exit_battle_visuals(duration: float = 1.0):
+	camera_controller.cancel_motion()
+	camera_controller.set_focus_mode(DungeonCameraController.FocusMode.PARTY)
 	var tween = create_tween().set_parallel(true)
 	tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
 	tween.tween_property(grid, "modulate:a", 1.0, duration)

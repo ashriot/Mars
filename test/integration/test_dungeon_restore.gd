@@ -801,6 +801,21 @@ func test_camera_pan_is_delta_scaled_zoom_is_clamped_and_recenter_targets_curren
 	assert_eq(dungeon_map.camera.position, dungeon_map._get_clamped_camera_pos(dungeon_map.current_node.position, dungeon_map.camera.zoom))
 
 
+func test_battle_visuals_cancel_camera_motion_and_restore_party_focus() -> void:
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	dungeon_map._zoom_camera(dungeon_map.zoom_step)
+	assert_true(dungeon_map.camera_controller.has_active_motion())
+	await dungeon_map.enter_battle_visuals(0.0)
+	assert_false(dungeon_map.camera_controller.has_active_motion())
+	dungeon_map.exit_battle_visuals(0.0)
+	await get_tree().process_frame
+	assert_eq(
+		dungeon_map.camera_controller.focus_mode,
+		DungeonCameraController.FocusMode.PARTY,
+	)
+
+
 func test_arrow_keys_drive_all_camera_directions_without_selecting_nodes() -> void:
 	var cases := [
 		[KEY_LEFT, Vector2.LEFT],
@@ -880,6 +895,13 @@ func test_map_registers_global_adapter_preserves_preview_without_world_cursor_an
 	assert_null(navigation._adapter)
 	assert_null(navigation.cursor._target)
 	assert_eq(navigation.hint_bar.get_hint_count(), 0)
+
+
+func test_unconfigured_map_can_exit_without_camera_controller() -> void:
+	var dungeon_map := DungeonMap.new()
+	dungeon_map._exit_tree()
+	dungeon_map.free()
+	assert_false(is_instance_valid(dungeon_map))
 
 
 func test_terminal_modal_temporarily_owns_cursor_then_restores_live_map_adapter() -> void:
