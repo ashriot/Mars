@@ -56,7 +56,7 @@ custom_minimum_size = Vector2(24, 0)
 layout_mode = 2
 mouse_filter = 2
 theme_override_fonts/font = ExtResource("4_regular")
-theme_override_font_sizes/font_size = 34
+theme_override_font_sizes/font_size = 36
 text = "›"
 vertical_alignment = 1
 
@@ -67,7 +67,7 @@ layout_mode = 2
 focus_mode = 0
 mouse_filter = 2
 ignore_texture_size = true
-stretch_mode = 0
+stretch_mode = 5
 script = ExtResource("2_glyph")
 
 [node name="Title" type="Label" parent="Margin/Content"]
@@ -75,8 +75,9 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.55, 0.25, 1)
 theme_override_fonts/font = ExtResource("3_bold")
-theme_override_font_sizes/font_size = 34
+theme_override_font_sizes/font_size = 36
 vertical_alignment = 1
 
 [node name="Upgraded" type="Label" parent="Margin/Content"]
@@ -85,7 +86,7 @@ layout_mode = 2
 mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.78, 0.2, 1)
 theme_override_fonts/font = ExtResource("4_regular")
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 24
 text = "[UPGRADED]"
 vertical_alignment = 1
 
@@ -93,7 +94,8 @@ vertical_alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("4_regular")
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 28
 horizontal_alignment = 2
 vertical_alignment = 1

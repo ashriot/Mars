@@ -44,3 +44,17 @@ func test_row_is_the_only_focusable_control_and_disabling_removes_focus() -> voi
 	row.set_interactable(false)
 	assert_eq(row.focus_mode, Control.FOCUS_NONE)
 	assert_eq(row.glyph.focus_mode, Control.FOCUS_NONE)
+
+func test_row_presentation_preserves_glyph_shape_and_terminal_color_hierarchy() -> void:
+	var row := _row()
+	assert_eq(row.glyph.custom_minimum_size, Vector2(48, 48))
+	assert_eq(row.glyph.stretch_mode, TextureButton.STRETCH_KEEP_ASPECT_CENTERED)
+	var title_color := row.title_label.get_theme_color(&"font_color")
+	var outcome_color := row.outcome_label.get_theme_color(&"font_color")
+	assert_gt(title_color.r, title_color.g)
+	assert_gt(title_color.g, title_color.b)
+	assert_almost_eq(outcome_color.r, 1.0, 0.01)
+	assert_almost_eq(outcome_color.g, 1.0, 0.01)
+	assert_almost_eq(outcome_color.b, 1.0, 0.01)
+	assert_eq(row.title_label.get_theme_font_size(&"font_size"), 36)
+	assert_eq(row.outcome_label.get_theme_font_size(&"font_size"), 28)
