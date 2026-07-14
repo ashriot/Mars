@@ -68,6 +68,9 @@ func test_terminal_panel_and_protocols_fit_minimum_and_desktop_viewports() -> vo
 		var fixture := await _terminal_in_viewport(size)
 		var terminal = fixture.terminal
 		var panel: Control = terminal.get_node("Panel")
+		assert_true(panel.size.y < size.y * 0.85, "%s panel should fit content instead of filling the viewport" % size)
+		assert_almost_eq(panel.position.y + panel.size.y * 0.5, size.y * 0.5, 2.0)
+		assert_true(panel.get_global_rect().encloses(terminal.get_node("Panel/PanelContent/Footer").get_global_rect()))
 		assert_true(panel.position.x >= size.x * 0.04)
 		assert_true(panel.position.y >= size.y * 0.04)
 		assert_true(panel.position.x + panel.size.x <= size.x * 0.96)
@@ -75,6 +78,17 @@ func test_terminal_panel_and_protocols_fit_minimum_and_desktop_viewports() -> vo
 		for index in 5:
 			var row: TerminalProtocolRow = terminal.get_protocol_row(index)
 			assert_true(panel.get_global_rect().encloses(row.get_global_rect()), "%s row %d" % [size, index])
+
+
+func test_footer_labels_cancel_as_exit_terminal_and_keeps_header_close_available() -> void:
+	var terminal := await _terminal()
+	var exit_glyph := terminal.get_node("Panel/PanelContent/Footer/ExitHint/DynamicGlyph") as DynamicGlyph
+	var exit_label := terminal.get_node("Panel/PanelContent/Footer/ExitHint/Label") as Label
+	assert_eq(exit_glyph.action, &"cancel")
+	assert_eq(exit_glyph.stretch_mode, TextureButton.STRETCH_KEEP_ASPECT_CENTERED)
+	assert_eq(exit_label.text, "EXIT TERMINAL")
+	assert_false(terminal.close_button.disabled)
+	terminal.free()
 
 
 func test_first_protocol_input_during_typing_only_finishes_animation() -> void:

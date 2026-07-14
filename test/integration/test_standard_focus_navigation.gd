@@ -134,6 +134,7 @@ func test_nested_party_and_terminal_cancel_only_top_and_restore_each_layer() -> 
 	assert_true(party.visible, "lower modal ignores cancel while another modal owns the top")
 	assert_true(ux.is_top_modal(inner))
 
+	assert_not_null(inner.get_node_or_null("Panel/PanelContent/Footer/ExitHint"), "visible footer guidance stays coupled to terminal cancel")
 	inner._unhandled_input(_cancel_event())
 	await wait_seconds(0.3)
 	assert_false(inner.visible)

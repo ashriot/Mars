@@ -97,7 +97,10 @@ Run this sequence once over USB and once over Bluetooth. Fill in both rows befor
 - [ ] Hold pan in all four directions; movement is smooth, delta-scaled, and clamped.
 - [ ] Zoom in/out with L2/R2 or displayed triggers; limits clamp and no input leaks through a locked map/modal.
 - [ ] Recenter returns the camera to the current node at minimum, middle, and maximum zoom.
-- [ ] At 1200×800, 1280×800, and 1920×1080, open a terminal from the fixed map path; the inset panel nearly fills the screen, all five protocol rows and their outcomes are readable, and no header, footer, glyph, row, or confirmation content clips.
+- [ ] At 1200×800 and 1280×800, the terminal is centered and only as tall as its header, five rows, and footer; there is no large blank region below Extraction.
+- [ ] Protocol titles are orange, outcomes remain white, and every keyboard/controller glyph retains its natural proportions.
+- [ ] The footer shows Escape/Circle/B as `EXIT TERMINAL`; using it closes the terminal, while the header X remains clickable.
+- [ ] Row order and shortcuts are Security 1/A, Medical 2/X, Finance 3/Y, Scan 4/L1, and Extraction 5/R1.
 - [ ] On DualSense, verify Cross executes Security, L1 enters Scan targeting, Square executes Medical, and Triangle executes Finance after the typing animation; the first protocol input during typing only completes the animation.
 - [ ] On keyboard, verify 1–4 execute the same protocols and 5 only opens extraction confirmation.
 - [ ] Verify Circle always closes/backs out in the normal terminal, R1 opens extraction confirmation, Cross confirms Tactical Retreat exactly once, and Circle returns to the protocol list from confirmation without closing or consuming the terminal.

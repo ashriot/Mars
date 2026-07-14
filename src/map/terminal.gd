@@ -13,7 +13,10 @@ const PROTOCOL_ACTIONS: Array[StringName] = [
 ]
 const EXTRACTION_ACTION := &"terminal_extract"
 const EXTRACTION_ID := &"opt_extract"
+const MAX_PANEL_HEIGHT_RATIO := 0.9
 
+@onready var panel: Control = %Panel
+@onready var panel_content: Control = %PanelContent
 @onready var close_button: TextureButton = %CloseButton
 @onready var protocols: VBoxContainer = %Protocols
 @onready var confirmation_panel: Control = %ConfirmationPanel
@@ -40,6 +43,8 @@ func _ready() -> void:
 	confirm_button.pressed.connect(func() -> void: handle_semantic_action(&"confirm"))
 	cancel_button.pressed.connect(func() -> void: handle_semantic_action(&"cancel"))
 	_ensure_modal_registered()
+	get_viewport().size_changed.connect(_fit_panel_to_content)
+	_fit_panel_to_content.call_deferred()
 
 
 func _exit_tree() -> void:
@@ -71,6 +76,7 @@ func setup(data: Dictionary) -> bool:
 		status_label.text = "PROTOCOL DIRECTORY UNAVAILABLE"
 		_set_rows_interactable(false)
 		interaction_state = TerminalState.READY
+		_fit_panel_to_content.call_deferred()
 		return false
 	var definitions := _protocol_definitions(data)
 	for index in 5:
@@ -88,7 +94,18 @@ func setup(data: Dictionary) -> bool:
 	interaction_state = TerminalState.TYPING
 	_start_typing_effect()
 	_grab_focus_if_valid.call_deferred(_rows[0])
+	_fit_panel_to_content.call_deferred()
 	return true
+
+
+func _fit_panel_to_content() -> void:
+	if not is_inside_tree() or not is_instance_valid(panel) or not is_instance_valid(panel_content):
+		return
+	var viewport_height := float(get_viewport_rect().size.y)
+	var desired_height := panel_content.get_combined_minimum_size().y
+	var fitted_height := minf(desired_height, viewport_height * MAX_PANEL_HEIGHT_RATIO)
+	panel.offset_top = -fitted_height * 0.5
+	panel.offset_bottom = fitted_height * 0.5
 
 
 func handle_semantic_action(action: StringName) -> bool:
