@@ -29,6 +29,7 @@ var interaction_state := TerminalState.TYPING
 var type_tween: Tween
 var close_tween: Tween
 var _lifecycle_generation := 0
+var _presentation_valid := false
 var _rows: Array[TerminalProtocolRow] = []
 var _typing_labels: Array[Label] = []
 
@@ -71,7 +72,8 @@ func _unhandled_input(event: InputEvent) -> void:
 func setup(data: Dictionary) -> bool:
 	_reset_lifecycle()
 	_ensure_modal_registered()
-	if not _has_valid_presentation_data(data):
+	_presentation_valid = _has_valid_presentation_data(data)
+	if not _presentation_valid:
 		header_text.text = "PARADIGM TERMINAL // DATA ERROR"
 		status_label.text = "PROTOCOL DIRECTORY UNAVAILABLE"
 		_set_rows_interactable(false)
@@ -111,6 +113,11 @@ func _fit_panel_to_content() -> void:
 func handle_semantic_action(action: StringName) -> bool:
 	if interaction_state == TerminalState.CLOSING:
 		return action in PROTOCOL_ACTIONS or action in [EXTRACTION_ACTION, &"confirm", &"cancel"]
+	if not _presentation_valid:
+		if action == &"cancel":
+			_begin_close()
+			return true
+		return action in PROTOCOL_ACTIONS or action in [EXTRACTION_ACTION, &"confirm"]
 	if interaction_state == TerminalState.TYPING:
 		if action == &"cancel":
 			_begin_close()
@@ -274,6 +281,8 @@ func _animate_close(emit_closed: bool) -> void:
 
 
 func _on_protocol_activated(choice_id: StringName) -> void:
+	if not _presentation_valid:
+		return
 	if interaction_state == TerminalState.TYPING:
 		finish_typing()
 		return

@@ -1,6 +1,13 @@
 extends GutTest
 
 const TerminalScene = preload("res://src/map/terminal.tscn")
+const TERMINAL_PROTOCOL_ACTIONS: Array[StringName] = [
+	&"terminal_security",
+	&"terminal_medical",
+	&"terminal_finance",
+	&"terminal_scan",
+	&"terminal_extract",
+]
 
 
 func _payload(upgrade_key: String = "", facility: String = "TEST", bits: int = 12, alert: int = 10) -> Dictionary:
@@ -173,9 +180,34 @@ func test_incomplete_presentation_data_disables_every_protocol_but_can_close() -
 		assert_true(terminal.get_protocol_row(index).disabled)
 	assert_false(terminal.close_button.disabled)
 	watch_signals(terminal)
+	for action in TERMINAL_PROTOCOL_ACTIONS:
+		assert_true(terminal.handle_semantic_action(action), "%s should be consumed by the malformed modal" % action)
+		assert_eq(terminal.interaction_state, terminal.TerminalState.READY)
+		assert_false(terminal.confirmation_panel.visible)
+		assert_signal_not_emitted(terminal, "option_selected")
 	assert_true(terminal.handle_semantic_action(&"cancel"))
 	await get_tree().create_timer(0.3).timeout
 	assert_signal_emit_count(terminal, "closed", 1)
+	terminal.free()
+
+
+func test_malformed_reused_terminal_cannot_commit_stale_protocol_choices() -> void:
+	var terminal := await _terminal("medical")
+	terminal.finish_typing()
+	assert_eq(terminal.get_protocol_row(1).get_choice_id(), &"opt_med_up")
+	assert_false(terminal.setup({"facility_name": "BROKEN"}))
+	watch_signals(terminal)
+
+	for action in TERMINAL_PROTOCOL_ACTIONS:
+		assert_true(terminal.handle_semantic_action(action), "%s should be consumed by the malformed modal" % action)
+		assert_eq(terminal.interaction_state, terminal.TerminalState.READY)
+		assert_false(terminal.confirmation_panel.visible)
+		assert_signal_not_emitted(terminal, "option_selected")
+
+	assert_true(terminal.handle_semantic_action(&"cancel"))
+	await get_tree().create_timer(0.3).timeout
+	assert_signal_emit_count(terminal, "closed", 1)
+	terminal.free()
 
 
 func test_repeated_protocol_activation_is_single_shot_and_never_closes() -> void:
