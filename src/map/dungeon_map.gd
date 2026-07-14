@@ -455,7 +455,10 @@ func cancel_preview() -> void:
 
 func _clear_navigation_cursor() -> void:
 	var navigation := _navigation_ux_layer()
-	if navigation and not navigation.has_open_modal():
+	if navigation and (
+		navigation.cursor.is_screen_position_active()
+		or not navigation.has_open_modal()
+	):
 		navigation.cursor.clear_target()
 
 

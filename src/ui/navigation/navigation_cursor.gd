@@ -85,6 +85,10 @@ func show_at_screen_position(
 	show()
 
 
+func is_screen_position_active() -> bool:
+	return _screen_position_active
+
+
 func set_cursor_state(state: CursorState) -> void:
 	_state = state
 	texture = load("res://assets/graphics/glyphs/cursors/outline/%s" % STATE_FILES[state]) as Texture2D

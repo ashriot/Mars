@@ -106,6 +106,7 @@ func test_explicit_screen_position_stays_visible_without_focus_target() -> void:
 	var cursor := TestCursor.new()
 	add_child_autofree(cursor)
 	cursor.show_at_screen_position(Vector2(320, 180))
+	assert_true(cursor.is_screen_position_active())
 	cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2.ZERO)
 	assert_true(cursor.visible)
 	assert_eq(cursor.position, Vector2(320, 180))
@@ -118,10 +119,26 @@ func test_clear_target_exits_explicit_screen_position_mode() -> void:
 	add_child_autofree(cursor)
 	cursor.show_at_screen_position(Vector2(50, 60))
 	cursor.clear_target()
+	assert_false(cursor.is_screen_position_active())
 	assert_false(cursor.visible)
 	assert_eq(cursor.set_modes.back(), Input.MOUSE_MODE_VISIBLE)
 	cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2.ZERO)
 	assert_false(cursor.visible)
+
+
+func test_focus_and_world_targets_replace_explicit_screen_position_ownership() -> void:
+	var cursor := TestCursor.new()
+	add_child_autofree(cursor)
+	var target := Button.new()
+	add_child_autofree(target)
+	cursor.show_at_screen_position(Vector2(50, 60))
+	cursor.set_focus_target(target)
+	assert_false(cursor.is_screen_position_active())
+	assert_same(cursor._target, target)
+	cursor.show_at_screen_position(Vector2(70, 80))
+	cursor.set_world_target(target)
+	assert_false(cursor.is_screen_position_active())
+	assert_same(cursor._target, target)
 
 
 func test_freeing_explicit_screen_cursor_restores_os_pointer() -> void:

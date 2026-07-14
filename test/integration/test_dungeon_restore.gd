@@ -602,10 +602,57 @@ func test_opening_modal_cancels_active_scan_and_returns_party_focus() -> void:
 		DungeonCameraController.FocusMode.PARTY,
 	)
 	assert_signal_emit_count(dungeon_map, &"scan_canceled", 1)
+	assert_false(navigation.cursor.visible)
+	assert_false(navigation.cursor.is_screen_position_active())
+	assert_eq(Input.mouse_mode, Input.MOUSE_MODE_VISIBLE)
 	await get_tree().create_timer(dungeon_map.camera_smooth_speed + 0.05).timeout
 	assert_almost_eq(dungeon_map.camera.position.x, expected.x, 0.01)
 	assert_almost_eq(dungeon_map.camera.position.y, expected.y, 0.01)
 	terminal.queue_free()
+	await get_tree().process_frame
+
+
+func test_scan_cancel_restores_cursor_when_handler_opens_focusless_terminal() -> void:
+	var navigation := _make_navigation_ux()
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	dungeon_map.start_targeting_mode(1)
+	assert_true(navigation.cursor.is_screen_position_active())
+	var terminal := TERMINAL_SCENE.instantiate()
+	dungeon_map.scan_canceled.connect(func() -> void: add_child(terminal), CONNECT_ONE_SHOT)
+
+	dungeon_map.cancel_preview()
+
+	assert_true(navigation.is_top_modal(terminal))
+	assert_false(navigation.cursor.visible)
+	assert_false(navigation.cursor.is_screen_position_active())
+	assert_eq(Input.mouse_mode, Input.MOUSE_MODE_VISIBLE)
+	terminal.queue_free()
+	await get_tree().process_frame
+
+
+func test_scan_cancel_preserves_cursor_claimed_by_focused_modal() -> void:
+	var navigation := _make_navigation_ux()
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	dungeon_map.start_targeting_mode(1)
+	var modal := Control.new()
+	var focus_target := Button.new()
+	modal.add_child(focus_target)
+	add_child(modal)
+	navigation.push_modal(modal, focus_target)
+	assert_false(navigation.cursor.is_screen_position_active())
+	assert_same(navigation.cursor._target, focus_target)
+
+	dungeon_map._process(0.016)
+
+	assert_false(dungeon_map.scan_controller.active)
+	assert_same(navigation.cursor._target, focus_target)
+	assert_eq(Input.mouse_mode, Input.MOUSE_MODE_VISIBLE)
+	navigation.pop_modal(modal)
+	modal.queue_free()
 	await get_tree().process_frame
 
 
