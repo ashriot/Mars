@@ -174,6 +174,8 @@ func _reset_lifecycle() -> void:
 	show()
 	confirmation_panel.hide()
 	close_button.disabled = false
+	confirm_button.disabled = false
+	cancel_button.disabled = false
 	for label: Label in _typing_labels:
 		label.visible_ratio = 1.0
 	for row: TerminalProtocolRow in _rows:
@@ -218,6 +220,8 @@ func _commit_choice(choice_id: StringName) -> void:
 	interaction_state = TerminalState.CLOSING
 	_set_rows_interactable(false)
 	close_button.disabled = true
+	confirm_button.disabled = true
+	cancel_button.disabled = true
 	AudioManager.play_sfx("terminal")
 	option_selected.emit(choice_id)
 	_animate_close(false)
@@ -229,6 +233,8 @@ func _begin_close() -> void:
 	interaction_state = TerminalState.CLOSING
 	_set_rows_interactable(false)
 	close_button.disabled = true
+	confirm_button.disabled = true
+	cancel_button.disabled = true
 	_animate_close(true)
 
 

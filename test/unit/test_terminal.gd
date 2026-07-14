@@ -107,6 +107,22 @@ func test_extraction_requires_confirm_and_cancel_returns_to_ready() -> void:
 	terminal.free()
 
 
+func test_extraction_confirmation_controls_disable_while_closing_and_reset_on_setup() -> void:
+	var terminal := await _terminal()
+	terminal.finish_typing()
+	terminal.handle_semantic_action(&"terminal_extract")
+	terminal.handle_semantic_action(&"confirm")
+
+	assert_eq(terminal.interaction_state, terminal.TerminalState.CLOSING)
+	assert_true(terminal.confirm_button.disabled)
+	assert_true(terminal.cancel_button.disabled)
+
+	terminal.setup(_payload("medical", "SECOND", 25, 15))
+	assert_false(terminal.confirm_button.disabled)
+	assert_false(terminal.cancel_button.disabled)
+	terminal.free()
+
+
 func test_setup_resets_confirmation_typing_and_one_shot_state() -> void:
 	var terminal := await _terminal()
 	terminal.finish_typing()

@@ -53,7 +53,7 @@ Run this sequence once over USB and once over Bluetooth. Fill in both rows befor
 - [ ] Steam Deck controls: complete the full loop in Gaming Mode.
 - [ ] Steam Input known-device profile: glyph family and every semantic action match the selected layout.
 - [ ] Steam Input unknown/generic profile: Steam Deck glyph-family fallback with an Xbox-compatible layout remains usable and internally consistent.
-- [ ] At native handheld resolution, cursor, focused-button scaling, button glyphs, hint text, terminal links, skill nodes, map nodes, card targets, and result totals are readable without clipping.
+- [ ] At native handheld resolution, cursor, focused-button scaling, button glyphs, hint text, protocol rows, skill nodes, map nodes, card targets, and result totals are readable without clipping.
 
 ## Mouse and keyboard switching
 
@@ -97,7 +97,7 @@ Run this sequence once over USB and once over Bluetooth. Fill in both rows befor
 - [ ] Hold pan in all four directions; movement is smooth, delta-scaled, and clamped.
 - [ ] Zoom in/out with L2/R2 or displayed triggers; limits clamp and no input leaks through a locked map/modal.
 - [ ] Recenter returns the camera to the current node at minimum, middle, and maximum zoom.
-- [ ] At 1200×800 and 1280×800, open a terminal from the fixed map path; the inset panel nearly fills the screen, all five protocol rows and their outcomes are readable, and no header, footer, glyph, row, or confirmation content clips.
+- [ ] At 1200×800, 1280×800, and 1920×1080, open a terminal from the fixed map path; the inset panel nearly fills the screen, all five protocol rows and their outcomes are readable, and no header, footer, glyph, row, or confirmation content clips.
 - [ ] On DualSense, verify Cross executes Security, L1 enters Scan targeting, Square executes Medical, and Triangle executes Finance after the typing animation; the first protocol input during typing only completes the animation.
 - [ ] On keyboard, verify 1–4 execute the same protocols and 5 only opens extraction confirmation.
 - [ ] Verify Circle always closes/backs out in the normal terminal, R1 opens extraction confirmation, Cross confirms Tactical Retreat exactly once, and Circle returns to the protocol list from confirmation without closing or consuming the terminal.
