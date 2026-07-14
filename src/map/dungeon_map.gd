@@ -76,6 +76,8 @@ const PENALTY_BOSS_MOVE = 2.0
 @export_group("Scanner")
 @export_range(0.1, 0.9, 0.05) var scan_dead_zone_ratio := 0.6
 @export var scan_camera_follow_response := 8.0
+# Temporary diagnostic switch. Remove after the physical controller fault is identified.
+@export var scan_debug_logging := true
 
 # --- Visuals ---
 @export_group("Visuals")
@@ -554,12 +556,43 @@ func _process_scan_navigation(
 	var viewport_size := get_viewport_rect().size
 	var input_mode := InputManager.get_active_mode()
 	if input_mode == InputManager.InputMode.CONTROLLER:
+		var pointer_before := scan_controller.pointer_position
+		var camera_before := camera.position
 		scan_controller.move_pointer(direction, delta, viewport_size)
+		var pointer_world_before_camera := _scan_pointer_world_position()
+		var desired_camera_before_move := camera_controller.desired_scanner_position(
+			pointer_world_before_camera,
+			camera_before,
+			viewport_size,
+			camera.zoom,
+		)
+		var camera_path := "none"
 		if not pan_direction.is_zero_approx():
+			camera_path = "right_stick_pan"
 			process_controller_camera(pan_direction, delta)
 		elif not direction.is_zero_approx():
+			camera_path = "left_stick_follow"
 			_follow_scan_pointer(delta, viewport_size)
 		_show_scan_cursor()
+		if not direction.is_zero_approx() or not pan_direction.is_zero_approx():
+			_scan_debug_log("STEP", {
+				"frame": Engine.get_process_frames(),
+				"delta": delta,
+				"direction": direction,
+				"pan_direction": pan_direction,
+				"camera_path": camera_path,
+				"pointer_before": pointer_before,
+				"pointer_after": scan_controller.pointer_position,
+				"pointer_world_before_camera": pointer_world_before_camera,
+				"desired_camera_before_move": desired_camera_before_move,
+				"inside_safe_area_before_move": desired_camera_before_move.is_equal_approx(camera_before),
+				"camera_before": camera_before,
+				"camera_after": camera.position,
+				"camera_zoom": camera.zoom,
+				"viewport": viewport_size,
+				"actions": _scan_debug_action_strengths(),
+				"joypads": _scan_debug_joypads(),
+			})
 		return
 	_clear_navigation_cursor()
 	scan_controller.sync_pointer(get_viewport().get_mouse_position(), viewport_size)
@@ -587,6 +620,41 @@ func _follow_scan_pointer(delta: float, viewport_size: Vector2) -> void:
 		delta,
 		viewport_size,
 	)
+
+
+func _scan_debug_log(event_name: String, values: Dictionary) -> void:
+	if not scan_debug_logging:
+		return
+	print("[SCAN_DEBUG] ", event_name, " ", values)
+
+
+func _scan_debug_action_strengths() -> Dictionary:
+	return {
+		"nav_left": Input.get_action_strength(&"nav_left"),
+		"nav_right": Input.get_action_strength(&"nav_right"),
+		"nav_up": Input.get_action_strength(&"nav_up"),
+		"nav_down": Input.get_action_strength(&"nav_down"),
+		"pan_left": Input.get_action_strength(&"camera_pan_left"),
+		"pan_right": Input.get_action_strength(&"camera_pan_right"),
+		"pan_up": Input.get_action_strength(&"camera_pan_up"),
+		"pan_down": Input.get_action_strength(&"camera_pan_down"),
+	}
+
+
+func _scan_debug_joypads() -> Array[Dictionary]:
+	var snapshots: Array[Dictionary] = []
+	for device: int in Input.get_connected_joypads():
+		snapshots.append({
+			"device": device,
+			"name": Input.get_joy_name(device),
+			"left_x": Input.get_joy_axis(device, JOY_AXIS_LEFT_X),
+			"left_y": Input.get_joy_axis(device, JOY_AXIS_LEFT_Y),
+			"right_x": Input.get_joy_axis(device, JOY_AXIS_RIGHT_X),
+			"right_y": Input.get_joy_axis(device, JOY_AXIS_RIGHT_Y),
+			"trigger_left": Input.get_joy_axis(device, JOY_AXIS_TRIGGER_LEFT),
+			"trigger_right": Input.get_joy_axis(device, JOY_AXIS_TRIGGER_RIGHT),
+		})
+	return snapshots
 
 
 func _is_normal_traversal_destination(node: MapNode) -> bool:
@@ -1072,6 +1140,20 @@ func start_targeting_mode(radius: int) -> void:
 	camera_controller.set_focus_mode(DungeonCameraController.FocusMode.SCANNER)
 	var origin_screen_position := current_node.get_global_transform_with_canvas().origin
 	scan_controller.begin(origin_screen_position, get_viewport_rect().size, current_node)
+	_scan_debug_log("START", {
+		"frame": Engine.get_process_frames(),
+		"radius": radius,
+		"current_node_grid": current_node.grid_coords,
+		"current_node_world": current_node.position,
+		"origin_screen_raw": origin_screen_position,
+		"pointer_clamped": scan_controller.pointer_position,
+		"viewport": get_viewport_rect().size,
+		"camera_position": camera.position,
+		"camera_zoom": camera.zoom,
+		"canvas_transform": get_canvas_transform(),
+		"actions": _scan_debug_action_strengths(),
+		"joypads": _scan_debug_joypads(),
+	})
 	_sync_scan_selection(false)
 	_start_reticle_scan_pulse()
 	_clear_navigation_cursor()
@@ -1089,6 +1171,12 @@ func _start_reticle_scan_pulse():
 
 func _cancel_targeting() -> void:
 	if current_map_state != MapState.TARGETING: return
+	_scan_debug_log("CANCEL", {
+		"frame": Engine.get_process_frames(),
+		"pointer": scan_controller.pointer_position,
+		"camera_position": camera.position,
+		"selected_grid": scan_controller.selected_node.grid_coords if scan_controller.selected_node else Vector2i(-1, -1),
+	})
 	current_map_state = MapState.PLAYING
 	pending_scan_radius = 0
 	_controller_preview_node = null
