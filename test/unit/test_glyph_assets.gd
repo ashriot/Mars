@@ -6,10 +6,19 @@ const BATTLE_KEYBOARD_GLYPHS := [
 	"keyboard_1.svg", "keyboard_2.svg", "keyboard_3.svg", "keyboard_4.svg",
 	"keyboard_q.svg", "keyboard_e.svg",
 ]
+const TERMINAL_KEYBOARD_GLYPHS := ["keyboard_1.svg", "keyboard_2.svg", "keyboard_3.svg", "keyboard_4.svg", "keyboard_5.svg"]
 
 
 func test_battle_keyboard_glyph_sources_are_curated() -> void:
 	for file_name: String in BATTLE_KEYBOARD_GLYPHS:
+		assert_true(
+			FileAccess.file_exists("res://assets/graphics/glyphs/keyboard_mouse/vector/%s" % file_name),
+			file_name,
+		)
+
+
+func test_terminal_keyboard_glyph_sources_are_curated() -> void:
+	for file_name: String in TERMINAL_KEYBOARD_GLYPHS:
 		assert_true(
 			FileAccess.file_exists("res://assets/graphics/glyphs/keyboard_mouse/vector/%s" % file_name),
 			file_name,

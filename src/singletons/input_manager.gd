@@ -13,6 +13,7 @@ const NAVIGATION_ACTIONS: Array[StringName] = [
 	&"confirm", &"cancel", &"page_left", &"page_right",
 	&"role_left", &"role_right",
 	&"action_1", &"action_2", &"action_3", &"action_4",
+	&"terminal_security", &"terminal_scan", &"terminal_medical", &"terminal_finance", &"terminal_extract",
 ]
 
 signal input_mode_changed(mode: InputMode)
@@ -127,7 +128,8 @@ func _set_active_controller_type(type: InputIconMap.ControllerType) -> void:
 
 func _apply_family_bindings(type: InputIconMap.ControllerType) -> void:
 	var bindings := InputIconMap.confirm_cancel_buttons(type)
-	for action: StringName in [&"confirm", &"cancel"]:
+	bindings[&"terminal_security"] = bindings[&"confirm"]
+	for action: StringName in bindings:
 		for event in InputMap.action_get_events(action):
 			if event is InputEventJoypadButton:
 				InputMap.action_erase_event(action, event)

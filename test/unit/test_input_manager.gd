@@ -6,6 +6,7 @@ const SYNTHETIC_UNCONNECTED_JOY_DEVICE := 127
 var manager: Node
 var original_confirm_events: Array[InputEvent]
 var original_cancel_events: Array[InputEvent]
+var original_terminal_security_events: Array[InputEvent]
 
 
 class TestInputManager extends InputManager:
@@ -18,6 +19,7 @@ class TestInputManager extends InputManager:
 func before_each() -> void:
 	original_confirm_events = InputMap.action_get_events(&"confirm")
 	original_cancel_events = InputMap.action_get_events(&"cancel")
+	original_terminal_security_events = InputMap.action_get_events(&"terminal_security")
 	manager = TestInputManager.new()
 
 
@@ -25,6 +27,7 @@ func after_each() -> void:
 	manager.free()
 	_restore_action(&"confirm", original_confirm_events)
 	_restore_action(&"cancel", original_cancel_events)
+	_restore_action(&"terminal_security", original_terminal_security_events)
 
 
 func test_key_press_switches_to_keyboard_mouse() -> void:
@@ -100,6 +103,17 @@ func test_keyboard_action_hotkeys_select_snapped_keyboard_mouse() -> void:
 		manager._input(_physical_key(keycode))
 		assert_eq(manager.get_active_mode(), manager.InputMode.KEYBOARD_MOUSE)
 		assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)
+
+
+func test_terminal_extraction_keyboard_shortcut_selects_snapped_keyboard_mode() -> void:
+	manager._set_active_mode(manager.InputMode.CONTROLLER)
+	manager._set_cursor_behavior(manager.CursorBehavior.FREE)
+	var event := InputEventKey.new()
+	event.physical_keycode = KEY_5
+	event.pressed = true
+	manager._input(event)
+	assert_eq(manager.get_active_mode(), manager.InputMode.KEYBOARD_MOUSE)
+	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)
 
 
 func test_controller_button_and_axis_select_snapped() -> void:
@@ -263,11 +277,39 @@ func test_controller_input_updates_family_and_mode() -> void:
 	assert_eq(manager.get_active_controller_type(), InputIconMap.ControllerType.STEAM_DECK)
 
 
+func _joy_button_for(action: StringName) -> JoyButton:
+	for event in InputMap.action_get_events(action):
+		if event is InputEventJoypadButton:
+			return event.button_index
+	return JOY_BUTTON_INVALID
+
+
+func test_terminal_actions_use_numbers_shoulders_and_non_cancel_face_buttons() -> void:
+	var expected := {
+		&"terminal_security": [KEY_1, JOY_BUTTON_A],
+		&"terminal_scan": [KEY_2, JOY_BUTTON_LEFT_SHOULDER],
+		&"terminal_medical": [KEY_3, JOY_BUTTON_X],
+		&"terminal_finance": [KEY_4, JOY_BUTTON_Y],
+		&"terminal_extract": [KEY_5, JOY_BUTTON_RIGHT_SHOULDER],
+	}
+	for action: StringName in expected:
+		var events := InputMap.action_get_events(action)
+		assert_eq(events.filter(func(event): return event is InputEventKey and event.physical_keycode == expected[action][0]).size(), 1, str(action))
+		assert_eq(events.filter(func(event): return event is InputEventJoypadButton and event.button_index == expected[action][1]).size(), 1, str(action))
+
+
+func test_nintendo_rebinds_terminal_security_to_a_and_keeps_b_as_cancel() -> void:
+	manager._set_active_controller_type(InputIconMap.ControllerType.NINTENDO_SWITCH)
+	assert_eq(_joy_button_for(&"terminal_security"), JOY_BUTTON_B)
+	assert_eq(_joy_button_for(&"cancel"), JOY_BUTTON_A)
+
+
 func test_required_semantic_actions_exist() -> void:
 	for action in [
 		&"nav_up", &"nav_down", &"nav_left", &"nav_right", &"confirm", &"cancel",
 		&"page_previous", &"page_next", &"section_previous", &"section_next",
 		&"action_1", &"action_2", &"action_3", &"action_4", &"shift_left", &"shift_right",
+		&"terminal_security", &"terminal_scan", &"terminal_medical", &"terminal_finance", &"terminal_extract",
 		&"camera_pan_left", &"camera_pan_right", &"camera_pan_up", &"camera_pan_down",
 		&"zoom_in", &"zoom_out", &"recenter", &"refund_progression",
 	]:

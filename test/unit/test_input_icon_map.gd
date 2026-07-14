@@ -37,6 +37,30 @@ func test_keyboard_battle_actions_resolve_kenney_textures() -> void:
 		assert_true(ResourceLoader.exists(path), path)
 
 
+func test_terminal_actions_resolve_keyboard_and_every_controller_family() -> void:
+	var actions: Array[StringName] = [&"terminal_security", &"terminal_scan", &"terminal_medical", &"terminal_finance", &"terminal_extract"]
+	var keyboard_files := ["keyboard_1.svg", "keyboard_2.svg", "keyboard_3.svg", "keyboard_4.svg", "keyboard_5.svg"]
+	for index in actions.size():
+		assert_true(InputIconMap.get_glyph_path(InputIconMap.ControllerType.KEYBOARD_MOUSE, actions[index]).ends_with(keyboard_files[index]))
+	for family in InputIconMap.runtime_controller_types():
+		if family == InputIconMap.ControllerType.KEYBOARD_MOUSE:
+			continue
+		for action: StringName in actions:
+			var path := InputIconMap.get_glyph_path(family, action)
+			assert_ne(path, "", "%s %s" % [family, action])
+			assert_true(ResourceLoader.exists(path), path)
+
+
+func test_terminal_controller_glyphs_match_behavior_groups() -> void:
+	assert_true(InputIconMap.get_glyph_path(InputIconMap.ControllerType.PLAYSTATION, &"terminal_security").ends_with("playstation_button_cross.svg"))
+	assert_true(InputIconMap.get_glyph_path(InputIconMap.ControllerType.PLAYSTATION, &"terminal_scan").ends_with("playstation_trigger_l1.svg"))
+	assert_true(InputIconMap.get_glyph_path(InputIconMap.ControllerType.PLAYSTATION, &"terminal_medical").ends_with("playstation_button_square.svg"))
+	assert_true(InputIconMap.get_glyph_path(InputIconMap.ControllerType.PLAYSTATION, &"terminal_finance").ends_with("playstation_button_triangle.svg"))
+	assert_true(InputIconMap.get_glyph_path(InputIconMap.ControllerType.PLAYSTATION, &"terminal_extract").ends_with("playstation_trigger_r1.svg"))
+	assert_true(InputIconMap.get_glyph_path(InputIconMap.ControllerType.NINTENDO_SWITCH, &"terminal_security").ends_with("switch_button_a.svg"))
+	assert_true(InputIconMap.get_glyph_path(InputIconMap.ControllerType.NINTENDO_SWITCH, &"cancel").ends_with("switch_button_b.svg"))
+
+
 func test_nintendo_uses_platform_confirm_cancel_positions() -> void:
 	for family in [InputIconMap.ControllerType.NINTENDO_SWITCH, InputIconMap.ControllerType.NINTENDO_SWITCH_2]:
 		assert_true(InputIconMap.get_glyph_path(family, &"confirm").ends_with("switch_button_a.svg"))
