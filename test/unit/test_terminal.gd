@@ -125,6 +125,7 @@ func test_protocols_one_through_four_execute_immediately_and_exactly_once() -> v
 		assert_true(terminal.handle_semantic_action([&"terminal_security", &"terminal_medical", &"terminal_finance", &"terminal_scan"][index]))
 		assert_signal_emit_count(terminal, "option_selected", 1)
 		assert_eq(terminal.interaction_state, terminal.TerminalState.CLOSING)
+		assert_not_null(terminal.close_tween)
 		terminal.handle_semantic_action(&"terminal_security")
 		assert_signal_emit_count(terminal, "option_selected", 1)
 		clear_signal_watcher()

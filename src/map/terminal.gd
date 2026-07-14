@@ -250,6 +250,8 @@ func _commit_choice(choice_id: StringName) -> void:
 	cancel_button.disabled = true
 	AudioManager.play_sfx("terminal")
 	option_selected.emit(choice_id)
+	if not is_inside_tree() or is_queued_for_deletion():
+		return
 	_animate_close(false)
 
 

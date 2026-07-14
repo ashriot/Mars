@@ -422,6 +422,36 @@ func test_scan_choice_removes_terminal_before_targeting_begins() -> void:
 	await get_tree().process_frame
 
 
+func test_real_terminal_scan_activation_survives_synchronous_owner_teardown() -> void:
+	var manager := ScanTransitionManager.new()
+	var dungeon_map := ScanTransitionDungeonMap.new()
+	var overlay := Node.new()
+	manager.dungeon_map = dungeon_map
+	manager.overlay_layer = overlay
+	dungeon_map.overlay_to_check = overlay
+	manager.add_child(dungeon_map)
+	add_child(overlay)
+	var terminal: Variant = load("res://src/map/terminal.tscn").instantiate()
+	overlay.add_child(terminal)
+	var payload := _terminal_payload()
+	terminal.setup(payload)
+	terminal.option_selected.connect(manager._on_terminal_choice.bind(payload))
+	terminal.finish_typing()
+
+	assert_true(terminal.handle_semantic_action(&"terminal_scan"))
+
+	assert_eq(dungeon_map.targeting_start_count, 1)
+	assert_eq(dungeon_map.overlay_children_when_targeting_started, 0)
+	assert_eq(overlay.get_child_count(), 0)
+	assert_false(terminal.is_inside_tree())
+	assert_true(terminal.is_queued_for_deletion())
+	assert_null(terminal.close_tween)
+	assert_engine_error_count(0)
+	overlay.free()
+	manager.free()
+	await get_tree().process_frame
+
+
 func test_finance_terminal_choice_grants_once_and_completes_once() -> void:
 	var original_bits := RunManager.run_bits
 	var manager := _manager()
