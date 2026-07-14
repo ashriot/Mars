@@ -264,6 +264,7 @@ func test_controller_events_route_the_complete_playable_loop() -> void:
 	Input.action_press(&"nav_right")
 	await get_tree().process_frame
 	assert_eq(map._controller_preview_node.type, MapNode.NodeType.COMBAT)
+	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.CONTROLLER)
 	await _send(&"confirm")
 	Input.action_release(&"nav_right")
 	await get_tree().process_frame
@@ -277,6 +278,9 @@ func test_controller_events_route_the_complete_playable_loop() -> void:
 	var battle_actions: Control = router.manager.battle_manager.action_bar.actions_ui
 	var first_action := battle_actions.get_child(0) as ActionButton
 	var second_action := battle_actions.get_child(1) as ActionButton
+	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.CONTROLLER, "combat inherits the global input mode before receiving battle input")
+	assert_same(first_action.dynamic_glyph.texture_normal, InputIconMap.get_glyph(InputManager.get_active_controller_type(), &"action_1"))
+	assert_same(second_action.dynamic_glyph.texture_normal, InputIconMap.get_glyph(InputManager.get_active_controller_type(), &"action_2"))
 	assert_eq(first_action.action.resource_path, "res://data/heroes/asher/actions/double_tap.tres")
 	assert_eq(second_action.action.resource_path, "res://data/heroes/asher/actions/fusion_ammo.tres")
 	assert_true(first_action.visible)

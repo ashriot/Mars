@@ -121,6 +121,7 @@ func _report_interaction_error(message: String) -> void:
 	push_error("GameManager interaction error: " + message)
 
 func _start_encounter(encounter: Encounter):
+	var inherited_input_mode := InputManager.get_active_mode()
 	current_encounter = encounter
 	_encounter_resolution_started = false
 	AudioManager.play_sfx("radiate")
@@ -129,6 +130,9 @@ func _start_encounter(encounter: Encounter):
 	AudioManager.play_music("battle", 0.0, true, false)
 	await dungeon_map.enter_battle_visuals()
 
+	# The transition is non-interactive. Keep incidental transition events from
+	# changing which device glyphs the newly created battle UI inherits.
+	InputManager.restore_active_mode(inherited_input_mode)
 	battle_scene = battle_scene_packed.instantiate()
 	overlay_layer.add_child(battle_scene)
 	battle_scene.setup_battle(encounter)

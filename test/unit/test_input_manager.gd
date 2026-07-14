@@ -138,6 +138,16 @@ func test_genuine_mouse_input_selects_free() -> void:
 	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.FREE)
 
 
+func test_restore_active_mode_reapplies_a_transition_snapshot() -> void:
+	manager._set_active_mode(manager.InputMode.CONTROLLER)
+	var mode_before_transition: int = manager.get_active_mode()
+	manager._set_active_mode(manager.InputMode.KEYBOARD_MOUSE)
+
+	manager.restore_active_mode(mode_before_transition)
+
+	assert_eq(manager.get_active_mode(), manager.InputMode.CONTROLLER)
+
+
 func test_cursor_behavior_signal_emits_only_on_actual_changes() -> void:
 	watch_signals(manager)
 	manager._set_cursor_behavior(manager.CursorBehavior.SNAPPED)
