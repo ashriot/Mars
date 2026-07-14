@@ -13,6 +13,8 @@ Redshift is a local, pre-alpha game prototype built with Godot 4.6.3. Optimize f
 
 Project documentation: [`docs/README.md`](docs/README.md).
 
+Positioning and coordinate-space guidance: [`docs/coordinate-spaces.md`](docs/coordinate-spaces.md).
+
 ## Working Rules
 
 - Inspect neighboring scripts, scenes, data, tests, and documentation before changing behavior.

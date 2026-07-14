@@ -2,7 +2,7 @@
 
 ## Goal
 
-Make terminal protocol input unambiguous and make controller scanning remain visibly anchored to the hex beneath the cursor, including while camera edge scrolling is moving the map.
+Make terminal protocol input unambiguous and make controller scanning use a stable world-space aim that stays centered during scan movement and remains anchored while the camera is deliberately panned away.
 
 This design supersedes the terminal focus/typing behavior and the pointer-presentation and selection-ownership portions of `2026-07-14-controller-driven-scan-cursor-design.md`. Existing scan effects, radius, costs, confirmation, cancellation, reveal timing, and return-to-party behavior remain unchanged.
 
@@ -12,7 +12,7 @@ The terminal currently combines focus navigation with direct shortcuts. A row ca
 
 The Scan choice also queues the terminal for deletion but starts targeting before the terminal has actually left the tree. Its modal registration can therefore remain active during the transition and cause the map to cancel or suppress the new targeting state.
 
-Controller scanning relies on `Area2D.mouse_entered` to update the selected hex after warping the system pointer. Once the pointer clamps at a viewport edge, its screen position no longer changes. Camera motion does not cause Godot to recompute `Area2D` mouse hover beneath that stationary pointer, so the reticle remains on an old hex and scrolls offscreen while the camera continues moving.
+Controller scanning originally relied on `Area2D.mouse_entered` to update the selected hex after warping the system pointer. Later screen-space pointer and edge-scroll behavior caused the cursor and camera to move simultaneously, producing apparent acceleration, feedback, and selection warping. The corrected model stores one world-space aim and projects it for display.
 
 ## Terminal Input Model
 
@@ -51,12 +51,12 @@ This preserves the existing behavior where canceling a scan reopens the current 
 
 ## Scan Cursor and Selection
 
-The controller continues to drive a screen-space pointer with the left stick or D-pad. This is a dedicated software cursor, not hex-to-hex controller navigation and not a warp of the physical OS mouse:
+The controller drives a dungeon-map-local world aim with the left stick or D-pad. This is continuous cursor movement, not hex-to-hex controller navigation and not a warp of the physical OS mouse:
 
-- analog magnitude controls continuous pointer velocity through the existing input dead zone;
-- D-pad input drives the same pointer at full digital magnitude;
-- the existing custom navigation cursor is drawn at those exact coordinates during controller scan targeting;
-- the stored controller pointer and custom cursor advance together as one controller-owned authority;
+- analog magnitude controls continuous world-aim velocity through the existing input dead zone;
+- D-pad input drives the same world aim at full digital magnitude;
+- the existing custom navigation cursor is drawn at the world aim's projected screen position;
+- the projected screen pointer and custom cursor are presentation of one controller-owned world authority;
 - controller movement never changes the physical OS mouse position.
 
 While controller mode is active, the OS cursor is hidden and the custom controller cursor remains visible during scan targeting. Mouse motion by itself does not switch input mode. A physical mouse-button click switches to keyboard-and-mouse mode, hides the custom controller cursor, and reveals the OS cursor at the physical mouse position. The OS cursor does not inherit the controller cursor's position.
@@ -65,25 +65,22 @@ Keyboard input alone remains part of keyboard-and-mouse mode. The mouse activati
 
 Hex selection no longer depends solely on Godot generating a new mouse-motion hover event:
 
-- physical mouse hover signals and controller pointer resolution both call one shared `DungeonMap` selection method;
-- after controller pointer movement and after scan camera movement, `DungeonMap` resolves the `MapNode` beneath the pointer using the map's actual `Area2D` collision shapes;
+- physical mouse hover signals and controller world-aim resolution both call one shared `DungeonMap` selection method;
+- after controller aim movement, `DungeonMap` resolves the `MapNode` at the global-world query point using the map's actual `Area2D` collision shapes;
 - when a `MapNode` is beneath the pointer, the shared method updates `DungeonScanController.selected_node`, `_controller_preview_node`, and the snapped reticle;
 - when the pointer crosses a gap, the last valid selected hex remains selected, matching existing mouse behavior;
-- selected-node state never drives pointer position or camera position.
+- selected-node state never drives aim position or camera position.
 
 The collision query is a necessary engine integration seam, not a second set of targeting rules. It reuses the same collision geometry and the same selection method as mouse hover.
 
 ## Camera Behavior
 
-The approved proportional safe area and input precedence remain:
-
-- pointer motion inside the safe area does not move the camera;
-- active left-stick/D-pad pressure outside the safe area edge-scrolls the camera;
-- continued pressure at the clamped viewport edge continues scrolling;
-- releasing navigation pressure stops edge scrolling immediately;
-- non-zero right-stick pan wins in the same frame.
-
-After camera movement, the under-pointer collision query runs again. The reticle therefore advances to the hex now beneath the stationary edge cursor rather than scrolling away with an old selection.
+- While left-stick or D-pad scan movement is active, the camera is attached to the world aim and keeps its projected cursor centered.
+- Releasing navigation input stops world-aim and attached-camera movement immediately.
+- With left input neutral, right-stick input detaches and pans the camera without moving the world aim or changing the selected hex.
+- The cursor and reticle remain anchored to that world target and therefore move together on screen as the camera pans.
+- Resuming left-stick or D-pad movement takes priority over right-stick input, smoothly returns the camera to the world aim, and restores the centered lock.
+- No camera motion feeds back into the stored world aim.
 
 ## Architecture
 
@@ -91,13 +88,13 @@ After camera movement, the under-pointer collision query runs again. The reticle
 
 `GameManager` owns synchronous terminal-overlay teardown before scan startup and the existing scan outcome connections.
 
-`DungeonScanController` continues to own pointer position, speed, clamping, active state, and the last supplied selected node.
+`DungeonScanController` continues to own scan speed, active state, projected pointer presentation, and the last supplied selected node.
 
 `InputManager` owns click-based mouse-mode activation and ignores mouse motion as a mode-switching signal.
 
-`DungeonMap` owns controller-pointer movement, visible custom scan-cursor presentation, collision resolution, the shared scan-selection boundary, and camera-policy orchestration.
+`DungeonMap` owns the controller world aim, visible custom scan-cursor projection, collision resolution, the shared scan-selection boundary, and camera-policy orchestration.
 
-`DungeonCameraController` continues to own safe-area calculations, smoothing, zoom interaction, and authoritative map clamping.
+`DungeonCameraController` continues to own pan motion, zoom interaction, and authoritative map clamping.
 
 ## Testing
 
@@ -109,13 +106,14 @@ Automated coverage must prove:
 - protocol input during typing neither skips the animation nor commits a choice;
 - Scan removes the terminal overlay/modal before targeting begins;
 - controller pointer resolution uses a real `MapNode` collision shape and the shared selection boundary;
-- analog and D-pad input move the stored controller pointer and custom cursor together without warping the OS mouse;
+- analog and D-pad input move the stored world aim at the expected magnitude while its projected cursor remains centered under attached-camera movement;
 - mouse motion alone preserves controller mode, while a physical mouse-button click activates keyboard-and-mouse mode and restores the OS cursor at its physical position;
-- camera movement beneath a stationary edge pointer updates the reticle without manually invoking `_on_node_hovered()`;
+- right-stick camera panning leaves the world aim and selected hex unchanged while their cursor and reticle projections move together on screen;
+- resumed left input smoothly reattaches the camera without warping the aim or reticle;
 - neutral input still stops camera motion immediately;
 - scan cancel reopens the terminal and scan confirm completes the interaction once.
 
-Manual DualSense acceptance must verify the terminal shortcut model, visible custom scan cursor, mouse hover presentation, terminal-to-scan transition, edge scrolling without reticle loss, mouse/controller handoff, confirmation, and cancellation.
+Manual DualSense acceptance must verify the terminal shortcut model, visible custom scan cursor, mouse hover presentation, terminal-to-scan transition, centered camera lock, right-stick detachment, smooth left-stick reattachment, mouse/controller handoff, confirmation, and cancellation.
 
 ## Out of Scope
 

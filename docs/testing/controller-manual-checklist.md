@@ -31,12 +31,12 @@ Run this sequence once over USB and once over Bluetooth. Fill in both rows befor
 | USB |  |  | PS5 DualSense | USB |  |  |
 | Bluetooth |  |  | PS5 DualSense | Bluetooth |  |  |
 
-- [ ] Move the left stick partially and fully: pointer speed follows analog magnitude; D-pad moves the same pointer at full digital speed.
-- [ ] During controller scanning, the visible custom cursor follows the controller pointer while the hidden OS mouse remains at its independent physical position.
+- [ ] Move the left stick partially and fully: the world aim follows analog magnitude, the map moves at a consistent speed, and the cursor stays centered while the camera is attached; D-pad provides the same movement at full digital magnitude.
+- [ ] During controller scanning, the reticle snaps through real hexes beneath the centered custom cursor while the OS mouse remains at its independent physical position.
 - [ ] Move the physical mouse without clicking: controller mode, controller cursor, and reticle remain authoritative. Click a mouse button: keyboard-and-mouse mode activates, the custom cursor hides, and the OS cursor appears at the physical click position without inheriting the controller position.
-- [ ] Hold toward a viewport edge: the cursor clamps, camera edge-scroll continues, and the reticle advances through real hexes beneath the stationary edge cursor.
-- [ ] No stale reticle scrolls offscreen; releasing the stick stops pointer and camera immediately.
-- [ ] Hold right-stick pan while moving the left stick or D-pad: right-stick pan wins and does not pull the cursor or selection.
+- [ ] Release the left stick or D-pad: the world aim and attached camera stop immediately with no drift or acceleration.
+- [ ] With left input neutral, hold the right stick: the camera detaches and pans while the cursor and reticle remain anchored to the same world target and move together on screen.
+- [ ] Resume left-stick or D-pad input after panning: left input wins, the camera slides back to the world aim without warping it, then keeps the cursor centered again.
 - [ ] Confirm after hovering a distant hex: the last hovered hex is scanned, the reveal begins, input briefly locks, then the camera smoothly returns to the party.
 - [ ] Cancel after hovering a distant hex: no scan is consumed and the camera smoothly returns to the party immediately.
 
@@ -82,12 +82,12 @@ Run this sequence once over USB and once over Bluetooth. Fill in both rows befor
 - [ ] Hold a direction and tap confirm repeatedly across completed nodes; each move reevaluates from the new node without requiring stick recentering, while new interactions still lock input.
 - [ ] Use the controller D-pad as a digital fallback and verify it selects the same eligible destinations.
 - [ ] Switch to keyboard-and-mouse mode with a physical mouse click; WASD/arrows do not preview or move between nodes, while subsequent mouse hover/click owns the reticle and traversal.
-- [ ] Move the left stick partially and fully: pointer speed follows analog magnitude; D-pad moves the same pointer at full digital speed.
-- [ ] During controller scanning, the visible custom cursor follows the controller pointer while the hidden OS mouse remains at its independent physical position.
+- [ ] Move the left stick partially and fully: the world aim follows analog magnitude, the map moves at a consistent speed, and the cursor stays centered while the camera is attached; D-pad provides the same movement at full digital magnitude.
+- [ ] During controller scanning, the reticle snaps through real hexes beneath the centered custom cursor while the OS mouse remains at its independent physical position.
 - [ ] Move the physical mouse without clicking: controller mode, controller cursor, and reticle remain authoritative. Click a mouse button: keyboard-and-mouse mode activates, the custom cursor hides, and the OS cursor appears at the physical click position without inheriting the controller position.
-- [ ] Hold toward a viewport edge: the cursor clamps, camera edge-scroll continues, and the reticle advances through real hexes beneath the stationary edge cursor.
-- [ ] No stale reticle scrolls offscreen; releasing the stick stops pointer and camera immediately.
-- [ ] Hold right-stick pan while moving the left stick or D-pad: right-stick pan wins and does not pull the cursor or selection.
+- [ ] Release the left stick or D-pad: the world aim and attached camera stop immediately with no drift or acceleration.
+- [ ] With left input neutral, hold the right stick: the camera detaches and pans while the cursor and reticle remain anchored to the same world target and move together on screen.
+- [ ] Resume left-stick or D-pad input after panning: left input wins, the camera slides back to the world aim without warping it, then keeps the cursor centered again.
 - [ ] Confirm after hovering a distant hex: the last hovered hex is scanned, the reveal begins, input briefly locks, then the camera smoothly returns to the party.
 - [ ] Cancel after hovering a distant hex: no scan is consumed and the camera smoothly returns to the party immediately.
 - [ ] Verify semantic confirm/cancel and D-pad fallback on the connected controller family.
