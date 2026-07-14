@@ -116,6 +116,9 @@ func test_nested_party_and_terminal_cancel_only_top_and_restore_each_layer() -> 
 	party.open()
 	await get_tree().process_frame
 	var party_default := party.mode_tabs.get_child(0) as Button
+	var underlying_pressed := [0]
+	for button: BaseButton in party.find_children("*", "BaseButton", true, false):
+		button.pressed.connect(func() -> void: underlying_pressed[0] += 1)
 	assert_eq(get_viewport().gui_get_focus_owner(), party_default)
 	assert_true(ux.is_top_modal(party))
 
@@ -132,9 +135,9 @@ func test_nested_party_and_terminal_cancel_only_top_and_restore_each_layer() -> 
 	var first_protocol: TerminalProtocolRow = inner.get_protocol_row(0)
 	assert_eq(first_protocol.focus_mode, Control.FOCUS_NONE)
 	assert_false(first_protocol.has_focus())
-	assert_eq(get_viewport().gui_get_focus_owner(), party_default)
-	assert_same(ux.get_focus_target(), party_default)
-	assert_same(ux.cursor._target, party_default)
+	assert_null(get_viewport().gui_get_focus_owner())
+	assert_null(ux.get_focus_target())
+	assert_null(ux.cursor._target)
 	assert_eq(ux.hint_bar.get_hint_count(), 0)
 	assert_true(ux.is_top_modal(inner))
 	var directional_event := _key(KEY_DOWN)
@@ -143,6 +146,14 @@ func test_nested_party_and_terminal_cancel_only_top_and_restore_each_layer() -> 
 	directional_event.pressed = false
 	get_viewport().push_input(directional_event)
 	await get_tree().process_frame
+	var enter_event := _key(KEY_ENTER)
+	get_viewport().push_input(enter_event)
+	await get_tree().process_frame
+	enter_event.pressed = false
+	get_viewport().push_input(enter_event)
+	await get_tree().process_frame
+	assert_eq(underlying_pressed[0], 0, "keyboard accept cannot activate an obscured party control")
+	assert_null(get_viewport().gui_get_focus_owner())
 	for index in 5:
 		var protocol_row: TerminalProtocolRow = inner.get_protocol_row(index)
 		assert_false(protocol_row.has_focus())
@@ -152,6 +163,14 @@ func test_nested_party_and_terminal_cancel_only_top_and_restore_each_layer() -> 
 	assert_true(inner.interaction_state in [inner.TerminalState.TYPING, inner.TerminalState.READY])
 	inner.finish_typing()
 	assert_eq(inner.interaction_state, inner.TerminalState.READY)
+	enter_event.pressed = true
+	get_viewport().push_input(enter_event)
+	await get_tree().process_frame
+	enter_event.pressed = false
+	get_viewport().push_input(enter_event)
+	await get_tree().process_frame
+	assert_eq(underlying_pressed[0], 0, "keyboard accept remains blocked after terminal typing completes")
+	assert_null(get_viewport().gui_get_focus_owner())
 	assert_true(inner.handle_semantic_action(&"terminal_extract"))
 	assert_true(ux.is_top_modal(inner))
 	assert_true(inner.confirm_button.is_visible_in_tree())
@@ -165,9 +184,9 @@ func test_nested_party_and_terminal_cancel_only_top_and_restore_each_layer() -> 
 	assert_same(ux.cursor._target, inner.confirm_button)
 	assert_true(inner.handle_semantic_action(&"cancel"))
 	assert_eq(inner.interaction_state, inner.TerminalState.READY)
-	assert_same(get_viewport().gui_get_focus_owner(), party_default)
-	assert_same(ux.get_focus_target(), party_default)
-	assert_same(ux.cursor._target, party_default)
+	assert_null(get_viewport().gui_get_focus_owner())
+	assert_null(ux.get_focus_target())
+	assert_null(ux.cursor._target)
 	assert_false(inner.confirm_button.has_focus())
 	assert_false(inner.cancel_button.has_focus())
 	assert_false(inner.close_button.has_focus())

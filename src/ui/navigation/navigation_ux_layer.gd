@@ -73,7 +73,9 @@ func push_modal(root: Control, default_focus: Control, suppress_hints := false, 
 		"focus_generation": _modal_focus_generation,
 	})
 	_apply_top_modal_hint_policy()
-	if not focusless and _is_focusable(default_focus):
+	if focusless:
+		_enter_focusless_modal()
+	elif _is_focusable(default_focus):
 		default_focus.grab_focus()
 		if _focus_target != default_focus:
 			_update_focus_target(default_focus)
@@ -88,7 +90,7 @@ func update_modal_focus(root: Control, default_focus: Control, focusless := fals
 	_modal_stack.back().focusless = focusless
 	_modal_stack.back().focus_generation = _modal_focus_generation
 	if focusless:
-		_restore_focusless_modal_presentation(_modal_stack.back())
+		_enter_focusless_modal()
 		return
 	var modal_focus := _modal_default(_modal_stack.back())
 	if modal_focus:
@@ -191,6 +193,13 @@ func _on_focus_changed(control: Control) -> void:
 		return
 	_prune_state()
 	if not _modal_stack.is_empty():
+		if bool(_modal_stack.back().get("focusless", false)):
+			if is_instance_valid(control):
+				_restoring_focus = true
+				control.release_focus()
+				_restoring_focus = false
+			_clear_presentation()
+			return
 		var modal_root := _weak_get(_modal_stack.back().root) as Control
 		if modal_root == control or modal_root.is_ancestor_of(control):
 			_update_focus_target(control)
@@ -236,6 +245,9 @@ func ensure_valid_focus() -> void:
 	if is_instance_valid(_adapter) and _modal_stack.is_empty():
 		return
 	if not _modal_stack.is_empty():
+		if bool(_modal_stack.back().get("focusless", false)):
+			_enter_focusless_modal()
+			return
 		var modal_root := _weak_get(_modal_stack.back().root) as Control
 		var owner := get_viewport().gui_get_focus_owner()
 		if _is_focusable(owner) and (owner == modal_root or modal_root.is_ancestor_of(owner)):
@@ -257,7 +269,10 @@ func ensure_valid_focus() -> void:
 func _restore_from_entry(entry: Dictionary) -> void:
 	var restore := _weak_get(entry.restore) as Control
 	var restore_screen := _weak_get(entry.restore_screen) as Control
-	if _is_focusable(restore) and is_instance_valid(_screen_for(restore)):
+	var top_modal_root: Control = null
+	if not _modal_stack.is_empty():
+		top_modal_root = _weak_get(_modal_stack.back().root) as Control
+	if _is_focusable(restore) and (is_instance_valid(_screen_for(restore)) or _belongs_to(restore, top_modal_root)):
 		restore.grab_focus()
 		return
 	if is_instance_valid(restore_screen) and _screens.has(restore_screen):
@@ -272,43 +287,13 @@ func _restore_from_entry(entry: Dictionary) -> void:
 	_restore_adapter_focus()
 
 
-func _restore_focusless_modal_presentation(entry: Dictionary) -> void:
-	var modal_root := _weak_get(entry.root) as Control
+func _enter_focusless_modal() -> void:
 	var owner := get_viewport().gui_get_focus_owner()
-	if _belongs_to(owner, modal_root):
-		owner.release_focus()
-	var restore := _focusless_restore_target(entry)
-	if restore:
+	if is_instance_valid(owner):
 		_restoring_focus = true
-		restore.grab_focus()
-		_update_focus_target(restore)
+		owner.release_focus()
 		_restoring_focus = false
-		return
 	_clear_presentation()
-
-
-func _focusless_restore_target(entry: Dictionary) -> Control:
-	var restore := _weak_get(entry.restore) as Control
-	if _is_focusable(restore) and _is_underlying_presentation(restore):
-		return restore
-	var restore_screen := _weak_get(entry.restore_screen) as Control
-	if is_instance_valid(restore_screen) and _screens.has(restore_screen):
-		var screen_fallback := _screen_fallback(restore_screen)
-		if screen_fallback:
-			return screen_fallback
-	if _modal_stack.size() > 1:
-		return _modal_default(_modal_stack[_modal_stack.size() - 2])
-	return _registered_fallback()
-
-
-func _is_underlying_presentation(control: Control) -> bool:
-	if is_instance_valid(_screen_for(control)):
-		return true
-	for index in _modal_stack.size() - 1:
-		var root := _weak_get(_modal_stack[index].root) as Control
-		if _belongs_to(control, root):
-			return true
-	return false
 
 
 func _restore_adapter_focus() -> void:
