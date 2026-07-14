@@ -16,7 +16,7 @@ The current interaction also divides responsibility between clickable RichText l
 
 The terminal keeps its command-line identity. It does not become a conventional card menu.
 
-The modal panel occupies approximately 90–91% of the available viewport width and height, centered with proportional outer margins. A small amount of the dungeon remains visible around it so the terminal reads as an in-world modal rather than a separate scene.
+The modal panel occupies approximately 90–91% of the available viewport width and is centered in both axes. Its height is content-driven by the header, status, five protocol rows, and footer instead of stretching to a fixed viewport percentage. The content height is clamped to the available viewport so the panel remains fully visible at the 1200×800 minimum. At that target it should occupy roughly 70–75% of the height, leaving a deliberate glimpse of the dungeon without a large empty body.
 
 The terminal retains its warm orange/brown palette, monospace typography, bright header strip, border glow, session metadata, and trace warning. The redesign does not enable the currently disabled CRT overlay; that shader remains available for later visual tuning. The layout establishes three clear regions:
 
@@ -24,7 +24,9 @@ The terminal retains its warm orange/brown palette, monospace typography, bright
 2. a body containing authentication status and the five protocol rows;
 3. a footer containing security flavor text and contextual input guidance where useful.
 
-At 1200×800, normal protocol text must render at approximately 22–24 physical pixels or larger. Metadata and footer text may be smaller but must remain legible. The implementation uses proportional anchors and margins instead of the current fixed root offsets. Font sizes and row spacing are verified at both 1200×800 and 1920×1080.
+At 1200×800, normal protocol text must render at approximately 24–26 physical pixels or larger. Metadata and footer text may be smaller but must remain legible. The implementation uses proportional anchors and margins instead of the current fixed root offsets. Font sizes and row spacing are verified at both 1200×800 and 1920×1080.
+
+Protocol titles use the terminal's orange accent while their right-aligned outcome summaries remain white. Upgrade annotations remain yellow. Every glyph occupies a consistent square slot, preserves its source aspect ratio, and is centered without stretching. The footer pairs the trace warning with an embedded Cancel glyph labeled `EXIT TERMINAL`; the clickable header X remains a secondary mouse close affordance.
 
 ## Protocol Controls
 
@@ -47,15 +49,15 @@ Directional navigation is available as a fallback through the real controls, but
 | Protocol | Keyboard | Controller |
 | --- | --- | --- |
 | Security | 1 | Cross/A/confirm-position face button |
-| Scan | 2 | L1/LB/left shoulder |
-| Medical | 3 | Square/X/left face button |
-| Finance | 4 | Triangle/Y/top face button |
+| Medical | 2 | Square/X/left face button |
+| Finance | 3 | Triangle/Y/top face button |
+| Scan | 4 | L1/LB/left shoulder |
 | Extraction | 5 | R1/RB/right shoulder |
-| Back/Close | Escape | Circle/B/cancel-position face button |
+| Exit Terminal | Escape | Circle/B/cancel-position face button |
 
-Controller labels resolve through the existing semantic glyph system. PlayStation displays Cross, L1, Square, Triangle, R1, and Circle for Back. Xbox and Steam-compatible families display A, LB, X, Y, RB, and B for Back. Nintendo displays A, L, Y, X, R, and B for Back. Keyboard-and-mouse displays 1–5 and Escape.
+Controller labels resolve through the existing semantic glyph system. In visual row order, PlayStation displays Cross, Square, Triangle, L1, R1, and Circle for Exit Terminal. Xbox and Steam-compatible families display A, X, Y, LB, RB, and B. Nintendo displays A, Y, X, L, R, and B. Keyboard-and-mouse displays 1–5 and Escape in the same row order.
 
-The five protocols receive terminal-specific semantic actions rather than borrowing combat action slots. The Security action follows the active controller family's confirm-position binding so Nintendo retains A as Security and B as Back. Extraction uses a dedicated semantic action rather than borrowing an unrelated screen action merely because it shares the same shoulder.
+The five protocols receive terminal-specific semantic actions rather than borrowing combat action slots. The Security action follows the active controller family's confirm-position binding so Nintendo retains A as Security and B as Exit Terminal. Extraction uses a dedicated semantic action rather than borrowing an unrelated screen action merely because it shares the same shoulder.
 
 Mouse users can click any protocol row. Protocols 1–4 execute immediately. Clicking Extraction enters the same guarded state as its keyboard or controller shortcut.
 
@@ -111,9 +113,11 @@ No fallback path silently selects a different protocol.
 
 Automated tests cover:
 
-- panel bounds, minimum readable layout, and absence of clipping at 1200×800 and 1920×1080;
+- content-driven panel height, panel bounds, minimum readable layout, and absence of clipping at 1200×800 and 1920×1080;
+- aspect-preserving glyph slots, orange protocol titles, white outcomes, and visible Exit Terminal guidance;
 - correct keyboard, PlayStation, Xbox/Steam, and Nintendo glyph resolution;
-- the controller mapping remaining Cross/A for Security, L1/LB for Scan, Square/X for Medical, Triangle/Y for Finance, R1/RB for Extraction, and Circle/B for Back;
+- row and shortcut order remaining Security 1/Cross/A, Medical 2/Square/X, Finance 3/Triangle/Y, Scan 4/L1/LB, Extraction 5/R1/RB, with Escape/Circle/B for Exit Terminal;
+- every configured glyph resource, including keyboard 5, rendering a legible symbol rather than an empty keycap;
 - protocols 1–4 emitting their existing choice IDs exactly once from keyboard, controller, focus activation, and mouse activation;
 - keyboard 5 and the controller right shoulder entering extraction confirmation without emitting a choice;
 - Confirm emitting extraction exactly once and Cancel returning to Ready;
@@ -130,7 +134,7 @@ Tests assert stable state transitions, signal counts, semantic mappings, focus o
 
 Manual verification covers:
 
-- readability, spacing, focus visibility, and absence of clipping at 1200×800, 1280×800, and 1920×1080;
+- readability, content-sized height, spacing, focus visibility, glyph proportions, color hierarchy, and absence of clipping at 1200×800, 1280×800, and 1920×1080;
 - typewriter timing and instant completion by controller, keyboard, and mouse;
 - all keyboard, DualSense, mouse, and controller-family glyph interactions;
 - immediate protocols versus guarded extraction confirmation;
