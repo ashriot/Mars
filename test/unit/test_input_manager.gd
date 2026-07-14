@@ -297,9 +297,9 @@ func _joy_button_for(action: StringName) -> JoyButton:
 func test_terminal_actions_use_numbers_shoulders_and_non_cancel_face_buttons() -> void:
 	var expected := {
 		&"terminal_security": [KEY_1, JOY_BUTTON_A],
-		&"terminal_scan": [KEY_2, JOY_BUTTON_LEFT_SHOULDER],
-		&"terminal_medical": [KEY_3, JOY_BUTTON_X],
-		&"terminal_finance": [KEY_4, JOY_BUTTON_Y],
+		&"terminal_medical": [KEY_2, JOY_BUTTON_X],
+		&"terminal_finance": [KEY_3, JOY_BUTTON_Y],
+		&"terminal_scan": [KEY_4, JOY_BUTTON_LEFT_SHOULDER],
 		&"terminal_extract": [KEY_5, JOY_BUTTON_RIGHT_SHOULDER],
 	}
 	for action: StringName in expected:

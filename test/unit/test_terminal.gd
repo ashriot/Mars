@@ -47,6 +47,22 @@ func test_setup_configures_five_structured_rows_and_one_upgrade() -> void:
 		terminal.free()
 
 
+func test_setup_orders_protocols_by_keyboard_and_controller_shortcuts() -> void:
+	var terminal := await _terminal()
+	var expected_actions: Array[StringName] = [
+		&"terminal_security",
+		&"terminal_medical",
+		&"terminal_finance",
+		&"terminal_scan",
+		&"terminal_extract",
+	]
+	var expected_ids: Array[StringName] = [&"opt_sec", &"opt_med", &"opt_fin", &"opt_scan", &"opt_extract"]
+	for index in expected_actions.size():
+		assert_eq(terminal.get_protocol_row(index).get_action(), expected_actions[index])
+		assert_eq(terminal.get_protocol_row(index).get_choice_id(), expected_ids[index])
+	terminal.free()
+
+
 func test_terminal_panel_and_protocols_fit_minimum_and_desktop_viewports() -> void:
 	for size in [Vector2i(1200, 800), Vector2i(1920, 1080)]:
 		var fixture := await _terminal_in_viewport(size)
@@ -79,7 +95,7 @@ func test_protocols_one_through_four_execute_immediately_and_exactly_once() -> v
 		var terminal := await _terminal()
 		terminal.finish_typing()
 		watch_signals(terminal)
-		assert_true(terminal.handle_semantic_action([&"terminal_security", &"terminal_scan", &"terminal_medical", &"terminal_finance"][index]))
+		assert_true(terminal.handle_semantic_action([&"terminal_security", &"terminal_medical", &"terminal_finance", &"terminal_scan"][index]))
 		assert_signal_emit_count(terminal, "option_selected", 1)
 		assert_eq(terminal.interaction_state, terminal.TerminalState.CLOSING)
 		terminal.handle_semantic_action(&"terminal_security")
@@ -130,7 +146,7 @@ func test_setup_resets_confirmation_typing_and_one_shot_state() -> void:
 	terminal.setup(_payload("medical", "SECOND", 25, 15))
 	assert_eq(terminal.interaction_state, terminal.TerminalState.TYPING)
 	assert_false(terminal.confirmation_panel.visible)
-	assert_eq(terminal.get_protocol_row(2).get_choice_id(), &"opt_med_up")
+	assert_eq(terminal.get_protocol_row(1).get_choice_id(), &"opt_med_up")
 	assert_false(terminal.close_button.disabled)
 	terminal.free()
 
@@ -195,12 +211,12 @@ func test_setup_invalidates_an_in_flight_explicit_close() -> void:
 	assert_true(terminal.visible)
 	assert_eq(terminal.modulate.a, 1.0)
 	assert_string_contains(terminal.header_text.text, "SECOND")
-	assert_eq(terminal.get_protocol_row(2).get_choice_id(), &"opt_med_up")
+	assert_eq(terminal.get_protocol_row(1).get_choice_id(), &"opt_med_up")
 	assert_eq(counts, [0, 0])
 	assert_false(terminal.close_button.disabled)
 
 	terminal.finish_typing()
-	terminal.get_protocol_row(2).emit_signal(&"pressed")
+	terminal.get_protocol_row(1).emit_signal(&"pressed")
 	terminal.get_protocol_row(3).emit_signal(&"pressed")
 	terminal.handle_semantic_action(&"cancel")
 	assert_eq(counts, [1, 0])

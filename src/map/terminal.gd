@@ -7,9 +7,9 @@ enum TerminalState { TYPING, READY, CONFIRMING_EXTRACTION, CLOSING }
 
 const PROTOCOL_ACTIONS: Array[StringName] = [
 	&"terminal_security",
-	&"terminal_scan",
 	&"terminal_medical",
 	&"terminal_finance",
+	&"terminal_scan",
 ]
 const EXTRACTION_ACTION := &"terminal_extract"
 const EXTRACTION_ID := &"opt_extract"
@@ -143,9 +143,9 @@ func _protocol_definitions(data: Dictionary) -> Array[Dictionary]:
 	var upgrade_key: String = data.upgrade_key
 	return [
 		{id = &"opt_sec_up" if upgrade_key == "security" else &"opt_sec", action = &"terminal_security", title = "REBOOT SECURITY" if upgrade_key == "security" else "SCRAMBLE CAMERAS", outcome = "ALERT -%d%%" % int(data.alert), upgraded = upgrade_key == "security"},
-		{id = &"opt_scan_up" if upgrade_key == "scan" else &"opt_scan", action = &"terminal_scan", title = "HIJACK CAMERA NETWORK" if upgrade_key == "scan" else "HIJACK LOCAL FEED", outcome = "WIDE SCAN" if upgrade_key == "scan" else "SECTOR SCAN", upgraded = upgrade_key == "scan"},
 		{id = &"opt_med_up" if upgrade_key == "medical" else &"opt_med", action = &"terminal_medical", title = "DISPENSE ADRENALINE" if upgrade_key == "medical" else "DISPENSE PAINKILLERS", outcome = "HEAL + BOOST" if upgrade_key == "medical" else "HEAL INJURY", upgraded = upgrade_key == "medical"},
 		{id = &"opt_fin_up" if upgrade_key == "finance" else &"opt_fin", action = &"terminal_finance", title = "INTERCEPT PAYMENT" if upgrade_key == "finance" else "BIT MINE", outcome = "+%.1f BITS" % (float(data.bits) / 10.0), upgraded = upgrade_key == "finance"},
+		{id = &"opt_scan_up" if upgrade_key == "scan" else &"opt_scan", action = &"terminal_scan", title = "HIJACK CAMERA NETWORK" if upgrade_key == "scan" else "HIJACK LOCAL FEED", outcome = "WIDE SCAN" if upgrade_key == "scan" else "SECTOR SCAN", upgraded = upgrade_key == "scan"},
 		{id = EXTRACTION_ID, action = EXTRACTION_ACTION, title = "SIGNAL EXTRACTION", outcome = "TACTICAL RETREAT", upgraded = false},
 	]
 

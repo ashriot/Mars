@@ -255,7 +255,7 @@ func test_controller_events_route_the_complete_playable_loop() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	var terminal := router.manager.overlay_layer.get_child(0)
-	var finance: TerminalProtocolRow = terminal.get_protocol_row(3)
+	var finance: TerminalProtocolRow = terminal.get_protocol_row(2)
 	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.CONTROLLER)
 	assert_same(finance.glyph.texture_normal, InputIconMap.get_glyph(InputManager.get_active_controller_type(), &"terminal_finance"))
 	_assert_focus(terminal.get_protocol_row(0))

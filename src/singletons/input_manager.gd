@@ -13,7 +13,7 @@ const NAVIGATION_ACTIONS: Array[StringName] = [
 	&"confirm", &"cancel", &"page_left", &"page_right",
 	&"role_left", &"role_right",
 	&"action_1", &"action_2", &"action_3", &"action_4",
-	&"terminal_security", &"terminal_scan", &"terminal_medical", &"terminal_finance", &"terminal_extract",
+	&"terminal_security", &"terminal_medical", &"terminal_finance", &"terminal_scan", &"terminal_extract",
 ]
 
 signal input_mode_changed(mode: InputMode)

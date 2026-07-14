@@ -24,6 +24,20 @@ func test_terminal_keyboard_glyph_sources_are_curated() -> void:
 			file_name,
 		)
 
+
+func test_keyboard_five_glyph_contains_visible_dark_numeral_pixels() -> void:
+	var texture := load("res://assets/graphics/glyphs/keyboard_mouse/vector/keyboard_5.svg") as Texture2D
+	assert_not_null(texture)
+	var image := texture.get_image()
+	var dark_opaque_pixels := 0
+	for y in image.get_height():
+		for x in image.get_width():
+			var pixel := image.get_pixel(x, y)
+			if pixel.a > 0.9 and pixel.get_luminance() < 0.25:
+				dark_opaque_pixels += 1
+	assert_gt(dark_opaque_pixels, 0, "keyboard 5 must render a visible numeral")
+
+
 func test_runtime_glyph_folders_are_lowercase_svg_only() -> void:
 	var glyph_root := DirAccess.open("res://assets/graphics/glyphs")
 	var actual_families := Array(glyph_root.get_directories())
