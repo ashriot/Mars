@@ -17,6 +17,22 @@ class BattleDungeonMap extends FakeDungeonMap:
 		refresh_count += 1
 
 
+class ScanTransitionDungeonMap extends FakeDungeonMap:
+	var overlay_to_check: Node
+	var overlay_children_when_targeting_started := -1
+	var targeting_start_count := 0
+
+	func start_targeting_mode(_radius: int) -> void:
+		overlay_children_when_targeting_started = overlay_to_check.get_child_count()
+		targeting_start_count += 1
+		current_map_state = MapState.TARGETING
+
+
+class ScanTransitionManager extends GameManager:
+	func _ready() -> void:
+		pass
+
+
 class FloatingTextDouble extends FloatingText:
 	func setup(
 		_pos: Vector2,
@@ -380,6 +396,28 @@ func test_scan_cancel_reopens_current_terminal_without_completion() -> void:
 	assert_eq(manager.canceled_count, 0)
 	node.free()
 	manager.overlay_layer.free()
+	manager.free()
+	await get_tree().process_frame
+
+
+func test_scan_choice_removes_terminal_before_targeting_begins() -> void:
+	var manager := ScanTransitionManager.new()
+	var dungeon_map := ScanTransitionDungeonMap.new()
+	var overlay := Node.new()
+	manager.dungeon_map = dungeon_map
+	manager.overlay_layer = overlay
+	dungeon_map.overlay_to_check = overlay
+	manager.add_child(dungeon_map)
+	manager.add_child(overlay)
+	var terminal := Control.new()
+	overlay.add_child(terminal)
+
+	manager._on_terminal_choice("opt_scan", _terminal_payload())
+
+	assert_eq(dungeon_map.targeting_start_count, 1)
+	assert_eq(dungeon_map.overlay_children_when_targeting_started, 0)
+	assert_eq(overlay.get_child_count(), 0)
+	assert_true(terminal.is_queued_for_deletion())
 	manager.free()
 	await get_tree().process_frame
 

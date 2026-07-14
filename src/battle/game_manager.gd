@@ -168,8 +168,9 @@ func _on_terminal_choice(choice_tag: String, data: Dictionary):
 			_scan_outcome_handled = false
 			var radius = 2 if choice_tag == "opt_scan_up" else 1
 
-			for child in overlay_layer.get_children():
-				child.queue_free()
+			# Remove the terminal from the tree before targeting starts so its modal
+			# registration cannot cancel the scan on the map's next frame.
+			_clear_transient_overlay()
 			dungeon_map.scan_performed.connect(_on_scan_success, CONNECT_ONE_SHOT)
 			dungeon_map.scan_canceled.connect(_on_scan_canceled, CONNECT_ONE_SHOT)
 			dungeon_map.start_targeting_mode(radius)
