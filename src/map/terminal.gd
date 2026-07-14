@@ -224,10 +224,17 @@ func _enter_extraction_confirmation() -> void:
 	interaction_state = TerminalState.CONFIRMING_EXTRACTION
 	_set_rows_interactable(false)
 	confirmation_panel.show()
-	_grab_focus_if_valid.call_deferred(confirm_button)
+	var navigation := _navigation_ux_layer()
+	if navigation and navigation.is_top_modal(self):
+		navigation.update_modal_focus(self, confirm_button)
+	else:
+		_grab_focus_if_valid.call_deferred(confirm_button)
 
 
 func _leave_extraction_confirmation() -> void:
+	var navigation := _navigation_ux_layer()
+	if navigation and navigation.is_top_modal(self):
+		navigation.update_modal_focus(self, _rows[0], true)
 	confirmation_panel.hide()
 	_set_rows_interactable(true)
 	interaction_state = TerminalState.READY
@@ -293,7 +300,9 @@ func _ensure_modal_registered() -> void:
 	if not navigation:
 		return
 	if not navigation.is_top_modal(self):
-		navigation.push_modal(self, _rows[0], true)
+		navigation.push_modal(self, _rows[0], true, true)
+	else:
+		navigation.update_modal_focus(self, _rows[0], true)
 
 
 func _navigation_ux_layer() -> NavigationUXLayer:

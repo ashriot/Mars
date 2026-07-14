@@ -121,6 +121,13 @@ func test_nested_party_and_terminal_cancel_only_top_and_restore_each_layer() -> 
 
 	var inner := TerminalScene.instantiate()
 	add_child_autofree(inner)
+	assert_true(inner.setup({
+		"upgrade_key": "",
+		"bits": 12,
+		"alert": 10,
+		"facility_name": "NESTED",
+		"session_id": "FOCUS-TEST",
+	}))
 	await get_tree().process_frame
 	var first_protocol: TerminalProtocolRow = inner.get_protocol_row(0)
 	assert_eq(first_protocol.focus_mode, Control.FOCUS_NONE)
@@ -142,6 +149,22 @@ func test_nested_party_and_terminal_cancel_only_top_and_restore_each_layer() -> 
 		assert_false(protocol_row.caret_label.visible)
 	assert_false(inner.close_button.has_focus())
 	assert_ne(ux.cursor._target, inner.close_button)
+	assert_true(inner.interaction_state in [inner.TerminalState.TYPING, inner.TerminalState.READY])
+	inner.finish_typing()
+	assert_eq(inner.interaction_state, inner.TerminalState.READY)
+	assert_true(inner.handle_semantic_action(&"terminal_extract"))
+	assert_true(ux.is_top_modal(inner))
+	assert_true(inner.confirm_button.is_visible_in_tree())
+	await get_tree().process_frame
+	assert_same(get_viewport().gui_get_focus_owner(), inner.confirm_button)
+	party_default.grab_focus()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	assert_same(get_viewport().gui_get_focus_owner(), inner.confirm_button, "extraction confirmation recovers escaped focus")
+	assert_same(ux.get_focus_target(), inner.confirm_button)
+	assert_same(ux.cursor._target, inner.confirm_button)
+	assert_true(inner.handle_semantic_action(&"cancel"))
+	assert_eq(inner.interaction_state, inner.TerminalState.READY)
 
 	party._unhandled_input(_cancel_event())
 	await get_tree().process_frame

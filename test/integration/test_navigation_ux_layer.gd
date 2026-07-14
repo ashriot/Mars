@@ -114,10 +114,9 @@ func test_focusless_suppressing_modal_restores_unchanged_focus_hints_on_pop() ->
 
 	var inner := Control.new()
 	var focusless_default := Button.new()
-	focusless_default.focus_mode = Control.FOCUS_NONE
 	inner.add_child(focusless_default)
 	add_child_autofree(inner)
-	ux.push_modal(inner, focusless_default, true)
+	ux.push_modal(inner, focusless_default, true, true)
 	assert_same(get_viewport().gui_get_focus_owner(), outer_button)
 	assert_eq(ux.hint_bar.get_hint_count(), 0)
 
@@ -169,6 +168,51 @@ func test_remove_modal_discards_owned_presentation_without_restoring_screen() ->
 	ux.remove_modal(modal)
 	ux.pop_modal(modal)
 	assert_ne(ux.get_focus_target(), prior_screen_focus)
+
+	var later_modal := Control.new()
+	var later_button := Button.new()
+	later_modal.add_child(later_button)
+	add_child_autofree(later_modal)
+	ux.push_modal(later_modal, later_button)
+	ux.pop_modal(later_modal)
+	await get_tree().process_frame
+	assert_eq(ux.hint_bar.get_hint_count(), 0, "later modal lifecycle cannot restore removed-modal hints")
+
+
+func test_removing_lower_modal_scrubs_its_hints_from_focusless_inner_restore() -> void:
+	var ux := UXScene.instantiate() as NavigationUXLayer
+	add_child_autofree(ux)
+	var screen := Control.new()
+	var screen_button := Button.new()
+	screen.add_child(screen_button)
+	add_child_autofree(screen)
+	var screen_hints: Array[Dictionary] = [{action = &"confirm", label = "Screen", enabled = true}]
+	screen_button.focus_entered.connect(func() -> void: ux.publish_hints(screen_hints))
+	ux.register_screen(screen, screen_button)
+	await get_tree().process_frame
+
+	var removed_modal := Control.new()
+	var removed_default := Button.new()
+	removed_default.focus_mode = Control.FOCUS_NONE
+	removed_modal.add_child(removed_default)
+	add_child_autofree(removed_modal)
+	ux.push_modal(removed_modal, removed_default, false, true)
+	ux.publish_hints([{action = &"cancel", label = "Removed", enabled = true}])
+
+	var inner := Control.new()
+	var inner_default := Button.new()
+	inner_default.focus_mode = Control.FOCUS_NONE
+	inner.add_child(inner_default)
+	add_child_autofree(inner)
+	ux.push_modal(inner, inner_default, false, true)
+	ux.publish_hints([{action = &"confirm", label = "Inner", enabled = true}])
+	ux.remove_modal(removed_modal)
+	assert_eq(ux.hint_bar.get_hint(0).label.text, "Inner")
+
+	ux.pop_modal(inner)
+	await get_tree().process_frame
+	assert_same(get_viewport().gui_get_focus_owner(), screen_button)
+	assert_eq(ux.hint_bar.get_hint(0).label.text, "Screen", "inner pop cannot resurrect removed-modal hints")
 
 
 func test_remove_lower_modal_scrubs_descendant_restore_before_inner_pop() -> void:
@@ -322,6 +366,29 @@ func test_registered_screens_track_focus_and_modal_restores_it() -> void:
 	assert_eq(get_viewport().gui_get_focus_owner(), first, "focus restored")
 	assert_eq(screen_one.find_children("*NavigationCursor*", "", true, false).size(), 0)
 	assert_eq(screen_two.find_children("*ActionHint*", "", true, false).size(), 0)
+
+
+func test_modal_with_unavailable_default_falls_back_to_enabled_descendant() -> void:
+	var ux := UXScene.instantiate() as NavigationUXLayer
+	add_child_autofree(ux)
+	var outside := Button.new()
+	add_child_autofree(outside)
+	var modal := Control.new()
+	var default_button := Button.new()
+	var fallback_button := Button.new()
+	modal.add_child(default_button)
+	modal.add_child(fallback_button)
+	add_child_autofree(modal)
+	ux.push_modal(modal, default_button)
+	await get_tree().process_frame
+	assert_same(get_viewport().gui_get_focus_owner(), default_button)
+
+	default_button.disabled = true
+	outside.grab_focus()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	assert_same(get_viewport().gui_get_focus_owner(), fallback_button)
+	assert_same(ux.get_focus_target(), fallback_button)
 
 
 func test_modal_pop_synchronizes_cursor_to_restored_screen_focus() -> void:

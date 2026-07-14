@@ -10,6 +10,7 @@ var _focus_target: Control
 var _adapter: Object
 var _restoring_focus := false
 var _published_hints: Array[Dictionary] = []
+var _published_hint_owner: WeakRef
 
 
 func _ready() -> void:
@@ -48,13 +49,15 @@ func publish_hints(hints: Array[Dictionary]) -> void:
 	_prune_state()
 	_published_hints.clear()
 	_published_hints.assign(hints.duplicate(true))
+	var owner := _active_presentation_owner()
+	_published_hint_owner = weakref(owner) if is_instance_valid(owner) else null
 	if _top_modal_suppresses_hints():
 		hint_bar.set_hints([])
 		return
 	hint_bar.set_hints(_published_hints)
 
 
-func push_modal(root: Control, default_focus: Control, suppress_hints := false) -> void:
+func push_modal(root: Control, default_focus: Control, suppress_hints := false, focusless := false) -> void:
 	_prune_state()
 	_modal_stack.append({
 		"root": weakref(root),
@@ -62,13 +65,30 @@ func push_modal(root: Control, default_focus: Control, suppress_hints := false) 
 		"restore": weakref(_focus_target) if is_instance_valid(_focus_target) else null,
 		"restore_screen": weakref(_screen_for(_focus_target)) if is_instance_valid(_screen_for(_focus_target)) else null,
 		"restore_hints": _published_hints.duplicate(true),
+		"restore_hint_owner": _published_hint_owner,
 		"suppress_hints": suppress_hints,
+		"focusless": focusless,
 	})
 	_apply_top_modal_hint_policy()
-	if _is_focusable(default_focus):
+	if not focusless and _is_focusable(default_focus):
 		default_focus.grab_focus()
 		if _focus_target != default_focus:
 			_update_focus_target(default_focus)
+
+
+func update_modal_focus(root: Control, default_focus: Control, focusless := false) -> void:
+	_prune_state()
+	if _modal_stack.is_empty() or _weak_get(_modal_stack.back().root) != root:
+		return
+	_modal_stack.back().default = weakref(default_focus)
+	_modal_stack.back().focusless = focusless
+	if focusless:
+		return
+	var modal_focus := _modal_default(_modal_stack.back())
+	if modal_focus:
+		modal_focus.grab_focus()
+		if _focus_target != modal_focus:
+			_update_focus_target(modal_focus)
 
 
 func pop_modal(root: Control) -> void:
@@ -77,7 +97,12 @@ func pop_modal(root: Control) -> void:
 		return
 	var entry: Dictionary = _modal_stack.pop_back()
 	_published_hints.clear()
-	_published_hints.assign(entry.get("restore_hints", []))
+	var restore_hint_owner := _weak_get(entry.get("restore_hint_owner")) as Control
+	if _is_active_presentation_owner(restore_hint_owner):
+		_published_hints.assign(entry.get("restore_hints", []))
+		_published_hint_owner = weakref(restore_hint_owner)
+	else:
+		_published_hint_owner = null
 	_apply_top_modal_hint_policy()
 	if not _top_modal_suppresses_hints():
 		hint_bar.set_hints(_published_hints)
@@ -92,6 +117,7 @@ func remove_modal(root: Control) -> void:
 		var owns_focus := is_instance_valid(_focus_target) and (_focus_target == root or root.is_ancestor_of(_focus_target))
 		_redirect_stale_restores(index, root)
 		_modal_stack.remove_at(index)
+		_discard_removed_hint_state(root)
 		_apply_top_modal_hint_policy()
 		if owns_focus:
 			_clear_presentation()
@@ -107,15 +133,31 @@ func _redirect_stale_restores(removed_index: int, removed_root: Control) -> void
 	var replacement_screen := _weak_get(removed_entry.restore_screen) as Control
 	if not is_instance_valid(replacement_screen) or not _screens.has(replacement_screen) or _belongs_to(replacement_screen, removed_root):
 		replacement_screen = null
+	var replacement_hint_owner := _weak_get(removed_entry.get("restore_hint_owner")) as Control
+	var replacement_hints: Array[Dictionary] = []
+	if is_instance_valid(replacement_hint_owner) and replacement_hint_owner != removed_root:
+		replacement_hints.assign(removed_entry.get("restore_hints", []))
 	for index in range(removed_index + 1, _modal_stack.size()):
 		var restore := _weak_get(_modal_stack[index].restore) as Control
 		var restore_screen := _weak_get(_modal_stack[index].restore_screen) as Control
 		var restore_is_removed := _belongs_to(restore, removed_root)
 		var restore_screen_is_removed := _belongs_to(restore_screen, removed_root)
-		if not restore_is_removed and not restore_screen_is_removed:
-			continue
-		_modal_stack[index].restore = weakref(replacement) if is_instance_valid(replacement) else null
-		_modal_stack[index].restore_screen = weakref(replacement_screen) if is_instance_valid(replacement_screen) else null
+		if restore_is_removed or restore_screen_is_removed:
+			_modal_stack[index].restore = weakref(replacement) if is_instance_valid(replacement) else null
+			_modal_stack[index].restore_screen = weakref(replacement_screen) if is_instance_valid(replacement_screen) else null
+		var restore_hint_owner := _weak_get(_modal_stack[index].get("restore_hint_owner")) as Control
+		if restore_hint_owner == removed_root:
+			_modal_stack[index].restore_hints = replacement_hints.duplicate(true)
+			_modal_stack[index].restore_hint_owner = weakref(replacement_hint_owner) if is_instance_valid(replacement_hint_owner) else null
+
+
+func _discard_removed_hint_state(removed_root: Control) -> void:
+	if _weak_get(_published_hint_owner) != removed_root:
+		return
+	_published_hints.clear()
+	_published_hint_owner = null
+	if is_instance_valid(hint_bar):
+		hint_bar.set_hints([])
 
 
 func _belongs_to(control: Control, root: Control) -> bool:
@@ -238,11 +280,27 @@ func _restore_adapter_focus() -> void:
 
 
 func _modal_default(entry: Dictionary) -> Control:
+	if bool(entry.get("focusless", false)):
+		return null
 	var root := _weak_get(entry.root) as Control
 	var default_focus := _weak_get(entry.default) as Control
-	if is_instance_valid(default_focus) and (default_focus == root or root.is_ancestor_of(default_focus)):
-		return default_focus if _is_focusable(default_focus) else null
+	if _is_focusable(default_focus) and (default_focus == root or root.is_ancestor_of(default_focus)):
+		return default_focus
 	return _first_focusable(root)
+
+
+func _active_presentation_owner() -> Control:
+	if not _modal_stack.is_empty():
+		return _weak_get(_modal_stack.back().root) as Control
+	return _screen_for(_focus_target)
+
+
+func _is_active_presentation_owner(owner: Control) -> bool:
+	if not is_instance_valid(owner):
+		return false
+	if not _modal_stack.is_empty():
+		return _weak_get(_modal_stack.back().root) == owner
+	return _screens.has(owner)
 
 
 func _screen_fallback(root: Control) -> Control:
@@ -303,7 +361,13 @@ func _weak_get(reference: Variant) -> Variant:
 func _grab_focus_deferred(control: Control) -> void:
 	_restoring_focus = true
 	control.grab_focus.call_deferred()
+	_sync_deferred_focus_target.call_deferred(control)
 	_reset_restoring.call_deferred()
+
+
+func _sync_deferred_focus_target(control: Control) -> void:
+	if get_viewport().gui_get_focus_owner() == control and _is_focusable(control):
+		_update_focus_target(control)
 
 
 func _clear_presentation() -> void:
