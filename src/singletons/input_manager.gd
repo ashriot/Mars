@@ -155,10 +155,6 @@ func _set_active_mode(mode: InputMode) -> void:
 
 
 func _set_cursor_behavior(behavior: CursorBehavior) -> void:
-	# Legacy tests and callers use SNAPPED as a fresh controller-navigation claim.
-	# Tasks 3-5 remove this reset together with the compatibility API.
-	if behavior == CursorBehavior.SNAPPED:
-		_consumed_mouse_button = MOUSE_BUTTON_NONE
 	if _cursor_behavior == behavior:
 		return
 	_cursor_behavior = behavior

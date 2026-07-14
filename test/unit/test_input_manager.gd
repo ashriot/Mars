@@ -97,6 +97,19 @@ func test_controller_mouse_handoff_consumes_press_and_matching_release() -> void
 	assert_eq(manager._consumed_mouse_button, MOUSE_BUTTON_NONE)
 
 
+func test_consumed_mouse_transaction_survives_interleaved_controller_input() -> void:
+	manager._input(_unconnected_joy_button(JOY_BUTTON_A))
+	manager._input(_mouse_button(MOUSE_BUTTON_LEFT, true))
+	manager._input(_unconnected_joy_button(JOY_BUTTON_A))
+	assert_eq(manager.handled_event_count, 1)
+	assert_eq(manager._consumed_mouse_button, MOUSE_BUTTON_LEFT)
+
+	manager._input(_mouse_button(MOUSE_BUTTON_LEFT, false))
+
+	assert_eq(manager.handled_event_count, 2)
+	assert_eq(manager._consumed_mouse_button, MOUSE_BUTTON_NONE)
+
+
 func test_keyboard_from_controller_reveals_pointer_and_does_not_consume_action() -> void:
 	manager._input(_unconnected_joy_button(JOY_BUTTON_A))
 	manager._input(_key(KEY_UP))

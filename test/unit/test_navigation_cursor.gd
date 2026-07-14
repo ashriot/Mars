@@ -207,6 +207,8 @@ func test_same_frame_mouse_click_then_snapped_input_resets_warp_dedupe_before_pr
 	assert_eq(cursor.warped_positions, [Vector2(70, 50), Vector2(70, 50)])
 	cursor.update_position_for_behavior(InputManager.get_cursor_behavior(), mouse_position, true)
 	assert_eq(cursor.warped_positions, [Vector2(70, 50), Vector2(70, 50)])
+	click.pressed = false
+	InputManager._input(click)
 	target.free()
 	cursor.free()
 	InputManager._active_mode = saved_mode

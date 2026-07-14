@@ -530,6 +530,8 @@ func test_scan_mouse_motion_preserves_controller_cursor_until_click_handoff() ->
 	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.KEYBOARD_MOUSE)
 	assert_false(navigation.cursor.visible)
 	assert_eq(dungeon_map.get_viewport().get_mouse_position(), physical_mouse)
+	click.pressed = false
+	InputManager._input(click)
 
 
 func test_pointer_gap_preserves_last_valid_scan_selection() -> void:

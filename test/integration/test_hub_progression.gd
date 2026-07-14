@@ -765,6 +765,8 @@ func test_keyboard_and_controller_skill_navigation_synchronize_cursor_through_in
 	Input.parse_input_event(mouse_click)
 	await get_tree().process_frame
 	assert_eq(InputManager.get_cursor_behavior(), InputManager.CursorBehavior.FREE)
+	mouse_click.pressed = false
+	Input.parse_input_event(mouse_click)
 	cursor.set_process(true)
 	await get_tree().process_frame
 	await get_tree().process_frame
