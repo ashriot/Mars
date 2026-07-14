@@ -33,7 +33,10 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventMouseMotion and _suppress_expected_mouse_warp(event):
+	# Mouse motion alone never changes input ownership. This prevents incidental
+	# movement from replacing controller presentation; a click performs handoff.
+	if event is InputEventMouseMotion:
+		_suppress_expected_mouse_warp(event)
 		return
 	if not is_meaningful_event(event):
 		return
@@ -45,7 +48,7 @@ func _input(event: InputEvent) -> void:
 		_set_active_mode(InputMode.KEYBOARD_MOUSE)
 		if _is_navigation_key(event):
 			_set_cursor_behavior(CursorBehavior.SNAPPED)
-	elif event is InputEventMouseButton or event is InputEventMouseMotion:
+	elif event is InputEventMouseButton:
 		_set_active_mode(InputMode.KEYBOARD_MOUSE)
 		_set_cursor_behavior(CursorBehavior.FREE)
 

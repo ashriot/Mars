@@ -753,10 +753,18 @@ func test_keyboard_and_controller_skill_navigation_synchronize_cursor_through_in
 	Input.parse_input_event(synthetic_warp)
 	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.KEYBOARD_MOUSE)
 	assert_eq(InputManager.get_cursor_behavior(), InputManager.CursorBehavior.SNAPPED)
-	var genuine_mouse := InputEventMouseMotion.new()
-	genuine_mouse.position = keyboard_destination + Vector2(10, 0)
-	genuine_mouse.relative = Vector2(10, 0)
-	Input.parse_input_event(genuine_mouse)
+	var mouse_motion := InputEventMouseMotion.new()
+	mouse_motion.position = keyboard_destination + Vector2(10, 0)
+	mouse_motion.relative = Vector2(10, 0)
+	Input.parse_input_event(mouse_motion)
+	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.KEYBOARD_MOUSE)
+	assert_eq(InputManager.get_cursor_behavior(), InputManager.CursorBehavior.SNAPPED)
+	var mouse_click := InputEventMouseButton.new()
+	mouse_click.button_index = MOUSE_BUTTON_LEFT
+	mouse_click.pressed = true
+	Input.parse_input_event(mouse_click)
+	await get_tree().process_frame
+	assert_eq(InputManager.get_cursor_behavior(), InputManager.CursorBehavior.FREE)
 	cursor.set_process(true)
 	await get_tree().process_frame
 	await get_tree().process_frame

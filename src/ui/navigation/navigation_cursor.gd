@@ -20,6 +20,7 @@ var _state := CursorState.DEFAULT
 var _position_tween: Tween
 var _last_warp_destination := Vector2.INF
 var _last_warp_target_id := 0
+var _screen_position_active := false
 
 
 func _ready() -> void:
@@ -33,6 +34,7 @@ func _ready() -> void:
 
 
 func _exit_tree() -> void:
+	_set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	if InputManager.cursor_behavior_changed.is_connected(_on_cursor_behavior_changed):
 		InputManager.cursor_behavior_changed.disconnect(_on_cursor_behavior_changed)
 
@@ -42,24 +44,45 @@ func _set_mouse_mode(mode: Input.MouseMode) -> void:
 
 
 func _process(_delta: float) -> void:
+	if _screen_position_active:
+		return
 	update_position_for_behavior(InputManager.get_cursor_behavior(), get_viewport().get_mouse_position())
 
 
 func set_focus_target(control: Control, state: CursorState = CursorState.DEFAULT) -> void:
+	_screen_position_active = false
+	_set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	_target = control
 	set_cursor_state(state)
 
 
 func set_world_target(canvas_item: CanvasItem, state: CursorState = CursorState.TARGET) -> void:
+	_screen_position_active = false
+	_set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	_target = canvas_item
 	set_cursor_state(state)
 
 
 func clear_target() -> void:
+	_screen_position_active = false
+	_set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	_target = null
 	_reset_warp_dedupe()
 	set_cursor_state(CursorState.DEFAULT)
 	hide()
+
+
+func show_at_screen_position(
+	screen_position: Vector2,
+	state: CursorState = CursorState.DEFAULT,
+) -> void:
+	_screen_position_active = true
+	_target = null
+	_reset_warp_dedupe()
+	set_cursor_state(state)
+	_move_to(screen_position, true)
+	_set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+	show()
 
 
 func set_cursor_state(state: CursorState) -> void:
@@ -68,6 +91,8 @@ func set_cursor_state(state: CursorState) -> void:
 
 
 func update_position_for_behavior(behavior: InputManager.CursorBehavior, mouse_position: Vector2, immediate := false) -> void:
+	if _screen_position_active:
+		return
 	if behavior == InputManager.CursorBehavior.FREE:
 		_reset_warp_dedupe()
 		_move_to(mouse_position, true)

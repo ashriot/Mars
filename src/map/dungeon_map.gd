@@ -487,7 +487,11 @@ func _sync_scan_selection(animate := true) -> bool:
 		_animate_reticle_to(selected.position, animate)
 	else:
 		_hide_reticle()
-	_clear_navigation_cursor()
+	if current_map_state == MapState.TARGETING \
+		and InputManager.get_active_mode() == InputManager.InputMode.CONTROLLER:
+		_show_scan_cursor()
+	else:
+		_clear_navigation_cursor()
 	_publish_controller_hints()
 	return true
 
@@ -504,11 +508,10 @@ func _process_scan_navigation(
 	var viewport_size := get_viewport_rect().size
 	var input_mode := InputManager.get_active_mode()
 	if input_mode == InputManager.InputMode.CONTROLLER:
-		var before := scan_controller.pointer_position
-		var after := scan_controller.move_pointer(direction, delta, viewport_size)
-		if not after.is_equal_approx(before):
-			_warp_scan_pointer(after)
+		scan_controller.move_pointer(direction, delta, viewport_size)
+		_show_scan_cursor()
 	else:
+		_clear_navigation_cursor()
 		scan_controller.sync_pointer(get_viewport().get_mouse_position(), viewport_size)
 	if not pan_direction.is_zero_approx():
 		process_controller_camera(pan_direction, delta)
@@ -518,9 +521,10 @@ func _process_scan_navigation(
 	_follow_scan_pointer(delta, viewport_size)
 
 
-func _warp_scan_pointer(screen_position: Vector2) -> void:
-	InputManager.expect_mouse_warp(screen_position)
-	get_viewport().warp_mouse(screen_position)
+func _show_scan_cursor() -> void:
+	var navigation := _navigation_ux_layer()
+	if navigation and InputManager.get_active_mode() == InputManager.InputMode.CONTROLLER:
+		navigation.cursor.show_at_screen_position(scan_controller.pointer_position)
 
 
 func _scan_pointer_world_position() -> Vector2:
@@ -1022,11 +1026,10 @@ func start_targeting_mode(radius: int) -> void:
 	camera_controller.set_focus_mode(DungeonCameraController.FocusMode.SCANNER)
 	var origin_screen_position := current_node.get_global_transform_with_canvas().origin
 	scan_controller.begin(origin_screen_position, get_viewport_rect().size, current_node)
-	if InputManager.get_active_mode() == InputManager.InputMode.CONTROLLER:
-		_warp_scan_pointer(scan_controller.pointer_position)
 	_sync_scan_selection(false)
 	_start_reticle_scan_pulse()
 	_clear_navigation_cursor()
+	_show_scan_cursor()
 	_publish_controller_hints()
 
 func _start_reticle_scan_pulse():

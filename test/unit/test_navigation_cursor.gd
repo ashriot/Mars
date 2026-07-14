@@ -102,6 +102,38 @@ func test_free_behavior_continues_from_synchronized_mouse_position_with_real_del
 	assert_eq(cursor.warped_positions, [Vector2(70, 50)])
 
 
+func test_explicit_screen_position_stays_visible_without_focus_target() -> void:
+	var cursor := TestCursor.new()
+	add_child_autofree(cursor)
+	cursor.show_at_screen_position(Vector2(320, 180))
+	cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2.ZERO)
+	assert_true(cursor.visible)
+	assert_eq(cursor.position, Vector2(320, 180))
+	assert_null(cursor._target)
+	assert_eq(cursor.set_modes.back(), Input.MOUSE_MODE_HIDDEN)
+
+
+func test_clear_target_exits_explicit_screen_position_mode() -> void:
+	var cursor := TestCursor.new()
+	add_child_autofree(cursor)
+	cursor.show_at_screen_position(Vector2(50, 60))
+	cursor.clear_target()
+	assert_false(cursor.visible)
+	assert_eq(cursor.set_modes.back(), Input.MOUSE_MODE_VISIBLE)
+	cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2.ZERO)
+	assert_false(cursor.visible)
+
+
+func test_freeing_explicit_screen_cursor_restores_os_pointer() -> void:
+	TestCursor.last_mode = Input.MOUSE_MODE_VISIBLE
+	var cursor := TestCursor.new()
+	add_child(cursor)
+	cursor.show_at_screen_position(Vector2(50, 60))
+	assert_eq(TestCursor.last_mode, Input.MOUSE_MODE_HIDDEN)
+	cursor.free()
+	assert_eq(TestCursor.last_mode, Input.MOUSE_MODE_VISIBLE)
+
+
 func test_same_physical_destination_does_not_repeat_warp_but_changed_target_warps_once() -> void:
 	var cursor := TestCursor.new()
 	add_child_autofree(cursor)
@@ -127,7 +159,7 @@ func test_same_physical_destination_does_not_repeat_warp_but_changed_target_warp
 	assert_eq(cursor.warped_positions, [Vector2(70, 50), Vector2(220, 90), Vector2(220, 90)])
 
 
-func test_same_frame_free_then_snapped_input_resets_warp_dedupe_before_process() -> void:
+func test_same_frame_mouse_click_then_snapped_input_resets_warp_dedupe_before_process() -> void:
 	var saved_mode := InputManager._active_mode
 	var saved_behavior := InputManager._cursor_behavior
 	var saved_expected_position := InputManager._expected_warp_position
@@ -142,10 +174,11 @@ func test_same_frame_free_then_snapped_input_resets_warp_dedupe_before_process()
 	InputManager._set_cursor_behavior(InputManager.CursorBehavior.SNAPPED)
 	cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2.ZERO, true)
 	assert_eq(cursor.warped_positions, [Vector2(70, 50)])
-	var mouse := InputEventMouseMotion.new()
-	mouse.position = Vector2(10, 10)
-	mouse.relative = Vector2(10, 10)
-	InputManager._input(mouse)
+	var mouse_position := Vector2(10, 10)
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	InputManager._input(click)
 	assert_eq(InputManager.get_cursor_behavior(), InputManager.CursorBehavior.FREE)
 	var navigation := InputEventKey.new()
 	navigation.physical_keycode = KEY_D
@@ -153,9 +186,9 @@ func test_same_frame_free_then_snapped_input_resets_warp_dedupe_before_process()
 	InputManager._input(navigation)
 	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.KEYBOARD_MOUSE)
 	assert_eq(InputManager.get_cursor_behavior(), InputManager.CursorBehavior.SNAPPED)
-	cursor.update_position_for_behavior(InputManager.get_cursor_behavior(), mouse.position, true)
+	cursor.update_position_for_behavior(InputManager.get_cursor_behavior(), mouse_position, true)
 	assert_eq(cursor.warped_positions, [Vector2(70, 50), Vector2(70, 50)])
-	cursor.update_position_for_behavior(InputManager.get_cursor_behavior(), mouse.position, true)
+	cursor.update_position_for_behavior(InputManager.get_cursor_behavior(), mouse_position, true)
 	assert_eq(cursor.warped_positions, [Vector2(70, 50), Vector2(70, 50)])
 	target.free()
 	cursor.free()

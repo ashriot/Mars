@@ -403,17 +403,69 @@ func test_scan_hover_selects_nodes_in_every_visibility_state() -> void:
 		assert_eq(dungeon_map.player_reticle.position, hovered.position)
 
 
-func test_expected_controller_mouse_motion_preserves_controller_mode() -> void:
+func test_controller_scan_cursor_moves_without_warping_physical_mouse() -> void:
+	var navigation := _make_navigation_ux()
 	var setup := await _prepare_navigation_map()
 	var dungeon_map: DungeonMap = setup.map
 	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	InputManager._set_cursor_behavior(InputManager.CursorBehavior.SNAPPED)
+	var physical_mouse := dungeon_map.get_viewport().get_mouse_position()
 	dungeon_map.start_targeting_mode(1)
+	var expected := dungeon_map.scan_controller.pointer_position
+	assert_true(navigation.cursor.visible)
+	assert_eq(navigation.cursor.position, expected)
+	assert_eq(dungeon_map.get_viewport().get_mouse_position(), physical_mouse)
+
+	dungeon_map._process_scan_navigation(Vector2.RIGHT * 0.5, Vector2.ZERO, 0.1)
+	var analog_moved := dungeon_map.scan_controller.pointer_position
+	assert_eq(
+		analog_moved,
+		expected + Vector2.RIGHT * dungeon_map.scan_controller.cursor_speed * 0.05,
+	)
+	assert_eq(navigation.cursor.position, analog_moved)
+	assert_eq(dungeon_map.get_viewport().get_mouse_position(), physical_mouse)
+
 	dungeon_map._process_scan_navigation(Vector2.RIGHT, Vector2.ZERO, 0.1)
-	var expected_motion := InputEventMouseMotion.new()
-	expected_motion.position = dungeon_map.scan_controller.pointer_position
-	expected_motion.relative = Vector2.RIGHT * 60.0
-	InputManager._input(expected_motion)
+	var digital_moved := dungeon_map.scan_controller.pointer_position
+	assert_eq(
+		digital_moved,
+		analog_moved + Vector2.RIGHT * dungeon_map.scan_controller.cursor_speed * 0.1,
+	)
+	assert_eq(navigation.cursor.position, digital_moved)
+	assert_eq(dungeon_map.get_viewport().get_mouse_position(), physical_mouse)
+
+	dungeon_map._on_node_hovered(setup.nodes[2])
+	assert_true(navigation.cursor.visible)
+	assert_eq(navigation.cursor.position, digital_moved)
+
+
+func test_scan_mouse_motion_preserves_controller_cursor_until_click_handoff() -> void:
+	var navigation := _make_navigation_ux()
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	InputManager._set_cursor_behavior(InputManager.CursorBehavior.SNAPPED)
+	var physical_mouse := dungeon_map.get_viewport().get_mouse_position()
+	dungeon_map.start_targeting_mode(1)
+	var controller_position := dungeon_map.scan_controller.pointer_position
+
+	var motion := InputEventMouseMotion.new()
+	motion.position = physical_mouse + Vector2(10, 5)
+	motion.relative = Vector2(10, 5)
+	InputManager._input(motion)
+	dungeon_map._process_scan_navigation(Vector2.ZERO, Vector2.ZERO, 0.1)
 	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.CONTROLLER)
+	assert_true(navigation.cursor.visible)
+	assert_eq(navigation.cursor.position, controller_position)
+
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	InputManager._input(click)
+	dungeon_map._process_scan_navigation(Vector2.ZERO, Vector2.ZERO, 0.1)
+	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.KEYBOARD_MOUSE)
+	assert_false(navigation.cursor.visible)
+	assert_eq(dungeon_map.get_viewport().get_mouse_position(), physical_mouse)
 
 
 func test_physical_mouse_syncs_pointer_and_controller_continues_from_it() -> void:

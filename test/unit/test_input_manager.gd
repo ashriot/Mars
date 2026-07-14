@@ -38,11 +38,13 @@ func test_key_press_switches_to_keyboard_mouse() -> void:
 
 
 func test_mouse_button_switches_to_keyboard_mouse() -> void:
-	manager._input(_pressed_key())
+	manager._set_active_mode(manager.InputMode.CONTROLLER)
+	manager._set_cursor_behavior(manager.CursorBehavior.SNAPPED)
 	var event := InputEventMouseButton.new()
 	event.pressed = true
 	manager._input(event)
 	assert_eq(manager.get_active_mode(), manager.InputMode.KEYBOARD_MOUSE)
+	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.FREE)
 
 
 func test_mouse_motion_above_three_pixels_is_meaningful() -> void:
@@ -136,19 +138,24 @@ func test_ordinary_typing_preserves_cursor_behavior() -> void:
 	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)
 
 
-func test_genuine_mouse_input_selects_free() -> void:
+func test_mouse_motion_does_not_take_ownership_from_controller() -> void:
 	manager._set_active_mode(manager.InputMode.CONTROLLER)
 	manager._set_cursor_behavior(manager.CursorBehavior.SNAPPED)
 	var motion := InputEventMouseMotion.new()
 	motion.position = Vector2(140, 80)
 	motion.relative = Vector2(8, 0)
 	manager._input(motion)
-	assert_eq(manager.get_active_mode(), manager.InputMode.KEYBOARD_MOUSE)
-	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.FREE)
+	assert_eq(manager.get_active_mode(), manager.InputMode.CONTROLLER)
+	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)
+
+
+func test_pressed_mouse_button_takes_ownership_and_selects_free() -> void:
+	manager._set_active_mode(manager.InputMode.CONTROLLER)
 	manager._set_cursor_behavior(manager.CursorBehavior.SNAPPED)
 	var button := InputEventMouseButton.new()
 	button.pressed = true
 	manager._input(button)
+	assert_eq(manager.get_active_mode(), manager.InputMode.KEYBOARD_MOUSE)
 	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.FREE)
 
 
@@ -192,8 +199,8 @@ func test_expected_warp_motion_within_tolerance_preserves_controller_and_snapped
 	var genuine := synthetic.duplicate() as InputEventMouseMotion
 	genuine.position = Vector2(310, 200)
 	manager._input(genuine)
-	assert_eq(manager.get_active_mode(), manager.InputMode.KEYBOARD_MOUSE)
-	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.FREE)
+	assert_eq(manager.get_active_mode(), manager.InputMode.CONTROLLER)
+	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)
 	assert_eq(manager._expected_warp_position, Vector2.INF)
 	assert_eq(manager._expected_warp_deadline_ms, 0)
 
@@ -212,12 +219,12 @@ func test_expected_warp_exact_deadline_is_suppressed_and_expiry_clears_payload()
 	assert_eq(manager._expected_warp_position, Vector2(300, 200))
 	manager.now_ms += 1
 	manager._input(boundary)
-	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.FREE)
+	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)
 	assert_eq(manager._expected_warp_position, Vector2.INF)
 	assert_eq(manager._expected_warp_deadline_ms, 0)
 
 
-func test_motion_outside_expected_warp_tolerance_is_genuine_mouse_input() -> void:
+func test_motion_outside_expected_warp_tolerance_still_preserves_controller_mode() -> void:
 	manager.now_ms = 500
 	manager._set_active_mode(manager.InputMode.CONTROLLER)
 	manager._set_cursor_behavior(manager.CursorBehavior.SNAPPED)
@@ -226,13 +233,13 @@ func test_motion_outside_expected_warp_tolerance_is_genuine_mouse_input() -> voi
 	motion.position = Vector2(303, 200)
 	motion.relative = Vector2(8, 0)
 	manager._input(motion)
-	assert_eq(manager.get_active_mode(), manager.InputMode.KEYBOARD_MOUSE)
-	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.FREE)
+	assert_eq(manager.get_active_mode(), manager.InputMode.CONTROLLER)
+	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)
 	assert_eq(manager._expected_warp_position, Vector2.INF)
 	assert_eq(manager._expected_warp_deadline_ms, 0)
 
 
-func test_expired_warp_expectation_cannot_suppress_real_mouse_input() -> void:
+func test_expired_warp_expectation_does_not_turn_motion_into_mouse_takeover() -> void:
 	manager.now_ms = 500
 	manager._set_active_mode(manager.InputMode.CONTROLLER)
 	manager._set_cursor_behavior(manager.CursorBehavior.SNAPPED)
@@ -242,8 +249,8 @@ func test_expired_warp_expectation_cannot_suppress_real_mouse_input() -> void:
 	motion.position = Vector2(300, 200)
 	motion.relative = Vector2(8, 0)
 	manager._input(motion)
-	assert_eq(manager.get_active_mode(), manager.InputMode.KEYBOARD_MOUSE)
-	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.FREE)
+	assert_eq(manager.get_active_mode(), manager.InputMode.CONTROLLER)
+	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)
 
 
 func test_connected_name_selection_uses_remaining_device_then_default() -> void:
