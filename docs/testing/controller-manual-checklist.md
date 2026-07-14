@@ -31,16 +31,16 @@ Run this sequence once over USB and once over Bluetooth. Fill in both rows befor
 | USB |  |  | PS5 DualSense | USB |  |  |
 | Bluetooth |  |  | PS5 DualSense | Bluetooth |  |  |
 
-- [ ] Enter scan targeting: only the existing hex reticle appears; no blue X or second cursor is visible.
-- [ ] Hold the left stick in each cardinal and diagonal direction: the reticle advances smoothly through neighboring valid hexes, including unrevealed hexes.
-- [ ] Hold toward every map edge: the reticle stops on the last valid hex without wrapping, reversing, or warping.
-- [ ] Pan with the right stick while moving the reticle: camera pan remains responsive and wins over smart-follow.
-- [ ] Release the right stick: the camera remains where it was manually placed.
-- [ ] Move the reticle inside the central safe area: the camera does not move.
-- [ ] Move the reticle beyond the safe area after manual panning: the camera smoothly applies only enough correction to reacquire it.
-- [ ] Confirm a distant scan: the reveal begins, input briefly locks, then the camera smoothly returns to the party.
-- [ ] Cancel a distant scan: no scan is consumed and the camera smoothly returns to the party immediately.
-- [ ] Switch between mouse and DualSense during targeting: the same reticle and selected hex persist without spawning another cursor.
+- [ ] Enter scan targeting: the visible system cursor is centered over the party hex, and the existing reticle appears on that hex.
+- [ ] Hold the left stick at varying magnitudes and in each cardinal and diagonal direction: the cursor moves smoothly at analog speed; hold the D-pad and verify continuous digital motion.
+- [ ] Cross hidden, revealed, and completed hexes with the cursor: the reticle snaps to each hex under the cursor.
+- [ ] Begin camera edge scrolling: the cursor and reticle never warp backward.
+- [ ] Hold toward every viewport edge: the cursor clamps at the boundary while continued pressure keeps scrolling the camera.
+- [ ] Release the left stick or D-pad: pointer movement and edge scrolling stop immediately.
+- [ ] Hold right-stick pan while moving the left stick or D-pad: right-stick pan wins and does not pull the cursor or selection.
+- [ ] Move the physical mouse during targeting, then resume controller movement: mouse control takes over from the cursor's current position, and controller movement resumes from that same position.
+- [ ] Confirm after hovering a distant hex: the last hovered hex is scanned, the reveal begins, input briefly locks, then the camera smoothly returns to the party.
+- [ ] Cancel after hovering a distant hex: no scan is consumed and the camera smoothly returns to the party immediately.
 
 ## Nintendo controller
 
@@ -83,16 +83,16 @@ Run this sequence once over USB and once over Bluetooth. Fill in both rows befor
 - [ ] Hold a direction and tap confirm repeatedly across completed nodes; each move reevaluates from the new node without requiring stick recentering, while new interactions still lock input.
 - [ ] Use the controller D-pad as a digital fallback and verify it selects the same eligible destinations.
 - [ ] Switch to keyboard-and-mouse mode; WASD/arrows do not preview or move between nodes, while mouse hover/click immediately owns the reticle and traversal.
-- [ ] Enter scan targeting: only the existing hex reticle appears; no blue X or second cursor is visible.
-- [ ] Hold the left stick in each cardinal and diagonal direction: the reticle advances smoothly through neighboring valid hexes, including unrevealed hexes.
-- [ ] Hold toward every map edge: the reticle stops on the last valid hex without wrapping, reversing, or warping.
-- [ ] Pan with the right stick while moving the reticle: camera pan remains responsive and wins over smart-follow.
-- [ ] Release the right stick: the camera remains where it was manually placed.
-- [ ] Move the reticle inside the central safe area: the camera does not move.
-- [ ] Move the reticle beyond the safe area after manual panning: the camera smoothly applies only enough correction to reacquire it.
-- [ ] Confirm a distant scan: the reveal begins, input briefly locks, then the camera smoothly returns to the party.
-- [ ] Cancel a distant scan: no scan is consumed and the camera smoothly returns to the party immediately.
-- [ ] Switch between mouse and DualSense during targeting: the same reticle and selected hex persist without spawning another cursor.
+- [ ] Enter scan targeting: the visible system cursor is centered over the party hex, and the existing reticle appears on that hex.
+- [ ] Hold the left stick at varying magnitudes and in each cardinal and diagonal direction: the cursor moves smoothly at analog speed; hold the D-pad and verify continuous digital motion.
+- [ ] Cross hidden, revealed, and completed hexes with the cursor: the reticle snaps to each hex under the cursor.
+- [ ] Begin camera edge scrolling: the cursor and reticle never warp backward.
+- [ ] Hold toward every viewport edge: the cursor clamps at the boundary while continued pressure keeps scrolling the camera.
+- [ ] Release the left stick or D-pad: pointer movement and edge scrolling stop immediately.
+- [ ] Hold right-stick pan while moving the left stick or D-pad: right-stick pan wins and does not pull the cursor or selection.
+- [ ] Move the physical mouse during targeting, then resume controller movement: mouse control takes over from the cursor's current position, and controller movement resumes from that same position.
+- [ ] Confirm after hovering a distant hex: the last hovered hex is scanned, the reveal begins, input briefly locks, then the camera smoothly returns to the party.
+- [ ] Cancel after hovering a distant hex: no scan is consumed and the camera smoothly returns to the party immediately.
 - [ ] Verify semantic confirm/cancel and D-pad fallback on the connected controller family.
 - [ ] Hold pan in all four directions; movement is smooth, delta-scaled, and clamped.
 - [ ] Zoom in/out with L2/R2 or displayed triggers; limits clamp and no input leaks through a locked map/modal.
