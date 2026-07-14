@@ -10,10 +10,18 @@ var original_terminal_security_events: Array[InputEvent]
 
 
 class TestInputManager extends InputManager:
-	var now_ms := 0
+	var mouse_modes: Array[Input.MouseMode] = []
+	var handled_event_count := 0
+	var custom_cursor_hotspot := Vector2.INF
 
-	func _now_ms() -> int:
-		return now_ms
+	func _set_mouse_mode(mode: Input.MouseMode) -> void:
+		mouse_modes.append(mode)
+
+	func _install_hardware_cursor(_texture: Texture2D, hotspot: Vector2) -> void:
+		custom_cursor_hotspot = hotspot
+
+	func _mark_input_handled() -> void:
+		handled_event_count += 1
 
 
 func before_each() -> void:
@@ -37,29 +45,6 @@ func test_key_press_switches_to_keyboard_mouse() -> void:
 	assert_eq(manager.get_active_mode(), manager.InputMode.KEYBOARD_MOUSE)
 
 
-func test_mouse_button_switches_to_keyboard_mouse() -> void:
-	manager._set_active_mode(manager.InputMode.CONTROLLER)
-	manager._set_cursor_behavior(manager.CursorBehavior.SNAPPED)
-	var event := InputEventMouseButton.new()
-	event.pressed = true
-	manager._input(event)
-	assert_eq(manager.get_active_mode(), manager.InputMode.KEYBOARD_MOUSE)
-	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.FREE)
-
-
-func test_mouse_motion_above_three_pixels_is_meaningful() -> void:
-	var event := InputEventMouseMotion.new()
-	event.relative = Vector2(3.01, 0.0)
-	assert_true(manager.is_meaningful_event(event))
-
-
-func test_mouse_motion_at_or_below_three_pixels_is_ignored() -> void:
-	for distance in [0.0, 3.0]:
-		var event := InputEventMouseMotion.new()
-		event.relative = Vector2(distance, 0.0)
-		assert_false(manager.is_meaningful_event(event))
-
-
 func test_joy_button_switches_to_controller() -> void:
 	var event := InputEventJoypadButton.new()
 	event.pressed = true
@@ -81,82 +66,66 @@ func test_joy_axis_at_quarter_is_controller_input() -> void:
 	assert_eq(manager.get_active_mode(), manager.InputMode.CONTROLLER)
 
 
-func test_arrow_and_wasd_navigation_select_snapped_keyboard_mouse() -> void:
-	var cases: Array[InputEventKey] = [
-		_key(KEY_LEFT),
-		_key(KEY_RIGHT),
-		_key(KEY_UP),
-		_key(KEY_DOWN),
-		_physical_key(KEY_A),
-		_physical_key(KEY_D),
-		_physical_key(KEY_W),
-		_physical_key(KEY_S),
-	]
-	for event: InputEventKey in cases:
-		manager._set_cursor_behavior(manager.CursorBehavior.FREE)
-		manager._input(event)
-		assert_eq(manager.get_active_mode(), manager.InputMode.KEYBOARD_MOUSE)
-		assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)
-
-
-func test_keyboard_action_hotkeys_select_snapped_keyboard_mouse() -> void:
-	for keycode in [KEY_1, KEY_2, KEY_3, KEY_4]:
-		manager._set_cursor_behavior(manager.CursorBehavior.FREE)
-		manager._input(_physical_key(keycode))
-		assert_eq(manager.get_active_mode(), manager.InputMode.KEYBOARD_MOUSE)
-		assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)
-
-
-func test_terminal_extraction_keyboard_shortcut_selects_snapped_keyboard_mode() -> void:
-	manager._set_active_mode(manager.InputMode.CONTROLLER)
-	manager._set_cursor_behavior(manager.CursorBehavior.FREE)
-	var event := InputEventKey.new()
-	event.physical_keycode = KEY_5
-	event.pressed = true
-	manager._input(event)
-	assert_eq(manager.get_active_mode(), manager.InputMode.KEYBOARD_MOUSE)
-	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)
-
-
-func test_controller_button_and_axis_select_snapped() -> void:
+func test_controller_hides_pointer_and_selects_focus_presentation() -> void:
 	manager._input(_unconnected_joy_button(JOY_BUTTON_A))
-	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)
-	manager._set_cursor_behavior(manager.CursorBehavior.FREE)
-	var axis := InputEventJoypadMotion.new()
-	axis.axis_value = 0.25
-	manager._input(axis)
-	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)
-
-
-func test_ordinary_typing_preserves_cursor_behavior() -> void:
-	manager._set_cursor_behavior(manager.CursorBehavior.SNAPPED)
-	var event := InputEventKey.new()
-	event.keycode = KEY_T
-	event.pressed = true
-	manager._input(event)
-	assert_eq(manager.get_active_mode(), manager.InputMode.KEYBOARD_MOUSE)
-	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)
-
-
-func test_mouse_motion_does_not_take_ownership_from_controller() -> void:
-	manager._set_active_mode(manager.InputMode.CONTROLLER)
-	manager._set_cursor_behavior(manager.CursorBehavior.SNAPPED)
-	var motion := InputEventMouseMotion.new()
-	motion.position = Vector2(140, 80)
-	motion.relative = Vector2(8, 0)
-	manager._input(motion)
 	assert_eq(manager.get_active_mode(), manager.InputMode.CONTROLLER)
-	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)
+	assert_eq(manager.get_presentation_mode(), manager.PresentationMode.FOCUS)
+	assert_eq(manager.mouse_modes.back(), Input.MOUSE_MODE_HIDDEN)
 
 
-func test_pressed_mouse_button_takes_ownership_and_selects_free() -> void:
-	manager._set_active_mode(manager.InputMode.CONTROLLER)
-	manager._set_cursor_behavior(manager.CursorBehavior.SNAPPED)
-	var button := InputEventMouseButton.new()
-	button.pressed = true
-	manager._input(button)
+func test_mouse_motion_cannot_leave_controller_mode() -> void:
+	manager._input(_unconnected_joy_button(JOY_BUTTON_A))
+	manager._input(_mouse_motion(Vector2(12, 0)))
+	assert_eq(manager.get_active_mode(), manager.InputMode.CONTROLLER)
+	assert_eq(manager.get_presentation_mode(), manager.PresentationMode.FOCUS)
+
+
+func test_one_pixel_mouse_motion_selects_pointer_only_in_keyboard_mouse_mode() -> void:
+	manager._set_presentation_mode(manager.PresentationMode.FOCUS)
+	manager._input(_mouse_motion(Vector2(1, 0)))
 	assert_eq(manager.get_active_mode(), manager.InputMode.KEYBOARD_MOUSE)
-	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.FREE)
+	assert_eq(manager.get_presentation_mode(), manager.PresentationMode.POINTER)
+
+
+func test_controller_mouse_handoff_consumes_press_and_matching_release() -> void:
+	manager._input(_unconnected_joy_button(JOY_BUTTON_A))
+	manager._input(_mouse_button(MOUSE_BUTTON_LEFT, true))
+	manager._input(_mouse_button(MOUSE_BUTTON_LEFT, false))
+	assert_eq(manager.get_active_mode(), manager.InputMode.KEYBOARD_MOUSE)
+	assert_eq(manager.get_presentation_mode(), manager.PresentationMode.POINTER)
+	assert_eq(manager.handled_event_count, 2)
+	assert_eq(manager._consumed_mouse_button, MOUSE_BUTTON_NONE)
+
+
+func test_keyboard_from_controller_reveals_pointer_and_does_not_consume_action() -> void:
+	manager._input(_unconnected_joy_button(JOY_BUTTON_A))
+	manager._input(_key(KEY_UP))
+	assert_eq(manager.get_active_mode(), manager.InputMode.KEYBOARD_MOUSE)
+	assert_eq(manager.get_presentation_mode(), manager.PresentationMode.FOCUS)
+	assert_eq(manager.mouse_modes.back(), Input.MOUSE_MODE_VISIBLE)
+	assert_eq(manager.handled_event_count, 0)
+
+
+func test_first_direction_after_pointer_restores_focus_and_is_consumed() -> void:
+	manager._set_presentation_mode(manager.PresentationMode.POINTER)
+	manager._input(_key(KEY_DOWN))
+	assert_eq(manager.get_presentation_mode(), manager.PresentationMode.FOCUS)
+	assert_eq(manager.handled_event_count, 1)
+	manager._input(_key(KEY_DOWN))
+	assert_eq(manager.handled_event_count, 1)
+
+
+func test_non_navigation_key_from_pointer_is_not_consumed() -> void:
+	manager._set_presentation_mode(manager.PresentationMode.POINTER)
+	manager._input(_physical_key(KEY_1))
+	assert_eq(manager.get_presentation_mode(), manager.PresentationMode.POINTER)
+	assert_eq(manager.handled_event_count, 0)
+
+
+func test_ready_installs_styled_hardware_cursor_at_arrow_tip() -> void:
+	manager._ready()
+	assert_eq(manager.custom_cursor_hotspot, Vector2(2, 2))
+	assert_eq(manager.mouse_modes.back(), Input.MOUSE_MODE_VISIBLE)
 
 
 func test_restore_active_mode_reapplies_a_transition_snapshot() -> void:
@@ -169,88 +138,13 @@ func test_restore_active_mode_reapplies_a_transition_snapshot() -> void:
 	assert_eq(manager.get_active_mode(), manager.InputMode.CONTROLLER)
 
 
-func test_cursor_behavior_signal_emits_only_on_actual_changes() -> void:
+func test_presentation_mode_signal_emits_only_on_actual_changes() -> void:
 	watch_signals(manager)
-	manager._set_cursor_behavior(manager.CursorBehavior.SNAPPED)
-	manager._set_cursor_behavior(manager.CursorBehavior.SNAPPED)
-	manager._set_cursor_behavior(manager.CursorBehavior.FREE)
-	manager._set_cursor_behavior(manager.CursorBehavior.FREE)
-	assert_signal_emit_count(manager, "cursor_behavior_changed", 2)
-
-
-func test_expected_warp_motion_within_tolerance_preserves_controller_and_snapped() -> void:
-	manager.now_ms = 500
-	manager._set_active_mode(manager.InputMode.CONTROLLER)
-	manager._set_cursor_behavior(manager.CursorBehavior.SNAPPED)
-	manager.expect_mouse_warp(Vector2(300, 200))
-	var synthetic := InputEventMouseMotion.new()
-	synthetic.position = Vector2(300.5, 199.5)
-	synthetic.relative = Vector2(100, 50)
-	manager._input(synthetic)
-	assert_eq(manager.get_active_mode(), manager.InputMode.CONTROLLER)
-	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)
-	assert_eq(manager._expected_warp_position, Vector2(300, 200))
-	var duplicate := synthetic.duplicate() as InputEventMouseMotion
-	duplicate.position = Vector2(299.5, 200.5)
-	manager._input(duplicate)
-	assert_eq(manager.get_active_mode(), manager.InputMode.CONTROLLER)
-	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)
-	assert_eq(manager._expected_warp_deadline_ms, 500 + manager.WARP_SUPPRESSION_MS, "duplicates do not extend the deadline")
-	var genuine := synthetic.duplicate() as InputEventMouseMotion
-	genuine.position = Vector2(310, 200)
-	manager._input(genuine)
-	assert_eq(manager.get_active_mode(), manager.InputMode.CONTROLLER)
-	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)
-	assert_eq(manager._expected_warp_position, Vector2.INF)
-	assert_eq(manager._expected_warp_deadline_ms, 0)
-
-
-func test_expected_warp_exact_deadline_is_suppressed_and_expiry_clears_payload() -> void:
-	manager.now_ms = 500
-	manager._set_active_mode(manager.InputMode.CONTROLLER)
-	manager._set_cursor_behavior(manager.CursorBehavior.SNAPPED)
-	manager.expect_mouse_warp(Vector2(300, 200))
-	manager.now_ms = 500 + manager.WARP_SUPPRESSION_MS
-	var boundary := InputEventMouseMotion.new()
-	boundary.position = Vector2(300, 200)
-	boundary.relative = Vector2(8, 0)
-	manager._input(boundary)
-	assert_eq(manager.get_active_mode(), manager.InputMode.CONTROLLER)
-	assert_eq(manager._expected_warp_position, Vector2(300, 200))
-	manager.now_ms += 1
-	manager._input(boundary)
-	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)
-	assert_eq(manager._expected_warp_position, Vector2.INF)
-	assert_eq(manager._expected_warp_deadline_ms, 0)
-
-
-func test_motion_outside_expected_warp_tolerance_still_preserves_controller_mode() -> void:
-	manager.now_ms = 500
-	manager._set_active_mode(manager.InputMode.CONTROLLER)
-	manager._set_cursor_behavior(manager.CursorBehavior.SNAPPED)
-	manager.expect_mouse_warp(Vector2(300, 200))
-	var motion := InputEventMouseMotion.new()
-	motion.position = Vector2(303, 200)
-	motion.relative = Vector2(8, 0)
-	manager._input(motion)
-	assert_eq(manager.get_active_mode(), manager.InputMode.CONTROLLER)
-	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)
-	assert_eq(manager._expected_warp_position, Vector2.INF)
-	assert_eq(manager._expected_warp_deadline_ms, 0)
-
-
-func test_expired_warp_expectation_does_not_turn_motion_into_mouse_takeover() -> void:
-	manager.now_ms = 500
-	manager._set_active_mode(manager.InputMode.CONTROLLER)
-	manager._set_cursor_behavior(manager.CursorBehavior.SNAPPED)
-	manager.expect_mouse_warp(Vector2(300, 200))
-	manager.now_ms += manager.WARP_SUPPRESSION_MS + 1
-	var motion := InputEventMouseMotion.new()
-	motion.position = Vector2(300, 200)
-	motion.relative = Vector2(8, 0)
-	manager._input(motion)
-	assert_eq(manager.get_active_mode(), manager.InputMode.CONTROLLER)
-	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)
+	manager._set_presentation_mode(manager.PresentationMode.FOCUS)
+	manager._set_presentation_mode(manager.PresentationMode.FOCUS)
+	manager._set_presentation_mode(manager.PresentationMode.POINTER)
+	manager._set_presentation_mode(manager.PresentationMode.POINTER)
+	assert_signal_emit_count(manager, "presentation_mode_changed", 2)
 
 
 func test_connected_name_selection_uses_remaining_device_then_default() -> void:
@@ -463,6 +357,19 @@ func _physical_key(keycode: Key) -> InputEventKey:
 	var event := InputEventKey.new()
 	event.physical_keycode = keycode
 	event.pressed = true
+	return event
+
+
+func _mouse_motion(relative: Vector2) -> InputEventMouseMotion:
+	var event := InputEventMouseMotion.new()
+	event.relative = relative
+	return event
+
+
+func _mouse_button(button: MouseButton, pressed: bool) -> InputEventMouseButton:
+	var event := InputEventMouseButton.new()
+	event.button_index = button
+	event.pressed = pressed
 	return event
 
 
