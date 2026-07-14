@@ -488,19 +488,50 @@ func test_physical_mouse_syncs_pointer_and_controller_continues_from_it() -> voi
 	assert_eq(dungeon_map.scan_controller.pointer_position, expected)
 
 
-func test_camera_hover_changes_scan_selection_without_neutral_frame_restoration() -> void:
+func test_camera_motion_retargets_real_node_under_stationary_pointer() -> void:
 	var setup := await _prepare_navigation_map()
 	var dungeon_map: DungeonMap = setup.map
-	var original: MapNode = setup.nodes[2]
-	var hovered_after_camera_move: MapNode = setup.nodes[3]
+	var first: MapNode = setup.nodes[1]
+	var second: MapNode = setup.nodes[2]
+	for node: MapNode in [first, second]:
+		var collision := node.get_node("CollisionPolygon2D") as CollisionPolygon2D
+		assert_false(collision.polygon.is_empty())
 	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
 	dungeon_map.start_targeting_mode(1)
-	dungeon_map._on_node_hovered(original)
-	dungeon_map.camera.position += Vector2.RIGHT * 100.0
-	dungeon_map._on_node_hovered(hovered_after_camera_move)
-	dungeon_map._process_scan_navigation(Vector2.ZERO, Vector2.ZERO, 0.1)
-	assert_same(dungeon_map.scan_controller.selected_node, hovered_after_camera_move)
-	assert_eq(dungeon_map.player_reticle.position, hovered_after_camera_move.position)
+	await get_tree().physics_frame
+	var stationary_pointer := first.get_global_transform_with_canvas().origin
+	dungeon_map.scan_controller.sync_pointer(
+		stationary_pointer,
+		dungeon_map.get_viewport_rect().size,
+	)
+	dungeon_map._refresh_scan_selection_under_pointer()
+	assert_same(dungeon_map.scan_controller.selected_node, first)
+
+	dungeon_map.camera.position += second.position - first.position
+	dungeon_map._process_scan_navigation(Vector2.ZERO, Vector2.ZERO, 0.016)
+
+	assert_eq(dungeon_map.scan_controller.pointer_position, stationary_pointer)
+	assert_same(dungeon_map.scan_controller.selected_node, second)
+	assert_eq(dungeon_map.player_reticle.position, second.position)
+
+
+func test_pointer_gap_preserves_last_valid_scan_selection() -> void:
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	var selected: MapNode = setup.nodes[1]
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	dungeon_map.start_targeting_mode(1)
+	await get_tree().physics_frame
+	dungeon_map._apply_scan_selection(selected)
+	var previous_reticle := dungeon_map.player_reticle.position
+	var gap_position := selected.get_global_transform_with_canvas().origin + Vector2(0, 100)
+	dungeon_map.scan_controller.sync_pointer(gap_position, dungeon_map.get_viewport_rect().size)
+
+	dungeon_map._refresh_scan_selection_under_pointer()
+
+	assert_null(dungeon_map._scan_node_under_pointer())
+	assert_same(dungeon_map.scan_controller.selected_node, selected)
+	assert_eq(dungeon_map.player_reticle.position, previous_reticle)
 
 
 func test_controller_can_scan_hidden_hex_without_changing_party_or_alert() -> void:

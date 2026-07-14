@@ -499,6 +499,40 @@ func _sync_scan_selection(animate := true) -> bool:
 	return true
 
 
+func _apply_scan_selection(node: MapNode) -> void:
+	if current_map_state != MapState.TARGETING or node == null:
+		return
+	scan_controller.set_selected(node)
+	_sync_scan_selection(false)
+
+
+func _scan_node_under_pointer() -> MapNode:
+	var parameters := PhysicsPointQueryParameters2D.new()
+	parameters.position = _scan_pointer_world_position()
+	parameters.collide_with_areas = true
+	parameters.collide_with_bodies = false
+	var matches: Array[MapNode] = []
+	for hit: Dictionary in get_world_2d().direct_space_state.intersect_point(parameters, 16):
+		var collider := hit.get("collider") as MapNode
+		if collider != null:
+			matches.append(collider)
+	if matches.is_empty():
+		return null
+	matches.sort_custom(func(a: MapNode, b: MapNode) -> bool:
+		return a.grid_coords.x < b.grid_coords.x or (
+			a.grid_coords.x == b.grid_coords.x and a.grid_coords.y < b.grid_coords.y
+		)
+	)
+	return matches[0]
+
+
+func _refresh_scan_selection_under_pointer() -> void:
+	camera.force_update_scroll()
+	var node := _scan_node_under_pointer()
+	if node != null:
+		_apply_scan_selection(node)
+
+
 func _process_scan_navigation(
 	direction: Vector2,
 	pan_direction: Vector2,
@@ -512,16 +546,17 @@ func _process_scan_navigation(
 	var input_mode := InputManager.get_active_mode()
 	if input_mode == InputManager.InputMode.CONTROLLER:
 		scan_controller.move_pointer(direction, delta, viewport_size)
+		if not pan_direction.is_zero_approx():
+			process_controller_camera(pan_direction, delta)
+		elif not direction.is_zero_approx():
+			_follow_scan_pointer(delta, viewport_size)
 		_show_scan_cursor()
-	else:
-		_clear_navigation_cursor()
-		scan_controller.sync_pointer(get_viewport().get_mouse_position(), viewport_size)
+		_refresh_scan_selection_under_pointer()
+		return
+	_clear_navigation_cursor()
+	scan_controller.sync_pointer(get_viewport().get_mouse_position(), viewport_size)
 	if not pan_direction.is_zero_approx():
 		process_controller_camera(pan_direction, delta)
-		return
-	if input_mode != InputManager.InputMode.CONTROLLER or direction.is_zero_approx():
-		return
-	_follow_scan_pointer(delta, viewport_size)
 
 
 func _show_scan_cursor() -> void:
@@ -1535,8 +1570,7 @@ func _on_node_hovered(hovered_node: MapNode) -> void:
 	if current_map_state != MapState.PLAYING and current_map_state != MapState.TARGETING:
 		return
 	if current_map_state == MapState.TARGETING:
-		scan_controller.set_selected(hovered_node)
-		_sync_scan_selection(false)
+		_apply_scan_selection(hovered_node)
 		return
 	if current_map_state == MapState.PLAYING:
 		var dist = _get_hex_distance(current_node.grid_coords, hovered_node.grid_coords)
