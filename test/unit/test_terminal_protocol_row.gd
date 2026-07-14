@@ -36,3 +36,11 @@ func test_focus_presentation_uses_terminal_caret_without_toggle_state() -> void:
 	row.release_focus()
 	await get_tree().process_frame
 	assert_false(row.caret_label.visible)
+
+func test_row_is_the_only_focusable_control_and_disabling_removes_focus() -> void:
+	var row := _row()
+	assert_eq(row.focus_mode, Control.FOCUS_ALL)
+	assert_eq(row.glyph.focus_mode, Control.FOCUS_NONE)
+	row.set_interactable(false)
+	assert_eq(row.focus_mode, Control.FOCUS_NONE)
+	assert_eq(row.glyph.focus_mode, Control.FOCUS_NONE)
