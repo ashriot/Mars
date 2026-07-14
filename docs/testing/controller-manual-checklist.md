@@ -31,14 +31,12 @@ Run this sequence once over USB and once over Bluetooth. Fill in both rows befor
 | USB |  |  | PS5 DualSense | USB |  |  |
 | Bluetooth |  |  | PS5 DualSense | Bluetooth |  |  |
 
-- [ ] Enter scan targeting: the visible system cursor is centered over the party hex, and the existing reticle appears on that hex.
-- [ ] Hold the left stick at varying magnitudes and in each cardinal and diagonal direction: the cursor moves smoothly at analog speed; hold the D-pad and verify continuous digital motion.
-- [ ] Cross hidden, revealed, and completed hexes with the cursor: the reticle snaps to each hex under the cursor.
-- [ ] Begin camera edge scrolling: the cursor and reticle never warp backward.
-- [ ] Hold toward every viewport edge: the cursor clamps at the boundary while continued pressure keeps scrolling the camera.
-- [ ] Release the left stick or D-pad: pointer movement and edge scrolling stop immediately.
+- [ ] Move the left stick partially and fully: pointer speed follows analog magnitude; D-pad moves the same pointer at full digital speed.
+- [ ] During controller scanning, the visible custom cursor follows the controller pointer while the hidden OS mouse remains at its independent physical position.
+- [ ] Move the physical mouse without clicking: controller mode, controller cursor, and reticle remain authoritative. Click a mouse button: keyboard-and-mouse mode activates, the custom cursor hides, and the OS cursor appears at the physical click position without inheriting the controller position.
+- [ ] Hold toward a viewport edge: the cursor clamps, camera edge-scroll continues, and the reticle advances through real hexes beneath the stationary edge cursor.
+- [ ] No stale reticle scrolls offscreen; releasing the stick stops pointer and camera immediately.
 - [ ] Hold right-stick pan while moving the left stick or D-pad: right-stick pan wins and does not pull the cursor or selection.
-- [ ] Move the physical mouse during targeting, then resume controller movement: mouse control takes over from the cursor's current position, and controller movement resumes from that same position.
 - [ ] Confirm after hovering a distant hex: the last hovered hex is scanned, the reveal begins, input briefly locks, then the camera smoothly returns to the party.
 - [ ] Cancel after hovering a distant hex: no scan is consumed and the camera smoothly returns to the party immediately.
 
@@ -57,11 +55,12 @@ Run this sequence once over USB and once over Bluetooth. Fill in both rows befor
 
 ## Mouse and keyboard switching
 
-- [ ] Move the mouse by 1–3 pixels in controller mode; incidental jitter does not steal controller mode or hide controller presentation.
-- [ ] Use the keyboard or move the mouse deliberately beyond the jitter threshold; keyboard/mouse mode activates without warping the pointer and hides non-clickable hint-bar text.
-- [ ] Alternate mouse movement/click and controller input rapidly at least ten times on every major screen; the latest meaningful input wins and focus/cursor never becomes stale.
-- [ ] Switch keyboard → controller → mouse while a modal is open; focus remains trapped inside the top modal.
-- [ ] After mouse hover leaves a battle target or dungeon node, controller input restores a valid semantic cursor without selecting anything.
+- [ ] Move the physical mouse by both small and large amounts in controller mode without clicking; motion never changes input mode, hides the controller presentation, or moves the controller cursor.
+- [ ] Click a physical mouse button; keyboard-and-mouse mode activates, non-clickable hint-bar text hides, and the OS pointer remains at its independent physical position without inheriting the controller cursor position.
+- [ ] Use the keyboard; keyboard-and-mouse mode activates without moving either pointer.
+- [ ] Alternate physical mouse clicks, keyboard input, and controller input rapidly at least ten times on every major screen; the latest activating input wins and focus/cursor never becomes stale.
+- [ ] Switch keyboard → controller → physical mouse click while a modal is open; focus remains trapped inside the top modal.
+- [ ] After keyboard-and-mouse mode is activated by a click and mouse hover leaves a battle target or dungeon node, controller input restores a valid semantic cursor without selecting anything.
 
 ## Title and hub
 
@@ -82,15 +81,13 @@ Run this sequence once over USB and once over Bluetooth. Fill in both rows befor
 - [ ] Release the stick; confirmation disables immediately, the reticle returns to the current node, briefly remains visible, and fades out.
 - [ ] Hold a direction and tap confirm repeatedly across completed nodes; each move reevaluates from the new node without requiring stick recentering, while new interactions still lock input.
 - [ ] Use the controller D-pad as a digital fallback and verify it selects the same eligible destinations.
-- [ ] Switch to keyboard-and-mouse mode; WASD/arrows do not preview or move between nodes, while mouse hover/click immediately owns the reticle and traversal.
-- [ ] Enter scan targeting: the visible system cursor is centered over the party hex, and the existing reticle appears on that hex.
-- [ ] Hold the left stick at varying magnitudes and in each cardinal and diagonal direction: the cursor moves smoothly at analog speed; hold the D-pad and verify continuous digital motion.
-- [ ] Cross hidden, revealed, and completed hexes with the cursor: the reticle snaps to each hex under the cursor.
-- [ ] Begin camera edge scrolling: the cursor and reticle never warp backward.
-- [ ] Hold toward every viewport edge: the cursor clamps at the boundary while continued pressure keeps scrolling the camera.
-- [ ] Release the left stick or D-pad: pointer movement and edge scrolling stop immediately.
+- [ ] Switch to keyboard-and-mouse mode with a physical mouse click; WASD/arrows do not preview or move between nodes, while subsequent mouse hover/click owns the reticle and traversal.
+- [ ] Move the left stick partially and fully: pointer speed follows analog magnitude; D-pad moves the same pointer at full digital speed.
+- [ ] During controller scanning, the visible custom cursor follows the controller pointer while the hidden OS mouse remains at its independent physical position.
+- [ ] Move the physical mouse without clicking: controller mode, controller cursor, and reticle remain authoritative. Click a mouse button: keyboard-and-mouse mode activates, the custom cursor hides, and the OS cursor appears at the physical click position without inheriting the controller position.
+- [ ] Hold toward a viewport edge: the cursor clamps, camera edge-scroll continues, and the reticle advances through real hexes beneath the stationary edge cursor.
+- [ ] No stale reticle scrolls offscreen; releasing the stick stops pointer and camera immediately.
 - [ ] Hold right-stick pan while moving the left stick or D-pad: right-stick pan wins and does not pull the cursor or selection.
-- [ ] Move the physical mouse during targeting, then resume controller movement: mouse control takes over from the cursor's current position, and controller movement resumes from that same position.
 - [ ] Confirm after hovering a distant hex: the last hovered hex is scanned, the reveal begins, input briefly locks, then the camera smoothly returns to the party.
 - [ ] Cancel after hovering a distant hex: no scan is consumed and the camera smoothly returns to the party immediately.
 - [ ] Verify semantic confirm/cancel and D-pad fallback on the connected controller family.
@@ -101,7 +98,10 @@ Run this sequence once over USB and once over Bluetooth. Fill in both rows befor
 - [ ] Protocol titles are orange, outcomes remain white, and every keyboard/controller glyph retains its natural proportions.
 - [ ] The footer shows Escape/Circle/B as `EXIT TERMINAL`; using it closes the terminal, while the header X remains clickable.
 - [ ] Row order and shortcuts are Security 1/A, Medical 2/X, Finance 3/Y, Scan 4/L1, and Extraction 5/R1.
-- [ ] On DualSense, verify Cross executes Security, L1 enters Scan targeting, Square executes Medical, and Triangle executes Finance after the typing animation; the first protocol input during typing only completes the animation.
+- [ ] On the normal protocol list, Up/Down and WASD do not highlight or move among rows; no protocol row owns GUI focus.
+- [ ] Hover each protocol with the mouse: its caret appears only while hovered, and clicking it activates that row exactly once.
+- [ ] On DualSense, Cross, Square, Triangle, L1, and R1 activate only their displayed protocols regardless of prior mouse hover; Circle closes.
+- [ ] Press a protocol shortcut during the brief typing animation: it is ignored without skipping or committing; after typing completes, one press activates it.
 - [ ] On keyboard, verify 1–4 execute the same protocols and 5 only opens extraction confirmation.
 - [ ] Verify Circle always closes/backs out in the normal terminal, R1 opens extraction confirmation, Cross confirms Tactical Retreat exactly once, and Circle returns to the protocol list from confirmation without closing or consuming the terminal.
 - [ ] With a mouse, click protocols 1–4 directly; click Extraction, then use its explicit Confirm and Cancel controls.
