@@ -51,17 +51,17 @@ This preserves the existing behavior where canceling a scan reopens the current 
 
 ## Scan Cursor and Selection
 
-The controller continues to drive a screen-space pointer with the left stick or D-pad. This is software-driven mouse movement, not hex-to-hex controller navigation:
+The controller continues to drive a screen-space pointer with the left stick or D-pad. This is a dedicated software cursor, not hex-to-hex controller navigation and not a warp of the physical OS mouse:
 
 - analog magnitude controls continuous pointer velocity through the existing input dead zone;
 - D-pad input drives the same pointer at full digital magnitude;
-- every changed pointer position registers an expected warp and moves the real viewport mouse to the same screen coordinates;
 - the existing custom navigation cursor is drawn at those exact coordinates during controller scan targeting;
-- the stored pointer, viewport mouse, and custom cursor never advance as separate authorities.
+- the stored controller pointer and custom cursor advance together as one controller-owned authority;
+- controller movement never changes the physical OS mouse position.
 
-The development-time OS cursor remains visible; release cursor-hiding policy remains deferred.
+While controller mode is active, the OS cursor is hidden and the custom controller cursor remains visible during scan targeting. Mouse motion by itself does not switch input mode. A physical mouse-button click switches to keyboard-and-mouse mode, hides the custom controller cursor, and reveals the OS cursor at the physical mouse position. The OS cursor does not inherit the controller cursor's position.
 
-Mouse movement continues to use the physical mouse position. Switching between mouse and controller preserves the current pointer position.
+Keyboard input alone remains part of keyboard-and-mouse mode. The mouse activation rule is intentionally click-based so incidental or hidden mouse motion cannot steal controller presentation.
 
 Hex selection no longer depends solely on Godot generating a new mouse-motion hover event:
 
@@ -93,7 +93,9 @@ After camera movement, the under-pointer collision query runs again. The reticle
 
 `DungeonScanController` continues to own pointer position, speed, clamping, active state, and the last supplied selected node.
 
-`DungeonMap` owns pointer movement, visible scan-cursor presentation, collision resolution, the shared scan-selection boundary, and camera-policy orchestration.
+`InputManager` owns click-based mouse-mode activation and ignores mouse motion as a mode-switching signal.
+
+`DungeonMap` owns controller-pointer movement, visible custom scan-cursor presentation, collision resolution, the shared scan-selection boundary, and camera-policy orchestration.
 
 `DungeonCameraController` continues to own safe-area calculations, smoothing, zoom interaction, and authoritative map clamping.
 
@@ -107,7 +109,8 @@ Automated coverage must prove:
 - protocol input during typing neither skips the animation nor commits a choice;
 - Scan removes the terminal overlay/modal before targeting begins;
 - controller pointer resolution uses a real `MapNode` collision shape and the shared selection boundary;
-- analog and D-pad input move the stored pointer, viewport mouse, and custom cursor together from the same starting coordinates;
+- analog and D-pad input move the stored controller pointer and custom cursor together without warping the OS mouse;
+- mouse motion alone preserves controller mode, while a physical mouse-button click activates keyboard-and-mouse mode and restores the OS cursor at its physical position;
 - camera movement beneath a stationary edge pointer updates the reticle without manually invoking `_on_node_hovered()`;
 - neutral input still stops camera motion immediately;
 - scan cancel reopens the terminal and scan confirm completes the interaction once.
@@ -119,5 +122,5 @@ Manual DualSense acceptance must verify the terminal shortcut model, visible cus
 - Changing terminal protocol effects or balance.
 - Changing scan radius, cost, reveal effects, or rewards.
 - Changing ordinary dungeon traversal.
-- Hiding the OS cursor for release.
+- General release cursor policy outside controller-owned cursor interaction.
 - Refactoring the wider terminal, dungeon, or navigation architecture.

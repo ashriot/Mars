@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make terminal protocols shortcut-only for controller/keyboard use, remove the terminal modal before scanning begins, and keep the software-driven scan mouse, custom cursor, and snapped reticle synchronized during camera movement.
+**Goal:** Make terminal protocols shortcut-only for controller/keyboard use, remove the terminal modal before scanning begins, and keep the dedicated controller scan cursor and snapped reticle synchronized during camera movement without warping the OS mouse.
 
-**Architecture:** Terminal rows retain mouse hover/click presentation but leave the GUI focus graph; semantic shortcuts remain the sole controller/keyboard protocol path. `GameManager` synchronously removes the terminal before starting targeting. `DungeonMap` drives one screen-space mouse position, presents it through `NavigationCursor`, and resolves the `MapNode` beneath it through real `Area2D` collision geometry after pointer or camera movement.
+**Architecture:** Terminal rows retain mouse hover/click presentation but leave the GUI focus graph; semantic shortcuts remain the sole controller/keyboard protocol path. `GameManager` synchronously removes the terminal before starting targeting. `DungeonMap` drives a controller-owned screen-space pointer, presents it through `NavigationCursor`, and resolves the `MapNode` beneath it through real `Area2D` collision geometry after pointer or camera movement. `InputManager` changes to keyboard-and-mouse mode on a physical mouse-button click, not mouse motion.
 
 **Tech Stack:** Godot 4.6.3, typed GDScript, GUT 9.6.1, `PhysicsDirectSpaceState2D`, existing `InputManager`, `NavigationCursor`, and isolated-HOME test commands.
 
@@ -16,12 +16,12 @@
 - Protocol and extraction input during the short typing animation is consumed without skipping or committing; Circle/B may still close.
 - Remove the terminal overlay/modal synchronously before calling `DungeonMap.start_targeting_mode()`.
 - Left-stick analog magnitude and D-pad input drive one continuous screen-space pointer, not hex-to-hex selection.
-- Every changed controller pointer position registers `InputManager.expect_mouse_warp()` before moving the viewport mouse to the same coordinates.
-- The stored pointer, viewport mouse, and custom navigation cursor use the same screen coordinates.
+- The stored controller pointer and custom navigation cursor use the same screen coordinates; controller input never warps the OS mouse.
+- Mouse motion alone does not change input mode. A physical mouse-button click activates keyboard-and-mouse mode, hides the custom cursor, and reveals the OS cursor at its physical position.
 - Mouse hover signals and controller collision resolution call one shared scan-selection method.
 - After controller pointer or camera movement, resolve the node beneath the pointer from real `Area2D` collision shapes; do not infer selection from nearest-node geometry.
 - Preserve scan effects, radius, costs, confirmation, cancellation, reveal timing, alert behavior, return-to-party behavior, and ordinary dungeon traversal.
-- Keep the development-time OS cursor visible; release cursor hiding remains deferred.
+- Keep the OS cursor hidden during controller-owned cursor interaction and visible in keyboard-and-mouse mode; broader release cursor policy remains deferred.
 - Automated Godot runs must use `HOME=/tmp/mars-godot-home`.
 
 **Design:** [`docs/superpowers/specs/2026-07-14-terminal-scan-transition-correction-design.md`](../specs/2026-07-14-terminal-scan-transition-correction-design.md)
@@ -267,21 +267,27 @@ git commit -m "fix: remove terminal before scan targeting"
 
 ---
 
-### Task 3: Add an explicit screen-position mode to the custom cursor
+### Task 3: Separate the controller scan cursor from the OS mouse
 
 **Files:**
 
 - Modify: `src/ui/navigation/navigation_cursor.gd`
+- Modify: `src/singletons/input_manager.gd`
 - Modify: `src/map/dungeon_map.gd`
 - Test: `test/unit/test_navigation_cursor.gd`
+- Test: `test/unit/test_input_manager.gd`
 - Test: `test/integration/test_dungeon_restore.gd`
 
 **Interfaces:**
 
-- Consumes: `DungeonScanController.pointer_position`, `DungeonMap._warp_scan_pointer(position)`, and the global `NavigationUXLayer.cursor`.
-- Produces: `NavigationCursor.show_at_screen_position(screen_position: Vector2, state := CursorState.DEFAULT) -> void`; `clear_target()` exits explicit screen-position mode.
+- Consumes: `DungeonScanController.pointer_position`, global input-mode events, and the global `NavigationUXLayer.cursor`.
+- Produces: `NavigationCursor.show_at_screen_position(screen_position: Vector2, state := CursorState.DEFAULT) -> void`; `clear_target()` exits explicit screen-position mode; physical mouse motion preserves controller mode and a mouse-button click activates keyboard-and-mouse mode.
 
-- [ ] **Step 1: Write failing NavigationCursor screen-position tests**
+- [ ] **Step 1: Write failing click-only mouse activation tests**
+
+Extend `test/unit/test_input_manager.gd` to prove that real `InputEventMouseMotion` leaves `InputMode.CONTROLLER` unchanged, while a pressed physical `InputEventMouseButton` changes it to `InputMode.KEYBOARD_MOUSE`. Retain keyboard activation and controller-button activation coverage. Remove or update obsolete tests whose intended behavior was deliberate mouse-motion takeover; expected-warp suppression is no longer part of controller scan movement.
+
+- [ ] **Step 2: Write failing NavigationCursor screen-position tests**
 
 Add:
 
@@ -306,37 +312,42 @@ func test_clear_target_exits_explicit_screen_position_mode() -> void:
 	assert_false(cursor.visible)
 ```
 
-- [ ] **Step 2: Write failing DungeonMap pointer synchronization test**
+- [ ] **Step 3: Write failing DungeonMap pointer-separation test**
 
-Create a `NavigationUXLayer` before preparing the map, start controller targeting, and assert:
+Create a `NavigationUXLayer` before preparing the map, record the viewport's physical mouse position, start controller targeting, and assert:
 
 ```gdscript
 var expected := dungeon_map.scan_controller.pointer_position
-assert_eq(dungeon_map.get_viewport().get_mouse_position(), expected)
+var physical_mouse := dungeon_map.get_viewport().get_mouse_position()
 assert_true(navigation.cursor.visible)
 assert_eq(navigation.cursor.position, expected)
 
 dungeon_map._process_scan_navigation(Vector2.RIGHT * 0.5, Vector2.ZERO, 0.1)
 var moved := dungeon_map.scan_controller.pointer_position
 assert_eq(moved, expected + Vector2.RIGHT * dungeon_map.scan_controller.cursor_speed * 0.05)
-assert_eq(dungeon_map.get_viewport().get_mouse_position(), moved)
+assert_eq(dungeon_map.get_viewport().get_mouse_position(), physical_mouse)
 assert_eq(navigation.cursor.position, moved)
 ```
 
-Use an origin and viewport size that avoid clamping. Add a D-pad/full-magnitude assertion using `Vector2.RIGHT` and the same API. Allow one process frame after `warp_mouse()` only if the real viewport requires it; do not replace the viewport assertion with an implementation-only spy.
+Use an origin and viewport size that avoid clamping. Add a D-pad/full-magnitude assertion using `Vector2.RIGHT` and the same API. Add a mode-handoff assertion: mouse motion leaves controller mode and the custom cursor intact; a mouse-button click activates keyboard-and-mouse mode, clears the custom cursor, and does not first warp the physical pointer to the controller position.
 
-- [ ] **Step 3: Run focused tests and verify RED**
+- [ ] **Step 4: Run focused tests and verify RED**
 
 Run:
 
 ```sh
 HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect navigation_cursor -gexit
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect input_manager -gexit
 HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect dungeon_restore -gexit
 ```
 
-Expected: `show_at_screen_position()` is missing and controller scan does not present the custom cursor.
+Expected: `show_at_screen_position()` is missing, mouse motion still activates keyboard-and-mouse mode, and controller scan still warps the viewport mouse.
 
-- [ ] **Step 4: Implement explicit screen-position cursor mode**
+- [ ] **Step 5: Implement click-only mouse activation**
+
+In `InputManager`, stop treating `InputEventMouseMotion` as a keyboard-and-mouse activation event. A pressed, non-synthetic `InputEventMouseButton` activates keyboard-and-mouse mode. Keep keyboard events in keyboard-and-mouse mode and controller events in controller mode. Remove controller-scan warp expectations only after all callers are gone; do not delete a still-used compatibility seam speculatively.
+
+- [ ] **Step 6: Implement explicit screen-position cursor mode**
 
 Add `_screen_position_active := false`. In `NavigationCursor._process()`, return without focus/free reconciliation while explicit mode is active.
 
@@ -357,7 +368,7 @@ func show_at_screen_position(
 
 At the beginning of `set_focus_target()` and `set_world_target()`, set `_screen_position_active = false`. At the beginning of `clear_target()`, set it to false before clearing and hiding.
 
-- [ ] **Step 5: Present the controller scan cursor from DungeonMap**
+- [ ] **Step 7: Present the controller scan cursor without warping the OS mouse**
 
 Add:
 
@@ -368,19 +379,19 @@ func _show_scan_cursor() -> void:
 		navigation.cursor.show_at_screen_position(scan_controller.pointer_position)
 ```
 
-Call `_show_scan_cursor()` after the initial `_warp_scan_pointer()` and after each controller pointer update. In mouse mode, clear the custom navigation cursor and continue synchronizing the stored pointer from `get_mouse_position()`. Existing cancel, confirm, modal takeover, and teardown paths must still call `_clear_navigation_cursor()`.
+Replace the controller scan warp path with a controller-pointer update that calls `_show_scan_cursor()` after initial placement and each controller movement. Do not call `Input.warp_mouse()` or `InputManager.expect_mouse_warp()` for controller scan movement. In keyboard-and-mouse mode, clear the custom navigation cursor and synchronize scan selection from the physical mouse only after a mouse-button click has activated that mode. Existing cancel, confirm, modal takeover, and teardown paths must still call `_clear_navigation_cursor()` and restore the correct OS/custom cursor visibility.
 
-- [ ] **Step 6: Run focused tests and verify GREEN**
+- [ ] **Step 8: Run focused tests and verify GREEN**
 
-Run the commands from Step 3.
+Run the commands from Step 4.
 
-Expected: both focused scripts pass and the stored pointer, real viewport mouse, and custom cursor share the same screen coordinates.
+Expected: all focused scripts pass; controller pointer and custom cursor share coordinates, the OS mouse is not warped, mouse motion cannot steal controller mode, and a mouse-button click performs the handoff.
 
-- [ ] **Step 7: Commit cursor synchronization**
+- [ ] **Step 9: Commit cursor separation**
 
 ```sh
-git add src/ui/navigation/navigation_cursor.gd src/map/dungeon_map.gd test/unit/test_navigation_cursor.gd test/integration/test_dungeon_restore.gd
-git commit -m "fix: show software driven scan cursor"
+git add src/ui/navigation/navigation_cursor.gd src/singletons/input_manager.gd src/map/dungeon_map.gd test/unit/test_navigation_cursor.gd test/unit/test_input_manager.gd test/integration/test_dungeon_restore.gd
+git commit -m "fix: separate controller scan cursor"
 ```
 
 ---
@@ -570,7 +581,8 @@ Replace the scan-cursor bullets with:
 
 ```markdown
 - [ ] Move the left stick partially and fully: pointer speed follows analog magnitude; D-pad moves the same pointer at full digital speed.
-- [ ] During controller scanning, the viewport mouse and custom cursor remain aligned at the same position without a hidden second controller coordinate.
+- [ ] During controller scanning, the visible custom cursor follows the controller pointer while the hidden OS mouse remains at its independent physical position.
+- [ ] Move the physical mouse without clicking: controller mode, controller cursor, and reticle remain authoritative. Click a mouse button: keyboard-and-mouse mode activates, the custom cursor hides, and the OS cursor appears at the physical click position without inheriting the controller position.
 - [ ] Hold toward a viewport edge: the cursor clamps, camera edge-scroll continues, and the reticle advances through real hexes beneath the stationary edge cursor.
 - [ ] No stale reticle scrolls offscreen; releasing the stick stops pointer and camera immediately.
 ```
@@ -614,4 +626,4 @@ No sidecars are expected for Markdown-only Task 5. If the final import changes a
 
 - [ ] **Step 6: Record remaining manual acceptance**
 
-Do not claim the physical behavior is verified until DualSense USB and Bluetooth passes confirm shortcut exclusivity, hover presentation, analog speed, D-pad parity, visible cursor alignment, edge-scroll reticle tracking, mouse takeover, confirm, and cancel.
+Do not claim the physical behavior is verified until DualSense USB and Bluetooth passes confirm shortcut exclusivity, hover presentation, analog speed, D-pad parity, visible controller-cursor alignment, click-only mouse takeover without pointer inheritance, edge-scroll reticle tracking, confirm, and cancel.
