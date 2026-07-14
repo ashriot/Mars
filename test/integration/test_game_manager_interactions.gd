@@ -300,7 +300,8 @@ func test_valid_terminal_payload_instantiates_and_connects_terminal_without_fini
 	assert_eq(manager.overlay_layer.get_child_count(), 1)
 	var terminal := manager.overlay_layer.get_child(0)
 	assert_eq(terminal.get_script(), load("res://src/map/terminal.gd"))
-	assert_eq(terminal.current_terminal_index, 0)
+	assert_eq(terminal.interaction_state, terminal.TerminalState.TYPING)
+	assert_eq(terminal.get_protocol_row(0).get_choice_id(), &"opt_sec")
 	assert_eq(terminal.option_selected.get_connections().size(), 1)
 	assert_true(terminal.closed.is_connected(manager._on_terminal_closed))
 	assert_eq(manager.completed_count, 0)
@@ -430,7 +431,9 @@ func test_real_terminal_extraction_close_does_not_clear_end_screen() -> void:
 
 	manager._on_map_interaction_requested(node)
 	var terminal := manager.overlay_layer.get_child(0)
-	terminal._on_text_link_clicked("opt_extract")
+	terminal.finish_typing()
+	assert_true(terminal.handle_semantic_action(&"terminal_extract"))
+	assert_true(terminal.handle_semantic_action(&"confirm"))
 	await get_tree().create_timer(0.35).timeout
 
 	assert_true(manager._run_end_started)

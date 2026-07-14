@@ -122,7 +122,11 @@ func test_nested_party_and_terminal_cancel_only_top_and_restore_each_layer() -> 
 	var inner := TerminalScene.instantiate()
 	add_child_autofree(inner)
 	await get_tree().process_frame
-	assert_eq(get_viewport().gui_get_focus_owner(), inner.close_button)
+	var first_protocol: TerminalProtocolRow = inner.get_protocol_row(0)
+	assert_eq(get_viewport().gui_get_focus_owner(), first_protocol)
+	assert_same(ux.get_focus_target(), first_protocol)
+	assert_same(ux.cursor._target, first_protocol)
+	assert_eq(ux.hint_bar.get_hint_count(), 0)
 	assert_true(ux.is_top_modal(inner))
 
 	party._unhandled_input(_cancel_event())

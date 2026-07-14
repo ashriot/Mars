@@ -21,6 +21,17 @@ func _terminal(upgrade_key: String = "") -> Control:
 	return terminal
 
 
+func _terminal_in_viewport(size: Vector2i) -> Dictionary:
+	var viewport := SubViewport.new()
+	viewport.size = size
+	add_child_autofree(viewport)
+	var terminal := TerminalScene.instantiate()
+	viewport.add_child(terminal)
+	terminal.setup(_payload("", "RESPONSIVE", 12, 10))
+	await get_tree().process_frame
+	return {viewport = viewport, terminal = terminal}
+
+
 func test_setup_configures_five_structured_rows_and_one_upgrade() -> void:
 	for upgrade_key in ["", "security", "scan", "medical", "finance"]:
 		var terminal := await _terminal(upgrade_key)
@@ -34,6 +45,20 @@ func test_setup_configures_five_structured_rows_and_one_upgrade() -> void:
 		assert_eq(ids.duplicate().reduce(func(unique, id): return unique + int(ids.count(id) == 1), 0), 5)
 		assert_eq(upgraded_count, 0 if upgrade_key.is_empty() else 1)
 		terminal.free()
+
+
+func test_terminal_panel_and_protocols_fit_minimum_and_desktop_viewports() -> void:
+	for size in [Vector2i(1200, 800), Vector2i(1920, 1080)]:
+		var fixture := await _terminal_in_viewport(size)
+		var terminal = fixture.terminal
+		var panel: Control = terminal.get_node("Panel")
+		assert_true(panel.position.x >= size.x * 0.04)
+		assert_true(panel.position.y >= size.y * 0.04)
+		assert_true(panel.position.x + panel.size.x <= size.x * 0.96)
+		assert_true(panel.position.y + panel.size.y <= size.y * 0.96)
+		for index in 5:
+			var row: TerminalProtocolRow = terminal.get_protocol_row(index)
+			assert_true(panel.get_global_rect().encloses(row.get_global_rect()), "%s row %d" % [size, index])
 
 
 func test_first_protocol_input_during_typing_only_finishes_animation() -> void:

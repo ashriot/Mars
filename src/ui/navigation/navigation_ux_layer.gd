@@ -44,17 +44,23 @@ func set_adapter(adapter: Object) -> void:
 
 
 func publish_hints(hints: Array[Dictionary]) -> void:
+	_prune_state()
+	if not _modal_stack.is_empty() and bool(_modal_stack.back().suppress_hints):
+		return
 	hint_bar.set_hints(hints)
 
 
-func push_modal(root: Control, default_focus: Control) -> void:
+func push_modal(root: Control, default_focus: Control, suppress_hints := false) -> void:
 	_prune_state()
 	_modal_stack.append({
 		"root": weakref(root),
 		"default": weakref(default_focus),
 		"restore": weakref(_focus_target) if is_instance_valid(_focus_target) else null,
 		"restore_screen": weakref(_screen_for(_focus_target)) if is_instance_valid(_screen_for(_focus_target)) else null,
+		"suppress_hints": suppress_hints,
 	})
+	if suppress_hints:
+		hint_bar.set_hints([])
 	if _is_focusable(default_focus):
 		default_focus.grab_focus()
 		if _focus_target != default_focus:

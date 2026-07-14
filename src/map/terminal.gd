@@ -54,11 +54,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	var navigation := _navigation_ux_layer()
 	if navigation and not navigation.is_top_modal(self):
 		return
+	var viewport := get_viewport()
 	var actions: Array[StringName] = [&"cancel", &"confirm", EXTRACTION_ACTION]
 	actions.append_array(PROTOCOL_ACTIONS)
 	for action: StringName in actions:
 		if event.is_action_pressed(action) and handle_semantic_action(action):
-			get_viewport().set_input_as_handled()
+			viewport.set_input_as_handled()
 			return
 
 
@@ -266,8 +267,7 @@ func _ensure_modal_registered() -> void:
 	if not navigation:
 		return
 	if not navigation.is_top_modal(self):
-		navigation.push_modal(self, _rows[0])
-	navigation.publish_hints([])
+		navigation.push_modal(self, _rows[0], true)
 
 
 func _navigation_ux_layer() -> NavigationUXLayer:
