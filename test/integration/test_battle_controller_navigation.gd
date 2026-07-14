@@ -206,7 +206,7 @@ func test_standard_right_direction_changes_battle_target() -> void:
 	assert_same(scene._controller_target, right)
 
 
-func test_battle_target_change_snaps_target_cursor_to_selected_actor() -> void:
+func test_battle_target_change_compatibility_target_cannot_reveal_scan_pointer() -> void:
 	var fixture := await _navigation_fixture()
 	var scene: BattleScene = fixture.scene
 	var manager: TrackingBattleManager = fixture.manager
@@ -219,7 +219,7 @@ func test_battle_target_change_snaps_target_cursor_to_selected_actor() -> void:
 	assert_eq(fixture.ux.cursor._state, NavigationCursor.CursorState.DEFAULT)
 	assert_eq(fixture.ux.cursor.texture.resource_path.get_file(), "pointer_c.svg")
 	fixture.ux.cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2.ZERO, true)
-	assert_true(fixture.ux.cursor.visible)
+	assert_false(fixture.ux.cursor.visible)
 
 
 func test_self_targeting_refresh_places_cursor_on_active_hero() -> void:
@@ -267,7 +267,7 @@ func test_different_action_hotkey_replaces_current_selection() -> void:
 	assert_same(manager.focused_button, second)
 
 
-func test_battle_action_hotkey_snaps_then_free_mouse_continues_from_target() -> void:
+func test_battle_compatibility_cursor_behavior_cannot_drive_scan_pointer() -> void:
 	var fixture := await _navigation_fixture()
 	var scene: BattleScene = fixture.scene
 	var manager: TrackingBattleManager = fixture.manager
@@ -277,18 +277,18 @@ func test_battle_action_hotkey_snaps_then_free_mouse_continues_from_target() -> 
 	InputManager._input(_physical_key(KEY_1))
 	assert_eq(InputManager.get_cursor_behavior(), InputManager.CursorBehavior.SNAPPED)
 	scene._set_controller_target(fixture.enemy)
-	var target_position: Vector2 = fixture.enemy.global_position + fixture.enemy.size * 0.5
+	var initial_position: Vector2 = fixture.ux.cursor.position
 	fixture.ux.cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2(20, 20), true)
-	assert_eq(fixture.ux.cursor.position, target_position)
-	assert_true(fixture.ux.cursor.visible)
+	assert_eq(fixture.ux.cursor.position, initial_position)
+	assert_false(fixture.ux.cursor.visible)
 
 	var motion := InputEventMouseMotion.new()
-	motion.position = target_position + Vector2(12, 0)
+	motion.position = Vector2(212, 90)
 	motion.relative = Vector2(12, 0)
 	InputManager._input(motion)
 	fixture.ux.cursor.update_position_for_behavior(InputManager.CursorBehavior.FREE, motion.position, true)
-	assert_eq(fixture.ux.cursor.position, motion.position)
-	assert_true(fixture.ux.cursor.visible)
+	assert_eq(fixture.ux.cursor.position, initial_position)
+	assert_false(fixture.ux.cursor.visible)
 	assert_same(scene._controller_target, fixture.enemy)
 
 

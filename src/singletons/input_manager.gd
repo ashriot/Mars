@@ -2,14 +2,13 @@ extends Node
 
 enum InputMode { KEYBOARD_MOUSE, CONTROLLER }
 enum PresentationMode { POINTER, FOCUS }
-# Temporary bridge for Tasks 3-5 while legacy navigation consumers migrate to PresentationMode.
+# Temporary Task 5 compatibility shape for legacy battle/hub tests and callers.
+# It carries no pointer positioning, warp suppression, or mouse-mode ownership.
 enum CursorBehavior { FREE, SNAPPED }
 
 const JOY_AXIS_THRESHOLD := 0.25
 const HARDWARE_CURSOR := preload("res://assets/graphics/glyphs/cursors/outline/pointer_c.svg")
 const HARDWARE_CURSOR_HOTSPOT := Vector2(2, 2)
-const WARP_POSITION_TOLERANCE := 2.0
-const WARP_SUPPRESSION_MS := 100
 const DIRECTIONAL_NAVIGATION_ACTIONS: Array[StringName] = [
 	&"ui_left", &"ui_right", &"ui_up", &"ui_down",
 	&"nav_left", &"nav_right", &"nav_up", &"nav_down",
@@ -25,8 +24,6 @@ var _active_controller_type := InputIconMap.ControllerType.STEAM_DECK
 var _presentation_mode := PresentationMode.POINTER
 var _consumed_mouse_button: MouseButton = MOUSE_BUTTON_NONE
 var _cursor_behavior := CursorBehavior.FREE
-var _expected_warp_position := Vector2.INF
-var _expected_warp_deadline_ms := 0
 
 
 func _ready() -> void:
@@ -43,8 +40,6 @@ func _input(event: InputEvent) -> void:
 			_consumed_mouse_button = MOUSE_BUTTON_NONE
 		return
 	if event is InputEventMouseMotion:
-		if _suppress_expected_mouse_warp(event):
-			return
 		if _active_mode == InputMode.KEYBOARD_MOUSE and not event.relative.is_zero_approx():
 			_set_presentation_mode(PresentationMode.POINTER)
 		return
@@ -105,11 +100,6 @@ func _set_presentation_mode(mode: PresentationMode) -> void:
 
 func get_cursor_behavior() -> CursorBehavior:
 	return _cursor_behavior
-
-
-func expect_mouse_warp(position: Vector2) -> void:
-	_expected_warp_position = position
-	_expected_warp_deadline_ms = _now_ms() + WARP_SUPPRESSION_MS
 
 
 func is_meaningful_event(event: InputEvent) -> bool:
@@ -203,18 +193,6 @@ func _is_legacy_navigation_key(event: InputEventKey) -> bool:
 	return false
 
 
-func _suppress_expected_mouse_warp(event: InputEventMouseMotion) -> bool:
-	if _expected_warp_position == Vector2.INF:
-		return false
-	var within_deadline := _now_ms() <= _expected_warp_deadline_ms
-	var matches := within_deadline and event.position.distance_to(_expected_warp_position) <= WARP_POSITION_TOLERANCE
-	if matches:
-		return true
-	_expected_warp_position = Vector2.INF
-	_expected_warp_deadline_ms = 0
-	return false
-
-
 func _set_mouse_mode(mode: Input.MouseMode) -> void:
 	Input.mouse_mode = mode
 
@@ -226,7 +204,3 @@ func _install_hardware_cursor(texture: Texture2D, hotspot: Vector2) -> void:
 func _mark_input_handled() -> void:
 	if is_inside_tree():
 		get_viewport().set_input_as_handled()
-
-
-func _now_ms() -> int:
-	return Time.get_ticks_msec()

@@ -467,11 +467,8 @@ func cancel_preview() -> void:
 
 func _clear_navigation_cursor() -> void:
 	var navigation := _navigation_ux_layer()
-	if navigation and (
-		navigation.cursor.is_screen_position_active()
-		or not navigation.has_open_modal()
-	):
-		navigation.cursor.clear_target()
+	if navigation:
+		navigation.cursor.hide_pointer()
 
 
 func navigation_focus_restored() -> void:
@@ -580,12 +577,14 @@ func _process_scan_navigation(
 
 func _show_scan_cursor() -> void:
 	var navigation := _navigation_ux_layer()
-	if navigation and InputManager.get_active_mode() == InputManager.InputMode.CONTROLLER:
+	if navigation \
+			and current_map_state == MapState.TARGETING \
+			and InputManager.get_active_mode() == InputManager.InputMode.CONTROLLER:
 		if _controller_scan_target_valid:
 			scan_controller.pointer_position = _scan_map_to_screen_position(
 				_controller_scan_map_position
 			)
-		navigation.cursor.show_at_screen_position(scan_controller.pointer_position)
+			navigation.cursor.show_at_screen_position(scan_controller.pointer_position)
 
 
 func _scan_pointer_global_world_position() -> Vector2:

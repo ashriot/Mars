@@ -1,165 +1,60 @@
 extends TextureRect
 class_name NavigationCursor
 
-enum CursorState { DEFAULT, INTERACT, CAN_GRAB, DRAGGING, UPGRADE, DISABLED, BUSY, TARGET, MODIFY }
+const POINTER_TEXTURE := preload("res://assets/graphics/glyphs/cursors/outline/pointer_c.svg")
 
-const STATE_FILES := {
-	CursorState.DEFAULT: "pointer_c.svg",
-	CursorState.INTERACT: "hand_point.svg",
-	CursorState.CAN_GRAB: "hand_open.svg",
-	CursorState.DRAGGING: "hand_closed.svg",
-	CursorState.UPGRADE: "tool_hammer.svg",
-	CursorState.DISABLED: "cursor_disabled.svg",
-	CursorState.BUSY: "busy_circle.svg",
-	CursorState.TARGET: "cross_small.svg",
-	CursorState.MODIFY: "cursor_cogs.svg",
-}
+# Temporary Task 5 compatibility surface. Ordinary battle and hub callers still
+# compile against these names, but none of them can position or reveal this pointer.
+enum CursorState { DEFAULT, INTERACT, CAN_GRAB, DRAGGING, UPGRADE, DISABLED, BUSY, TARGET, MODIFY }
 
 var _target: CanvasItem
 var _state := CursorState.DEFAULT
-var _position_tween: Tween
-var _last_warp_destination := Vector2.INF
-var _last_warp_target_id := 0
-var _screen_position_active := false
 
 
 func _ready() -> void:
-	# Keep the OS cursor visible during development; reconsider hiding it for release.
-	_set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-	if not InputManager.cursor_behavior_changed.is_connected(_on_cursor_behavior_changed):
-		InputManager.cursor_behavior_changed.connect(_on_cursor_behavior_changed)
+	texture = POINTER_TEXTURE
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	set_process_priority(100)
-	set_cursor_state(_state)
-
-
-func _exit_tree() -> void:
-	_set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-	if InputManager.cursor_behavior_changed.is_connected(_on_cursor_behavior_changed):
-		InputManager.cursor_behavior_changed.disconnect(_on_cursor_behavior_changed)
-
-
-func _set_mouse_mode(mode: Input.MouseMode) -> void:
-	Input.mouse_mode = mode
-
-
-func _process(_delta: float) -> void:
-	if _screen_position_active:
-		return
-	update_position_for_behavior(InputManager.get_cursor_behavior(), get_viewport().get_mouse_position())
-
-
-func set_focus_target(control: Control, state: CursorState = CursorState.DEFAULT) -> void:
-	_screen_position_active = false
-	_set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-	_target = control
-	set_cursor_state(state)
-
-
-func set_world_target(canvas_item: CanvasItem, state: CursorState = CursorState.TARGET) -> void:
-	_screen_position_active = false
-	_set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-	_target = canvas_item
-	set_cursor_state(state)
-
-
-func clear_target() -> void:
-	_clear_target(true)
-
-
-func _clear_target(restore_hardware_cursor: bool) -> void:
-	_screen_position_active = false
-	if restore_hardware_cursor:
-		_set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-	_target = null
-	_reset_warp_dedupe()
-	set_cursor_state(CursorState.DEFAULT)
 	hide()
 
 
-func show_at_screen_position(
-	screen_position: Vector2,
-	state: CursorState = CursorState.DEFAULT,
-) -> void:
-	_screen_position_active = true
+func show_at_screen_position(screen_position: Vector2) -> void:
 	_target = null
-	_reset_warp_dedupe()
-	set_cursor_state(state)
-	_move_to(screen_position, true)
-	_set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+	_state = CursorState.DEFAULT
+	position = screen_position
 	show()
 
 
-func is_screen_position_active() -> bool:
-	return _screen_position_active
+func hide_pointer() -> void:
+	hide()
+
+
+# Remove these compatibility methods with the remaining Task 5 callers.
+func set_focus_target(control: Control, state: CursorState = CursorState.DEFAULT) -> void:
+	_target = control
+	_state = state
+	hide_pointer()
+
+
+func set_world_target(canvas_item: CanvasItem, state: CursorState = CursorState.TARGET) -> void:
+	_target = canvas_item
+	_state = state
+	hide_pointer()
+
+
+func clear_target() -> void:
+	_target = null
+	_state = CursorState.DEFAULT
+	hide_pointer()
 
 
 func set_cursor_state(state: CursorState) -> void:
 	_state = state
-	texture = load("res://assets/graphics/glyphs/cursors/outline/%s" % STATE_FILES[state]) as Texture2D
+	hide_pointer()
 
 
-func update_position_for_behavior(behavior: InputManager.CursorBehavior, mouse_position: Vector2, immediate := false) -> void:
-	if _screen_position_active:
-		return
-	if behavior == InputManager.CursorBehavior.FREE:
-		_reset_warp_dedupe()
-		_move_to(mouse_position, true)
-		show()
-		return
-	if not _is_valid_target():
-		_clear_target(false)
-		return
-	var destination := _target_position()
-	_move_to(destination, immediate)
-	var target_id := _target.get_instance_id()
-	var already_requested := _last_warp_target_id == target_id \
-		and _last_warp_destination.distance_to(destination) <= InputManager.WARP_POSITION_TOLERANCE
-	if not already_requested and mouse_position.distance_to(destination) > InputManager.WARP_POSITION_TOLERANCE:
-		_last_warp_target_id = target_id
-		_last_warp_destination = destination
-		InputManager.expect_mouse_warp(destination)
-		_warp_mouse(destination)
-	show()
-
-
-func _warp_mouse(position: Vector2) -> void:
-	_warp_viewport_mouse(get_viewport(), position)
-
-
-func _warp_viewport_mouse(viewport: Viewport, position: Vector2) -> void:
-	viewport.warp_mouse(position)
-
-
-func _reset_warp_dedupe() -> void:
-	_last_warp_destination = Vector2.INF
-	_last_warp_target_id = 0
-
-
-func _on_cursor_behavior_changed(behavior: InputManager.CursorBehavior) -> void:
-	if behavior == InputManager.CursorBehavior.FREE:
-		_reset_warp_dedupe()
-
-
-func _is_valid_target() -> bool:
-	if not is_instance_valid(_target) or not _target.is_inside_tree() or not _target.is_visible_in_tree():
-		return false
-	return not (_target is BaseButton and (_target as BaseButton).disabled)
-
-
-func _target_position() -> Vector2:
-	if _target is Control:
-		var control := _target as Control
-		var anchor: Vector2 = control.get_meta("cursor_anchor", control.size * 0.5)
-		return control.get_global_transform_with_canvas() * anchor
-	return _target.get_global_transform_with_canvas().origin
-
-
-func _move_to(destination: Vector2, immediate: bool) -> void:
-	if is_instance_valid(_position_tween):
-		_position_tween.kill()
-	if immediate or not is_inside_tree():
-		position = destination
-		return
-	_position_tween = create_tween()
-	_position_tween.tween_property(self, "position", destination, 0.08).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+func update_position_for_behavior(
+	_behavior: InputManager.CursorBehavior,
+	_mouse_position: Vector2,
+	_immediate := false,
+) -> void:
+	hide_pointer()

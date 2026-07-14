@@ -503,35 +503,43 @@ func test_right_pan_detaches_from_world_cursor_and_left_input_slides_camera_back
 	assert_gt(returning_distance, 1.0, "camera returns smoothly instead of snapping")
 
 
-func test_scan_mouse_motion_preserves_controller_cursor_until_click_handoff() -> void:
+func test_scan_mouse_motion_preserves_controller_pointer_until_consumed_click_handoff() -> void:
 	var navigation := _make_navigation_ux()
 	var setup := await _prepare_navigation_map()
 	var dungeon_map: DungeonMap = setup.map
 	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
-	InputManager._set_cursor_behavior(InputManager.CursorBehavior.SNAPPED)
+	InputManager._set_presentation_mode(InputManager.PresentationMode.FOCUS)
 	var physical_mouse := dungeon_map.get_viewport().get_mouse_position()
 	dungeon_map.start_targeting_mode(1)
 	var controller_position := dungeon_map.scan_controller.pointer_position
+	var selected_before := dungeon_map.scan_controller.selected_node
+	watch_signals(selected_before)
 
-	var motion := InputEventMouseMotion.new()
-	motion.position = physical_mouse + Vector2(10, 5)
-	motion.relative = Vector2(10, 5)
-	InputManager._input(motion)
+	InputManager._input(_mouse_motion(Vector2(10, 5)))
 	dungeon_map._process_scan_navigation(Vector2.ZERO, Vector2.ZERO, 0.1)
 	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.CONTROLLER)
 	assert_true(navigation.cursor.visible)
 	assert_eq(navigation.cursor.position, controller_position)
+	assert_same(dungeon_map.scan_controller.selected_node, selected_before)
 
-	var click := InputEventMouseButton.new()
-	click.button_index = MOUSE_BUTTON_LEFT
-	click.pressed = true
-	InputManager._input(click)
+	InputManager._input(_mouse_button(MOUSE_BUTTON_LEFT, true))
+	assert_eq(InputManager._consumed_mouse_button, MOUSE_BUTTON_LEFT)
+	InputManager._input(_mouse_button(MOUSE_BUTTON_LEFT, false))
 	dungeon_map._process_scan_navigation(Vector2.ZERO, Vector2.ZERO, 0.1)
 	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.KEYBOARD_MOUSE)
+	assert_eq(InputManager.get_presentation_mode(), InputManager.PresentationMode.POINTER)
 	assert_false(navigation.cursor.visible)
+	assert_eq(dungeon_map.current_map_state, DungeonMap.MapState.TARGETING)
+	assert_same(dungeon_map.scan_controller.selected_node, selected_before)
+	assert_signal_not_emitted(selected_before, &"node_clicked")
 	assert_eq(dungeon_map.get_viewport().get_mouse_position(), physical_mouse)
-	click.pressed = false
-	InputManager._input(click)
+
+	var second_click := _mouse_button(MOUSE_BUTTON_LEFT, true)
+	InputManager._input(second_click)
+	selected_before._input_event(dungeon_map.get_viewport(), second_click, 0)
+	InputManager._input(_mouse_button(MOUSE_BUTTON_LEFT, false))
+	assert_signal_emitted(selected_before, &"node_clicked")
+	assert_eq(dungeon_map.current_map_state, DungeonMap.MapState.LOCKED)
 
 
 func test_pointer_gap_preserves_last_valid_scan_selection() -> void:
@@ -662,7 +670,6 @@ func test_opening_modal_cancels_active_scan_and_returns_party_focus() -> void:
 	)
 	assert_signal_emit_count(dungeon_map, &"scan_canceled", 1)
 	assert_false(navigation.cursor.visible)
-	assert_false(navigation.cursor.is_screen_position_active())
 	assert_eq(Input.mouse_mode, Input.MOUSE_MODE_VISIBLE)
 	await get_tree().create_timer(dungeon_map.camera_smooth_speed + 0.05).timeout
 	assert_almost_eq(dungeon_map.camera.position.x, expected.x, 0.01)
@@ -677,7 +684,7 @@ func test_scan_cancel_restores_cursor_when_handler_opens_focusless_terminal() ->
 	var dungeon_map: DungeonMap = setup.map
 	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
 	dungeon_map.start_targeting_mode(1)
-	assert_true(navigation.cursor.is_screen_position_active())
+	assert_true(navigation.cursor.visible)
 	var terminal := TERMINAL_SCENE.instantiate()
 	dungeon_map.scan_canceled.connect(func() -> void: add_child(terminal), CONNECT_ONE_SHOT)
 
@@ -685,7 +692,6 @@ func test_scan_cancel_restores_cursor_when_handler_opens_focusless_terminal() ->
 
 	assert_true(navigation.is_top_modal(terminal))
 	assert_false(navigation.cursor.visible)
-	assert_false(navigation.cursor.is_screen_position_active())
 	assert_eq(Input.mouse_mode, Input.MOUSE_MODE_VISIBLE)
 	terminal.queue_free()
 	await get_tree().process_frame
@@ -708,7 +714,6 @@ func test_scan_cancel_preserves_focus_claimed_by_modal() -> void:
 	dungeon_map._process(0.016)
 
 	assert_false(dungeon_map.scan_controller.active)
-	assert_false(navigation.cursor.is_screen_position_active())
 	assert_false(navigation.cursor.visible)
 	assert_same(navigation.get_focus_target(), focus_target)
 	assert_true(NavigationFocus._states.has(focus_target.get_instance_id()))
@@ -1119,12 +1124,10 @@ func test_map_registers_global_adapter_preserves_preview_without_world_cursor_an
 	var preview: MapNode = dungeon_map._controller_preview_node
 	assert_not_null(preview)
 	assert_true(dungeon_map.player_reticle.visible)
-	assert_null(navigation.cursor._target)
-	assert_eq(navigation.cursor._state, NavigationCursor.CursorState.DEFAULT)
 	assert_false(navigation.cursor.visible)
 	outsider.grab_focus()
 	await get_tree().process_frame
-	assert_null(navigation.cursor._target, "focus changes cannot assign an active adapter's world cursor")
+	assert_false(navigation.cursor.visible, "focus changes cannot reveal the scan pointer")
 	assert_same(dungeon_map._controller_preview_node, preview)
 	Input.action_release(&"nav_right")
 	assert_eq(_hint_actions(navigation), [&"confirm", &"cancel", &"camera_pan_right", &"zoom_in", &"zoom_out", &"recenter"])
@@ -1141,13 +1144,12 @@ func test_map_registers_global_adapter_preserves_preview_without_world_cursor_an
 		dungeon_map.camera_controller.focus_mode,
 		DungeonCameraController.FocusMode.PARTY,
 	)
-	assert_null(navigation.cursor._target)
 	assert_null(dungeon_map._controller_preview_node)
 	assert_false(dungeon_map.player_reticle.visible)
 	dungeon_map.queue_free()
 	await get_tree().process_frame
 	assert_null(navigation._adapter)
-	assert_null(navigation.cursor._target)
+	assert_false(navigation.cursor.visible)
 	assert_eq(navigation.hint_bar.get_hint_count(), 0)
 
 
@@ -1167,7 +1169,7 @@ func test_terminal_modal_temporarily_owns_cursor_then_restores_live_map_adapter(
 	Input.action_press(&"nav_right")
 	dungeon_map._process(0.016)
 	assert_not_null(dungeon_map._controller_preview_node)
-	assert_null(navigation.cursor._target, "map preview uses its reticle, not the global cursor")
+	assert_false(navigation.cursor.visible, "map preview uses its reticle, not the scan pointer")
 
 	var terminal := TERMINAL_SCENE.instantiate()
 	add_child(terminal)
@@ -1182,7 +1184,7 @@ func test_terminal_modal_temporarily_owns_cursor_then_restores_live_map_adapter(
 	assert_false(first_protocol.has_focus())
 	assert_null(get_viewport().gui_get_focus_owner())
 	assert_null(navigation.get_focus_target())
-	assert_null(navigation.cursor._target)
+	assert_false(navigation.cursor.visible)
 	assert_eq(navigation.hint_bar.get_hint_count(), 0)
 	assert_same(navigation._adapter, dungeon_map)
 
@@ -1190,48 +1192,36 @@ func test_terminal_modal_temporarily_owns_cursor_then_restores_live_map_adapter(
 	await get_tree().process_frame
 	dungeon_map._process(0.016)
 	assert_same(navigation._adapter, dungeon_map, "closing a modal keeps the live dungeon adapter registered")
-	assert_null(navigation.cursor._target)
 	assert_not_null(dungeon_map._controller_preview_node, "held input resumes after modal closes")
-	assert_eq(navigation.cursor._state, NavigationCursor.CursorState.DEFAULT)
 	assert_false(navigation.cursor.visible)
 	assert_eq(_hint_actions(navigation), [&"confirm", &"cancel", &"camera_pan_right", &"zoom_in", &"zoom_out", &"recenter"])
 	Input.action_release(&"nav_right")
 
 
-func test_map_adapter_restore_clears_world_cursor_target() -> void:
+func test_map_adapter_restore_keeps_scan_pointer_hidden() -> void:
 	InputManager._input(_joy_button())
 	var navigation := _make_navigation_ux()
 	var setup := await _prepare_navigation_map()
 	var dungeon_map: DungeonMap = setup.map
-	navigation.cursor.set_world_target(dungeon_map.current_node, NavigationCursor.CursorState.TARGET)
 	dungeon_map.navigation_focus_restored()
-	assert_null(navigation.cursor._target)
-	assert_eq(navigation.cursor._state, NavigationCursor.CursorState.DEFAULT)
 	assert_false(navigation.cursor.visible)
 
 
-func test_map_cursor_shows_for_free_mouse_then_hides_for_keyboard_navigation() -> void:
+func test_ordinary_map_navigation_never_shows_scan_pointer() -> void:
 	var navigation := _make_navigation_ux()
 	var setup := await _prepare_navigation_map()
 	var dungeon_map: DungeonMap = setup.map
-	InputManager._set_cursor_behavior(InputManager.CursorBehavior.SNAPPED)
 	dungeon_map.select_direction(Vector2.RIGHT)
-	navigation.cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2.ZERO, true)
 	assert_false(navigation.cursor.visible)
 
-	var motion := InputEventMouseMotion.new()
-	motion.position = Vector2(240, 180)
-	motion.relative = Vector2(10, 0)
+	var motion := _mouse_motion(Vector2(10, 0))
 	InputManager._input(motion)
-	navigation.cursor.update_position_for_behavior(InputManager.CursorBehavior.FREE, motion.position, true)
-	assert_true(navigation.cursor.visible)
-	assert_eq(navigation.cursor.position, motion.position)
+	assert_false(navigation.cursor.visible)
 
 	var navigation_key := InputEventKey.new()
 	navigation_key.physical_keycode = KEY_D
 	navigation_key.pressed = true
 	InputManager._input(navigation_key)
-	navigation.cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, motion.position, true)
 	assert_false(navigation.cursor.visible)
 	dungeon_map._process(0.016)
 	assert_null(dungeon_map._controller_preview_node)
@@ -1261,6 +1251,19 @@ func _physical_key(keycode: Key) -> InputEventKey:
 	var event := InputEventKey.new()
 	event.physical_keycode = keycode
 	event.pressed = true
+	return event
+
+
+func _mouse_motion(relative: Vector2) -> InputEventMouseMotion:
+	var event := InputEventMouseMotion.new()
+	event.relative = relative
+	return event
+
+
+func _mouse_button(button: MouseButton, pressed: bool) -> InputEventMouseButton:
+	var event := InputEventMouseButton.new()
+	event.button_index = button
+	event.pressed = pressed
 	return event
 
 

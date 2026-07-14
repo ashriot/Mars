@@ -6,8 +6,6 @@ const HubScene = preload("res://src/hub/hub.tscn")
 var saved_input_mode: InputManager.InputMode
 var saved_presentation_mode: InputManager.PresentationMode
 var saved_cursor_behavior: InputManager.CursorBehavior
-var saved_expected_warp_position: Vector2
-var saved_expected_warp_deadline_ms: int
 var saved_process_input: bool
 
 
@@ -22,19 +20,13 @@ func before_each() -> void:
 	saved_input_mode = InputManager._active_mode
 	saved_presentation_mode = InputManager._presentation_mode
 	saved_cursor_behavior = InputManager._cursor_behavior
-	saved_expected_warp_position = InputManager._expected_warp_position
-	saved_expected_warp_deadline_ms = InputManager._expected_warp_deadline_ms
 	saved_process_input = InputManager.is_processing_input()
 
 
 func after_each() -> void:
-	InputManager._expected_warp_position = Vector2.INF
-	InputManager._expected_warp_deadline_ms = 0
 	InputManager._active_mode = saved_input_mode
 	InputManager._presentation_mode = saved_presentation_mode
 	InputManager._cursor_behavior = saved_cursor_behavior
-	InputManager._expected_warp_position = saved_expected_warp_position
-	InputManager._expected_warp_deadline_ms = saved_expected_warp_deadline_ms
 	InputManager.set_process_input(saved_process_input)
 
 
@@ -152,7 +144,6 @@ func test_controller_direction_from_pointer_moves_immediately_and_hides_mouse() 
 	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)
 	var direction := _joy_direction(JOY_BUTTON_DPAD_DOWN, true)
 	InputManager._input(direction)
-	cursor._process(0.0)
 	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.CONTROLLER)
 	assert_false(
 		cursor.requested_modes.has(Input.MOUSE_MODE_VISIBLE),
