@@ -502,14 +502,20 @@ func _process_scan_navigation(
 	if _controller_preview_node == null:
 		_sync_scan_selection(false)
 	var viewport_size := get_viewport_rect().size
-	if InputManager.get_active_mode() == InputManager.InputMode.CONTROLLER:
+	var input_mode := InputManager.get_active_mode()
+	if input_mode == InputManager.InputMode.CONTROLLER:
 		var before := scan_controller.pointer_position
 		var after := scan_controller.move_pointer(direction, delta, viewport_size)
 		if not after.is_equal_approx(before):
 			_warp_scan_pointer(after)
 	else:
 		scan_controller.sync_pointer(get_viewport().get_mouse_position(), viewport_size)
-	process_controller_camera(pan_direction, delta)
+	if not pan_direction.is_zero_approx():
+		process_controller_camera(pan_direction, delta)
+		return
+	if input_mode != InputManager.InputMode.CONTROLLER or direction.is_zero_approx():
+		return
+	_follow_scan_pointer(delta, viewport_size)
 
 
 func _warp_scan_pointer(screen_position: Vector2) -> void:
@@ -517,14 +523,19 @@ func _warp_scan_pointer(screen_position: Vector2) -> void:
 	get_viewport().warp_mouse(screen_position)
 
 
-func _approach_scan_camera(delta: float) -> void:
-	if scan_controller.selected_node == null:
-		return
+func _scan_pointer_world_position() -> Vector2:
+	return get_canvas_transform().affine_inverse() * scan_controller.pointer_position
+
+
+func _follow_scan_pointer(delta: float, viewport_size: Vector2) -> void:
 	_sync_camera_tuning()
+	var pointer_world_position := _scan_pointer_world_position()
+	if camera_controller.scanner_is_inside_safe_area(pointer_world_position, viewport_size):
+		return
 	camera_controller.follow_scanner(
-		scan_controller.selected_node.position,
+		pointer_world_position,
 		delta,
-		get_viewport_rect().size,
+		viewport_size,
 	)
 
 
