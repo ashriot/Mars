@@ -17,25 +17,27 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 		return
 
 	for target in parent_targets:
-		if not target or not is_instance_valid(target) or (target.is_defeated and not is_revive):
+		if not target or not is_instance_valid(target):
 			continue
-		target = target as HeroCard
+		var hero_target := target as HeroCard
+		if hero_target == null or (hero_target.is_defeated and not is_revive):
+			continue
 
 		var base_power = attacker.get_power(power_type)
 		var base_heal_float: float = base_power * potency
 
 		var scalar: float = 1.0
 		if scales_with_missing_hp:
-			var hp_percent = float(target.current_hp) / target.current_stats.max_hp
+			var hp_percent = float(hero_target.current_hp) / hero_target.current_stats.max_hp
 			scalar += (1.0 - hp_percent)
 
-		scalar += focus_scalar * target.current_focus
+		scalar += focus_scalar * hero_target.current_focus
 
 		var final_heal_float = base_heal_float * scalar
 		var final_heal_int = roundi(final_heal_float)
 
-		print(target.actor_name, " is healed for ", final_heal_int)
-		target.take_healing(final_heal_int, is_revive)
+		print(hero_target.actor_name, " is healed for ", final_heal_int)
+		hero_target.take_healing(final_heal_int, is_revive)
 
 	await battle_manager.wait()
 	return
