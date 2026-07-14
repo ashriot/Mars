@@ -96,6 +96,39 @@ func test_suppressing_outer_clears_inner_hints_when_reexposed_then_restores_scre
 	assert_eq(ux.hint_bar.get_hint(0).label.text, "Screen")
 
 
+func test_focusless_suppressing_modal_restores_unchanged_focus_hints_on_pop() -> void:
+	var ux := UXScene.instantiate() as NavigationUXLayer
+	add_child_autofree(ux)
+	var outer := Control.new()
+	var outer_button := Button.new()
+	outer.add_child(outer_button)
+	add_child_autofree(outer)
+	var outer_hints: Array[Dictionary] = [
+		{action = &"confirm", label = "Select", enabled = true},
+		{action = &"cancel", label = "Back", enabled = true},
+	]
+	outer_button.focus_entered.connect(func() -> void: ux.publish_hints(outer_hints))
+	ux.push_modal(outer, outer_button)
+	await get_tree().process_frame
+	assert_eq(ux.hint_bar.get_hint(1).label.text, "Back")
+
+	var inner := Control.new()
+	var focusless_default := Button.new()
+	focusless_default.focus_mode = Control.FOCUS_NONE
+	inner.add_child(focusless_default)
+	add_child_autofree(inner)
+	ux.push_modal(inner, focusless_default, true)
+	assert_same(get_viewport().gui_get_focus_owner(), outer_button)
+	assert_eq(ux.hint_bar.get_hint_count(), 0)
+
+	ux.pop_modal(inner)
+	await get_tree().process_frame
+	assert_same(get_viewport().gui_get_focus_owner(), outer_button)
+	assert_eq(ux.hint_bar.get_hint_count(), 2)
+	if ux.hint_bar.get_hint_count() >= 2:
+		assert_eq(ux.hint_bar.get_hint(1).label.text, "Back")
+
+
 func test_open_modal_query_tracks_stack_presence() -> void:
 	var ux = UXScene.instantiate()
 	add_child_autofree(ux)

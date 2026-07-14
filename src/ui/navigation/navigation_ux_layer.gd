@@ -9,6 +9,7 @@ var _modal_stack: Array[Dictionary] = []
 var _focus_target: Control
 var _adapter: Object
 var _restoring_focus := false
+var _published_hints: Array[Dictionary] = []
 
 
 func _ready() -> void:
@@ -45,10 +46,12 @@ func set_adapter(adapter: Object) -> void:
 
 func publish_hints(hints: Array[Dictionary]) -> void:
 	_prune_state()
+	_published_hints.clear()
+	_published_hints.assign(hints.duplicate(true))
 	if _top_modal_suppresses_hints():
 		hint_bar.set_hints([])
 		return
-	hint_bar.set_hints(hints)
+	hint_bar.set_hints(_published_hints)
 
 
 func push_modal(root: Control, default_focus: Control, suppress_hints := false) -> void:
@@ -58,6 +61,7 @@ func push_modal(root: Control, default_focus: Control, suppress_hints := false) 
 		"default": weakref(default_focus),
 		"restore": weakref(_focus_target) if is_instance_valid(_focus_target) else null,
 		"restore_screen": weakref(_screen_for(_focus_target)) if is_instance_valid(_screen_for(_focus_target)) else null,
+		"restore_hints": _published_hints.duplicate(true),
 		"suppress_hints": suppress_hints,
 	})
 	_apply_top_modal_hint_policy()
@@ -72,7 +76,11 @@ func pop_modal(root: Control) -> void:
 	if _modal_stack.is_empty() or _weak_get(_modal_stack.back().root) != root:
 		return
 	var entry: Dictionary = _modal_stack.pop_back()
+	_published_hints.clear()
+	_published_hints.assign(entry.get("restore_hints", []))
 	_apply_top_modal_hint_policy()
+	if not _top_modal_suppresses_hints():
+		hint_bar.set_hints(_published_hints)
 	_restore_from_entry(entry)
 
 
@@ -232,8 +240,8 @@ func _restore_adapter_focus() -> void:
 func _modal_default(entry: Dictionary) -> Control:
 	var root := _weak_get(entry.root) as Control
 	var default_focus := _weak_get(entry.default) as Control
-	if _is_focusable(default_focus) and (default_focus == root or root.is_ancestor_of(default_focus)):
-		return default_focus
+	if is_instance_valid(default_focus) and (default_focus == root or root.is_ancestor_of(default_focus)):
+		return default_focus if _is_focusable(default_focus) else null
 	return _first_focusable(root)
 
 

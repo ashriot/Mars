@@ -130,6 +130,18 @@ func test_nested_party_and_terminal_cancel_only_top_and_restore_each_layer() -> 
 	assert_same(ux.cursor._target, party_default)
 	assert_eq(ux.hint_bar.get_hint_count(), 0)
 	assert_true(ux.is_top_modal(inner))
+	var directional_event := _key(KEY_DOWN)
+	get_viewport().push_input(directional_event)
+	await get_tree().process_frame
+	directional_event.pressed = false
+	get_viewport().push_input(directional_event)
+	await get_tree().process_frame
+	for index in 5:
+		var protocol_row: TerminalProtocolRow = inner.get_protocol_row(index)
+		assert_false(protocol_row.has_focus())
+		assert_false(protocol_row.caret_label.visible)
+	assert_false(inner.close_button.has_focus())
+	assert_ne(ux.cursor._target, inner.close_button)
 
 	party._unhandled_input(_cancel_event())
 	await get_tree().process_frame
@@ -143,7 +155,7 @@ func test_nested_party_and_terminal_cancel_only_top_and_restore_each_layer() -> 
 	assert_true(party.visible)
 	assert_true(ux.is_top_modal(party))
 	assert_eq(get_viewport().gui_get_focus_owner(), party_default)
-	assert_eq(ux.hint_bar.get_hint_count(), 0, "unchanged underlying focus does not republish suppressed hints")
+	assert_eq(ux.hint_bar.get_hint(1).label.text, "Back", "lower modal hints restore")
 
 	party._unhandled_input(_cancel_event())
 	await get_tree().process_frame
