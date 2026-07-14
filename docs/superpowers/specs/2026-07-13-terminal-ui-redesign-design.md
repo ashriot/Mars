@@ -46,15 +46,16 @@ Directional navigation is available as a fallback through the real controls, but
 
 | Protocol | Keyboard | Controller |
 | --- | --- | --- |
-| Security | 1 | Action slot 1 / first face button |
-| Scan | 2 | Action slot 2 / second face button |
-| Medical | 3 | Action slot 3 / third face button |
-| Finance | 4 | Action slot 4 / fourth face button |
+| Security | 1 | Cross/A/confirm-position face button |
+| Scan | 2 | L1/LB/left shoulder |
+| Medical | 3 | Square/X/left face button |
+| Finance | 4 | Triangle/Y/top face button |
 | Extraction | 5 | R1/RB/right shoulder |
+| Back/Close | Escape | Circle/B/cancel-position face button |
 
-Controller labels resolve through the existing semantic glyph system. PlayStation displays Cross, Circle, Square, Triangle, and R1. Xbox and Steam-compatible families display A, B, X, Y, and RB. Nintendo displays the correct physical face-button glyphs for the semantic action slots plus R. Keyboard-and-mouse displays 1–5.
+Controller labels resolve through the existing semantic glyph system. PlayStation displays Cross, L1, Square, Triangle, R1, and Circle for Back. Xbox and Steam-compatible families display A, LB, X, Y, RB, and B for Back. Nintendo displays A, L, Y, X, R, and B for Back. Keyboard-and-mouse displays 1–5 and Escape.
 
-Extraction receives a dedicated semantic action rather than borrowing an unrelated screen action merely because it shares the same physical button.
+The five protocols receive terminal-specific semantic actions rather than borrowing combat action slots. The Security action follows the active controller family's confirm-position binding so Nintendo retains A as Security and B as Back. Extraction uses a dedicated semantic action rather than borrowing an unrelated screen action merely because it shares the same shoulder.
 
 Mouse users can click any protocol row. Protocols 1–4 execute immediately. Clicking Extraction enters the same guarded state as its keyboard or controller shortcut.
 
@@ -112,6 +113,7 @@ Automated tests cover:
 
 - panel bounds, minimum readable layout, and absence of clipping at 1200×800 and 1920×1080;
 - correct keyboard, PlayStation, Xbox/Steam, and Nintendo glyph resolution;
+- the controller mapping remaining Cross/A for Security, L1/LB for Scan, Square/X for Medical, Triangle/Y for Finance, R1/RB for Extraction, and Circle/B for Back;
 - protocols 1–4 emitting their existing choice IDs exactly once from keyboard, controller, focus activation, and mouse activation;
 - keyboard 5 and the controller right shoulder entering extraction confirmation without emitting a choice;
 - Confirm emitting extraction exactly once and Cancel returning to Ready;
