@@ -180,6 +180,15 @@ func follow_scanner(scanner_position: Vector2, delta: float, viewport_size: Vect
 	return _camera.position
 
 
+func scanner_is_inside_safe_area(scanner_position: Vector2, viewport_size: Vector2) -> bool:
+	return desired_scanner_position(
+		scanner_position,
+		_camera.position,
+		viewport_size,
+		_camera.zoom,
+	).is_equal_approx(_camera.position)
+
+
 func clamp_position(
 	target_position: Vector2,
 	zoom_level: Vector2,

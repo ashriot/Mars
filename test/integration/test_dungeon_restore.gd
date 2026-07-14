@@ -350,6 +350,24 @@ func test_scan_starts_on_party_with_single_reticle() -> void:
 	assert_eq(dungeon_map.player_reticle.position, dungeon_map.current_node.position)
 
 
+func test_scan_start_without_current_node_is_rejected_and_cancel_is_safe() -> void:
+	var dungeon_map := await _make_map()
+	dungeon_map.current_map_state = DungeonMap.MapState.PLAYING
+	assert_null(dungeon_map.current_node)
+
+	dungeon_map.start_targeting_mode(2)
+	dungeon_map._cancel_targeting()
+
+	assert_eq(dungeon_map.current_map_state, DungeonMap.MapState.PLAYING)
+	assert_eq(dungeon_map.pending_scan_radius, 0)
+	assert_false(dungeon_map.scan_controller.active)
+	assert_false(dungeon_map.player_reticle.visible)
+	assert_eq(
+		dungeon_map.camera_controller.focus_mode,
+		DungeonCameraController.FocusMode.PARTY,
+	)
+
+
 func test_scan_reticle_repeats_through_hidden_hexes_without_moving_party() -> void:
 	var setup := await _prepare_navigation_map()
 	var dungeon_map: DungeonMap = setup.map
@@ -436,35 +454,43 @@ func test_select_direction_does_not_replace_active_scan_selection() -> void:
 	assert_eq(dungeon_map.player_reticle.position, selected.position)
 
 
-func test_scan_selection_resynchronizes_after_modal_closes_with_neutral_input() -> void:
+func test_opening_modal_cancels_active_scan_and_returns_party_focus() -> void:
 	InputManager._input(_joy_button())
 	var navigation := _make_navigation_ux()
 	var setup := await _prepare_navigation_map()
 	var dungeon_map: DungeonMap = setup.map
 	var selected: MapNode = setup.nodes[2]
 	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	dungeon_map.camera.zoom = Vector2(5, 5)
 	dungeon_map.start_targeting_mode(1)
 	dungeon_map.scan_controller.set_selected(selected)
 	dungeon_map._sync_scan_selection(false)
-	var camera_position := dungeon_map.camera.position
+	dungeon_map.camera.position = selected.position
+	var expected := dungeon_map._calculate_hybrid_position(dungeon_map.camera.zoom)
+	watch_signals(dungeon_map)
 
 	var terminal := TERMINAL_SCENE.instantiate()
 	add_child(terminal)
 	await get_tree().process_frame
 	dungeon_map._process(0.016)
 	assert_true(navigation.is_top_modal(terminal))
-	assert_null(dungeon_map._controller_preview_node)
-
+	assert_false(dungeon_map.scan_controller.active)
+	assert_eq(dungeon_map.current_map_state, DungeonMap.MapState.PLAYING)
+	assert_eq(dungeon_map.pending_scan_radius, 0)
+	assert_false(dungeon_map.player_reticle.visible)
+	assert_eq(
+		dungeon_map.camera_controller.focus_mode,
+		DungeonCameraController.FocusMode.PARTY,
+	)
+	assert_signal_emit_count(dungeon_map, &"scan_canceled", 1)
+	await get_tree().create_timer(dungeon_map.camera_smooth_speed + 0.05).timeout
+	assert_almost_eq(dungeon_map.camera.position.x, expected.x, 0.01)
+	assert_almost_eq(dungeon_map.camera.position.y, expected.y, 0.01)
 	terminal.queue_free()
 	await get_tree().process_frame
-	dungeon_map._process(0.016)
-
-	assert_same(dungeon_map._controller_preview_node, selected)
-	assert_same(dungeon_map.scan_controller.selected_node, selected)
-	assert_eq(dungeon_map.camera.position, camera_position)
 
 
-func test_open_modal_suppresses_active_scan_events_until_it_closes() -> void:
+func test_open_modal_suppresses_playing_map_events_without_canceling() -> void:
 	InputManager._input(_joy_button())
 	var navigation := _make_navigation_ux()
 	var setup := await _prepare_navigation_map()
@@ -476,20 +502,14 @@ func test_open_modal_suppresses_active_scan_events_until_it_closes() -> void:
 		selected.position,
 		dungeon_map.camera.zoom,
 	)
-	dungeon_map.start_targeting_mode(2)
-	dungeon_map.scan_controller.set_selected(selected)
-	dungeon_map._sync_scan_selection(false)
+	watch_signals(dungeon_map)
 
 	var terminal := TERMINAL_SCENE.instantiate()
 	add_child(terminal)
 	await get_tree().process_frame
 	assert_true(navigation.is_top_modal(terminal))
+	dungeon_map._process(0.016)
 
-	var state_before := dungeon_map.current_map_state
-	var radius_before := dungeon_map.pending_scan_radius
-	var active_before := dungeon_map.scan_controller.active
-	var selection_before: MapNode = dungeon_map.scan_controller.selected_node
-	var preview_before := dungeon_map._controller_preview_node
 	var zoom_before := dungeon_map.camera.zoom
 	var camera_before := dungeon_map.camera.position
 	for action: StringName in [&"zoom_in", &"recenter", &"cancel"]:
@@ -505,18 +525,13 @@ func test_open_modal_suppresses_active_scan_events_until_it_closes() -> void:
 	pan.delta = Vector2(8.0, -5.0)
 	dungeon_map._input(pan)
 
-	assert_eq(dungeon_map.current_map_state, state_before)
-	assert_eq(dungeon_map.pending_scan_radius, radius_before)
-	assert_eq(dungeon_map.scan_controller.active, active_before)
-	assert_same(dungeon_map.scan_controller.selected_node, selection_before)
-	assert_same(dungeon_map._controller_preview_node, preview_before)
+	assert_eq(dungeon_map.current_map_state, DungeonMap.MapState.PLAYING)
+	assert_false(dungeon_map.scan_controller.active)
+	assert_signal_emit_count(dungeon_map, &"scan_canceled", 0)
 	assert_eq(dungeon_map.camera.zoom, zoom_before)
 	assert_eq(dungeon_map.camera.position, camera_before)
-
 	terminal.queue_free()
 	await get_tree().process_frame
-	dungeon_map._process(0.016)
-	assert_same(dungeon_map._controller_preview_node, selected)
 
 
 func test_scan_right_stick_pan_wins_over_same_frame_reticle_follow() -> void:
@@ -547,6 +562,29 @@ func test_scan_reticle_movement_reacquires_only_after_manual_pan_release() -> vo
 	assert_eq(dungeon_map.camera.position, manually_panned)
 	dungeon_map._process_scan_navigation(Vector2.LEFT, Vector2.ZERO, 0.1)
 	assert_ne(dungeon_map.camera.position, manually_panned)
+
+
+func test_scan_camera_continues_reacquiring_over_neutral_frames() -> void:
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	dungeon_map.camera.zoom = Vector2(5, 5)
+	dungeon_map.scan_dead_zone_ratio = 0.1
+	dungeon_map.start_targeting_mode(1)
+	dungeon_map._process_scan_navigation(Vector2.RIGHT, Vector2.ZERO, 0.016)
+	var after_selection_frame := dungeon_map.camera.position
+	for frame in range(120):
+		dungeon_map._process_scan_navigation(Vector2.ZERO, Vector2.ZERO, 0.016)
+	var selected_position := dungeon_map.scan_controller.selected_node.position
+	var desired := dungeon_map.camera_controller.desired_scanner_position(
+		selected_position,
+		dungeon_map.camera.position,
+		dungeon_map.get_viewport_rect().size,
+		dungeon_map.camera.zoom,
+	)
+	assert_ne(dungeon_map.camera.position, after_selection_frame)
+	assert_almost_eq(dungeon_map.camera.position.x, desired.x, 0.001)
+	assert_almost_eq(dungeon_map.camera.position.y, desired.y, 0.001)
 
 
 func test_scan_camera_approach_uses_exponential_response_without_overshoot() -> void:
@@ -640,6 +678,7 @@ func test_scan_movement_keeps_camera_position_ownership_during_zoom_tween() -> v
 	assert_ne(dungeon_map.scan_controller.selected_node, selection_before)
 	assert_ne(dungeon_map.camera.position, camera_before_follow)
 	var camera_after_follow := dungeon_map.camera.position
+	dungeon_map.set_process(false)
 	await get_tree().create_timer(0.35).timeout
 	assert_eq(dungeon_map.camera.position, camera_after_follow)
 
@@ -682,19 +721,25 @@ func test_scan_cancel_returns_camera_to_party_without_consuming_scan() -> void:
 	assert_almost_eq(dungeon_map.camera.position.y, expected.y, 0.01)
 
 
-func test_modal_suppresses_active_scan_selection() -> void:
+func test_modal_takeover_clears_scan_transient_state() -> void:
 	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
 	var navigation := _make_navigation_ux()
 	var setup := await _prepare_navigation_map()
 	var dungeon_map: DungeonMap = setup.map
+	dungeon_map.camera.zoom = Vector2(5, 5)
+	dungeon_map.scan_dead_zone_ratio = 0.1
 	dungeon_map.start_targeting_mode(1)
-	var selected: MapNode = dungeon_map.scan_controller.selected_node
+	dungeon_map._process_scan_navigation(Vector2.RIGHT, Vector2.ZERO, 0.016)
 	var terminal := TERMINAL_SCENE.instantiate()
 	add_child(terminal)
 	await get_tree().process_frame
 	dungeon_map._process(0.1)
 	assert_true(navigation.has_open_modal())
-	assert_same(dungeon_map.scan_controller.selected_node, selected)
+	assert_false(dungeon_map.scan_controller.active)
+	assert_null(dungeon_map.scan_controller.selected_node)
+	assert_null(dungeon_map._controller_preview_node)
+	assert_false(dungeon_map._scan_camera_reacquiring)
+	assert_false(dungeon_map.player_reticle.visible)
 	terminal.queue_free()
 	await get_tree().process_frame
 
