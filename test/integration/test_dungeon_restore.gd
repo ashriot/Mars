@@ -691,7 +691,7 @@ func test_scan_cancel_restores_cursor_when_handler_opens_focusless_terminal() ->
 	await get_tree().process_frame
 
 
-func test_scan_cancel_preserves_cursor_claimed_by_focused_modal() -> void:
+func test_scan_cancel_preserves_focus_claimed_by_modal() -> void:
 	var navigation := _make_navigation_ux()
 	var setup := await _prepare_navigation_map()
 	var dungeon_map: DungeonMap = setup.map
@@ -702,13 +702,16 @@ func test_scan_cancel_preserves_cursor_claimed_by_focused_modal() -> void:
 	modal.add_child(focus_target)
 	add_child(modal)
 	navigation.push_modal(modal, focus_target)
-	assert_false(navigation.cursor.is_screen_position_active())
-	assert_same(navigation.cursor._target, focus_target)
+	assert_same(navigation.get_focus_target(), focus_target)
+	assert_true(NavigationFocus._states.has(focus_target.get_instance_id()))
 
 	dungeon_map._process(0.016)
 
 	assert_false(dungeon_map.scan_controller.active)
-	assert_same(navigation.cursor._target, focus_target)
+	assert_false(navigation.cursor.is_screen_position_active())
+	assert_false(navigation.cursor.visible)
+	assert_same(navigation.get_focus_target(), focus_target)
+	assert_true(NavigationFocus._states.has(focus_target.get_instance_id()))
 	assert_eq(Input.mouse_mode, Input.MOUSE_MODE_VISIBLE)
 	navigation.pop_modal(modal)
 	modal.queue_free()

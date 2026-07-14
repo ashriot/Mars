@@ -62,7 +62,7 @@ func test_party_menu_authored_focus_neighbors_resolve_from_each_control() -> voi
 	assert_eq(back.get_node_or_null(back.focus_neighbor_bottom), skills)
 
 
-func test_party_tabs_arrow_and_wasd_move_focus_and_cursor_to_same_destination() -> void:
+func test_party_tabs_arrow_and_wasd_move_focus_to_same_destination() -> void:
 	var ux := _add_ux()
 	var hero := load("res://data/heroes/asher/asher.tres").duplicate(true) as HeroData
 	SaveSystem.party_roster.assign([hero])
@@ -74,31 +74,24 @@ func test_party_tabs_arrow_and_wasd_move_focus_and_cursor_to_same_destination() 
 	var skills := hub.party_menu.get_node("Header/ModeTabs/Skills") as Button
 	var inventory := hub.party_menu.get_node("Header/ModeTabs/Inventory") as Button
 
-	var destinations: Array[Vector2] = []
 	for event: InputEventKey in [_key(KEY_RIGHT), _physical_key(KEY_D)]:
+		InputManager._set_presentation_mode(InputManager.PresentationMode.FOCUS)
 		skills.grab_focus()
 		await get_tree().process_frame
 		var focus_transitions: Array[Control] = []
 		var record_focus := func(control: Control) -> void: focus_transitions.append(control)
 		get_viewport().gui_focus_changed.connect(record_focus)
-		InputManager._set_cursor_behavior(InputManager.CursorBehavior.FREE)
 		get_viewport().push_input(event)
 		await get_tree().process_frame
 		get_viewport().gui_focus_changed.disconnect(record_focus)
 		assert_same(get_viewport().gui_get_focus_owner(), inventory)
 		assert_eq(focus_transitions, [inventory], "one focus transition per key press")
 		assert_same(ux.get_focus_target(), inventory)
-		assert_same(ux.cursor._target, inventory)
+		assert_true(NavigationFocus._states.has(inventory.get_instance_id()))
 		assert_eq(InputManager.get_active_mode(), InputManager.InputMode.KEYBOARD_MOUSE)
-		assert_eq(InputManager.get_cursor_behavior(), InputManager.CursorBehavior.SNAPPED)
-		destinations.append(ux.cursor._target_position())
 		event.pressed = false
 		get_viewport().push_input(event)
 		await get_tree().process_frame
-
-	assert_eq(destinations.size(), 2)
-	assert_eq(destinations[0], destinations[1])
-
 
 func test_nested_party_and_terminal_cancel_only_top_and_restore_each_layer() -> void:
 	var ux := _add_ux()
@@ -137,7 +130,7 @@ func test_nested_party_and_terminal_cancel_only_top_and_restore_each_layer() -> 
 	assert_false(first_protocol.has_focus())
 	assert_null(get_viewport().gui_get_focus_owner())
 	assert_null(ux.get_focus_target())
-	assert_null(ux.cursor._target)
+	assert_false(ux.cursor.visible)
 	assert_eq(ux.hint_bar.get_hint_count(), 0)
 	assert_true(ux.is_top_modal(inner))
 	var directional_event := _key(KEY_DOWN)
@@ -159,7 +152,7 @@ func test_nested_party_and_terminal_cancel_only_top_and_restore_each_layer() -> 
 		assert_false(protocol_row.has_focus())
 		assert_false(protocol_row.caret_label.visible)
 	assert_false(inner.close_button.has_focus())
-	assert_ne(ux.cursor._target, inner.close_button)
+	assert_false(ux.cursor.visible)
 	assert_true(inner.interaction_state in [inner.TerminalState.TYPING, inner.TerminalState.READY])
 	inner.finish_typing()
 	assert_eq(inner.interaction_state, inner.TerminalState.READY)
@@ -181,12 +174,12 @@ func test_nested_party_and_terminal_cancel_only_top_and_restore_each_layer() -> 
 	await get_tree().process_frame
 	assert_same(get_viewport().gui_get_focus_owner(), inner.confirm_button, "extraction confirmation recovers escaped focus")
 	assert_same(ux.get_focus_target(), inner.confirm_button)
-	assert_same(ux.cursor._target, inner.confirm_button)
+	assert_true(NavigationFocus._states.has(inner.confirm_button.get_instance_id()))
 	assert_true(inner.handle_semantic_action(&"cancel"))
 	assert_eq(inner.interaction_state, inner.TerminalState.READY)
 	assert_null(get_viewport().gui_get_focus_owner())
 	assert_null(ux.get_focus_target())
-	assert_null(ux.cursor._target)
+	assert_false(ux.cursor.visible)
 	assert_false(inner.confirm_button.has_focus())
 	assert_false(inner.cancel_button.has_focus())
 	assert_false(inner.close_button.has_focus())

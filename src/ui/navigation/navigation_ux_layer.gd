@@ -3,6 +3,7 @@ class_name NavigationUXLayer
 
 @onready var cursor: NavigationCursor = $NavigationCursor
 @onready var hint_bar: ActionHintBar = $ActionHintBar
+@onready var pointer_input_blocker: Control = $PointerInputBlocker
 
 var _screens: Dictionary = {}
 var _modal_stack: Array[Dictionary] = []
@@ -16,6 +17,8 @@ var _published_hint_owner: WeakRef
 
 func _ready() -> void:
 	get_viewport().gui_focus_changed.connect(_on_focus_changed)
+	InputManager.presentation_mode_changed.connect(_on_presentation_mode_changed)
+	_on_presentation_mode_changed(InputManager.get_presentation_mode())
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
 
@@ -43,7 +46,6 @@ func set_adapter(adapter: Object) -> void:
 	if is_instance_valid(_focus_target):
 		NavigationFocus.clear(_focus_target)
 	_focus_target = null
-	cursor.clear_target()
 
 
 func publish_hints(hints: Array[Dictionary]) -> void:
@@ -218,11 +220,20 @@ func _update_focus_target(control: Control) -> void:
 	if is_instance_valid(_focus_target):
 		NavigationFocus.clear(_focus_target)
 	_focus_target = control
-	if _is_focusable(control):
+	if _is_focusable(control) \
+		and InputManager.get_presentation_mode() == InputManager.PresentationMode.FOCUS:
 		NavigationFocus.apply(control)
-		cursor.set_focus_target(control, control.get_meta("cursor_state", NavigationCursor.CursorState.DEFAULT))
-	else:
-		cursor.clear_target()
+
+
+func _on_presentation_mode_changed(mode: InputManager.PresentationMode) -> void:
+	pointer_input_blocker.visible = mode == InputManager.PresentationMode.FOCUS
+	if mode == InputManager.PresentationMode.POINTER:
+		if is_instance_valid(_focus_target):
+			NavigationFocus.clear(_focus_target)
+		return
+	ensure_valid_focus()
+	if _is_focusable(_focus_target):
+		NavigationFocus.apply(_focus_target)
 
 
 func _first_focusable(root: Control) -> Control:
@@ -420,4 +431,3 @@ func _clear_presentation() -> void:
 	if is_instance_valid(_focus_target):
 		NavigationFocus.clear(_focus_target)
 	_focus_target = null
-	cursor.clear_target()

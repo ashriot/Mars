@@ -454,7 +454,7 @@ func test_physical_button_zero_selects_then_distinct_press_confirms() -> void:
 	assert_eq(manager.confirm_count, 1)
 
 
-func test_top_modal_suppresses_battle_input_and_restores_adapter_cursor() -> void:
+func test_top_modal_suppresses_battle_input_and_restores_adapter_focus() -> void:
 	var fixture := await _navigation_fixture()
 	var scene: BattleScene = fixture.scene
 	var manager: TrackingBattleManager = fixture.manager
@@ -466,7 +466,8 @@ func test_top_modal_suppresses_battle_input_and_restores_adapter_cursor() -> voi
 	ux.push_modal(modal, modal_button)
 	await get_tree().process_frame
 	assert_same(ux.get_focus_target(), modal_button)
-	assert_same(ux.cursor._target, modal_button)
+	assert_true(NavigationFocus._states.has(modal_button.get_instance_id()))
+	assert_false(ux.cursor.visible)
 	fixture.bar._unhandled_input(_action_event(&"action_1"))
 	scene._unhandled_input(_action_event(&"confirm"))
 	assert_eq(manager.action_select_count, 0)

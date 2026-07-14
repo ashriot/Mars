@@ -4,24 +4,15 @@ const UXScene = preload("res://src/ui/navigation/navigation_ux_layer.tscn")
 const HubScene = preload("res://src/hub/hub.tscn")
 
 var saved_input_mode: InputManager.InputMode
+var saved_presentation_mode: InputManager.PresentationMode
 var saved_cursor_behavior: InputManager.CursorBehavior
 var saved_expected_warp_position: Vector2
 var saved_expected_warp_deadline_ms: int
 
 
-class RecordingCursor extends NavigationCursor:
-	signal physical_warped(position: Vector2)
-	var warped_positions: Array[Vector2] = []
-	var expected_positions_at_warp: Array[Vector2] = []
-
-	func _warp_mouse(position: Vector2) -> void:
-		warped_positions.append(position)
-		expected_positions_at_warp.append(InputManager._expected_warp_position)
-		physical_warped.emit(position)
-
-
 func before_each() -> void:
 	saved_input_mode = InputManager._active_mode
+	saved_presentation_mode = InputManager._presentation_mode
 	saved_cursor_behavior = InputManager._cursor_behavior
 	saved_expected_warp_position = InputManager._expected_warp_position
 	saved_expected_warp_deadline_ms = InputManager._expected_warp_deadline_ms
@@ -31,6 +22,7 @@ func after_each() -> void:
 	InputManager._expected_warp_position = Vector2.INF
 	InputManager._expected_warp_deadline_ms = 0
 	InputManager._active_mode = saved_input_mode
+	InputManager._presentation_mode = saved_presentation_mode
 	InputManager._cursor_behavior = saved_cursor_behavior
 	InputManager._expected_warp_position = saved_expected_warp_position
 	InputManager._expected_warp_deadline_ms = saved_expected_warp_deadline_ms
@@ -41,6 +33,116 @@ func _key(keycode: Key) -> InputEventKey:
 	event.keycode = keycode
 	event.pressed = true
 	return event
+
+
+func _released_key(keycode: Key) -> InputEventKey:
+	var event := _key(keycode)
+	event.pressed = false
+	return event
+
+
+func _mouse_motion(relative: Vector2) -> InputEventMouseMotion:
+	var event := InputEventMouseMotion.new()
+	event.relative = relative
+	return event
+
+
+func _joy_direction(button: JoyButton, pressed: bool) -> InputEventJoypadButton:
+	var event := InputEventJoypadButton.new()
+	event.button_index = button
+	event.pressed = pressed
+	return event
+
+
+func _three_button_screen() -> Dictionary:
+	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
+	InputManager._set_presentation_mode(InputManager.PresentationMode.FOCUS)
+	var ux := UXScene.instantiate() as NavigationUXLayer
+	add_child_autofree(ux)
+	var screen := VBoxContainer.new()
+	screen.position = Vector2(100, 100)
+	var top := Button.new()
+	var middle := Button.new()
+	var bottom := Button.new()
+	for index in 3:
+		var button: Button = [top, middle, bottom][index]
+		button.text = ["TOP", "MIDDLE", "BOTTOM"][index]
+		button.custom_minimum_size = Vector2(240, 40)
+		button.focus_mode = Control.FOCUS_ALL
+		screen.add_child(button)
+	top.focus_neighbor_bottom = top.get_path_to(middle)
+	middle.focus_neighbor_top = middle.get_path_to(top)
+	middle.focus_neighbor_bottom = middle.get_path_to(bottom)
+	bottom.focus_neighbor_top = bottom.get_path_to(middle)
+	add_child_autofree(screen)
+	ux.register_screen(screen, top)
+	await get_tree().process_frame
+	return {"ux": ux, "screen": screen, "top": top, "middle": middle, "bottom": bottom}
+
+
+func test_mouse_motion_hides_focus_but_retains_navigation_origin() -> void:
+	var setup := await _three_button_screen()
+	var ux: NavigationUXLayer = setup.ux
+	var top: Button = setup.top
+	InputManager._set_presentation_mode(InputManager.PresentationMode.FOCUS)
+	top.grab_focus()
+	await get_tree().process_frame
+	assert_true(NavigationFocus._states.has(top.get_instance_id()))
+	InputManager._input(_mouse_motion(Vector2(12, 0)))
+	assert_same(ux.get_focus_target(), top)
+	assert_same(get_viewport().gui_get_focus_owner(), top)
+	assert_false(NavigationFocus._states.has(top.get_instance_id()))
+	assert_false(ux.pointer_input_blocker.visible)
+
+
+func test_first_keyboard_direction_after_pointer_only_restores_top_focus() -> void:
+	var setup := await _three_button_screen()
+	setup.top.grab_focus()
+	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)
+	get_viewport().push_input(_key(KEY_DOWN))
+	await get_tree().process_frame
+	assert_same(get_viewport().gui_get_focus_owner(), setup.top)
+	assert_true(NavigationFocus._states.has(setup.top.get_instance_id()))
+	get_viewport().push_input(_released_key(KEY_DOWN))
+	get_viewport().push_input(_key(KEY_DOWN))
+	await get_tree().process_frame
+	assert_same(get_viewport().gui_get_focus_owner(), setup.middle)
+
+
+func test_controller_direction_from_pointer_moves_immediately_and_hides_mouse() -> void:
+	var setup := await _three_button_screen()
+	var ux: NavigationUXLayer = setup.ux
+	setup.top.grab_focus()
+	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)
+	get_viewport().push_input(_joy_direction(JOY_BUTTON_DPAD_DOWN, true))
+	await get_tree().process_frame
+	assert_same(get_viewport().gui_get_focus_owner(), setup.middle)
+	assert_true(ux.pointer_input_blocker.visible)
+	assert_false(ux.cursor.visible, "ordinary controller focus does not show the navigation cursor")
+
+
+func test_keyboard_direction_from_controller_moves_immediately_and_reveals_mouse() -> void:
+	var setup := await _three_button_screen()
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	setup.top.grab_focus()
+	get_viewport().push_input(_key(KEY_DOWN))
+	await get_tree().process_frame
+	assert_same(get_viewport().gui_get_focus_owner(), setup.middle)
+	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.KEYBOARD_MOUSE)
+	assert_eq(Input.mouse_mode, Input.MOUSE_MODE_VISIBLE)
+	assert_false(setup.ux.cursor.visible, "keyboard focus does not show the navigation cursor")
+
+
+func test_focus_presentation_resolves_invalid_retained_target_to_fallback() -> void:
+	var setup := await _three_button_screen()
+	setup.top.grab_focus()
+	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)
+	setup.top.disabled = true
+	InputManager._set_presentation_mode(InputManager.PresentationMode.FOCUS)
+	await get_tree().process_frame
+	assert_same(get_viewport().gui_get_focus_owner(), setup.middle)
+	assert_same(setup.ux.get_focus_target(), setup.middle)
+	assert_true(NavigationFocus._states.has(setup.middle.get_instance_id()))
 
 
 func test_top_modal_query_tracks_nested_ownership() -> void:
@@ -126,7 +228,6 @@ func test_focusless_suppressing_modal_restores_unchanged_focus_hints_on_pop() ->
 	ux.push_modal(inner, focusless_default, true, true)
 	assert_null(get_viewport().gui_get_focus_owner())
 	assert_null(ux.get_focus_target())
-	assert_null(ux.cursor._target)
 	assert_eq(ux.hint_bar.get_hint_count(), 0)
 
 	ux.pop_modal(inner)
@@ -138,6 +239,7 @@ func test_focusless_suppressing_modal_restores_unchanged_focus_hints_on_pop() ->
 
 
 func test_focusless_policy_change_releases_live_focus_and_cancels_stale_deferred_fallback() -> void:
+	InputManager._set_presentation_mode(InputManager.PresentationMode.FOCUS)
 	var ux := UXScene.instantiate() as NavigationUXLayer
 	add_child_autofree(ux)
 	var screen := Control.new()
@@ -158,19 +260,17 @@ func test_focusless_policy_change_releases_live_focus_and_cancels_stale_deferred
 	ux.update_modal_focus(modal, modal_button, true)
 	assert_null(get_viewport().gui_get_focus_owner())
 	assert_null(ux.get_focus_target())
-	assert_null(ux.cursor._target)
 	await get_tree().process_frame
 	await get_tree().process_frame
 	assert_null(get_viewport().gui_get_focus_owner())
 	assert_null(ux.get_focus_target())
-	assert_null(ux.cursor._target)
 	assert_false(modal_button.has_focus())
 
 	ux.pop_modal(modal)
 	await get_tree().process_frame
 	assert_same(get_viewport().gui_get_focus_owner(), screen_button)
 	assert_same(ux.get_focus_target(), screen_button)
-	assert_same(ux.cursor._target, screen_button)
+	assert_true(NavigationFocus._states.has(screen_button.get_instance_id()))
 
 
 func test_focusless_modal_blocks_underlying_focus_navigation_and_keyboard_accept() -> void:
@@ -477,17 +577,10 @@ func test_modal_with_unavailable_default_falls_back_to_enabled_descendant() -> v
 	assert_same(ux.get_focus_target(), fallback_button)
 
 
-func test_modal_pop_synchronizes_cursor_to_restored_screen_focus() -> void:
+func test_modal_pop_synchronizes_restored_screen_focus_presentation() -> void:
+	InputManager._set_presentation_mode(InputManager.PresentationMode.FOCUS)
 	var ux := UXScene.instantiate() as NavigationUXLayer
 	add_child_autofree(ux)
-	var original_cursor := ux.cursor
-	original_cursor.set_process(false)
-	ux.remove_child(original_cursor)
-	original_cursor.free()
-	var cursor := RecordingCursor.new()
-	ux.add_child(cursor)
-	ux.cursor = cursor
-	cursor.set_process(false)
 	var screen := Control.new()
 	var restored := Button.new()
 	restored.position = Vector2(120, 70)
@@ -502,18 +595,10 @@ func test_modal_pop_synchronizes_cursor_to_restored_screen_focus() -> void:
 	add_child_autofree(modal)
 	ux.push_modal(modal, modal_button)
 	await get_tree().process_frame
-	InputManager._set_cursor_behavior(InputManager.CursorBehavior.SNAPPED)
 	ux.pop_modal(modal)
-	cursor.set_process(true)
-	var recorded_warp: Vector2 = await cursor.physical_warped
-	cursor.set_process(false)
-	var destination := restored.get_global_transform_with_canvas() * (restored.size * 0.5)
-	assert_eq(ux.get_focus_target(), restored)
-	assert_eq(recorded_warp, destination)
-	assert_eq(cursor.warped_positions, [destination])
-	assert_eq(cursor.expected_positions_at_warp, [destination], "expect_mouse_warp runs before the physical warp seam")
 	await get_tree().process_frame
-	cursor.set_process(true)
+	assert_eq(ux.get_focus_target(), restored)
+	assert_true(NavigationFocus._states.has(restored.get_instance_id()))
 
 
 func test_invalid_prior_focus_restores_registered_default_or_descendant() -> void:

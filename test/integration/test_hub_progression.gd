@@ -7,18 +7,8 @@ var saved_roster: Array[HeroData] = []
 var saved_slot: int
 var saved_storage_root: String
 var saved_input_mode: InputManager.InputMode
+var saved_presentation_mode: InputManager.PresentationMode
 var saved_cursor_behavior: InputManager.CursorBehavior
-var saved_expected_warp_position: Vector2
-var saved_expected_warp_deadline_ms: int
-
-
-class RecordingCursor extends NavigationCursor:
-	signal physical_warped(position: Vector2)
-	var warped_positions: Array[Vector2] = []
-
-	func _warp_mouse(position: Vector2) -> void:
-		warped_positions.append(position)
-		physical_warped.emit(position)
 
 
 func before_each() -> void:
@@ -27,9 +17,8 @@ func before_each() -> void:
 	saved_slot = SaveSystem.current_slot_index
 	saved_storage_root = SaveSystem.storage_root_override
 	saved_input_mode = InputManager._active_mode
+	saved_presentation_mode = InputManager._presentation_mode
 	saved_cursor_behavior = InputManager._cursor_behavior
-	saved_expected_warp_position = InputManager._expected_warp_position
-	saved_expected_warp_deadline_ms = InputManager._expected_warp_deadline_ms
 	SaveSystem.storage_root_override = TEST_SAVE_ROOT
 	SaveSystem.current_slot_index = TEST_SLOT
 	SaveSystem.party_roster.clear()
@@ -44,12 +33,9 @@ func after_each() -> void:
 	SaveSystem.current_slot_index = saved_slot
 	DirAccess.remove_absolute(SaveSystem._get_slot_path(TEST_SLOT))
 	SaveSystem.storage_root_override = saved_storage_root
-	InputManager._expected_warp_position = Vector2.INF
-	InputManager._expected_warp_deadline_ms = 0
 	InputManager._active_mode = saved_input_mode
+	InputManager._presentation_mode = saved_presentation_mode
 	InputManager._cursor_behavior = saved_cursor_behavior
-	InputManager._expected_warp_position = saved_expected_warp_position
-	InputManager._expected_warp_deadline_ms = saved_expected_warp_deadline_ms
 
 
 func _tree() -> RoleTreeDefinition:
@@ -738,20 +724,14 @@ func test_shoulder_events_change_pages_and_roles_at_node_focus() -> void:
 	await get_tree().process_frame
 
 
-func test_keyboard_and_controller_skill_navigation_synchronize_cursor_through_input_pipeline() -> void:
+func test_keyboard_and_controller_skill_navigation_synchronize_focus_through_input_pipeline() -> void:
 	var hero := _hero()
 	hero.role_definitions.assign([_legacy_role()])
+	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
+	InputManager._set_presentation_mode(InputManager.PresentationMode.FOCUS)
 	var navigation := preload("res://src/ui/navigation/navigation_ux_layer.tscn").instantiate() as NavigationUXLayer
 	navigation.name = "NavigationUXLayer"
 	add_child(navigation)
-	var original_cursor := navigation.cursor
-	original_cursor.set_process(false)
-	navigation.remove_child(original_cursor)
-	original_cursor.free()
-	var cursor := RecordingCursor.new()
-	navigation.add_child(cursor)
-	navigation.cursor = cursor
-	cursor.set_process(false)
 	var panel := preload("res://src/hub/skill_tree_panel.tscn").instantiate() as SkillTreePanel
 	panel.progression_catalog = ProgressionCatalog.from_validated_trees([_tree()])
 	add_child(panel)
@@ -759,67 +739,35 @@ func test_keyboard_and_controller_skill_navigation_synchronize_cursor_through_in
 	navigation.register_screen(panel, panel.get_focused_node())
 	panel.focus_node("gun.start1")
 	await get_tree().create_timer(0.35).timeout
-	cursor.warped_positions.clear()
-	cursor.set_process(true)
 	var keyboard := InputEventKey.new()
 	keyboard.physical_keycode = KEY_D
 	keyboard.pressed = true
 	get_viewport().push_input(keyboard)
-	var keyboard_warp: Vector2 = await cursor.physical_warped
-	cursor.set_process(false)
+	await get_tree().process_frame
+	await get_tree().process_frame
 	var keyboard_target := panel.get_focused_node()
-	var keyboard_anchor: Vector2 = keyboard_target.get_meta("cursor_anchor", keyboard_target.size * 0.5)
-	var keyboard_destination := keyboard_target.get_global_transform_with_canvas() * keyboard_anchor
 	assert_eq(panel.focused_node_id, "gun.anchor")
 	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.KEYBOARD_MOUSE)
-	assert_eq(InputManager.get_cursor_behavior(), InputManager.CursorBehavior.SNAPPED)
-	assert_eq(keyboard_warp, keyboard_destination)
-	assert_eq(cursor.warped_positions, [keyboard_destination])
-	var synthetic_warp := InputEventMouseMotion.new()
-	synthetic_warp.position = keyboard_destination
-	synthetic_warp.global_position = keyboard_destination
-	synthetic_warp.relative = keyboard_destination
-	Input.parse_input_event(synthetic_warp)
-	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.KEYBOARD_MOUSE)
-	assert_eq(InputManager.get_cursor_behavior(), InputManager.CursorBehavior.SNAPPED)
-	var mouse_motion := InputEventMouseMotion.new()
-	mouse_motion.position = keyboard_destination + Vector2(10, 0)
-	mouse_motion.relative = Vector2(10, 0)
-	Input.parse_input_event(mouse_motion)
-	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.KEYBOARD_MOUSE)
-	assert_eq(InputManager.get_cursor_behavior(), InputManager.CursorBehavior.SNAPPED)
-	var mouse_click := InputEventMouseButton.new()
-	mouse_click.button_index = MOUSE_BUTTON_LEFT
-	mouse_click.pressed = true
-	Input.parse_input_event(mouse_click)
-	await get_tree().process_frame
-	assert_eq(InputManager.get_cursor_behavior(), InputManager.CursorBehavior.FREE)
-	mouse_click.pressed = false
-	Input.parse_input_event(mouse_click)
-	cursor.set_process(true)
-	await get_tree().process_frame
-	await get_tree().process_frame
-	cursor.set_process(false)
+	assert_same(navigation.get_focus_target(), keyboard_target)
+	assert_true(NavigationFocus._states.has(keyboard_target.get_instance_id()))
+	assert_false(navigation.cursor.visible)
+	keyboard.pressed = false
+	get_viewport().push_input(keyboard)
 	panel.focus_node("gun.start2")
 	await get_tree().process_frame
-	cursor.warped_positions.clear()
-	cursor.set_process(true)
+	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)
 	var controller := InputEventJoypadButton.new()
 	controller.button_index = JOY_BUTTON_DPAD_LEFT
 	controller.pressed = true
 	get_viewport().push_input(controller)
-	var controller_warp: Vector2 = await cursor.physical_warped
-	cursor.set_process(false)
+	await get_tree().process_frame
+	await get_tree().process_frame
 	var controller_target := panel.get_focused_node()
-	var controller_anchor: Vector2 = controller_target.get_meta("cursor_anchor", controller_target.size * 0.5)
-	var controller_destination := controller_target.get_global_transform_with_canvas() * controller_anchor
 	assert_eq(panel.focused_node_id, "gun.anchor")
 	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.CONTROLLER)
-	assert_eq(InputManager.get_cursor_behavior(), InputManager.CursorBehavior.SNAPPED)
-	assert_eq(controller_warp, controller_destination)
-	assert_eq(cursor.warped_positions, [controller_destination])
-	await get_tree().process_frame
-	cursor.set_process(true)
+	assert_same(navigation.get_focus_target(), controller_target)
+	assert_true(NavigationFocus._states.has(controller_target.get_instance_id()))
+	assert_false(navigation.cursor.visible)
 	panel.free()
 	navigation.free()
 	await get_tree().process_frame
