@@ -14,6 +14,16 @@ func test_hint_can_be_configured_before_entering_tree() -> void:
 	assert_almost_eq(hint.modulate.a, 0.45, 0.001)
 
 
+func test_hint_can_be_refreshed_before_entering_tree() -> void:
+	var hint := HintScene.instantiate() as ActionHint
+	hint.configure({action = &"confirm", label = "Select", enabled = true})
+	hint.refresh(InputManager.InputMode.CONTROLLER, InputIconMap.ControllerType.XBOX)
+	add_child_autofree(hint)
+	await get_tree().process_frame
+	assert_true(hint.glyph.visible)
+	assert_not_null(hint.glyph.texture)
+
+
 func test_controller_mode_shows_controller_glyphs() -> void:
 	var bar = HintBarScene.instantiate()
 	add_child_autofree(bar)
