@@ -215,6 +215,15 @@ func _process(delta: float) -> void:
 		)
 	process_controller_camera(pan_direction, delta)
 
+
+func _physics_process(_delta: float) -> void:
+	if current_map_state != MapState.TARGETING or not scan_controller.active:
+		return
+	if InputManager.get_active_mode() != InputManager.InputMode.CONTROLLER:
+		return
+	_refresh_scan_selection_under_pointer()
+
+
 func _start_cursor_pulse():
 	if cursor_pulse_tween: cursor_pulse_tween.kill()
 
@@ -551,7 +560,6 @@ func _process_scan_navigation(
 		elif not direction.is_zero_approx():
 			_follow_scan_pointer(delta, viewport_size)
 		_show_scan_cursor()
-		_refresh_scan_selection_under_pointer()
 		return
 	_clear_navigation_cursor()
 	scan_controller.sync_pointer(get_viewport().get_mouse_position(), viewport_size)

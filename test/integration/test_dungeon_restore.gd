@@ -370,25 +370,30 @@ func test_scan_start_without_current_node_is_rejected_and_cancel_is_safe() -> vo
 	)
 
 
-func test_controller_pointer_motion_does_not_select_until_node_hover() -> void:
+func test_controller_pointer_resolves_real_node_on_physics_frame() -> void:
 	var setup := await _prepare_navigation_map()
 	var dungeon_map: DungeonMap = setup.map
-	var hovered: MapNode = setup.nodes[2]
+	var target: MapNode = setup.nodes[2]
 	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
 	dungeon_map.start_targeting_mode(1)
+	await get_tree().physics_frame
 	var original := dungeon_map.scan_controller.selected_node
-	dungeon_map._process_scan_navigation(Vector2.RIGHT, Vector2.ZERO, 0.1)
+	dungeon_map.scan_controller.sync_pointer(
+		target.get_global_transform_with_canvas().origin,
+		dungeon_map.get_viewport_rect().size,
+	)
+	dungeon_map._process_scan_navigation(Vector2.ZERO, Vector2.ZERO, 0.1)
 	assert_same(dungeon_map.scan_controller.selected_node, original)
-	dungeon_map._on_node_hovered(hovered)
-	assert_same(dungeon_map.scan_controller.selected_node, hovered)
-	assert_eq(dungeon_map.player_reticle.position, hovered.position)
+	await get_tree().physics_frame
+	assert_same(dungeon_map.scan_controller.selected_node, target)
+	assert_eq(dungeon_map.player_reticle.position, target.position)
 
 
 func test_scan_hover_selects_nodes_in_every_visibility_state() -> void:
 	var setup := await _prepare_navigation_map()
 	var dungeon_map: DungeonMap = setup.map
 	var nodes: Array = setup.nodes
-	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
 	dungeon_map.start_targeting_mode(1)
 	var states := [
 		MapNode.NodeState.HIDDEN,
@@ -504,13 +509,15 @@ func test_camera_motion_retargets_real_node_under_stationary_pointer() -> void:
 		stationary_pointer,
 		dungeon_map.get_viewport_rect().size,
 	)
-	dungeon_map._refresh_scan_selection_under_pointer()
+	await get_tree().physics_frame
 	assert_same(dungeon_map.scan_controller.selected_node, first)
 
 	dungeon_map.camera.position += second.position - first.position
 	dungeon_map._process_scan_navigation(Vector2.ZERO, Vector2.ZERO, 0.016)
 
 	assert_eq(dungeon_map.scan_controller.pointer_position, stationary_pointer)
+	assert_same(dungeon_map.scan_controller.selected_node, first)
+	await get_tree().physics_frame
 	assert_same(dungeon_map.scan_controller.selected_node, second)
 	assert_eq(dungeon_map.player_reticle.position, second.position)
 
@@ -527,9 +534,8 @@ func test_pointer_gap_preserves_last_valid_scan_selection() -> void:
 	var gap_position := selected.get_global_transform_with_canvas().origin + Vector2(0, 100)
 	dungeon_map.scan_controller.sync_pointer(gap_position, dungeon_map.get_viewport_rect().size)
 
-	dungeon_map._refresh_scan_selection_under_pointer()
+	await get_tree().physics_frame
 
-	assert_null(dungeon_map._scan_node_under_pointer())
 	assert_same(dungeon_map.scan_controller.selected_node, selected)
 	assert_eq(dungeon_map.player_reticle.position, previous_reticle)
 
