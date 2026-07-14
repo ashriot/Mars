@@ -1,5 +1,7 @@
 extends GutTest
 
+const SYNTHETIC_UNCONNECTED_JOY_DEVICE := 127
+
 
 func test_missing_action_hides_without_error() -> void:
 	var glyph := DynamicGlyph.new()
@@ -94,5 +96,6 @@ func test_input_manager_family_signal_refreshes_glyph_texture() -> void:
 
 func _pressed_joy_button() -> InputEventJoypadButton:
 	var event := InputEventJoypadButton.new()
+	event.device = SYNTHETIC_UNCONNECTED_JOY_DEVICE
 	event.pressed = true
 	return event

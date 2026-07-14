@@ -2,6 +2,7 @@ extends GutTest
 
 const ActionButtonScene := preload("res://src/battle/action_button.tscn")
 const UXScene := preload("res://src/ui/navigation/navigation_ux_layer.tscn")
+const SYNTHETIC_UNCONNECTED_JOY_DEVICE := 127
 
 
 class MinimalActionBar extends ActionBar:
@@ -571,6 +572,7 @@ func _physical_key(keycode: Key) -> InputEventKey:
 
 func _pressed_joy_button() -> InputEventJoypadButton:
 	var event := InputEventJoypadButton.new()
+	event.device = SYNTHETIC_UNCONNECTED_JOY_DEVICE
 	event.pressed = true
 	return event
 

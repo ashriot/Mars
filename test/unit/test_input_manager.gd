@@ -1,6 +1,7 @@
 extends GutTest
 
 const InputManagerScript := preload("res://src/singletons/input_manager.gd")
+const SYNTHETIC_UNCONNECTED_JOY_DEVICE := 127
 
 var manager: Node
 var original_confirm_events: Array[InputEvent]
@@ -102,7 +103,7 @@ func test_keyboard_action_hotkeys_select_snapped_keyboard_mouse() -> void:
 
 
 func test_controller_button_and_axis_select_snapped() -> void:
-	manager._input(_joy_button(JOY_BUTTON_A))
+	manager._input(_unconnected_joy_button(JOY_BUTTON_A))
 	assert_eq(manager.get_cursor_behavior(), manager.CursorBehavior.SNAPPED)
 	manager._set_cursor_behavior(manager.CursorBehavior.FREE)
 	var axis := InputEventJoypadMotion.new()
@@ -244,8 +245,8 @@ func test_connect_and_reconnect_update_controller_family() -> void:
 
 func test_mode_and_family_signals_emit_only_on_actual_changes() -> void:
 	watch_signals(manager)
-	manager._input(_joy_button(JOY_BUTTON_A))
-	manager._input(_joy_button(JOY_BUTTON_A))
+	manager._input(_unconnected_joy_button(JOY_BUTTON_A))
+	manager._input(_unconnected_joy_button(JOY_BUTTON_A))
 	manager._input(_pressed_key())
 	manager._input(_pressed_key())
 	manager.update_controller_from_connected_names(["DualSense Wireless Controller"])
@@ -256,8 +257,7 @@ func test_mode_and_family_signals_emit_only_on_actual_changes() -> void:
 
 func test_controller_input_updates_family_and_mode() -> void:
 	manager.update_controller_from_connected_names(["DualSense Wireless Controller"])
-	var event := InputEventJoypadButton.new()
-	event.pressed = true
+	var event := _unconnected_joy_button(JOY_BUTTON_A)
 	manager._input(event)
 	assert_eq(manager.get_active_mode(), manager.InputMode.CONTROLLER)
 	assert_eq(manager.get_active_controller_type(), InputIconMap.ControllerType.STEAM_DECK)
@@ -439,4 +439,10 @@ func _joy_button(index: int) -> InputEventJoypadButton:
 	var event := InputEventJoypadButton.new()
 	event.button_index = index as JoyButton
 	event.pressed = true
+	return event
+
+
+func _unconnected_joy_button(index: int) -> InputEventJoypadButton:
+	var event := _joy_button(index)
+	event.device = SYNTHETIC_UNCONNECTED_JOY_DEVICE
 	return event
