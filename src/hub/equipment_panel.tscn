@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://bc5k1xyxevh03"]
+[gd_scene load_steps=11 format=3 uid="uid://bc5k1xyxevh03"]
 
 [ext_resource type="Script" uid="uid://buqjp13pekb4p" path="res://src/hub/equipment_panel.gd" id="1_8e66j"]
 [ext_resource type="Texture2D" uid="uid://bmfgtwon1vl3q" path="res://assets/graphics/icons/equipment/rifle.png" id="2_pnfj5"]
@@ -20,6 +20,9 @@ corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tune_focus"]
+bg_color = Color(0, 0, 0, 0)
 
 [node name="EquipmentPanel" type="Panel"]
 clip_contents = true
@@ -100,6 +103,14 @@ offset_right = -1.0
 offset_bottom = 40.0
 grow_horizontal = 2
 mouse_filter = 2
+
+[node name="TuneFocusSurface" type="Panel" parent="Border/Content/XP"]
+layout_mode = 0
+offset_top = -2.0
+offset_right = 44.0
+offset_bottom = 42.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_tune_focus")
 
 [node name="TuneBtn" type="TextureButton" parent="Border/Content/XP"]
 layout_mode = 0

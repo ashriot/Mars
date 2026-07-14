@@ -1,38 +1,41 @@
 extends GutTest
 
 
-func test_clear_restores_original_visual_state_and_focus_override() -> void:
+func test_button_focus_uses_seventy_percent_fill_and_dark_text_without_scaling() -> void:
 	var control := Button.new()
-	add_child_autofree(control)
 	control.scale = Vector2(1.4, 0.8)
 	control.pivot_offset = Vector2(7, 9)
-	var original_style := StyleBoxFlat.new()
-	original_style.bg_color = Color.RED
-	control.add_theme_stylebox_override(&"focus", original_style)
+	add_child_autofree(control)
 	NavigationFocus.apply(control)
-	assert_same(control.get_theme_stylebox(&"focus"), original_style, "logical focus does not replace authored button styling")
-	NavigationFocus.clear(control)
-	await get_tree().create_timer(0.1).timeout
+	var style := control.get_theme_stylebox(&"focus") as StyleBoxFlat
+	assert_not_null(style)
+	if style:
+		assert_almost_eq(style.bg_color.a, 0.7, 0.001)
+	assert_eq(control.get_theme_color(&"font_focus_color"), Color(0.19607843, 0.19607843, 0.19607843, 1))
 	assert_eq(control.scale, Vector2(1.4, 0.8))
 	assert_eq(control.pivot_offset, Vector2(7, 9))
-	assert_true(control.has_theme_stylebox_override(&"focus"))
-	assert_same(control.get_theme_stylebox(&"focus"), original_style)
+	NavigationFocus.clear(control)
 
 
-func test_repeated_apply_and_clear_restore_controls_without_existing_override() -> void:
-	var control := Button.new()
+func test_clear_restores_authored_style_and_label_colors() -> void:
+	var control := TextureButton.new()
+	var surface := Panel.new()
+	surface.name = "Panel"
+	var label := Label.new()
+	control.add_child(surface)
+	control.add_child(label)
+	control.set_meta("navigation_focus_surface", NodePath("Panel"))
+	var original_style := StyleBoxFlat.new()
+	original_style.bg_color = Color.BLUE
+	surface.add_theme_stylebox_override(&"panel", original_style)
+	label.add_theme_color_override(&"font_color", Color.GREEN)
 	add_child_autofree(control)
-	control.scale = Vector2(0.9, 1.1)
-	control.pivot_offset = Vector2(3, 5)
 	NavigationFocus.apply(control)
-	NavigationFocus.apply(control)
-	assert_false(control.has_theme_stylebox_override(&"focus"), "scale is the only global focus treatment")
+	assert_ne(surface.get_theme_stylebox(&"panel"), original_style)
+	assert_eq(label.get_theme_color(&"font_color"), Color(0.19607843, 0.19607843, 0.19607843, 1))
 	NavigationFocus.clear(control)
-	NavigationFocus.clear(control)
-	await get_tree().create_timer(0.1).timeout
-	assert_eq(control.scale, Vector2(0.9, 1.1))
-	assert_eq(control.pivot_offset, Vector2(3, 5))
-	assert_false(control.has_theme_stylebox_override(&"focus"))
+	assert_same(surface.get_theme_stylebox(&"panel"), original_style)
+	assert_eq(label.get_theme_color(&"font_color"), Color.GREEN)
 
 
 func test_freed_highlighted_control_releases_saved_state() -> void:
@@ -50,6 +53,5 @@ func test_apply_after_completed_clear_reuses_tree_exit_cleanup_safely() -> void:
 	add_child_autofree(control)
 	NavigationFocus.apply(control)
 	NavigationFocus.clear(control)
-	await get_tree().create_timer(0.1).timeout
 	NavigationFocus.apply(control)
 	assert_engine_error_count(0)

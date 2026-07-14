@@ -12,6 +12,10 @@ var is_active: bool
 var _pulse_tween: Tween
 
 
+func _ready() -> void:
+	button.set_meta("navigation_focus_surface", NodePath(".."))
+
+
 func setup(mod: EquipmentMod, enable: bool):
 	is_active = enable
 

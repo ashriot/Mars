@@ -24,6 +24,11 @@ var equipment: Equipment
 var _highlight_tween: Tween
 
 
+func _ready() -> void:
+	equip_button.set_meta("navigation_focus_surface", NodePath("../Header"))
+	tune_btn.set_meta("navigation_focus_surface", NodePath("../TuneFocusSurface"))
+
+
 func setup(item: Equipment):
 	if not item:
 		_clear_equipment()

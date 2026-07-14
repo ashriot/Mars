@@ -537,6 +537,35 @@ func test_inventory_and_equipment_controls_publish_controller_semantics() -> voi
 	slot.free()
 
 
+func test_nonstandard_hub_controls_expose_valid_focus_surfaces() -> void:
+	var item := preload("res://src/hub/item_button.tscn").instantiate() as ItemButton
+	var slot := preload("res://src/hub/mod_slot.tscn").instantiate() as ModSlot
+	var equipment := preload("res://src/hub/equipment_panel.tscn").instantiate() as EquipmentPanel
+	add_child_autofree(item)
+	add_child_autofree(slot)
+	add_child_autofree(equipment)
+	await get_tree().process_frame
+	var controls: Array[Control] = [
+		item.get_focus_control(),
+		slot.get_focus_control(),
+		equipment.equip_button,
+		equipment.tune_btn,
+	]
+	for control in controls:
+		assert_true(control.has_meta("navigation_focus_surface"))
+		if not control.has_meta("navigation_focus_surface"):
+			continue
+		var surface := control.get_node_or_null(control.get_meta("navigation_focus_surface")) as Control
+		assert_not_null(surface)
+		if not surface:
+			continue
+		NavigationFocus.apply(control)
+		var style_name := &"focus" if surface is Button else &"panel"
+		var style := surface.get_theme_stylebox(style_name) as StyleBoxFlat
+		assert_almost_eq(style.bg_color.a, 0.7, 0.001)
+		NavigationFocus.clear(control)
+
+
 func test_cancel_moves_from_node_to_page_layer_before_leaving_skill_panel() -> void:
 	var hero := _hero()
 	hero.role_definitions.assign([_legacy_role()])

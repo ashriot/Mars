@@ -19,6 +19,7 @@ var disabled: bool:
 func _ready() -> void:
 	$Button.focus_mode = Control.FOCUS_ALL
 	$Button.set_meta("cursor_state", NavigationCursor.CursorState.CAN_GRAB)
+	$Button.set_meta("navigation_focus_surface", NodePath("Header"))
 
 
 func setup(resource: Resource, slot_type: int, amount: int):
