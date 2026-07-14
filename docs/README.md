@@ -12,6 +12,7 @@ Use this page as the index for project knowledge that is more detailed or more l
 ## Design and Engineering
 
 - [Refactor notes](refactor.md) — Research and candidates for the later refactor phase.
+- [Controller-driven scan cursor](superpowers/specs/2026-07-14-controller-driven-scan-cursor-design.md) — Authoritative mouse/controller scan pointer, hover selection, and edge-scroll behavior.
 - [Design records](superpowers/specs/) — Approved feature designs and decisions captured before implementation.
 - [Implementation plans](superpowers/plans/) — Task-level execution records for larger changes.
 
