@@ -45,7 +45,8 @@ func set_adapter(adapter: Object) -> void:
 
 func publish_hints(hints: Array[Dictionary]) -> void:
 	_prune_state()
-	if not _modal_stack.is_empty() and bool(_modal_stack.back().suppress_hints):
+	if _top_modal_suppresses_hints():
+		hint_bar.set_hints([])
 		return
 	hint_bar.set_hints(hints)
 
@@ -59,8 +60,7 @@ func push_modal(root: Control, default_focus: Control, suppress_hints := false) 
 		"restore_screen": weakref(_screen_for(_focus_target)) if is_instance_valid(_screen_for(_focus_target)) else null,
 		"suppress_hints": suppress_hints,
 	})
-	if suppress_hints:
-		hint_bar.set_hints([])
+	_apply_top_modal_hint_policy()
 	if _is_focusable(default_focus):
 		default_focus.grab_focus()
 		if _focus_target != default_focus:
@@ -72,6 +72,7 @@ func pop_modal(root: Control) -> void:
 	if _modal_stack.is_empty() or _weak_get(_modal_stack.back().root) != root:
 		return
 	var entry: Dictionary = _modal_stack.pop_back()
+	_apply_top_modal_hint_policy()
 	_restore_from_entry(entry)
 
 
@@ -83,6 +84,7 @@ func remove_modal(root: Control) -> void:
 		var owns_focus := is_instance_valid(_focus_target) and (_focus_target == root or root.is_ancestor_of(_focus_target))
 		_redirect_stale_restores(index, root)
 		_modal_stack.remove_at(index)
+		_apply_top_modal_hint_policy()
 		if owns_focus:
 			_clear_presentation()
 			hint_bar.set_hints([])
@@ -268,6 +270,16 @@ func _prune_state() -> void:
 	for index in range(_modal_stack.size() - 1, -1, -1):
 		if not is_instance_valid(_weak_get(_modal_stack[index].root)):
 			_modal_stack.remove_at(index)
+	_apply_top_modal_hint_policy()
+
+
+func _top_modal_suppresses_hints() -> bool:
+	return not _modal_stack.is_empty() and bool(_modal_stack.back().get("suppress_hints", false))
+
+
+func _apply_top_modal_hint_policy() -> void:
+	if _top_modal_suppresses_hints() and is_instance_valid(hint_bar):
+		hint_bar.set_hints([])
 
 
 func _prune_screens() -> void:

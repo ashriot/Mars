@@ -57,6 +57,45 @@ func test_top_modal_query_tracks_nested_ownership() -> void:
 	assert_true(ux.is_top_modal(outer))
 
 
+func test_suppressing_outer_clears_inner_hints_when_reexposed_then_restores_screen() -> void:
+	var ux = UXScene.instantiate()
+	add_child_autofree(ux)
+	var screen := Control.new()
+	var screen_button := Button.new()
+	screen.add_child(screen_button)
+	add_child_autofree(screen)
+	var screen_hints: Array[Dictionary] = [{action = &"confirm", label = "Screen", enabled = true}]
+	screen_button.focus_entered.connect(func() -> void: ux.publish_hints(screen_hints))
+	ux.register_screen(screen, screen_button)
+	await get_tree().process_frame
+	assert_eq(ux.hint_bar.get_hint(0).label.text, "Screen")
+
+	var outer := Control.new()
+	var outer_button := Button.new()
+	outer.add_child(outer_button)
+	add_child_autofree(outer)
+	ux.push_modal(outer, outer_button, true)
+	assert_eq(ux.hint_bar.get_hint_count(), 0)
+
+	var inner := Control.new()
+	var inner_button := Button.new()
+	inner.add_child(inner_button)
+	add_child_autofree(inner)
+	ux.push_modal(inner, inner_button)
+	var inner_hints: Array[Dictionary] = [{action = &"cancel", label = "Inner", enabled = true}]
+	ux.publish_hints(inner_hints)
+	assert_eq(ux.hint_bar.get_hint(0).label.text, "Inner")
+
+	ux.pop_modal(inner)
+	await get_tree().process_frame
+	assert_true(ux.is_top_modal(outer))
+	assert_eq(ux.hint_bar.get_hint_count(), 0)
+	ux.pop_modal(outer)
+	await get_tree().process_frame
+	assert_eq(ux.get_focus_target(), screen_button)
+	assert_eq(ux.hint_bar.get_hint(0).label.text, "Screen")
+
+
 func test_open_modal_query_tracks_stack_presence() -> void:
 	var ux = UXScene.instantiate()
 	add_child_autofree(ux)
