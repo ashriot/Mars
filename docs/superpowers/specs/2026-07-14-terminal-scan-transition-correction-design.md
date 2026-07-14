@@ -51,7 +51,15 @@ This preserves the existing behavior where canceling a scan reopens the current 
 
 ## Scan Cursor and Selection
 
-The controller continues to drive a screen-space pointer with the left stick or D-pad. During controller scan targeting, the existing custom navigation cursor is drawn at that pointer position so the player has an unmistakable visual reference. The development-time OS cursor remains visible; release cursor-hiding policy remains deferred.
+The controller continues to drive a screen-space pointer with the left stick or D-pad. This is software-driven mouse movement, not hex-to-hex controller navigation:
+
+- analog magnitude controls continuous pointer velocity through the existing input dead zone;
+- D-pad input drives the same pointer at full digital magnitude;
+- every changed pointer position registers an expected warp and moves the real viewport mouse to the same screen coordinates;
+- the existing custom navigation cursor is drawn at those exact coordinates during controller scan targeting;
+- the stored pointer, viewport mouse, and custom cursor never advance as separate authorities.
+
+The development-time OS cursor remains visible; release cursor-hiding policy remains deferred.
 
 Mouse movement continues to use the physical mouse position. Switching between mouse and controller preserves the current pointer position.
 
@@ -99,6 +107,7 @@ Automated coverage must prove:
 - protocol input during typing neither skips the animation nor commits a choice;
 - Scan removes the terminal overlay/modal before targeting begins;
 - controller pointer resolution uses a real `MapNode` collision shape and the shared selection boundary;
+- analog and D-pad input move the stored pointer, viewport mouse, and custom cursor together from the same starting coordinates;
 - camera movement beneath a stationary edge pointer updates the reticle without manually invoking `_on_node_hovered()`;
 - neutral input still stops camera motion immediately;
 - scan cancel reopens the terminal and scan confirm completes the interaction once.
