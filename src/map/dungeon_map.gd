@@ -101,7 +101,6 @@ var reward_memory: Dictionary = {}
 var _last_alert_state: int = -1
 var _controller_preview_node: MapNode = null
 var _controller_direction_engaged := false
-var _scan_camera_reacquiring := false
 var scan_controller := DungeonScanController.new()
 var camera_controller: DungeonCameraController
 
@@ -161,7 +160,6 @@ func _ready():
 
 
 func _exit_tree() -> void:
-	_scan_camera_reacquiring = false
 	if is_instance_valid(camera_controller):
 		camera_controller.cancel_motion()
 	var navigation := _navigation_ux_layer()
@@ -480,13 +478,6 @@ func _is_controller_candidate(node: MapNode) -> bool:
 	return _is_normal_traversal_destination(node)
 
 
-func _map_nodes() -> Array[MapNode]:
-	var nodes: Array[MapNode] = []
-	for value in grid_nodes.values():
-		nodes.append(value as MapNode)
-	return nodes
-
-
 func _sync_scan_selection(animate := true) -> bool:
 	var selected := scan_controller.selected_node
 	if selected == _controller_preview_node:
@@ -507,29 +498,23 @@ func _process_scan_navigation(
 	delta: float,
 ) -> void:
 	if not scan_controller.active:
-		_scan_camera_reacquiring = false
 		return
 	if _controller_preview_node == null:
 		_sync_scan_selection(false)
-	var selection_moved := false
+	var viewport_size := get_viewport_rect().size
 	if InputManager.get_active_mode() == InputManager.InputMode.CONTROLLER:
-		var before := scan_controller.selected_node
-		scan_controller.process_direction(direction, _map_nodes(), delta)
-		selection_moved = scan_controller.selected_node != before
-		if selection_moved:
-			_sync_scan_selection()
+		var before := scan_controller.pointer_position
+		var after := scan_controller.move_pointer(direction, delta, viewport_size)
+		if not after.is_equal_approx(before):
+			_warp_scan_pointer(after)
+	else:
+		scan_controller.sync_pointer(get_viewport().get_mouse_position(), viewport_size)
 	process_controller_camera(pan_direction, delta)
-	if not pan_direction.is_zero_approx():
-		_scan_camera_reacquiring = false
-		return
-	if selection_moved:
-		_scan_camera_reacquiring = true
-	if _scan_camera_reacquiring:
-		_approach_scan_camera(delta)
-		_scan_camera_reacquiring = not camera_controller.scanner_is_inside_safe_area(
-			scan_controller.selected_node.position,
-			get_viewport_rect().size,
-		)
+
+
+func _warp_scan_pointer(screen_position: Vector2) -> void:
+	InputManager.expect_mouse_warp(screen_position)
+	get_viewport().warp_mouse(screen_position)
 
 
 func _approach_scan_camera(delta: float) -> void:
@@ -1020,12 +1005,14 @@ func start_targeting_mode(radius: int) -> void:
 		return
 	_controller_direction_engaged = false
 	_controller_preview_node = null
-	_scan_camera_reacquiring = false
 	current_map_state = MapState.TARGETING
 	pending_scan_radius = radius
 	_sync_camera_tuning()
 	camera_controller.set_focus_mode(DungeonCameraController.FocusMode.SCANNER)
-	scan_controller.begin(current_node)
+	var origin_screen_position := current_node.get_global_transform_with_canvas().origin
+	scan_controller.begin(origin_screen_position, get_viewport_rect().size, current_node)
+	if InputManager.get_active_mode() == InputManager.InputMode.CONTROLLER:
+		_warp_scan_pointer(scan_controller.pointer_position)
 	_sync_scan_selection(false)
 	_start_reticle_scan_pulse()
 	_clear_navigation_cursor()
@@ -1045,7 +1032,6 @@ func _cancel_targeting() -> void:
 	current_map_state = MapState.PLAYING
 	pending_scan_radius = 0
 	_controller_preview_node = null
-	_scan_camera_reacquiring = false
 	scan_controller.stop()
 	camera_controller.set_focus_mode(DungeonCameraController.FocusMode.PARTY)
 	if current_node != null:
@@ -1091,7 +1077,6 @@ func _finish_scan_target(target_node: MapNode) -> void:
 	current_map_state = MapState.LOCKED
 	pending_scan_radius = 0
 	_controller_preview_node = null
-	_scan_camera_reacquiring = false
 	scan_controller.stop()
 	camera_controller.set_focus_mode(DungeonCameraController.FocusMode.PARTY)
 	_reset_reticle_visuals()
