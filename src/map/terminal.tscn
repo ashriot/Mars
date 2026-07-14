@@ -1,29 +1,47 @@
-[gd_scene load_steps=8 format=3 uid="uid://brd70upq3tjwu"]
+[gd_scene load_steps=11 format=3 uid="uid://brd70upq3tjwu"]
 
-[ext_resource type="Script" uid="uid://cfc3x0j8xdanv" path="res://src/map/terminal.gd" id="1_0jfgh"]
-[ext_resource type="Shader" uid="uid://dg4j3qt72ayqd" path="res://src/map/crt.gdshader" id="1_ofi5q"]
-[ext_resource type="FontVariation" uid="uid://c0je4m574ytir" path="res://data/theme/fonts/suse_mono.tres" id="1_rwyeu"]
-[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="2_0jfgh"]
+[ext_resource type="Script" uid="uid://cfc3x0j8xdanv" path="res://src/map/terminal.gd" id="1_terminal"]
+[ext_resource type="PackedScene" path="res://src/map/terminal_protocol_row.tscn" id="2_row"]
+[ext_resource type="FontVariation" uid="uid://c0je4m574ytir" path="res://data/theme/fonts/suse_mono.tres" id="3_regular"]
+[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="4_bold"]
+[ext_resource type="Texture2D" uid="uid://y2kx6im08fe7" path="res://assets/graphics/icons/map/cancel.png" id="5_cancel"]
+[ext_resource type="Script" uid="uid://b684sdqsvpn3p" path="res://src/battle/dynamic_glyph.gd" id="6_glyph"]
+[ext_resource type="Shader" uid="uid://dg4j3qt72ayqd" path="res://src/map/crt.gdshader" id="7_filter"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ofi5q"]
-bg_color = Color(0.18184729, 0.054765537, 0, 0.88235295)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.181847, 0.0547655, 0, 0.96)
 border_width_left = 12
 border_width_top = 12
 border_width_right = 12
 border_width_bottom = 12
-border_color = Color(1.164, 0.557, 0.205, 1)
+border_color = Color(1, 0.478, 0.176, 1)
 corner_radius_top_left = 20
 corner_radius_top_right = 20
 corner_radius_bottom_right = 20
 corner_radius_bottom_left = 20
-shadow_color = Color(0, 0, 0, 0.84705883)
+shadow_color = Color(0, 0, 0, 0.85)
 shadow_size = 10
 
-[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_0jfgh"]
-load_path = "res://.godot/imported/cancel.png-e827012282c9a1fe250bc953d191154d.ctex"
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_confirmation"]
+content_margin_left = 28.0
+content_margin_top = 24.0
+content_margin_right = 28.0
+content_margin_bottom = 24.0
+bg_color = Color(0.08, 0.018, 0, 0.98)
+border_width_left = 6
+border_width_top = 6
+border_width_right = 6
+border_width_bottom = 6
+border_color = Color(1, 0.478, 0.176, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+shadow_color = Color(0, 0, 0, 0.9)
+shadow_size = 16
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_rwyeu"]
-shader = ExtResource("1_ofi5q")
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_filter"]
+shader = ExtResource("7_filter")
 shader_parameter/overlay = true
 shader_parameter/scanlines_opacity = 0.4
 shader_parameter/scanlines_width = 0.25
@@ -34,11 +52,11 @@ shader_parameter/roll = true
 shader_parameter/roll_speed = 3.0
 shader_parameter/roll_size = 15.0
 shader_parameter/roll_variation = 1.8
-shader_parameter/distort_intensity = 0.010000000475
+shader_parameter/distort_intensity = 0.01
 shader_parameter/noise_opacity = 0.0
 shader_parameter/noise_speed = 5.0
-shader_parameter/static_noise_intensity = 0.02000000095
-shader_parameter/aberration = 0.03000004892500007
+shader_parameter/static_noise_intensity = 0.02
+shader_parameter/aberration = 0.03
 shader_parameter/brightness = 1.4
 shader_parameter/discolor = true
 shader_parameter/warp_amount = 1.0
@@ -47,116 +65,306 @@ shader_parameter/vignette_intensity = 0.4
 shader_parameter/vignette_opacity = 0.5
 
 [node name="Terminal" type="Control"]
-custom_minimum_size = Vector2(680, 640)
 layout_mode = 3
-anchors_preset = 0
-offset_left = 579.0
-offset_top = 101.0
-offset_right = 1369.0
-offset_bottom = 741.0
-script = ExtResource("1_0jfgh")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_terminal")
 
-[node name="background" type="ColorRect" parent="."]
-visible = false
+[node name="Backdrop" type="ColorRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0, 0, 0, 1)
-mouse_filter = 2
-metadata/_edit_lock_ = true
+mouse_filter = 0
+color = Color(0, 0, 0, 0.55)
 
 [node name="Panel" type="Panel" parent="."]
-custom_minimum_size = Vector2(680, 640)
+custom_minimum_size = Vector2(1080, 720)
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchor_left = 0.045
+anchor_top = 0.05
+anchor_right = 0.955
+anchor_bottom = 0.95
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_ofi5q")
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 
-[node name="Label" type="RichTextLabel" parent="Panel"]
-modulate = Color(1.164, 0.557, 0.205, 1)
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 21.0
-offset_top = 72.0
-offset_right = -18.760864
-offset_bottom = -20.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_fonts/normal_font = ExtResource("1_rwyeu")
-theme_override_fonts/bold_font = ExtResource("2_0jfgh")
-theme_override_font_sizes/normal_font_size = 22
-theme_override_font_sizes/bold_font_size = 22
-bbcode_enabled = true
-scroll_active = false
-
-[node name="ColorRect" type="ColorRect" parent="Panel"]
+[node name="Header" type="ColorRect" parent="Panel"]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_left = 11.0
-offset_top = 11.0
+offset_left = 12.0
+offset_top = 12.0
 offset_right = -12.0
-offset_bottom = 64.0
+offset_bottom = 88.0
 grow_horizontal = 2
-color = Color(1.164, 0.557, 0.205, 1)
+color = Color(1, 0.478, 0.176, 1)
 
-[node name="Header" type="Label" parent="Panel/ColorRect"]
-modulate = Color(0.126, 0.21, 0.126, 1)
+[node name="HeaderText" type="Label" parent="Panel/Header"]
+unique_name_in_owner = true
+modulate = Color(0.181847, 0.0547655, 0, 1)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 12.0
-offset_top = -4.0
-offset_right = -12.0
-offset_bottom = -4.0
+offset_left = 24.0
+offset_right = -84.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_fonts/font = ExtResource("1_rwyeu")
-theme_override_font_sizes/font_size = 24
-text = "/usr/local/paradigm/secops/terminal/override..."
+theme_override_fonts/font = ExtResource("4_bold")
+theme_override_font_sizes/font_size = 34
+text = "PARADIGM TERMINAL"
 vertical_alignment = 1
 
-[node name="CloseButton" type="TextureButton" parent="Panel/ColorRect"]
-modulate = Color(0.18039216, 0.05490196, 0, 0.88235295)
+[node name="CloseButton" type="TextureButton" parent="Panel/Header"]
+unique_name_in_owner = true
+modulate = Color(0.181847, 0.0547655, 0, 1)
+custom_minimum_size = Vector2(52, 52)
 layout_mode = 1
 anchors_preset = 6
 anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = -50.0
-offset_top = -29.000006
-offset_bottom = 21.000008
+offset_left = -64.0
+offset_top = -26.0
+offset_right = -12.0
+offset_bottom = 26.0
 grow_horizontal = 0
 grow_vertical = 2
 focus_mode = 2
-texture_normal = SubResource("CompressedTexture2D_0jfgh")
+mouse_default_cursor_shape = 2
+texture_normal = ExtResource("5_cancel")
 ignore_texture_size = true
 stretch_mode = 0
 
-[node name="TerminalFilter" type="ColorRect" parent="."]
-visible = false
-material = SubResource("ShaderMaterial_rwyeu")
-custom_minimum_size = Vector2(640, 480)
+[node name="BodyMargin" type="MarginContainer" parent="Panel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -44.0
-offset_top = -69.0
-offset_right = -39.0
-offset_bottom = -67.0
+offset_left = 12.0
+offset_top = 88.0
+offset_right = -12.0
+offset_bottom = -78.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 38
+theme_override_constants/margin_top = 28
+theme_override_constants/margin_right = 38
+theme_override_constants/margin_bottom = 28
+
+[node name="Body" type="VBoxContainer" parent="Panel/BodyMargin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Status" type="Label" parent="Panel/BodyMargin/Body"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.99, 0.55, 0.25, 1)
+theme_override_fonts/font = ExtResource("3_regular")
+theme_override_font_sizes/font_size = 24
+text = "NEURAL AUTH: SUCCESS · FIREWALL: OFF"
+
+[node name="Prompt" type="Label" parent="Panel/BodyMargin/Body"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.72, 0.35, 1)
+theme_override_fonts/font = ExtResource("4_bold")
+theme_override_font_sizes/font_size = 28
+text = "SELECT PROTOCOL"
+
+[node name="Protocols" type="VBoxContainer" parent="Panel/BodyMargin/Body"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="Security" parent="Panel/BodyMargin/Body/Protocols" instance=ExtResource("2_row")]
+layout_mode = 2
+
+[node name="Scan" parent="Panel/BodyMargin/Body/Protocols" instance=ExtResource("2_row")]
+layout_mode = 2
+
+[node name="Medical" parent="Panel/BodyMargin/Body/Protocols" instance=ExtResource("2_row")]
+layout_mode = 2
+
+[node name="Finance" parent="Panel/BodyMargin/Body/Protocols" instance=ExtResource("2_row")]
+layout_mode = 2
+
+[node name="Extraction" parent="Panel/BodyMargin/Body/Protocols" instance=ExtResource("2_row")]
+layout_mode = 2
+
+[node name="Footer" type="HBoxContainer" parent="Panel"]
+layout_mode = 1
+anchors_preset = 12
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 32.0
+offset_top = -78.0
+offset_right = -32.0
+offset_bottom = -32.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 24
+
+[node name="TraceWarning" type="Label" parent="Panel/Footer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.72, 0.35, 0.16, 1)
+theme_override_fonts/font = ExtResource("3_regular")
+theme_override_font_sizes/font_size = 20
+text = "SECURITY: TRACE DETECTED · PURGE IN T-30s"
+vertical_alignment = 1
+
+[node name="ContextText" type="Label" parent="Panel/Footer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.62, 0.28, 1)
+theme_override_fonts/font = ExtResource("3_regular")
+theme_override_font_sizes/font_size = 20
+text = "DIRECT-LINK PROTOCOL DIRECTORY"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="ConfirmationPanel" type="PanelContainer" parent="Panel"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(760, 280)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -380.0
+offset_top = -140.0
+offset_right = 380.0
+offset_bottom = 140.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_confirmation")
+
+[node name="ConfirmationContent" type="VBoxContainer" parent="Panel/ConfirmationPanel"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="Warning" type="Label" parent="Panel/ConfirmationPanel/ConfirmationContent"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.55, 0.2, 1)
+theme_override_fonts/font = ExtResource("4_bold")
+theme_override_font_sizes/font_size = 32
+text = "WARNING: ABANDON CURRENT RUN?"
+horizontal_alignment = 1
+
+[node name="Consequence" type="Label" parent="Panel/ConfirmationPanel/ConfirmationContent"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_regular")
+theme_override_font_sizes/font_size = 23
+text = "Tactical retreat ends this operation and preserves recovered assets."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="ConfirmationActions" type="HBoxContainer" parent="Panel/ConfirmationPanel/ConfirmationContent"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 28
+alignment = 1
+
+[node name="ConfirmButton" type="Button" parent="Panel/ConfirmationPanel/ConfirmationContent/ConfirmationActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(250, 72)
+layout_mode = 2
+focus_mode = 2
+mouse_default_cursor_shape = 2
+
+[node name="Content" type="HBoxContainer" parent="Panel/ConfirmationPanel/ConfirmationContent/ConfirmationActions/ConfirmButton"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -84.0
+offset_top = -24.0
+offset_right = 84.0
+offset_bottom = 24.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+theme_override_constants/separation = 12
 
-[connection signal="pressed" from="Panel/ColorRect/CloseButton" to="." method="_on_close_button_pressed"]
+[node name="DynamicGlyph" type="TextureButton" parent="Panel/ConfirmationPanel/ConfirmationContent/ConfirmationActions/ConfirmButton/Content"]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+focus_mode = 0
+mouse_filter = 2
+ignore_texture_size = true
+stretch_mode = 0
+script = ExtResource("6_glyph")
+action = &"confirm"
+
+[node name="Label" type="Label" parent="Panel/ConfirmationPanel/ConfirmationContent/ConfirmationActions/ConfirmButton/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/font = ExtResource("4_bold")
+theme_override_font_sizes/font_size = 26
+text = "EXTRACT"
+vertical_alignment = 1
+
+[node name="CancelButton" type="Button" parent="Panel/ConfirmationPanel/ConfirmationContent/ConfirmationActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(250, 72)
+layout_mode = 2
+focus_mode = 2
+mouse_default_cursor_shape = 2
+
+[node name="Content" type="HBoxContainer" parent="Panel/ConfirmationPanel/ConfirmationContent/ConfirmationActions/CancelButton"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -78.0
+offset_top = -24.0
+offset_right = 78.0
+offset_bottom = 24.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="DynamicGlyph" type="TextureButton" parent="Panel/ConfirmationPanel/ConfirmationContent/ConfirmationActions/CancelButton/Content"]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+focus_mode = 0
+mouse_filter = 2
+ignore_texture_size = true
+stretch_mode = 0
+script = ExtResource("6_glyph")
+action = &"cancel"
+
+[node name="Label" type="Label" parent="Panel/ConfirmationPanel/ConfirmationContent/ConfirmationActions/CancelButton/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/font = ExtResource("4_bold")
+theme_override_font_sizes/font_size = 26
+text = "RETURN"
+vertical_alignment = 1
+
+[node name="TerminalFilter" type="ColorRect" parent="."]
+visible = false
+material = SubResource("ShaderMaterial_filter")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2

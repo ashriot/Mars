@@ -1,165 +1,238 @@
 extends Control
 
-signal option_selected(choice_id, value) # Generic signal
+signal option_selected(choice_id: StringName)
 signal closed
 
-@onready var close_button: TextureButton = $Panel/ColorRect/CloseButton
-@onready var text_label: RichTextLabel = $Panel/Label
+enum TerminalState { TYPING, READY, CONFIRMING_EXTRACTION, CLOSING }
 
+const PROTOCOL_ACTIONS: Array[StringName] = [
+	&"terminal_security",
+	&"terminal_scan",
+	&"terminal_medical",
+	&"terminal_finance",
+]
+const EXTRACTION_ACTION := &"terminal_extract"
+const EXTRACTION_ID := &"opt_extract"
+
+@onready var close_button: TextureButton = %CloseButton
+@onready var protocols: VBoxContainer = %Protocols
+@onready var confirmation_panel: Control = %ConfirmationPanel
+@onready var confirm_button: Button = %ConfirmButton
+@onready var cancel_button: Button = %CancelButton
+@onready var header_text: Label = %HeaderText
+@onready var status_label: Label = %Status
+
+var interaction_state := TerminalState.TYPING
 var type_tween: Tween
-var cursor_tween: Tween
 var close_tween: Tween
-var final_text_content: String = ""
-var _interaction_started := false
 var _lifecycle_generation := 0
+var _rows: Array[TerminalProtocolRow] = []
+var _typing_labels: Array[Label] = []
 
-# Data for the logic handler
-var current_terminal_index: int = 0
-var base_bits: int = 0
-var base_alert_reduction: int = 0
 
-func _ready():
-	text_label.meta_clicked.connect(_on_text_link_clicked)
-	close_button.focus_entered.connect(_publish_hints)
-	_configure_navigation()
+func _ready() -> void:
+	for child in protocols.get_children():
+		if child is TerminalProtocolRow:
+			_rows.append(child)
+			(child as TerminalProtocolRow).activated.connect(_on_protocol_activated)
+	_typing_labels.assign([header_text, status_label, %Prompt, %TraceWarning])
+	close_button.pressed.connect(func() -> void: handle_semantic_action(&"cancel"))
+	confirm_button.pressed.connect(func() -> void: handle_semantic_action(&"confirm"))
+	cancel_button.pressed.connect(func() -> void: handle_semantic_action(&"cancel"))
+	_ensure_modal_registered()
 
 
 func _exit_tree() -> void:
 	var navigation := _navigation_ux_layer()
 	if navigation:
-		navigation.pop_modal(self)
+		navigation.remove_modal(self)
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if not visible:
+		return
 	var navigation := _navigation_ux_layer()
-	if not visible or not navigation or not navigation.is_top_modal(self):
+	if navigation and not navigation.is_top_modal(self):
 		return
-	if event.is_action_pressed(&"cancel"):
-		get_viewport().set_input_as_handled()
-		_on_close_button_pressed()
-		return
-	for index in 4:
-		if event.is_action_pressed(StringName("action_%d" % (index + 1))):
+	var actions: Array[StringName] = [&"cancel", &"confirm", EXTRACTION_ACTION]
+	actions.append_array(PROTOCOL_ACTIONS)
+	for action: StringName in actions:
+		if event.is_action_pressed(action) and handle_semantic_action(action):
 			get_viewport().set_input_as_handled()
-			_on_text_link_clicked(["opt_sec", "opt_scan", "opt_med", "opt_fin"][index] + ("_up" if _is_upgraded_choice(index) else ""))
 			return
 
 
-func _is_upgraded_choice(index: int) -> bool:
-	return (index == 0 and "opt_sec_up" in final_text_content) or (index == 1 and "opt_scan_up" in final_text_content) or (index == 2 and "opt_med_up" in final_text_content) or (index == 3 and "opt_fin_up" in final_text_content)
+func setup(data: Dictionary) -> bool:
+	_reset_lifecycle()
+	_ensure_modal_registered()
+	if not _has_valid_presentation_data(data):
+		header_text.text = "PARADIGM TERMINAL // DATA ERROR"
+		status_label.text = "PROTOCOL DIRECTORY UNAVAILABLE"
+		_set_rows_interactable(false)
+		interaction_state = TerminalState.READY
+		return false
+	var definitions := _protocol_definitions(data)
+	for index in 5:
+		var definition: Dictionary = definitions[index]
+		_rows[index].configure(
+			definition.id,
+			definition.action,
+			definition.title,
+			definition.outcome,
+			definition.upgraded,
+		)
+		_rows[index].set_interactable(true)
+	header_text.text = "PARADIGM TERMINAL v4.2 // %s" % str(data.facility_name)
+	status_label.text = "NEURAL AUTH: SUCCESS · FIREWALL: OFF · SESSION %s" % str(data.session_id)
+	interaction_state = TerminalState.TYPING
+	_start_typing_effect()
+	_grab_focus_if_valid.call_deferred(_rows[0])
+	return true
 
-func setup(data: Dictionary):
+
+func handle_semantic_action(action: StringName) -> bool:
+	if interaction_state == TerminalState.CLOSING:
+		return action in PROTOCOL_ACTIONS or action in [EXTRACTION_ACTION, &"confirm", &"cancel"]
+	if interaction_state == TerminalState.TYPING:
+		if action == &"cancel":
+			_begin_close()
+			return true
+		if action in PROTOCOL_ACTIONS or action in [EXTRACTION_ACTION, &"confirm"]:
+			finish_typing()
+			return true
+		return false
+	if interaction_state == TerminalState.CONFIRMING_EXTRACTION:
+		if action == &"confirm":
+			_commit_choice(EXTRACTION_ID)
+			return true
+		if action == &"cancel":
+			_leave_extraction_confirmation()
+			return true
+		return action in PROTOCOL_ACTIONS or action == EXTRACTION_ACTION
+	if action == &"cancel":
+		_begin_close()
+		return true
+	if action == EXTRACTION_ACTION:
+		_enter_extraction_confirmation()
+		return true
+	var action_index := PROTOCOL_ACTIONS.find(action)
+	if action_index >= 0:
+		_commit_choice(_rows[action_index].get_choice_id())
+		return true
+	return false
+
+
+func finish_typing() -> void:
+	if interaction_state != TerminalState.TYPING:
+		return
+	if is_instance_valid(type_tween):
+		type_tween.kill()
+	for label: Label in _typing_labels:
+		label.visible_ratio = 1.0
+	for row: TerminalProtocolRow in _rows:
+		row.modulate.a = 1.0
+	interaction_state = TerminalState.READY
+
+
+func get_protocol_row(index: int) -> TerminalProtocolRow:
+	return _rows[index] if index >= 0 and index < _rows.size() else null
+
+
+func _protocol_definitions(data: Dictionary) -> Array[Dictionary]:
+	var upgrade_key: String = data.upgrade_key
+	return [
+		{id = &"opt_sec_up" if upgrade_key == "security" else &"opt_sec", action = &"terminal_security", title = "REBOOT SECURITY" if upgrade_key == "security" else "SCRAMBLE CAMERAS", outcome = "ALERT -%d%%" % int(data.alert), upgraded = upgrade_key == "security"},
+		{id = &"opt_scan_up" if upgrade_key == "scan" else &"opt_scan", action = &"terminal_scan", title = "HIJACK CAMERA NETWORK" if upgrade_key == "scan" else "HIJACK LOCAL FEED", outcome = "WIDE SCAN" if upgrade_key == "scan" else "SECTOR SCAN", upgraded = upgrade_key == "scan"},
+		{id = &"opt_med_up" if upgrade_key == "medical" else &"opt_med", action = &"terminal_medical", title = "DISPENSE ADRENALINE" if upgrade_key == "medical" else "DISPENSE PAINKILLERS", outcome = "HEAL + BOOST" if upgrade_key == "medical" else "HEAL INJURY", upgraded = upgrade_key == "medical"},
+		{id = &"opt_fin_up" if upgrade_key == "finance" else &"opt_fin", action = &"terminal_finance", title = "INTERCEPT PAYMENT" if upgrade_key == "finance" else "BIT MINE", outcome = "+%.1f BITS" % (float(data.bits) / 10.0), upgraded = upgrade_key == "finance"},
+		{id = EXTRACTION_ID, action = EXTRACTION_ACTION, title = "SIGNAL EXTRACTION", outcome = "TACTICAL RETREAT", upgraded = false},
+	]
+
+
+func _has_valid_presentation_data(data: Dictionary) -> bool:
+	for field in ["upgrade_key", "bits", "alert", "facility_name", "session_id"]:
+		if not data.has(field):
+			return false
+	return (
+		data.upgrade_key is String
+		and (data.bits is int or data.bits is float)
+		and (data.alert is int or data.alert is float)
+		and data.facility_name is String
+		and data.session_id is String
+	)
+
+
+func _reset_lifecycle() -> void:
 	_lifecycle_generation += 1
-	if close_tween:
-		close_tween.kill()
-		close_tween = null
-	_interaction_started = false
-	close_button.disabled = false
+	for tween: Tween in [type_tween, close_tween]:
+		if is_instance_valid(tween):
+			tween.kill()
+	type_tween = null
+	close_tween = null
 	modulate.a = 1.0
 	show()
-	var upgrade_key = data.upgrade_key
-	var bits_val = data.bits
-	var alert_val = data.alert
-	var facility_name = data.facility_name
-	var session = data.session_id
-	if session == "": session = "0x%X-%d-KANECHO" % [randi() % 0xFFFF, randi() % 9999]
+	confirmation_panel.hide()
+	close_button.disabled = false
+	for label: Label in _typing_labels:
+		label.visible_ratio = 1.0
+	for row: TerminalProtocolRow in _rows:
+		row.modulate.a = 1.0
 
-	# 2. CALCULATE UPGRADES (0=Security, 1=Medical, 2=Finance)
-	var opt_sec = _get_security_text(upgrade_key == "security", alert_val)
-	var opt_scan = _get_scan_text(upgrade_key == "scan")
-	var opt_med = _get_medical_text(upgrade_key == "medical")
-	var opt_fin = _get_finance_text(upgrade_key == "finance", bits_val)
 
-	# --- 2. BUILD TEXT ---
-	var text_body = """=========================================
-PARADIGM TERMINAL v4.2 - {facility}
-=========================================
-Neural Auth: [color=#00ff00][SUCCESS][/color] | Firewall: [color=red][OFF][/color]
-Session ID: {session}
+func _start_typing_effect() -> void:
+	for label: Label in _typing_labels:
+		label.visible_ratio = 0.0
+	for row: TerminalProtocolRow in _rows:
+		row.modulate.a = 0.15
+	type_tween = create_tween().set_parallel(true)
+	for label: Label in _typing_labels:
+		type_tween.tween_property(label, "visible_ratio", 1.0, 0.3)
+	for row: TerminalProtocolRow in _rows:
+		type_tween.tween_property(row, "modulate:a", 1.0, 0.35)
+	type_tween.chain().tween_callback(finish_typing)
 
---- ACCESS GRANTED ---
-SELECT PROTOCOL:[b]
 
-{opt_1}
-{opt_2}
-{opt_3}
-{opt_4}
-{opt_5}
+func _set_rows_interactable(enabled: bool) -> void:
+	for row: TerminalProtocolRow in _rows:
+		row.set_interactable(enabled)
 
-ENTER CHOICE [1-5]: _[/b]
-[color=#666666][SECURITY: Trace detected. Purge in T-30s.][/color]"""
 
-	var format_data = {
-		"facility": facility_name,
-		"session": session,
-		"opt_1": opt_sec,
-		"opt_2": opt_scan,
-		"opt_3": opt_med,
-		"opt_4": opt_fin,
-		"opt_5": "[url=opt_extract]5 -> SIGNAL EXTRACTION (TACTICAL RETREAT)[/url]"
-	}
+func _enter_extraction_confirmation() -> void:
+	interaction_state = TerminalState.CONFIRMING_EXTRACTION
+	_set_rows_interactable(false)
+	confirmation_panel.show()
+	_grab_focus_if_valid.call_deferred(confirm_button)
 
-	final_text_content = text_body.format(format_data)
-	text_label.text = final_text_content
-	_start_typing_effect()
 
-# --- HELPERS FOR TEXT GENERATION ---
-func _get_security_text(is_upgraded: bool, amount: int) -> String:
-	var suffix = " [color=gold][UPGRADED][/color]" if is_upgraded else ""
-	var label = "REBOOT SECURITY" if is_upgraded else "SCRAMBLE CAMERAS"
-	var tag = "opt_sec_up" if is_upgraded else "opt_sec"
-	return "[url=%s]1 -> %s (ALERT -%d%%)[/url]%s" % [tag, label, amount, suffix]
+func _leave_extraction_confirmation() -> void:
+	confirmation_panel.hide()
+	_set_rows_interactable(true)
+	interaction_state = TerminalState.READY
+	_grab_focus_if_valid.call_deferred(_rows[4])
 
-func _get_scan_text(is_upgraded: bool) -> String:
 
-	if is_upgraded:
-		return "[url=opt_scan_up]2 -> HIJACK CAMERA NETWORK (WIDE SCAN)[/url] [color=gold][UPGRADED][/color]"
-	else:
-		return "[url=opt_scan]2 -> HIJACK LOCAL FEED (SECTOR SCAN)[/url]"
-
-func _get_finance_text(is_upgraded: bool, amount: int) -> String:
-	var suffix = " [color=gold][UPGRADED][/color]" if is_upgraded else ""
-	var label = "INTERCEPT PAYMENT" if is_upgraded else "BIT MINE"
-	var tag = "opt_fin_up" if is_upgraded else "opt_fin"
-	var display_val = float(amount) / 10.0
-	return "[url=%s]4 -> %s (+%.1f BITS)[/url]%s" % [tag, label, display_val, suffix]
-
-func _get_medical_text(is_upgraded: bool) -> String:
-	if is_upgraded:
-		return "[url=opt_med_up]3 -> DISPENSE ADRENALINE (HEAL + BOOST)[/url] [color=gold][UPGRADED][/color]"
-	else:
-		return "[url=opt_med]3 -> DISPENSE PAINKILLERS (HEAL INJURY)[/url]"
-
-func _on_text_link_clicked(meta):
-	if _interaction_started:
+func _commit_choice(choice_id: StringName) -> void:
+	if interaction_state == TerminalState.CLOSING:
 		return
-	_interaction_started = true
+	interaction_state = TerminalState.CLOSING
+	_set_rows_interactable(false)
 	close_button.disabled = true
-	var meta_str = str(meta)
 	AudioManager.play_sfx("terminal")
-
-	option_selected.emit(meta_str)
+	option_selected.emit(choice_id)
 	_animate_close(false)
 
-func _start_typing_effect():
-	# Stop any existing cursor blinking
-	if cursor_tween: cursor_tween.kill()
 
-	var char_count = text_label.get_total_character_count()
-	var duration = float(char_count) * 0.001
+func _begin_close() -> void:
+	if interaction_state == TerminalState.CLOSING:
+		return
+	interaction_state = TerminalState.CLOSING
+	_set_rows_interactable(false)
+	close_button.disabled = true
+	_animate_close(true)
 
-	text_label.visible_ratio = 0.0
 
-	if type_tween and type_tween.is_running():
-		type_tween.kill()
-
-	type_tween = create_tween()
-	type_tween.tween_property(text_label, "visible_ratio", 1.0, duration)
-
-func _animate_close(emit_closed: bool = true):
+func _animate_close(emit_closed: bool) -> void:
 	var close_generation := _lifecycle_generation
-	if cursor_tween: cursor_tween.kill()
-	text_label.text = final_text_content
 	close_tween = create_tween()
 	close_tween.tween_property(self, "modulate:a", 0.0, 0.25)
 	await close_tween.finished
@@ -168,45 +241,44 @@ func _animate_close(emit_closed: bool = true):
 	close_tween = null
 	hide()
 	var navigation := _navigation_ux_layer()
-	if navigation:
+	if navigation and navigation.is_top_modal(self):
 		navigation.pop_modal(self)
 	if emit_closed:
 		closed.emit()
 	else:
 		queue_free()
 
-func _on_close_button_pressed() -> void:
-	if _interaction_started:
+
+func _on_protocol_activated(choice_id: StringName) -> void:
+	if interaction_state == TerminalState.TYPING:
+		finish_typing()
 		return
-	var navigation := _navigation_ux_layer()
-	if navigation and not navigation.is_top_modal(self):
+	if interaction_state != TerminalState.READY:
 		return
-	_interaction_started = true
-	close_button.disabled = true
-	_animate_close()
+	if choice_id == EXTRACTION_ID:
+		_enter_extraction_confirmation()
+	else:
+		_commit_choice(choice_id)
 
 
-func _configure_navigation() -> void:
+func _ensure_modal_registered() -> void:
 	var navigation := _navigation_ux_layer()
-	if navigation:
-		navigation.push_modal(self, close_button)
-	_publish_hints()
-	_grab_focus_if_valid.call_deferred(close_button)
+	if not navigation:
+		return
+	if not navigation.is_top_modal(self):
+		navigation.push_modal(self, _rows[0])
+	navigation.publish_hints([])
 
 
 func _navigation_ux_layer() -> NavigationUXLayer:
 	return get_tree().root.find_child("NavigationUXLayer", true, false) as NavigationUXLayer
 
 
-func _publish_hints() -> void:
-	var navigation := _navigation_ux_layer()
-	if navigation and navigation.is_top_modal(self):
-		navigation.publish_hints([
-			{action = &"confirm", label = "Select", enabled = true},
-			{action = &"cancel", label = "Close", enabled = true},
-		])
-
-
 func _grab_focus_if_valid(control: Control) -> void:
-	if is_instance_valid(control) and control.is_inside_tree() and control.is_visible_in_tree() and not (control is BaseButton and control.disabled):
+	if (
+		is_instance_valid(control)
+		and control.is_inside_tree()
+		and control.is_visible_in_tree()
+		and not (control is BaseButton and control.disabled)
+	):
 		control.grab_focus()
