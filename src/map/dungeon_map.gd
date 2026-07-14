@@ -1578,7 +1578,8 @@ func _on_node_hovered(hovered_node: MapNode) -> void:
 	if current_map_state != MapState.PLAYING and current_map_state != MapState.TARGETING:
 		return
 	if current_map_state == MapState.TARGETING:
-		_apply_scan_selection(hovered_node)
+		if InputManager.get_active_mode() == InputManager.InputMode.KEYBOARD_MOUSE:
+			_apply_scan_selection(hovered_node)
 		return
 	if current_map_state == MapState.PLAYING:
 		var dist = _get_hex_distance(current_node.grid_coords, hovered_node.grid_coords)

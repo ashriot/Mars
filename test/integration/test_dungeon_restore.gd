@@ -408,6 +408,30 @@ func test_scan_hover_selects_nodes_in_every_visibility_state() -> void:
 		assert_eq(dungeon_map.player_reticle.position, hovered.position)
 
 
+func test_controller_mode_ignores_real_map_node_hover_until_physics_refresh() -> void:
+	var navigation := _make_navigation_ux()
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	var hovered: MapNode = setup.nodes[3]
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	dungeon_map.start_targeting_mode(1)
+	await get_tree().physics_frame
+	var selected := dungeon_map.scan_controller.selected_node
+	var reticle_position := dungeon_map.player_reticle.position
+	var cursor_position := navigation.cursor.position
+
+	hovered.mouse_entered.emit()
+
+	assert_same(dungeon_map.scan_controller.selected_node, selected)
+	assert_eq(dungeon_map.player_reticle.position, reticle_position)
+	assert_true(navigation.cursor.visible)
+	assert_eq(navigation.cursor.position, cursor_position)
+	await get_tree().physics_frame
+	assert_same(dungeon_map.scan_controller.selected_node, selected)
+	assert_eq(dungeon_map.player_reticle.position, reticle_position)
+	assert_eq(navigation.cursor.position, cursor_position)
+
+
 func test_controller_scan_cursor_moves_without_warping_physical_mouse() -> void:
 	var navigation := _make_navigation_ux()
 	var setup := await _prepare_navigation_map()
@@ -439,7 +463,6 @@ func test_controller_scan_cursor_moves_without_warping_physical_mouse() -> void:
 	assert_eq(navigation.cursor.position, digital_moved)
 	assert_eq(dungeon_map.get_viewport().get_mouse_position(), physical_mouse)
 
-	dungeon_map._on_node_hovered(setup.nodes[2])
 	assert_true(navigation.cursor.visible)
 	assert_eq(navigation.cursor.position, digital_moved)
 
@@ -550,7 +573,12 @@ func test_controller_can_scan_hidden_hex_without_changing_party_or_alert() -> vo
 	var alert := dungeon_map.current_alert
 	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
 	dungeon_map.start_targeting_mode(1)
-	dungeon_map._on_node_hovered(hidden)
+	await get_tree().physics_frame
+	dungeon_map.scan_controller.sync_pointer(
+		hidden.get_global_transform_with_canvas().origin,
+		dungeon_map.get_viewport_rect().size,
+	)
+	await get_tree().physics_frame
 	assert_same(dungeon_map._controller_preview_node, hidden)
 	watch_signals(dungeon_map)
 	dungeon_map._unhandled_input(_action_event(&"confirm"))
