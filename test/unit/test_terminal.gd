@@ -67,6 +67,8 @@ func test_setup_orders_protocols_by_keyboard_and_controller_shortcuts() -> void:
 	for index in expected_actions.size():
 		assert_eq(terminal.get_protocol_row(index).get_action(), expected_actions[index])
 		assert_eq(terminal.get_protocol_row(index).get_choice_id(), expected_ids[index])
+		assert_eq(terminal.get_protocol_row(index).focus_mode, Control.FOCUS_NONE)
+		assert_false(terminal.get_protocol_row(index).has_focus())
 	terminal.free()
 
 
@@ -98,15 +100,19 @@ func test_footer_labels_cancel_as_exit_terminal_and_keeps_header_close_available
 	terminal.free()
 
 
-func test_first_protocol_input_during_typing_only_finishes_animation() -> void:
+func test_protocol_input_during_typing_is_consumed_without_skip_or_choice() -> void:
 	var terminal := await _terminal()
 	watch_signals(terminal)
 	assert_eq(terminal.interaction_state, terminal.TerminalState.TYPING)
-	assert_true(terminal.handle_semantic_action(&"terminal_security"))
-	assert_eq(terminal.interaction_state, terminal.TerminalState.READY)
+	var typing_actions := TERMINAL_PROTOCOL_ACTIONS.duplicate()
+	typing_actions.append(&"confirm")
+	for action: StringName in typing_actions:
+		assert_true(terminal.handle_semantic_action(action))
+		assert_eq(terminal.interaction_state, terminal.TerminalState.TYPING)
+		assert_signal_not_emitted(terminal, "option_selected")
+	terminal.get_protocol_row(3).emit_signal(&"pressed")
+	assert_eq(terminal.interaction_state, terminal.TerminalState.TYPING)
 	assert_signal_not_emitted(terminal, "option_selected")
-	assert_true(terminal.handle_semantic_action(&"terminal_security"))
-	assert_signal_emitted_with_parameters(terminal, "option_selected", [&"opt_sec"])
 	clear_signal_watcher()
 	terminal.free()
 
@@ -131,6 +137,8 @@ func test_extraction_requires_confirm_and_cancel_returns_to_ready() -> void:
 	watch_signals(terminal)
 	assert_true(terminal.handle_semantic_action(&"terminal_extract"))
 	assert_eq(terminal.interaction_state, terminal.TerminalState.CONFIRMING_EXTRACTION)
+	await get_tree().process_frame
+	assert_true(terminal.confirm_button.has_focus())
 	assert_signal_not_emitted(terminal, "option_selected")
 	assert_true(terminal.handle_semantic_action(&"terminal_scan"))
 	assert_signal_not_emitted(terminal, "option_selected")

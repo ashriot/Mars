@@ -258,8 +258,11 @@ func test_controller_events_route_the_complete_playable_loop() -> void:
 	var finance: TerminalProtocolRow = terminal.get_protocol_row(2)
 	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.CONTROLLER)
 	assert_same(finance.glyph.texture_normal, InputIconMap.get_glyph(InputManager.get_active_controller_type(), &"terminal_finance"))
-	_assert_focus(terminal.get_protocol_row(0))
-	await _send(&"terminal_finance")
+	for index in 5:
+		assert_eq(terminal.get_protocol_row(index).focus_mode, Control.FOCUS_NONE)
+		assert_false(terminal.get_protocol_row(index).has_focus())
+	assert_null(router.get_node("NavigationUXLayer").cursor._target)
+	await wait_seconds(0.4)
 	assert_eq(terminal.interaction_state, terminal.TerminalState.READY)
 	await _send(&"terminal_finance")
 	await get_tree().process_frame

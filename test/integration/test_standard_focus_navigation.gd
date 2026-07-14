@@ -123,9 +123,11 @@ func test_nested_party_and_terminal_cancel_only_top_and_restore_each_layer() -> 
 	add_child_autofree(inner)
 	await get_tree().process_frame
 	var first_protocol: TerminalProtocolRow = inner.get_protocol_row(0)
-	assert_eq(get_viewport().gui_get_focus_owner(), first_protocol)
-	assert_same(ux.get_focus_target(), first_protocol)
-	assert_same(ux.cursor._target, first_protocol)
+	assert_eq(first_protocol.focus_mode, Control.FOCUS_NONE)
+	assert_false(first_protocol.has_focus())
+	assert_eq(get_viewport().gui_get_focus_owner(), party_default)
+	assert_same(ux.get_focus_target(), party_default)
+	assert_same(ux.cursor._target, party_default)
 	assert_eq(ux.hint_bar.get_hint_count(), 0)
 	assert_true(ux.is_top_modal(inner))
 
@@ -141,7 +143,7 @@ func test_nested_party_and_terminal_cancel_only_top_and_restore_each_layer() -> 
 	assert_true(party.visible)
 	assert_true(ux.is_top_modal(party))
 	assert_eq(get_viewport().gui_get_focus_owner(), party_default)
-	assert_eq(ux.hint_bar.get_hint(1).label.text, "Back", "lower modal hints restore")
+	assert_eq(ux.hint_bar.get_hint_count(), 0, "unchanged underlying focus does not republish suppressed hints")
 
 	party._unhandled_input(_cancel_event())
 	await get_tree().process_frame

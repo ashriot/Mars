@@ -95,7 +95,6 @@ func setup(data: Dictionary) -> bool:
 	status_label.text = "NEURAL AUTH: SUCCESS · FIREWALL: OFF · SESSION %s" % str(data.session_id)
 	interaction_state = TerminalState.TYPING
 	_start_typing_effect()
-	_grab_focus_if_valid.call_deferred(_rows[0])
 	_fit_panel_to_content.call_deferred()
 	return true
 
@@ -122,10 +121,7 @@ func handle_semantic_action(action: StringName) -> bool:
 		if action == &"cancel":
 			_begin_close()
 			return true
-		if action in PROTOCOL_ACTIONS or action in [EXTRACTION_ACTION, &"confirm"]:
-			finish_typing()
-			return true
-		return false
+		return action in PROTOCOL_ACTIONS or action in [EXTRACTION_ACTION, &"confirm"]
 	if interaction_state == TerminalState.CONFIRMING_EXTRACTION:
 		if action == &"confirm":
 			_commit_choice(EXTRACTION_ID)
@@ -235,7 +231,6 @@ func _leave_extraction_confirmation() -> void:
 	confirmation_panel.hide()
 	_set_rows_interactable(true)
 	interaction_state = TerminalState.READY
-	_grab_focus_if_valid.call_deferred(_rows[4])
 
 
 func _commit_choice(choice_id: StringName) -> void:
@@ -284,7 +279,6 @@ func _on_protocol_activated(choice_id: StringName) -> void:
 	if not _presentation_valid:
 		return
 	if interaction_state == TerminalState.TYPING:
-		finish_typing()
 		return
 	if interaction_state != TerminalState.READY:
 		return

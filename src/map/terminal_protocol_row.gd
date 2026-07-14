@@ -11,12 +11,14 @@ signal activated(choice_id: StringName)
 
 var _choice_id: StringName
 var _action: StringName
+var _mouse_hovered := false
 
 func _ready() -> void:
 	pressed.connect(_on_pressed)
-	focus_entered.connect(_refresh_focus_presentation)
-	focus_exited.connect(_refresh_focus_presentation)
-	_refresh_focus_presentation()
+	mouse_entered.connect(_on_mouse_entered)
+	mouse_exited.connect(_on_mouse_exited)
+	focus_mode = Control.FOCUS_NONE
+	_refresh_hover_presentation()
 
 func configure(choice_id: StringName, action: StringName, title: String, outcome: String, upgraded: bool) -> void:
 	_choice_id = choice_id
@@ -28,7 +30,10 @@ func configure(choice_id: StringName, action: StringName, title: String, outcome
 
 func set_interactable(enabled: bool) -> void:
 	disabled = not enabled
-	focus_mode = Control.FOCUS_ALL if enabled else Control.FOCUS_NONE
+	focus_mode = Control.FOCUS_NONE
+	if not enabled:
+		_mouse_hovered = false
+	_refresh_hover_presentation()
 
 func get_choice_id() -> StringName:
 	return _choice_id
@@ -40,6 +45,14 @@ func _on_pressed() -> void:
 	if not disabled:
 		activated.emit(_choice_id)
 
-func _refresh_focus_presentation() -> void:
+func _on_mouse_entered() -> void:
+	_mouse_hovered = true
+	_refresh_hover_presentation()
+
+func _on_mouse_exited() -> void:
+	_mouse_hovered = false
+	_refresh_hover_presentation()
+
+func _refresh_hover_presentation() -> void:
 	if is_node_ready():
-		caret_label.visible = has_focus()
+		caret_label.visible = _mouse_hovered and not disabled

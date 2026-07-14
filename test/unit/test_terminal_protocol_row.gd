@@ -28,22 +28,24 @@ func test_press_emits_choice_once_and_disabled_row_is_inert() -> void:
 	assert_signal_emit_count(row, "activated", 1)
 	assert_true(row.disabled)
 
-func test_focus_presentation_uses_terminal_caret_without_toggle_state() -> void:
+func test_enabled_row_is_mouse_clickable_but_never_gui_focusable() -> void:
 	var row := _row()
-	row.grab_focus()
-	await get_tree().process_frame
-	assert_true(row.caret_label.visible)
-	row.release_focus()
-	await get_tree().process_frame
-	assert_false(row.caret_label.visible)
-
-func test_row_is_the_only_focusable_control_and_disabling_removes_focus() -> void:
-	var row := _row()
-	assert_eq(row.focus_mode, Control.FOCUS_ALL)
-	assert_eq(row.glyph.focus_mode, Control.FOCUS_NONE)
-	row.set_interactable(false)
+	row.set_interactable(true)
+	assert_false(row.disabled)
 	assert_eq(row.focus_mode, Control.FOCUS_NONE)
-	assert_eq(row.glyph.focus_mode, Control.FOCUS_NONE)
+	assert_eq(row.mouse_filter, Control.MOUSE_FILTER_STOP)
+	watch_signals(row)
+	row.emit_signal(&"pressed")
+	assert_signal_emit_count(row, "activated", 1)
+
+
+func test_mouse_hover_controls_caret_without_assigning_focus() -> void:
+	var row := _row()
+	row.mouse_entered.emit()
+	assert_true(row.caret_label.visible)
+	assert_false(row.has_focus())
+	row.mouse_exited.emit()
+	assert_false(row.caret_label.visible)
 
 func test_row_presentation_preserves_glyph_shape_and_terminal_color_hierarchy() -> void:
 	var row := _row()
