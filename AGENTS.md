@@ -20,6 +20,7 @@ Project documentation: [`docs/README.md`](docs/README.md).
 - Make the smallest cohesive change that solves the problem; refactor locally only when it directly improves the change.
 - Do not add speculative save migrations, backward compatibility, release hardening, or public-install support unless requested.
 - Ask before changing the Godot version, vendored plugins, dependencies, project-wide formats, or durable architecture.
+- Use ordinary feature branches in the primary checkout by default; do not create or use Git worktrees unless the user explicitly requests one for that effort.
 - When committing, include only task files plus any required Godot sidecars generated for those files.
 
 ## Godot Files
