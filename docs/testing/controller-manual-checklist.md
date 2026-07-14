@@ -102,11 +102,12 @@ Run this sequence once over USB and once over Bluetooth. Fill in both rows befor
 - [ ] Hover each protocol with the mouse: its caret appears only while hovered, and clicking it activates that row exactly once.
 - [ ] On DualSense, Cross, Square, Triangle, L1, and R1 activate only their displayed protocols regardless of prior mouse hover; Circle closes.
 - [ ] Press a protocol shortcut during the brief typing animation: it is ignored without skipping or committing; after typing completes, one press activates it.
+- [ ] From the ready protocol list, press L1: the terminal overlay and modal are fully gone before the scan cursor and reticle become interactive; no terminal focus, hints, or input interception remains over the map.
+- [ ] Cancel scan with Circle: exactly one fresh terminal reopens and becomes ready after its normal short typing animation, with no duplicate or ghost terminal; the scan cursor is gone and OS/custom cursor visibility matches the active input mode.
 - [ ] On keyboard, verify 1–4 execute the same protocols and 5 only opens extraction confirmation.
 - [ ] Verify Circle always closes/backs out in the normal terminal, R1 opens extraction confirmation, Cross confirms Tactical Retreat exactly once, and Circle returns to the protocol list from confirmation without closing or consuming the terminal.
 - [ ] With a mouse, click protocols 1–4 directly; click Extraction, then use its explicit Confirm and Cancel controls.
 - [ ] Switch between controller and keyboard-and-mouse while the terminal is open; every embedded glyph updates immediately and the global passive hint bar remains hidden.
-- [ ] Close normally and cancel scan targeting after reopening; focus returns to the live map adapter, and the reopened terminal resets typing, extraction confirmation, and one-shot state.
 
 ## Battle and result
 
