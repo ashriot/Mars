@@ -6,10 +6,15 @@ class_name ActionHint
 var action: StringName
 var enabled := true
 var _configuration: Dictionary = {}
+var _refresh_pending := false
+var _refresh_mode := InputManager.InputMode.KEYBOARD_MOUSE
+var _refresh_controller_type := InputIconMap.ControllerType.STEAM_DECK
 
 
 func _ready() -> void:
 	_apply_configuration()
+	if _refresh_pending:
+		_apply_refresh()
 
 
 func configure(data: Dictionary) -> void:
@@ -28,6 +33,16 @@ func _apply_configuration() -> void:
 
 
 func refresh(mode: InputManager.InputMode, controller_type: InputIconMap.ControllerType) -> void:
-	var resolved := InputIconMap.get_glyph(controller_type, action) if mode == InputManager.InputMode.CONTROLLER else null
+	_refresh_pending = true
+	_refresh_mode = mode
+	_refresh_controller_type = controller_type
+	if is_node_ready():
+		_apply_refresh()
+
+
+func _apply_refresh() -> void:
+	if not is_instance_valid(glyph):
+		return
+	var resolved := InputIconMap.get_glyph(_refresh_controller_type, action) if _refresh_mode == InputManager.InputMode.CONTROLLER else null
 	glyph.texture = resolved
 	glyph.visible = resolved != null

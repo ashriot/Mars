@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3 uid="uid://b4tt3yil85l7j"]
+[gd_scene format=3 uid="uid://b4tt3yil85l7j"]
 
 [ext_resource type="Script" uid="uid://carvfoj4h04nm" path="res://src/battle/enemy_card.gd" id="1_cu1kv"]
 [ext_resource type="Resource" uid="uid://bg7k6ixvwst7t" path="res://data/enemies/actions/recover_breach.tres" id="2_dmmmv"]
@@ -72,7 +72,7 @@ corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
 
-[node name="EnemyCard" type="Control"]
+[node name="EnemyCard" type="Control" unique_id=1665877761]
 custom_minimum_size = Vector2(400, 180)
 layout_mode = 3
 anchors_preset = 0
@@ -85,7 +85,7 @@ damage_popup_scene = ExtResource("2_xkcvw")
 buff_scene = ExtResource("3_pdx0h")
 debuff_scene = ExtResource("3_1mnyd")
 
-[node name="Panel" type="Panel" parent="."]
+[node name="Panel" type="Panel" parent="." unique_id=1383817375]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -95,7 +95,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 1
 
-[node name="Highlight" type="Panel" parent="Panel"]
+[node name="Highlight" type="Panel" parent="Panel" unique_id=1954330024]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -109,7 +109,7 @@ grow_vertical = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_8i7ma")
 
-[node name="TargetFlash" type="Panel" parent="Panel"]
+[node name="TargetFlash" type="Panel" parent="Panel" unique_id=813998384]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -124,7 +124,7 @@ grow_vertical = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_1mnyd")
 
-[node name="Portrait" type="TextureRect" parent="Panel"]
+[node name="Portrait" type="TextureRect" parent="Panel" unique_id=1666982492]
 layout_mode = 0
 offset_left = 264.0
 offset_top = 22.0
@@ -132,7 +132,7 @@ offset_right = 380.0
 offset_bottom = 138.0
 mouse_filter = 2
 
-[node name="KinDef" type="TextureProgressBar" parent="Panel"]
+[node name="KinDef" type="TextureProgressBar" parent="Panel" unique_id=1068030147]
 self_modulate = Color(1, 1, 1, 0.19607843)
 layout_mode = 1
 offset_left = 20.0
@@ -147,7 +147,7 @@ texture_progress = ExtResource("10_hupy2")
 tint_under = Color(0, 0, 0, 0.5019608)
 tint_progress = Color(1, 0.5019608, 0, 1)
 
-[node name="Value" type="Label" parent="Panel/KinDef"]
+[node name="Value" type="Label" parent="Panel/KinDef" unique_id=1046582310]
 modulate = Color(1, 0.5019608, 0, 1)
 layout_mode = 1
 offset_left = -16.0
@@ -160,7 +160,7 @@ text = "40%"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="NrgDef" type="TextureProgressBar" parent="Panel"]
+[node name="NrgDef" type="TextureProgressBar" parent="Panel" unique_id=1072613876]
 self_modulate = Color(1, 1, 1, 0.19607843)
 layout_mode = 1
 anchors_preset = 1
@@ -179,7 +179,7 @@ texture_progress = ExtResource("10_mu8yp")
 tint_under = Color(0, 0, 0, 0.5019608)
 tint_progress = Color(0, 1, 1, 1)
 
-[node name="Value" type="Label" parent="Panel/NrgDef"]
+[node name="Value" type="Label" parent="Panel/NrgDef" unique_id=453585657]
 modulate = Color(0, 1, 1, 1)
 layout_mode = 1
 anchors_preset = 1
@@ -196,7 +196,7 @@ text = "40%"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Info" type="MarginContainer" parent="Panel"]
+[node name="Info" type="MarginContainer" parent="Panel" unique_id=792261101]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -207,7 +207,7 @@ offset_right = 86.0
 offset_bottom = 37.0
 grow_horizontal = 2
 
-[node name="Text" type="Label" parent="Panel/Info"]
+[node name="Text" type="Label" parent="Panel/Info" unique_id=1300805450]
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_fonts/font = ExtResource("6_pdx0h")
@@ -215,7 +215,7 @@ theme_override_font_sizes/font_size = 24
 text = "Rk. 01 ELITE"
 horizontal_alignment = 1
 
-[node name="Icon" type="TextureRect" parent="Panel/Info/Text"]
+[node name="Icon" type="TextureRect" parent="Panel/Info/Text" unique_id=1561994418]
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
@@ -228,7 +228,7 @@ grow_vertical = 2
 texture = ExtResource("12_mu8yp")
 expand_mode = 1
 
-[node name="Title" type="Label" parent="Panel"]
+[node name="Title" type="Label" parent="Panel" unique_id=1619779736]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -246,7 +246,7 @@ theme_override_font_sizes/font_size = 32
 text = "Example Enemy Name"
 horizontal_alignment = 1
 
-[node name="HP" type="Control" parent="Panel"]
+[node name="HP" type="Control" parent="Panel" unique_id=1480078296]
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
@@ -260,7 +260,7 @@ grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
 
-[node name="BarGhost" type="ProgressBar" parent="Panel/HP"]
+[node name="BarGhost" type="ProgressBar" parent="Panel/HP" unique_id=726477456]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -274,7 +274,7 @@ theme_override_styles/fill = SubResource("StyleBoxFlat_g4dne")
 value = 16.0
 show_percentage = false
 
-[node name="BarActual" type="ProgressBar" parent="Panel/HP"]
+[node name="BarActual" type="ProgressBar" parent="Panel/HP" unique_id=125467400]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -287,7 +287,7 @@ theme_override_styles/fill = SubResource("StyleBoxFlat_mu8yp")
 value = 12.0
 show_percentage = false
 
-[node name="HeartIcon" type="TextureRect" parent="Panel/HP"]
+[node name="HeartIcon" type="TextureRect" parent="Panel/HP" unique_id=1414868796]
 layout_mode = 1
 anchors_preset = 9
 anchor_bottom = 1.0
@@ -301,7 +301,7 @@ texture = ExtResource("2_e8ixv")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Value" type="Label" parent="Panel/HP"]
+[node name="Value" type="Label" parent="Panel/HP" unique_id=651793645]
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
@@ -318,7 +318,7 @@ theme_override_font_sizes/font_size = 50
 text = "99999"
 horizontal_alignment = 2
 
-[node name="GuardBar" type="HBoxContainer" parent="Panel"]
+[node name="GuardBar" type="HBoxContainer" parent="Panel" unique_id=118765543]
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -334,12 +334,12 @@ grow_vertical = 0
 mouse_filter = 2
 theme_override_constants/separation = -2
 
-[node name="Pip1" type="Control" parent="Panel/GuardBar"]
+[node name="Pip1" type="Control" parent="Panel/GuardBar" unique_id=84154412]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip1"]
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip1" unique_id=393502728]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 0
 offset_left = 2.0
@@ -349,12 +349,12 @@ mouse_filter = 2
 texture = ExtResource("8_g4dne")
 expand_mode = 1
 
-[node name="Pip2" type="Control" parent="Panel/GuardBar"]
+[node name="Pip2" type="Control" parent="Panel/GuardBar" unique_id=1534261735]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip2"]
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip2" unique_id=1994796018]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 0
 offset_left = 2.0
@@ -364,12 +364,12 @@ mouse_filter = 2
 texture = ExtResource("8_g4dne")
 expand_mode = 1
 
-[node name="Pip3" type="Control" parent="Panel/GuardBar"]
+[node name="Pip3" type="Control" parent="Panel/GuardBar" unique_id=923379233]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip3"]
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip3" unique_id=1552131460]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 0
 offset_left = 2.0
@@ -379,12 +379,12 @@ mouse_filter = 2
 texture = ExtResource("8_g4dne")
 expand_mode = 1
 
-[node name="Pip4" type="Control" parent="Panel/GuardBar"]
+[node name="Pip4" type="Control" parent="Panel/GuardBar" unique_id=1158192621]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip4"]
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip4" unique_id=193790280]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 0
 offset_left = 2.0
@@ -394,12 +394,12 @@ mouse_filter = 2
 texture = ExtResource("8_g4dne")
 expand_mode = 1
 
-[node name="Pip5" type="Control" parent="Panel/GuardBar"]
+[node name="Pip5" type="Control" parent="Panel/GuardBar" unique_id=428977274]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip5"]
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip5" unique_id=1584180474]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 0
 offset_left = 2.0
@@ -409,12 +409,12 @@ mouse_filter = 2
 texture = ExtResource("8_g4dne")
 expand_mode = 1
 
-[node name="Pip6" type="Control" parent="Panel/GuardBar"]
+[node name="Pip6" type="Control" parent="Panel/GuardBar" unique_id=194991703]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip6"]
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip6" unique_id=1734572009]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 0
 offset_left = 2.0
@@ -424,12 +424,12 @@ mouse_filter = 2
 texture = ExtResource("8_g4dne")
 expand_mode = 1
 
-[node name="Pip7" type="Control" parent="Panel/GuardBar"]
+[node name="Pip7" type="Control" parent="Panel/GuardBar" unique_id=136623633]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip7"]
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip7" unique_id=1613526609]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 0
 offset_left = 2.0
@@ -439,12 +439,12 @@ mouse_filter = 2
 texture = ExtResource("8_g4dne")
 expand_mode = 1
 
-[node name="Pip8" type="Control" parent="Panel/GuardBar"]
+[node name="Pip8" type="Control" parent="Panel/GuardBar" unique_id=405210384]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip8"]
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip8" unique_id=1466251889]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 0
 offset_left = 2.0
@@ -454,12 +454,12 @@ mouse_filter = 2
 texture = ExtResource("8_g4dne")
 expand_mode = 1
 
-[node name="Pip9" type="Control" parent="Panel/GuardBar"]
+[node name="Pip9" type="Control" parent="Panel/GuardBar" unique_id=398020051]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip9"]
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip9" unique_id=520880906]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 0
 offset_left = 2.0
@@ -469,12 +469,12 @@ mouse_filter = 2
 texture = ExtResource("8_g4dne")
 expand_mode = 1
 
-[node name="Pip10" type="Control" parent="Panel/GuardBar"]
+[node name="Pip10" type="Control" parent="Panel/GuardBar" unique_id=1376260833]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip10"]
+[node name="Shield" type="TextureRect" parent="Panel/GuardBar/Pip10" unique_id=1143715003]
 custom_minimum_size = Vector2(41, 42)
 layout_mode = 0
 offset_left = 2.0
@@ -484,7 +484,7 @@ mouse_filter = 2
 texture = ExtResource("8_g4dne")
 expand_mode = 1
 
-[node name="GuardLabel" type="Control" parent="Panel"]
+[node name="GuardLabel" type="Control" parent="Panel" unique_id=1715069200]
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
@@ -498,7 +498,7 @@ grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
 
-[node name="Value" type="Label" parent="Panel/GuardLabel"]
+[node name="Value" type="Label" parent="Panel/GuardLabel" unique_id=644255914]
 layout_mode = 1
 offset_right = 34.0
 offset_bottom = 36.0
@@ -511,7 +511,7 @@ text = "6"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="IntentText" type="RichTextLabel" parent="Panel"]
+[node name="IntentText" type="RichTextLabel" parent="Panel" unique_id=1477654647]
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -532,11 +532,11 @@ text = "20x5  ->  Asher"
 scroll_active = false
 horizontal_alignment = 1
 
-[node name="RichTooltip" type="Node" parent="Panel/IntentText"]
+[node name="RichTooltip" type="Node" parent="Panel/IntentText" unique_id=58781386]
 script = ExtResource("13_mu8yp")
 metadata/_custom_type_script = "uid://m4vn3jl6sqd6"
 
-[node name="ActionName" type="PanelContainer" parent="Panel"]
+[node name="ActionName" type="PanelContainer" parent="Panel" unique_id=1867238534]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -547,12 +547,12 @@ offset_right = 107.5
 offset_bottom = -14.0
 grow_horizontal = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="Panel/ActionName"]
+[node name="MarginContainer" type="MarginContainer" parent="Panel/ActionName" unique_id=1055106561]
 layout_mode = 2
 theme_override_constants/margin_left = 50
 theme_override_constants/margin_right = 50
 
-[node name="Label" type="Label" parent="Panel/ActionName/MarginContainer"]
+[node name="Label" type="Label" parent="Panel/ActionName/MarginContainer" unique_id=2079138669]
 layout_mode = 2
 theme_override_constants/line_spacing = -5
 theme_override_constants/outline_size = 5
@@ -563,7 +563,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 uppercase = true
 
-[node name="BreachedLabel" type="Label" parent="Panel"]
+[node name="BreachedLabel" type="Label" parent="Panel" unique_id=579833826]
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
@@ -583,7 +583,7 @@ theme_override_font_sizes/font_size = 40
 text = "BREACHED"
 horizontal_alignment = 1
 
-[node name="NextPanel" type="Panel" parent="Panel"]
+[node name="NextPanel" type="Panel" parent="Panel" unique_id=185707253]
 visible = false
 layout_mode = 1
 anchors_preset = 5
@@ -596,7 +596,7 @@ offset_bottom = -14.0
 grow_horizontal = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_pdx0h")
 
-[node name="Label" type="Label" parent="Panel/NextPanel"]
+[node name="Label" type="Label" parent="Panel/NextPanel" unique_id=1527719095]
 modulate = Color(1, 1, 1, 0.5019608)
 layout_mode = 1
 anchors_preset = 15
@@ -609,11 +609,11 @@ text = "NEXT"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="RichTooltip" type="Node" parent="Panel"]
+[node name="RichTooltip" type="Node" parent="Panel" unique_id=1140040464]
 script = ExtResource("13_mu8yp")
 metadata/_custom_type_script = "uid://m4vn3jl6sqd6"
 
-[node name="Debuffs" type="HBoxContainer" parent="."]
+[node name="Debuffs" type="HBoxContainer" parent="." unique_id=145389976]
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 1
 anchors_preset = 12
@@ -627,7 +627,7 @@ grow_horizontal = 2
 grow_vertical = 0
 theme_override_constants/separation = 8
 
-[node name="Buffs" type="HBoxContainer" parent="."]
+[node name="Buffs" type="HBoxContainer" parent="." unique_id=107630897]
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 1
 anchors_preset = 12
@@ -643,7 +643,7 @@ grow_vertical = 0
 theme_override_constants/separation = 8
 alignment = 2
 
-[node name="Glyph" type="TextureRect" parent="."]
+[node name="Glyph" type="TextureRect" parent="." unique_id=861470840]
 visible = false
 layout_mode = 1
 anchors_preset = 7

@@ -294,7 +294,10 @@ func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary 
 			for effect in trigger.effects_to_run:
 				var is_hero = self is HeroCard
 				effect = effect as ActionEffect
-				targets = battle_manager.get_targets(effect.target_type, is_hero, targets, attacker)
+				if effect.target_type == Action.TargetType.SELF:
+					targets = [self]
+				else:
+					targets = battle_manager.get_targets(effect.target_type, is_hero, targets, attacker)
 				if battle_manager.current_actor is HeroCard and condition.is_passive and trigger.trigger_type == Trigger.TriggerType.ON_TURN_START:
 					self.passive_fired.emit()
 				await battle_manager.execute_triggered_effect(source, effect, targets, action, context)

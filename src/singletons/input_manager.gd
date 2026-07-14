@@ -54,6 +54,10 @@ func get_active_mode() -> InputMode:
 	return _active_mode
 
 
+func restore_active_mode(mode: InputMode) -> void:
+	_set_active_mode(mode)
+
+
 func get_active_controller_type() -> InputIconMap.ControllerType:
 	return _active_controller_type
 
