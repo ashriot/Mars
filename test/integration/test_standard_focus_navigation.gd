@@ -165,6 +165,14 @@ func test_nested_party_and_terminal_cancel_only_top_and_restore_each_layer() -> 
 	assert_same(ux.cursor._target, inner.confirm_button)
 	assert_true(inner.handle_semantic_action(&"cancel"))
 	assert_eq(inner.interaction_state, inner.TerminalState.READY)
+	assert_same(get_viewport().gui_get_focus_owner(), party_default)
+	assert_same(ux.get_focus_target(), party_default)
+	assert_same(ux.cursor._target, party_default)
+	assert_false(inner.confirm_button.has_focus())
+	assert_false(inner.cancel_button.has_focus())
+	assert_false(inner.close_button.has_focus())
+	for index in 5:
+		assert_false(inner.get_protocol_row(index).has_focus())
 
 	party._unhandled_input(_cancel_event())
 	await get_tree().process_frame

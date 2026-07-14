@@ -128,6 +128,36 @@ func test_focusless_suppressing_modal_restores_unchanged_focus_hints_on_pop() ->
 		assert_eq(ux.hint_bar.get_hint(1).label.text, "Back")
 
 
+func test_focusless_policy_change_restores_underlying_focus_and_cancels_stale_deferred_fallback() -> void:
+	var ux := UXScene.instantiate() as NavigationUXLayer
+	add_child_autofree(ux)
+	var screen := Control.new()
+	var screen_button := Button.new()
+	screen.add_child(screen_button)
+	add_child_autofree(screen)
+	ux.register_screen(screen, screen_button)
+	await get_tree().process_frame
+	var modal := Control.new()
+	var modal_button := Button.new()
+	modal.add_child(modal_button)
+	add_child_autofree(modal)
+	ux.push_modal(modal, modal_button)
+	await get_tree().process_frame
+	assert_same(get_viewport().gui_get_focus_owner(), modal_button)
+
+	screen_button.grab_focus()
+	ux.update_modal_focus(modal, modal_button, true)
+	assert_same(get_viewport().gui_get_focus_owner(), screen_button)
+	assert_same(ux.get_focus_target(), screen_button)
+	assert_same(ux.cursor._target, screen_button)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	assert_same(get_viewport().gui_get_focus_owner(), screen_button)
+	assert_same(ux.get_focus_target(), screen_button)
+	assert_same(ux.cursor._target, screen_button)
+	assert_false(modal_button.has_focus())
+
+
 func test_open_modal_query_tracks_stack_presence() -> void:
 	var ux = UXScene.instantiate()
 	add_child_autofree(ux)

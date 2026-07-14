@@ -144,6 +144,11 @@ func test_extraction_requires_confirm_and_cancel_returns_to_ready() -> void:
 	assert_signal_not_emitted(terminal, "option_selected")
 	assert_true(terminal.handle_semantic_action(&"cancel"))
 	assert_eq(terminal.interaction_state, terminal.TerminalState.READY)
+	assert_false(terminal.confirm_button.has_focus())
+	assert_false(terminal.cancel_button.has_focus())
+	assert_false(terminal.close_button.has_focus())
+	for index in 5:
+		assert_false(terminal.get_protocol_row(index).has_focus())
 	assert_true(terminal.handle_semantic_action(&"terminal_extract"))
 	assert_true(terminal.handle_semantic_action(&"confirm"))
 	assert_signal_emitted_with_parameters(terminal, "option_selected", [&"opt_extract"])
@@ -177,6 +182,11 @@ func test_setup_resets_confirmation_typing_and_one_shot_state() -> void:
 	assert_false(terminal.confirmation_panel.visible)
 	assert_eq(terminal.get_protocol_row(1).get_choice_id(), &"opt_med_up")
 	assert_false(terminal.close_button.disabled)
+	assert_false(terminal.confirm_button.has_focus())
+	assert_false(terminal.cancel_button.has_focus())
+	assert_false(terminal.close_button.has_focus())
+	for index in 5:
+		assert_false(terminal.get_protocol_row(index).has_focus())
 	terminal.free()
 
 

@@ -9,6 +9,7 @@ var _modal_stack: Array[Dictionary] = []
 var _focus_target: Control
 var _adapter: Object
 var _restoring_focus := false
+var _modal_focus_generation := 0
 var _published_hints: Array[Dictionary] = []
 var _published_hint_owner: WeakRef
 
@@ -59,6 +60,7 @@ func publish_hints(hints: Array[Dictionary]) -> void:
 
 func push_modal(root: Control, default_focus: Control, suppress_hints := false, focusless := false) -> void:
 	_prune_state()
+	_modal_focus_generation += 1
 	_modal_stack.append({
 		"root": weakref(root),
 		"default": weakref(default_focus),
@@ -68,6 +70,7 @@ func push_modal(root: Control, default_focus: Control, suppress_hints := false, 
 		"restore_hint_owner": _published_hint_owner,
 		"suppress_hints": suppress_hints,
 		"focusless": focusless,
+		"focus_generation": _modal_focus_generation,
 	})
 	_apply_top_modal_hint_policy()
 	if not focusless and _is_focusable(default_focus):
@@ -80,9 +83,12 @@ func update_modal_focus(root: Control, default_focus: Control, focusless := fals
 	_prune_state()
 	if _modal_stack.is_empty() or _weak_get(_modal_stack.back().root) != root:
 		return
+	_modal_focus_generation += 1
 	_modal_stack.back().default = weakref(default_focus)
 	_modal_stack.back().focusless = focusless
+	_modal_stack.back().focus_generation = _modal_focus_generation
 	if focusless:
+		_restore_focusless_modal_presentation(_modal_stack.back())
 		return
 	var modal_focus := _modal_default(_modal_stack.back())
 	if modal_focus:
@@ -225,10 +231,6 @@ func _is_focusable(control: Control) -> bool:
 	return is_instance_valid(control) and control.is_inside_tree() and control.is_visible_in_tree() and control.focus_mode != Control.FOCUS_NONE and not (control is BaseButton and control.disabled)
 
 
-func _reset_restoring() -> void:
-	_restoring_focus = false
-
-
 func ensure_valid_focus() -> void:
 	_prune_state()
 	if is_instance_valid(_adapter) and _modal_stack.is_empty():
@@ -268,6 +270,45 @@ func _restore_from_entry(entry: Dictionary) -> void:
 		fallback.grab_focus()
 		return
 	_restore_adapter_focus()
+
+
+func _restore_focusless_modal_presentation(entry: Dictionary) -> void:
+	var modal_root := _weak_get(entry.root) as Control
+	var owner := get_viewport().gui_get_focus_owner()
+	if _belongs_to(owner, modal_root):
+		owner.release_focus()
+	var restore := _focusless_restore_target(entry)
+	if restore:
+		_restoring_focus = true
+		restore.grab_focus()
+		_update_focus_target(restore)
+		_restoring_focus = false
+		return
+	_clear_presentation()
+
+
+func _focusless_restore_target(entry: Dictionary) -> Control:
+	var restore := _weak_get(entry.restore) as Control
+	if _is_focusable(restore) and _is_underlying_presentation(restore):
+		return restore
+	var restore_screen := _weak_get(entry.restore_screen) as Control
+	if is_instance_valid(restore_screen) and _screens.has(restore_screen):
+		var screen_fallback := _screen_fallback(restore_screen)
+		if screen_fallback:
+			return screen_fallback
+	if _modal_stack.size() > 1:
+		return _modal_default(_modal_stack[_modal_stack.size() - 2])
+	return _registered_fallback()
+
+
+func _is_underlying_presentation(control: Control) -> bool:
+	if is_instance_valid(_screen_for(control)):
+		return true
+	for index in _modal_stack.size() - 1:
+		var root := _weak_get(_modal_stack[index].root) as Control
+		if _belongs_to(control, root):
+			return true
+	return false
 
 
 func _restore_adapter_focus() -> void:
@@ -359,15 +400,35 @@ func _weak_get(reference: Variant) -> Variant:
 
 
 func _grab_focus_deferred(control: Control) -> void:
+	if _modal_stack.is_empty():
+		return
+	var entry: Dictionary = _modal_stack.back()
+	_apply_deferred_modal_focus.call_deferred(
+		entry.root,
+		weakref(control),
+		int(entry.get("focus_generation", -1)),
+	)
+
+
+func _apply_deferred_modal_focus(root_reference: WeakRef, control_reference: WeakRef, generation: int) -> void:
+	_prune_state()
+	if _modal_stack.is_empty():
+		return
+	var entry: Dictionary = _modal_stack.back()
+	var root := _weak_get(root_reference) as Control
+	var control := _weak_get(control_reference) as Control
+	if (
+		_weak_get(entry.root) != root
+		or int(entry.get("focus_generation", -1)) != generation
+		or bool(entry.get("focusless", false))
+		or _modal_default(entry) != control
+	):
+		return
 	_restoring_focus = true
-	control.grab_focus.call_deferred()
-	_sync_deferred_focus_target.call_deferred(control)
-	_reset_restoring.call_deferred()
-
-
-func _sync_deferred_focus_target(control: Control) -> void:
+	control.grab_focus()
 	if get_viewport().gui_get_focus_owner() == control and _is_focusable(control):
 		_update_focus_target(control)
+	_restoring_focus = false
 
 
 func _clear_presentation() -> void:
