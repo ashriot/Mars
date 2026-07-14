@@ -64,8 +64,13 @@ func set_world_target(canvas_item: CanvasItem, state: CursorState = CursorState.
 
 
 func clear_target() -> void:
+	_clear_target(true)
+
+
+func _clear_target(restore_hardware_cursor: bool) -> void:
 	_screen_position_active = false
-	_set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	if restore_hardware_cursor:
+		_set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	_target = null
 	_reset_warp_dedupe()
 	set_cursor_state(CursorState.DEFAULT)
@@ -103,7 +108,7 @@ func update_position_for_behavior(behavior: InputManager.CursorBehavior, mouse_p
 		show()
 		return
 	if not _is_valid_target():
-		clear_target()
+		_clear_target(false)
 		return
 	var destination := _target_position()
 	_move_to(destination, immediate)

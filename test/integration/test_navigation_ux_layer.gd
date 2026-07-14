@@ -8,6 +8,14 @@ var saved_presentation_mode: InputManager.PresentationMode
 var saved_cursor_behavior: InputManager.CursorBehavior
 var saved_expected_warp_position: Vector2
 var saved_expected_warp_deadline_ms: int
+var saved_process_input: bool
+
+
+class RecordingCursor extends NavigationCursor:
+	var requested_modes: Array[Input.MouseMode] = []
+
+	func _set_mouse_mode(mode: Input.MouseMode) -> void:
+		requested_modes.append(mode)
 
 
 func before_each() -> void:
@@ -16,6 +24,7 @@ func before_each() -> void:
 	saved_cursor_behavior = InputManager._cursor_behavior
 	saved_expected_warp_position = InputManager._expected_warp_position
 	saved_expected_warp_deadline_ms = InputManager._expected_warp_deadline_ms
+	saved_process_input = InputManager.is_processing_input()
 
 
 func after_each() -> void:
@@ -26,6 +35,7 @@ func after_each() -> void:
 	InputManager._cursor_behavior = saved_cursor_behavior
 	InputManager._expected_warp_position = saved_expected_warp_position
 	InputManager._expected_warp_deadline_ms = saved_expected_warp_deadline_ms
+	InputManager.set_process_input(saved_process_input)
 
 
 func _key(keycode: Key) -> InputEventKey:
@@ -44,6 +54,22 @@ func _released_key(keycode: Key) -> InputEventKey:
 func _mouse_motion(relative: Vector2) -> InputEventMouseMotion:
 	var event := InputEventMouseMotion.new()
 	event.relative = relative
+	return event
+
+
+func _mouse_motion_at(position: Vector2, relative := Vector2.ZERO) -> InputEventMouseMotion:
+	var event := _mouse_motion(relative)
+	event.position = position
+	event.global_position = position
+	return event
+
+
+func _mouse_button_at(position: Vector2, pressed: bool) -> InputEventMouseButton:
+	var event := InputEventMouseButton.new()
+	event.button_index = MOUSE_BUTTON_LEFT
+	event.position = position
+	event.global_position = position
+	event.pressed = pressed
 	return event
 
 
@@ -112,13 +138,79 @@ func test_first_keyboard_direction_after_pointer_only_restores_top_focus() -> vo
 func test_controller_direction_from_pointer_moves_immediately_and_hides_mouse() -> void:
 	var setup := await _three_button_screen()
 	var ux: NavigationUXLayer = setup.ux
+	var original_cursor := ux.cursor
+	original_cursor.set_process(false)
+	ux.remove_child(original_cursor)
+	original_cursor.free()
+	var cursor := RecordingCursor.new()
+	ux.add_child(cursor)
+	ux.cursor = cursor
+	cursor.set_process(false)
+	cursor.hide()
+	cursor.requested_modes.clear()
 	setup.top.grab_focus()
 	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)
-	get_viewport().push_input(_joy_direction(JOY_BUTTON_DPAD_DOWN, true))
+	var direction := _joy_direction(JOY_BUTTON_DPAD_DOWN, true)
+	InputManager._input(direction)
+	cursor._process(0.0)
+	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.CONTROLLER)
+	assert_false(
+		cursor.requested_modes.has(Input.MOUSE_MODE_VISIBLE),
+		"unowned cursor processing cannot reveal the hardware cursor",
+	)
+	get_viewport().push_input(direction)
 	await get_tree().process_frame
 	assert_same(get_viewport().gui_get_focus_owner(), setup.middle)
 	assert_true(ux.pointer_input_blocker.visible)
-	assert_false(ux.cursor.visible, "ordinary controller focus does not show the navigation cursor")
+	assert_false(cursor.visible, "ordinary controller focus does not show the navigation cursor")
+
+
+func test_pointer_hover_preserves_retained_origin_until_second_keyboard_direction() -> void:
+	var setup := await _three_button_screen()
+	var middle_position: Vector2 = setup.middle.get_global_rect().get_center()
+	setup.top.grab_focus()
+	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)
+	get_viewport().push_input(_mouse_motion_at(middle_position, Vector2(12, 0)), true)
+	await get_tree().process_frame
+	assert_true(setup.middle.is_hovered())
+	assert_same(setup.ux.get_focus_target(), setup.top)
+	assert_same(get_viewport().gui_get_focus_owner(), setup.top)
+
+	get_viewport().push_input(_key(KEY_DOWN))
+	await get_tree().process_frame
+	assert_same(get_viewport().gui_get_focus_owner(), setup.top)
+	assert_true(NavigationFocus._states.has(setup.top.get_instance_id()))
+
+	get_viewport().push_input(_released_key(KEY_DOWN))
+	get_viewport().push_input(_key(KEY_DOWN))
+	await get_tree().process_frame
+	assert_same(get_viewport().gui_get_focus_owner(), setup.middle)
+
+
+func test_pointer_blocker_suppresses_gui_hover_and_activation_only_in_focus() -> void:
+	var setup := await _three_button_screen()
+	var middle: Button = setup.middle
+	var middle_position := middle.get_global_rect().get_center()
+	var press_count := [0]
+	middle.pressed.connect(func() -> void: press_count[0] += 1)
+	InputManager.set_process_input(false)
+	InputManager._set_presentation_mode(InputManager.PresentationMode.FOCUS)
+
+	get_viewport().push_input(_mouse_motion_at(middle_position), true)
+	get_viewport().push_input(_mouse_button_at(middle_position, true), true)
+	get_viewport().push_input(_mouse_button_at(middle_position, false), true)
+	await get_tree().process_frame
+	assert_false(middle.is_hovered())
+	assert_eq(press_count[0], 0)
+
+	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)
+	get_viewport().push_input(_mouse_motion_at(Vector2.ZERO), true)
+	get_viewport().push_input(_mouse_motion_at(middle_position, middle_position), true)
+	get_viewport().push_input(_mouse_button_at(middle_position, true), true)
+	get_viewport().push_input(_mouse_button_at(middle_position, false), true)
+	await get_tree().process_frame
+	assert_true(middle.is_hovered())
+	assert_eq(press_count[0], 1)
 
 
 func test_keyboard_direction_from_controller_moves_immediately_and_reveals_mouse() -> void:
