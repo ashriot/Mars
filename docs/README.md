@@ -13,6 +13,7 @@ Use this page as the index for project knowledge that is more detailed or more l
 
 - [Coordinate spaces and positioning](coordinate-spaces.md) — Authoritative world, viewport, UI, cursor, reticle, and camera conversion rules.
 - [Refactor notes](refactor.md) — Research and candidates for the later refactor phase.
+- [Combat target presentation](superpowers/specs/2026-07-14-combat-target-presentation-design.md) — Current hero/enemy target availability, selection, CTB preview, and input behavior.
 - [Controller-driven scan cursor](superpowers/specs/2026-07-14-controller-driven-scan-cursor-design.md) — Historical initial controller scan-pointer and edge-scroll design.
 - [Terminal-to-scan correction](superpowers/specs/2026-07-14-terminal-scan-transition-correction-design.md) — Current terminal shortcut, modal transition, world-aim cursor, and scan-camera behavior.
 - [Design records](superpowers/specs/) — Approved feature designs and decisions captured before implementation.
