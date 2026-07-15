@@ -17,6 +17,7 @@
 - The battlefield current actor keeps a `#FFC94A` acting outline beneath independent target outline and pulse layers for the full turn.
 - The current occurrence scrolls with the rest and is identified only by its gold perimeter.
 - Hover previews preserve scroll; commits and turn advances reset it to zero.
+- On committed turn advancement, the consumed current entry slides left beyond the rail and fades over 0.3 seconds above the simultaneously promoted entries; preview removals remain fade-only.
 - Use `HOME=/tmp/mars-godot-home` for every automated Godot import and test run.
 - Preserve unrelated dirty files and commit only task-scoped files plus required Godot sidecars.
 - Manual visual, controller, mouse-wheel, and touch acceptance remains required after automation.
@@ -956,4 +957,209 @@ Expected: import and all focused/full suites exit zero with no parser errors, cr
 ```bash
 git add src/battle/ctb_gauge.gd src/battle/turn_queue.tscn src/battle/hero_card.tscn src/battle/enemy_card.tscn test/unit/test_ctb_gauge.gd test/unit/test_actor_card_target_presentation.gd test/integration/test_turn_queue.gd docs/testing/ctb-combat-checklist.md
 git commit -m "fix: clarify CTB gauge layers"
+```
+
+### Task 5: Clear the Consumed Turn Laterally
+
+**Files:**
+- Modify: `src/battle/actor_queue.gd`
+- Modify: `src/battle/turn_queue.gd`
+- Modify: `src/battle/turn_queue.tscn`
+- Modify: `test/integration/test_turn_queue.gd`
+- Modify: `docs/testing/ctb-combat-checklist.md`
+
+**Interfaces:**
+- Produces: `ActorQueue.COMMITTED_EXIT_DISTANCE := 96.0` and `animate_committed_exit() -> void`.
+- Produces: `TurnQueue.exit_layer: Control`, an unclipped, mouse-ignoring overlay above the queue scroll.
+- Preserves: `animate_exit() -> void` as the fade-only exit for preview removals and other non-committed disappearances.
+
+- [ ] **Step 1: Write failing committed-exit and preview-removal tests**
+
+Replace `test_advance_fades_consumed_occurrence_and_promotes_existing_future_item()` in `test/integration/test_turn_queue.gd` with:
+
+```gdscript
+func test_advance_slides_consumed_occurrence_left_above_promoted_item() -> void:
+	var hero := _hero("Echo")
+	var enemy := _enemy("Attack Drone A")
+	queue._on_turn_order_updated([
+		{"actor": hero, "ticks_needed": 0},
+		{"actor": hero, "ticks_needed": 20},
+		{"actor": enemy, "ticks_needed": 40},
+	], BattleManager.TurnOrderUpdate.REFRESH)
+	await get_tree().process_frame
+	var outgoing := queue.queue_items[0]
+	var promoted := queue.queue_items[1]
+	var outgoing_start_x := outgoing.global_position.x
+
+	queue._on_turn_order_updated([
+		{"actor": hero, "ticks_needed": 0},
+		{"actor": enemy, "ticks_needed": 20},
+	], BattleManager.TurnOrderUpdate.ADVANCE)
+
+	assert_true(outgoing._exit_tween != null)
+	assert_same(outgoing.get_parent(), queue.exit_layer)
+	assert_gt(queue.exit_layer.z_index, queue.queue_scroll.z_index)
+	assert_same(queue.queue_items[0], promoted)
+	assert_eq(queue.queue_scroll.scroll_vertical, 0)
+	await get_tree().create_timer(ActorQueue.ANIMATION_DURATION * 0.5).timeout
+	assert_lt(outgoing.global_position.x, outgoing_start_x)
+	assert_lt(outgoing.modulate.a, 1.0)
+	assert_gt(promoted.position.y, queue._target_position(0).y)
+	await get_tree().create_timer(ActorQueue.ANIMATION_DURATION * 0.5 + 0.05).timeout
+	assert_false(is_instance_valid(outgoing))
+	assert_eq(promoted.position, queue._target_position(0))
+	assert_true(promoted.gauge._is_current)
+```
+
+Add a focused boundary test showing previews keep the existing fade-only path:
+
+```gdscript
+func test_preview_removal_fades_in_place_inside_queue_content() -> void:
+	var hero := _hero("Echo")
+	var enemy := _enemy("Attack Drone A")
+	queue._on_turn_order_updated([
+		{"actor": hero, "ticks_needed": 0},
+		{"actor": enemy, "ticks_needed": 30},
+	], BattleManager.TurnOrderUpdate.REFRESH)
+	await get_tree().process_frame
+	var removed := queue.queue_items[1]
+	var start_position := removed.position
+
+	queue._on_turn_order_updated([
+		{"actor": hero, "ticks_needed": 0},
+	], BattleManager.TurnOrderUpdate.PREVIEW)
+
+	assert_same(removed.get_parent(), queue.queue_content)
+	await get_tree().create_timer(ActorQueue.ANIMATION_DURATION * 0.5).timeout
+	assert_eq(removed.position, start_position)
+	assert_lt(removed.modulate.a, 1.0)
+```
+
+- [ ] **Step 2: Run the focused suite and verify RED**
+
+Run:
+
+```bash
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect turn_queue -gexit
+```
+
+Expected: the suite fails because `TurnQueue.exit_layer` does not exist and committed exits remain at their original horizontal position in `queue_content`. The new preview-removal test passes, confirming the existing fade-only boundary before production changes.
+
+- [ ] **Step 3: Add an unclipped exit overlay above the scroll container**
+
+In `src/battle/turn_queue.tscn`, add this sibling after `QueueScroll` so a consumed entry can leave the rail without changing the scroll container's clipping behavior:
+
+```text
+[node name="ExitLayer" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+z_index = 10
+```
+
+In `src/battle/turn_queue.gd`, expose the layer with the other scene references:
+
+```gdscript
+@onready var exit_layer: Control = $ExitLayer
+```
+
+The layer must retain the default `clip_contents = false`; do not disable clipping on `QueueScroll`, because that would allow ordinary future entries to spill outside the rail while scrolling.
+
+- [ ] **Step 4: Add the committed leftward fade animation**
+
+In `src/battle/actor_queue.gd`, add the distance beside the existing animation constants:
+
+```gdscript
+const COMMITTED_EXIT_DISTANCE := 96.0
+```
+
+Add a separate committed exit method, leaving `animate_exit()` unchanged:
+
+```gdscript
+func animate_committed_exit() -> void:
+	if _move_tween and _move_tween.is_valid():
+		_move_tween.kill()
+	if _exit_tween and _exit_tween.is_valid():
+		_exit_tween.kill()
+	_exit_tween = create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_CUBIC)
+	_exit_tween.set_parallel(true)
+	_exit_tween.tween_property(
+		self,
+		"position",
+		position + Vector2.LEFT * COMMITTED_EXIT_DISTANCE,
+		ANIMATION_DURATION,
+	)
+	_exit_tween.tween_property(self, "modulate:a", 0.0, ANIMATION_DURATION)
+	_exit_tween.chain().tween_callback(queue_free)
+```
+
+The position and alpha properties animate in parallel for the same 0.3-second duration. The existing `cancel_animations()` and instance-validity pruning continue to own interrupted-tween cleanup.
+
+- [ ] **Step 5: Reparent only the committed current exit and clear both containers safely**
+
+In the `ADVANCE` branch of `TurnQueue._on_turn_order_updated()`, preserve the global transform while moving the outgoing entry above the clipped scroll content, then start the committed exit:
+
+```gdscript
+		var outgoing := current_items[0]
+		reusable.erase(outgoing)
+		outgoing.reparent(exit_layer, true)
+		outgoing.animate_committed_exit()
+		_committed_exits.append(outgoing)
+```
+
+In `_clear_queue()`, replace the single-container child loop with:
+
+```gdscript
+	for container: Node in [queue_content, exit_layer]:
+		for child in container.get_children():
+			if child is ActorQueue:
+				var item := child as ActorQueue
+				item.cancel_animations()
+				item.free()
+```
+
+This keeps empty projections synchronous even if a committed exit is currently outside `QueueContent`. Do not add committed exits to the recoverable pool; consumed occurrences must never be revived by a subsequent preview refresh.
+
+- [ ] **Step 6: Run the focused suite and verify GREEN**
+
+Run:
+
+```bash
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect turn_queue -gexit
+```
+
+Expected: all turn-queue tests pass. At the midpoint, the consumed entry has moved left and partially faded in the higher exit layer while the promoted entry is still moving upward; preview-only removal remains stationary and fade-only.
+
+- [ ] **Step 7: Update manual acceptance**
+
+In `docs/testing/ctb-combat-checklist.md`, replace the committed outgoing-fade wording with unchecked checks that:
+
+- the consumed top entry slides left beyond the black rail while fading, visibly above the simultaneously promoted entry;
+- the promoted entry and remaining queue slide upward without covering the consumed entry;
+- hover-preview removals fade in place and never use the committed leftward exit;
+- the leftward exit remains visible outside the rail rather than being clipped at its edge.
+
+- [ ] **Step 8: Import, run focused tests, then run the complete suite**
+
+Run:
+
+```bash
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" --editor --quit
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect actor_queue -gexit
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect turn_queue -gexit
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gexit
+git diff --check
+```
+
+Expected: import and all focused/full suites exit zero with no parser errors, crashes, or unexpected runtime errors. Record exact totals; the documented CA and engine-shutdown diagnostics remain acceptable. Complete the new visual checks manually at the 1920 by 1080 reference viewport.
+
+- [ ] **Step 9: Commit Task 5**
+
+```bash
+git add src/battle/actor_queue.gd src/battle/turn_queue.gd src/battle/turn_queue.tscn test/integration/test_turn_queue.gd docs/testing/ctb-combat-checklist.md
+git commit -m "fix: slide consumed CTB turn left"
 ```
