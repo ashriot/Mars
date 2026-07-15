@@ -54,13 +54,24 @@ func test_acting_outline_matches_queue_gold_and_stays_independent_of_targeting()
 	for card in _cards():
 		var acting_outline := card.get_node("Panel/Highlight") as Panel
 		var acting_style := acting_outline.get_theme_stylebox(&"panel") as StyleBoxFlat
+		if card is HeroCard:
+			var definition := RoleDefinition.new()
+			definition.color = Color(0.2, 0.65, 0.9, 1.0)
+			var role := RoleData.new()
+			role.source_definition = definition
+			var hero := card as HeroCard
+			hero.loaded_roles = [role]
+			hero.current_role_index = 0
+			hero.recolor()
 		assert_eq(acting_style.border_color, CTBGauge.CURRENT_COLOR)
+		assert_eq(acting_outline.modulate, Color.WHITE)
 		assert_false(acting_outline.visible)
 
 		card.highlight(true)
 		card.set_target_presentation(ActorCard.TargetPresentation.SELECTED)
 		assert_true(acting_outline.visible)
 		assert_eq(acting_style.border_color, Color("ffc94a"))
+		assert_eq(acting_outline.modulate, Color.WHITE)
 		assert_true(card.target_outline.visible)
 		assert_true(card.target_pulse.visible)
 

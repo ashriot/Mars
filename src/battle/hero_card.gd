@@ -211,4 +211,4 @@ func recolor():
 	role_icon.self_modulate = color
 	focus_bar.modulate = color
 	guard_bar.modulate = color
-	highlight_panel.modulate = color
+	highlight_panel.modulate = Color.WHITE
