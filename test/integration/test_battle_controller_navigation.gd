@@ -17,6 +17,17 @@ class PausingShiftActionBar extends MinimalActionBar:
 		await continue_slide_out
 
 
+class RemoveConditionsEffect extends ActionEffect:
+	func execute(
+		attacker: ActorCard,
+		_parent_targets: Array,
+		_battle_manager: BattleManager,
+		_action: Action = null,
+		_context: Dictionary = {}
+	) -> void:
+		attacker.active_conditions.clear()
+
+
 class TrackingBattleScene extends BattleScene:
 	pass
 
@@ -382,7 +393,7 @@ func test_group_parent_ct_preview_projects_every_affected_actor() -> void:
 	manager.actor_list = [hero, first_enemy, second_enemy]
 
 	var effect := Effect_ModifyCT.new()
-	effect.ct_boost_percent = 0.5
+	effect.ct_change_percent = 0.5
 	assert_eq(effect.target_type, Action.TargetType.PARENT, "CT effects use PARENT by default")
 	var action := Action.new()
 	action.target_type = Action.TargetType.ALL_ENEMIES
@@ -404,6 +415,86 @@ func test_group_parent_ct_preview_projects_every_affected_actor() -> void:
 	manager.free()
 	hero_area.free()
 	enemy_area.free()
+
+
+func test_turn_ending_action_applies_recovery_to_live_ct() -> void:
+	var manager := BattleManager.new()
+	var actor := _ct_actor(-500, 100)
+	var action := Action.new()
+	action.ct_cost_percent = 75
+
+	await manager.execute_action(actor, action, [], false, true)
+
+	assert_eq(actor.current_ct, 750)
+	manager.free()
+	actor.free()
+
+
+func test_action_recovery_uses_multiplier_snapshot_from_execution_start() -> void:
+	var manager := BattleManager.new()
+	var actor := _ct_actor(-500, 100)
+	var condition := Condition.new()
+	condition.action_ct_multiplier = 0.75
+	actor.active_conditions = [condition]
+	var action := Action.new()
+	action.effects = [RemoveConditionsEffect.new()]
+
+	await manager.execute_action(actor, action, [], false, true)
+
+	assert_true(actor.active_conditions.is_empty(), "the effect changes recovery modifiers during execution")
+	assert_eq(actor.current_ct, 750, "recovery retains the 75% snapshot captured before effects")
+	manager.free()
+	actor.free()
+
+
+func test_repeating_non_ct_preview_is_stable() -> void:
+	var manager := BattleManager.new()
+	var actor := _ct_actor(-500, 100)
+	var rival := _ct_actor(600, 100)
+	manager.current_actor = actor
+	manager.actor_list = [actor, rival]
+	var action := Action.new()
+	action.ct_cost_percent = 75
+	var projections: Array = []
+	manager.turn_order_updated.connect(func(queue: Array, _animate: bool) -> void:
+		projections.append(_projection_signature(queue))
+	)
+
+	manager.preview_action_turn_order(actor, action)
+	manager.preview_action_turn_order(actor, action)
+
+	assert_eq(projections.size(), 2)
+	assert_eq(projections[0], projections[1])
+	assert_eq(actor.current_ct, -500, "preview never mutates live CT")
+	manager.free()
+	actor.free()
+	rival.free()
+
+
+func test_preview_and_recovery_publish_the_same_next_future_actor() -> void:
+	var manager := BattleManager.new()
+	var actor := _ct_actor(-500, 100)
+	var rival := _ct_actor(600, 100)
+	manager.current_actor = actor
+	manager.actor_list = [actor, rival]
+	var action := Action.new()
+	action.ct_cost_percent = 75
+	var projections: Array[Array] = []
+	manager.turn_order_updated.connect(func(queue: Array, _animate: bool) -> void:
+		projections.append(queue)
+	)
+
+	manager.preview_action_turn_order(actor, action)
+	manager.executing_action_ct_percent = actor.get_action_ct_percent(action)
+	manager.executing_action_ends_turn = true
+	manager._apply_executing_action_recovery(actor)
+
+	assert_eq(projections.size(), 2)
+	assert_same(projections[0][1].actor, actor, "the preview includes authored recovery")
+	assert_same(projections[0][1].actor, projections[1][1].actor)
+	manager.free()
+	actor.free()
+	rival.free()
 
 
 func test_invalid_current_target_falls_back_for_controller_and_clears_for_pointer() -> void:
@@ -797,6 +888,22 @@ func test_battle_adapter_teardown_clears_target_presentation_cursor_hints_and_re
 	assert_false(ux.cursor.visible)
 	assert_eq(ux.hint_bar.get_hint_count(), 0)
 	scene.free()
+
+
+func _ct_actor(current_ct: int, speed: int) -> EnemyCard:
+	var actor := EnemyCard.new()
+	actor.current_stats = ActorStats.new()
+	actor.current_stats.speed = speed
+	actor.current_ct = current_ct
+	actor.is_defeated = false
+	return actor
+
+
+func _projection_signature(queue: Array) -> Array:
+	var signature: Array = []
+	for entry: Dictionary in queue:
+		signature.append([entry.actor, entry.ticks_needed])
+	return signature
 
 
 func _battle_fixture() -> Dictionary:

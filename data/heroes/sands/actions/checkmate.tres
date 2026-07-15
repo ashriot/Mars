@@ -15,7 +15,7 @@ metadata/_custom_type_script = "uid://d0eibi4b735ay"
 
 [sub_resource type="Resource" id="Resource_8rp66"]
 script = ExtResource("5_ekuji")
-ct_boost_percent = -0.5
+ct_change_percent = -0.5
 metadata/_custom_type_script = "uid://dgkss5d1axeag"
 
 [resource]

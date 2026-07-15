@@ -20,6 +20,7 @@ enum ConditionType { BUFF, DEBUFF }
 @export var damage_dealt_scalar: float = 0.0
 @export var damage_taken_scalar: float = 0.0
 @export var focus_cost_reduction: float = 0.0
+@export_range(0.01, 4.0, 0.01) var action_ct_multiplier: float = 1.0
 
 @export_group("Triggers & Effects")
 @export var update_turn_order: bool

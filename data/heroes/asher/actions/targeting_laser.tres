@@ -9,7 +9,7 @@
 
 [sub_resource type="Resource" id="Resource_8vh47"]
 script = ExtResource("2_2luar")
-ct_boost_percent = 0.25
+ct_change_percent = 0.25
 target_type = 4
 metadata/_custom_type_script = "uid://dgkss5d1axeag"
 

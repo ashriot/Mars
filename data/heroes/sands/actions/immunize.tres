@@ -28,7 +28,6 @@ icon = ExtResource("4_witea")
 description = "A hero gains Buff: Prevent the next incoming Debuff, then heal HP."
 focus_cost = null
 auto_target = null
-update_turn_order = null
 is_shift_action = null
 target_type = 5
 effects = Array[ExtResource("1_5njvh")]([SubResource("Resource_nxx36"), SubResource("Resource_l5t2g"), SubResource("Resource_jdada")])

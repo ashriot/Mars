@@ -17,7 +17,6 @@ action_name = "Return Fire"
 icon = ExtResource("4_65uya")
 focus_cost = null
 auto_target = true
-update_turn_order = null
 is_shift_action = null
 target_type = 4
 effects = Array[ExtResource("1_a3d6b")]([SubResource("Resource_vuc7h")])

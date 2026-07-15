@@ -25,6 +25,9 @@ func get_damage_dealt_scalar(_target: ActorCard) -> float:
 func get_damage_taken_scalar(_attacker: ActorCard, _rank: int) -> float:
 	return 0.0
 
+func get_action_ct_multiplier(_action: Action) -> float:
+	return 1.0
+
 # 3. Event Triggers
 func on_trigger(_trigger_type: Trigger.TriggerType, _context: Dictionary, _owner: ActorCard, _rank: int):
 	pass

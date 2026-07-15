@@ -33,7 +33,6 @@ icon = ExtResource("5_ykd3v")
 description = "Deals {dmg1} {kin} split across all enemies. Each enemy hit who is BREACHED will grant Sands {foc}."
 focus_cost = 2
 auto_target = null
-update_turn_order = null
 is_shift_action = null
 target_type = 1
 effects = Array[ExtResource("1_g04ix")]([SubResource("Resource_occlv")])

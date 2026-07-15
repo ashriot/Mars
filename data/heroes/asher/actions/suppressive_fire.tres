@@ -13,7 +13,7 @@ metadata/_custom_type_script = "uid://cu12q7dfj3hfe"
 
 [sub_resource type="Resource" id="Resource_36ivr"]
 script = ExtResource("3_vusvv")
-ct_boost_percent = -0.15
+ct_change_percent = -0.15
 metadata/_custom_type_script = "uid://dgkss5d1axeag"
 
 [resource]

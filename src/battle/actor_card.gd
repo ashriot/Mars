@@ -566,6 +566,16 @@ func get_speed() -> int:
 		scalar += condition.speed_scalar
 	return int(current_stats.speed * scalar)
 
+func get_action_ct_percent(action: Action) -> int:
+	if action == null:
+		return 100
+	var result := float(action.ct_cost_percent)
+	for condition: Condition in active_conditions:
+		result *= condition.action_ct_multiplier
+	for active_trait: Trait in active_traits:
+		result *= active_trait.get_action_ct_multiplier(action)
+	return clampi(roundi(result), 10, 200)
+
 func get_aim() -> int:
 	var mod: int = 0
 	for condition in active_conditions:

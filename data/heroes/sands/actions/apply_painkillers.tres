@@ -23,7 +23,6 @@ action_name = "Painkillers"
 description = "The team takes 15% less damage."
 focus_cost = null
 auto_target = null
-update_turn_order = null
 is_shift_action = null
 target_type = 4
 effects = Array[ExtResource("1_cwe1c")]([SubResource("Resource_a1ptl"), SubResource("Resource_gmvci")])

@@ -28,7 +28,6 @@ icon = ExtResource("6_g27ww")
 description = "Deals {dmg1} {kin} twice and Sands gains Buff: Deal an additional {kin} hit the next time you use Return Fire."
 focus_cost = 1
 auto_target = null
-update_turn_order = null
 is_shift_action = null
 target_type = null
 effects = Array[ExtResource("1_t1vww")]([SubResource("Resource_d4a0j"), SubResource("Resource_hhd1q")])

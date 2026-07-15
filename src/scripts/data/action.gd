@@ -26,7 +26,7 @@ enum TargetType {
 @export_multiline var description: String = ""
 @export var focus_cost: int = 0
 @export var auto_target: bool = false
-@export var update_turn_order: bool = false
+@export_range(10, 200, 1) var ct_cost_percent: int = 100
 @export var is_shift_action: bool = false
 
 @export var target_type: TargetType = TargetType.ONE_ENEMY
@@ -101,49 +101,11 @@ func _init_regex():
 	if _regex.get_pattern() == "":
 		_regex.compile("\\{([^}]+)\\}")
 
-func get_ct_modification_for_actor(actor: ActorCard, battle_manager: BattleManager) -> int:
-	"""
-	Calculate CT modification that will be applied to a specific actor.
-	Returns positive for boost, negative for delay.
-	"""
-	var total_ct_change = 0
-
-	for effect in effects:
-		if effect is Effect_ModifyCT:
-			# Check if this effect will target the given actor
-			if _effect_targets_actor(effect, actor):
-				total_ct_change += int(battle_manager.TARGET_CT * effect.ct_boost_percent)
-
-	return total_ct_change
-
-func _effect_targets_actor(effect: ActionEffect, actor: ActorCard) -> bool:
-	"""Check if an effect will target the given actor based on action's target_type"""
-	match effect.target_type:
-		TargetType.SELF, TargetType.ATTACKER:
-			return true  # Effect targets the user
-		TargetType.ONE_ENEMY, TargetType.ALL_ENEMIES, TargetType.ENEMY_GROUP, TargetType.RANDOM_ENEMY:
-			return false  # Effect targets enemies
-		TargetType.ONE_ALLY, TargetType.ALLY_ONLY, TargetType.ALL_ALLIES, TargetType.ALLIES_ONLY:
-			return actor.is_hero  # Targets allies
-		TargetType.PARENT:
-			return false  # Context-dependent, safer to assume no
-		_:
-			return false
-
-func has_self_ct_modification() -> bool:
-	"""Check if this action boosts/delays the user's turn"""
-	for effect in effects:
-		if effect is Effect_ModifyCT:
-			if target_type in [TargetType.SELF, TargetType.ATTACKER]:
-				return true
-	return false
-
-# In Action class
 func get_ct_description() -> String:
 	"""Get human-readable CT effect description"""
 	for effect in effects:
 		if effect is Effect_ModifyCT:
-			var percent = int(abs(effect.ct_boost_percent * 100))
+			var percent = int(abs(effect.ct_change_percent * 100))
 
 			# Determine who it affects
 			var target_text = ""
@@ -157,7 +119,7 @@ func get_ct_description() -> String:
 				_:
 					target_text = "target's"
 
-			if effect.ct_boost_percent > 0:
+			if effect.ct_change_percent > 0:
 				return "Boost %s next turn by %d%%" % [target_text, percent]
 			else:
 				return "Delay %s next turn by %d%%" % [target_text, percent]

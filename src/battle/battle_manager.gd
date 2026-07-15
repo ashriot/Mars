@@ -35,6 +35,8 @@ signal target_invalidated(actor: ActorCard)
 var current_actor: ActorCard = null
 var current_action: Action = null
 var executing_action: Action = null
+var executing_action_ct_percent := 100
+var executing_action_ends_turn := false
 var focused_button: ActionButton = null
 var actor_list: Array = []
 var TARGET_CT: int = 5000
@@ -153,6 +155,7 @@ func _display_projection(ct_adjustments: Dictionary = {}, count: int = 10) -> Ar
 
 func find_and_start_next_turn():
 	executing_action = null
+	_clear_executing_action_recovery()
 	if current_state == State.BATTLE_OVER:
 		return
 	if current_actor:
@@ -202,6 +205,21 @@ func _on_actor_breached():
 
 func update_turn_order() -> void:
 	turn_order_updated.emit(_display_projection(), false)
+
+func get_action_recovery_adjustment(actor: ActorCard, action: Action) -> int:
+	var percent := actor.get_action_ct_percent(action)
+	return int(TARGET_CT * (100 - percent) / 100.0)
+
+func _apply_executing_action_recovery(actor: ActorCard) -> void:
+	if not executing_action_ends_turn:
+		return
+	actor.current_ct += int(TARGET_CT * (100 - executing_action_ct_percent) / 100.0)
+	_clear_executing_action_recovery()
+	update_turn_order()
+
+func _clear_executing_action_recovery() -> void:
+	executing_action_ct_percent = 100
+	executing_action_ends_turn = false
 
 func _update_all_enemy_intents():
 	var living_heroes = get_living_heroes()
@@ -295,9 +313,11 @@ func _apply_role_passive(hero: HeroCard):
 		print("Applying passive: ", action.action_name, " to ", hero.actor_name)
 		await execute_action(hero, action, [hero], false)
 
-func execute_action(actor: ActorCard, action: Action, targets: Array, display_name: bool = true):
+func execute_action(actor: ActorCard, action: Action, targets: Array, display_name: bool = true, ends_turn: bool = false):
 	var parent_targets = targets
-	executing_action = current_action
+	executing_action = action
+	executing_action_ends_turn = ends_turn
+	executing_action_ct_percent = actor.get_action_ct_percent(action) if ends_turn else 100
 	current_action = null
 	if actor is HeroCard:
 		current_action_panel.hide()
@@ -326,6 +346,7 @@ func execute_action(actor: ActorCard, action: Action, targets: Array, display_na
 		await _flush_all_health_animations()
 	if display_name: await actor.hide_action()
 	await _flush_all_health_animations()
+	_apply_executing_action_recovery(actor)
 	return
 
 func execute_triggered_effect(actor: ActorCard, effect: ActionEffect, targets: Array, action: Action, context: Dictionary = {}):
@@ -341,9 +362,10 @@ func execute_enemy_turn(enemy: EnemyCard):
 
 	if not action:
 		push_error(enemy.actor_name, " is missing an action!")
+		_clear_executing_action_recovery()
 		return
 
-	await execute_action(enemy, action, targets)
+	await execute_action(enemy, action, targets, true, true)
 	if current_state == State.BATTLE_OVER:
 		return
 	await wait(0.15)
@@ -390,7 +412,7 @@ func _on_hero_clicked(target_hero: HeroCard):
 		action_bar.hide_bar()
 
 	var target_list = [target_hero]
-	await execute_action(current_actor, current_action, target_list)
+	await execute_action(current_actor, current_action, target_list, true, not current_action.is_shift_action)
 	await _finish_hero_turn()
 
 func _on_enemy_clicked(target_enemy: EnemyCard):
@@ -414,7 +436,7 @@ func _on_enemy_clicked(target_enemy: EnemyCard):
 		Action.TargetType.ALL_ENEMIES, Action.TargetType.RANDOM_ENEMY:
 			targets_array = get_living_enemies()
 
-	await execute_action(current_actor, current_action, targets_array)
+	await execute_action(current_actor, current_action, targets_array, true, not current_action.is_shift_action)
 	await _finish_hero_turn()
 
 func _on_target_hovered(actor: ActorCard) -> void:
@@ -588,40 +610,25 @@ func _fade_out(duration: float = 0.5):
 	)
 	await tween.finished
 
-func preview_action_turn_order(actor: ActorCard, action: Action, selected_target: ActorCard = null):
-	var original_ct_values = {}
-	for a in actor_list:
-		original_ct_values[a] = a.current_ct
-
-	if action:
-		var primary_targets: Array = []
-		if is_instance_valid(selected_target):
-			primary_targets.append(selected_target)
-		elif is_group_target_action(action):
-			primary_targets = get_targets(action.target_type, actor is HeroCard, [], actor)
-		for effect in action.effects:
-			if effect is Effect_ModifyCT:
-				if effect.target_type == Action.TargetType.PARENT and primary_targets.is_empty():
-					continue
-
-				var targets = get_targets(effect.target_type, actor is HeroCard, primary_targets, actor)
-				for target in targets:
-					var ct_change = int(TARGET_CT * effect.ct_boost_percent)
-					target.current_ct += ct_change
-
-	var projection = _run_ct_simulation()
-
-	var current_turn_entry = {
-		"actor": actor,
-		"ticks_needed": 0
+func preview_action_turn_order(actor: ActorCard, action: Action, selected_target: ActorCard = null) -> void:
+	var adjustments: Dictionary = {
+		actor: get_action_recovery_adjustment(actor, action),
 	}
-	projection.insert(0, current_turn_entry)
-	projection.pop_back()
+	var primary_targets: Array = []
+	if is_instance_valid(selected_target):
+		primary_targets.append(selected_target)
+	elif is_group_target_action(action):
+		primary_targets = get_targets(action.target_type, actor is HeroCard, [], actor)
 
-	for a in actor_list:
-		a.current_ct = original_ct_values[a]
-
-	turn_order_updated.emit(projection, true)
+	for effect: ActionEffect in action.effects:
+		if not effect is Effect_ModifyCT:
+			continue
+		if effect.target_type == Action.TargetType.PARENT and primary_targets.is_empty():
+			continue
+		for target: ActorCard in get_targets(effect.target_type, actor is HeroCard, primary_targets, actor):
+			adjustments[target] = int(adjustments.get(target, 0)) \
+				+ int(TARGET_CT * effect.ct_change_percent)
+	turn_order_updated.emit(_display_projection(adjustments), true)
 
 func _get_effect_targets(effect: ActionEffect, user: ActorCard, selected_target: ActorCard = null) -> Array:
 	"""Helper to resolve who an action will target"""
@@ -648,6 +655,7 @@ func _check_if_battle_ended() -> bool:
 	var enemies_alive = not get_living_enemies().is_empty()
 
 	if not enemies_alive:
+		_clear_executing_action_recovery()
 		print("--- VICTORY ---")
 		change_state(State.BATTLE_OVER)
 		AudioManager.stop_music(1.0)
@@ -660,6 +668,7 @@ func _check_if_battle_ended() -> bool:
 		return true
 
 	if not heroes_alive:
+		_clear_executing_action_recovery()
 		print("--- DEFEAT ---")
 		change_state(State.BATTLE_OVER)
 		AudioManager.stop_music(2.0)
