@@ -17,6 +17,8 @@ const REPEAT_INTERVAL := 0.12
 func _ready():
 	manager.battle_ended.connect(_on_battle_ended)
 	manager.battle_state_changed.connect(_on_battle_state_changed)
+	manager.target_hovered.connect(_on_target_hovered)
+	manager.target_unhovered.connect(_on_target_unhovered)
 	if manager.action_bar:
 		manager.action_bar.action_selected.connect(_on_action_selected)
 		manager.action_bar.action_cancelled.connect(cancel_targeting)
@@ -166,6 +168,22 @@ func _on_presentation_mode_changed(mode: InputManager.PresentationMode) -> void:
 		_clear_current_target(true)
 
 
+func _on_target_hovered(actor: ActorCard) -> void:
+	if InputManager.get_active_mode() != InputManager.InputMode.KEYBOARD_MOUSE \
+		or InputManager.get_presentation_mode() != InputManager.PresentationMode.POINTER \
+		or not _is_targeting() \
+		or not _is_valid_candidate(actor):
+		return
+	_set_current_target(actor)
+
+
+func _on_target_unhovered(actor: ActorCard) -> void:
+	if InputManager.get_active_mode() == InputManager.InputMode.KEYBOARD_MOUSE \
+		and InputManager.get_presentation_mode() == InputManager.PresentationMode.POINTER \
+		and actor == _current_target:
+		_clear_current_target(true)
+
+
 func _refresh_targeting() -> void:
 	if not _is_targeting():
 		_clear_current_target(false)
@@ -226,6 +244,7 @@ func _set_current_target(target: ActorCard) -> void:
 		_last_enemy_target = target
 	elif target is HeroCard:
 		_last_hero_target = target
+	_refresh_target_preview()
 
 
 func _clear_current_target(retain_origin: bool) -> void:
@@ -236,6 +255,12 @@ func _clear_current_target(retain_origin: bool) -> void:
 	_current_target = null
 	if not retain_origin:
 		_navigation_origin = null
+	_refresh_target_preview()
+
+
+func _refresh_target_preview() -> void:
+	if manager and is_instance_valid(manager.current_actor) and manager.current_action:
+		manager.preview_action_turn_order(manager.current_actor, manager.current_action, _current_target)
 
 
 func _restore_remembered_target() -> void:

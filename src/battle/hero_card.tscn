@@ -801,3 +801,5 @@ theme_override_constants/separation = 8
 alignment = 2
 
 [connection signal="gui_input" from="Panel" to="." method="_on_gui_input"]
+[connection signal="mouse_entered" from="Panel" to="." method="_on_target_mouse_entered"]
+[connection signal="mouse_exited" from="Panel" to="." method="_on_target_mouse_exited"]

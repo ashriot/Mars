@@ -9,6 +9,8 @@ var current_state = State.LOADING
 signal turn_order_updated(projected_queue, animate)
 signal battle_state_changed(new_state)
 signal battle_ended(won)
+signal target_hovered(actor: ActorCard)
+signal target_unhovered(actor: ActorCard)
 
 @export_range(0.1, 5.0) var battle_speed: float = 1.0
 
@@ -63,6 +65,8 @@ func spawn_encounter():
 		hero_area.add_child(hero_card)
 		hero_card.setup(hero_data)
 		hero_card.hero_clicked.connect(_on_hero_clicked)
+		hero_card.target_hovered.connect(_on_target_hovered)
+		hero_card.target_unhovered.connect(_on_target_unhovered)
 		hero_card.actor_breached.connect(_on_actor_breached)
 		hero_card.actor_defeated.connect(_on_actor_died)
 		hero_card.spawn_particles.connect(_on_spawn_particles)
@@ -89,8 +93,8 @@ func spawn_encounter():
 		spawned_enemies.append(enemy_card)
 
 		enemy_card.enemy_clicked.connect(_on_enemy_clicked)
-		enemy_card.enemy_hovered.connect(_on_enemy_hovered)
-		enemy_card.enemy_unhovered.connect(_on_enemy_unhovered)
+		enemy_card.target_hovered.connect(_on_target_hovered)
+		enemy_card.target_unhovered.connect(_on_target_unhovered)
 		enemy_card.actor_breached.connect(_on_actor_breached)
 		enemy_card.actor_defeated.connect(_on_actor_died)
 		enemy_card.spawn_particles.connect(_on_spawn_particles)
@@ -433,13 +437,12 @@ func _on_enemy_clicked(target_enemy: EnemyCard):
 	await execute_action(current_actor, current_action, targets_array)
 	await _finish_hero_turn()
 
-func _on_enemy_hovered(enemy: EnemyCard):
-	if enemy.is_valid_target:
-		preview_action_turn_order(current_actor, current_action, enemy)
+func _on_target_hovered(actor: ActorCard) -> void:
+	target_hovered.emit(actor)
 
-func _on_enemy_unhovered(enemy: EnemyCard):
-	if enemy.is_valid_target:
-		preview_action_turn_order(current_actor, current_action, null)
+
+func _on_target_unhovered(actor: ActorCard) -> void:
+	target_unhovered.emit(actor)
 
 func _on_shift_button_pressed(direction: String):
 	var current_hero = current_actor as HeroCard

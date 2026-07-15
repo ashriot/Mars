@@ -3,8 +3,6 @@ class_name EnemyCard
 
 # --- UNIQUE Signals ---
 signal enemy_clicked(enemy_card)
-signal enemy_hovered(enemy_card)
-signal enemy_unhovered(enemy_card)
 
 @export var recover_action: Action
 
@@ -390,15 +388,3 @@ func _on_gui_input(event: InputEvent):
 		print("Clicked on: ", actor_name)
 		enemy_clicked.emit(self)
 		get_viewport().set_input_as_handled()
-
-func _on_mouse_entered():
-	enemy_hovered.emit(self)
-
-func _on_mouse_exited():
-	enemy_unhovered.emit(self)
-
-func _on_focus_entered():
-	enemy_hovered.emit(self)
-
-func _on_focus_exited():
-	enemy_unhovered.emit(self)

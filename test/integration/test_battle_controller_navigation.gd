@@ -25,11 +25,10 @@ class TrackingBattleManager extends BattleManager:
 	var selected_enemy: EnemyCard
 	var shift_direction := ""
 	var clear_count := 0
-	var enemy_hover_count := 0
-	var enemy_unhover_count := 0
 	var action_select_count := 0
 	var confirm_count := 0
 	var forced_target: EnemyCard
+	var preview_targets: Array[ActorCard] = []
 
 	func _ready() -> void:
 		if action_bar:
@@ -55,11 +54,8 @@ class TrackingBattleManager extends BattleManager:
 	func _clear_all_targeting_ui():
 		clear_count += 1
 
-	func _on_enemy_hovered(_enemy: EnemyCard):
-		enemy_hover_count += 1
-
-	func _on_enemy_unhovered(_enemy: EnemyCard):
-		enemy_unhover_count += 1
+	func preview_action_turn_order(_actor: ActorCard, _action: Action, selected_target: ActorCard = null):
+		preview_targets.append(selected_target)
 
 
 func test_activate_slot_emits_only_for_visible_enabled_semantic_slot() -> void:
@@ -213,6 +209,46 @@ func test_battle_target_change_uses_actor_highlight_without_cursor() -> void:
 	assert_same(scene._current_target, fixture.enemy)
 	assert_eq(fixture.enemy.get_target_presentation(), ActorCard.TargetPresentation.SELECTED)
 	assert_false(fixture.ux.cursor.visible)
+
+
+func test_pointer_hover_selects_real_hero_and_enemy_cards_and_exit_clears_selection() -> void:
+	var fixture := await _navigation_fixture()
+	var scene: BattleScene = fixture.scene
+	var manager: TrackingBattleManager = fixture.manager
+	var hero: HeroCard = fixture.hero
+	var enemy: EnemyCard = fixture.enemy
+	manager.current_action = Action.new()
+	manager.current_state = BattleManager.State.FORCED_TARGET
+	hero.is_valid_target = true
+	enemy.is_valid_target = true
+	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
+	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)
+
+	enemy.panel.mouse_entered.emit()
+	assert_same(scene._current_target, enemy)
+	assert_eq(enemy.get_target_presentation(), ActorCard.TargetPresentation.SELECTED)
+	assert_same(manager.preview_targets.back(), enemy)
+
+	enemy.panel.mouse_exited.emit()
+	hero.panel.mouse_entered.emit()
+	assert_same(scene._current_target, hero)
+	assert_eq(enemy.get_target_presentation(), ActorCard.TargetPresentation.AVAILABLE)
+	assert_same(manager.preview_targets.back(), hero)
+
+	hero.panel.mouse_exited.emit()
+	assert_null(scene._current_target)
+	assert_same(scene._navigation_origin, hero)
+	assert_null(manager.preview_targets.back())
+
+
+func test_controller_owned_pointer_hover_cannot_replace_current_target() -> void:
+	var fixture := await _navigation_fixture()
+	fixture.hero.is_valid_target = true
+	fixture.enemy.is_valid_target = true
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	fixture.scene._set_current_target(fixture.enemy)
+	fixture.hero.panel.mouse_entered.emit()
+	assert_same(fixture.scene._current_target, fixture.enemy)
 
 
 func test_self_targeting_refresh_retains_active_hero_without_cursor() -> void:
@@ -656,6 +692,12 @@ func _navigation_fixture() -> Dictionary:
 	manager.enemy_area = enemy_area
 	manager.current_actor = hero
 	manager.forced_target = enemy
+	hero.connect(&"target_hovered", Callable(manager, &"_on_target_hovered"))
+	hero.connect(&"target_unhovered", Callable(manager, &"_on_target_unhovered"))
+	enemy.connect(&"target_hovered", Callable(manager, &"_on_target_hovered"))
+	enemy.connect(&"target_unhovered", Callable(manager, &"_on_target_unhovered"))
+	second_enemy.connect(&"target_hovered", Callable(manager, &"_on_target_hovered"))
+	second_enemy.connect(&"target_unhovered", Callable(manager, &"_on_target_unhovered"))
 	scene.manager = manager
 	scene.add_child(manager)
 	scene.add_child(hero_area)

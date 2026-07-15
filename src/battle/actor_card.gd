@@ -14,6 +14,8 @@ signal hp_changed(new_hp, max_hp)
 signal armor_changed(new_pips)
 signal actor_conditions_changed
 signal spawn_particles(pos, type)
+signal target_hovered(actor: ActorCard)
+signal target_unhovered(actor: ActorCard)
 
 const MAX_GUARD = 10
 
@@ -67,6 +69,14 @@ var panel_home_position: Vector2
 var last_popup_time: float = 0.0
 var popup_stack_offset: int = 0
 const POPUP_SPACING_TIME: float = 1.0
+
+
+func _on_target_mouse_entered() -> void:
+	target_hovered.emit(self)
+
+
+func _on_target_mouse_exited() -> void:
+	target_unhovered.emit(self)
 
 
 func setup_base(stats: ActorStats):
