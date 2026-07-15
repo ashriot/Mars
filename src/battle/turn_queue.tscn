@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://b7pmdidfa57uo"]
+[gd_scene load_steps=6 format=3 uid="uid://b7pmdidfa57uo"]
 
 [ext_resource type="Script" uid="uid://bf5t2mtgtkbsn" path="res://src/battle/turn_queue.gd" id="1_0t4nl"]
 [ext_resource type="PackedScene" uid="uid://diku73kk4tjv7" path="res://src/battle/actor_queue.tscn" id="2_67eim"]
@@ -14,6 +14,13 @@ height = 64
 fill_from = Vector2(0.5, 0)
 fill_to = Vector2(0.5, 1)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rail"]
+bg_color = Color(0, 0, 0, 0.7)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+
 [node name="TurnQueue" type="Control"]
 custom_minimum_size = Vector2(120, 764)
 layout_mode = 3
@@ -24,41 +31,32 @@ mouse_filter = 2
 script = ExtResource("1_0t4nl")
 actor_queue_scene = ExtResource("2_67eim")
 
-[node name="ActiveName" type="Label" parent="."]
-visible = false
-layout_mode = 0
-offset_left = -248.0
-offset_right = -8.0
-offset_bottom = 112.0
-mouse_filter = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 6
-theme_override_font_sizes/font_size = 32
-horizontal_alignment = 0
-vertical_alignment = 1
-
-[node name="ActiveSlot" type="Control" parent="."]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_bottom = 112.0
-grow_horizontal = 2
-mouse_filter = 2
-
-[node name="FutureScroll" type="ScrollContainer" parent="."]
+[node name="RailBackground" type="Panel" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 124.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_rail")
+
+[node name="QueueScroll" type="ScrollContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 6.0
+offset_right = -6.0
+offset_bottom = -6.0
 grow_horizontal = 2
 grow_vertical = 2
 horizontal_scroll_mode = 0
 scroll_deadzone = 12
 
-[node name="FutureContent" type="Control" parent="FutureScroll"]
-custom_minimum_size = Vector2(120, 0)
+[node name="QueueContent" type="Control" parent="QueueScroll"]
+custom_minimum_size = Vector2(108, 0)
 layout_mode = 2
 mouse_filter = 2
 
@@ -68,7 +66,9 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 6.0
 offset_top = -64.0
+offset_right = -6.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2

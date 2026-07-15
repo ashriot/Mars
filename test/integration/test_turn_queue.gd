@@ -3,6 +3,7 @@ extends GutTest
 
 const TURN_QUEUE_SCENE := preload("res://src/battle/turn_queue.tscn")
 const BATTLE_SCENE := preload("res://src/battle/battle_scene.tscn")
+const ARCHIVO := preload("res://data/theme/fonts/archivo.tres")
 
 var queue: TurnQueue
 var manager: BattleManager
@@ -34,11 +35,12 @@ func _enemy(actor_name: String) -> EnemyCard:
 	return actor
 
 
-func _hero(actor_name: String, icon: Texture2D = null) -> HeroCard:
+func _hero(actor_name: String, icon: Texture2D = null, color := Color.WHITE) -> HeroCard:
 	var actor := HeroCard.new()
 	actor.actor_name = actor_name
 	var definition := RoleDefinition.new()
 	definition.icon = icon
+	definition.color = color
 	var role := RoleData.new()
 	role.source_definition = definition
 	actor.loaded_roles = [role]
@@ -74,53 +76,49 @@ func test_display_projection_publishes_active_plus_twenty_future_entries() -> vo
 	assert_eq(projection[0].ticks_needed, 0)
 
 
-func test_real_queue_separates_active_and_renders_faction_content() -> void:
+func test_real_queue_uses_one_uniform_scrollable_list() -> void:
 	var icon := GradientTexture2D.new()
-	var hero := _hero("Asher", icon)
+	var hero := _hero("Asher", icon, Color("56e5ff"))
 	var enemy := _enemy("Scout Drone A")
 	queue._on_turn_order_updated([
 		{"actor": hero, "ticks_needed": 0},
-		{"actor": hero, "ticks_needed": 10},
 		{"actor": enemy, "ticks_needed": 31},
 		{"actor": hero, "ticks_needed": 50},
 	], false)
 	await get_tree().process_frame
 
-	assert_same(queue.active_item.get_parent(), queue.active_slot)
-	assert_eq(queue.active_item.size, ActorQueue.ACTIVE_SIZE)
-	assert_true(queue.active_item.gauge._is_current)
-	assert_same(queue.future_items[0].get_parent(), queue.future_content)
-	assert_eq(queue.future_items[0].size, ActorQueue.FUTURE_SIZE)
-	assert_eq(queue.future_items[0].gauge._faction, CTBGauge.Faction.HERO)
-	assert_same(queue.future_items[0].role_icon.texture, icon)
-	assert_eq(queue.future_items[1].gauge._faction, CTBGauge.Faction.ENEMY)
-	assert_eq(queue.future_items[1].enemy_label.text, "SD A")
-	assert_eq(queue.future_items[2].occurrence_index, 2)
-	assert_eq(queue.future_items[0].occurrence_index, 1)
+	assert_false(queue.has_node("ActiveName"))
+	assert_false(queue.has_node("ActiveSlot"))
+	assert_eq(queue.queue_items.size(), 3)
+	for item: ActorQueue in queue.queue_items:
+		assert_same(item.get_parent(), queue.queue_content)
+		assert_eq(item.size, Vector2(72, 72))
+	assert_true(queue.queue_items[0].gauge._is_current)
+	assert_false(queue.queue_items[1].gauge._is_current)
+	assert_eq(queue.queue_items[2].occurrence_index, 1)
 
 
-func test_active_full_name_is_left_aligned_beside_gold_card_only() -> void:
-	var hero := _hero("Echo")
+func test_queue_uses_role_color_archivo_and_enemy_gauge_magenta() -> void:
+	var icon := GradientTexture2D.new()
+	var hero := _hero("Echo", icon, Color("4f6fff"))
 	var enemy := _enemy("Attack Drone A")
 	queue._on_turn_order_updated([
 		{"actor": hero, "ticks_needed": 0},
 		{"actor": enemy, "ticks_needed": 40},
 	], false)
 	await get_tree().process_frame
-	assert_eq(queue.active_name.text, "Echo")
-	assert_eq(queue.active_name.horizontal_alignment, HORIZONTAL_ALIGNMENT_LEFT)
-	assert_eq(queue.active_name.size.x, 240.0)
-	assert_lt(queue.active_name.position.x + queue.active_name.size.x, queue.active_item.position.x)
-	assert_false(queue.future_items[0].has_node("ActiveName"))
 
-	queue._on_turn_order_updated([
-		{"actor": enemy, "ticks_needed": 0},
-		{"actor": hero, "ticks_needed": 30},
-	], false)
-	assert_eq(queue.active_name.text, "Attack Drone A")
+	assert_same(queue.queue_items[0].role_icon.texture, icon)
+	assert_eq(queue.queue_items[0].role_icon.self_modulate, Color("4f6fff"))
+	assert_eq(queue.queue_items[1].enemy_label.text, "AD A")
+	assert_same(queue.queue_items[1].enemy_label.get_theme_font("font"), ARCHIVO)
+	assert_eq(
+		queue.queue_items[1].enemy_label.get_theme_color("font_color"),
+		CTBGauge.ENEMY_COLORS[0],
+	)
 
 
-func test_current_action_ends_before_active_name_at_reference_viewport() -> void:
+func test_current_action_ends_before_queue_rail_at_reference_viewport() -> void:
 	var reference_viewport := Control.new()
 	reference_viewport.size = Vector2(1920, 1080)
 	add_child_autofree(reference_viewport)
@@ -129,54 +127,57 @@ func test_current_action_ends_before_active_name_at_reference_viewport() -> void
 	await get_tree().process_frame
 	assert_eq(battle.size, Vector2(1920, 1080), "test uses the authored reference viewport")
 	var current_action := battle.get_node("UI/CurrentAction") as Control
-	var active_name := battle.get_node("UI/TurnQueue/ActiveName") as Label
+	var turn_queue := battle.get_node("UI/TurnQueue") as Control
 	var current_action_right := current_action.global_position.x + current_action.size.x
 
 	assert_lt(
 		current_action_right,
-		active_name.global_position.x,
-		"the action panel reserves the active combatant name footprint",
+		turn_queue.global_position.x,
+		"the action panel ends before the queue rail",
 	)
 
 
-func test_rail_allocation_fully_exposes_eight_future_cards() -> void:
-	assert_gte(queue.future_scroll.size.y, float(8 * 72 + 7 * 8))
+func test_rail_allocation_fully_exposes_eight_queue_cards() -> void:
+	assert_gte(queue.queue_scroll.size.y, float(8 * 72 + 7 * 8))
 	assert_eq(
-		queue.future_scroll.horizontal_scroll_mode,
+		queue.queue_scroll.horizontal_scroll_mode,
 		ScrollContainer.SCROLL_MODE_DISABLED,
 	)
 
 
-func test_preview_preserves_clamps_scroll_and_new_active_resets_it() -> void:
+func test_rail_background_and_scrollbar_stay_inside_queue() -> void:
+	var style := queue.rail_background.get_theme_stylebox("panel") as StyleBoxFlat
+	assert_eq(style.bg_color, Color(0, 0, 0, 0.70))
+	assert_eq(style.corner_radius_top_left, 18)
+	assert_eq(style.corner_radius_top_right, 18)
+	assert_eq(style.corner_radius_bottom_left, 18)
+	assert_eq(style.corner_radius_bottom_right, 18)
+
+	var hero := _hero("Asher")
+	queue._on_turn_order_updated(_projection(hero, 21), false)
+	await get_tree().process_frame
+	var bar: VScrollBar = queue.queue_scroll.get_v_scroll_bar()
+	assert_lte(bar.global_position.x + bar.size.x, queue.global_position.x + queue.size.x - 6.0)
+	assert_eq(bar.modulate.a, 0.0)
+	queue.queue_scroll.scroll_vertical = 80
+	assert_eq(bar.modulate.a, 1.0)
+	queue.queue_scroll.scroll_vertical = 0
+	assert_eq(bar.modulate.a, 0.0)
+
+
+func test_refresh_preserves_and_clamps_scroll() -> void:
 	var hero_a := _hero("Asher")
 	var hero_b := _hero("Bell")
 	queue._on_turn_order_updated(_projection(hero_a, 21, hero_b), false)
 	await get_tree().process_frame
-	queue.future_scroll.scroll_vertical = 160
+	queue.queue_scroll.scroll_vertical = 160
 	queue._on_turn_order_updated(_projection(hero_a, 21, hero_b), false)
 	await get_tree().process_frame
-	assert_eq(queue.future_scroll.scroll_vertical, 160)
-	queue.future_scroll.scroll_vertical = queue._max_future_scroll()
+	assert_eq(queue.queue_scroll.scroll_vertical, 160)
+	queue.queue_scroll.scroll_vertical = queue._max_future_scroll()
 	queue._on_turn_order_updated(_projection(hero_a, 3, hero_b), false)
 	await get_tree().process_frame
-	assert_eq(queue.future_scroll.scroll_vertical, queue._max_future_scroll())
-	queue._on_turn_order_updated(_projection(hero_b, 21, hero_a), false)
-	await get_tree().process_frame
-	assert_eq(queue.future_scroll.scroll_vertical, 0)
-
-
-func test_rapid_refresh_after_active_change_cannot_restore_stale_scroll() -> void:
-	var hero_a := _hero("Asher")
-	var hero_b := _hero("Bell")
-	queue._on_turn_order_updated(_projection(hero_a, 21, hero_b), false)
-	await get_tree().process_frame
-	queue.future_scroll.scroll_vertical = 160
-
-	queue._on_turn_order_updated(_projection(hero_b, 21, hero_a), false)
-	queue._on_turn_order_updated(_projection(hero_b, 21, hero_a), false)
-	await get_tree().process_frame
-
-	assert_eq(queue.future_scroll.scroll_vertical, 0)
+	assert_eq(queue.queue_scroll.scroll_vertical, queue._max_future_scroll())
 
 
 func test_right_stick_scroll_does_not_change_combat_selection() -> void:
@@ -190,7 +191,7 @@ func test_right_stick_scroll_does_not_change_combat_selection() -> void:
 
 	queue.scroll_future_by_axis(1.0, 0.1)
 
-	assert_gt(queue.future_scroll.scroll_vertical, 0)
+	assert_gt(queue.queue_scroll.scroll_vertical, 0)
 	assert_same(manager.current_action, selected_action)
 	assert_true(enemy.is_valid_target)
 
@@ -202,12 +203,12 @@ func test_right_stick_scroll_accumulates_fractional_pixels_across_small_frames()
 
 	for frame in 10:
 		queue.scroll_future_by_axis(1.0, 0.001)
-	var small_frame_scroll := queue.future_scroll.scroll_vertical
-	queue.future_scroll.scroll_vertical = 0
+	var small_frame_scroll: int = queue.queue_scroll.scroll_vertical
+	queue.queue_scroll.scroll_vertical = 0
 	queue.scroll_future_by_axis(1.0, 0.01)
 
 	assert_eq(small_frame_scroll, 7)
-	assert_eq(queue.future_scroll.scroll_vertical, small_frame_scroll)
+	assert_eq(queue.queue_scroll.scroll_vertical, small_frame_scroll)
 
 
 func test_right_stick_fraction_resets_across_dead_zone_and_direction_change() -> void:
@@ -218,13 +219,13 @@ func test_right_stick_fraction_resets_across_dead_zone_and_direction_change() ->
 	queue.scroll_future_by_axis(1.0, 0.0005)
 	queue.scroll_future_by_axis(0.0, 0.1)
 	queue.scroll_future_by_axis(1.0, 0.001)
-	assert_eq(queue.future_scroll.scroll_vertical, 0)
+	assert_eq(queue.queue_scroll.scroll_vertical, 0)
 
 	queue.scroll_future_by_axis(0.0, 0.1)
-	queue.future_scroll.scroll_vertical = 10
+	queue.queue_scroll.scroll_vertical = 10
 	queue.scroll_future_by_axis(1.0, 0.0005)
 	queue.scroll_future_by_axis(-1.0, 0.001)
-	assert_eq(queue.future_scroll.scroll_vertical, 10)
+	assert_eq(queue.queue_scroll.scroll_vertical, 10)
 
 
 func test_overflow_fade_tracks_scroll_extent() -> void:
@@ -233,7 +234,7 @@ func test_overflow_fade_tracks_scroll_extent() -> void:
 	await get_tree().process_frame
 	queue._update_overflow_fade()
 	assert_true(queue.overflow_fade.visible)
-	queue.future_scroll.scroll_vertical = queue._max_future_scroll()
+	queue.queue_scroll.scroll_vertical = queue._max_future_scroll()
 	queue._update_overflow_fade()
 	assert_false(queue.overflow_fade.visible)
 	queue._on_turn_order_updated(_projection(hero, 3), false)
@@ -252,15 +253,3 @@ func test_clear_hides_overflow_fade_before_layout_recalculates() -> void:
 	queue._on_turn_order_updated([], false)
 
 	assert_false(queue.overflow_fade.visible)
-
-
-func test_rapid_projections_cancel_stale_layout_tweens() -> void:
-	var hero := _hero("Asher")
-	var enemy := _enemy("Scout Drone")
-	queue._on_turn_order_updated(_projection(hero, 8, enemy), true)
-	queue._on_turn_order_updated(_projection(hero, 8), true)
-	await get_tree().create_timer(ActorQueue.ANIMATION_DURATION + 0.05).timeout
-
-	for index in queue.future_items.size():
-		var item := queue.future_items[index] as ActorQueue
-		assert_eq(item.position.y, index * (ActorQueue.FUTURE_SIZE.y + TurnQueue.ITEM_SPACING))

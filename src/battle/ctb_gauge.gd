@@ -76,7 +76,12 @@ static func rounded_rect_path(
 	return points
 
 
-func configure(ticks: int, faction: Faction, is_current: bool) -> void:
+func configure(
+	ticks: int,
+	faction: Faction,
+	is_current: bool,
+	_animate := false,
+) -> void:
 	_ticks = maxi(ticks, 0)
 	_faction = faction
 	_is_current = is_current

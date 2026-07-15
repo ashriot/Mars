@@ -9,15 +9,12 @@ const RIGHT_STICK_SCROLL_SPEED := 700.0
 @export var actor_queue_scene: PackedScene
 @export var battle_manager: BattleManager
 
-@onready var active_name: Label = $ActiveName
-@onready var active_slot: Control = $ActiveSlot
-@onready var future_scroll: ScrollContainer = $FutureScroll
-@onready var future_content: Control = $FutureScroll/FutureContent
+@onready var rail_background: Panel = $RailBackground
+@onready var queue_scroll: ScrollContainer = $QueueScroll
+@onready var queue_content: Control = $QueueScroll/QueueContent
 @onready var overflow_fade: TextureRect = $OverflowFade
 
-var active_item: ActorQueue
-var future_items: Array[ActorQueue] = []
-var active_actor_ref: ActorCard
+var queue_items: Array[ActorQueue] = []
 var _right_stick_y := 0.0
 var _right_stick_scroll_residual := 0.0
 var _right_stick_direction := 0
@@ -27,8 +24,10 @@ var _right_stick_max_scroll := -1
 func _ready() -> void:
 	if is_instance_valid(battle_manager):
 		battle_manager.turn_order_updated.connect(_on_turn_order_updated)
-	future_scroll.get_v_scroll_bar().value_changed.connect(_update_overflow_fade)
-	call_deferred("_update_overflow_fade")
+	var bar := queue_scroll.get_v_scroll_bar()
+	bar.value_changed.connect(_on_scroll_changed)
+	bar.custom_minimum_size.x = 6.0
+	_on_scroll_changed(queue_scroll.scroll_vertical)
 
 
 func _input(event: InputEvent) -> void:
@@ -52,7 +51,7 @@ func scroll_future_by_axis(axis_value: float, delta: float) -> void:
 	if max_scroll != _right_stick_max_scroll:
 		_right_stick_scroll_residual = 0.0
 		_right_stick_max_scroll = max_scroll
-	var current_scroll := future_scroll.scroll_vertical
+	var current_scroll := queue_scroll.scroll_vertical
 	if max_scroll == 0 or (direction < 0 and current_scroll == 0) or (
 		direction > 0 and current_scroll == max_scroll
 	):
@@ -67,7 +66,7 @@ func scroll_future_by_axis(axis_value: float, delta: float) -> void:
 	if whole_pixels == 0:
 		return
 	var target_scroll := clampi(current_scroll + whole_pixels, 0, max_scroll)
-	future_scroll.scroll_vertical = target_scroll
+	queue_scroll.scroll_vertical = target_scroll
 	if target_scroll == 0 or target_scroll == max_scroll:
 		_right_stick_scroll_residual = 0.0
 
@@ -77,105 +76,80 @@ func _reset_right_stick_scroll() -> void:
 	_right_stick_direction = 0
 
 
-func _setup_active(turn_data: Dictionary, _animate: bool) -> void:
-	active_name.text = str(turn_data.actor.actor_name)
-	active_name.show()
-	if active_item == null or active_item.actor_ref != turn_data.actor:
-		if active_item:
-			active_item.queue_free()
-		active_item = actor_queue_scene.instantiate() as ActorQueue
-		active_slot.add_child(active_item)
-	active_item.setup(turn_data.actor, int(turn_data.ticks_needed), false, true, 0)
-	active_item.position = Vector2(
-		(active_slot.size.x - ActorQueue.ACTIVE_SIZE.x) * 0.5,
-		0.0,
-	)
-
-
-func _on_turn_order_updated(projected_queue: Array, animate: bool = true) -> void:
+func _on_turn_order_updated(projected_queue: Array, _animate: bool = true) -> void:
+	if not is_inside_tree():
+		return
+	var saved_scroll := queue_scroll.scroll_vertical
+	for item: ActorQueue in queue_items:
+		item.queue_free()
+	queue_items.clear()
 	if projected_queue.is_empty():
 		_clear_queue()
 		return
-	var new_active: ActorCard = projected_queue[0].actor
-	var active_changed := active_actor_ref != new_active
-	var saved_scroll := 0 if active_changed else future_scroll.scroll_vertical
-	if active_changed:
-		future_scroll.scroll_vertical = 0
-	active_actor_ref = new_active
-	_setup_active(projected_queue[0], animate)
 
-	var occurrence_counts: Dictionary = {new_active: 1}
-	var old_items := future_items.duplicate()
-	future_items.clear()
-	for index in range(1, projected_queue.size()):
+	var occurrences: Dictionary = {}
+	for index in projected_queue.size():
 		var turn_data: Dictionary = projected_queue[index]
 		var actor: ActorCard = turn_data.actor
-		var occurrence := int(occurrence_counts.get(actor, 0))
-		occurrence_counts[actor] = occurrence + 1
-		var item := _find_and_pop_match(actor, occurrence, old_items)
-		if item == null:
-			item = actor_queue_scene.instantiate() as ActorQueue
-			future_content.add_child(item)
-		item.setup(actor, int(turn_data.ticks_needed), animate, false, occurrence)
-		var target := Vector2(
-			(future_scroll.size.x - ActorQueue.FUTURE_SIZE.x) * 0.5,
-			(index - 1) * (ActorQueue.FUTURE_SIZE.y + ITEM_SPACING),
-		)
-		if animate:
-			item.animate_to(target)
-		else:
-			item.position = target
-		future_items.append(item)
+		var occurrence := int(occurrences.get(actor, 0))
+		occurrences[actor] = occurrence + 1
+		var item := actor_queue_scene.instantiate() as ActorQueue
+		queue_content.add_child(item)
+		item.setup(actor, int(turn_data.ticks_needed), index == 0, occurrence, false)
+		item.position = _target_position(index)
+		queue_items.append(item)
 
-	var content_height := future_items.size() * int(ActorQueue.FUTURE_SIZE.y + ITEM_SPACING)
-	if not future_items.is_empty():
-		content_height -= ITEM_SPACING
-	future_content.custom_minimum_size = Vector2(future_scroll.size.x, content_height)
-	for unused: ActorQueue in old_items:
-		unused.animate_exit()
+	queue_content.custom_minimum_size = Vector2(
+		queue_scroll.size.x - queue_scroll.get_v_scroll_bar().get_combined_minimum_size().x,
+		queue_items.size() * int(ActorQueue.ITEM_SIZE.y + ITEM_SPACING) - ITEM_SPACING,
+	)
 	call_deferred("_restore_scroll", saved_scroll)
 
 
-func _find_and_pop_match(actor: ActorCard, occurrence: int, pool: Array) -> ActorQueue:
-	for index in pool.size():
-		var candidate := pool[index] as ActorQueue
-		if candidate.actor_ref == actor and candidate.occurrence_index == occurrence:
-			pool.remove_at(index)
-			return candidate
-	return null
+func _target_position(index: int) -> Vector2:
+	var usable_width := queue_scroll.size.x - 10.0
+	return Vector2(
+		(usable_width - ActorQueue.ITEM_SIZE.x) * 0.5,
+		index * (ActorQueue.ITEM_SIZE.y + ITEM_SPACING),
+	)
 
 
 func _restore_scroll(value: int) -> void:
-	future_scroll.scroll_vertical = clampi(value, 0, _max_future_scroll())
+	queue_scroll.scroll_vertical = clampi(value, 0, _max_future_scroll())
 	_reset_right_stick_scroll()
 	_right_stick_max_scroll = _max_future_scroll()
-	_update_overflow_fade()
+	_on_scroll_changed(queue_scroll.scroll_vertical)
 
 
 func _max_future_scroll() -> int:
-	var bar := future_scroll.get_v_scroll_bar()
+	var bar := queue_scroll.get_v_scroll_bar()
 	return maxi(int(ceil(bar.max_value - bar.page)), 0)
+
+
+func _on_scroll_changed(value: float) -> void:
+	var bar := queue_scroll.get_v_scroll_bar()
+	bar.modulate.a = 0.0 if is_zero_approx(value) else 1.0
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE if is_zero_approx(value) \
+		else Control.MOUSE_FILTER_STOP
+	_update_overflow_fade(value)
 
 
 func _update_overflow_fade(_value: float = 0.0) -> void:
 	overflow_fade.visible = (
 		_max_future_scroll() > 0
-		and future_scroll.scroll_vertical < _max_future_scroll()
+		and queue_scroll.scroll_vertical < _max_future_scroll()
 	)
 
 
 func _clear_queue() -> void:
-	active_name.text = ""
-	active_name.hide()
-	if active_item:
-		active_item.queue_free()
-		active_item = null
-	for item in future_items:
+	for item: ActorQueue in queue_items:
 		item.queue_free()
-	future_items.clear()
-	active_actor_ref = null
-	future_content.custom_minimum_size.y = 0.0
-	future_scroll.scroll_vertical = 0
+	queue_items.clear()
+	queue_content.custom_minimum_size.y = 0.0
+	queue_scroll.scroll_vertical = 0
 	_reset_right_stick_scroll()
 	_right_stick_max_scroll = 0
+	var bar := queue_scroll.get_v_scroll_bar()
+	bar.modulate.a = 0.0
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	overflow_fade.visible = false

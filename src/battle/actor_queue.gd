@@ -2,8 +2,7 @@ extends Control
 class_name ActorQueue
 
 
-const ACTIVE_SIZE := Vector2(104, 112)
-const FUTURE_SIZE := Vector2(68, 72)
+const ITEM_SIZE := Vector2(72, 72)
 const ANIMATION_DURATION := 0.3
 
 @onready var gauge: CTBGauge = $CTBGauge
@@ -18,28 +17,28 @@ var _move_tween: Tween
 func setup(
 	actor: ActorCard,
 	ticks: int,
-	animate: bool,
 	is_current: bool,
 	occurrence: int,
+	animate_gauge := false,
 ) -> void:
 	actor_ref = actor
 	occurrence_index = occurrence
-	custom_minimum_size = ACTIVE_SIZE if is_current else FUTURE_SIZE
-	size = custom_minimum_size
+	custom_minimum_size = ITEM_SIZE
+	size = ITEM_SIZE
 	role_icon.visible = actor is HeroCard
 	enemy_label.visible = actor is EnemyCard
 	if actor is HeroCard:
 		var role := (actor as HeroCard).get_current_role()
 		role_icon.texture = role.icon if role else null
+		role_icon.self_modulate = role.color if role else Color.WHITE
 	else:
 		enemy_label.text = enemy_abbreviation(actor.actor_name)
 	gauge.configure(
 		ticks,
 		CTBGauge.Faction.HERO if actor is HeroCard else CTBGauge.Faction.ENEMY,
 		is_current,
+		animate_gauge,
 	)
-	if not animate and _move_tween and _move_tween.is_valid():
-		_move_tween.kill()
 
 
 func animate_to(target_position: Vector2) -> void:
