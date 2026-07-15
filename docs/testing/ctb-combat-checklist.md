@@ -10,6 +10,7 @@ All checks below are intentionally unchecked until performed interactively in co
 ## Active portrait and rail layout
 
 - [ ] During action selection, target hover, target cancel, CT modification previews, condition changes, and Speed changes, the gold active portrait remains first.
+- [ ] The active combatant's full name is left-aligned beside the gold card, updates on both hero and enemy turns, and never appears beside future entries.
 - [ ] The larger active portrait remains fixed at the top-right while future-turn cards scroll beneath it.
 - [ ] At `1920x1080`, the rail exposes at least eight complete future-turn cards at once and allows inspection of all twenty projected future turns.
 - [ ] The bottom overflow fade appears only while additional future turns remain below the visible rail and disappears at the end of the list.
@@ -32,6 +33,10 @@ All checks below are intentionally unchecked until performed interactively in co
 ## Action recovery and CT effects
 
 - [ ] For otherwise identical actions, `75% CT` places the actor earlier than `100% CT`, while `125% CT` places the actor later.
+- [ ] Ordinary actors near the battle median show standard recovery at around two gauge bands instead of every future perimeter appearing full.
+- [ ] Before other CT changes, `75%`, `100%`, `125%`, and `150%` recovery visibly map to approximately `1.5`, `2`, `2.5`, and `3` gauge bands respectively.
+- [ ] Early-game and endgame battles retain readable gauge variation because each battle freezes its own median normalization scale.
+- [ ] Speed buffs and debuffs change the affected actor's future gauge and order without rescaling every other actor.
 - [ ] Action recovery modifiers render white when equal to the authored action value, green when faster, and red when slower.
 - [ ] Repeated reactive 10% delays stack below zero instead of clamping after the first delay.
 

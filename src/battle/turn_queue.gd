@@ -9,6 +9,7 @@ const RIGHT_STICK_SCROLL_SPEED := 700.0
 @export var actor_queue_scene: PackedScene
 @export var battle_manager: BattleManager
 
+@onready var active_name: Label = $ActiveName
 @onready var active_slot: Control = $ActiveSlot
 @onready var future_scroll: ScrollContainer = $FutureScroll
 @onready var future_content: Control = $FutureScroll/FutureContent
@@ -77,6 +78,8 @@ func _reset_right_stick_scroll() -> void:
 
 
 func _setup_active(turn_data: Dictionary, _animate: bool) -> void:
+	active_name.text = str(turn_data.actor.actor_name)
+	active_name.show()
 	if active_item == null or active_item.actor_ref != turn_data.actor:
 		if active_item:
 			active_item.queue_free()
@@ -162,6 +165,8 @@ func _update_overflow_fade(_value: float = 0.0) -> void:
 
 
 func _clear_queue() -> void:
+	active_name.text = ""
+	active_name.hide()
 	if active_item:
 		active_item.queue_free()
 		active_item = null

@@ -98,6 +98,27 @@ func test_real_queue_separates_active_and_renders_faction_content() -> void:
 	assert_eq(queue.future_items[0].occurrence_index, 1)
 
 
+func test_active_full_name_is_left_aligned_beside_gold_card_only() -> void:
+	var hero := _hero("Echo")
+	var enemy := _enemy("Attack Drone A")
+	queue._on_turn_order_updated([
+		{"actor": hero, "ticks_needed": 0},
+		{"actor": enemy, "ticks_needed": 40},
+	], false)
+	await get_tree().process_frame
+	assert_eq(queue.active_name.text, "Echo")
+	assert_eq(queue.active_name.horizontal_alignment, HORIZONTAL_ALIGNMENT_LEFT)
+	assert_eq(queue.active_name.size.x, 240.0)
+	assert_lt(queue.active_name.position.x + queue.active_name.size.x, queue.active_item.position.x)
+	assert_false(queue.future_items[0].has_node("ActiveName"))
+
+	queue._on_turn_order_updated([
+		{"actor": enemy, "ticks_needed": 0},
+		{"actor": hero, "ticks_needed": 30},
+	], false)
+	assert_eq(queue.active_name.text, "Attack Drone A")
+
+
 func test_rail_allocation_fully_exposes_eight_future_cards() -> void:
 	assert_gte(queue.future_scroll.size.y, float(8 * 72 + 7 * 8))
 	assert_eq(
