@@ -12,6 +12,7 @@ const ANIMATION_DURATION := 0.3
 var actor_ref: ActorCard
 var occurrence_index := 0
 var _move_tween: Tween
+var _exit_tween: Tween
 
 
 func setup(
@@ -51,9 +52,11 @@ func animate_to(target_position: Vector2) -> void:
 func animate_exit() -> void:
 	if _move_tween and _move_tween.is_valid():
 		_move_tween.kill()
-	_move_tween = create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_CUBIC)
-	_move_tween.tween_property(self, "modulate:a", 0.0, ANIMATION_DURATION / 3.0)
-	_move_tween.tween_callback(queue_free)
+	if _exit_tween and _exit_tween.is_valid():
+		_exit_tween.kill()
+	_exit_tween = create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_CUBIC)
+	_exit_tween.tween_property(self, "modulate:a", 0.0, ANIMATION_DURATION)
+	_exit_tween.tween_callback(queue_free)
 
 
 static func enemy_abbreviation(actor_name: String) -> String:

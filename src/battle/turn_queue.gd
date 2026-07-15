@@ -92,12 +92,17 @@ func _on_turn_order_updated(
 	var saved_scroll := 0 if resets_scroll else queue_scroll.scroll_vertical
 	if resets_scroll:
 		queue_scroll.scroll_vertical = 0
-	for item: ActorQueue in queue_items:
-		item.queue_free()
+	var reusable: Array[ActorQueue] = queue_items.duplicate()
 	queue_items.clear()
 	if projected_queue.is_empty():
+		for item: ActorQueue in reusable:
+			_kill_item_tweens(item)
+			item.queue_free()
 		_clear_queue()
 		return
+	if update_kind == BattleManager.TurnOrderUpdate.ADVANCE and not reusable.is_empty():
+		var outgoing := reusable.pop_front() as ActorQueue
+		outgoing.animate_exit()
 
 	var occurrences: Dictionary = {}
 	for index in projected_queue.size():
@@ -105,17 +110,33 @@ func _on_turn_order_updated(
 		var actor: ActorCard = turn_data.actor
 		var occurrence := int(occurrences.get(actor, 0))
 		occurrences[actor] = occurrence + 1
-		var item := actor_queue_scene.instantiate() as ActorQueue
-		queue_content.add_child(item)
-		item.setup(actor, int(turn_data.ticks_needed), index == 0, occurrence, false)
-		item.position = _target_position(index)
+		var item := _take_actor_item(actor, reusable)
+		var reused := item != null
+		if not reused:
+			item = actor_queue_scene.instantiate() as ActorQueue
+			queue_content.add_child(item)
+			item.position = _target_position(index)
+			item.modulate.a = 1.0
+		item.setup(actor, int(turn_data.ticks_needed), index == 0, occurrence, reused)
+		item.z_index = index
+		if reused:
+			item.animate_to(_target_position(index))
 		queue_items.append(item)
+	for item: ActorQueue in reusable:
+		item.animate_exit()
 
 	queue_content.custom_minimum_size = Vector2(
 		queue_scroll.size.x - queue_scroll.get_v_scroll_bar().get_combined_minimum_size().x,
 		queue_items.size() * int(ActorQueue.ITEM_SIZE.y + ITEM_SPACING) - ITEM_SPACING,
 	)
 	call_deferred("_restore_scroll", saved_scroll, generation)
+
+
+func _take_actor_item(actor: ActorCard, pool: Array[ActorQueue]) -> ActorQueue:
+	for index in pool.size():
+		if pool[index].actor_ref == actor:
+			return pool.pop_at(index)
+	return null
 
 
 func _target_position(index: int) -> Vector2:
@@ -167,3 +188,10 @@ func _clear_queue() -> void:
 	bar.modulate.a = 0.0
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	overflow_fade.visible = false
+
+
+func _kill_item_tweens(item: ActorQueue) -> void:
+	if item._move_tween and item._move_tween.is_valid():
+		item._move_tween.kill()
+	if item._exit_tween and item._exit_tween.is_valid():
+		item._exit_tween.kill()

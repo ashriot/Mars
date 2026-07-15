@@ -7,20 +7,22 @@ All checks below are intentionally unchecked until performed interactively in co
 - [ ] Launch the project with the isolated test `HOME`, enter a representative combat with multiple heroes and duplicate enemy types, and set the window to `1920x1080`.
 - [ ] Exercise mouse, keyboard, controller, and direct touch input where each check names them; a simulated input family does not count as a physical-device pass.
 
-## Active portrait and rail layout
+## Queue rail layout
 
-- [ ] During action selection, target hover, target cancel, CT modification previews, condition changes, and Speed changes, the gold active portrait remains first.
-- [ ] The active combatant's full name is left-aligned beside the gold card, updates on both hero and enemy turns, and never appears beside future entries.
-- [ ] The larger active portrait remains fixed at the top-right while future-turn cards scroll beneath it.
-- [ ] At `1920x1080`, the rail exposes at least eight complete future-turn cards at once and allows inspection of all twenty projected future turns.
+- [ ] One rounded, semi-transparent black rail contains the entire current-and-future turn queue.
+- [ ] Every queue entry is a uniform `72x72` square, and only the current entry has a gold perimeter.
+- [ ] Hero entries use their authored role icon and role color; enemy entries use readable Archivo abbreviations in magenta.
+- [ ] At `1920x1080`, the rail exposes at least eight complete queue cards at once and allows inspection of all twenty projected future turns.
+- [ ] The inset scrollbar is hidden at the top and remains visible while the rail is displaced.
 - [ ] The bottom overflow fade appears only while additional future turns remain below the visible rail and disappears at the end of the list.
 
 ## Scrolling and refresh behavior
 
-- [ ] Right-stick scrolling moves the future-turn rail without changing the selected action or current target.
-- [ ] Mouse-wheel input over the rail and direct touch drag scroll the same future-turn list.
-- [ ] Hover and preview refreshes preserve the current rail scroll position; advancing to the next actual turn resets the rail to the top.
-- [ ] Rapid target hover changes and rapid input-family handoffs never leave queue cards stranded between positions.
+- [ ] Mouse-wheel input over the full rail, direct touch drag, and right-stick input scroll the same complete turn list without changing the selected action or current target.
+- [ ] Preview reorder and preview-clear animations preserve the current rail scroll position.
+- [ ] Committing an action and advancing to the next actual turn snap the rail to the top.
+- [ ] An advance fades the consumed entry while the remaining entries slide upward; visible Fast/Slow crossings swap positions while their gauges interpolate simultaneously.
+- [ ] Rapid target hover changes and rapid input-family handoffs settle on the latest projection without flashes, stale movement, or queue cards stranded between positions.
 
 ## Deterministic order and timeline presentation
 
@@ -46,7 +48,7 @@ All checks below are intentionally unchecked until performed interactively in co
 
 ## Sign-off
 
-- [ ] Active portrait and rail layout passed — date/OS/resolution/build/notes:
+- [ ] Queue rail layout passed — date/OS/resolution/build/notes:
 - [ ] Mouse and keyboard interaction passed — device/build/date/notes:
 - [ ] Controller interaction passed — device/connection/build/date/notes:
 - [ ] Direct touch interaction passed — device/build/date/notes:

@@ -24,3 +24,31 @@ func test_partial_perimeter_has_exact_end_interpolation() -> void:
 	])
 	var half := CTBGauge.partial_polyline(square, 0.5)
 	assert_eq(half[-1], Vector2(10, 10))
+
+
+func test_gauge_interpolates_ticks_without_mutating_target() -> void:
+	var gauge := CTBGauge.new()
+	add_child_autofree(gauge)
+	gauge.configure(20, CTBGauge.Faction.HERO, false, false)
+	gauge.configure(40, CTBGauge.Faction.HERO, false, true)
+
+	assert_eq(gauge.displayed_ticks, 20.0)
+	assert_eq(gauge._target_ticks, 40.0)
+	gauge._advance_animation(CTBGauge.ANIMATION_DURATION * 0.5)
+	assert_eq(gauge.displayed_ticks, 30.0)
+	assert_eq(CTBGauge.band_fills(gauge.displayed_ticks), [1.0, 0.5, 0.0])
+	gauge._advance_animation(CTBGauge.ANIMATION_DURATION * 0.5)
+	assert_eq(gauge.displayed_ticks, 40.0)
+	assert_false(gauge._is_animating)
+
+
+func test_new_target_replaces_in_flight_gauge_animation() -> void:
+	var gauge := CTBGauge.new()
+	add_child_autofree(gauge)
+	gauge.configure(20, CTBGauge.Faction.ENEMY, false, false)
+	gauge.configure(60, CTBGauge.Faction.ENEMY, false, true)
+	gauge._advance_animation(CTBGauge.ANIMATION_DURATION * 0.5)
+	gauge.configure(10, CTBGauge.Faction.ENEMY, false, true)
+	assert_eq(gauge._start_ticks, 40.0)
+	gauge._advance_animation(CTBGauge.ANIMATION_DURATION)
+	assert_eq(gauge.displayed_ticks, 10.0)

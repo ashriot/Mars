@@ -57,6 +57,13 @@ func _projection(active: ActorCard, count: int, alternate: ActorCard = null) -> 
 	return result
 
 
+func _positions_by_item(items: Array[ActorQueue]) -> Dictionary:
+	var result := {}
+	for item: ActorQueue in items:
+		result[item] = item.position
+	return result
+
+
 func test_display_projection_publishes_active_plus_twenty_future_entries() -> void:
 	var hero := _hero("Asher")
 	var enemy := _enemy("Scout Drone A")
@@ -294,3 +301,71 @@ func test_clear_hides_overflow_fade_before_layout_recalculates() -> void:
 	queue._on_turn_order_updated([], BattleManager.TurnOrderUpdate.REFRESH)
 
 	assert_false(queue.overflow_fade.visible)
+
+
+func test_preview_reuses_occurrences_and_visually_swaps_positions() -> void:
+	var hero := _hero("Echo")
+	var enemy := _enemy("Attack Drone A")
+	queue._on_turn_order_updated([
+		{"actor": hero, "ticks_needed": 0},
+		{"actor": enemy, "ticks_needed": 30},
+		{"actor": hero, "ticks_needed": 40},
+	], BattleManager.TurnOrderUpdate.REFRESH)
+	await get_tree().process_frame
+	var old_items := queue.queue_items.duplicate()
+	var enemy_item := old_items[1] as ActorQueue
+	var future_hero_item := old_items[2] as ActorQueue
+
+	queue._on_turn_order_updated([
+		{"actor": hero, "ticks_needed": 0},
+		{"actor": hero, "ticks_needed": 20},
+		{"actor": enemy, "ticks_needed": 35},
+	], BattleManager.TurnOrderUpdate.PREVIEW)
+
+	assert_same(queue.queue_items[1], future_hero_item)
+	assert_same(queue.queue_items[2], enemy_item)
+	assert_true(future_hero_item._move_tween != null)
+	assert_true(enemy_item._move_tween != null)
+	await get_tree().create_timer(ActorQueue.ANIMATION_DURATION + 0.05).timeout
+	assert_eq(future_hero_item.position, queue._target_position(1))
+	assert_eq(enemy_item.position, queue._target_position(2))
+
+
+func test_advance_fades_consumed_occurrence_and_promotes_existing_future_item() -> void:
+	var hero := _hero("Echo")
+	var enemy := _enemy("Attack Drone A")
+	queue._on_turn_order_updated([
+		{"actor": hero, "ticks_needed": 0},
+		{"actor": hero, "ticks_needed": 20},
+		{"actor": enemy, "ticks_needed": 40},
+	], BattleManager.TurnOrderUpdate.REFRESH)
+	await get_tree().process_frame
+	var outgoing := queue.queue_items[0]
+	var promoted := queue.queue_items[1]
+
+	queue._on_turn_order_updated([
+		{"actor": hero, "ticks_needed": 0},
+		{"actor": enemy, "ticks_needed": 20},
+	], BattleManager.TurnOrderUpdate.ADVANCE)
+
+	assert_true(outgoing._exit_tween != null)
+	assert_same(queue.queue_items[0], promoted)
+	assert_eq(queue.queue_scroll.scroll_vertical, 0)
+	await get_tree().create_timer(ActorQueue.ANIMATION_DURATION + 0.05).timeout
+	assert_false(is_instance_valid(outgoing))
+	assert_eq(promoted.position, queue._target_position(0))
+	assert_true(promoted.gauge._is_current)
+
+
+func test_rapid_preview_replaces_position_and_gauge_targets() -> void:
+	var hero := _hero("Echo")
+	var enemy := _enemy("Attack Drone A")
+	queue._on_turn_order_updated(_projection(hero, 8, enemy), BattleManager.TurnOrderUpdate.REFRESH)
+	queue._on_turn_order_updated(_projection(enemy, 8, hero), BattleManager.TurnOrderUpdate.PREVIEW)
+	queue._on_turn_order_updated(_projection(hero, 8, enemy), BattleManager.TurnOrderUpdate.REFRESH)
+	await get_tree().create_timer(ActorQueue.ANIMATION_DURATION + 0.05).timeout
+
+	for index in queue.queue_items.size():
+		var item := queue.queue_items[index]
+		assert_eq(item.position, queue._target_position(index))
+		assert_eq(item.gauge.displayed_ticks, float(index * 5))

@@ -5,6 +5,7 @@ class_name CTBGauge
 enum Faction { HERO, ENEMY }
 
 const TICKS_PER_BAND := 20
+const ANIMATION_DURATION := 0.30
 const GAUGE_WIDTH := 6.0
 const CORNER_RADIUS := 10.0
 const HERO_COLORS := [
@@ -20,12 +21,16 @@ const ENEMY_COLORS := [
 const CURRENT_COLOR := Color("ffc94a")
 const TRACK_COLOR := Color(0.12, 0.15, 0.2, 0.9)
 
-var _ticks := 0
+var displayed_ticks := 0.0
+var _start_ticks := 0.0
+var _target_ticks := 0.0
+var _animation_elapsed := 0.0
+var _is_animating := false
 var _faction := Faction.HERO
 var _is_current := false
 
 
-static func band_fills(ticks: int) -> Array[float]:
+static func band_fills(ticks: float) -> Array[float]:
 	var fills: Array[float] = []
 	for band in 3:
 		fills.append(clampf(float(ticks - band * TICKS_PER_BAND) / TICKS_PER_BAND, 0.0, 1.0))
@@ -80,12 +85,40 @@ func configure(
 	ticks: int,
 	faction: Faction,
 	is_current: bool,
-	_animate := false,
+	animate := false,
 ) -> void:
-	_ticks = maxi(ticks, 0)
 	_faction = faction
 	_is_current = is_current
+	_target_ticks = float(maxi(ticks, 0))
+	if animate and not is_equal_approx(displayed_ticks, _target_ticks):
+		_start_ticks = displayed_ticks
+		_animation_elapsed = 0.0
+		_is_animating = true
+		set_process(true)
+	else:
+		displayed_ticks = _target_ticks
+		_start_ticks = displayed_ticks
+		_animation_elapsed = ANIMATION_DURATION
+		_is_animating = false
+		set_process(false)
 	queue_redraw()
+
+
+func _process(delta: float) -> void:
+	_advance_animation(delta)
+
+
+func _advance_animation(delta: float) -> void:
+	if not _is_animating:
+		return
+	_animation_elapsed = minf(_animation_elapsed + maxf(delta, 0.0), ANIMATION_DURATION)
+	var weight := _animation_elapsed / ANIMATION_DURATION
+	displayed_ticks = lerpf(_start_ticks, _target_ticks, weight)
+	queue_redraw()
+	if is_equal_approx(_animation_elapsed, ANIMATION_DURATION):
+		displayed_ticks = _target_ticks
+		_is_animating = false
+		set_process(false)
 
 
 func _draw() -> void:
@@ -99,7 +132,7 @@ func _draw() -> void:
 		draw_polyline(path, CURRENT_COLOR, GAUGE_WIDTH, true)
 		return
 	var colors := HERO_COLORS if _faction == Faction.HERO else ENEMY_COLORS
-	var fills := band_fills(_ticks)
+	var fills := band_fills(displayed_ticks)
 	for band in 3:
 		var partial := partial_polyline(path, fills[band])
 		if partial.size() >= 2:
