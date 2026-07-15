@@ -2,6 +2,7 @@ extends GutTest
 
 
 const TURN_QUEUE_SCENE := preload("res://src/battle/turn_queue.tscn")
+const BATTLE_SCENE := preload("res://src/battle/battle_scene.tscn")
 
 var queue: TurnQueue
 var manager: BattleManager
@@ -117,6 +118,25 @@ func test_active_full_name_is_left_aligned_beside_gold_card_only() -> void:
 		{"actor": hero, "ticks_needed": 30},
 	], false)
 	assert_eq(queue.active_name.text, "Attack Drone A")
+
+
+func test_current_action_ends_before_active_name_at_reference_viewport() -> void:
+	var reference_viewport := Control.new()
+	reference_viewport.size = Vector2(1920, 1080)
+	add_child_autofree(reference_viewport)
+	var battle := BATTLE_SCENE.instantiate() as BattleScene
+	reference_viewport.add_child(battle)
+	await get_tree().process_frame
+	assert_eq(battle.size, Vector2(1920, 1080), "test uses the authored reference viewport")
+	var current_action := battle.get_node("UI/CurrentAction") as Control
+	var active_name := battle.get_node("UI/TurnQueue/ActiveName") as Label
+	var current_action_right := current_action.global_position.x + current_action.size.x
+
+	assert_lt(
+		current_action_right,
+		active_name.global_position.x,
+		"the action panel reserves the active combatant name footprint",
+	)
 
 
 func test_rail_allocation_fully_exposes_eight_future_cards() -> void:

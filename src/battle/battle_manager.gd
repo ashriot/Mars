@@ -77,6 +77,7 @@ func spawn_encounter():
 		hero_card.target_unhovered.connect(_on_target_unhovered)
 		hero_card.actor_breached.connect(_on_actor_breached)
 		hero_card.actor_defeated.connect(_on_actor_died)
+		hero_card.actor_revived.connect(_on_actor_revived)
 		hero_card.spawn_particles.connect(_on_spawn_particles)
 		hero_card.actor_conditions_changed.connect(_on_actor_conditions_changed)
 		hero_card.current_ct = 0
@@ -278,11 +279,11 @@ func _on_actor_died(actor: ActorCard):
 func _on_actor_revived(actor: ActorCard):
 	print(actor.name, " has revived! Adding back to actor_list.")
 
-	if not actor_list.has(actor):
-		actor.ct_speed_scale = battle_ct_speed_scale
-		actor_list.append(actor)
-	else:
+	if actor_list.has(actor):
 		print("Actor was already in actor_list?")
+		return
+	actor.ct_speed_scale = battle_ct_speed_scale
+	actor_list.append(actor)
 
 	update_turn_order()
 

@@ -93,12 +93,15 @@ func on_turn_ended() -> void:
 	await super.on_turn_ended()
 
 func take_healing(heal_amount: int, is_revive: bool = false):
-	if is_defeated and is_revive:
+	var was_defeated := is_defeated
+	if was_defeated and is_revive and heal_amount > 0:
 		print(actor_name, " is revived!")
 		is_defeated = false
 		self_modulate = Color.WHITE
 
 	super.take_healing(heal_amount, is_revive)
+	if was_defeated and not is_defeated:
+		actor_revived.emit(self)
 
 func defeated():
 	super.defeated()
