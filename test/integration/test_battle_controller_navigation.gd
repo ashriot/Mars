@@ -450,15 +450,28 @@ func test_cancel_suppresses_action_preview_and_restores_ordinary_turn_order() ->
 	assert_eq(fixture.manager.ordinary_preview_count, 1, "cancel explicitly restores the ordinary CTB projection")
 
 
-func test_active_hero_turn_uses_slide_without_turn_highlight() -> void:
+func test_active_hero_turn_uses_slide_and_static_role_colored_border() -> void:
 	var hero := preload("res://src/battle/hero_card.tscn").instantiate() as HeroCard
 	add_child_autofree(hero)
 	await get_tree().process_frame
+	var definition := RoleDefinition.new()
+	definition.color = Color(0.2, 0.65, 0.9, 1.0)
+	var role := RoleData.new()
+	role.source_definition = definition
+	hero.loaded_roles = [role]
+	hero.current_role_index = 0
+	hero.recolor()
 	hero._slide_up()
 	await get_tree().create_timer(hero.duration + 0.01).timeout
 	assert_eq(hero.panel.position, hero.panel_home_position + Vector2(0, hero.slide_offset_y))
 	hero.highlight(true)
-	assert_false(hero.highlight_panel.visible)
+	assert_true(hero.highlight_panel.visible)
+	assert_eq(hero.highlight_panel.modulate, role.color)
+	var border := hero.highlight_panel.get_theme_stylebox(&"panel") as StyleBoxFlat
+	assert_eq(border.border_width_left, 8)
+	assert_eq(border.border_width_top, 8)
+	assert_eq(border.border_width_right, 8)
+	assert_eq(border.border_width_bottom, 8)
 
 
 func test_selected_action_hotkey_toggles_targeting_off() -> void:

@@ -538,10 +538,10 @@ func set_target_presentation(state: TargetPresentation) -> void:
 	target_outline.visible = state != TargetPresentation.NORMAL
 	target_pulse.visible = state == TargetPresentation.SELECTED
 	if state == TargetPresentation.SELECTED:
-		target_pulse.modulate.a = 0.35
+		target_pulse.modulate.a = 0.0
 		_target_pulse_tween = create_tween().set_loops()
-		_target_pulse_tween.tween_property(target_pulse, "modulate:a", 1.0, 0.35).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		_target_pulse_tween.tween_property(target_pulse, "modulate:a", 0.35, 0.65).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		_target_pulse_tween.tween_property(target_pulse, "modulate:a", 0.5, 0.35).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		_target_pulse_tween.tween_property(target_pulse, "modulate:a", 0.0, 0.65).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 func _stop_target_pulse() -> void:
 	if _target_pulse_tween and _target_pulse_tween.is_valid():

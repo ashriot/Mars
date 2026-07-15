@@ -48,3 +48,11 @@ func test_repeated_target_state_assignment_keeps_one_tween_and_exact_normal_clea
 	assert_null(card._target_pulse_tween)
 	assert_true(card.target_outline.visible)
 	assert_false(card.target_pulse.visible)
+
+
+func test_selected_target_pulse_fades_from_transparent_to_at_most_half_opacity() -> void:
+	var card := _cards()[0]
+	card.set_target_presentation(ActorCard.TargetPresentation.SELECTED)
+	assert_eq(card.target_pulse.modulate.a, 0.0)
+	await get_tree().create_timer(0.4).timeout
+	assert_lte(card.target_pulse.modulate.a, 0.5)

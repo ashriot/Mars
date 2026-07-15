@@ -170,8 +170,8 @@ func _add_trait(trait_res: Trait, tier: int):
 	active_traits.append(new_trait)
 	print("Added Trait: ", new_trait.trait_name, " (Tier ", tier, ")")
 
-func highlight(_value: bool):
-	highlight_panel.visible = false
+func highlight(value: bool):
+	highlight_panel.visible = value
 
 func _slide_up():
 	var tween = create_tween().set_parallel()
