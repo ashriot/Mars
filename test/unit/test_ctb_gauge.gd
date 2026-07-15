@@ -52,3 +52,16 @@ func test_new_target_replaces_in_flight_gauge_animation() -> void:
 	assert_eq(gauge._start_ticks, 40.0)
 	gauge._advance_animation(CTBGauge.ANIMATION_DURATION)
 	assert_eq(gauge.displayed_ticks, 10.0)
+
+
+func test_cancel_animation_stops_in_flight_processing() -> void:
+	var gauge := CTBGauge.new()
+	add_child_autofree(gauge)
+	gauge.configure(20, CTBGauge.Faction.HERO, false, false)
+	gauge.configure(40, CTBGauge.Faction.HERO, false, true)
+	assert_true(gauge._is_animating)
+
+	gauge.cancel_animation()
+
+	assert_false(gauge._is_animating)
+	assert_false(gauge.is_processing())

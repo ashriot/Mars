@@ -121,6 +121,11 @@ func _advance_animation(delta: float) -> void:
 		set_process(false)
 
 
+func cancel_animation() -> void:
+	_is_animating = false
+	set_process(false)
+
+
 func _draw() -> void:
 	var inset := GAUGE_WIDTH * 0.5
 	var path := rounded_rect_path(

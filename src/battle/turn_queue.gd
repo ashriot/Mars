@@ -20,6 +20,8 @@ var _right_stick_scroll_residual := 0.0
 var _right_stick_direction := 0
 var _right_stick_max_scroll := -1
 var _projection_generation := 0
+var _recoverable_exits: Array[ActorQueue] = []
+var _committed_exits: Array[ActorQueue] = []
 
 
 func _ready() -> void:
@@ -92,17 +94,22 @@ func _on_turn_order_updated(
 	var saved_scroll := 0 if resets_scroll else queue_scroll.scroll_vertical
 	if resets_scroll:
 		queue_scroll.scroll_vertical = 0
-	var reusable: Array[ActorQueue] = queue_items.duplicate()
+	var current_items: Array[ActorQueue] = queue_items.duplicate()
+	var reusable: Array[ActorQueue] = current_items.duplicate()
+	for item: ActorQueue in _recoverable_exits:
+		if is_instance_valid(item):
+			reusable.append(item)
+	_recoverable_exits.clear()
+	_prune_committed_exits()
 	queue_items.clear()
 	if projected_queue.is_empty():
-		for item: ActorQueue in reusable:
-			_kill_item_tweens(item)
-			item.queue_free()
 		_clear_queue()
 		return
-	if update_kind == BattleManager.TurnOrderUpdate.ADVANCE and not reusable.is_empty():
-		var outgoing := reusable.pop_front() as ActorQueue
+	if update_kind == BattleManager.TurnOrderUpdate.ADVANCE and not current_items.is_empty():
+		var outgoing := current_items[0]
+		reusable.erase(outgoing)
 		outgoing.animate_exit()
+		_committed_exits.append(outgoing)
 
 	var occurrences: Dictionary = {}
 	for index in projected_queue.size():
@@ -117,13 +124,17 @@ func _on_turn_order_updated(
 			queue_content.add_child(item)
 			item.position = _target_position(index)
 			item.modulate.a = 1.0
+		else:
+			item.prepare_for_reuse()
 		item.setup(actor, int(turn_data.ticks_needed), index == 0, occurrence, reused)
 		item.z_index = index
 		if reused:
 			item.animate_to(_target_position(index))
 		queue_items.append(item)
 	for item: ActorQueue in reusable:
-		item.animate_exit()
+		if not item._exit_tween or not item._exit_tween.is_valid():
+			item.animate_exit()
+		_recoverable_exits.append(item)
 
 	queue_content.custom_minimum_size = Vector2(
 		queue_scroll.size.x - queue_scroll.get_v_scroll_bar().get_combined_minimum_size().x,
@@ -177,9 +188,14 @@ func _update_overflow_fade(_value: float = 0.0) -> void:
 
 
 func _clear_queue() -> void:
-	for item: ActorQueue in queue_items:
-		item.queue_free()
 	queue_items.clear()
+	_recoverable_exits.clear()
+	_committed_exits.clear()
+	for child in queue_content.get_children():
+		if child is ActorQueue:
+			var item := child as ActorQueue
+			item.cancel_animations()
+			item.free()
 	queue_content.custom_minimum_size.y = 0.0
 	queue_scroll.scroll_vertical = 0
 	_reset_right_stick_scroll()
@@ -190,8 +206,9 @@ func _clear_queue() -> void:
 	overflow_fade.visible = false
 
 
-func _kill_item_tweens(item: ActorQueue) -> void:
-	if item._move_tween and item._move_tween.is_valid():
-		item._move_tween.kill()
-	if item._exit_tween and item._exit_tween.is_valid():
-		item._exit_tween.kill()
+func _prune_committed_exits() -> void:
+	var live_exits: Array[ActorQueue] = []
+	for item: ActorQueue in _committed_exits:
+		if is_instance_valid(item):
+			live_exits.append(item)
+	_committed_exits = live_exits

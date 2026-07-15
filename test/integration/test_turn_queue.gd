@@ -57,13 +57,6 @@ func _projection(active: ActorCard, count: int, alternate: ActorCard = null) -> 
 	return result
 
 
-func _positions_by_item(items: Array[ActorQueue]) -> Dictionary:
-	var result := {}
-	for item: ActorQueue in items:
-		result[item] = item.position
-	return result
-
-
 func test_display_projection_publishes_active_plus_twenty_future_entries() -> void:
 	var hero := _hero("Asher")
 	var enemy := _enemy("Scout Drone A")
@@ -369,3 +362,57 @@ func test_rapid_preview_replaces_position_and_gauge_targets() -> void:
 		var item := queue.queue_items[index]
 		assert_eq(item.position, queue._target_position(index))
 		assert_eq(item.gauge.displayed_ticks, float(index * 5))
+
+
+func test_preview_restore_cancels_exit_and_reuses_same_control() -> void:
+	var hero := _hero("Echo")
+	var enemy := _enemy("Attack Drone A")
+	queue._on_turn_order_updated([
+		{"actor": hero, "ticks_needed": 0},
+		{"actor": enemy, "ticks_needed": 30},
+	], BattleManager.TurnOrderUpdate.REFRESH)
+	await get_tree().process_frame
+	var enemy_item := queue.queue_items[1]
+
+	queue._on_turn_order_updated([
+		{"actor": hero, "ticks_needed": 0},
+	], BattleManager.TurnOrderUpdate.PREVIEW)
+	assert_true(enemy_item._exit_tween != null)
+	queue._on_turn_order_updated([
+		{"actor": hero, "ticks_needed": 0},
+		{"actor": enemy, "ticks_needed": 35},
+	], BattleManager.TurnOrderUpdate.REFRESH)
+
+	assert_same(queue.queue_items[1], enemy_item)
+	assert_eq(queue.queue_content.get_child_count(), 2)
+	assert_null(enemy_item._exit_tween)
+	assert_eq(enemy_item.modulate.a, 1.0)
+	await get_tree().create_timer(ActorQueue.ANIMATION_DURATION + 0.05).timeout
+	assert_true(is_instance_valid(enemy_item))
+	assert_eq(queue.queue_content.get_child_count(), 2)
+
+
+func test_empty_projection_synchronously_clears_in_flight_exits() -> void:
+	var hero := _hero("Echo")
+	var enemy := _enemy("Attack Drone A")
+	queue._on_turn_order_updated([
+		{"actor": hero, "ticks_needed": 0},
+		{"actor": enemy, "ticks_needed": 30},
+	], BattleManager.TurnOrderUpdate.REFRESH)
+	await get_tree().process_frame
+	var enemy_item := queue.queue_items[1]
+	queue._on_turn_order_updated([
+		{"actor": hero, "ticks_needed": 10},
+	], BattleManager.TurnOrderUpdate.PREVIEW)
+	assert_true(enemy_item._exit_tween != null)
+
+	queue._on_turn_order_updated([], BattleManager.TurnOrderUpdate.REFRESH)
+
+	assert_true(queue.queue_items.is_empty())
+	assert_eq(queue.queue_content.get_child_count(), 0)
+	assert_false(is_instance_valid(enemy_item))
+	assert_eq(queue.queue_scroll.scroll_vertical, 0)
+	assert_eq(queue.queue_scroll.get_v_scroll_bar().modulate.a, 0.0)
+	assert_false(queue.overflow_fade.visible)
+	await get_tree().create_timer(ActorQueue.ANIMATION_DURATION + 0.05).timeout
+	assert_eq(queue.queue_content.get_child_count(), 0)

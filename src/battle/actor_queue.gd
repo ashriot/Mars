@@ -59,6 +59,23 @@ func animate_exit() -> void:
 	_exit_tween.tween_callback(queue_free)
 
 
+func prepare_for_reuse() -> void:
+	if _exit_tween and _exit_tween.is_valid():
+		_exit_tween.kill()
+	_exit_tween = null
+	modulate.a = 1.0
+
+
+func cancel_animations() -> void:
+	if _move_tween and _move_tween.is_valid():
+		_move_tween.kill()
+	_move_tween = null
+	if _exit_tween and _exit_tween.is_valid():
+		_exit_tween.kill()
+	_exit_tween = null
+	gauge.cancel_animation()
+
+
 static func enemy_abbreviation(actor_name: String) -> String:
 	var words := actor_name.strip_edges().split(" ", false)
 	var suffix := ""
