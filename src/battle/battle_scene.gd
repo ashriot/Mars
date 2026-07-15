@@ -33,6 +33,11 @@ func _ready():
 
 
 func _exit_tree() -> void:
+	_clear_current_target(false)
+	if manager:
+		manager._clear_all_targeting_ui()
+	_last_enemy_target = null
+	_last_hero_target = null
 	var navigation := _navigation_ux_layer()
 	if navigation and navigation._adapter == self:
 		navigation.set_adapter(null)
@@ -189,18 +194,33 @@ func _refresh_targeting() -> void:
 		_clear_current_target(false)
 		_publish_controller_hints()
 		return
+	_prune_target_memory()
+	if is_instance_valid(_current_target) and not _is_valid_candidate(_current_target):
+		if InputManager.get_active_mode() == InputManager.InputMode.CONTROLLER:
+			_restore_remembered_target()
+		else:
+			_clear_current_target(false)
+	var group_targeting := _is_group_targeting()
 	for candidate: ActorCard in _valid_targets():
-		if candidate != _current_target:
+		if group_targeting:
+			candidate.set_target_presentation(ActorCard.TargetPresentation.SELECTED)
+		elif candidate != _current_target:
 			candidate.set_target_presentation(ActorCard.TargetPresentation.AVAILABLE)
-	if InputManager.get_active_mode() == InputManager.InputMode.CONTROLLER:
+	if InputManager.get_active_mode() == InputManager.InputMode.CONTROLLER \
+		and not _is_valid_candidate(_current_target):
 		_restore_remembered_target()
-	elif not _is_valid_candidate(_current_target):
+	elif InputManager.get_active_mode() != InputManager.InputMode.CONTROLLER \
+		and not _is_valid_candidate(_current_target):
 		_clear_current_target(false)
 	_publish_controller_hints()
 
 
 func _is_targeting() -> bool:
 	return manager != null and not _valid_targets().is_empty()
+
+
+func _is_group_targeting() -> bool:
+	return manager != null and manager.is_group_target_action(manager.current_action)
 
 
 func navigation_focus_restored() -> void:
@@ -236,7 +256,14 @@ func _set_current_target(target: ActorCard) -> void:
 	if not _is_valid_candidate(target):
 		return
 	if is_instance_valid(_current_target) and _current_target != target:
-		_current_target.set_target_presentation(ActorCard.TargetPresentation.AVAILABLE)
+		if _is_group_targeting() and _is_valid_candidate(_current_target):
+			_current_target.set_target_presentation(ActorCard.TargetPresentation.SELECTED)
+		else:
+			_current_target.set_target_presentation(
+				ActorCard.TargetPresentation.AVAILABLE
+				if _is_valid_candidate(_current_target)
+				else ActorCard.TargetPresentation.NORMAL
+			)
 	_current_target = target
 	_navigation_origin = target
 	target.set_target_presentation(ActorCard.TargetPresentation.SELECTED)
@@ -249,7 +276,14 @@ func _set_current_target(target: ActorCard) -> void:
 
 func _clear_current_target(retain_origin: bool) -> void:
 	if is_instance_valid(_current_target):
-		_current_target.set_target_presentation(ActorCard.TargetPresentation.AVAILABLE)
+		if _is_group_targeting() and _is_valid_candidate(_current_target):
+			_current_target.set_target_presentation(ActorCard.TargetPresentation.SELECTED)
+		else:
+			_current_target.set_target_presentation(
+				ActorCard.TargetPresentation.AVAILABLE
+				if _is_valid_candidate(_current_target)
+				else ActorCard.TargetPresentation.NORMAL
+			)
 		if retain_origin:
 			_navigation_origin = _current_target
 	_current_target = null
@@ -260,7 +294,8 @@ func _clear_current_target(retain_origin: bool) -> void:
 
 func _refresh_target_preview() -> void:
 	if manager and is_instance_valid(manager.current_actor) and manager.current_action:
-		manager.preview_action_turn_order(manager.current_actor, manager.current_action, _current_target)
+		var preview_target: ActorCard = null if _is_group_targeting() else _current_target
+		manager.preview_action_turn_order(manager.current_actor, manager.current_action, preview_target)
 
 
 func _restore_remembered_target() -> void:
@@ -270,6 +305,15 @@ func _restore_remembered_target() -> void:
 		return
 	var remembered: ActorCard = _last_hero_target if candidates[0] is HeroCard else _last_enemy_target
 	_set_current_target(remembered if _is_valid_candidate(remembered) else candidates[0])
+
+
+func _prune_target_memory() -> void:
+	if _last_enemy_target != null \
+		and (not is_instance_valid(_last_enemy_target) or _last_enemy_target.is_defeated):
+		_last_enemy_target = null
+	if _last_hero_target != null \
+		and (not is_instance_valid(_last_hero_target) or _last_hero_target.is_defeated):
+		_last_hero_target = null
 
 
 func _publish_controller_hints() -> void:

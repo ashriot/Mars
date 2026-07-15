@@ -22,7 +22,6 @@ var loaded_roles: Array[RoleData] = []
 var current_role_index: int
 var current_focus: int = 0
 var shifted_this_turn: bool
-var blink_tween: Tween
 
 
 func setup(data: HeroData):
@@ -129,7 +128,6 @@ func shift_role(direction: String):
 	else:
 		current_role_index = (current_role_index + 1) % role_count
 	update_current_role()
-	start_blinking()
 	await _fire_condition_event(Trigger.TriggerType.ON_SHIFT)
 
 func update_current_role():
@@ -172,39 +170,8 @@ func _add_trait(trait_res: Trait, tier: int):
 	active_traits.append(new_trait)
 	print("Added Trait: ", new_trait.trait_name, " (Tier ", tier, ")")
 
-func highlight(value: bool):
-	if value:
-		start_blinking()
-	else:
-		stop_blinking()
-	highlight_panel.visible = value
-
-func start_blinking():
-	if blink_tween and blink_tween.is_running():
-		blink_tween.kill()
-	var color: Color = get_current_role().color
-	var bright_color = color + Color(1.0, 1.0, 1.0)
-
-	blink_tween = create_tween().set_loops()
-
-	blink_tween.tween_property(
-		highlight_panel,
-		"modulate",
-		bright_color,
-		0.4 / battle_manager.battle_speed
-	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-
-	blink_tween.tween_property(
-		highlight_panel,
-		"modulate",
-		get_current_role().color,
-		0.4 / battle_manager.battle_speed
-	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-
-func stop_blinking():
-	if blink_tween and blink_tween.is_running():
-		blink_tween.kill()
-		blink_tween = null
+func highlight(_value: bool):
+	highlight_panel.visible = false
 
 func _slide_up():
 	var tween = create_tween().set_parallel()

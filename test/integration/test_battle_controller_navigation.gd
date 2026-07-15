@@ -53,6 +53,7 @@ class TrackingBattleManager extends BattleManager:
 
 	func _clear_all_targeting_ui():
 		clear_count += 1
+		super._clear_all_targeting_ui()
 
 	func preview_action_turn_order(_actor: ActorCard, _action: Action, selected_target: ActorCard = null):
 		preview_targets.append(selected_target)
@@ -311,6 +312,60 @@ func test_pointer_cleared_origin_restores_before_next_direction_moves() -> void:
 	assert_same(fixture.scene._current_target, fixture.enemy)
 	fixture.scene.select_direction(Vector2.RIGHT)
 	assert_same(fixture.scene._current_target, fixture.second_enemy)
+
+
+func test_all_enemy_action_selects_every_affected_card_and_requests_group_preview() -> void:
+	var fixture := await _navigation_fixture()
+	var action := Action.new()
+	action.target_type = Action.TargetType.ALL_ENEMIES
+	fixture.enemy.is_valid_target = true
+	fixture.second_enemy.is_valid_target = true
+	fixture.manager._apply_target_presentation(action, [fixture.enemy, fixture.second_enemy])
+	assert_eq(fixture.enemy.get_target_presentation(), ActorCard.TargetPresentation.SELECTED)
+	assert_eq(fixture.second_enemy.get_target_presentation(), ActorCard.TargetPresentation.SELECTED)
+	assert_eq(fixture.hero.get_target_presentation(), ActorCard.TargetPresentation.NORMAL)
+	fixture.manager.current_actor = fixture.hero
+	fixture.manager.current_action = action
+	fixture.scene._refresh_target_preview()
+	assert_eq(fixture.manager.preview_targets.size(), 1)
+	assert_null(fixture.manager.preview_targets.back(), "group preview does not invent a single parent target")
+
+
+func test_invalid_current_target_falls_back_for_controller_and_clears_for_pointer() -> void:
+	var fixture := await _navigation_fixture()
+	fixture.enemy.is_valid_target = true
+	fixture.second_enemy.is_valid_target = true
+	fixture.scene._set_current_target(fixture.enemy)
+	fixture.enemy.is_defeated = true
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	fixture.scene._refresh_targeting()
+	assert_same(fixture.scene._current_target, fixture.second_enemy)
+	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
+	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)
+	fixture.second_enemy.is_defeated = true
+	fixture.scene._refresh_targeting()
+	assert_null(fixture.scene._current_target)
+
+
+func test_cancel_and_teardown_return_all_cards_to_normal_and_stop_pulses() -> void:
+	var fixture := await _navigation_fixture()
+	fixture.enemy.is_valid_target = true
+	fixture.scene._set_current_target(fixture.enemy)
+	fixture.scene.cancel_targeting()
+	for actor: ActorCard in [fixture.hero, fixture.enemy, fixture.second_enemy]:
+		assert_eq(actor.get_target_presentation(), ActorCard.TargetPresentation.NORMAL)
+		assert_null(actor._target_pulse_tween)
+
+
+func test_active_hero_turn_uses_slide_without_turn_highlight() -> void:
+	var hero := preload("res://src/battle/hero_card.tscn").instantiate() as HeroCard
+	add_child_autofree(hero)
+	await get_tree().process_frame
+	hero._slide_up()
+	await get_tree().create_timer(hero.duration + 0.01).timeout
+	assert_eq(hero.panel.position, hero.panel_home_position + Vector2(0, hero.slide_offset_y))
+	hero.highlight(true)
+	assert_false(hero.highlight_panel.visible)
 
 
 func test_selected_action_hotkey_toggles_targeting_off() -> void:

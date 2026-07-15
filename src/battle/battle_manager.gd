@@ -253,6 +253,8 @@ func _update_all_enemy_intents():
 
 func _on_actor_died(actor: ActorCard):
 	print(actor.actor_name, " has died. Removing from actor_list.")
+	actor.is_valid_target = false
+	actor.set_target_presentation(ActorCard.TargetPresentation.NORMAL)
 
 	if actor is HeroCard:
 		actor.hero_data.injuries += 1
@@ -281,9 +283,27 @@ func set_current_action(action: Action):
 	var hero = current_actor as HeroCard
 	current_action_panel.modulate = hero.get_current_role().color
 	current_action_panel.show()
-	for target: ActorCard in get_targets(action.target_type, true):
+	var targets := get_targets(action.target_type, true)
+	_apply_target_presentation(action, targets)
+
+
+func is_group_target_action(action: Action) -> bool:
+	return action != null and action.target_type in [
+		Action.TargetType.ALL_ENEMIES,
+		Action.TargetType.ALL_ALLIES,
+		Action.TargetType.ALLIES_ONLY,
+	]
+
+
+func _apply_target_presentation(action: Action, targets: Array) -> void:
+	var presentation := ActorCard.TargetPresentation.SELECTED \
+		if is_group_target_action(action) \
+		else ActorCard.TargetPresentation.AVAILABLE
+	for target: ActorCard in targets:
+		if not is_instance_valid(target):
+			continue
 		target.is_valid_target = true
-		target.set_target_presentation(ActorCard.TargetPresentation.AVAILABLE)
+		target.set_target_presentation(presentation)
 
 func _focus_button(button: ActionButton):
 	if focused_button:
@@ -557,9 +577,23 @@ func _flush_all_health_animations() -> void:
 		await tween.finished
 
 func _clear_all_targeting_ui():
-	for actor: ActorCard in actor_list:
+	for actor: ActorCard in _all_actor_cards():
 		actor.is_valid_target = false
 		actor.set_target_presentation(ActorCard.TargetPresentation.NORMAL)
+
+
+func _all_actor_cards() -> Array[ActorCard]:
+	var cards: Array[ActorCard] = []
+	for area: Control in [hero_area, enemy_area]:
+		if not is_instance_valid(area):
+			continue
+		for child in area.get_children():
+			if child is ActorCard and not cards.has(child):
+				cards.append(child)
+	for actor in actor_list:
+		if is_instance_valid(actor) and actor is ActorCard and not cards.has(actor):
+			cards.append(actor)
+	return cards
 
 func _on_spawn_particles(pos: Vector2, _type: String):
 	fx_manager.play_hit_effect(pos, false)
