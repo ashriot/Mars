@@ -277,6 +277,24 @@ func test_controller_target_entry_restores_last_valid_same_side_target() -> void
 	assert_eq(fixture.enemy.get_target_presentation(), ActorCard.TargetPresentation.AVAILABLE)
 
 
+func test_controller_target_entry_restores_and_falls_back_on_hero_side() -> void:
+	var fixture := await _navigation_fixture()
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	var other_hero := preload("res://src/battle/hero_card.tscn").instantiate() as HeroCard
+	other_hero.battle_manager = fixture.manager
+	other_hero.is_defeated = false
+	fixture.manager.hero_area.add_child(other_hero)
+	fixture.hero.is_valid_target = true
+	other_hero.is_valid_target = true
+	fixture.scene._last_hero_target = other_hero
+	fixture.scene._refresh_targeting()
+	assert_same(fixture.scene._current_target, other_hero)
+	fixture.scene._clear_current_target(false)
+	other_hero.is_defeated = true
+	fixture.scene._refresh_targeting()
+	assert_same(fixture.scene._current_target, fixture.hero)
+
+
 func test_invalid_remembered_target_falls_back_deterministically() -> void:
 	var fixture := await _navigation_fixture()
 	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
@@ -347,7 +365,7 @@ func test_invalid_current_target_falls_back_for_controller_and_clears_for_pointe
 	assert_null(fixture.scene._current_target)
 
 
-func test_cancel_and_teardown_return_all_cards_to_normal_and_stop_pulses() -> void:
+func test_cancel_returns_all_cards_to_normal_and_stops_pulses() -> void:
 	var fixture := await _navigation_fixture()
 	fixture.enemy.is_valid_target = true
 	fixture.scene._set_current_target(fixture.enemy)
@@ -593,16 +611,22 @@ func test_battle_phase_restore_retains_active_actor_without_cursor() -> void:
 	assert_false(ux.cursor.visible)
 
 
-func test_battle_adapter_teardown_clears_global_cursor_hints_and_refs() -> void:
+func test_battle_adapter_teardown_clears_target_presentation_cursor_hints_and_refs() -> void:
 	var fixture := await _navigation_fixture()
 	var scene: BattleScene = fixture.scene
 	var ux: NavigationUXLayer = fixture.ux
+	fixture.enemy.is_valid_target = true
+	scene._set_current_target(fixture.enemy)
+	assert_eq(fixture.enemy.get_target_presentation(), ActorCard.TargetPresentation.SELECTED)
 	assert_same(ux._adapter, scene)
-	scene.free()
+	scene.get_parent().remove_child(scene)
 	await get_tree().process_frame
+	assert_eq(fixture.enemy.get_target_presentation(), ActorCard.TargetPresentation.NORMAL)
+	assert_null(fixture.enemy._target_pulse_tween)
 	assert_null(ux._adapter)
 	assert_false(ux.cursor.visible)
 	assert_eq(ux.hint_bar.get_hint_count(), 0)
+	scene.free()
 
 
 func _battle_fixture() -> Dictionary:

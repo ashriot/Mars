@@ -129,15 +129,18 @@ Run this sequence once over USB and once over Bluetooth. Fill in both rows befor
 - [ ] Action 4 activates only the fourth visible enabled affordable skill.
 - [ ] Disabled, unaffordable, hidden, and missing skills do nothing and are not advertised as available.
 - [ ] Shift activates the currently legal direction once and does nothing when neither direction is legal.
-- [ ] Target navigation cycles only living valid targets using screen geometry; actor-card highlighting agrees with the selected target and no ordinary navigation arrow appears.
-- [ ] Confirm executes through the existing target selection path exactly once.
-- [ ] Target cancel executes nothing, exits targeting, and returns highlighting/hints to action selection or the active hero region.
+- [ ] During single-target selection, every valid hero/enemy card has a steady bright-white outline; invalid cards remain authored and unaffected.
+- [ ] The current mouse, keyboard, or controller target keeps the white outline and adds a thicker breathing glow whose base outline never dims.
+- [ ] Controller entry restores the last valid hero/enemy target or deterministic fallback; mouse/keyboard entry begins with no selected target.
+- [ ] Moving the mouse off every card clears visible selection and target-dependent CTB preview; the next directional press restores the retained origin before a later press moves.
+- [ ] Target changes with delay effects update the CTB preview immediately; all-target delay effects mark and preview every affected card.
+- [ ] The active hero slides up without a blinking outline, and target cancellation/execution/defeat leaves no stale outline or glow.
 - [ ] Open any battle modal/overlay; action, shift, target, confirm, and cancel input cannot leak beneath it; closing restores the battle adapter highlight.
 - [ ] Victory, retreat, and defeat result screens each focus Continue, show readable totals, accept confirm once, and route onward once.
 
 ## Sign-off
 
-The controls hint-bar redesign remains deferred. A future pass should make it a deliberate floating panel, use Archivo for sentence-case informational copy, and reserve monospace typography for uppercase labels and other all-caps interface text.
+The hub visual redesign remains deferred. The controls hint-bar redesign also remains deferred; a future pass should make it a deliberate floating panel, use Archivo for sentence-case informational copy, and reserve monospace typography for uppercase labels and other all-caps interface text.
 
 - [ ] Xbox physical hardware passed — device/build/date/notes:
 - [ ] PlayStation physical hardware passed — device/build/date/notes:

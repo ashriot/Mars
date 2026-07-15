@@ -25,7 +25,7 @@ const STARTING_NODE_IDS := {
 class LoopBattleManager extends BattleManager:
 	signal target_confirmed
 	var confirmed_targets := 0
-	var forced_enemy: EnemyCard
+	var forced_enemies: Array[EnemyCard] = []
 
 	func _ready() -> void:
 		action_bar.action_selected.connect(_on_action_button_pressed)
@@ -33,11 +33,11 @@ class LoopBattleManager extends BattleManager:
 	func _on_action_button_pressed(button: ActionButton):
 		current_action = button.action
 		current_state = State.FORCED_TARGET
-		forced_enemy.is_valid_target = true
+		_apply_target_presentation(current_action, forced_enemies)
 
 	func _on_enemy_clicked(enemy: EnemyCard):
 		confirmed_targets += 1
-		assert(enemy == forced_enemy)
+		assert(enemy in forced_enemies)
 		target_confirmed.emit()
 		battle_ended.emit(false)
 
@@ -104,7 +104,12 @@ class LoopManager extends GameManager:
 		battle_manager.current_encounter = encounter
 		await battle_manager.spawn_encounter()
 		var hero := battle_manager.hero_area.get_child(0) as HeroCard
-		battle_manager.forced_enemy = battle_manager.enemy_area.get_child(0) as EnemyCard
+		var first_enemy := battle_manager.enemy_area.get_child(0) as EnemyCard
+		var other_enemy := enemy_card_scene.instantiate() as EnemyCard
+		other_enemy.battle_manager = battle_manager
+		battle_manager.enemy_area.add_child(other_enemy)
+		other_enemy.position = first_enemy.position + Vector2(first_enemy.size.x + 40.0, 0.0)
+		battle_manager.forced_enemies.assign([first_enemy, other_enemy])
 		battle_manager.current_actor = hero
 		battle_manager.current_state = BattleManager.State.PLAYER_ACTION
 		await battle_manager.action_bar.load_actions(hero)
@@ -292,15 +297,27 @@ func test_controller_events_route_the_complete_playable_loop() -> void:
 	assert_eq(second_action.action.resource_path, "res://data/heroes/asher/actions/fusion_ammo.tres")
 	assert_true(first_action.visible)
 	assert_true(second_action.visible)
-	var previous_target := router.manager.battle_scene._current_target
 	assert_true(router.manager.battle_manager.action_bar.activate_slot(0))
 	await get_tree().process_frame
 	assert_eq(router.manager.battle_manager.current_state, BattleManager.State.FORCED_TARGET)
-	await _send(&"nav_right")
-	assert_ne(router.manager.battle_scene._current_target, previous_target)
-	assert_same(router.manager.battle_scene._current_target, router.manager.battle_manager.forced_enemy)
+	var valid_enemies := router.manager.battle_manager.get_living_enemies()
+	assert_gte(valid_enemies.size(), 2, "the playable-loop fixture exposes two valid targets")
+	if valid_enemies.size() < 2:
+		return
+	var first_valid := valid_enemies[0] as EnemyCard
+	var other_valid := valid_enemies[1] as EnemyCard
+	assert_eq(first_valid.get_target_presentation(), ActorCard.TargetPresentation.SELECTED)
+	assert_eq(other_valid.get_target_presentation(), ActorCard.TargetPresentation.AVAILABLE)
+	Input.parse_input_event(_joy_direction(JOY_BUTTON_DPAD_RIGHT, true))
+	await get_tree().process_frame
+	Input.parse_input_event(_joy_direction(JOY_BUTTON_DPAD_RIGHT, false))
+	await get_tree().process_frame
+	assert_eq(first_valid.get_target_presentation(), ActorCard.TargetPresentation.AVAILABLE)
+	assert_eq(other_valid.get_target_presentation(), ActorCard.TargetPresentation.SELECTED)
 	assert_false(navigation_ux.cursor.visible)
-	await _send(&"confirm")
+	Input.parse_input_event(_joy_confirm(true))
+	await get_tree().process_frame
+	Input.parse_input_event(_joy_confirm(false))
 	await get_tree().process_frame
 	assert_eq(router.manager.battle_confirmed, 1)
 	var result := router.manager.overlay_layer.get_child(0) as DungeonEndScreen
@@ -347,6 +364,11 @@ func _send(action: StringName) -> void:
 	event.pressed = true
 	get_viewport().push_input(event)
 	await get_tree().process_frame
+	event = InputEventAction.new()
+	event.action = action
+	event.pressed = false
+	get_viewport().push_input(event)
+	await get_tree().process_frame
 
 
 func _send_semantic(action: StringName) -> void:
@@ -355,6 +377,22 @@ func _send_semantic(action: StringName) -> void:
 	event.pressed = true
 	get_viewport().push_input(event)
 	await get_tree().process_frame
+	event = InputEventAction.new()
+	event.action = action
+	event.pressed = false
+	get_viewport().push_input(event)
+	await get_tree().process_frame
+
+
+func _joy_direction(button_index: JoyButton, pressed: bool) -> InputEventJoypadButton:
+	var event := InputEventJoypadButton.new()
+	event.button_index = button_index
+	event.pressed = pressed
+	return event
+
+
+func _joy_confirm(pressed: bool) -> InputEventJoypadButton:
+	return _joy_direction(JOY_BUTTON_A, pressed)
 
 
 func _assert_focus(expected: Control) -> void:
