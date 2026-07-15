@@ -17,6 +17,34 @@ func test_quarter_recovery_steps_map_to_half_band_steps() -> void:
 	assert_eq(CTBGauge.band_fills(60), [1.0, 1.0, 1.0]) # 150% CT
 
 
+func test_faction_strokes_overlay_light_medium_dark_at_one_width() -> void:
+	var hero := CTBGauge.faction_strokes(50.0, CTBGauge.Faction.HERO)
+	assert_eq(hero.size(), 3)
+	assert_eq(hero[0], {
+		"color": CTBGauge.HERO_COLORS[0],
+		"fraction": 1.0,
+		"width": CTBGauge.GAUGE_WIDTH,
+	})
+	assert_eq(hero[1], {
+		"color": CTBGauge.HERO_COLORS[1],
+		"fraction": 1.0,
+		"width": CTBGauge.GAUGE_WIDTH,
+	})
+	assert_eq(hero[2], {
+		"color": CTBGauge.HERO_COLORS[2],
+		"fraction": 0.5,
+		"width": CTBGauge.GAUGE_WIDTH,
+	})
+
+	var enemy := CTBGauge.faction_strokes(30.0, CTBGauge.Faction.ENEMY)
+	assert_eq(enemy.size(), 2)
+	assert_eq(enemy[0].color, CTBGauge.ENEMY_COLORS[0])
+	assert_eq(enemy[0].width, CTBGauge.GAUGE_WIDTH)
+	assert_eq(enemy[1].color, CTBGauge.ENEMY_COLORS[1])
+	assert_eq(enemy[1].fraction, 0.5)
+	assert_eq(enemy[1].width, CTBGauge.GAUGE_WIDTH)
+
+
 func test_partial_perimeter_has_exact_end_interpolation() -> void:
 	var square := PackedVector2Array([
 		Vector2.ZERO, Vector2(10, 0), Vector2(10, 10),

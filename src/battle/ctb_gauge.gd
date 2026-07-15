@@ -37,6 +37,21 @@ static func band_fills(ticks: float) -> Array[float]:
 	return fills
 
 
+static func faction_strokes(ticks: float, faction: Faction) -> Array[Dictionary]:
+	var colors := HERO_COLORS if faction == Faction.HERO else ENEMY_COLORS
+	var fills := band_fills(ticks)
+	var strokes: Array[Dictionary] = []
+	for band in 3:
+		if fills[band] <= 0.0:
+			continue
+		strokes.append({
+			"color": colors[band],
+			"fraction": fills[band],
+			"width": GAUGE_WIDTH,
+		})
+	return strokes
+
+
 static func partial_polyline(points: PackedVector2Array, fraction: float) -> PackedVector2Array:
 	if points.size() < 2 or fraction <= 0.0:
 		return PackedVector2Array()
@@ -136,9 +151,14 @@ func _draw() -> void:
 	if _is_current:
 		draw_polyline(path, CURRENT_COLOR, GAUGE_WIDTH, true)
 		return
-	var colors := HERO_COLORS if _faction == Faction.HERO else ENEMY_COLORS
-	var fills := band_fills(displayed_ticks)
-	for band in 3:
-		var partial := partial_polyline(path, fills[band])
+	for stroke: Dictionary in faction_strokes(displayed_ticks, _faction):
+		var partial := partial_polyline(path, float(stroke.fraction))
 		if partial.size() >= 2:
-			draw_polyline(partial, colors[band], GAUGE_WIDTH - band * 2.0, true)
+			var stroke_color: Color = stroke.color
+			var stroke_width: float = stroke.width
+			draw_polyline(
+				partial,
+				stroke_color,
+				stroke_width,
+				true,
+			)

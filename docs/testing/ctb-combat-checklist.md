@@ -9,7 +9,10 @@ All checks below are intentionally unchecked until performed interactively in co
 
 ## Queue rail layout
 
-- [ ] One rounded, semi-transparent black rail contains the entire current-and-future turn queue.
+- [ ] The unified rounded rail is black at 90% opacity and keeps icons/text readable over bright combat backgrounds.
+- [ ] Non-current gauges show a subtle dark-gray track with same-width opaque light, medium, and dark faction strokes covering one another, with no nested colored outlines.
+- [ ] The acting battlefield card uses the exact queue gold for the full hero or enemy turn.
+- [ ] Target availability, selection outline, and pulse remain independently visible while the acting gold outline persists beneath them.
 - [ ] Every queue entry is a uniform `72x72` square, and only the current entry has a gold perimeter.
 - [ ] Hero entries use their authored role icon and role color; enemy entries use readable Archivo abbreviations in magenta.
 - [ ] At `1920x1080`, the rail exposes at least eight complete queue cards at once and allows inspection of all twenty projected future turns.

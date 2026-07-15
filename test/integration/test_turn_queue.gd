@@ -147,7 +147,7 @@ func test_rail_allocation_fully_exposes_eight_queue_cards() -> void:
 
 func test_rail_background_and_scrollbar_stay_inside_queue() -> void:
 	var style := queue.rail_background.get_theme_stylebox("panel") as StyleBoxFlat
-	assert_eq(style.bg_color, Color(0, 0, 0, 0.70))
+	assert_eq(style.bg_color, Color(0, 0, 0, 0.90))
 	assert_eq(style.corner_radius_top_left, 18)
 	assert_eq(style.corner_radius_top_right, 18)
 	assert_eq(style.corner_radius_bottom_left, 18)

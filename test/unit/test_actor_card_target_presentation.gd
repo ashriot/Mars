@@ -50,6 +50,26 @@ func test_repeated_target_state_assignment_keeps_one_tween_and_exact_normal_clea
 	assert_false(card.target_pulse.visible)
 
 
+func test_acting_outline_matches_queue_gold_and_stays_independent_of_targeting() -> void:
+	for card in _cards():
+		var acting_outline := card.get_node("Panel/Highlight") as Panel
+		var acting_style := acting_outline.get_theme_stylebox(&"panel") as StyleBoxFlat
+		assert_eq(acting_style.border_color, CTBGauge.CURRENT_COLOR)
+		assert_false(acting_outline.visible)
+
+		card.highlight(true)
+		card.set_target_presentation(ActorCard.TargetPresentation.SELECTED)
+		assert_true(acting_outline.visible)
+		assert_eq(acting_style.border_color, Color("ffc94a"))
+		assert_true(card.target_outline.visible)
+		assert_true(card.target_pulse.visible)
+
+		card.highlight(false)
+		assert_false(acting_outline.visible)
+		assert_true(card.target_outline.visible)
+		assert_true(card.target_pulse.visible)
+
+
 func test_selected_target_pulse_fades_from_transparent_to_at_most_half_opacity() -> void:
 	var card := _cards()[0]
 	card.set_target_presentation(ActorCard.TargetPresentation.SELECTED)
