@@ -45,7 +45,8 @@ func test_defeated_hero_rejoins_projection_through_reviving_heal_once() -> void:
 		hero.connect("actor_revived", manager._on_actor_revived)
 	var published_queues := {count = 0}
 	manager.turn_order_updated.connect(
-		func(_queue: Array, _animate: bool) -> void: published_queues.count += 1
+		func(_queue: Array, _kind: BattleManager.TurnOrderUpdate) -> void:
+			published_queues.count += 1
 	)
 
 	hero.defeated()

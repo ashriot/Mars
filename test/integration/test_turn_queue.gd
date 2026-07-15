@@ -206,6 +206,18 @@ func test_preview_and_refresh_preserve_scroll_but_commit_and_advance_reset() -> 
 	queue._on_turn_order_updated(projection, BattleManager.TurnOrderUpdate.ADVANCE)
 	assert_eq(queue.queue_scroll.scroll_vertical, 0)
 
+	queue.queue_scroll.scroll_vertical = 160
+	queue._on_turn_order_updated(projection, BattleManager.TurnOrderUpdate.PREVIEW)
+	queue._on_turn_order_updated(projection, BattleManager.TurnOrderUpdate.COMMIT)
+	await get_tree().process_frame
+	assert_eq(queue.queue_scroll.scroll_vertical, 0, "stale preview cannot undo commit reset")
+
+	queue.queue_scroll.scroll_vertical = 160
+	queue._on_turn_order_updated(projection, BattleManager.TurnOrderUpdate.PREVIEW)
+	queue._on_turn_order_updated(projection, BattleManager.TurnOrderUpdate.ADVANCE)
+	await get_tree().process_frame
+	assert_eq(queue.queue_scroll.scroll_vertical, 0, "stale preview cannot undo advance reset")
+
 
 func test_right_stick_scroll_does_not_change_combat_selection() -> void:
 	var hero := _hero("Asher")

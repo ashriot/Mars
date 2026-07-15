@@ -32,6 +32,22 @@ class AdvancementBattleManager extends BattleManager:
 		return
 
 
+class PublishingBattleManager extends BattleManager:
+	func _flush_all_health_animations() -> void:
+		return
+
+	func wait(_duration: float = 0.01) -> void:
+		return
+
+
+class PublishingActor extends ActorCard:
+	func show_action(_action_name: String) -> void:
+		return
+
+	func hide_action() -> void:
+		return
+
+
 func _actor(hero: bool, speed: int, ct: int, priority: int) -> ActorCard:
 	var actor: ActorCard = HeroCard.new() if hero else EnemyCard.new()
 	var stats := ActorStats.new()
@@ -198,11 +214,17 @@ func test_live_advancement_matches_projected_normalized_ticks() -> void:
 	observer.current_stats.speed = 50
 	observer.ct_speed_scale = 2.0
 	manager.actor_list = [winner, observer]
+	var kinds: Array[int] = []
+	manager.turn_order_updated.connect(
+		func(_queue: Array, kind: BattleManager.TurnOrderUpdate) -> void:
+			kinds.append(kind)
+	)
 
 	manager.find_and_start_next_turn()
 
 	assert_same(manager.current_actor, winner)
 	assert_eq(observer.current_ct, manager.TARGET_CT)
+	assert_eq(kinds, [BattleManager.TurnOrderUpdate.ADVANCE])
 	winner.free()
 	observer.free()
 	manager.action_bar.free()
@@ -234,7 +256,7 @@ func test_active_actor_stays_first_and_remains_in_future_projection() -> void:
 	manager.free()
 
 
-func test_manager_publishes_explicit_preview_refresh_and_advance_kinds() -> void:
+func test_manager_publishes_explicit_preview_and_refresh_kinds() -> void:
 	var manager := BattleManager.new()
 	var actor := _actor(true, 100, 0, 0)
 	manager.actor_list = [actor]
@@ -247,13 +269,33 @@ func test_manager_publishes_explicit_preview_refresh_and_advance_kinds() -> void
 
 	manager.update_turn_order()
 	manager.preview_action_turn_order(actor, Action.new())
-	manager._publish_turn_order(BattleManager.TurnOrderUpdate.COMMIT)
 
 	assert_eq(kinds, [
 		BattleManager.TurnOrderUpdate.REFRESH,
 		BattleManager.TurnOrderUpdate.PREVIEW,
-		BattleManager.TurnOrderUpdate.COMMIT,
 	])
+	actor.free()
+	manager.free()
+
+
+func test_visible_execution_commits_but_hidden_passive_execution_does_not() -> void:
+	var manager := PublishingBattleManager.new()
+	var actor := PublishingActor.new()
+	actor.current_stats = ActorStats.new()
+	actor.current_stats.speed = 100
+	actor.actor_name = "Publisher"
+	manager.actor_list = [actor]
+	manager.current_actor = actor
+	var kinds: Array[int] = []
+	manager.turn_order_updated.connect(
+		func(_queue: Array, kind: BattleManager.TurnOrderUpdate) -> void:
+			kinds.append(kind)
+	)
+
+	await manager.execute_action(actor, Action.new(), [], true, false)
+	await manager.execute_action(actor, Action.new(), [], false, false)
+
+	assert_eq(kinds, [BattleManager.TurnOrderUpdate.COMMIT])
 	actor.free()
 	manager.free()
 
