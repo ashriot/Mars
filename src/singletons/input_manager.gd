@@ -19,6 +19,7 @@ var _active_mode := InputMode.KEYBOARD_MOUSE
 var _active_controller_type := InputIconMap.ControllerType.STEAM_DECK
 var _presentation_mode := PresentationMode.POINTER
 var _consumed_mouse_button: MouseButton = MOUSE_BUTTON_NONE
+var _processing_controller_direction := false
 
 
 func _ready() -> void:
@@ -29,9 +30,11 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and _consumed_mouse_button != MOUSE_BUTTON_NONE:
+	if event is InputEventMouseButton \
+		and event.button_index == _consumed_mouse_button \
+		and _consumed_mouse_button != MOUSE_BUTTON_NONE:
 		_mark_input_handled()
-		if event.button_index == _consumed_mouse_button and not event.pressed:
+		if not event.pressed:
 			_consumed_mouse_button = MOUSE_BUTTON_NONE
 		return
 	if event is InputEventMouseMotion:
@@ -41,10 +44,12 @@ func _input(event: InputEvent) -> void:
 	if not is_meaningful_event(event):
 		return
 	if event is InputEventJoypadButton or event is InputEventJoypadMotion:
+		_processing_controller_direction = _is_directional_navigation_event(event)
 		_set_active_mode(InputMode.CONTROLLER)
 		_set_presentation_mode(PresentationMode.FOCUS)
 		_set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 		_set_active_controller_type(InputIconMap.get_controller_type_from_name(Input.get_joy_name(event.device)))
+		_processing_controller_direction = false
 		return
 	if event is InputEventKey:
 		var previous_mode := _active_mode
@@ -52,7 +57,7 @@ func _input(event: InputEvent) -> void:
 		_set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 		if previous_mode == InputMode.CONTROLLER:
 			_set_presentation_mode(PresentationMode.FOCUS)
-		elif _presentation_mode == PresentationMode.POINTER and _is_directional_navigation_key(event):
+		elif _presentation_mode == PresentationMode.POINTER and _is_directional_navigation_event(event):
 			_set_presentation_mode(PresentationMode.FOCUS)
 			_mark_input_handled()
 		return
@@ -62,7 +67,8 @@ func _input(event: InputEvent) -> void:
 		_set_presentation_mode(PresentationMode.POINTER)
 		_set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 		if previous_mode == InputMode.CONTROLLER:
-			_consumed_mouse_button = event.button_index
+			if _mouse_button_has_release(event.button_index):
+				_consumed_mouse_button = event.button_index
 			_mark_input_handled()
 
 
@@ -152,11 +158,26 @@ func _apply_family_bindings(type: InputIconMap.ControllerType) -> void:
 		InputMap.action_add_event(action, joy_event)
 
 
-func _is_directional_navigation_key(event: InputEventKey) -> bool:
+func consume_controller_direction_for_focus_recovery() -> void:
+	if _processing_controller_direction:
+		_mark_input_handled()
+
+
+func _is_directional_navigation_event(event: InputEvent) -> bool:
 	for action in DIRECTIONAL_NAVIGATION_ACTIONS:
 		if event.is_action(action):
 			return true
 	return false
+
+
+func _mouse_button_has_release(button: MouseButton) -> bool:
+	return button in [
+		MOUSE_BUTTON_LEFT,
+		MOUSE_BUTTON_RIGHT,
+		MOUSE_BUTTON_MIDDLE,
+		MOUSE_BUTTON_XBUTTON1,
+		MOUSE_BUTTON_XBUTTON2,
+	]
 
 
 func _set_mouse_mode(mode: Input.MouseMode) -> void:

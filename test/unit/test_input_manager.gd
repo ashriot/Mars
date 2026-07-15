@@ -97,10 +97,11 @@ func test_controller_mouse_handoff_consumes_press_and_matching_release() -> void
 	assert_eq(manager._consumed_mouse_button, MOUSE_BUTTON_NONE)
 
 
-func test_consumed_mouse_transaction_survives_interleaved_controller_input() -> void:
+func test_consumed_mouse_transaction_survives_interleaved_controller_and_keyboard_input() -> void:
 	manager._input(_unconnected_joy_button(JOY_BUTTON_A))
 	manager._input(_mouse_button(MOUSE_BUTTON_LEFT, true))
 	manager._input(_unconnected_joy_button(JOY_BUTTON_A))
+	manager._input(_key(KEY_UP))
 	assert_eq(manager.handled_event_count, 1)
 	assert_eq(manager._consumed_mouse_button, MOUSE_BUTTON_LEFT)
 
@@ -108,6 +109,38 @@ func test_consumed_mouse_transaction_survives_interleaved_controller_input() -> 
 
 	assert_eq(manager.handled_event_count, 2)
 	assert_eq(manager._consumed_mouse_button, MOUSE_BUTTON_NONE)
+
+
+func test_wheel_handoff_does_not_leave_a_pending_mouse_transaction() -> void:
+	manager._input(_unconnected_joy_button(JOY_BUTTON_A))
+	manager._input(_mouse_button(MOUSE_BUTTON_WHEEL_UP, true))
+	assert_eq(manager.get_active_mode(), manager.InputMode.KEYBOARD_MOUSE)
+	assert_eq(manager.get_presentation_mode(), manager.PresentationMode.POINTER)
+	assert_eq(manager.handled_event_count, 1)
+	assert_eq(manager._consumed_mouse_button, MOUSE_BUTTON_NONE)
+
+	manager._input(_mouse_button(MOUSE_BUTTON_LEFT, true))
+	manager._input(_mouse_button(MOUSE_BUTTON_LEFT, false))
+
+	assert_eq(manager.handled_event_count, 1, "subsequent pointer-owned clicks proceed normally")
+	assert_eq(manager._consumed_mouse_button, MOUSE_BUTTON_NONE)
+
+
+func test_pending_handoff_consumes_only_the_initiating_button_transaction() -> void:
+	manager._input(_unconnected_joy_button(JOY_BUTTON_A))
+	manager._input(_mouse_button(MOUSE_BUTTON_LEFT, true))
+	manager._input(_mouse_button(MOUSE_BUTTON_RIGHT, true))
+	manager._input(_mouse_button(MOUSE_BUTTON_RIGHT, false))
+	assert_eq(manager.handled_event_count, 1, "a different button remains available to pointer ownership")
+	assert_eq(manager._consumed_mouse_button, MOUSE_BUTTON_LEFT)
+
+	manager._input(_mouse_button(MOUSE_BUTTON_LEFT, false))
+	assert_eq(manager.handled_event_count, 2)
+	assert_eq(manager._consumed_mouse_button, MOUSE_BUTTON_NONE)
+
+	manager._input(_mouse_button(MOUSE_BUTTON_RIGHT, true))
+	manager._input(_mouse_button(MOUSE_BUTTON_RIGHT, false))
+	assert_eq(manager.handled_event_count, 2, "later clicks proceed normally after the handoff release")
 
 
 func test_keyboard_from_controller_reveals_pointer_and_does_not_consume_action() -> void:

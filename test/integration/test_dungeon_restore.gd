@@ -352,6 +352,19 @@ func test_scan_starts_on_party_with_single_reticle() -> void:
 	assert_eq(dungeon_map.player_reticle.position, dungeon_map.current_node.position)
 
 
+func test_freeing_active_controller_scan_hides_global_pointer() -> void:
+	var navigation := _make_navigation_ux()
+	var setup := await _prepare_navigation_map()
+	var dungeon_map: DungeonMap = setup.map
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	dungeon_map.start_targeting_mode(1)
+	assert_true(navigation.cursor.visible)
+
+	dungeon_map.free()
+
+	assert_false(navigation.cursor.visible)
+
+
 func test_scan_start_without_current_node_is_rejected_and_cancel_is_safe() -> void:
 	var dungeon_map := await _make_map()
 	dungeon_map.current_map_state = DungeonMap.MapState.PLAYING

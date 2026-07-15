@@ -167,6 +167,8 @@ func _exit_tree() -> void:
 		camera_controller.cancel_motion()
 	var navigation := _navigation_ux_layer()
 	if navigation:
+		if is_instance_valid(navigation.cursor):
+			navigation.cursor.hide_pointer()
 		if navigation._adapter == self:
 			navigation.set_adapter(null)
 		navigation.publish_hints([])

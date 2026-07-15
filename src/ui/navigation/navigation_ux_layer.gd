@@ -231,7 +231,10 @@ func _on_presentation_mode_changed(mode: InputManager.PresentationMode) -> void:
 		if is_instance_valid(_focus_target):
 			NavigationFocus.clear(_focus_target)
 		return
+	var had_valid_origin := _is_focusable(_focus_target)
 	ensure_valid_focus()
+	if not had_valid_origin and _is_focusable(_focus_target):
+		InputManager.consume_controller_direction_for_focus_recovery()
 	if _is_focusable(_focus_target):
 		NavigationFocus.apply(_focus_target)
 

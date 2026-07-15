@@ -273,6 +273,23 @@ func test_focus_presentation_resolves_invalid_retained_target_to_fallback() -> v
 	assert_true(NavigationFocus._states.has(setup.middle.get_instance_id()))
 
 
+func test_controller_direction_recovering_invalid_retained_focus_stops_at_fallback() -> void:
+	var setup := await _three_button_screen()
+	setup.top.grab_focus()
+	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)
+	setup.top.disabled = true
+
+	get_viewport().push_input(_joy_direction(JOY_BUTTON_DPAD_DOWN, true))
+	await get_tree().process_frame
+	assert_same(get_viewport().gui_get_focus_owner(), setup.middle)
+	assert_same(setup.ux.get_focus_target(), setup.middle)
+	get_viewport().push_input(_joy_direction(JOY_BUTTON_DPAD_DOWN, false))
+
+	get_viewport().push_input(_joy_direction(JOY_BUTTON_DPAD_DOWN, true))
+	await get_tree().process_frame
+	assert_same(get_viewport().gui_get_focus_owner(), setup.bottom)
+
+
 func test_top_modal_query_tracks_nested_ownership() -> void:
 	var ux = UXScene.instantiate()
 	add_child_autofree(ux)
