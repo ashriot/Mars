@@ -53,6 +53,7 @@ var current_stats: ActorStats
 var current_hp: int
 var current_guard: int
 var current_ct: int = 0
+var battle_priority: int = 0
 var is_breached: bool
 var is_in_danger: bool
 var is_defeated: bool

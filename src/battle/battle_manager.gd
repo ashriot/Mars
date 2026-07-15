@@ -74,6 +74,7 @@ func spawn_encounter():
 		hero_card.actor_conditions_changed.connect(_on_actor_conditions_changed)
 		hero_card.current_ct = randi_range(0, hero_data.stats.speed * 5)
 		print(hero_card.actor_name, "'s CT: ", hero_card.current_ct)
+		hero_card.battle_priority = actor_list.size()
 		actor_list.append(hero_card)
 
 	var spawned_enemies: Array[EnemyCard] = []
@@ -102,6 +103,7 @@ func spawn_encounter():
 		enemy_card.actor_conditions_changed.connect(_on_actor_conditions_changed)
 		enemy_card.current_ct = randi_range(0, enemy_data.stats.speed * 5)
 		print(enemy_card.actor_name, "'s CT: ", enemy_card.current_ct)
+		enemy_card.battle_priority = actor_list.size()
 		actor_list.append(enemy_card)
 		enemy_card.prepare_turn_base_action()
 
@@ -138,51 +140,16 @@ func _apply_starting_passives() -> void:
 	print("--- Starting Passives Applied ---")
 	return
 
-func _run_ct_simulation(num_turns := 10) -> Array:
-	var projected_queue = []
-	var relative_ticks = 0
+func _run_ct_simulation(num_turns := 10, ct_adjustments: Dictionary = {}) -> Array:
+	return CTBSimulator.project(actor_list, TARGET_CT, num_turns, ct_adjustments)
 
-	var sim_data = []
-	for actor in actor_list:
-		sim_data.append({
-			"actor": actor,
-			"ct": actor.current_ct # Copy the REAL, current CT
-		})
 
-	while projected_queue.size() < num_turns:
-		var winner_dict = null
-		var ticks_needed_for_winner = INF
-
-		# 3. Find the next winner in the "ghost" list
-		for data in sim_data:
-			var ct_needed = TARGET_CT - data.ct
-			var ticks_needed = 0
-			if ct_needed > 0:
-				var speed = max(data.actor.get_speed(), 1)
-				ticks_needed = ceil(float(ct_needed) / speed)
-
-			if ticks_needed < ticks_needed_for_winner:
-				ticks_needed_for_winner = ticks_needed
-				winner_dict = data
-			elif ticks_needed == ticks_needed_for_winner:
-				if sort_actors_by_ct(data.actor, winner_dict.actor):
-					winner_dict = data
-
-		if not winner_dict:
-			break
-
-		relative_ticks += ticks_needed_for_winner
-		projected_queue.append({
-			"actor": winner_dict.actor,
-			"ticks_needed": relative_ticks # e.g., 0, 28, 48
-		})
-
-		for data in sim_data:
-			data.ct += data.actor.get_speed() * ticks_needed_for_winner
-
-		winner_dict.ct = 0
-
-	return projected_queue
+func _display_projection(ct_adjustments: Dictionary = {}, count: int = 10) -> Array:
+	var future_count := count - 1 if is_instance_valid(current_actor) else count
+	var projection := _run_ct_simulation(future_count, ct_adjustments)
+	if is_instance_valid(current_actor):
+		projection.insert(0, {"actor": current_actor, "ticks_needed": 0})
+	return projection
 
 func find_and_start_next_turn():
 	executing_action = null
@@ -192,7 +159,7 @@ func find_and_start_next_turn():
 		current_actor.highlight(false)
 	change_state(State.LOADING)
 
-	var projection = _run_ct_simulation()
+	var projection := _run_ct_simulation()
 
 	if projection.is_empty():
 		push_error("Error: No one can take a turn!")
@@ -203,12 +170,11 @@ func find_and_start_next_turn():
 	var real_ticks_passed = first_turn_data.ticks_needed
 
 	for actor in actor_list:
-		actor.current_ct += actor.get_speed() * real_ticks_passed
+		actor.current_ct += maxi(actor.get_speed(), 1) * real_ticks_passed
 
 	winner.current_ct = 0
-	turn_order_updated.emit(projection, false)
-
 	current_actor = winner
+	turn_order_updated.emit(_display_projection(), false)
 	if winner is HeroCard:
 		if action_bar.sliding:
 			await action_bar.slide_finished
@@ -229,21 +195,13 @@ func find_and_start_next_turn():
 		await wait(0.5)
 		find_and_start_next_turn()
 
-func sort_actors_by_ct(a, b):
-	var a_is_player = a is HeroCard
-	var b_is_player = b is HeroCard
-
-	if a_is_player and not b_is_player: return true
-	if not a_is_player and b_is_player: return false
-	return randf() > 0.5
-
 func _on_actor_breached():
 	_update_all_enemy_intents()
 	print("\n Actor was Breached -> New Queue: ")
 	update_turn_order()
 
-func update_turn_order():
-	turn_order_updated.emit(_run_ct_simulation(), false)
+func update_turn_order() -> void:
+	turn_order_updated.emit(_display_projection(), false)
 
 func _update_all_enemy_intents():
 	var living_heroes = get_living_heroes()
