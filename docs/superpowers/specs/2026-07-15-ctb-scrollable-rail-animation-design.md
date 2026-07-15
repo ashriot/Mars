@@ -9,7 +9,7 @@ Refine the combat turn-order presentation into a compact, readable, animated tim
 
 ## Visual Structure
 
-The complete turn order lives inside one tall, narrow, semi-transparent black rounded rectangle on the right side of combat. The backing panel covers the existing rail footprint and sits behind all entries, gauges, and scroll feedback. It must not extend the queue's mouse-interaction region beyond the rail.
+The complete turn order lives inside one tall, narrow, rounded black rectangle at 90% opacity on the right side of combat. The backing panel covers the existing rail footprint and sits behind all entries, gauges, and scroll feedback. It must not extend the queue's mouse-interaction region beyond the rail.
 
 The rail contains one unified vertical scroll view. The current occurrence is the first item in the same scrolling list as every future occurrence; it is not pinned. Every entry is a 72 by 72 pixel square with equal spacing. The current occurrence is identified only by its gold perimeter gauge. It is not enlarged and has no separate name label.
 
@@ -22,6 +22,20 @@ Hero entries display the current role icon tinted with the role's authored color
 Enemy entries display the existing stable abbreviation. The abbreviation uses the project's Archivo font and the bright magenta used by the outer enemy CT gauge (`CTBGauge.ENEMY_COLORS[0]`). The active occurrence retains the same entry content; its gold perimeter is sufficient to show current-turn state.
 
 The rail backing supplies contrast for both hero icons and enemy text. Individual entries retain their existing dark interior treatment only where needed for legibility; the result should read as one unified rail rather than a stack of unrelated black panels.
+
+## Gauge Composition
+
+Each non-current CT gauge begins with the existing subtle dark-gray perimeter track. The three 20-tick faction bands are then painted over that track in light, medium, and dark cyan for heroes or magenta for enemies.
+
+All three faction strokes use the same six-pixel width and are fully opaque. The light band paints first, the medium band paints over it, and the dark band paints last. A partial later band covers only its filled fraction of the same perimeter. The bands never use progressively narrower widths, so the result has no concentric or nested colored lines.
+
+The current queue occurrence remains a single full gold perimeter using `CTBGauge.CURRENT_COLOR` (`#FFC94A`).
+
+## Acting Unit Outline
+
+The battlefield card belonging to `BattleManager.current_actor` shows a persistent `#FFC94A` outline for the full acting turn. Hero and enemy cards use the same gold as the current queue occurrence.
+
+The acting outline is an independent turn-state layer beneath the existing target outline and target pulse. Hover, available-target, and selected-target presentation may appear simultaneously without hiding or replacing the gold acting outline. The outline clears when the actor's turn ends and transfers when the next turn begins.
 
 ## Scrolling
 
@@ -61,10 +75,12 @@ Automated coverage will protect:
 - uniform 72 by 72 entry sizing and removal of the separate active name;
 - one scroll container containing current and future entries;
 - role-color icon tint, Archivo enemy font, and bright-magenta enemy text;
+- 90%-opaque rail backing and same-width light/medium/dark gauge overlays;
+- persistent gold acting-card outline on hero and enemy turns without disrupting target presentation;
 - inset scrollbar visibility at the top and away from the top;
 - preview scroll preservation and committed-update snap-to-top behavior;
 - stable occurrence reuse, outgoing fade, position swaps, and gauge interpolation;
 - stale tween cancellation under rapid projections;
 - empty-queue cleanup and unchanged right-stick selection behavior.
 
-Manual acceptance at the 1920 by 1080 reference viewport will confirm contrast, rounded-rail composition, readable crossing animations, scrollbar placement, and mouse/controller/touch feel.
+Manual acceptance at the 1920 by 1080 reference viewport will confirm contrast, rounded-rail composition, non-nested gauge readability, acting-card/queue visual correspondence, readable crossing animations, scrollbar placement, and mouse/controller/touch feel.
