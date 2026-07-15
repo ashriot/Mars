@@ -181,14 +181,14 @@ func test_target_navigation_filters_invalid_cards_and_uses_geometry() -> void:
 	var first: EnemyCard = fixture.first
 	var defeated: EnemyCard = fixture.defeated
 	var right: EnemyCard = fixture.right
-	scene._controller_target = first
+	scene._current_target = first
 	scene.select_direction(Vector2.RIGHT)
-	assert_same(scene._controller_target, right)
+	assert_same(scene._current_target, right)
 	scene.select_direction(Vector2.LEFT)
-	assert_same(scene._controller_target, first)
-	assert_ne(scene._controller_target, defeated)
+	assert_same(scene._current_target, first)
+	assert_ne(scene._current_target, defeated)
 	scene.select_direction(Vector2.LEFT)
-	assert_same(scene._controller_target, right, "edge navigation cycles through valid targets")
+	assert_same(scene._current_target, right, "edge navigation cycles through valid targets")
 
 
 func test_standard_right_direction_changes_battle_target() -> void:
@@ -196,11 +196,11 @@ func test_standard_right_direction_changes_battle_target() -> void:
 	var scene: BattleScene = fixture.scene
 	var first: EnemyCard = fixture.first
 	var right: EnemyCard = fixture.right
-	scene._controller_target = first
+	scene._current_target = first
 	Input.action_press(&"ui_right")
 	scene._process(0.0)
 	Input.action_release(&"ui_right")
-	assert_same(scene._controller_target, right)
+	assert_same(scene._current_target, right)
 
 
 func test_battle_target_change_uses_actor_highlight_without_cursor() -> void:
@@ -209,9 +209,9 @@ func test_battle_target_change_uses_actor_highlight_without_cursor() -> void:
 	var manager: TrackingBattleManager = fixture.manager
 	manager.current_action = Action.new()
 	fixture.enemy.is_valid_target = true
-	scene._set_controller_target(fixture.enemy)
-	assert_same(scene._controller_target, fixture.enemy)
-	assert_eq(manager.enemy_hover_count, 1)
+	scene._set_current_target(fixture.enemy)
+	assert_same(scene._current_target, fixture.enemy)
+	assert_eq(fixture.enemy.get_target_presentation(), ActorCard.TargetPresentation.SELECTED)
 	assert_false(fixture.ux.cursor.visible)
 
 
@@ -223,9 +223,58 @@ func test_self_targeting_refresh_retains_active_hero_without_cursor() -> void:
 	manager.current_action.target_type = Action.TargetType.SELF
 	fixture.hero.is_valid_target = true
 	fixture.enemy.is_valid_target = false
-	scene._controller_target = fixture.hero
+	scene._current_target = fixture.hero
 	scene._refresh_targeting()
-	assert_same(scene._controller_target, fixture.hero)
+	assert_same(scene._current_target, fixture.hero)
+
+
+func test_controller_target_entry_restores_last_valid_same_side_target() -> void:
+	var fixture := await _navigation_fixture()
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	fixture.enemy.is_valid_target = true
+	fixture.second_enemy.is_valid_target = true
+	fixture.scene._last_enemy_target = fixture.second_enemy
+	fixture.scene._refresh_targeting()
+	assert_same(fixture.scene._current_target, fixture.second_enemy)
+	assert_eq(fixture.second_enemy.get_target_presentation(), ActorCard.TargetPresentation.SELECTED)
+	assert_eq(fixture.enemy.get_target_presentation(), ActorCard.TargetPresentation.AVAILABLE)
+
+
+func test_invalid_remembered_target_falls_back_deterministically() -> void:
+	var fixture := await _navigation_fixture()
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	fixture.enemy.is_valid_target = true
+	fixture.second_enemy.is_valid_target = true
+	fixture.second_enemy.is_defeated = true
+	fixture.scene._last_enemy_target = fixture.second_enemy
+	fixture.scene._refresh_targeting()
+	assert_same(fixture.scene._current_target, fixture.enemy)
+
+
+func test_keyboard_mouse_entry_starts_without_an_executable_target() -> void:
+	var fixture := await _navigation_fixture()
+	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
+	InputManager._set_presentation_mode(InputManager.PresentationMode.FOCUS)
+	fixture.enemy.is_valid_target = true
+	fixture.second_enemy.is_valid_target = true
+	fixture.scene._refresh_targeting()
+	assert_null(fixture.scene._current_target)
+	assert_null(fixture.scene._navigation_origin)
+	assert_eq(fixture.enemy.get_target_presentation(), ActorCard.TargetPresentation.AVAILABLE)
+
+
+func test_pointer_cleared_origin_restores_before_next_direction_moves() -> void:
+	var fixture := await _navigation_fixture()
+	fixture.enemy.is_valid_target = true
+	fixture.second_enemy.is_valid_target = true
+	fixture.scene._set_current_target(fixture.enemy)
+	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
+	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)
+	fixture.scene._clear_current_target(true)
+	fixture.scene.select_direction(Vector2.RIGHT)
+	assert_same(fixture.scene._current_target, fixture.enemy)
+	fixture.scene.select_direction(Vector2.RIGHT)
+	assert_same(fixture.scene._current_target, fixture.second_enemy)
 
 
 func test_selected_action_hotkey_toggles_targeting_off() -> void:
@@ -241,7 +290,7 @@ func test_selected_action_hotkey_toggles_targeting_off() -> void:
 	assert_null(manager.focused_button)
 	assert_eq(manager.current_state, BattleManager.State.PLAYER_ACTION)
 	assert_eq(manager.clear_count, 1)
-	assert_same(scene._controller_target, manager.current_actor)
+	assert_null(scene._current_target)
 
 
 func test_different_action_hotkey_replaces_current_selection() -> void:
@@ -262,11 +311,11 @@ func test_held_direction_repeats_after_delay() -> void:
 	var scene: TrackingBattleScene = fixture.scene
 	var first: EnemyCard = fixture.first
 	var right: EnemyCard = fixture.right
-	scene._controller_target = first
+	scene._current_target = first
 	scene.process_controller_direction(Vector2.RIGHT, 0.0)
-	assert_same(scene._controller_target, right)
+	assert_same(scene._current_target, right)
 	scene.process_controller_direction(Vector2.RIGHT, BattleScene.REPEAT_DELAY)
-	assert_same(scene._controller_target, first, "held navigation repeats and cycles")
+	assert_same(scene._current_target, first, "held navigation repeats and cycles")
 
 
 func test_confirm_delegates_to_existing_selection_and_cancel_never_executes() -> void:
@@ -274,16 +323,16 @@ func test_confirm_delegates_to_existing_selection_and_cancel_never_executes() ->
 	var scene: BattleScene = fixture.scene
 	var manager: TrackingBattleManager = fixture.manager
 	var first: EnemyCard = fixture.first
-	scene._controller_target = first
+	scene._set_current_target(first)
 	scene.confirm_target()
 	assert_same(manager.selected_enemy, first)
 	manager.selected_enemy = null
 	manager.current_state = BattleManager.State.FORCED_TARGET
-	scene._controller_target = first
+	scene._set_current_target(first)
 	scene.cancel_targeting()
 	assert_null(manager.selected_enemy, "cancel does not execute")
 	assert_eq(manager.current_state, BattleManager.State.PLAYER_ACTION)
-	assert_same(scene._controller_target, manager.current_actor, "cursor region returns to active hero")
+	assert_null(scene._current_target, "target ownership clears after cancel")
 
 
 func test_confirm_is_not_consumed_outside_targeting_or_confused_with_action_one() -> void:
@@ -292,7 +341,7 @@ func test_confirm_is_not_consumed_outside_targeting_or_confused_with_action_one(
 	var manager: TrackingBattleManager = fixture.manager
 	manager.current_state = BattleManager.State.PLAYER_ACTION
 	manager.current_action = null
-	scene._controller_target = manager.current_actor
+	scene._current_target = manager.current_actor
 	scene._unhandled_input(_action_event(&"confirm"))
 	assert_null(manager.selected_hero)
 	assert_null(manager.selected_enemy)
@@ -303,10 +352,9 @@ func test_mouse_mode_clears_synthetic_controller_hover_without_selecting() -> vo
 	var scene: TrackingBattleScene = fixture.scene
 	var manager: TrackingBattleManager = fixture.manager
 	var first: EnemyCard = fixture.first
-	scene._controller_target = first
+	scene._current_target = first
 	scene._on_input_mode_changed(InputManager.InputMode.KEYBOARD_MOUSE)
-	assert_eq(manager.enemy_unhover_count, 1)
-	assert_same(scene._controller_target, manager.current_actor)
+	assert_same(scene._current_target, first)
 	assert_null(manager.selected_enemy)
 
 
@@ -396,7 +444,7 @@ func test_combat_keeps_global_hints_hidden_during_targeting() -> void:
 	var ux: NavigationUXLayer = fixture.ux
 	manager.current_action = Action.new()
 	fixture.enemy.is_valid_target = true
-	scene._controller_target = fixture.enemy
+	scene._current_target = fixture.enemy
 	ux.publish_hints([{action = &"cancel", label = "Previous Screen", enabled = true}])
 	assert_eq(ux.hint_bar.get_hint_count(), 1)
 	scene._publish_controller_hints()
@@ -439,7 +487,7 @@ func test_top_modal_suppresses_battle_input_and_restores_adapter_focus() -> void
 	ux.pop_modal(modal)
 	await get_tree().process_frame
 	assert_same(ux._adapter, scene)
-	assert_same(scene._controller_target, manager.current_actor)
+	assert_null(scene._current_target)
 	assert_false(ux.cursor.visible)
 
 
@@ -450,7 +498,7 @@ func test_battle_phase_restore_retains_active_actor_without_cursor() -> void:
 	var ux: NavigationUXLayer = fixture.ux
 	manager.current_state = BattleManager.State.PLAYER_ACTION
 	scene.navigation_focus_restored()
-	assert_same(scene._controller_target, manager.current_actor)
+	assert_null(scene._current_target)
 	assert_false(ux.cursor.visible)
 
 
@@ -473,21 +521,25 @@ func _battle_fixture() -> Dictionary:
 	var enemy_area := Control.new()
 	manager.hero_area = hero_area
 	manager.enemy_area = enemy_area
-	var hero := HeroCard.new()
+	var hero := preload("res://src/battle/hero_card.tscn").instantiate() as HeroCard
+	hero.battle_manager = manager
 	hero.position = Vector2(100, 300)
 	hero.is_defeated = false
 	hero_area.add_child(hero)
-	var first := EnemyCard.new()
+	var first := preload("res://src/battle/enemy_card.tscn").instantiate() as EnemyCard
+	first.battle_manager = manager
 	first.position = Vector2(100, 100)
 	first.is_valid_target = true
 	first.is_defeated = false
 	enemy_area.add_child(first)
-	var defeated := EnemyCard.new()
+	var defeated := preload("res://src/battle/enemy_card.tscn").instantiate() as EnemyCard
+	defeated.battle_manager = manager
 	defeated.position = Vector2(200, 100)
 	defeated.is_valid_target = true
 	defeated.is_defeated = true
 	enemy_area.add_child(defeated)
-	var right := EnemyCard.new()
+	var right := preload("res://src/battle/enemy_card.tscn").instantiate() as EnemyCard
+	right.battle_manager = manager
 	right.position = Vector2(300, 100)
 	right.is_valid_target = true
 	right.is_defeated = false
@@ -498,7 +550,7 @@ func _battle_fixture() -> Dictionary:
 	scene.add_child(manager)
 	scene.add_child(hero_area)
 	scene.add_child(enemy_area)
-	autofree(scene)
+	add_child_autofree(scene)
 	return {scene = scene, manager = manager, first = first, defeated = defeated, right = right}
 
 
@@ -583,15 +635,23 @@ func _navigation_fixture() -> Dictionary:
 	manager.current_state = BattleManager.State.PLAYER_ACTION
 	var hero := preload("res://src/battle/hero_card.tscn").instantiate() as HeroCard
 	var enemy := preload("res://src/battle/enemy_card.tscn").instantiate() as EnemyCard
+	var second_enemy := preload("res://src/battle/enemy_card.tscn").instantiate() as EnemyCard
+	second_enemy.name = "second_enemy"
 	hero.battle_manager = manager
 	enemy.battle_manager = manager
+	second_enemy.battle_manager = manager
 	hero.is_defeated = false
 	enemy.is_defeated = false
+	second_enemy.is_defeated = false
 	enemy.is_valid_target = false
+	second_enemy.is_valid_target = false
+	enemy.position = Vector2(100, 100)
+	second_enemy.position = Vector2(300, 100)
 	var hero_area := Control.new()
 	var enemy_area := Control.new()
 	hero_area.add_child(hero)
 	enemy_area.add_child(enemy)
+	enemy_area.add_child(second_enemy)
 	manager.hero_area = hero_area
 	manager.enemy_area = enemy_area
 	manager.current_actor = hero
@@ -603,4 +663,4 @@ func _navigation_fixture() -> Dictionary:
 	scene.add_child(bar)
 	add_child_autofree(scene)
 	await get_tree().process_frame
-	return {scene = scene, manager = manager, bar = bar, ux = ux, hero = hero, enemy = enemy}
+	return {scene = scene, manager = manager, bar = bar, ux = ux, hero = hero, enemy = enemy, second_enemy = second_enemy}

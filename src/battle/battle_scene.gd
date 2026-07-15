@@ -5,7 +5,10 @@ signal battle_ended(won)
 
 @export var manager: BattleManager
 
-var _controller_target: ActorCard
+var _current_target: ActorCard
+var _navigation_origin: ActorCard
+var _last_enemy_target: EnemyCard
+var _last_hero_target: HeroCard
 var _last_controller_direction := Vector2.ZERO
 var _direction_hold_time := 0.0
 const REPEAT_DELAY := 0.32
@@ -19,10 +22,11 @@ func _ready():
 		manager.action_bar.action_cancelled.connect(cancel_targeting)
 		manager.action_bar.availability_changed.connect(_publish_controller_hints)
 	InputManager.input_mode_changed.connect(_on_input_mode_changed)
+	InputManager.presentation_mode_changed.connect(_on_presentation_mode_changed)
 	var navigation := _navigation_ux_layer()
 	if navigation:
 		navigation.set_adapter(self)
-	_restore_controller_target()
+	_refresh_targeting()
 	_publish_controller_hints()
 
 
@@ -74,15 +78,18 @@ func _unhandled_input(event: InputEvent) -> void:
 func select_direction(direction: Vector2) -> void:
 	if direction.is_zero_approx():
 		return
-	var candidates := _valid_controller_targets()
+	if not is_instance_valid(_current_target) and _is_valid_candidate(_navigation_origin):
+		_set_current_target(_navigation_origin)
+		return
+	var candidates := _valid_targets()
 	if candidates.is_empty():
 		return
-	var origin: Vector2 = _controller_target.global_position + _controller_target.size * 0.5 if is_instance_valid(_controller_target) else _target_origin(candidates)
+	var origin: Vector2 = _current_target.global_position + _current_target.size * 0.5 if _is_valid_candidate(_current_target) else _target_origin(candidates)
 	var best: ActorCard
 	var best_angle := INF
 	var best_distance := INF
 	for candidate: ActorCard in candidates:
-		if candidate == _controller_target:
+		if candidate == _current_target:
 			continue
 		var offset := candidate.global_position + candidate.size * 0.5 - origin
 		if offset.dot(direction) <= 0.0:
@@ -94,34 +101,37 @@ func select_direction(direction: Vector2) -> void:
 			best_angle = angle
 			best_distance = distance
 	if best:
-		_set_controller_target(best)
+		_set_current_target(best)
 		return
 	# Cycle at the edge to the geometrically opposite extreme.
 	var wrapped: ActorCard
 	var wrapped_projection := INF
 	for candidate: ActorCard in candidates:
-		if candidate == _controller_target:
+		if candidate == _current_target:
 			continue
 		var projection := (candidate.global_position + candidate.size * 0.5).dot(direction.normalized())
 		if projection < wrapped_projection:
 			wrapped = candidate
 			wrapped_projection = projection
 	if wrapped:
-		_set_controller_target(wrapped)
+		_set_current_target(wrapped)
 
 
 func confirm_target() -> void:
-	if not is_instance_valid(_controller_target) or not _controller_target.is_valid_target or _controller_target.is_defeated:
+	if not _is_valid_candidate(_current_target) \
+		or not _current_target.is_visible_in_tree() \
+		or _current_target.get_target_presentation() != ActorCard.TargetPresentation.SELECTED:
 		return
-	if _controller_target is HeroCard:
-		manager._on_hero_clicked(_controller_target as HeroCard)
-	elif _controller_target is EnemyCard:
-		manager._on_enemy_clicked(_controller_target as EnemyCard)
+	if _current_target is HeroCard:
+		manager._on_hero_clicked(_current_target as HeroCard)
+	elif _current_target is EnemyCard:
+		manager._on_enemy_clicked(_current_target as EnemyCard)
 
 
 func cancel_targeting() -> void:
 	if not _is_targeting():
 		return
+	_clear_current_target(false)
 	manager._clear_all_targeting_ui()
 	manager.current_action = null
 	if manager.current_action_panel:
@@ -130,7 +140,6 @@ func cancel_targeting() -> void:
 		manager.focused_button.focused(false)
 		manager.focused_button = null
 	manager.change_state(BattleManager.State.PLAYER_ACTION)
-	_controller_target = manager.current_actor
 	_publish_controller_hints()
 
 
@@ -143,35 +152,44 @@ func _on_battle_state_changed(_state: BattleManager.State) -> void:
 
 
 func _on_input_mode_changed(mode: InputManager.InputMode) -> void:
-	if mode == InputManager.InputMode.CONTROLLER:
-		return
-	if is_instance_valid(_controller_target) and _controller_target is EnemyCard:
-		manager._on_enemy_unhovered(_controller_target as EnemyCard)
-	_controller_target = manager.current_actor
 	_last_controller_direction = Vector2.ZERO
 	_direction_hold_time = 0.0
+	if mode == InputManager.InputMode.CONTROLLER and _is_targeting():
+		_restore_remembered_target()
+	_publish_controller_hints()
+
+
+func _on_presentation_mode_changed(mode: InputManager.PresentationMode) -> void:
+	if mode == InputManager.PresentationMode.POINTER \
+		and InputManager.get_active_mode() == InputManager.InputMode.KEYBOARD_MOUSE \
+		and _is_targeting():
+		_clear_current_target(true)
 
 
 func _refresh_targeting() -> void:
-	if _is_targeting():
-		var candidates := _valid_controller_targets()
-		if not candidates.is_empty() and not candidates.has(_controller_target):
-			_set_controller_target(candidates[0])
-	else:
-		_controller_target = manager.current_actor
+	if not _is_targeting():
+		_clear_current_target(false)
+		_publish_controller_hints()
+		return
+	for candidate: ActorCard in _valid_targets():
+		if candidate != _current_target:
+			candidate.set_target_presentation(ActorCard.TargetPresentation.AVAILABLE)
+	if InputManager.get_active_mode() == InputManager.InputMode.CONTROLLER:
+		_restore_remembered_target()
+	elif not _is_valid_candidate(_current_target):
+		_clear_current_target(false)
 	_publish_controller_hints()
 
 
 func _is_targeting() -> bool:
-	return manager != null and (manager.current_state == BattleManager.State.FORCED_TARGET or manager.current_action != null) and not _valid_controller_targets().is_empty()
+	return manager != null and not _valid_targets().is_empty()
 
 
 func navigation_focus_restored() -> void:
-	_restore_controller_target()
-	_publish_controller_hints()
+	_refresh_targeting()
 
 
-func _valid_controller_targets() -> Array[ActorCard]:
+func _valid_targets() -> Array[ActorCard]:
 	var targets: Array[ActorCard] = []
 	if not manager:
 		return targets
@@ -182,27 +200,51 @@ func _valid_controller_targets() -> Array[ActorCard]:
 	return targets
 
 
+func _is_valid_candidate(target: ActorCard) -> bool:
+	return is_instance_valid(target) \
+		and target.is_inside_tree() \
+		and target.is_valid_target \
+		and not target.is_defeated \
+		and _valid_targets().has(target)
+
+
 func _target_origin(candidates: Array[ActorCard]) -> Vector2:
 	if manager and is_instance_valid(manager.current_actor):
 		return manager.current_actor.global_position + manager.current_actor.size * 0.5
 	return candidates[0].global_position + candidates[0].size * 0.5
 
 
-func _set_controller_target(target: ActorCard) -> void:
-	if is_instance_valid(_controller_target) and _controller_target is EnemyCard:
-		manager._on_enemy_unhovered(_controller_target as EnemyCard)
-	_controller_target = target
+func _set_current_target(target: ActorCard) -> void:
+	if not _is_valid_candidate(target):
+		return
+	if is_instance_valid(_current_target) and _current_target != target:
+		_current_target.set_target_presentation(ActorCard.TargetPresentation.AVAILABLE)
+	_current_target = target
+	_navigation_origin = target
+	target.set_target_presentation(ActorCard.TargetPresentation.SELECTED)
 	if target is EnemyCard:
-		manager._on_enemy_hovered(target as EnemyCard)
-	_publish_controller_hints()
+		_last_enemy_target = target
+	elif target is HeroCard:
+		_last_hero_target = target
 
 
-func _restore_controller_target() -> void:
-	var candidates := _valid_controller_targets()
-	if not candidates.is_empty() and _is_targeting():
-		_set_controller_target(candidates[0])
-	elif manager:
-		_controller_target = manager.current_actor
+func _clear_current_target(retain_origin: bool) -> void:
+	if is_instance_valid(_current_target):
+		_current_target.set_target_presentation(ActorCard.TargetPresentation.AVAILABLE)
+		if retain_origin:
+			_navigation_origin = _current_target
+	_current_target = null
+	if not retain_origin:
+		_navigation_origin = null
+
+
+func _restore_remembered_target() -> void:
+	var candidates := _valid_targets()
+	if candidates.is_empty():
+		_clear_current_target(false)
+		return
+	var remembered: ActorCard = _last_hero_target if candidates[0] is HeroCard else _last_enemy_target
+	_set_current_target(remembered if _is_valid_candidate(remembered) else candidates[0])
 
 
 func _publish_controller_hints() -> void:
