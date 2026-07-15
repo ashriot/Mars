@@ -29,6 +29,7 @@ class TrackingBattleManager extends BattleManager:
 	var confirm_count := 0
 	var forced_target: EnemyCard
 	var preview_targets: Array[ActorCard] = []
+	var ordinary_preview_count := 0
 
 	func _ready() -> void:
 		if action_bar:
@@ -57,6 +58,15 @@ class TrackingBattleManager extends BattleManager:
 
 	func preview_action_turn_order(_actor: ActorCard, _action: Action, selected_target: ActorCard = null):
 		preview_targets.append(selected_target)
+
+	func update_turn_order():
+		ordinary_preview_count += 1
+
+	func _update_all_enemy_intents():
+		pass
+
+	func _check_if_battle_ended() -> bool:
+		return false
 
 
 func test_activate_slot_emits_only_for_visible_enabled_semantic_slot() -> void:
@@ -349,6 +359,53 @@ func test_all_enemy_action_selects_every_affected_card_and_requests_group_previe
 	assert_null(fixture.manager.preview_targets.back(), "group preview does not invent a single parent target")
 
 
+func test_group_parent_ct_preview_projects_every_affected_actor() -> void:
+	var manager := BattleManager.new()
+	var hero_area := Control.new()
+	var enemy_area := Control.new()
+	manager.hero_area = hero_area
+	manager.enemy_area = enemy_area
+
+	var hero := HeroCard.new()
+	var first_enemy := EnemyCard.new()
+	var second_enemy := EnemyCard.new()
+	for actor: ActorCard in [hero, first_enemy, second_enemy]:
+		var stats := ActorStats.new()
+		stats.speed = 100
+		actor.current_stats = stats
+		actor.current_ct = 0
+		actor.is_defeated = false
+	hero_area.add_child(hero)
+	enemy_area.add_child(first_enemy)
+	enemy_area.add_child(second_enemy)
+	manager.current_actor = hero
+	manager.actor_list = [hero, first_enemy, second_enemy]
+
+	var effect := Effect_ModifyCT.new()
+	effect.ct_boost_percent = 0.5
+	assert_eq(effect.target_type, Action.TargetType.PARENT, "CT effects use PARENT by default")
+	var action := Action.new()
+	action.target_type = Action.TargetType.ALL_ENEMIES
+	action.effects = [effect]
+	var captured := {queue = []}
+	manager.turn_order_updated.connect(func(queue: Array, _animate: bool) -> void:
+		captured.queue = queue
+	)
+
+	manager.preview_action_turn_order(hero, action, null)
+
+	for target: EnemyCard in [first_enemy, second_enemy]:
+		var target_turn := (captured.queue as Array).filter(func(entry: Dictionary) -> bool:
+			return entry.actor == target
+		).front() as Dictionary
+		assert_eq(target_turn.ticks_needed, 25.0, "every group target receives the projected 50% CT boost")
+	assert_eq(first_enemy.current_ct, 0, "preview restores live CT")
+	assert_eq(second_enemy.current_ct, 0, "preview restores live CT")
+	manager.free()
+	hero_area.free()
+	enemy_area.free()
+
+
 func test_invalid_current_target_falls_back_for_controller_and_clears_for_pointer() -> void:
 	var fixture := await _navigation_fixture()
 	fixture.enemy.is_valid_target = true
@@ -373,6 +430,24 @@ func test_cancel_returns_all_cards_to_normal_and_stops_pulses() -> void:
 	for actor: ActorCard in [fixture.hero, fixture.enemy, fixture.second_enemy]:
 		assert_eq(actor.get_target_presentation(), ActorCard.TargetPresentation.NORMAL)
 		assert_null(actor._target_pulse_tween)
+
+
+func test_cancel_suppresses_action_preview_and_restores_ordinary_turn_order() -> void:
+	var fixture := await _navigation_fixture()
+	var action := Action.new()
+	var self_ct_effect := Effect_ModifyCT.new()
+	self_ct_effect.target_type = Action.TargetType.SELF
+	action.effects = [self_ct_effect]
+	fixture.manager.current_action = action
+	fixture.enemy.is_valid_target = true
+	fixture.scene._set_current_target(fixture.enemy)
+	fixture.manager.preview_targets.clear()
+	fixture.manager.ordinary_preview_count = 0
+
+	fixture.scene.cancel_targeting()
+
+	assert_eq(fixture.manager.preview_targets.size(), 0, "cancel never republishes the outgoing action preview")
+	assert_eq(fixture.manager.ordinary_preview_count, 1, "cancel explicitly restores the ordinary CTB projection")
 
 
 func test_active_hero_turn_uses_slide_without_turn_highlight() -> void:
@@ -413,6 +488,88 @@ func test_different_action_hotkey_replaces_current_selection() -> void:
 	assert_eq(manager.action_select_count, 2)
 	assert_same(manager.current_action, second.action)
 	assert_same(manager.focused_button, second)
+
+
+func test_keyboard_action_replacement_synchronously_clears_shared_target() -> void:
+	var fixture := await _navigation_fixture()
+	var scene: BattleScene = fixture.scene
+	var manager: TrackingBattleManager = fixture.manager
+	var bar: ActionBar = fixture.bar
+	var second := bar.actions_ui.get_child(1) as ActionButton
+	second.button.disabled = false
+	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
+	bar._unhandled_input(_action_event(&"action_1"))
+	fixture.enemy.is_valid_target = true
+	scene._set_current_target(fixture.enemy)
+	assert_same(scene._current_target, fixture.enemy)
+
+	bar._unhandled_input(_action_event(&"action_2"))
+
+	assert_same(manager.current_action, second.action)
+	assert_null(scene._current_target, "the outgoing target is not visible for the replacement action")
+	assert_null(scene._navigation_origin, "replacement begins with no retained pointer/keyboard origin")
+
+
+func test_hidden_remembered_target_uses_visible_controller_fallback() -> void:
+	var fixture := await _navigation_fixture()
+	fixture.enemy.is_valid_target = true
+	fixture.second_enemy.is_valid_target = true
+	fixture.second_enemy.hide()
+	fixture.scene._last_enemy_target = fixture.second_enemy
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+
+	fixture.scene._refresh_targeting()
+
+	assert_same(fixture.scene._current_target, fixture.enemy)
+
+
+func test_hidden_first_candidate_is_excluded_from_controller_fallback() -> void:
+	var fixture := await _navigation_fixture()
+	fixture.enemy.is_valid_target = true
+	fixture.second_enemy.is_valid_target = true
+	fixture.enemy.hide()
+	fixture.scene._last_enemy_target = null
+	fixture.scene._clear_current_target(false)
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+
+	fixture.scene._refresh_targeting()
+
+	assert_same(fixture.scene._current_target, fixture.second_enemy)
+
+
+func test_real_death_path_immediately_restores_controller_fallback() -> void:
+	var fixture := await _navigation_fixture()
+	fixture.manager.current_action = Action.new()
+	fixture.manager.actor_list = [fixture.hero, fixture.enemy, fixture.second_enemy]
+	fixture.enemy.is_valid_target = true
+	fixture.second_enemy.is_valid_target = true
+	fixture.enemy.actor_defeated.connect(fixture.manager._on_actor_died)
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	fixture.scene._set_current_target(fixture.enemy)
+
+	fixture.enemy.defeated()
+
+	assert_same(fixture.scene._current_target, fixture.second_enemy)
+	assert_same(fixture.scene._navigation_origin, fixture.second_enemy)
+	assert_same(fixture.scene._last_enemy_target, fixture.second_enemy)
+
+
+func test_real_death_path_immediately_clears_pointer_target_origin_and_memory() -> void:
+	var fixture := await _navigation_fixture()
+	fixture.manager.current_action = Action.new()
+	fixture.manager.actor_list = [fixture.hero, fixture.enemy, fixture.second_enemy]
+	fixture.enemy.is_valid_target = true
+	fixture.second_enemy.is_valid_target = true
+	fixture.enemy.actor_defeated.connect(fixture.manager._on_actor_died)
+	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
+	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)
+	fixture.scene._set_current_target(fixture.enemy)
+
+	fixture.enemy.defeated()
+
+	assert_null(fixture.scene._current_target)
+	assert_null(fixture.scene._navigation_origin)
+	assert_null(fixture.scene._last_enemy_target)
 
 
 func test_held_direction_repeats_after_delay() -> void:

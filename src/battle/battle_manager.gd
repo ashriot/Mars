@@ -11,6 +11,7 @@ signal battle_state_changed(new_state)
 signal battle_ended(won)
 signal target_hovered(actor: ActorCard)
 signal target_unhovered(actor: ActorCard)
+signal target_invalidated(actor: ActorCard)
 
 @export_range(0.1, 5.0) var battle_speed: float = 1.0
 
@@ -261,6 +262,7 @@ func _on_actor_died(actor: ActorCard):
 		print("Hero gained an injury. Total: ", actor.hero_data.injuries)
 
 	actor_list.erase(actor)
+	target_invalidated.emit(actor)
 	if await _check_if_battle_ended():
 		return
 	_update_all_enemy_intents()
@@ -634,17 +636,17 @@ func preview_action_turn_order(actor: ActorCard, action: Action, selected_target
 		original_ct_values[a] = a.current_ct
 
 	if action:
+		var primary_targets: Array = []
+		if is_instance_valid(selected_target):
+			primary_targets.append(selected_target)
+		elif is_group_target_action(action):
+			primary_targets = get_targets(action.target_type, actor is HeroCard, [], actor)
 		for effect in action.effects:
 			if effect is Effect_ModifyCT:
-				var primary_targets = []
+				if effect.target_type == Action.TargetType.PARENT and primary_targets.is_empty():
+					continue
 
-				if effect.target_type == Action.TargetType.PARENT:
-					if selected_target:
-						primary_targets.append(selected_target)
-					else:
-						continue
-
-				var targets = get_targets(effect.target_type, actor is ActorCard, primary_targets, actor)
+				var targets = get_targets(effect.target_type, actor is HeroCard, primary_targets, actor)
 				for target in targets:
 					var ct_change = int(TARGET_CT * effect.ct_boost_percent)
 					target.current_ct += ct_change

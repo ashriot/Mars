@@ -19,6 +19,7 @@ func _ready():
 	manager.battle_state_changed.connect(_on_battle_state_changed)
 	manager.target_hovered.connect(_on_target_hovered)
 	manager.target_unhovered.connect(_on_target_unhovered)
+	manager.target_invalidated.connect(_on_target_invalidated)
 	if manager.action_bar:
 		manager.action_bar.action_selected.connect(_on_action_selected)
 		manager.action_bar.action_cancelled.connect(cancel_targeting)
@@ -138,19 +139,22 @@ func confirm_target() -> void:
 func cancel_targeting() -> void:
 	if not _is_targeting():
 		return
+	manager.current_action = null
 	_clear_current_target(false)
 	manager._clear_all_targeting_ui()
-	manager.current_action = null
 	if manager.current_action_panel:
 		manager.current_action_panel.hide()
 	if manager.focused_button:
 		manager.focused_button.focused(false)
 		manager.focused_button = null
 	manager.change_state(BattleManager.State.PLAYER_ACTION)
+	manager.update_turn_order()
 	_publish_controller_hints()
 
 
 func _on_action_selected(_button: ActionButton) -> void:
+	if InputManager.get_active_mode() != InputManager.InputMode.CONTROLLER:
+		_clear_current_target(false)
 	_refresh_targeting.call_deferred()
 
 
@@ -187,6 +191,16 @@ func _on_target_unhovered(actor: ActorCard) -> void:
 		and InputManager.get_presentation_mode() == InputManager.PresentationMode.POINTER \
 		and actor == _current_target:
 		_clear_current_target(true)
+
+
+func _on_target_invalidated(actor: ActorCard) -> void:
+	if _navigation_origin == actor:
+		_navigation_origin = null
+	if _last_enemy_target == actor:
+		_last_enemy_target = null
+	if _last_hero_target == actor:
+		_last_hero_target = null
+	_refresh_targeting()
 
 
 func _refresh_targeting() -> void:
@@ -233,7 +247,10 @@ func _valid_targets() -> Array[ActorCard]:
 		return targets
 	var source: Array = manager.get_living_heroes() + manager.get_living_enemies()
 	for actor in source:
-		if actor is ActorCard and actor.is_valid_target and not actor.is_defeated:
+		if actor is ActorCard \
+			and actor.is_visible_in_tree() \
+			and actor.is_valid_target \
+			and not actor.is_defeated:
 			targets.append(actor)
 	return targets
 
