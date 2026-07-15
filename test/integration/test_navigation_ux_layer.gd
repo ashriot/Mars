@@ -201,6 +201,22 @@ func test_pointer_blocker_suppresses_gui_hover_and_activation_only_in_focus() ->
 	assert_eq(press_count[0], 1)
 
 
+func test_controller_handoff_clears_existing_pointer_hover_without_mouse_motion() -> void:
+	var setup := await _three_button_screen()
+	var middle: Button = setup.middle
+	var middle_position := middle.get_global_rect().get_center()
+	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)
+	get_viewport().push_input(_mouse_motion_at(middle_position, Vector2(12, 0)), true)
+	await get_tree().process_frame
+	assert_true(middle.is_hovered())
+
+	get_viewport().push_input(_joy_direction(JOY_BUTTON_A, true))
+	await get_tree().process_frame
+	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.CONTROLLER)
+	assert_true(setup.ux.pointer_input_blocker.visible)
+	assert_false(middle.is_hovered(), "controller focus clears stale pointer hover immediately")
+
+
 func test_keyboard_direction_from_controller_moves_immediately_and_reveals_mouse() -> void:
 	var setup := await _three_button_screen()
 	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)

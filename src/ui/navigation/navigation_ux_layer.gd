@@ -231,12 +231,24 @@ func _on_presentation_mode_changed(mode: InputManager.PresentationMode) -> void:
 		if is_instance_valid(_focus_target):
 			NavigationFocus.clear(_focus_target)
 		return
+	if InputManager.get_active_mode() == InputManager.InputMode.CONTROLLER:
+		_refresh_pointer_hover.call_deferred()
 	var had_valid_origin := _is_focusable(_focus_target)
 	ensure_valid_focus()
 	if not had_valid_origin and _is_focusable(_focus_target):
 		InputManager.consume_controller_direction_for_focus_recovery()
 	if _is_focusable(_focus_target):
 		NavigationFocus.apply(_focus_target)
+
+
+func _refresh_pointer_hover() -> void:
+	if InputManager.get_active_mode() != InputManager.InputMode.CONTROLLER \
+		or InputManager.get_presentation_mode() != InputManager.PresentationMode.FOCUS:
+		return
+	var motion := InputEventMouseMotion.new()
+	motion.position = get_viewport().get_mouse_position()
+	motion.global_position = motion.position
+	get_viewport().push_input(motion, true)
 
 
 func _first_focusable(root: Control) -> Control:
