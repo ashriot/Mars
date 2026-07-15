@@ -251,6 +251,9 @@ func test_controller_events_route_the_complete_playable_loop() -> void:
 	var controller_input := InputEventJoypadButton.new()
 	controller_input.pressed = true
 	InputManager._input(controller_input)
+	controller_input = InputEventJoypadButton.new()
+	controller_input.pressed = false
+	InputManager._input(controller_input)
 	Input.action_press(&"nav_right")
 	await get_tree().process_frame
 	assert_not_null(map._controller_preview_node)
