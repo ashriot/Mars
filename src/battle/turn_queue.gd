@@ -19,6 +19,7 @@ var _right_stick_y := 0.0
 var _right_stick_scroll_residual := 0.0
 var _right_stick_direction := 0
 var _right_stick_max_scroll := -1
+var _projection_generation := 0
 
 
 func _ready() -> void:
@@ -76,10 +77,21 @@ func _reset_right_stick_scroll() -> void:
 	_right_stick_direction = 0
 
 
-func _on_turn_order_updated(projected_queue: Array, _animate: bool = true) -> void:
+func _on_turn_order_updated(
+	projected_queue: Array,
+	update_kind: BattleManager.TurnOrderUpdate = BattleManager.TurnOrderUpdate.REFRESH,
+) -> void:
 	if not is_inside_tree():
 		return
-	var saved_scroll := queue_scroll.scroll_vertical
+	_projection_generation += 1
+	var generation := _projection_generation
+	var resets_scroll := update_kind in [
+		BattleManager.TurnOrderUpdate.COMMIT,
+		BattleManager.TurnOrderUpdate.ADVANCE,
+	]
+	var saved_scroll := 0 if resets_scroll else queue_scroll.scroll_vertical
+	if resets_scroll:
+		queue_scroll.scroll_vertical = 0
 	for item: ActorQueue in queue_items:
 		item.queue_free()
 	queue_items.clear()
@@ -103,7 +115,7 @@ func _on_turn_order_updated(projected_queue: Array, _animate: bool = true) -> vo
 		queue_scroll.size.x - queue_scroll.get_v_scroll_bar().get_combined_minimum_size().x,
 		queue_items.size() * int(ActorQueue.ITEM_SIZE.y + ITEM_SPACING) - ITEM_SPACING,
 	)
-	call_deferred("_restore_scroll", saved_scroll)
+	call_deferred("_restore_scroll", saved_scroll, generation)
 
 
 func _target_position(index: int) -> Vector2:
@@ -114,7 +126,9 @@ func _target_position(index: int) -> Vector2:
 	)
 
 
-func _restore_scroll(value: int) -> void:
+func _restore_scroll(value: int, generation: int) -> void:
+	if generation != _projection_generation:
+		return
 	queue_scroll.scroll_vertical = clampi(value, 0, _max_future_scroll())
 	_reset_right_stick_scroll()
 	_right_stick_max_scroll = _max_future_scroll()

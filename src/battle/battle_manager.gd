@@ -7,10 +7,11 @@ const FUTURE_TURN_DISPLAY_COUNT := 20
 
 # --- State Machine ---
 enum State { LOADING, PLAYER_ACTION, ENEMY_ACTION, EXECUTING_ACTION, FORCED_TARGET, BATTLE_OVER }
+enum TurnOrderUpdate { REFRESH, PREVIEW, COMMIT, ADVANCE }
 var current_state = State.LOADING
 
 # --- Signals ---
-signal turn_order_updated(projected_queue, animate)
+signal turn_order_updated(projected_queue: Array, update_kind: TurnOrderUpdate)
 signal battle_state_changed(new_state)
 signal battle_ended(won)
 signal target_hovered(actor: ActorCard)
@@ -209,7 +210,7 @@ func find_and_start_next_turn():
 
 	winner.current_ct = 0
 	current_actor = winner
-	turn_order_updated.emit(_display_projection(), false)
+	_publish_turn_order(TurnOrderUpdate.ADVANCE)
 	if winner is HeroCard:
 		if action_bar.sliding:
 			await action_bar.slide_finished
@@ -236,7 +237,11 @@ func _on_actor_breached():
 	update_turn_order()
 
 func update_turn_order() -> void:
-	turn_order_updated.emit(_display_projection(), false)
+	_publish_turn_order(TurnOrderUpdate.REFRESH)
+
+
+func _publish_turn_order(update_kind: TurnOrderUpdate) -> void:
+	turn_order_updated.emit(_display_projection(), update_kind)
 
 func get_action_recovery_adjustment(actor: ActorCard, action: Action) -> int:
 	var percent := actor.get_action_ct_percent(action)
@@ -368,6 +373,8 @@ func execute_action(actor: ActorCard, action: Action, targets: Array, display_na
 	executing_action = action
 	executing_action_ends_turn = ends_turn
 	executing_action_ct_percent = actor.get_action_ct_percent(action) if ends_turn else 100
+	if display_name:
+		_publish_turn_order(TurnOrderUpdate.COMMIT)
 	current_action = null
 	if actor is HeroCard:
 		current_action_panel.hide()
@@ -680,7 +687,7 @@ func preview_action_turn_order(actor: ActorCard, action: Action, selected_target
 		for target: ActorCard in get_targets(effect.target_type, actor is HeroCard, primary_targets, actor):
 			adjustments[target] = int(adjustments.get(target, 0)) \
 				+ int(TARGET_CT * effect.ct_change_percent)
-	turn_order_updated.emit(_display_projection(adjustments), true)
+	turn_order_updated.emit(_display_projection(adjustments), TurnOrderUpdate.PREVIEW)
 
 func _get_effect_targets(effect: ActionEffect, user: ActorCard, selected_target: ActorCard = null) -> Array:
 	"""Helper to resolve who an action will target"""

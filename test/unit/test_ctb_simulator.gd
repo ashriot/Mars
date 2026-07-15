@@ -217,7 +217,8 @@ func test_active_actor_stays_first_and_remains_in_future_projection() -> void:
 	manager.current_actor = active_actor
 	var emitted_queue: Array = []
 	manager.turn_order_updated.connect(
-		func(queue: Array, _animate: bool) -> void: emitted_queue.assign(queue)
+		func(queue: Array, _kind: BattleManager.TurnOrderUpdate) -> void:
+			emitted_queue.assign(queue)
 	)
 
 	manager.update_turn_order()
@@ -230,6 +231,30 @@ func test_active_actor_stays_first_and_remains_in_future_projection() -> void:
 	)
 	active_actor.free()
 	other_actor.free()
+	manager.free()
+
+
+func test_manager_publishes_explicit_preview_refresh_and_advance_kinds() -> void:
+	var manager := BattleManager.new()
+	var actor := _actor(true, 100, 0, 0)
+	manager.actor_list = [actor]
+	manager.current_actor = actor
+	var kinds: Array[int] = []
+	manager.turn_order_updated.connect(
+		func(_queue: Array, kind: BattleManager.TurnOrderUpdate) -> void:
+			kinds.append(kind)
+	)
+
+	manager.update_turn_order()
+	manager.preview_action_turn_order(actor, Action.new())
+	manager._publish_turn_order(BattleManager.TurnOrderUpdate.COMMIT)
+
+	assert_eq(kinds, [
+		BattleManager.TurnOrderUpdate.REFRESH,
+		BattleManager.TurnOrderUpdate.PREVIEW,
+		BattleManager.TurnOrderUpdate.COMMIT,
+	])
+	actor.free()
 	manager.free()
 
 

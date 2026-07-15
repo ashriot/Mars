@@ -241,7 +241,7 @@ func test_role_shift_publishes_queue_only_after_new_role_is_current() -> void:
 	manager.actor_list = [hero]
 	manager.current_state = BattleManager.State.PLAYER_ACTION
 	var publication := {count = 0, icons = []}
-	manager.turn_order_updated.connect(func(queue: Array, _animate: bool) -> void:
+	manager.turn_order_updated.connect(func(queue: Array, _kind: BattleManager.TurnOrderUpdate) -> void:
 		publication.count += 1
 		for entry: Dictionary in queue:
 			if entry.actor == hero:
@@ -464,7 +464,7 @@ func test_group_parent_ct_preview_projects_every_affected_actor() -> void:
 	action.target_type = Action.TargetType.ALL_ENEMIES
 	action.effects = [effect]
 	var captured := {queue = []}
-	manager.turn_order_updated.connect(func(queue: Array, _animate: bool) -> void:
+	manager.turn_order_updated.connect(func(queue: Array, _kind: BattleManager.TurnOrderUpdate) -> void:
 		captured.queue = queue
 	)
 
@@ -521,7 +521,7 @@ func test_repeating_non_ct_preview_is_stable() -> void:
 	var action := Action.new()
 	action.ct_cost_percent = 75
 	var projections: Array = []
-	manager.turn_order_updated.connect(func(queue: Array, _animate: bool) -> void:
+	manager.turn_order_updated.connect(func(queue: Array, _kind: BattleManager.TurnOrderUpdate) -> void:
 		projections.append(_projection_signature(queue))
 	)
 
@@ -545,7 +545,7 @@ func test_preview_and_recovery_publish_the_same_next_future_actor() -> void:
 	var action := Action.new()
 	action.ct_cost_percent = 75
 	var projections: Array[Array] = []
-	manager.turn_order_updated.connect(func(queue: Array, _animate: bool) -> void:
+	manager.turn_order_updated.connect(func(queue: Array, _kind: BattleManager.TurnOrderUpdate) -> void:
 		projections.append(queue)
 	)
 
@@ -574,7 +574,7 @@ func test_modifier_bearing_shift_preview_matches_non_turn_ending_execution() -> 
 	var action := Action.new()
 	action.is_shift_action = true
 	var projections: Array[Array] = []
-	manager.turn_order_updated.connect(func(queue: Array, _animate: bool) -> void:
+	manager.turn_order_updated.connect(func(queue: Array, _kind: BattleManager.TurnOrderUpdate) -> void:
 		projections.append(queue)
 	)
 

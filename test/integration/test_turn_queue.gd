@@ -84,7 +84,7 @@ func test_real_queue_uses_one_uniform_scrollable_list() -> void:
 		{"actor": hero, "ticks_needed": 0},
 		{"actor": enemy, "ticks_needed": 31},
 		{"actor": hero, "ticks_needed": 50},
-	], false)
+	], BattleManager.TurnOrderUpdate.REFRESH)
 	await get_tree().process_frame
 
 	assert_false(queue.has_node("ActiveName"))
@@ -105,7 +105,7 @@ func test_queue_uses_role_color_archivo_and_enemy_gauge_magenta() -> void:
 	queue._on_turn_order_updated([
 		{"actor": hero, "ticks_needed": 0},
 		{"actor": enemy, "ticks_needed": 40},
-	], false)
+	], BattleManager.TurnOrderUpdate.REFRESH)
 	await get_tree().process_frame
 
 	assert_same(queue.queue_items[0].role_icon.texture, icon)
@@ -154,7 +154,7 @@ func test_rail_background_and_scrollbar_stay_inside_queue() -> void:
 	assert_eq(style.corner_radius_bottom_right, 18)
 
 	var hero := _hero("Asher")
-	queue._on_turn_order_updated(_projection(hero, 21), false)
+	queue._on_turn_order_updated(_projection(hero, 21), BattleManager.TurnOrderUpdate.REFRESH)
 	await get_tree().process_frame
 	var bar: VScrollBar = queue.queue_scroll.get_v_scroll_bar()
 	assert_lte(bar.global_position.x + bar.size.x, queue.global_position.x + queue.size.x - 6.0)
@@ -168,22 +168,51 @@ func test_rail_background_and_scrollbar_stay_inside_queue() -> void:
 func test_refresh_preserves_and_clamps_scroll() -> void:
 	var hero_a := _hero("Asher")
 	var hero_b := _hero("Bell")
-	queue._on_turn_order_updated(_projection(hero_a, 21, hero_b), false)
+	queue._on_turn_order_updated(
+		_projection(hero_a, 21, hero_b), BattleManager.TurnOrderUpdate.REFRESH
+	)
 	await get_tree().process_frame
 	queue.queue_scroll.scroll_vertical = 160
-	queue._on_turn_order_updated(_projection(hero_a, 21, hero_b), false)
+	queue._on_turn_order_updated(
+		_projection(hero_a, 21, hero_b), BattleManager.TurnOrderUpdate.REFRESH
+	)
 	await get_tree().process_frame
 	assert_eq(queue.queue_scroll.scroll_vertical, 160)
 	queue.queue_scroll.scroll_vertical = queue._max_future_scroll()
-	queue._on_turn_order_updated(_projection(hero_a, 3, hero_b), false)
+	queue._on_turn_order_updated(
+		_projection(hero_a, 3, hero_b), BattleManager.TurnOrderUpdate.REFRESH
+	)
 	await get_tree().process_frame
 	assert_eq(queue.queue_scroll.scroll_vertical, queue._max_future_scroll())
+
+
+func test_preview_and_refresh_preserve_scroll_but_commit_and_advance_reset() -> void:
+	var hero := _hero("Asher")
+	var projection := _projection(hero, 21)
+	queue._on_turn_order_updated(projection, BattleManager.TurnOrderUpdate.REFRESH)
+	await get_tree().process_frame
+	queue.queue_scroll.scroll_vertical = 160
+
+	queue._on_turn_order_updated(projection, BattleManager.TurnOrderUpdate.PREVIEW)
+	await get_tree().process_frame
+	assert_eq(queue.queue_scroll.scroll_vertical, 160)
+	queue._on_turn_order_updated(projection, BattleManager.TurnOrderUpdate.REFRESH)
+	await get_tree().process_frame
+	assert_eq(queue.queue_scroll.scroll_vertical, 160)
+
+	queue._on_turn_order_updated(projection, BattleManager.TurnOrderUpdate.COMMIT)
+	assert_eq(queue.queue_scroll.scroll_vertical, 0)
+	queue.queue_scroll.scroll_vertical = 160
+	queue._on_turn_order_updated(projection, BattleManager.TurnOrderUpdate.ADVANCE)
+	assert_eq(queue.queue_scroll.scroll_vertical, 0)
 
 
 func test_right_stick_scroll_does_not_change_combat_selection() -> void:
 	var hero := _hero("Asher")
 	var enemy := _enemy("Scout Drone")
-	queue._on_turn_order_updated(_projection(hero, 21, enemy), false)
+	queue._on_turn_order_updated(
+		_projection(hero, 21, enemy), BattleManager.TurnOrderUpdate.REFRESH
+	)
 	await get_tree().process_frame
 	var selected_action := Action.new()
 	manager.current_action = selected_action
@@ -198,7 +227,7 @@ func test_right_stick_scroll_does_not_change_combat_selection() -> void:
 
 func test_right_stick_scroll_accumulates_fractional_pixels_across_small_frames() -> void:
 	var hero := _hero("Asher")
-	queue._on_turn_order_updated(_projection(hero, 21), false)
+	queue._on_turn_order_updated(_projection(hero, 21), BattleManager.TurnOrderUpdate.REFRESH)
 	await get_tree().process_frame
 
 	for frame in 10:
@@ -213,7 +242,7 @@ func test_right_stick_scroll_accumulates_fractional_pixels_across_small_frames()
 
 func test_right_stick_fraction_resets_across_dead_zone_and_direction_change() -> void:
 	var hero := _hero("Asher")
-	queue._on_turn_order_updated(_projection(hero, 21), false)
+	queue._on_turn_order_updated(_projection(hero, 21), BattleManager.TurnOrderUpdate.REFRESH)
 	await get_tree().process_frame
 
 	queue.scroll_future_by_axis(1.0, 0.0005)
@@ -230,14 +259,14 @@ func test_right_stick_fraction_resets_across_dead_zone_and_direction_change() ->
 
 func test_overflow_fade_tracks_scroll_extent() -> void:
 	var hero := _hero("Asher")
-	queue._on_turn_order_updated(_projection(hero, 21), false)
+	queue._on_turn_order_updated(_projection(hero, 21), BattleManager.TurnOrderUpdate.REFRESH)
 	await get_tree().process_frame
 	queue._update_overflow_fade()
 	assert_true(queue.overflow_fade.visible)
 	queue.queue_scroll.scroll_vertical = queue._max_future_scroll()
 	queue._update_overflow_fade()
 	assert_false(queue.overflow_fade.visible)
-	queue._on_turn_order_updated(_projection(hero, 3), false)
+	queue._on_turn_order_updated(_projection(hero, 3), BattleManager.TurnOrderUpdate.REFRESH)
 	await get_tree().process_frame
 	queue._update_overflow_fade()
 	assert_false(queue.overflow_fade.visible)
@@ -245,11 +274,11 @@ func test_overflow_fade_tracks_scroll_extent() -> void:
 
 func test_clear_hides_overflow_fade_before_layout_recalculates() -> void:
 	var hero := _hero("Asher")
-	queue._on_turn_order_updated(_projection(hero, 21), false)
+	queue._on_turn_order_updated(_projection(hero, 21), BattleManager.TurnOrderUpdate.REFRESH)
 	await get_tree().process_frame
 	queue._update_overflow_fade()
 	assert_true(queue.overflow_fade.visible)
 
-	queue._on_turn_order_updated([], false)
+	queue._on_turn_order_updated([], BattleManager.TurnOrderUpdate.REFRESH)
 
 	assert_false(queue.overflow_fade.visible)
