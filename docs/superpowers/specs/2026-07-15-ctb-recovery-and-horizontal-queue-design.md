@@ -1,8 +1,8 @@
-# CTB Recovery and Horizontal Queue Design
+# CTB Recovery and Scrollable Right Queue Design
 
 ## Purpose
 
-Make combat turn order deterministic, keep the active combatant at the head of the projection, support signed CT debt and authored action recovery, and replace the temporary vertical text list with a horizontal portrait queue whose gauges communicate fixed tick distances.
+Make combat turn order deterministic, keep the active combatant at the head of the projection, support signed CT debt and authored action recovery, and replace the temporary text list with a scrollable right-side portrait queue whose gauges communicate fixed tick distances.
 
 The system remains based on Final Fantasy X's Conditional Turn-Based model: Speed controls how quickly an actor reaches a turn, actions and effects can move later turns, and the UI previews the resulting order before an action is confirmed.
 
@@ -14,7 +14,7 @@ The system remains based on Final Fantasy X's Conditional Turn-Based model: Spee
 - Every turn-ending action has an exact authored CT percentage.
 - Equipment and conditions may modify action CT multiplicatively.
 - Action selection previews recovery and direct CT effects through the same simulation used for actual turn selection.
-- The queue becomes a horizontal row of rounded portrait cards at the top of combat.
+- The queue becomes a vertical right-side rail with a larger fixed active card and scrollable future turns.
 - Fixed, layered perimeter gauges communicate cumulative hard ticks from the active turn.
 
 ## Non-goals
@@ -142,20 +142,35 @@ Every queue projection contains:
 - following entries: future turns with cumulative integer ticks measured from the active turn;
 - repeated entries when a fast actor is projected to act more than once.
 
+The combat UI requests twenty future turns in addition to the active entry. Rendering only the visible subset must not reduce simulation depth: players can scroll through the entire projection.
+
 Ordinary refreshes, action selection, target hover, condition changes, deaths, revival, Speed changes, and direct CT changes all publish this same shape. Action preview adds the snapshotted recovery adjustment and applicable direct CT effects before simulating future turns.
 
 Queue item identity accounts for repeated occurrences of the same actor instead of treating actor reference alone as unique. Obsolete movement and gauge tweens are canceled when a newer projection arrives.
 
-## Horizontal queue presentation
+## Scrollable right-rail presentation
 
-The queue moves to the top of the combat UI as a horizontal list of rounded portrait cards.
+The queue occupies a dedicated rail along the right edge of combat. This preserves the vertically constrained central stack of action descriptions, enemies, heroes, and actions while visually associating queue inspection with the controller's right stick.
+
+The active entry is a larger rounded portrait card fixed at the top of the rail. It never enters the scrolling viewport. Future turns use smaller rounded portrait cards in a single vertical list beneath it; at least eight future cards remain fully visible at the project's `1920x1080` reference viewport.
+
+The future-turn viewport supports:
+
+- right-stick vertical scrolling without changing action or target selection;
+- mouse-wheel scrolling while the pointer is over the rail;
+- direct touch dragging;
+- a subtle bottom-edge fade when additional turns remain below the viewport.
+
+The scroll offset resets to the top only when the active actor changes. Preview, hover, condition, Speed, death, and other projection refreshes preserve and clamp the current offset so the interface does not fight a player inspecting later turns. The overflow affordance is hidden when every projected future turn fits.
+
+The selected-action panel ends before the right rail rather than rendering underneath it. The rail remains visible during action selection and target preview.
 
 Temporary interior content is:
 
 - heroes: the current role/class icon;
 - enemies: a generated uppercase abbreviation from the combat name, preserving the existing A/B/C suffix for duplicate enemies.
 
-Future enemy portrait crops replace only the interior content. They do not change the projection or gauge contract.
+Future enemy portrait crops replace only the interior content. They do not change the projection, scrolling, or gauge contract.
 
 The active entry uses a gold perimeter regardless of faction. Projected hero turns use cyan gauges, and projected enemy turns use magenta gauges.
 
@@ -214,5 +229,10 @@ Focused automated coverage protects:
 - hero role-icon, enemy-abbreviation, faction-color, and gold-current presentation;
 - repeated actor occurrences receiving distinct queue items;
 - rapid updates settling to the newest projection without stale tweens.
+- twenty future turns remaining available even when only a smaller subset is visible;
+- the larger active card remaining fixed while future turns scroll;
+- right-stick scrolling not changing action or target selection;
+- preview refreshes preserving scroll position while actual turn changes reset it;
+- overflow fade visibility tracking whether more future turns remain.
 
 Because this affects turn selection, action execution, conditions, Speed, targeting previews, and the combat scene, final verification includes the complete automated suite plus manual combat checks for queue readability and animation behavior.
