@@ -18,6 +18,9 @@ var active_item: ActorQueue
 var future_items: Array[ActorQueue] = []
 var active_actor_ref: ActorCard
 var _right_stick_y := 0.0
+var _right_stick_scroll_residual := 0.0
+var _right_stick_direction := 0
+var _right_stick_max_scroll := -1
 
 
 func _ready() -> void:
@@ -38,13 +41,39 @@ func _process(delta: float) -> void:
 
 func scroll_future_by_axis(axis_value: float, delta: float) -> void:
 	if absf(axis_value) < RIGHT_STICK_DEAD_ZONE:
+		_reset_right_stick_scroll()
 		return
-	var amount := int(axis_value * RIGHT_STICK_SCROLL_SPEED * delta)
-	future_scroll.scroll_vertical = clampi(
-		future_scroll.scroll_vertical + amount,
-		0,
-		_max_future_scroll(),
+	var direction := 1 if axis_value > 0.0 else -1
+	if direction != _right_stick_direction:
+		_right_stick_scroll_residual = 0.0
+		_right_stick_direction = direction
+	var max_scroll := _max_future_scroll()
+	if max_scroll != _right_stick_max_scroll:
+		_right_stick_scroll_residual = 0.0
+		_right_stick_max_scroll = max_scroll
+	var current_scroll := future_scroll.scroll_vertical
+	if max_scroll == 0 or (direction < 0 and current_scroll == 0) or (
+		direction > 0 and current_scroll == max_scroll
+	):
+		_right_stick_scroll_residual = 0.0
+		return
+	var movement := (
+		axis_value * RIGHT_STICK_SCROLL_SPEED * delta
+		+ _right_stick_scroll_residual
 	)
+	var whole_pixels := int(movement)
+	_right_stick_scroll_residual = movement - whole_pixels
+	if whole_pixels == 0:
+		return
+	var target_scroll := clampi(current_scroll + whole_pixels, 0, max_scroll)
+	future_scroll.scroll_vertical = target_scroll
+	if target_scroll == 0 or target_scroll == max_scroll:
+		_right_stick_scroll_residual = 0.0
+
+
+func _reset_right_stick_scroll() -> void:
+	_right_stick_scroll_residual = 0.0
+	_right_stick_direction = 0
 
 
 func _setup_active(turn_data: Dictionary, _animate: bool) -> void:
@@ -115,6 +144,8 @@ func _find_and_pop_match(actor: ActorCard, occurrence: int, pool: Array) -> Acto
 
 func _restore_scroll(value: int) -> void:
 	future_scroll.scroll_vertical = clampi(value, 0, _max_future_scroll())
+	_reset_right_stick_scroll()
+	_right_stick_max_scroll = _max_future_scroll()
 	_update_overflow_fade()
 
 
@@ -140,4 +171,6 @@ func _clear_queue() -> void:
 	active_actor_ref = null
 	future_content.custom_minimum_size.y = 0.0
 	future_scroll.scroll_vertical = 0
+	_reset_right_stick_scroll()
+	_right_stick_max_scroll = 0
 	overflow_fade.visible = false

@@ -154,6 +154,38 @@ func test_right_stick_scroll_does_not_change_combat_selection() -> void:
 	assert_true(enemy.is_valid_target)
 
 
+func test_right_stick_scroll_accumulates_fractional_pixels_across_small_frames() -> void:
+	var hero := _hero("Asher")
+	queue._on_turn_order_updated(_projection(hero, 21), false)
+	await get_tree().process_frame
+
+	for frame in 10:
+		queue.scroll_future_by_axis(1.0, 0.001)
+	var small_frame_scroll := queue.future_scroll.scroll_vertical
+	queue.future_scroll.scroll_vertical = 0
+	queue.scroll_future_by_axis(1.0, 0.01)
+
+	assert_eq(small_frame_scroll, 7)
+	assert_eq(queue.future_scroll.scroll_vertical, small_frame_scroll)
+
+
+func test_right_stick_fraction_resets_across_dead_zone_and_direction_change() -> void:
+	var hero := _hero("Asher")
+	queue._on_turn_order_updated(_projection(hero, 21), false)
+	await get_tree().process_frame
+
+	queue.scroll_future_by_axis(1.0, 0.0005)
+	queue.scroll_future_by_axis(0.0, 0.1)
+	queue.scroll_future_by_axis(1.0, 0.001)
+	assert_eq(queue.future_scroll.scroll_vertical, 0)
+
+	queue.scroll_future_by_axis(0.0, 0.1)
+	queue.future_scroll.scroll_vertical = 10
+	queue.scroll_future_by_axis(1.0, 0.0005)
+	queue.scroll_future_by_axis(-1.0, 0.001)
+	assert_eq(queue.future_scroll.scroll_vertical, 10)
+
+
 func test_overflow_fade_tracks_scroll_extent() -> void:
 	var hero := _hero("Asher")
 	queue._on_turn_order_updated(_projection(hero, 21), false)
