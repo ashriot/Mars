@@ -1,6 +1,8 @@
 extends Control
 class_name ActorCard
 
+enum TargetPresentation { NORMAL, AVAILABLE, SELECTED }
+
 @export var damage_popup_scene: PackedScene
 @export var buff_scene: PackedScene
 @export var debuff_scene: PackedScene
@@ -28,16 +30,18 @@ const MAX_GUARD = 10
 @onready var portrait_rect: TextureRect = $Panel/Portrait
 @onready var breached_label: Label = $Panel/BreachedLabel
 @onready var highlight_panel: Panel = $Panel/Highlight
-@onready var target_flash: Panel = $Panel/TargetFlash
+@onready var target_outline: Panel = $Panel/TargetOutline
+@onready var target_pulse: Panel = $Panel/TargetPulse
 @onready var action_display: PanelContainer = $Panel/ActionName
 @onready var next_panel: Panel = $Panel/NextPanel
 @onready var debuffs_panel: Control = $Debuffs
 @onready var buffs_panel: Control = $Buffs
 
 var battle_manager: BattleManager
-var flash_tween: Tween
 var is_valid_target: bool
 var pip_tweens: Dictionary = {}
+var _target_presentation := TargetPresentation.NORMAL
+var _target_pulse_tween: Tween
 
 # --- Data (Shared by both) ---
 var actor_name: String
@@ -82,8 +86,6 @@ func setup_base(stats: ActorStats):
 	is_defeated = false
 	is_breached = false
 	highlight_panel.hide()
-	target_flash.hide()
-	target_flash.modulate.a = 0.2
 	hp_bar_ghost.hide()
 	update_health_bar()
 	hp_bar_actual.value = 0
@@ -95,6 +97,7 @@ func setup_base(stats: ActorStats):
 	for pip in guard_bar.get_children():
 		pip.get_child(0).set_pivot_offset(pip.size / 2.0)
 	update_guard_bar(false)
+	set_target_presentation(TargetPresentation.NORMAL)
 
 func on_turn_started() -> void:
 	next_panel.hide()
@@ -512,40 +515,29 @@ func _animate_pip_loss(pip_node: Control, animate: bool = true):
 func highlight(value: bool):
 	highlight_panel.visible = value
 
-func start_flashing():
-	is_valid_target = true
-	target_flash.modulate.a = 0
-	target_flash.visible = true
+func get_target_presentation() -> TargetPresentation:
+	return _target_presentation
 
-	# Kill old tween if it's running
-	if flash_tween and flash_tween.is_running():
-		flash_tween.kill()
+func set_target_presentation(state: TargetPresentation) -> void:
+	if state == _target_presentation:
+		target_outline.visible = state != TargetPresentation.NORMAL
+		target_pulse.visible = state == TargetPresentation.SELECTED
+		return
+	_stop_target_pulse()
+	_target_presentation = state
+	target_outline.visible = state != TargetPresentation.NORMAL
+	target_pulse.visible = state == TargetPresentation.SELECTED
+	if state == TargetPresentation.SELECTED:
+		target_pulse.modulate.a = 0.35
+		_target_pulse_tween = create_tween().set_loops()
+		_target_pulse_tween.tween_property(target_pulse, "modulate:a", 1.0, 0.35).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		_target_pulse_tween.tween_property(target_pulse, "modulate:a", 0.35, 0.65).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
-	flash_tween = create_tween().set_loops()
-
-	flash_tween.tween_property(
-		target_flash,
-		"modulate:a",
-		0.6,
-		0.2 / battle_manager.battle_speed
-	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-
-	flash_tween.tween_property(
-		target_flash,
-		"modulate:a",
-		0.2,
-		0.6 / battle_manager.battle_speed
-	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-
-func stop_flashing():
-	is_valid_target = false
-	if flash_tween and flash_tween.is_running():
-		flash_tween.kill()
-		flash_tween = null
-
-	if target_flash:
-		target_flash.visible = false
-		target_flash.modulate.a = 0.2
+func _stop_target_pulse() -> void:
+	if _target_pulse_tween and _target_pulse_tween.is_valid():
+		_target_pulse_tween.kill()
+	_target_pulse_tween = null
+	target_pulse.modulate.a = 1.0
 
 func _on_gui_input(_event: InputEvent):
 	pass

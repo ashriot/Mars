@@ -27,11 +27,30 @@ corner_radius_bottom_right = 17
 corner_radius_bottom_left = 17
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1mnyd"]
-bg_color = Color(1, 1, 1, 1)
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(1, 1, 1, 1)
 corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_target_pulse"]
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 8
+border_width_top = 8
+border_width_right = 8
+border_width_bottom = 8
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 17
+corner_radius_top_right = 17
+corner_radius_bottom_right = 17
+corner_radius_bottom_left = 17
+shadow_color = Color(1, 1, 1, 1)
+shadow_size = 8
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_puinb"]
 bg_color = Color(0, 0, 0, 0.78431374)
@@ -109,7 +128,7 @@ grow_vertical = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_8i7ma")
 
-[node name="TargetFlash" type="Panel" parent="Panel" unique_id=813998384]
+[node name="TargetOutline" type="Panel" parent="Panel" unique_id=813998384]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -123,6 +142,21 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_1mnyd")
+
+[node name="TargetPulse" type="Panel" parent="Panel"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -5.0
+offset_top = -5.0
+offset_right = 5.0
+offset_bottom = 5.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_target_pulse")
 
 [node name="Portrait" type="TextureRect" parent="Panel" unique_id=1666982492]
 layout_mode = 0

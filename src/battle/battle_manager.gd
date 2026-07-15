@@ -277,10 +277,9 @@ func set_current_action(action: Action):
 	var hero = current_actor as HeroCard
 	current_action_panel.modulate = hero.get_current_role().color
 	current_action_panel.show()
-	var target_list = get_targets(action.target_type, true)
-
-	for target in target_list:
-		target.start_flashing()
+	for target: ActorCard in get_targets(action.target_type, true):
+		target.is_valid_target = true
+		target.set_target_presentation(ActorCard.TargetPresentation.AVAILABLE)
 
 func _focus_button(button: ActionButton):
 	if focused_button:
@@ -555,8 +554,9 @@ func _flush_all_health_animations() -> void:
 		await tween.finished
 
 func _clear_all_targeting_ui():
-	for actor in actor_list:
-		actor.stop_flashing()
+	for actor: ActorCard in actor_list:
+		actor.is_valid_target = false
+		actor.set_target_presentation(ActorCard.TargetPresentation.NORMAL)
 
 func _on_spawn_particles(pos: Vector2, _type: String):
 	fx_manager.play_hit_effect(pos, false)
