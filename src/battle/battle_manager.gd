@@ -3,6 +3,7 @@ class_name BattleManager
 
 const CT_FASTER_COLOR := Color("67e88a")
 const CT_SLOWER_COLOR := Color("f87171")
+const FUTURE_TURN_DISPLAY_COUNT := 20
 
 # --- State Machine ---
 enum State { LOADING, PLAYER_ACTION, ENEMY_ACTION, EXECUTING_ACTION, FORCED_TARGET, BATTLE_OVER }
@@ -149,7 +150,10 @@ func _run_ct_simulation(num_turns := 10, ct_adjustments: Dictionary = {}) -> Arr
 	return CTBSimulator.project(actor_list, TARGET_CT, num_turns, ct_adjustments)
 
 
-func _display_projection(ct_adjustments: Dictionary = {}, count: int = 10) -> Array:
+func _display_projection(
+	ct_adjustments: Dictionary = {},
+	count: int = FUTURE_TURN_DISPLAY_COUNT + 1,
+) -> Array:
 	var future_count := count - 1 if is_instance_valid(current_actor) else count
 	var projection := _run_ct_simulation(future_count, ct_adjustments)
 	if is_instance_valid(current_actor):

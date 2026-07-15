@@ -121,7 +121,7 @@ anchors_preset = 10
 anchor_right = 1.0
 offset_left = 65.0
 offset_top = 23.0
-offset_right = -55.0
+offset_right = -152.0
 offset_bottom = 123.0
 grow_horizontal = 2
 mouse_filter = 2
@@ -175,6 +175,7 @@ layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 offset_top = 159.0
+offset_right = -144.0
 offset_bottom = 339.0
 grow_horizontal = 2
 
@@ -218,11 +219,16 @@ layout_mode = 1
 battle_manager = NodePath("../../BattleManager")
 
 [node name="TurnQueue" parent="UI" node_paths=PackedStringArray("battle_manager") instance=ExtResource("12_rvyyd")]
-layout_mode = 0
-offset_left = 15.0
-offset_top = 365.0
-offset_right = 315.0
-offset_bottom = 405.0
+layout_mode = 1
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -136.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -300.0
+grow_horizontal = 0
+grow_vertical = 2
 battle_manager = NodePath("../../BattleManager")
 
 [node name="FXManager" type="Node2D" parent="."]

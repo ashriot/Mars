@@ -1,120 +1,143 @@
 extends Control
 class_name TurnQueue
 
+
+const ITEM_SPACING := 8
+const RIGHT_STICK_DEAD_ZONE := 0.25
+const RIGHT_STICK_SCROLL_SPEED := 700.0
+
 @export var actor_queue_scene: PackedScene
 @export var battle_manager: BattleManager
-@onready var queue := $Queue
 
-const QUEUE_ITEM_HEIGHT: int = 40
-const QUEUE_ITEM_SPACING: int = 4
-const ANIMATION_DURATION: float = 0.3
+@onready var active_slot: Control = $ActiveSlot
+@onready var future_scroll: ScrollContainer = $FutureScroll
+@onready var future_content: Control = $FutureScroll/FutureContent
+@onready var overflow_fade: TextureRect = $OverflowFade
 
-const SLIDE_OFFSET_X = 50.0
+var active_item: ActorQueue
+var future_items: Array[ActorQueue] = []
+var active_actor_ref: ActorCard
+var _right_stick_y := 0.0
 
-var queue_items: Array[ActorQueue] = []
 
-func _ready():
-	battle_manager.turn_order_updated.connect(_on_turn_order_updated)
+func _ready() -> void:
+	if is_instance_valid(battle_manager):
+		battle_manager.turn_order_updated.connect(_on_turn_order_updated)
+	future_scroll.get_v_scroll_bar().value_changed.connect(_update_overflow_fade)
+	call_deferred("_update_overflow_fade")
 
-func _on_turn_order_updated(projected_queue: Array, animate: bool = true):
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventJoypadMotion and event.axis == JOY_AXIS_RIGHT_Y:
+		_right_stick_y = event.axis_value
+
+
+func _process(delta: float) -> void:
+	scroll_future_by_axis(_right_stick_y, delta)
+
+
+func scroll_future_by_axis(axis_value: float, delta: float) -> void:
+	if absf(axis_value) < RIGHT_STICK_DEAD_ZONE:
+		return
+	var amount := int(axis_value * RIGHT_STICK_SCROLL_SPEED * delta)
+	future_scroll.scroll_vertical = clampi(
+		future_scroll.scroll_vertical + amount,
+		0,
+		_max_future_scroll(),
+	)
+
+
+func _setup_active(turn_data: Dictionary, _animate: bool) -> void:
+	if active_item == null or active_item.actor_ref != turn_data.actor:
+		if active_item:
+			active_item.queue_free()
+		active_item = actor_queue_scene.instantiate() as ActorQueue
+		active_slot.add_child(active_item)
+	active_item.setup(turn_data.actor, int(turn_data.ticks_needed), false, true, 0)
+	active_item.position = Vector2(
+		(active_slot.size.x - ActorQueue.ACTIVE_SIZE.x) * 0.5,
+		0.0,
+	)
+
+
+func _on_turn_order_updated(projected_queue: Array, animate: bool = true) -> void:
 	if projected_queue.is_empty():
 		_clear_queue()
 		return
+	var new_active: ActorCard = projected_queue[0].actor
+	var active_changed := active_actor_ref != new_active
+	var saved_scroll := 0 if active_changed else future_scroll.scroll_vertical
+	if active_changed:
+		future_scroll.scroll_vertical = 0
+	active_actor_ref = new_active
+	_setup_active(projected_queue[0], animate)
 
-	# 1. Snapshot the Old State
-	var old_items = queue_items.duplicate()
-	queue_items.clear()
-
-	var exiting_item: ActorQueue = null
-
-	if not old_items.is_empty() and animate:
-		if old_items[0].actor_ref != projected_queue[0].actor:
-			exiting_item = old_items.pop_front() # Remove top item
-
-	# 3. Handle the Exiting Item
-	if exiting_item:
-		_animate_exit(exiting_item)
-
-	# 4. Rebuild the List
-	var ticks_per_bar = _calculate_ticks_per_bar(projected_queue)
-	print("Ticks per bar: ", ticks_per_bar)
-	var first_turn_ticks = projected_queue[0].ticks_needed
-
-	# We limit the display count to keep the UI clean (e.g., 10 items max)
-	# or just use the projection size provided by the manager (usually 10).
-	var display_count = projected_queue.size()
-
-	for i in range(display_count):
-		var turn_data = projected_queue[i]
-		var actor = turn_data.actor
-
-		# Calculate target Y immediately
-		var target_y = i * (QUEUE_ITEM_HEIGHT + QUEUE_ITEM_SPACING)
-
-		# A. Find existing
-		var item_ui: ActorQueue = _find_and_pop_match(actor, old_items)
-		var is_new_instance = false
-
-		# B. Create New if needed
-		if not item_ui:
-			item_ui = actor_queue_scene.instantiate() as ActorQueue
-			queue.add_child(item_ui)
-			is_new_instance = true
-			item_ui.position.y = target_y
-
-			if animate:
-				item_ui.position.x = SLIDE_OFFSET_X
-				item_ui.modulate.a = 0.0
-
-		# C. Setup Data
-		var relative_ticks = turn_data.ticks_needed - first_turn_ticks
-		var bar_pos = relative_ticks / ticks_per_bar
-
-		item_ui.setup(actor, bar_pos, int(relative_ticks), animate, i == 0)
-		queue_items.append(item_ui)
-
-		# D. Animate
+	var occurrence_counts: Dictionary = {new_active: 1}
+	var old_items := future_items.duplicate()
+	future_items.clear()
+	for index in range(1, projected_queue.size()):
+		var turn_data: Dictionary = projected_queue[index]
+		var actor: ActorCard = turn_data.actor
+		var occurrence := int(occurrence_counts.get(actor, 0))
+		occurrence_counts[actor] = occurrence + 1
+		var item := _find_and_pop_match(actor, occurrence, old_items)
+		if item == null:
+			item = actor_queue_scene.instantiate() as ActorQueue
+			future_content.add_child(item)
+		item.setup(actor, int(turn_data.ticks_needed), animate, false, occurrence)
+		var target := Vector2(
+			(future_scroll.size.x - ActorQueue.FUTURE_SIZE.x) * 0.5,
+			(index - 1) * (ActorQueue.FUTURE_SIZE.y + ITEM_SPACING),
+		)
 		if animate:
-			_animate_to_target(item_ui, target_y, is_new_instance)
+			item.animate_to(target)
 		else:
-			# Instant Snap
-			item_ui.position.y = target_y
-			item_ui.position.x = 0
-			item_ui.modulate.a = 1.0
+			item.position = target
+		future_items.append(item)
 
-	for unused_item in old_items:
-		_animate_exit(unused_item)
+	var content_height := future_items.size() * int(ActorQueue.FUTURE_SIZE.y + ITEM_SPACING)
+	if not future_items.is_empty():
+		content_height -= ITEM_SPACING
+	future_content.custom_minimum_size = Vector2(future_scroll.size.x, content_height)
+	for unused: ActorQueue in old_items:
+		unused.animate_exit()
+	call_deferred("_restore_scroll", saved_scroll)
 
-func _find_and_pop_match(actor: ActorCard, pool: Array) -> ActorQueue:
-	for i in range(pool.size()):
-		if pool[i].actor_ref == actor:
-			var item = pool[i]
-			pool.remove_at(i)
-			return item
+
+func _find_and_pop_match(actor: ActorCard, occurrence: int, pool: Array) -> ActorQueue:
+	for index in pool.size():
+		var candidate := pool[index] as ActorQueue
+		if candidate.actor_ref == actor and candidate.occurrence_index == occurrence:
+			pool.remove_at(index)
+			return candidate
 	return null
 
-func _animate_exit(item: ActorQueue):
-	var tween = create_tween()
-	tween.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_CUBIC)
-	tween.tween_property(item, "modulate:a", 0.0, ANIMATION_DURATION / 3.0)
-	tween.chain().tween_callback(item.queue_free)
 
-func _animate_to_target(item: ActorQueue, target_y: float, is_new: bool):
-	var tween = create_tween().set_parallel()
-	tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-	tween.tween_property(item, "position:y", target_y, ANIMATION_DURATION)
+func _restore_scroll(value: int) -> void:
+	future_scroll.scroll_vertical = clampi(value, 0, _max_future_scroll())
+	_update_overflow_fade()
 
-	if item.position.x != 0:
-		tween.tween_property(item, "position:x", 0.0, ANIMATION_DURATION)
-	if is_new:
-		tween.tween_property(item, "modulate:a", 1.0, ANIMATION_DURATION)
 
-func _calculate_ticks_per_bar(projection: Array) -> float:
-	if projection.size() < 2: return 100.0
-	var first = projection[0].ticks_needed
-	var last = projection[min(6, projection.size() - 1)].ticks_needed
-	return max((last - first) / 3.0, 10.0)
+func _max_future_scroll() -> int:
+	var bar := future_scroll.get_v_scroll_bar()
+	return maxi(int(ceil(bar.max_value - bar.page)), 0)
 
-func _clear_queue():
-	for item in queue_items: item.queue_free()
-	queue_items.clear()
+
+func _update_overflow_fade(_value: float = 0.0) -> void:
+	overflow_fade.visible = (
+		_max_future_scroll() > 0
+		and future_scroll.scroll_vertical < _max_future_scroll()
+	)
+
+
+func _clear_queue() -> void:
+	if active_item:
+		active_item.queue_free()
+		active_item = null
+	for item in future_items:
+		item.queue_free()
+	future_items.clear()
+	active_actor_ref = null
+	future_content.custom_minimum_size.y = 0.0
+	future_scroll.scroll_vertical = 0
+	overflow_fade.visible = false

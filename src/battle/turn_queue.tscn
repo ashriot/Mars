@@ -1,23 +1,62 @@
-[gd_scene load_steps=3 format=3 uid="uid://b7pmdidfa57uo"]
+[gd_scene load_steps=5 format=3 uid="uid://b7pmdidfa57uo"]
 
 [ext_resource type="Script" uid="uid://bf5t2mtgtkbsn" path="res://src/battle/turn_queue.gd" id="1_0t4nl"]
 [ext_resource type="PackedScene" uid="uid://diku73kk4tjv7" path="res://src/battle/actor_queue.tscn" id="2_67eim"]
 
+[sub_resource type="Gradient" id="Gradient_overflow"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(0.03, 0.04, 0.07, 0, 0.03, 0.04, 0.07, 0.92)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_overflow"]
+gradient = SubResource("Gradient_overflow")
+width = 1
+height = 64
+fill_from = Vector2(0.5, 0)
+fill_to = Vector2(0.5, 1)
+
 [node name="TurnQueue" type="Control"]
-custom_minimum_size = Vector2(300, 0)
+custom_minimum_size = Vector2(120, 764)
 layout_mode = 3
 anchors_preset = 0
-offset_right = 300.0
-offset_bottom = 40.0
+offset_right = 120.0
+offset_bottom = 764.0
 mouse_filter = 2
 script = ExtResource("1_0t4nl")
 actor_queue_scene = ExtResource("2_67eim")
 
-[node name="Queue" type="Control" parent="."]
+[node name="ActiveSlot" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 112.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="FutureScroll" type="ScrollContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_top = 124.0
 grow_horizontal = 2
 grow_vertical = 2
+horizontal_scroll_mode = 0
+scroll_deadzone = 12
+
+[node name="FutureContent" type="Control" parent="FutureScroll"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
 mouse_filter = 2
+
+[node name="OverflowFade" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -64.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+texture = SubResource("GradientTexture2D_overflow")
+expand_mode = 1
