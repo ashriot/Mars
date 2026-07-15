@@ -1085,7 +1085,7 @@ func animate_committed_exit() -> void:
 		_move_tween.kill()
 	if _exit_tween and _exit_tween.is_valid():
 		_exit_tween.kill()
-	_exit_tween = create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_CUBIC)
+	_exit_tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 	_exit_tween.set_parallel(true)
 	_exit_tween.tween_property(
 		self,
@@ -1097,7 +1097,7 @@ func animate_committed_exit() -> void:
 	_exit_tween.chain().tween_callback(queue_free)
 ```
 
-The position and alpha properties animate in parallel for the same 0.3-second duration. The existing `cancel_animations()` and instance-validity pruning continue to own interrupted-tween cleanup.
+The position and alpha properties animate in parallel with cubic ease-out for the same 0.3-second duration, clearing the promoted entry's lane early. The existing `cancel_animations()` and instance-validity pruning continue to own interrupted-tween cleanup.
 
 - [ ] **Step 5: Reparent only the committed current exit and clear both containers safely**
 

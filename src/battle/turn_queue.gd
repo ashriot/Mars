@@ -12,6 +12,7 @@ const RIGHT_STICK_SCROLL_SPEED := 700.0
 @onready var rail_background: Panel = $RailBackground
 @onready var queue_scroll: ScrollContainer = $QueueScroll
 @onready var queue_content: Control = $QueueScroll/QueueContent
+@onready var exit_layer: Control = $ExitLayer
 @onready var overflow_fade: TextureRect = $OverflowFade
 
 var queue_items: Array[ActorQueue] = []
@@ -108,7 +109,8 @@ func _on_turn_order_updated(
 	if update_kind == BattleManager.TurnOrderUpdate.ADVANCE and not current_items.is_empty():
 		var outgoing := current_items[0]
 		reusable.erase(outgoing)
-		outgoing.animate_exit()
+		outgoing.reparent(exit_layer, true)
+		outgoing.animate_committed_exit()
 		_committed_exits.append(outgoing)
 
 	var occurrences: Dictionary = {}
@@ -191,11 +193,12 @@ func _clear_queue() -> void:
 	queue_items.clear()
 	_recoverable_exits.clear()
 	_committed_exits.clear()
-	for child in queue_content.get_children():
-		if child is ActorQueue:
-			var item := child as ActorQueue
-			item.cancel_animations()
-			item.free()
+	for container: Node in [queue_content, exit_layer]:
+		for child in container.get_children():
+			if child is ActorQueue:
+				var item := child as ActorQueue
+				item.cancel_animations()
+				item.free()
 	queue_content.custom_minimum_size.y = 0.0
 	queue_scroll.scroll_vertical = 0
 	_reset_right_stick_scroll()

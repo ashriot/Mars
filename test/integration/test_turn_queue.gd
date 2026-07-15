@@ -324,7 +324,7 @@ func test_preview_reuses_occurrences_and_visually_swaps_positions() -> void:
 	assert_eq(enemy_item.position, queue._target_position(2))
 
 
-func test_advance_fades_consumed_occurrence_and_promotes_existing_future_item() -> void:
+func test_advance_slides_consumed_occurrence_left_above_promoted_item() -> void:
 	var hero := _hero("Echo")
 	var enemy := _enemy("Attack Drone A")
 	queue._on_turn_order_updated([
@@ -335,6 +335,7 @@ func test_advance_fades_consumed_occurrence_and_promotes_existing_future_item() 
 	await get_tree().process_frame
 	var outgoing := queue.queue_items[0]
 	var promoted := queue.queue_items[1]
+	var outgoing_start_x := outgoing.global_position.x
 
 	queue._on_turn_order_updated([
 		{"actor": hero, "ticks_needed": 0},
@@ -342,12 +343,40 @@ func test_advance_fades_consumed_occurrence_and_promotes_existing_future_item() 
 	], BattleManager.TurnOrderUpdate.ADVANCE)
 
 	assert_true(outgoing._exit_tween != null)
+	assert_same(outgoing.get_parent(), queue.exit_layer)
+	assert_gt(queue.exit_layer.z_index, queue.queue_scroll.z_index)
 	assert_same(queue.queue_items[0], promoted)
 	assert_eq(queue.queue_scroll.scroll_vertical, 0)
-	await get_tree().create_timer(ActorQueue.ANIMATION_DURATION + 0.05).timeout
+	await get_tree().create_timer(ActorQueue.ANIMATION_DURATION * 0.5).timeout
+	assert_lt(outgoing.global_position.x, outgoing_start_x)
+	assert_lt(outgoing.modulate.a, 1.0)
+	assert_lt(outgoing.global_position.x + outgoing.size.x, promoted.global_position.x)
+	assert_gt(promoted.position.y, queue._target_position(0).y)
+	await get_tree().create_timer(ActorQueue.ANIMATION_DURATION * 0.5 + 0.05).timeout
 	assert_false(is_instance_valid(outgoing))
 	assert_eq(promoted.position, queue._target_position(0))
 	assert_true(promoted.gauge._is_current)
+
+
+func test_preview_removal_fades_in_place_inside_queue_content() -> void:
+	var hero := _hero("Echo")
+	var enemy := _enemy("Attack Drone A")
+	queue._on_turn_order_updated([
+		{"actor": hero, "ticks_needed": 0},
+		{"actor": enemy, "ticks_needed": 30},
+	], BattleManager.TurnOrderUpdate.REFRESH)
+	await get_tree().process_frame
+	var removed := queue.queue_items[1]
+	var start_position := removed.position
+
+	queue._on_turn_order_updated([
+		{"actor": hero, "ticks_needed": 0},
+	], BattleManager.TurnOrderUpdate.PREVIEW)
+
+	assert_same(removed.get_parent(), queue.queue_content)
+	await get_tree().create_timer(ActorQueue.ANIMATION_DURATION * 0.5).timeout
+	assert_eq(removed.position, start_position)
+	assert_lt(removed.modulate.a, 1.0)
 
 
 func test_rapid_preview_replaces_position_and_gauge_targets() -> void:

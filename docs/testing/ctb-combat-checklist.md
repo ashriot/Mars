@@ -24,7 +24,10 @@ All checks below are intentionally unchecked until performed interactively in co
 - [ ] Mouse-wheel input over the full rail, direct touch drag, and right-stick input scroll the same complete turn list without changing the selected action or current target.
 - [ ] Preview reorder and preview-clear animations preserve the current rail scroll position.
 - [ ] Committing an action and advancing to the next actual turn snap the rail to the top.
-- [ ] An advance fades the consumed entry while the remaining entries slide upward; visible Fast/Slow crossings swap positions while their gauges interpolate simultaneously.
+- [ ] On advance, the consumed top entry slides left beyond the black rail while fading, visibly above the simultaneously promoted entry.
+- [ ] The promoted entry and remaining queue slide upward without covering the consumed entry; visible Fast/Slow crossings still swap positions while their gauges interpolate simultaneously.
+- [ ] Hover-preview removals fade in place and never use the committed leftward exit.
+- [ ] The leftward exit remains visible outside the rail rather than being clipped at its edge.
 - [ ] Rapid target hover changes and rapid input-family handoffs settle on the latest projection without flashes, stale movement, or queue cards stranded between positions.
 
 ## Deterministic order and timeline presentation

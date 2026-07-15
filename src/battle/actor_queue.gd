@@ -4,6 +4,7 @@ class_name ActorQueue
 
 const ITEM_SIZE := Vector2(72, 72)
 const ANIMATION_DURATION := 0.3
+const COMMITTED_EXIT_DISTANCE := 96.0
 
 @onready var gauge: CTBGauge = $CTBGauge
 @onready var role_icon: TextureRect = $Interior/RoleIcon
@@ -57,6 +58,23 @@ func animate_exit() -> void:
 	_exit_tween = create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_CUBIC)
 	_exit_tween.tween_property(self, "modulate:a", 0.0, ANIMATION_DURATION)
 	_exit_tween.tween_callback(queue_free)
+
+
+func animate_committed_exit() -> void:
+	if _move_tween and _move_tween.is_valid():
+		_move_tween.kill()
+	if _exit_tween and _exit_tween.is_valid():
+		_exit_tween.kill()
+	_exit_tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	_exit_tween.set_parallel(true)
+	_exit_tween.tween_property(
+		self,
+		"position",
+		position + Vector2.LEFT * COMMITTED_EXIT_DISTANCE,
+		ANIMATION_DURATION,
+	)
+	_exit_tween.tween_property(self, "modulate:a", 0.0, ANIMATION_DURATION)
+	_exit_tween.chain().tween_callback(queue_free)
 
 
 func prepare_for_reuse() -> void:
