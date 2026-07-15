@@ -54,7 +54,7 @@ For an even actor count, the median is the arithmetic mean of the two center val
 
 Normalizing the median actor to `100` CT per tick makes standard `4000`-CT recovery take approximately `40` ticks. Multiplying every actor by one shared factor preserves raw Speed ratios apart from final integer rounding while retaining enough resolution for endgame values.
 
-Actors begin with a randomized zero-to-five-tick head start. After the scale is frozen, initialize each actor's CT in the inclusive range from `0` through `actor CT Speed * 5`; do not seed from raw Speed before normalization.
+Actors begin with a randomized zero-to-five-tick head start. After the scale is frozen, add a head-start amount in the inclusive range from `0` through `actor CT Speed * 5`; do not seed from raw Speed before normalization. Adding rather than replacing preserves any direct CT change produced by a starting passive.
 
 ## Action CT percentage
 
