@@ -36,6 +36,11 @@ Dungeon scan conversion is centralized in `DungeonMap._scan_screen_to_global_wor
 
 ## Cursor and reticle ownership
 
+- The hardware pointer is always driven by physical mouse input and is never warped by keyboard or controller navigation.
+- Ordinary controller navigation hides that pointer and uses GUI focus, map reticles, or actor highlights.
+- The scan software pointer is the sole controller-positioned pointer; it consumes an explicit projected screen position and never feeds back into OS pointer state.
+- Mouse motion is ignored during controller ownership. A consumed click transaction performs controller-to-mouse ownership handoff.
+
 During controller scanning:
 
 - `DungeonMap._controller_scan_map_position` is the authoritative dungeon-map-local aim position.
@@ -58,7 +63,7 @@ For keyboard-and-mouse input, the viewport mouse position becomes the scan point
 - Do not compare a global physics point directly with `camera.position`; inherited scene offsets create runaway camera feedback.
 - Do not send a dungeon-map-local point to `World2D.intersect_point()`; it will miss map nodes when the live scene root is offset or scaled.
 - Prefer one named conversion function at the boundary over scattered `Transform2D` multiplication.
-- Keep UI focus, software cursor presentation, world selection, and camera focus as separate state even when they visually overlap.
+- Keep UI focus, scan software-pointer presentation, world selection, and camera focus as separate state. Ordinary GUI focus never overlaps a software pointer.
 
 ## Verification
 

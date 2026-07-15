@@ -53,9 +53,9 @@ func _mouse_motion_at(position: Vector2, relative := Vector2.ZERO) -> InputEvent
 	return event
 
 
-func _mouse_button_at(position: Vector2, pressed: bool) -> InputEventMouseButton:
+func _mouse_button_at(position: Vector2, button: MouseButton, pressed: bool) -> InputEventMouseButton:
 	var event := InputEventMouseButton.new()
-	event.button_index = MOUSE_BUTTON_LEFT
+	event.button_index = button
 	event.position = position
 	event.global_position = position
 	event.pressed = pressed
@@ -185,8 +185,8 @@ func test_pointer_blocker_suppresses_gui_hover_and_activation_only_in_focus() ->
 	InputManager._set_presentation_mode(InputManager.PresentationMode.FOCUS)
 
 	get_viewport().push_input(_mouse_motion_at(middle_position), true)
-	get_viewport().push_input(_mouse_button_at(middle_position, true), true)
-	get_viewport().push_input(_mouse_button_at(middle_position, false), true)
+	get_viewport().push_input(_mouse_button_at(middle_position, MOUSE_BUTTON_LEFT, true), true)
+	get_viewport().push_input(_mouse_button_at(middle_position, MOUSE_BUTTON_LEFT, false), true)
 	await get_tree().process_frame
 	assert_false(middle.is_hovered())
 	assert_eq(press_count[0], 0)
@@ -194,8 +194,8 @@ func test_pointer_blocker_suppresses_gui_hover_and_activation_only_in_focus() ->
 	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)
 	get_viewport().push_input(_mouse_motion_at(Vector2.ZERO), true)
 	get_viewport().push_input(_mouse_motion_at(middle_position, middle_position), true)
-	get_viewport().push_input(_mouse_button_at(middle_position, true), true)
-	get_viewport().push_input(_mouse_button_at(middle_position, false), true)
+	get_viewport().push_input(_mouse_button_at(middle_position, MOUSE_BUTTON_LEFT, true), true)
+	get_viewport().push_input(_mouse_button_at(middle_position, MOUSE_BUTTON_LEFT, false), true)
 	await get_tree().process_frame
 	assert_true(middle.is_hovered())
 	assert_eq(press_count[0], 1)
@@ -211,6 +211,54 @@ func test_keyboard_direction_from_controller_moves_immediately_and_reveals_mouse
 	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.KEYBOARD_MOUSE)
 	assert_eq(Input.mouse_mode, Input.MOUSE_MODE_VISIBLE)
 	assert_false(setup.ux.cursor.visible, "keyboard focus does not show the navigation cursor")
+
+
+func test_pointer_keyboard_controller_handoffs_preserve_one_logical_focus() -> void:
+	var setup := await _three_button_screen()
+	var ux: NavigationUXLayer = setup.ux
+	var top: Button = setup.top
+	var middle: Button = setup.middle
+	var bottom: Button = setup.bottom
+	var bottom_press_count := [0]
+	bottom.pressed.connect(func() -> void: bottom_press_count[0] += 1)
+
+	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)
+	get_viewport().push_input(_key(KEY_DOWN))
+	await get_tree().process_frame
+	assert_same(get_viewport().gui_get_focus_owner(), top)
+	get_viewport().push_input(_released_key(KEY_DOWN))
+	get_viewport().push_input(_key(KEY_DOWN))
+	await get_tree().process_frame
+	assert_same(get_viewport().gui_get_focus_owner(), middle)
+	get_viewport().push_input(_released_key(KEY_DOWN))
+
+	get_viewport().push_input(_joy_direction(JOY_BUTTON_DPAD_DOWN, true))
+	await get_tree().process_frame
+	assert_same(get_viewport().gui_get_focus_owner(), bottom)
+	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.CONTROLLER)
+	assert_true(ux.pointer_input_blocker.visible)
+	get_viewport().push_input(_joy_direction(JOY_BUTTON_DPAD_DOWN, false))
+
+	get_viewport().push_input(_key(KEY_UP))
+	await get_tree().process_frame
+	assert_same(get_viewport().gui_get_focus_owner(), middle)
+	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.KEYBOARD_MOUSE)
+	get_viewport().push_input(_released_key(KEY_UP))
+
+	InputManager._input(_mouse_motion(Vector2(12, 0)))
+	assert_same(ux.get_focus_target(), middle)
+	assert_false(NavigationFocus._states.has(middle.get_instance_id()))
+
+	InputManager._input(_joy_direction(JOY_BUTTON_A, true))
+	var click_position := bottom.get_global_rect().get_center()
+	get_viewport().push_input(_mouse_button_at(click_position, MOUSE_BUTTON_LEFT, true), true)
+	get_viewport().push_input(_mouse_button_at(click_position, MOUSE_BUTTON_LEFT, false), true)
+	await get_tree().process_frame
+	assert_eq(bottom_press_count[0], 0)
+	get_viewport().push_input(_mouse_button_at(click_position, MOUSE_BUTTON_LEFT, true), true)
+	get_viewport().push_input(_mouse_button_at(click_position, MOUSE_BUTTON_LEFT, false), true)
+	await get_tree().process_frame
+	assert_eq(bottom_press_count[0], 1)
 
 
 func test_focus_presentation_resolves_invalid_retained_target_to_fallback() -> void:

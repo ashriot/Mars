@@ -10,6 +10,18 @@ All device checks below are intentionally unchecked until performed on the named
 - [ ] Connect two controllers, remove the active one, and verify the remaining controller becomes authoritative without invalid focus.
 - [ ] Use an unknown/generic controller through Steam Input and verify the Steam Deck glyph family with an Xbox-compatible button layout and semantic actions.
 
+## Focus and pointer ownership
+
+- [ ] Ordinary controller navigation hides the hardware arrow and shows no snapped cursor on focused buttons.
+- [ ] Focused buttons and button-like controls use the clear 70% neutral fill with readable dark foregrounds across title orange, hub blue, terminal, and result palettes.
+- [ ] Focus clears without scaling or tweening, and every authored style and foreground color is restored exactly.
+- [ ] Mouse motion in controller mode changes neither ownership nor visible focus; the first click reveals the independent pointer and activates nothing, while the matching release is also consumed and the second click activates exactly once.
+- [ ] Mouse motion in keyboard-and-mouse mode hides visible focus but retains its logical origin; mouse hover is temporary visual ownership and does not replace that origin. The first arrow/WASD press restores the retained focus without moving and the second moves.
+- [ ] Any keyboard input after controller presentation reveals the hardware pointer and performs its action; keyboard direction moves immediately.
+- [ ] Controller direction after pointer presentation hides the pointer and moves immediately; keyboard direction after controller presentation reveals the pointer and moves immediately.
+- [ ] Battle uses actor highlighting and dungeon traversal uses its reticle without an ordinary navigation arrow.
+- [ ] Security scanning alone shows the controller-positioned software pointer while the hardware pointer remains hidden and physically independent.
+
 ## Xbox controller
 
 - [ ] Xbox controller (USB): complete the full title → hub → dungeon → terminal → battle → result loop.
@@ -32,8 +44,8 @@ Run this sequence once over USB and once over Bluetooth. Fill in both rows befor
 | Bluetooth |  |  | PS5 DualSense | Bluetooth |  |  |
 
 - [ ] Move the left stick partially and fully: the world aim follows analog magnitude, the map moves at a consistent speed, and the cursor stays centered while the camera is attached; D-pad provides the same movement at full digital magnitude.
-- [ ] During controller scanning, the reticle snaps through real hexes beneath the centered custom cursor while the OS mouse remains at its independent physical position.
-- [ ] Move the physical mouse without clicking: controller mode, controller cursor, and reticle remain authoritative. Click a mouse button: keyboard-and-mouse mode activates, the custom cursor hides, and the OS cursor appears at the physical click position without inheriting the controller position.
+- [ ] During controller scanning, the reticle snaps through real hexes beneath the centered scan software pointer while the OS mouse remains at its independent physical position.
+- [ ] Move the physical mouse without clicking: controller ownership, scan software pointer, and reticle remain authoritative. The first mouse-button transaction activates nothing, hides the software pointer, and reveals the OS cursor at its independent physical position; a second click activates exactly once.
 - [ ] Release the left stick or D-pad: the world aim and attached camera stop immediately with no drift or acceleration.
 - [ ] With left input neutral, hold the right stick: the camera detaches and pans while the cursor and reticle remain anchored to the same world target and move together on screen.
 - [ ] Resume left-stick or D-pad input after panning: left input wins, the camera slides back to the world aim without warping it, then keeps the cursor centered again.
@@ -51,16 +63,16 @@ Run this sequence once over USB and once over Bluetooth. Fill in both rows befor
 - [ ] Steam Deck controls: complete the full loop in Gaming Mode.
 - [ ] Steam Input known-device profile: glyph family and every semantic action match the selected layout.
 - [ ] Steam Input unknown/generic profile: Steam Deck glyph-family fallback with an Xbox-compatible layout remains usable and internally consistent.
-- [ ] At native handheld resolution, cursor, focused-button scaling, button glyphs, hint text, protocol rows, skill nodes, map nodes, card targets, and result totals are readable without clipping.
+- [ ] At native handheld resolution, the 70% neutral focus fill, button glyphs, hint text, protocol rows, skill nodes, map nodes, card targets, and result totals are readable without clipping.
 
 ## Mouse and keyboard switching
 
-- [ ] Move the physical mouse by both small and large amounts in controller mode without clicking; motion never changes input mode, hides the controller presentation, or moves the controller cursor.
-- [ ] Click a physical mouse button; keyboard-and-mouse mode activates, non-clickable hint-bar text hides, and the OS pointer remains at its independent physical position without inheriting the controller cursor position.
-- [ ] Use the keyboard; keyboard-and-mouse mode activates without moving either pointer.
+- [ ] Move the physical mouse by both small and large amounts in controller mode without clicking; motion never changes input ownership, reveals the hardware pointer, changes visible focus, or moves a scan software pointer.
+- [ ] Click a physical mouse button; keyboard-and-mouse mode activates, non-clickable hint-bar text hides, the complete first press/release transaction activates nothing, and the OS pointer remains at its independent physical position. A second click activates exactly once.
+- [ ] Use each keyboard input category from controller mode; keyboard-and-mouse ownership activates, the hardware pointer appears without moving, and the key's confirm, cancel, shortcut, or directional action proceeds immediately.
 - [ ] Alternate physical mouse clicks, keyboard input, and controller input rapidly at least ten times on every major screen; the latest activating input wins and focus/cursor never becomes stale.
 - [ ] Switch keyboard → controller → physical mouse click while a modal is open; focus remains trapped inside the top modal.
-- [ ] After keyboard-and-mouse mode is activated by a click and mouse hover leaves a battle target or dungeon node, controller input restores a valid semantic cursor without selecting anything.
+- [ ] After keyboard-and-mouse mode is activated by a click and mouse hover leaves a battle target or dungeon node, controller input immediately restores a valid reticle or actor highlight without selecting anything.
 
 ## Title and hub
 
@@ -68,7 +80,7 @@ Run this sequence once over USB and once over Bluetooth. Fill in both rows befor
 - [ ] Hub outer depth: navigate every enabled action, confirm opens the selected panel, and cancel/return behavior is stable.
 - [ ] Party hero-list depth: traverse every hero, enter content, return to the remembered hero, and close outward.
 - [ ] Skill role/page depth: traverse each unlocked role and every authored page; remembered role, page, and node restore after leaving and returning.
-- [ ] Skill node depth: D-pad geometry is deterministic; available, affordable, locked, and owned nodes show the correct cursor/hint state; confirm never purchases twice.
+- [ ] Skill node depth: D-pad geometry is deterministic; available, affordable, locked, and owned nodes show the correct focus/hint state; confirm never purchases twice.
 - [ ] L1/R1 page controls wrap only among authored pages; one-page roles omit or disable page hints.
 - [ ] L2/R2 role controls remain active at hero, page, and node depths and restore a valid node.
 - [ ] Inventory depth: traverse all slots, begin/cancel held-item mode, and verify valid versus invalid equipment/mod targets.
@@ -83,8 +95,8 @@ Run this sequence once over USB and once over Bluetooth. Fill in both rows befor
 - [ ] Use the controller D-pad as a digital fallback and verify it selects the same eligible destinations.
 - [ ] Switch to keyboard-and-mouse mode with a physical mouse click; WASD/arrows do not preview or move between nodes, while subsequent mouse hover/click owns the reticle and traversal.
 - [ ] Move the left stick partially and fully: the world aim follows analog magnitude, the map moves at a consistent speed, and the cursor stays centered while the camera is attached; D-pad provides the same movement at full digital magnitude.
-- [ ] During controller scanning, the reticle snaps through real hexes beneath the centered custom cursor while the OS mouse remains at its independent physical position.
-- [ ] Move the physical mouse without clicking: controller mode, controller cursor, and reticle remain authoritative. Click a mouse button: keyboard-and-mouse mode activates, the custom cursor hides, and the OS cursor appears at the physical click position without inheriting the controller position.
+- [ ] During controller scanning, the reticle snaps through real hexes beneath the centered scan software pointer while the OS mouse remains at its independent physical position.
+- [ ] Move the physical mouse without clicking: controller ownership, scan software pointer, and reticle remain authoritative. Click once: the complete transaction activates nothing, the software pointer hides, and the OS cursor appears at its independent physical position; click again to activate exactly once.
 - [ ] Release the left stick or D-pad: the world aim and attached camera stop immediately with no drift or acceleration.
 - [ ] With left input neutral, hold the right stick: the camera detaches and pans while the cursor and reticle remain anchored to the same world target and move together on screen.
 - [ ] Resume left-stick or D-pad input after panning: left input wins, the camera slides back to the world aim without warping it, then keeps the cursor centered again.
@@ -117,13 +129,15 @@ Run this sequence once over USB and once over Bluetooth. Fill in both rows befor
 - [ ] Action 4 activates only the fourth visible enabled affordable skill.
 - [ ] Disabled, unaffordable, hidden, and missing skills do nothing and are not advertised as available.
 - [ ] Shift activates the currently legal direction once and does nothing when neither direction is legal.
-- [ ] Target navigation cycles only living valid targets using screen geometry; cursor and hover presentation agree.
+- [ ] Target navigation cycles only living valid targets using screen geometry; actor-card highlighting agrees with the selected target and no ordinary navigation arrow appears.
 - [ ] Confirm executes through the existing target selection path exactly once.
-- [ ] Target cancel executes nothing, exits targeting, and returns cursor/hints to action selection or the active hero region.
-- [ ] Open any battle modal/overlay; action, shift, target, confirm, and cancel input cannot leak beneath it; closing restores the battle adapter cursor.
+- [ ] Target cancel executes nothing, exits targeting, and returns highlighting/hints to action selection or the active hero region.
+- [ ] Open any battle modal/overlay; action, shift, target, confirm, and cancel input cannot leak beneath it; closing restores the battle adapter highlight.
 - [ ] Victory, retreat, and defeat result screens each focus Continue, show readable totals, accept confirm once, and route onward once.
 
 ## Sign-off
+
+The controls hint-bar redesign remains deferred. A future pass should make it a deliberate floating panel, use Archivo for sentence-case informational copy, and reserve monospace typography for uppercase labels and other all-caps interface text.
 
 - [ ] Xbox physical hardware passed — device/build/date/notes:
 - [ ] PlayStation physical hardware passed — device/build/date/notes:
