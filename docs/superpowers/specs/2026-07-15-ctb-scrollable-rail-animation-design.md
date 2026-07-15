@@ -51,10 +51,13 @@ Queue entries are matched by stable projected occurrence identity: actor plus th
 
 On a committed turn transition:
 
-- the outgoing current occurrence fades out;
+- the outgoing current occurrence slides left beyond the rail while fading out over the existing 0.3-second transition;
+- the outgoing occurrence temporarily draws above the surviving entries so the promoted entry cannot cover it during their crossing motion;
 - remaining occurrences slide toward their new vertical positions;
 - the new current occurrence remains the same 72 by 72 size and gains the gold gauge state;
 - each perimeter gauge interpolates from its previous band progress to its new value during the same transition.
+
+The leftward exit applies only to the consumed current occurrence during a committed `ADVANCE`. Preview-only removals and non-current entries continue to use the ordinary fade exit so speculative queue changes do not read as consumed turns. The exit and promotion run simultaneously; the queue does not pause before sliding the surviving entries upward.
 
 When Fast, Slow, direct CT changes, or other timing effects reorder future turns, entries visibly cross and swap positions as they tween to the new projection. Hover previews use this same animation and animate back when the preview clears.
 
