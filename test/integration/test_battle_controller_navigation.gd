@@ -17,6 +17,25 @@ class PausingShiftActionBar extends MinimalActionBar:
 		await continue_slide_out
 
 
+class ImmediateShiftActionBar extends MinimalActionBar:
+	func slide_out(_duration: float = 0.2):
+		return
+
+	func slide_in(_duration: float = 0.2):
+		return
+
+	func update_action_bar(_hero_card: HeroCard, _shifted: bool = false):
+		return
+
+
+class ImmediateShiftHero extends HeroCard:
+	func shift_role(_direction: String):
+		current_role_index = 1
+
+	func set_target_presentation(_state: TargetPresentation) -> void:
+		return
+
+
 class RemoveConditionsEffect extends ActionEffect:
 	func execute(
 		attacker: ActorCard,
@@ -30,6 +49,9 @@ class RemoveConditionsEffect extends ActionEffect:
 
 class RecoveryBattleManager extends BattleManager:
 	func _flush_all_health_animations() -> void:
+		return
+
+	func _apply_role_passive(_hero: HeroCard):
 		return
 
 
@@ -196,6 +218,44 @@ func test_directional_shift_fully_supersedes_selected_action_before_role_ui_load
 	assert_null(manager.focused_button)
 	assert_false(action_button.highlight_panel.visible)
 	assert_false(current_action_panel.visible)
+
+
+func test_role_shift_publishes_queue_only_after_new_role_is_current() -> void:
+	var manager := RecoveryBattleManager.new()
+	var bar := ImmediateShiftActionBar.new()
+	var hero := ImmediateShiftHero.new()
+	var stats := ActorStats.new()
+	stats.speed = 100
+	hero.current_stats = stats
+	hero.is_defeated = false
+	for icon_color in [Color.RED, Color.BLUE]:
+		var definition := RoleDefinition.new()
+		definition.icon = GradientTexture2D.new()
+		definition.color = icon_color
+		var role := RoleData.new()
+		role.source_definition = definition
+		hero.loaded_roles.append(role)
+	hero.current_role_index = 0
+	manager.action_bar = bar
+	manager.current_actor = hero
+	manager.actor_list = [hero]
+	manager.current_state = BattleManager.State.PLAYER_ACTION
+	var publication := {count = 0, icons = []}
+	manager.turn_order_updated.connect(func(queue: Array, _animate: bool) -> void:
+		publication.count += 1
+		for entry: Dictionary in queue:
+			if entry.actor == hero:
+				publication.icons.append((entry.actor as HeroCard).get_current_role().icon)
+	)
+
+	await manager._on_shift_button_pressed("right")
+
+	assert_eq(publication.count, 1, "role shift publishes one immediate queue refresh")
+	for icon in publication.icons:
+		assert_same(icon, hero.loaded_roles[1].icon, "no publication exposes the old role icon")
+	bar.free()
+	hero.free()
+	manager.free()
 
 
 func test_target_navigation_filters_invalid_cards_and_uses_geometry() -> void:

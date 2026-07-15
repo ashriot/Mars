@@ -8,6 +8,11 @@ class RecoveryTrait extends Trait:
 		return multiplier
 
 
+class ImmediateBattleManager extends BattleManager:
+	func wait(_duration: float = 0.01) -> void:
+		return
+
+
 func _actor() -> HeroCard:
 	var actor := HeroCard.new()
 	actor.current_stats = ActorStats.new()
@@ -44,5 +49,40 @@ func test_recovery_adjustment_uses_signed_ct() -> void:
 	assert_eq(manager.get_action_recovery_adjustment(actor, action), 1250)
 	action.ct_cost_percent = 125
 	assert_eq(manager.get_action_recovery_adjustment(actor, action), -1250)
+	manager.free()
+	actor.free()
+
+
+func test_recovery_adjustment_uses_exact_boundary_percentages() -> void:
+	var manager := BattleManager.new()
+	var actor := _actor()
+	var action := Action.new()
+	for boundary in [
+		[10, 4500],
+		[100, 0],
+		[200, -5000],
+	]:
+		action.ct_cost_percent = boundary[0]
+		assert_eq(
+			manager.get_action_recovery_adjustment(actor, action),
+			boundary[1],
+			"%d%% recovery uses the exact boundary adjustment" % boundary[0],
+		)
+	manager.free()
+	actor.free()
+
+
+func test_repeated_direct_ten_percent_delays_accumulate_below_zero() -> void:
+	var manager := ImmediateBattleManager.new()
+	var actor := _actor()
+	manager.actor_list = [actor]
+	manager.current_actor = actor
+	var delay := Effect_ModifyCT.new()
+	delay.ct_change_percent = -0.1
+
+	await delay.execute(actor, [actor], manager)
+	await delay.execute(actor, [actor], manager)
+
+	assert_eq(actor.current_ct, -1000)
 	manager.free()
 	actor.free()

@@ -221,6 +221,7 @@ func remove_condition(condition_name: String):
 			active_conditions.erase(condition)
 			print(actor_name, " is removing condition: ", condition.condition_name)
 			_update_conditions_ui()
+			actor_conditions_changed.emit()
 			return
 
 	push_error("[ERROR] Trying to remove an invalid condition: ", actor_name, " -> ", condition_name)
@@ -235,9 +236,11 @@ func remove_debuffs(quantity: int):
 			amount_removed += 1
 			active_conditions.erase(condition)
 			print(actor_name, " is removing condition: ", condition.condition_name)
-			_update_conditions_ui()
 			if amount_removed == quantity:
-				return
+				break
+	if amount_removed > 0:
+		_update_conditions_ui()
+		actor_conditions_changed.emit()
 
 func count_debuffs() -> int:
 	var count = 0

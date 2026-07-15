@@ -413,6 +413,7 @@ func get_living_enemies() -> Array[EnemyCard]:
 
 func _on_actor_conditions_changed():
 	_update_all_enemy_intents()
+	update_turn_order()
 
 func _on_action_button_pressed(button: ActionButton):
 	if current_state in [State.LOADING, State.FORCED_TARGET]: return
@@ -484,6 +485,7 @@ func _on_shift_button_pressed(direction: String):
 	AudioManager.play_sfx("radiate")
 	await action_bar.slide_out()
 	await current_actor.shift_role(direction)
+	update_turn_order()
 	action_bar.update_action_bar(current_hero, true)
 	await action_bar.slide_in()
 	await _apply_role_passive(current_hero)
