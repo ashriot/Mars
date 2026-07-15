@@ -611,9 +611,9 @@ func _fade_out(duration: float = 0.5):
 	await tween.finished
 
 func preview_action_turn_order(actor: ActorCard, action: Action, selected_target: ActorCard = null) -> void:
-	var adjustments: Dictionary = {
-		actor: get_action_recovery_adjustment(actor, action),
-	}
+	var adjustments: Dictionary = {}
+	if not action.is_shift_action:
+		adjustments[actor] = get_action_recovery_adjustment(actor, action)
 	var primary_targets: Array = []
 	if is_instance_valid(selected_target):
 		primary_targets.append(selected_target)

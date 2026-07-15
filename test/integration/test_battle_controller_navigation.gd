@@ -28,6 +28,11 @@ class RemoveConditionsEffect extends ActionEffect:
 		attacker.active_conditions.clear()
 
 
+class RecoveryBattleManager extends BattleManager:
+	func _flush_all_health_animations() -> void:
+		return
+
+
 class TrackingBattleScene extends BattleScene:
 	pass
 
@@ -410,8 +415,8 @@ func test_group_parent_ct_preview_projects_every_affected_actor() -> void:
 			return entry.actor == target
 		).front() as Dictionary
 		assert_eq(target_turn.ticks_needed, 25.0, "every group target receives the projected 50% CT boost")
-	assert_eq(first_enemy.current_ct, 0, "preview restores live CT")
-	assert_eq(second_enemy.current_ct, 0, "preview restores live CT")
+	assert_eq(first_enemy.current_ct, 0, "preview does not mutate live CT")
+	assert_eq(second_enemy.current_ct, 0, "preview does not mutate live CT")
 	manager.free()
 	hero_area.free()
 	enemy_area.free()
@@ -491,6 +496,34 @@ func test_preview_and_recovery_publish_the_same_next_future_actor() -> void:
 
 	assert_eq(projections.size(), 2)
 	assert_same(projections[0][1].actor, actor, "the preview includes authored recovery")
+	assert_same(projections[0][1].actor, projections[1][1].actor)
+	manager.free()
+	actor.free()
+	rival.free()
+
+
+func test_modifier_bearing_shift_preview_matches_non_turn_ending_execution() -> void:
+	var manager := RecoveryBattleManager.new()
+	var actor := _ct_actor(-500, 100)
+	var rival := _ct_actor(600, 100)
+	var condition := Condition.new()
+	condition.action_ct_multiplier = 0.75
+	actor.active_conditions = [condition]
+	manager.current_actor = actor
+	manager.actor_list = [actor, rival]
+	var action := Action.new()
+	action.is_shift_action = true
+	var projections: Array[Array] = []
+	manager.turn_order_updated.connect(func(queue: Array, _animate: bool) -> void:
+		projections.append(queue)
+	)
+
+	manager.preview_action_turn_order(actor, action)
+	await manager.execute_action(actor, action, [], false, false)
+	manager.update_turn_order()
+
+	assert_eq(actor.current_ct, -500, "shift execution does not apply recovery")
+	assert_same(projections[0][1].actor, rival, "shift preview omits recovery despite active modifiers")
 	assert_same(projections[0][1].actor, projections[1][1].actor)
 	manager.free()
 	actor.free()
