@@ -12,6 +12,9 @@
 
 - Preserve normalized CT, deterministic tie ordering, signed CT, action recovery, and all combat rules unchanged.
 - Use one 120 by 764 pixel rounded black rail and uniform 72 by 72 pixel entries.
+- The rail background is black at 90% opacity.
+- Non-current gauges keep the dark-gray track and paint light, medium, then dark faction bands as fully opaque same-width six-pixel strokes; later bands cover earlier bands without nested widths.
+- The battlefield current actor keeps a `#FFC94A` acting outline beneath independent target outline and pulse layers for the full turn.
 - The current occurrence scrolls with the rest and is identified only by its gold perimeter.
 - Hover previews preserve scroll; commits and turn advances reset it to zero.
 - Use `HOME=/tmp/mars-godot-home` for every automated Godot import and test run.
@@ -766,4 +769,191 @@ Expected: import and all focused/full suites exit zero, with no parser errors, c
 ```bash
 git add src/battle/ctb_gauge.gd src/battle/actor_queue.gd src/battle/turn_queue.gd test/unit/test_ctb_gauge.gd test/integration/test_turn_queue.gd docs/testing/ctb-combat-checklist.md
 git commit -m "feat: animate CTB timeline changes"
+```
+
+---
+
+### Task 4: Gauge Readability and Acting-Unit Correspondence
+
+**Files:**
+- Modify: `src/battle/ctb_gauge.gd`
+- Modify: `src/battle/turn_queue.tscn`
+- Modify: `src/battle/hero_card.tscn`
+- Modify: `src/battle/enemy_card.tscn`
+- Modify: `test/unit/test_ctb_gauge.gd`
+- Modify: `test/unit/test_actor_card_target_presentation.gd`
+- Modify: `test/integration/test_turn_queue.gd`
+- Modify: `docs/testing/ctb-combat-checklist.md`
+
+**Interfaces:**
+- Consumes: `CTBGauge.GAUGE_WIDTH`, `HERO_COLORS`, `ENEMY_COLORS`, `TRACK_COLOR`, and `CURRENT_COLOR`.
+- Produces: `CTBGauge.faction_strokes(ticks: float, faction: Faction) -> Array[Dictionary]`, the single source used by `_draw()` for faction layer order, fill, color, and width.
+- Preserves: existing 20-tick band calculations, gauge interpolation, current gold perimeter, target presentation, CT rules, scroll behavior, and queue animation.
+
+- [ ] **Step 1: Write failing same-width gauge-layer tests**
+
+Add to `test/unit/test_ctb_gauge.gd`:
+
+```gdscript
+func test_faction_strokes_overlay_light_medium_dark_at_one_width() -> void:
+	var hero := CTBGauge.faction_strokes(50.0, CTBGauge.Faction.HERO)
+	assert_eq(hero.size(), 3)
+	assert_eq(hero[0], {
+		"color": CTBGauge.HERO_COLORS[0],
+		"fraction": 1.0,
+		"width": CTBGauge.GAUGE_WIDTH,
+	})
+	assert_eq(hero[1], {
+		"color": CTBGauge.HERO_COLORS[1],
+		"fraction": 1.0,
+		"width": CTBGauge.GAUGE_WIDTH,
+	})
+	assert_eq(hero[2], {
+		"color": CTBGauge.HERO_COLORS[2],
+		"fraction": 0.5,
+		"width": CTBGauge.GAUGE_WIDTH,
+	})
+
+	var enemy := CTBGauge.faction_strokes(30.0, CTBGauge.Faction.ENEMY)
+	assert_eq(enemy.size(), 2)
+	assert_eq(enemy[0].color, CTBGauge.ENEMY_COLORS[0])
+	assert_eq(enemy[0].width, CTBGauge.GAUGE_WIDTH)
+	assert_eq(enemy[1].color, CTBGauge.ENEMY_COLORS[1])
+	assert_eq(enemy[1].fraction, 0.5)
+	assert_eq(enemy[1].width, CTBGauge.GAUGE_WIDTH)
+```
+
+This test fixes the draw order as light, medium, dark and prevents a future return to `GAUGE_WIDTH - band * 2.0` nested strokes.
+
+- [ ] **Step 2: Write failing rail-opacity and acting-outline tests**
+
+In the existing `test_rail_background_and_scrollbar_stay_inside_queue()` in `test/integration/test_turn_queue.gd`, change only the background assertion to the approved value and retain its existing radius, inset-scrollbar, and top/displaced visibility assertions:
+
+```gdscript
+assert_eq(style.bg_color, Color(0, 0, 0, 0.90))
+```
+
+Add to `test/unit/test_actor_card_target_presentation.gd`:
+
+```gdscript
+func test_acting_outline_matches_queue_gold_and_stays_independent_of_targeting() -> void:
+	for card in _cards():
+		var acting_outline := card.get_node("Panel/Highlight") as Panel
+		var acting_style := acting_outline.get_theme_stylebox(&"panel") as StyleBoxFlat
+		assert_eq(acting_style.border_color, CTBGauge.CURRENT_COLOR)
+		assert_false(acting_outline.visible)
+
+		card.highlight(true)
+		card.set_target_presentation(ActorCard.TargetPresentation.SELECTED)
+		assert_true(acting_outline.visible)
+		assert_eq(acting_style.border_color, Color("ffc94a"))
+		assert_true(card.target_outline.visible)
+		assert_true(card.target_pulse.visible)
+
+		card.highlight(false)
+		assert_false(acting_outline.visible)
+		assert_true(card.target_outline.visible)
+		assert_true(card.target_pulse.visible)
+```
+
+- [ ] **Step 3: Run focused suites and verify the expected RED**
+
+Run:
+
+```bash
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect ctb_gauge -gexit
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect actor_card_target_presentation -gexit
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect turn_queue -gexit
+```
+
+Expected: the gauge suite fails because `faction_strokes()` does not exist; actor-card tests report white acting borders; the queue test reports rail alpha `0.7` instead of `0.9`.
+
+- [ ] **Step 4: Make the rail background 90% opaque**
+
+In `src/battle/turn_queue.tscn`, change only the rail backing color:
+
+```text
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rail"]
+bg_color = Color(0, 0, 0, 0.9)
+```
+
+Retain the four 18-pixel radii, node geometry, scroll insets, and mouse filtering unchanged.
+
+- [ ] **Step 5: Replace nested gauge widths with one layered-stroke description**
+
+In `src/battle/ctb_gauge.gd`, add:
+
+```gdscript
+static func faction_strokes(ticks: float, faction: Faction) -> Array[Dictionary]:
+	var colors := HERO_COLORS if faction == Faction.HERO else ENEMY_COLORS
+	var fills := band_fills(ticks)
+	var strokes: Array[Dictionary] = []
+	for band in 3:
+		if fills[band] <= 0.0:
+			continue
+		strokes.append({
+			"color": colors[band],
+			"fraction": fills[band],
+			"width": GAUGE_WIDTH,
+		})
+	return strokes
+```
+
+Replace the non-current portion of `_draw()` with:
+
+```gdscript
+	for stroke: Dictionary in faction_strokes(displayed_ticks, _faction):
+		var partial := partial_polyline(path, float(stroke.fraction))
+		if partial.size() >= 2:
+			var stroke_color: Color = stroke.color
+			var stroke_width: float = stroke.width
+			draw_polyline(
+				partial,
+				stroke_color,
+				stroke_width,
+				true,
+			)
+```
+
+Keep the dark-gray track draw first and the current gold early return unchanged. Array order ensures later medium/dark same-width strokes cover earlier light/medium portions.
+
+- [ ] **Step 6: Recolor the existing acting layers to queue gold**
+
+In both `src/battle/hero_card.tscn` and `src/battle/enemy_card.tscn`, change only the eight-pixel `Highlight` style's border color:
+
+```text
+border_color = Color(1, 0.7882353, 0.2901961, 1)
+```
+
+This is `#FFC94A`, matching `CTBGauge.CURRENT_COLOR`. Do not change `TargetOutline` or `TargetPulse`; their independent visibility, white border, pulse tween, and sibling layering remain intact. `ActorCard.on_turn_started()` and `on_turn_ended()` already call `highlight(true)` and `highlight(false)`, so no new lifecycle state is required.
+
+- [ ] **Step 7: Update the manual CTB checklist**
+
+In `docs/testing/ctb-combat-checklist.md`, replace the generic semi-transparent-rail check with these unchecked acceptance items:
+
+- the unified rounded rail is black at 90% opacity and keeps icons/text readable over bright combat backgrounds;
+- non-current gauges show a subtle dark-gray track with same-width opaque light, medium, and dark faction strokes covering one another, with no nested colored outlines;
+- the acting battlefield card uses the exact queue gold for the full hero or enemy turn;
+- target availability, selection outline, and pulse remain independently visible while the acting gold outline persists beneath them.
+
+- [ ] **Step 8: Import, run focused suites, then run the complete suite**
+
+Run:
+
+```bash
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" --editor --quit
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect ctb_gauge -gexit
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect actor_card_target_presentation -gexit
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect turn_queue -gexit
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gexit
+git diff --check
+```
+
+Expected: import and all focused/full suites exit zero with no parser errors, crashes, or unexpected runtime errors. Record exact totals; the documented CA, expected-error, and shutdown diagnostics remain acceptable.
+
+- [ ] **Step 9: Commit Task 4**
+
+```bash
+git add src/battle/ctb_gauge.gd src/battle/turn_queue.tscn src/battle/hero_card.tscn src/battle/enemy_card.tscn test/unit/test_ctb_gauge.gd test/unit/test_actor_card_target_presentation.gd test/integration/test_turn_queue.gd docs/testing/ctb-combat-checklist.md
+git commit -m "fix: clarify CTB gauge layers"
 ```
