@@ -15,6 +15,7 @@ The system remains based on Final Fantasy X's Conditional Turn-Based model: Spee
 - Equipment and conditions may modify action CT multiplicatively.
 - Action selection previews recovery and direct CT effects through the same simulation used for actual turn selection.
 - The queue becomes a vertical right-side rail with a larger fixed active card and scrollable future turns.
+- The active combatant's full name appears left-aligned immediately to the left of the larger active card.
 - Fixed, layered perimeter gauges communicate cumulative hard ticks from the active turn.
 
 ## Non-goals
@@ -28,16 +29,32 @@ The system remains based on Final Fantasy X's Conditional Turn-Based model: Spee
 
 ## Signed CT model
 
-`BattleManager.TARGET_CT` remains `5000`. CT is signed progress toward that threshold:
+`BattleManager.TARGET_CT` is `4000`. CT is signed progress toward that threshold:
 
-- `5000` or greater is ready.
+- `4000` or greater is ready.
 - `0` is the normal state after beginning a turn.
 - Positive CT below the threshold advances the next turn.
 - Negative CT represents recovery debt and delays the next turn.
 
-Direct CT effects are unbounded. A 10% delay subtracts `500` CT, and repeated triggers may continue below zero. This permits effects such as "each time an enemy hits you, delay their next turn by 10%."
+Direct CT effects are unbounded. A 10% delay subtracts `400` CT, and repeated triggers may continue below zero. This permits effects such as "each time an enemy hits you, delay their next turn by 10%."
 
-Effective Speed is clamped consistently to a minimum of `1` anywhere CT time is calculated or advanced. The simulator must never calculate arrival using one Speed value and advance CT using another.
+Raw effective Speed is clamped consistently to a minimum of `1`. The simulator must never calculate arrival using one CT Speed value and advance live CT using another.
+
+## Battle Speed normalization
+
+Authored and derived raw Speed ranges from early-game values in the teens to endgame values around `500-800`. Each battle converts those raw values into a stable CT Speed scale without changing their relative ratios:
+
+```text
+battle reference Speed = median clamped raw effective Speed after starting passives
+battle CT scale = 100 / battle reference Speed
+actor CT Speed = max(round(current clamped raw effective Speed * battle CT scale), 1)
+```
+
+For an even actor count, the median is the arithmetic mean of the two center values. The battle CT scale is calculated once, after all actors spawn and starting passives resolve, then frozen for the rest of the battle. Defeat, revival, conditions, equipment effects, and other mid-combat Speed changes do not recalculate the shared scale; an actor's CT Speed still changes because its current raw effective Speed is multiplied by that fixed scale.
+
+Normalizing the median actor to `100` CT per tick makes standard `4000`-CT recovery take approximately `40` ticks. Multiplying every actor by one shared factor preserves raw Speed ratios apart from final integer rounding while retaining enough resolution for endgame values.
+
+Actors begin with a randomized zero-to-five-tick head start. After the scale is frozen, initialize each actor's CT in the inclusive range from `0` through `actor CT Speed * 5`; do not seed from raw Speed before normalization.
 
 ## Action CT percentage
 
@@ -54,15 +71,15 @@ The recovery adjustment is:
 recovery CT adjustment = TARGET_CT * (100 - final CT percent) / 100
 ```
 
-Examples with a `5000` threshold:
+Examples with a `4000` threshold:
 
 ```text
-200% -> -5000 CT
-125% -> -1250 CT
+200% -> -4000 CT
+125% -> -1000 CT
 100% ->     0 CT
- 75% -> +1250 CT
- 25% -> +3750 CT
- 10% -> +4500 CT
+ 75% -> +1000 CT
+ 25% -> +3000 CT
+ 10% -> +3600 CT
 ```
 
 The adjustment is added to the actor's current signed CT rather than replacing it. Reactive boosts and delays incurred during action execution therefore survive action recovery.
@@ -88,7 +105,7 @@ The final CT percentage is snapshotted when execution begins. Conditions applied
 
 When an actor becomes ready:
 
-1. Advance every living actor by the selected number of ticks using its clamped effective Speed.
+1. Advance every living actor by the selected number of ticks using its normalized CT Speed.
 2. Set the winner's CT to `0` and mark it as the active actor.
 3. Keep an explicit active-turn entry at the head of every ordinary and preview projection.
 4. When a turn-ending action begins, snapshot its final CT percentage.
@@ -123,14 +140,14 @@ The projection is ordered by:
 
 ```text
 earliest tick
--> higher effective Speed
+-> higher raw effective Speed
 -> heroes before enemies
 -> immutable battle spawn priority
 ```
 
 Each actor receives a stable battle priority when the encounter is created. Hero priority follows party order. Enemy priority follows encounter order and therefore agrees with existing A/B/C duplicate suffixes. Defeat and revival do not change the actor's priority.
 
-Random tie-breaking is removed. The preview and actual turn selection call the same ordering logic, so hovering an action with no CT consequence cannot move an equal-tick actor.
+Random tie-breaking is removed. Raw effective Speed, rather than rounded normalized CT Speed, resolves the secondary tie so normalization does not erase a real Speed difference. The preview and actual turn selection call the same ordering logic, so hovering an action with no CT consequence cannot move an equal-tick actor.
 
 Projection operates on copied simulation records and supplied preview adjustments. It does not temporarily modify live actor CT and later restore it.
 
@@ -152,7 +169,7 @@ Queue item identity accounts for repeated occurrences of the same actor instead 
 
 The queue occupies a dedicated rail along the right edge of combat. This preserves the vertically constrained central stack of action descriptions, enemies, heroes, and actions while visually associating queue inspection with the controller's right stick.
 
-The active entry is a larger rounded portrait card fixed at the top of the rail. It never enters the scrolling viewport. Future turns use smaller rounded portrait cards in a single vertical list beneath it; at least eight future cards remain fully visible at the project's `1920x1080` reference viewport.
+The active entry is a larger rounded portrait card fixed at the top of the rail. It never enters the scrolling viewport. Its full combat name appears in a `240`-pixel-wide, left-aligned label immediately to the card's left, vertically centered with the portrait. The name uses white text with the established dark outline and does not inherit hero, enemy, or gold gauge color. Future entries remain icon/abbreviation-only and use smaller rounded portrait cards in a single vertical list beneath it; at least eight future cards remain fully visible at the project's `1920x1080` reference viewport.
 
 The future-turn viewport supports:
 
@@ -225,6 +242,11 @@ Focused automated coverage protects:
 - a non-CT hover leaving the projection unchanged;
 - preview and execution producing the same projected next turn;
 - consistent minimum effective Speed;
+- `4000` target CT and exact percentage-derived recovery/direct effects;
+- median raw Speed normalizing to CT Speed `100`, including the even-count median;
+- the battle normalization scale remaining fixed through Speed changes, defeat, and revival;
+- actual advancement and projection using identical normalized CT Speed while ties use raw effective Speed;
+- initial CT representing an inclusive zero-to-five normalized-tick head start;
 - fixed 20-tick gauge bands and `60+` saturation;
 - hero role-icon, enemy-abbreviation, faction-color, and gold-current presentation;
 - repeated actor occurrences receiving distinct queue items;
@@ -234,5 +256,6 @@ Focused automated coverage protects:
 - right-stick scrolling not changing action or target selection;
 - preview refreshes preserving scroll position while actual turn changes reset it;
 - overflow fade visibility tracking whether more future turns remain.
+- the active combatant's full name updating beside the fixed card while future entries remain compact.
 
 Because this affects turn selection, action execution, conditions, Speed, targeting previews, and the combat scene, final verification includes the complete automated suite plus manual combat checks for queue readability and animation behavior.
