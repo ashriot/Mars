@@ -19,6 +19,19 @@ class ConditionBattleManager extends BattleManager:
 		intent_refresh_count += 1
 
 
+class AdvancementHero extends HeroCard:
+	func highlight(_value: bool) -> void:
+		return
+
+	func on_turn_started() -> void:
+		return
+
+
+class AdvancementBattleManager extends BattleManager:
+	func _flush_all_health_animations() -> void:
+		return
+
+
 func _actor(hero: bool, speed: int, ct: int, priority: int) -> ActorCard:
 	var actor: ActorCard = HeroCard.new() if hero else EnemyCard.new()
 	var stats := ActorStats.new()
@@ -31,25 +44,25 @@ func _actor(hero: bool, speed: int, ct: int, priority: int) -> ActorCard:
 
 func test_negative_ct_requires_extra_ticks() -> void:
 	var actor := _actor(true, 100, -1000, 0)
-	var queue := CTBSimulator.project([actor], 5000, 1)
-	assert_eq(queue[0].ticks_needed, 60)
+	var queue := CTBSimulator.project([actor], 4000, 1)
+	assert_eq(queue[0].ticks_needed, 50)
 	actor.free()
 
 
 func test_zero_or_negative_speed_uses_one_consistently() -> void:
 	var actor := _actor(true, 0, 0, 0)
-	var queue := CTBSimulator.project([actor], 5000, 1)
-	assert_eq(queue[0].ticks_needed, 5000)
+	var queue := CTBSimulator.project([actor], 4000, 1)
+	assert_eq(queue[0].ticks_needed, 4000)
 	actor.free()
 
 
 func test_exact_ties_use_speed_then_faction_then_priority() -> void:
 	var fast_enemy := _actor(false, 200, 0, 3)
-	var slow_hero := _actor(true, 100, 2500, 2)
-	var first_hero := _actor(true, 100, 2500, 0)
-	var second_hero := _actor(true, 100, 2500, 1)
+	var slow_hero := _actor(true, 100, 2000, 2)
+	var first_hero := _actor(true, 100, 2000, 0)
+	var second_hero := _actor(true, 100, 2000, 1)
 	var queue := CTBSimulator.project(
-		[second_hero, slow_hero, fast_enemy, first_hero], 5000, 4
+		[second_hero, slow_hero, fast_enemy, first_hero], 4000, 4
 	)
 	assert_same(queue[0].actor, fast_enemy, "higher Speed wins an equal arrival tick")
 	assert_same(queue[1].actor, first_hero, "heroes then use immutable lower priority")
@@ -61,7 +74,7 @@ func test_equal_tick_equal_speed_hero_wins_over_enemy() -> void:
 	var enemy := _actor(false, 100, 0, 0)
 	var hero := _actor(true, 100, 0, 1)
 
-	var queue := CTBSimulator.project([enemy, hero], 5000, 1)
+	var queue := CTBSimulator.project([enemy, hero], 4000, 1)
 
 	assert_same(queue[0].actor, hero)
 	enemy.free()
@@ -77,7 +90,7 @@ func test_readded_actor_keeps_immutable_priority_for_ties() -> void:
 	first.is_defeated = false
 	actors.append(first)
 
-	var queue := CTBSimulator.project(actors, 5000, 1)
+	var queue := CTBSimulator.project(actors, 4000, 1)
 
 	assert_same(queue[0].actor, first, "revival order does not replace spawn priority")
 	first.free()
@@ -87,8 +100,8 @@ func test_readded_actor_keeps_immutable_priority_for_ties() -> void:
 func test_repeated_projection_is_identical() -> void:
 	var first := _actor(false, 100, 0, 0)
 	var second := _actor(false, 100, 0, 1)
-	var first_projection := CTBSimulator.project([first, second], 5000, 10)
-	var second_projection := CTBSimulator.project([first, second], 5000, 10)
+	var first_projection := CTBSimulator.project([first, second], 4000, 10)
+	var second_projection := CTBSimulator.project([first, second], 4000, 10)
 	assert_eq(
 		first_projection.map(func(entry): return entry.actor),
 		second_projection.map(func(entry): return entry.actor)
@@ -99,10 +112,101 @@ func test_repeated_projection_is_identical() -> void:
 
 func test_adjustments_do_not_mutate_live_ct() -> void:
 	var actor := _actor(true, 100, 0, 0)
-	var queue := CTBSimulator.project([actor], 5000, 1, {actor: -500})
-	assert_eq(queue[0].ticks_needed, 55)
+	var queue := CTBSimulator.project([actor], 4000, 1, {actor: -400})
+	assert_eq(queue[0].ticks_needed, 44)
 	assert_eq(actor.current_ct, 0)
 	actor.free()
+
+
+func test_projection_uses_normalized_ct_speed() -> void:
+	var actor := _actor(true, 200, 0, 0)
+	actor.ct_speed_scale = 0.5
+
+	var queue := CTBSimulator.project([actor], 4000, 1)
+
+	assert_eq(actor.get_ct_speed(), 100)
+	assert_eq(queue[0].ticks_needed, 40)
+	actor.free()
+
+
+func test_equal_normalized_arrival_uses_raw_speed_as_secondary_tie() -> void:
+	var slower := _actor(true, 100, 0, 0)
+	var faster := _actor(false, 101, 0, 1)
+	slower.ct_speed_scale = 0.01
+	faster.ct_speed_scale = 0.01
+
+	var queue := CTBSimulator.project([slower, faster], 10, 1)
+
+	assert_eq(slower.get_ct_speed(), faster.get_ct_speed())
+	assert_same(queue[0].actor, faster)
+	slower.free()
+	faster.free()
+
+
+func test_battle_scale_freezes_across_speed_conditions_and_actor_revival() -> void:
+	var manager := BattleManager.new()
+	var slow_actor := _actor(true, 100, 0, 0)
+	var fast_actor := _actor(false, 200, 0, 1)
+	manager.actor_list = [slow_actor, fast_actor]
+	manager._configure_battle_ct_speed_scale()
+	var frozen_scale: float = manager.battle_ct_speed_scale
+	var initial_fast_ct_speed := fast_actor.get_ct_speed()
+	var speed_condition := Condition.new()
+	speed_condition.speed_scalar = 0.5
+
+	fast_actor.active_conditions = [speed_condition]
+	manager.actor_list.erase(fast_actor)
+	manager._on_actor_revived(fast_actor)
+
+	assert_ne(fast_actor.get_ct_speed(), initial_fast_ct_speed)
+	assert_eq(manager.battle_ct_speed_scale, frozen_scale)
+	assert_eq(slow_actor.ct_speed_scale, frozen_scale)
+	assert_eq(fast_actor.ct_speed_scale, frozen_scale)
+	slow_actor.free()
+	fast_actor.free()
+	manager.free()
+
+
+func test_head_starts_add_normalized_ct_without_replacing_passive_adjustment() -> void:
+	var manager := BattleManager.new()
+	var slow_actor := _actor(true, 100, 400, 0)
+	var fast_actor := _actor(false, 200, 0, 1)
+	manager.actor_list = [slow_actor, fast_actor]
+	manager._configure_battle_ct_speed_scale()
+	var frozen_scale: float = manager.battle_ct_speed_scale
+
+	manager._apply_initial_ct_head_starts([0.0, 1.0])
+
+	assert_eq(slow_actor.current_ct, 400)
+	assert_eq(fast_actor.current_ct, fast_actor.get_ct_speed() * 5)
+	assert_eq(slow_actor.ct_speed_scale, frozen_scale)
+	assert_eq(fast_actor.ct_speed_scale, frozen_scale)
+	slow_actor.free()
+	fast_actor.free()
+	manager.free()
+
+
+func test_live_advancement_matches_projected_normalized_ticks() -> void:
+	var manager := AdvancementBattleManager.new()
+	manager.action_bar = ActionBar.new()
+	var winner := AdvancementHero.new()
+	winner.current_stats = ActorStats.new()
+	winner.current_stats.speed = 200
+	winner.ct_speed_scale = 0.5
+	var observer := ActorCard.new()
+	observer.current_stats = ActorStats.new()
+	observer.current_stats.speed = 50
+	observer.ct_speed_scale = 2.0
+	manager.actor_list = [winner, observer]
+
+	manager.find_and_start_next_turn()
+
+	assert_same(manager.current_actor, winner)
+	assert_eq(observer.current_ct, manager.TARGET_CT)
+	winner.free()
+	observer.free()
+	manager.action_bar.free()
+	manager.free()
 
 
 func test_active_actor_stays_first_and_remains_in_future_projection() -> void:

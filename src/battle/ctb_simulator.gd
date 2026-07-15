@@ -16,7 +16,8 @@ static func project(
 		sim_data.append({
 			"actor": actor,
 			"ct": actor.current_ct + int(ct_adjustments.get(actor, 0)),
-			"speed": maxi(actor.get_speed(), 1),
+			"ct_speed": actor.get_ct_speed(),
+			"raw_speed": maxi(actor.get_speed(), 1),
 		})
 
 	var elapsed_ticks := 0
@@ -24,7 +25,7 @@ static func project(
 		var winner: Dictionary = {}
 		var winner_ticks := 0
 		for candidate: Dictionary in sim_data:
-			var ticks := maxi(ceili(float(target_ct - candidate.ct) / candidate.speed), 0)
+			var ticks := maxi(ceili(float(target_ct - candidate.ct) / candidate.ct_speed), 0)
 			if winner.is_empty() \
 				or ticks < winner_ticks \
 				or (ticks == winner_ticks and _comes_first(candidate, winner)):
@@ -33,14 +34,14 @@ static func project(
 		elapsed_ticks += winner_ticks
 		projection.append({"actor": winner.actor, "ticks_needed": elapsed_ticks})
 		for candidate: Dictionary in sim_data:
-			candidate.ct += candidate.speed * winner_ticks
+			candidate.ct += candidate.ct_speed * winner_ticks
 		winner.ct = 0
 	return projection
 
 
 static func _comes_first(candidate: Dictionary, incumbent: Dictionary) -> bool:
-	if candidate.speed != incumbent.speed:
-		return candidate.speed > incumbent.speed
+	if candidate.raw_speed != incumbent.raw_speed:
+		return candidate.raw_speed > incumbent.raw_speed
 	var candidate_is_hero := candidate.actor is HeroCard
 	var incumbent_is_hero := incumbent.actor is HeroCard
 	if candidate_is_hero != incumbent_is_hero:

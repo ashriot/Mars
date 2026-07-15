@@ -43,7 +43,8 @@ var executing_action_ct_percent := 100
 var executing_action_ends_turn := false
 var focused_button: ActionButton = null
 var actor_list: Array = []
-var TARGET_CT: int = 5000
+var TARGET_CT: int = 4000
+var battle_ct_speed_scale := 1.0
 var force_enemy_level: int = -1
 var current_encounter: Encounter
 
@@ -78,7 +79,7 @@ func spawn_encounter():
 		hero_card.actor_defeated.connect(_on_actor_died)
 		hero_card.spawn_particles.connect(_on_spawn_particles)
 		hero_card.actor_conditions_changed.connect(_on_actor_conditions_changed)
-		hero_card.current_ct = randi_range(0, hero_data.stats.speed * 5)
+		hero_card.current_ct = 0
 		print(hero_card.actor_name, "'s CT: ", hero_card.current_ct)
 		hero_card.battle_priority = actor_list.size()
 		actor_list.append(hero_card)
@@ -107,7 +108,7 @@ func spawn_encounter():
 		enemy_card.actor_defeated.connect(_on_actor_died)
 		enemy_card.spawn_particles.connect(_on_spawn_particles)
 		enemy_card.actor_conditions_changed.connect(_on_actor_conditions_changed)
-		enemy_card.current_ct = randi_range(0, enemy_data.stats.speed * 5)
+		enemy_card.current_ct = 0
 		print(enemy_card.actor_name, "'s CT: ", enemy_card.current_ct)
 		enemy_card.battle_priority = actor_list.size()
 		actor_list.append(enemy_card)
@@ -135,6 +136,9 @@ func spawn_encounter():
 	await _flush_all_health_animations()
 	await wait(0.5)
 	await _apply_starting_passives()
+	current_actor = null
+	_configure_battle_ct_speed_scale()
+	_apply_initial_ct_head_starts()
 	find_and_start_next_turn()
 
 func _apply_starting_passives() -> void:
@@ -145,6 +149,26 @@ func _apply_starting_passives() -> void:
 			await _apply_role_passive(actor)
 	print("--- Starting Passives Applied ---")
 	return
+
+
+func _configure_battle_ct_speed_scale() -> void:
+	var raw_speeds: Array = []
+	for actor: ActorCard in actor_list:
+		if is_instance_valid(actor) and not actor.is_defeated:
+			raw_speeds.append(maxi(actor.get_speed(), 1))
+	battle_ct_speed_scale = CTBSpeed.scale_for(raw_speeds)
+	for actor: ActorCard in actor_list:
+		if is_instance_valid(actor):
+			actor.ct_speed_scale = battle_ct_speed_scale
+
+
+func _apply_initial_ct_head_starts(test_rolls: Array = []) -> void:
+	for index in actor_list.size():
+		var actor := actor_list[index] as ActorCard
+		if not is_instance_valid(actor) or actor.is_defeated:
+			continue
+		var roll := float(test_rolls[index]) if index < test_rolls.size() else randf()
+		actor.current_ct += CTBSpeed.head_start_ct(actor.get_ct_speed(), roll)
 
 func _run_ct_simulation(num_turns := 10, ct_adjustments: Dictionary = {}) -> Array:
 	return CTBSimulator.project(actor_list, TARGET_CT, num_turns, ct_adjustments)
@@ -180,7 +204,7 @@ func find_and_start_next_turn():
 	var real_ticks_passed = first_turn_data.ticks_needed
 
 	for actor in actor_list:
-		actor.current_ct += maxi(actor.get_speed(), 1) * real_ticks_passed
+		actor.current_ct += actor.get_ct_speed() * real_ticks_passed
 
 	winner.current_ct = 0
 	current_actor = winner
@@ -255,6 +279,7 @@ func _on_actor_revived(actor: ActorCard):
 	print(actor.name, " has revived! Adding back to actor_list.")
 
 	if not actor_list.has(actor):
+		actor.ct_speed_scale = battle_ct_speed_scale
 		actor_list.append(actor)
 	else:
 		print("Actor was already in actor_list?")

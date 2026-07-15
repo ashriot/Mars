@@ -46,9 +46,9 @@ func test_recovery_adjustment_uses_signed_ct() -> void:
 	var actor := _actor()
 	var action := Action.new()
 	action.ct_cost_percent = 75
-	assert_eq(manager.get_action_recovery_adjustment(actor, action), 1250)
+	assert_eq(manager.get_action_recovery_adjustment(actor, action), 1000)
 	action.ct_cost_percent = 125
-	assert_eq(manager.get_action_recovery_adjustment(actor, action), -1250)
+	assert_eq(manager.get_action_recovery_adjustment(actor, action), -1000)
 	manager.free()
 	actor.free()
 
@@ -58,9 +58,9 @@ func test_recovery_adjustment_uses_exact_boundary_percentages() -> void:
 	var actor := _actor()
 	var action := Action.new()
 	for boundary in [
-		[10, 4500],
+		[10, 3600],
 		[100, 0],
-		[200, -5000],
+		[200, -4000],
 	]:
 		action.ct_cost_percent = boundary[0]
 		assert_eq(
@@ -83,6 +83,6 @@ func test_repeated_direct_ten_percent_delays_accumulate_below_zero() -> void:
 	await delay.execute(actor, [actor], manager)
 	await delay.execute(actor, [actor], manager)
 
-	assert_eq(actor.current_ct, -1000)
+	assert_eq(actor.current_ct, -800)
 	manager.free()
 	actor.free()

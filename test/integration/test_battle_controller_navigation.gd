@@ -474,7 +474,7 @@ func test_group_parent_ct_preview_projects_every_affected_actor() -> void:
 		var target_turn := (captured.queue as Array).filter(func(entry: Dictionary) -> bool:
 			return entry.actor == target
 		).front() as Dictionary
-		assert_eq(target_turn.ticks_needed, 25.0, "every group target receives the projected 50% CT boost")
+		assert_eq(target_turn.ticks_needed, 20, "every group target receives the projected 50% CT boost")
 	assert_eq(first_enemy.current_ct, 0, "preview does not mutate live CT")
 	assert_eq(second_enemy.current_ct, 0, "preview does not mutate live CT")
 	manager.free()
@@ -490,7 +490,7 @@ func test_turn_ending_action_applies_recovery_to_live_ct() -> void:
 
 	await manager.execute_action(actor, action, [], false, true)
 
-	assert_eq(actor.current_ct, 750)
+	assert_eq(actor.current_ct, 500)
 	manager.free()
 	actor.free()
 
@@ -507,7 +507,7 @@ func test_action_recovery_uses_multiplier_snapshot_from_execution_start() -> voi
 	await manager.execute_action(actor, action, [], false, true)
 
 	assert_true(actor.active_conditions.is_empty(), "the effect changes recovery modifiers during execution")
-	assert_eq(actor.current_ct, 750, "recovery retains the 75% snapshot captured before effects")
+	assert_eq(actor.current_ct, 500, "recovery retains the 75% snapshot captured before effects")
 	manager.free()
 	actor.free()
 
@@ -539,7 +539,7 @@ func test_repeating_non_ct_preview_is_stable() -> void:
 func test_preview_and_recovery_publish_the_same_next_future_actor() -> void:
 	var manager := BattleManager.new()
 	var actor := _ct_actor(-500, 100)
-	var rival := _ct_actor(600, 100)
+	var rival := _ct_actor(400, 100)
 	manager.current_actor = actor
 	manager.actor_list = [actor, rival]
 	var action := Action.new()

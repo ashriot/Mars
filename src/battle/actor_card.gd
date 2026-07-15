@@ -53,6 +53,7 @@ var current_stats: ActorStats
 var current_hp: int
 var current_guard: int
 var current_ct: int = 0
+var ct_speed_scale := 1.0
 var battle_priority: int = 0
 var is_breached: bool
 var is_in_danger: bool
@@ -568,6 +569,9 @@ func get_speed() -> int:
 	for condition in active_conditions:
 		scalar += condition.speed_scalar
 	return int(current_stats.speed * scalar)
+
+func get_ct_speed() -> int:
+	return CTBSpeed.normalize(get_speed(), ct_speed_scale)
 
 func get_action_ct_percent(action: Action) -> int:
 	if action == null:
