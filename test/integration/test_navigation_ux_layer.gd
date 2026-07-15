@@ -5,7 +5,6 @@ const HubScene = preload("res://src/hub/hub.tscn")
 
 var saved_input_mode: InputManager.InputMode
 var saved_presentation_mode: InputManager.PresentationMode
-var saved_cursor_behavior: InputManager.CursorBehavior
 var saved_process_input: bool
 
 
@@ -19,14 +18,12 @@ class RecordingCursor extends NavigationCursor:
 func before_each() -> void:
 	saved_input_mode = InputManager._active_mode
 	saved_presentation_mode = InputManager._presentation_mode
-	saved_cursor_behavior = InputManager._cursor_behavior
 	saved_process_input = InputManager.is_processing_input()
 
 
 func after_each() -> void:
 	InputManager._active_mode = saved_input_mode
 	InputManager._presentation_mode = saved_presentation_mode
-	InputManager._cursor_behavior = saved_cursor_behavior
 	InputManager.set_process_input(saved_process_input)
 
 

@@ -213,9 +213,7 @@ func _process(delta: float) -> void:
 	if InputManager.get_active_mode() == InputManager.InputMode.CONTROLLER:
 		_reconcile_controller_navigation(direction)
 	else:
-		_clear_controller_navigation(
-			InputManager.get_cursor_behavior() == InputManager.CursorBehavior.SNAPPED
-		)
+		_clear_controller_navigation(false)
 	process_controller_camera(pan_direction, delta)
 
 

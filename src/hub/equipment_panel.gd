@@ -39,10 +39,8 @@ func setup(item: Equipment):
 	xp_container.show()
 	equip_button.disabled = false
 	equip_button.focus_mode = Control.FOCUS_ALL
-	equip_button.set_meta("cursor_state", NavigationCursor.CursorState.INTERACT)
 	tune_btn.disabled = false
 	tune_btn.focus_mode = Control.FOCUS_ALL
-	tune_btn.set_meta("cursor_state", NavigationCursor.CursorState.INTERACT)
 	if equipment.stats_changed.is_connected(_refresh_details):
 		equipment.stats_changed.disconnect(_refresh_details)
 
@@ -131,7 +129,6 @@ func _refresh_mods():
 
 		# 6. Setup
 		slot_ui.setup(mod_data, is_enabled)
-		slot_ui.set_drop_validity(is_enabled)
 
 		# 7. Connect Signal
 		if is_enabled:
@@ -213,10 +210,8 @@ func _clear_equipment() -> void:
 	armor_stats.hide()
 	equip_button.disabled = true
 	equip_button.focus_mode = Control.FOCUS_NONE
-	equip_button.set_meta("cursor_state", NavigationCursor.CursorState.DISABLED)
 	tune_btn.disabled = true
 	tune_btn.focus_mode = Control.FOCUS_NONE
-	tune_btn.set_meta("cursor_state", NavigationCursor.CursorState.DISABLED)
 	for slot in mods_container.get_children():
 		if slot is ModSlot:
 			(slot as ModSlot).setup(null, false)

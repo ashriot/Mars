@@ -75,7 +75,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			var hero_panel := _get_panel_by_index(current_hero_idx)
 			if hero_panel:
 				hero_panel.focus_mode = Control.FOCUS_ALL
-				hero_panel.set_meta("cursor_state", NavigationCursor.CursorState.INTERACT)
 				hero_panel.grab_focus()
 				return
 		_close()

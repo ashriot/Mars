@@ -28,7 +28,6 @@ func setup(mod: EquipmentMod, enable: bool):
 		button.disabled = true
 		plus.visible = false
 	button.focus_mode = Control.FOCUS_ALL if enable else Control.FOCUS_NONE
-	button.set_meta("cursor_state", NavigationCursor.CursorState.INTERACT if enable else NavigationCursor.CursorState.DISABLED)
 
 	if mod:
 		icon.texture = mod.icon
@@ -59,9 +58,3 @@ func _on_button_pressed() -> void:
 
 func get_focus_control() -> BaseButton:
 	return button
-
-
-func set_drop_validity(is_valid: bool) -> void:
-	button.set_meta("cursor_state", NavigationCursor.CursorState.INTERACT if is_valid else NavigationCursor.CursorState.DISABLED)
-	if button.has_focus():
-		NavigationFocus.apply(button)

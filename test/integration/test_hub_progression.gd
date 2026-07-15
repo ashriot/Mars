@@ -8,7 +8,6 @@ var saved_slot: int
 var saved_storage_root: String
 var saved_input_mode: InputManager.InputMode
 var saved_presentation_mode: InputManager.PresentationMode
-var saved_cursor_behavior: InputManager.CursorBehavior
 
 
 func before_each() -> void:
@@ -18,7 +17,6 @@ func before_each() -> void:
 	saved_storage_root = SaveSystem.storage_root_override
 	saved_input_mode = InputManager._active_mode
 	saved_presentation_mode = InputManager._presentation_mode
-	saved_cursor_behavior = InputManager._cursor_behavior
 	SaveSystem.storage_root_override = TEST_SAVE_ROOT
 	SaveSystem.current_slot_index = TEST_SLOT
 	SaveSystem.party_roster.clear()
@@ -35,7 +33,6 @@ func after_each() -> void:
 	SaveSystem.storage_root_override = saved_storage_root
 	InputManager._active_mode = saved_input_mode
 	InputManager._presentation_mode = saved_presentation_mode
-	InputManager._cursor_behavior = saved_cursor_behavior
 
 
 func _tree() -> RoleTreeDefinition:
@@ -115,10 +112,11 @@ func test_role_panel_submits_stable_ids_without_mutating_progression() -> void:
 	panel.hero_data = hero
 	panel.role_id = "gun"
 	panel.is_currently_expanded = true
-	var ui := SkillTreeNode.new()
+	var ui := preload("res://src/hub/skill_tree_node.tscn").instantiate() as SkillTreeNode
+	add_child(ui)
+	await get_tree().process_frame
 	ui.node_definition = _tree().get_node("gun.root")
-	ui.state = SkillTreeNode.NodeState.AVAILABLE
-	ui.set_meta("cursor_state", NavigationCursor.CursorState.UPGRADE)
+	ui.set_availability(true, true)
 	watch_signals(panel)
 
 	panel._on_node_clicked(ui)
@@ -128,6 +126,18 @@ func test_role_panel_submits_stable_ids_without_mutating_progression() -> void:
 	assert_true(hero.role_progress.is_empty())
 	ui.free()
 	panel.free()
+
+
+func test_skill_node_purchase_authority_uses_availability_and_affordability() -> void:
+	var ui := preload("res://src/hub/skill_tree_node.tscn").instantiate() as SkillTreeNode
+	add_child_autofree(ui)
+	await get_tree().process_frame
+	ui.set_availability(true, true)
+	assert_true(ui.is_purchasable())
+	ui.set_availability(true, false)
+	assert_false(ui.is_purchasable())
+	ui.set_availability(false, true)
+	assert_false(ui.is_purchasable())
 
 
 func test_role_panel_renders_explicit_rank_column_and_indexed_links() -> void:
@@ -175,7 +185,6 @@ func test_role_panel_renders_focusable_starting_role_header_geometry() -> void:
 		assert_eq(control.focus_mode, Control.FOCUS_ALL)
 	assert_eq(anchor.get_node("Label").text, "Gunner")
 	assert_false(anchor.has_node("XpCost"))
-	assert_eq(anchor.get_meta("cursor_state"), NavigationCursor.CursorState.INTERACT)
 	assert_true(anchor.get_node("Arrows/Left").visible)
 	assert_true(anchor.get_node("Arrows/Right").visible)
 	assert_true(anchor.get_node("Arrows/Down").visible)
@@ -322,7 +331,7 @@ func test_refresh_preserves_role_page_and_node_identity_and_updates_xp_affordabi
 
 	assert_eq(role_panel.xp_display.text, "50 XP")
 	assert_false(sibling.disabled)
-	assert_eq(sibling.get_meta("cursor_state"), NavigationCursor.CursorState.INTERACT)
+	assert_false(sibling.is_purchasable())
 	assert_eq(sibling.get_instance_id(), sibling_id)
 	assert_eq(panel.current_role_idx, 0)
 	assert_eq(panel.current_page, 0)
@@ -391,7 +400,7 @@ func test_success_refreshes_all_matching_roles_and_leaves_other_hero_unchanged()
 	assert_eq(first.xp_display.text, "50 XP")
 	assert_eq(sibling.xp_display.text, "50 XP")
 	assert_false(sibling_node.disabled)
-	assert_eq(sibling_node.get_meta("cursor_state"), NavigationCursor.CursorState.DISABLED)
+	assert_false(sibling_node.is_purchasable())
 	assert_eq(sibling_node.get_instance_id(), sibling_id)
 	assert_eq(other_panel.xp_display.text, other_text)
 	assert_eq(other_node.get_instance_id(), other_node_id)
@@ -491,7 +500,7 @@ func test_confirm_emits_existing_purchase_signal_once_and_locked_node_is_inspect
 	assert_true(panel.focus_node("gun.left"))
 	var locked := panel.get_focused_node()
 	assert_false(locked.disabled)
-	assert_eq(locked.get_meta("cursor_state"), NavigationCursor.CursorState.INTERACT)
+	assert_false(locked.is_purchasable())
 	watch_signals(panel)
 	panel.confirm_focused_node()
 	assert_signal_not_emitted(panel, "purchase_requested")
@@ -505,20 +514,16 @@ func test_confirm_emits_existing_purchase_signal_once_and_locked_node_is_inspect
 	await get_tree().process_frame
 
 
-func test_inventory_and_equipment_controls_publish_controller_semantics() -> void:
+func test_inventory_and_equipment_controls_use_shared_focus_surfaces() -> void:
 	var item := preload("res://src/hub/item_button.tscn").instantiate() as ItemButton
 	add_child(item)
 	assert_eq(item.get_focus_control().focus_mode, Control.FOCUS_ALL)
-	assert_eq(item.get_focus_control().get_meta("cursor_state"), NavigationCursor.CursorState.CAN_GRAB)
-	item.set_dragging(true)
-	assert_eq(item.get_focus_control().get_meta("cursor_state"), NavigationCursor.CursorState.DRAGGING)
+	assert_eq(item.get_focus_control().get_meta("navigation_focus_surface"), NodePath("Header"))
 	var slot := preload("res://src/hub/mod_slot.tscn").instantiate() as ModSlot
 	add_child(slot)
 	slot.setup(null, true)
-	slot.set_drop_validity(true)
-	assert_eq(slot.get_focus_control().get_meta("cursor_state"), NavigationCursor.CursorState.INTERACT)
-	slot.set_drop_validity(false)
-	assert_eq(slot.get_focus_control().get_meta("cursor_state"), NavigationCursor.CursorState.DISABLED)
+	assert_eq(slot.get_focus_control().focus_mode, Control.FOCUS_ALL)
+	assert_eq(slot.get_focus_control().get_meta("navigation_focus_surface"), NodePath(".."))
 	item.free()
 	slot.free()
 
@@ -645,7 +650,7 @@ func test_role_change_selects_closest_supported_page_and_keeps_focus() -> void:
 	await get_tree().process_frame
 
 
-func test_inventory_spawn_path_retains_dragging_and_links_every_enabled_slot() -> void:
+func test_inventory_spawn_path_links_every_enabled_slot() -> void:
 	var party := preload("res://src/hub/party_menu.tscn").instantiate() as PartyMenu
 	add_child(party)
 	party.show()
@@ -655,8 +660,6 @@ func test_inventory_spawn_path_retains_dragging_and_links_every_enabled_slot() -
 	var first := panel._spawn_grid_button(load("res://data/equipment/weapons/pistol.tres"), Equipment.Slot.WEAPON, 1) as ItemButton
 	var second := panel._spawn_grid_button(load("res://data/equipment/weapons/rifle.tres"), Equipment.Slot.WEAPON, 1) as ItemButton
 	var third := panel._spawn_grid_button(load("res://data/equipment/weapons/smg.tres"), Equipment.Slot.WEAPON, 1) as ItemButton
-	assert_eq(first.get_focus_control().get_meta("cursor_state"), NavigationCursor.CursorState.DRAGGING)
-	assert_eq(second.get_focus_control().get_meta("cursor_state"), NavigationCursor.CursorState.DRAGGING)
 	assert_eq(first.get_focus_control().focus_neighbor_bottom, first.get_focus_control().get_path_to(second.get_focus_control()))
 	assert_eq(second.get_focus_control().focus_neighbor_bottom, second.get_focus_control().get_path_to(third.get_focus_control()))
 	assert_eq(third.get_focus_control().focus_neighbor_bottom, third.get_focus_control().get_path_to(first.get_focus_control()))
@@ -688,16 +691,13 @@ func test_equipment_panel_reuse_with_null_clears_and_disables_controller_actions
 	panel.free()
 
 
-func test_invalid_mod_drop_uses_disabled_cursor_without_focus_override() -> void:
+func test_disabled_mod_slot_cannot_focus_or_activate() -> void:
 	var slot := preload("res://src/hub/mod_slot.tscn").instantiate() as ModSlot
 	add_child(slot)
-	slot.setup(null, true)
-	slot.get_focus_control().grab_focus()
-	NavigationFocus.apply(slot.get_focus_control())
-	slot.set_drop_validity(false)
-	assert_eq(slot.get_focus_control().get_meta("cursor_state"), NavigationCursor.CursorState.DISABLED)
-	assert_false(slot.get_focus_control().has_theme_stylebox_override(&"focus"))
-	NavigationFocus.clear(slot.get_focus_control())
+	slot.setup(null, false)
+	assert_true(slot.get_focus_control().disabled)
+	assert_eq(slot.get_focus_control().focus_mode, Control.FOCUS_NONE)
+	assert_false(NavigationFocus._states.has(slot.get_focus_control().get_instance_id()))
 	slot.free()
 
 
@@ -724,7 +724,7 @@ func test_shoulder_events_change_pages_and_roles_at_node_focus() -> void:
 	await get_tree().process_frame
 
 
-func test_keyboard_and_controller_skill_navigation_synchronize_focus_through_input_pipeline() -> void:
+func test_keyboard_and_controller_skill_navigation_share_retained_focus() -> void:
 	var hero := _hero()
 	hero.role_definitions.assign([_legacy_role()])
 	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)

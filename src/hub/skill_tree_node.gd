@@ -9,6 +9,7 @@ var node_definition: ProgressionNodeDefinition
 var tree_definition: RoleTreeDefinition
 var state: NodeState = NodeState.LOCKED
 var hero_data: HeroData
+var _can_afford := false
 
 @onready var icon_rect: TextureRect = $Panel/Icon
 @onready var owned_highlight: Panel = $Owned
@@ -31,23 +32,22 @@ func setup(node: ProgressionNodeDefinition, hero: HeroData, tree: RoleTreeDefini
 
 func set_availability(is_available: bool, can_afford: bool):
 	if state == NodeState.UNLOCKED:
-		set_meta("cursor_state", NavigationCursor.CursorState.INTERACT)
+		_can_afford = false
 		return
 	disabled = false
+	_can_afford = is_available and can_afford
 	if is_available:
 		state = NodeState.AVAILABLE
 		modulate = Color.WHITE if can_afford else Color.GAINSBORO
 		modulate.a = 1.0
 		cost_label.modulate = modulate
-		set_meta("cursor_state", NavigationCursor.CursorState.UPGRADE if can_afford else NavigationCursor.CursorState.DISABLED)
 	else:
 		state = NodeState.LOCKED
 		modulate = Color(1, 1, 1, 0.25)
-		set_meta("cursor_state", NavigationCursor.CursorState.INTERACT)
 
 
 func is_purchasable() -> bool:
-	return state == NodeState.AVAILABLE and get_meta("cursor_state", NavigationCursor.CursorState.DISABLED) == NavigationCursor.CursorState.UPGRADE
+	return state == NodeState.AVAILABLE and _can_afford
 
 
 func _update_button_visuals(is_owned: bool):
@@ -68,7 +68,7 @@ func _update_button_visuals(is_owned: bool):
 		disabled = false
 		modulate.a = 1.0
 		cost_label.hide()
-		set_meta("cursor_state", NavigationCursor.CursorState.INTERACT)
+		_can_afford = false
 
 
 func _update_arrows(is_self_owned: bool):

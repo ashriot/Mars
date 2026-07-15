@@ -261,7 +261,7 @@ func test_controller_events_route_the_complete_playable_loop() -> void:
 	for index in 5:
 		assert_eq(terminal.get_protocol_row(index).focus_mode, Control.FOCUS_NONE)
 		assert_false(terminal.get_protocol_row(index).has_focus())
-	assert_null(router.get_node("NavigationUXLayer").cursor._target)
+	assert_false(router.get_node("NavigationUXLayer").cursor.visible)
 	await wait_seconds(0.4)
 	assert_eq(terminal.interaction_state, terminal.TerminalState.READY)
 	await _send(&"terminal_finance")
@@ -279,7 +279,7 @@ func test_controller_events_route_the_complete_playable_loop() -> void:
 	assert_not_null(router.manager.battle_scene)
 	var navigation_ux := router.get_node("NavigationUXLayer") as NavigationUXLayer
 	assert_same(router.manager.battle_scene._controller_target, router.manager.battle_manager.current_actor)
-	assert_null(navigation_ux.cursor._target)
+	assert_false(navigation_ux.cursor.visible)
 	var spawned_hero := router.manager.battle_manager.hero_area.get_child(0) as HeroCard
 	assert_eq(spawned_hero.get_current_role().role_name, "Gunner")
 	var battle_actions: Control = router.manager.battle_manager.action_bar.actions_ui
@@ -299,8 +299,7 @@ func test_controller_events_route_the_complete_playable_loop() -> void:
 	await _send(&"nav_right")
 	assert_ne(router.manager.battle_scene._controller_target, previous_target)
 	assert_same(router.manager.battle_scene._controller_target, router.manager.battle_manager.forced_enemy)
-	assert_same(navigation_ux.cursor._target, router.manager.battle_manager.forced_enemy)
-	assert_eq(navigation_ux.cursor._state, NavigationCursor.CursorState.DEFAULT)
+	assert_false(navigation_ux.cursor.visible)
 	await _send(&"confirm")
 	await get_tree().process_frame
 	assert_eq(router.manager.battle_confirmed, 1)

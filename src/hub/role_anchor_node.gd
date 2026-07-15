@@ -17,7 +17,6 @@ func setup(role: RoleDefinition, tree: RoleTreeDefinition) -> void:
 	tree_definition = tree
 	node_id = tree.root_id
 	focus_mode = Control.FOCUS_ALL
-	set_meta("cursor_state", NavigationCursor.CursorState.INTERACT)
 	icon_rect.texture = role.icon
 	label.text = role.role_name
 	_update_arrows()

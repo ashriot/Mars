@@ -18,7 +18,6 @@ var disabled: bool:
 
 func _ready() -> void:
 	$Button.focus_mode = Control.FOCUS_ALL
-	$Button.set_meta("cursor_state", NavigationCursor.CursorState.CAN_GRAB)
 	$Button.set_meta("navigation_focus_surface", NodePath("Header"))
 
 
@@ -33,19 +32,11 @@ func setup(resource: Resource, slot_type: int, amount: int):
 		_setup_item(resource)
 	update_quantity(amount)
 	$Button.focus_mode = Control.FOCUS_ALL
-	$Button.set_meta("cursor_state", NavigationCursor.CursorState.CAN_GRAB)
 
 
 func get_focus_control() -> BaseButton:
 	return $Button
 
-
-func set_dragging(is_dragging: bool) -> void:
-	$Button.set_meta("cursor_state", NavigationCursor.CursorState.DRAGGING if is_dragging else NavigationCursor.CursorState.CAN_GRAB)
-
-
-func set_drop_validity(is_valid: bool) -> void:
-	$Button.set_meta("cursor_state", NavigationCursor.CursorState.INTERACT if is_valid else NavigationCursor.CursorState.DISABLED)
 
 func update_quantity(amount: int):
 	if amount > 1:

@@ -131,7 +131,6 @@ func cancel_targeting() -> void:
 		manager.focused_button = null
 	manager.change_state(BattleManager.State.PLAYER_ACTION)
 	_controller_target = manager.current_actor
-	_update_cursor()
 	_publish_controller_hints()
 
 
@@ -151,7 +150,6 @@ func _on_input_mode_changed(mode: InputManager.InputMode) -> void:
 	_controller_target = manager.current_actor
 	_last_controller_direction = Vector2.ZERO
 	_direction_hold_time = 0.0
-	_update_cursor()
 
 
 func _refresh_targeting() -> void:
@@ -159,11 +157,8 @@ func _refresh_targeting() -> void:
 		var candidates := _valid_controller_targets()
 		if not candidates.is_empty() and not candidates.has(_controller_target):
 			_set_controller_target(candidates[0])
-		else:
-			_update_cursor()
 	else:
 		_controller_target = manager.current_actor
-		_update_cursor()
 	_publish_controller_hints()
 
 
@@ -199,7 +194,6 @@ func _set_controller_target(target: ActorCard) -> void:
 	_controller_target = target
 	if target is EnemyCard:
 		manager._on_enemy_hovered(target as EnemyCard)
-	_update_cursor()
 	_publish_controller_hints()
 
 
@@ -209,16 +203,6 @@ func _restore_controller_target() -> void:
 		_set_controller_target(candidates[0])
 	elif manager:
 		_controller_target = manager.current_actor
-		_update_cursor()
-
-
-func _update_cursor() -> void:
-	var navigation := _navigation_ux_layer()
-	if navigation:
-		if _is_targeting() and is_instance_valid(_controller_target):
-			navigation.cursor.set_world_target(_controller_target, NavigationCursor.CursorState.DEFAULT)
-		else:
-			navigation.cursor.clear_target()
 
 
 func _publish_controller_hints() -> void:

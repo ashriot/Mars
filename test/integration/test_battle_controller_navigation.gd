@@ -18,10 +18,7 @@ class PausingShiftActionBar extends MinimalActionBar:
 
 
 class TrackingBattleScene extends BattleScene:
-	var cursor_update_count := 0
-
-	func _update_cursor() -> void:
-		cursor_update_count += 1
+	pass
 
 class TrackingBattleManager extends BattleManager:
 	var selected_hero: HeroCard
@@ -206,7 +203,7 @@ func test_standard_right_direction_changes_battle_target() -> void:
 	assert_same(scene._controller_target, right)
 
 
-func test_battle_target_change_compatibility_target_cannot_reveal_scan_pointer() -> void:
+func test_battle_target_change_uses_actor_highlight_without_cursor() -> void:
 	var fixture := await _navigation_fixture()
 	var scene: BattleScene = fixture.scene
 	var manager: TrackingBattleManager = fixture.manager
@@ -215,14 +212,10 @@ func test_battle_target_change_compatibility_target_cannot_reveal_scan_pointer()
 	scene._set_controller_target(fixture.enemy)
 	assert_same(scene._controller_target, fixture.enemy)
 	assert_eq(manager.enemy_hover_count, 1)
-	assert_same(fixture.ux.cursor._target, fixture.enemy)
-	assert_eq(fixture.ux.cursor._state, NavigationCursor.CursorState.DEFAULT)
-	assert_eq(fixture.ux.cursor.texture.resource_path.get_file(), "pointer_c.svg")
-	fixture.ux.cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2.ZERO, true)
 	assert_false(fixture.ux.cursor.visible)
 
 
-func test_self_targeting_refresh_places_cursor_on_active_hero() -> void:
+func test_self_targeting_refresh_retains_active_hero_without_cursor() -> void:
 	var fixture := await _navigation_fixture()
 	var scene: BattleScene = fixture.scene
 	var manager: TrackingBattleManager = fixture.manager
@@ -231,11 +224,8 @@ func test_self_targeting_refresh_places_cursor_on_active_hero() -> void:
 	fixture.hero.is_valid_target = true
 	fixture.enemy.is_valid_target = false
 	scene._controller_target = fixture.hero
-	fixture.ux.cursor.clear_target()
 	scene._refresh_targeting()
 	assert_same(scene._controller_target, fixture.hero)
-	assert_same(fixture.ux.cursor._target, fixture.hero)
-	assert_eq(fixture.ux.cursor._state, NavigationCursor.CursorState.DEFAULT)
 
 
 func test_selected_action_hotkey_toggles_targeting_off() -> void:
@@ -265,31 +255,6 @@ func test_different_action_hotkey_replaces_current_selection() -> void:
 	assert_eq(manager.action_select_count, 2)
 	assert_same(manager.current_action, second.action)
 	assert_same(manager.focused_button, second)
-
-
-func test_battle_compatibility_cursor_behavior_cannot_drive_scan_pointer() -> void:
-	var fixture := await _navigation_fixture()
-	var scene: BattleScene = fixture.scene
-	var manager: TrackingBattleManager = fixture.manager
-	manager.current_action = Action.new()
-	fixture.enemy.is_valid_target = true
-	InputManager._set_cursor_behavior(InputManager.CursorBehavior.FREE)
-	InputManager._input(_physical_key(KEY_1))
-	assert_eq(InputManager.get_cursor_behavior(), InputManager.CursorBehavior.SNAPPED)
-	scene._set_controller_target(fixture.enemy)
-	var initial_position: Vector2 = fixture.ux.cursor.position
-	fixture.ux.cursor.update_position_for_behavior(InputManager.CursorBehavior.SNAPPED, Vector2(20, 20), true)
-	assert_eq(fixture.ux.cursor.position, initial_position)
-	assert_false(fixture.ux.cursor.visible)
-
-	var motion := InputEventMouseMotion.new()
-	motion.position = Vector2(212, 90)
-	motion.relative = Vector2(12, 0)
-	InputManager._input(motion)
-	fixture.ux.cursor.update_position_for_behavior(InputManager.CursorBehavior.FREE, motion.position, true)
-	assert_eq(fixture.ux.cursor.position, initial_position)
-	assert_false(fixture.ux.cursor.visible)
-	assert_same(scene._controller_target, fixture.enemy)
 
 
 func test_held_direction_repeats_after_delay() -> void:
@@ -342,7 +307,6 @@ func test_mouse_mode_clears_synthetic_controller_hover_without_selecting() -> vo
 	scene._on_input_mode_changed(InputManager.InputMode.KEYBOARD_MOUSE)
 	assert_eq(manager.enemy_unhover_count, 1)
 	assert_same(scene._controller_target, manager.current_actor)
-	assert_eq(scene.cursor_update_count, 1, "semantic cursor target returns to the active hero")
 	assert_null(manager.selected_enemy)
 
 
@@ -476,23 +440,18 @@ func test_top_modal_suppresses_battle_input_and_restores_adapter_focus() -> void
 	await get_tree().process_frame
 	assert_same(ux._adapter, scene)
 	assert_same(scene._controller_target, manager.current_actor)
-	assert_null(ux.cursor._target)
-	assert_eq(ux.cursor._state, NavigationCursor.CursorState.DEFAULT)
-	assert_eq(ux.cursor.texture.resource_path.get_file(), "pointer_c.svg")
+	assert_false(ux.cursor.visible)
 
 
-func test_battle_phase_restore_clears_specialized_cursor_appearance() -> void:
+func test_battle_phase_restore_retains_active_actor_without_cursor() -> void:
 	var fixture := await _navigation_fixture()
 	var scene: BattleScene = fixture.scene
 	var manager: TrackingBattleManager = fixture.manager
 	var ux: NavigationUXLayer = fixture.ux
-	ux.cursor.set_world_target(manager.current_actor, NavigationCursor.CursorState.TARGET)
 	manager.current_state = BattleManager.State.PLAYER_ACTION
 	scene.navigation_focus_restored()
 	assert_same(scene._controller_target, manager.current_actor)
-	assert_null(ux.cursor._target)
-	assert_eq(ux.cursor._state, NavigationCursor.CursorState.DEFAULT)
-	assert_eq(ux.cursor.texture.resource_path.get_file(), "pointer_c.svg")
+	assert_false(ux.cursor.visible)
 
 
 func test_battle_adapter_teardown_clears_global_cursor_hints_and_refs() -> void:
@@ -503,7 +462,7 @@ func test_battle_adapter_teardown_clears_global_cursor_hints_and_refs() -> void:
 	scene.free()
 	await get_tree().process_frame
 	assert_null(ux._adapter)
-	assert_null(ux.cursor._target)
+	assert_false(ux.cursor.visible)
 	assert_eq(ux.hint_bar.get_hint_count(), 0)
 
 

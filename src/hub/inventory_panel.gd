@@ -260,7 +260,6 @@ func _spawn_grid_button(resource: Resource, slot: int, count: int) -> Control:
 	var btn = item_button_scene.instantiate() as ItemButton
 	grid.add_child(btn)
 	btn.setup(resource, slot, count)
-	btn.set_dragging(current_mode != Mode.VIEW)
 	_refresh_grid_focus_neighbors()
 
 	return btn

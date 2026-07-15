@@ -2,9 +2,6 @@ extends Node
 
 enum InputMode { KEYBOARD_MOUSE, CONTROLLER }
 enum PresentationMode { POINTER, FOCUS }
-# Temporary Task 5 compatibility shape for legacy battle/hub tests and callers.
-# It carries no pointer positioning, warp suppression, or mouse-mode ownership.
-enum CursorBehavior { FREE, SNAPPED }
 
 const JOY_AXIS_THRESHOLD := 0.25
 const HARDWARE_CURSOR := preload("res://assets/graphics/glyphs/cursors/outline/pointer_c.svg")
@@ -17,13 +14,11 @@ const DIRECTIONAL_NAVIGATION_ACTIONS: Array[StringName] = [
 signal input_mode_changed(mode: InputMode)
 signal controller_type_changed(type: InputIconMap.ControllerType)
 signal presentation_mode_changed(mode: PresentationMode)
-signal cursor_behavior_changed(behavior: CursorBehavior)
 
 var _active_mode := InputMode.KEYBOARD_MOUSE
 var _active_controller_type := InputIconMap.ControllerType.STEAM_DECK
 var _presentation_mode := PresentationMode.POINTER
 var _consumed_mouse_button: MouseButton = MOUSE_BUTTON_NONE
-var _cursor_behavior := CursorBehavior.FREE
 
 
 func _ready() -> void:
@@ -48,7 +43,6 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventJoypadButton or event is InputEventJoypadMotion:
 		_set_active_mode(InputMode.CONTROLLER)
 		_set_presentation_mode(PresentationMode.FOCUS)
-		_set_cursor_behavior(CursorBehavior.SNAPPED)
 		_set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 		_set_active_controller_type(InputIconMap.get_controller_type_from_name(Input.get_joy_name(event.device)))
 		return
@@ -61,14 +55,11 @@ func _input(event: InputEvent) -> void:
 		elif _presentation_mode == PresentationMode.POINTER and _is_directional_navigation_key(event):
 			_set_presentation_mode(PresentationMode.FOCUS)
 			_mark_input_handled()
-		if _is_legacy_navigation_key(event):
-			_set_cursor_behavior(CursorBehavior.SNAPPED)
 		return
 	if event is InputEventMouseButton:
 		var previous_mode := _active_mode
 		_set_active_mode(InputMode.KEYBOARD_MOUSE)
 		_set_presentation_mode(PresentationMode.POINTER)
-		_set_cursor_behavior(CursorBehavior.FREE)
 		_set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 		if previous_mode == InputMode.CONTROLLER:
 			_consumed_mouse_button = event.button_index
@@ -96,10 +87,6 @@ func _set_presentation_mode(mode: PresentationMode) -> void:
 		return
 	_presentation_mode = mode
 	presentation_mode_changed.emit(mode)
-
-
-func get_cursor_behavior() -> CursorBehavior:
-	return _cursor_behavior
 
 
 func is_meaningful_event(event: InputEvent) -> bool:
@@ -144,13 +131,6 @@ func _set_active_mode(mode: InputMode) -> void:
 	input_mode_changed.emit(mode)
 
 
-func _set_cursor_behavior(behavior: CursorBehavior) -> void:
-	if _cursor_behavior == behavior:
-		return
-	_cursor_behavior = behavior
-	cursor_behavior_changed.emit(behavior)
-
-
 func _set_active_controller_type(type: InputIconMap.ControllerType) -> void:
 	var resolved := InputIconMap.normalize_controller_type(type)
 	_apply_family_bindings(resolved)
@@ -175,20 +155,6 @@ func _apply_family_bindings(type: InputIconMap.ControllerType) -> void:
 func _is_directional_navigation_key(event: InputEventKey) -> bool:
 	for action in DIRECTIONAL_NAVIGATION_ACTIONS:
 		if event.is_action(action):
-			return true
-	return false
-
-
-func _is_legacy_navigation_key(event: InputEventKey) -> bool:
-	for action in [
-		&"ui_left", &"ui_right", &"ui_up", &"ui_down",
-		&"nav_left", &"nav_right", &"nav_up", &"nav_down",
-		&"confirm", &"cancel", &"page_left", &"page_right",
-		&"role_left", &"role_right",
-		&"action_1", &"action_2", &"action_3", &"action_4",
-		&"terminal_security", &"terminal_medical", &"terminal_finance", &"terminal_scan", &"terminal_extract",
-	]:
-		if InputMap.has_action(action) and event.is_action(action):
 			return true
 	return false
 

@@ -127,7 +127,6 @@ func test_keyboard_mode_does_not_preview_or_confirm_dungeon_nodes() -> void:
 	var dungeon_map: DungeonMap = setup.map
 	var start := dungeon_map.current_node
 	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
-	InputManager._set_cursor_behavior(InputManager.CursorBehavior.SNAPPED)
 	Input.action_press(&"nav_right")
 	dungeon_map._process(0.016)
 	Input.action_release(&"nav_right")
@@ -144,7 +143,6 @@ func test_mouse_hover_takes_reticle_ownership_after_controller_preview() -> void
 	dungeon_map._reconcile_controller_navigation(Vector2.RIGHT)
 	assert_not_null(dungeon_map._controller_preview_node)
 	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
-	InputManager._set_cursor_behavior(InputManager.CursorBehavior.FREE)
 	dungeon_map._on_node_hovered(nodes[0])
 	dungeon_map._process(0.016)
 	assert_null(dungeon_map._controller_preview_node)
@@ -441,7 +439,6 @@ func test_controller_scan_keeps_cursor_centered_while_analog_input_moves_camera(
 	var setup := await _prepare_navigation_map()
 	var dungeon_map: DungeonMap = setup.map
 	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
-	InputManager._set_cursor_behavior(InputManager.CursorBehavior.SNAPPED)
 	var physical_mouse := dungeon_map.get_viewport().get_mouse_position()
 	dungeon_map.camera.zoom = Vector2(5, 5)
 	dungeon_map.start_targeting_mode(1)
