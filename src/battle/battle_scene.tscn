@@ -153,12 +153,21 @@ expand_mode = 1
 
 [node name="Label" type="RichTextLabel" parent="UI/CurrentAction/HBoxContainer"]
 layout_mode = 2
+size_flags_horizontal = 3
 mouse_filter = 2
 theme_override_constants/outline_size = 5
 bbcode_enabled = true
 text = "Testing"
 fit_content = true
 autowrap_mode = 0
+vertical_alignment = 1
+
+[node name="CTPercent" type="Label" parent="UI/CurrentAction/HBoxContainer"]
+custom_minimum_size = Vector2(110, 0)
+layout_mode = 2
+theme_override_constants/outline_size = 5
+text = "100% CT"
+horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="Enemies" type="Control" parent="UI"]

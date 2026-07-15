@@ -1,15 +1,9 @@
 [gd_resource type="Resource" script_class="Action" format=3 uid="uid://b4q2358kx0na0"]
 
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_iunas"]
-[ext_resource type="Script" uid="uid://dgkss5d1axeag" path="res://src/scripts/action_effects/effect_modify_ct.gd" id="2_chmr7"]
 [ext_resource type="Script" uid="uid://bhblyd70hrd4m" path="res://src/scripts/action_effects/effect_modify_focus.gd" id="3_x63gu"]
 [ext_resource type="Texture2D" uid="uid://cgpol6ek6p4nt" path="res://assets/graphics/icons/skills/thunder-struck.png" id="4_chmr7"]
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="5_chmr7"]
-
-[sub_resource type="Resource" id="Resource_phhal"]
-script = ExtResource("2_chmr7")
-target_type = 4
-metadata/_custom_type_script = "uid://dgkss5d1axeag"
 
 [sub_resource type="Resource" id="Resource_bs8qx"]
 script = ExtResource("3_x63gu")
@@ -22,6 +16,7 @@ action_name = "Energize"
 icon = ExtResource("4_chmr7")
 description = "Boosts Echo's next turn by 50% and grants an ally {foc}{foc}{foc}{foc}."
 focus_cost = 4
+ct_cost_percent = 50
 target_type = 6
-effects = Array[ExtResource("1_iunas")]([SubResource("Resource_phhal"), SubResource("Resource_bs8qx")])
+effects = Array[ExtResource("1_iunas")]([SubResource("Resource_bs8qx")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

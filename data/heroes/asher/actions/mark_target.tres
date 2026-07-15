@@ -4,7 +4,6 @@
 [ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://src/scripts/action_effects/effect_apply_condition.gd" id="2_ia4qe"]
 [ext_resource type="Resource" uid="uid://bnkh1gf3l78oq" path="res://data/heroes/asher/conditions/marked_debuff.tres" id="3_m15ye"]
 [ext_resource type="Resource" uid="uid://dya51rfrgr2bw" path="res://data/heroes/asher/conditions/marked_buff.tres" id="5_m15ye"]
-[ext_resource type="Script" uid="uid://dgkss5d1axeag" path="res://src/scripts/action_effects/effect_modify_ct.gd" id="6_b537w"]
 [ext_resource type="Texture2D" uid="uid://c8be56w4pxbui" path="res://assets/graphics/icons/skills/human-target.png" id="6_m15ye"]
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="7_m15ye"]
 
@@ -19,16 +18,11 @@ condition = ExtResource("5_m15ye")
 target_type = 4
 metadata/_custom_type_script = "uid://dggojfw8tmpnk"
 
-[sub_resource type="Resource" id="Resource_habd1"]
-script = ExtResource("6_b537w")
-ct_change_percent = 0.75
-target_type = 4
-metadata/_custom_type_script = "uid://dgkss5d1axeag"
-
 [resource]
 script = ExtResource("7_m15ye")
 action_name = "Mark Target"
 icon = ExtResource("6_m15ye")
 description = "Boosts Asher's next turn by 75% and Marks the target, apply Debuff:[p][i]Heroes gain +25% AIM against this target.[p]Lasts until Asher shifts."
-effects = Array[ExtResource("1_6ff7n")]([SubResource("Resource_8s7nv"), SubResource("Resource_82nfl"), SubResource("Resource_habd1")])
+ct_cost_percent = 25
+effects = Array[ExtResource("1_6ff7n")]([SubResource("Resource_8s7nv"), SubResource("Resource_82nfl")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

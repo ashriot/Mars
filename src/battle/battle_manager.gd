@@ -1,6 +1,9 @@
 extends Node
 class_name BattleManager
 
+const CT_FASTER_COLOR := Color("67e88a")
+const CT_SLOWER_COLOR := Color("f87171")
+
 # --- State Machine ---
 enum State { LOADING, PLAYER_ACTION, ENEMY_ACTION, EXECUTING_ACTION, FORCED_TARGET, BATTLE_OVER }
 var current_state = State.LOADING
@@ -258,11 +261,28 @@ func set_current_action(action: Action):
 	current_action = action
 	current_action_panel.get_node("HBoxContainer/Mask/Icon").texture = current_action.icon
 	current_action_panel.get_node("HBoxContainer/Label").text = _get_rich_description(current_action)
-	var hero = current_actor as HeroCard
-	current_action_panel.modulate = hero.get_current_role().color
+	var final_percent := current_actor.get_action_ct_percent(current_action)
+	var ct_label := current_action_panel.get_node("HBoxContainer/CTPercent") as Label
+	ct_label.text = "%d%% CT" % final_percent
+	ct_label.add_theme_color_override(
+		"font_color", _action_ct_color(current_action.ct_cost_percent, final_percent)
+	)
+	var hero := current_actor as HeroCard
+	current_action_panel.modulate = Color.WHITE
+	current_action_panel.get_node("HBoxContainer/Mask").self_modulate = (
+		hero.get_current_role().color
+	)
 	current_action_panel.show()
 	var targets := get_targets(action.target_type, true)
 	_apply_target_presentation(action, targets)
+
+
+static func _action_ct_color(base_percent: int, final_percent: int) -> Color:
+	if final_percent < base_percent:
+		return CT_FASTER_COLOR
+	if final_percent > base_percent:
+		return CT_SLOWER_COLOR
+	return Color.WHITE
 
 
 func is_group_target_action(action: Action) -> bool:

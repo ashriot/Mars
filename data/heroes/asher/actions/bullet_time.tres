@@ -23,7 +23,6 @@ script = ExtResource("6_hir7p")
 action_name = "Bullet Time"
 icon = ExtResource("5_tojmx")
 description = "Reduce all enemies Speed by 15%."
-update_turn_order = true
 target_type = 4
 effects = Array[ExtResource("1_hir7p")]([SubResource("Resource_nv23t"), SubResource("Resource_ejk74")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"
