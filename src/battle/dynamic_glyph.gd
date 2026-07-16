@@ -22,6 +22,7 @@ func set_action(new_action: StringName) -> void:
 func _exit_tree() -> void:
 	if _fade_tween and _fade_tween.is_valid():
 		_fade_tween.kill()
+	_fade_tween = null
 
 
 func refresh(show_controller_glyph: bool, family: InputIconMap.ControllerType) -> void:
@@ -61,6 +62,9 @@ func _fade_to(alpha: float) -> void:
 
 
 func _clear_texture() -> void:
+	if _fade_tween and _fade_tween.is_valid():
+		_fade_tween.kill()
+	_fade_tween = null
 	texture_normal = null
 	texture_pressed = null
 	texture_disabled = null

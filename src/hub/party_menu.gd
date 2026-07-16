@@ -39,6 +39,7 @@ func _ready():
 	DisplayProfile.bind(apply_display_profile)
 	hide()
 	skill_view.purchase_requested.connect(_on_purchase_requested)
+	skill_view.set_role_navigation_owner(_owns_roles_content_input)
 	inventory_view.hero_stats_updated.connect(_on_hero_stats_updated)
 	inventory_view.mode_changed.connect(_on_inventory_mode_changed)
 	for index in range(tab_buttons.size()):
@@ -526,6 +527,11 @@ func _close() -> void:
 
 func _navigation_ux_layer() -> NavigationUXLayer:
 	return get_tree().root.find_child("NavigationUXLayer", true, false) as NavigationUXLayer
+
+
+func _owns_roles_content_input() -> bool:
+	var navigation := _navigation_ux_layer()
+	return visible and current_depth == Depth.CONTENT and current_tab == Tab.ROLES and navigation != null and navigation.is_top_modal(self)
 
 
 func _publish_hints() -> void:

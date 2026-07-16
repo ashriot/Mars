@@ -166,6 +166,73 @@ func test_roles_use_bumpers_and_rank_pages_are_spatial() -> void:
 	await get_tree().process_frame
 
 
+func test_role_bumpers_only_route_from_top_modal_roles_content() -> void:
+	var navigation := preload("res://src/ui/navigation/navigation_ux_layer.tscn").instantiate() as NavigationUXLayer
+	navigation.name = "NavigationUXLayer"
+	add_child_autofree(navigation)
+	var party := await _opened_party_with_three_heroes()
+	var panel := party.skill_view
+	var initial_role := panel.current_role_idx
+
+	await _push_action_event(&"hub_role_next")
+	assert_eq(panel.current_role_idx, initial_role, "hero rail does not own role shoulders")
+
+	assert_true(party.enter_content())
+	await _push_action_event(&"hub_role_next")
+	assert_eq(panel.current_role_idx, posmod(initial_role + 1, panel.role_list_container.get_child_count()), "Roles content owns role shoulders")
+	var roles_content_role := panel.current_role_idx
+
+	party.change_tab(1)
+	assert_eq(party.current_tab, PartyMenu.Tab.ITEMS)
+	await _push_action_event(&"hub_role_next")
+	assert_eq(panel.current_role_idx, roles_content_role, "Items does not leak role shoulders")
+
+	party.change_tab(-1)
+	var nested := Control.new()
+	add_child_autofree(nested)
+	navigation.push_modal(nested, null, true, true)
+	assert_true(navigation.is_top_modal(nested))
+	await _push_action_event(&"hub_role_next")
+	assert_eq(panel.current_role_idx, roles_content_role, "nested modal blocks underlying role shoulders")
+	navigation.pop_modal(nested)
+
+
+func test_roles_same_frame_rebuild_restores_focus_to_current_subtree() -> void:
+	var panel := await _skill_panel_with_multi_page_role()
+	assert_true(panel.focus_node("gun.atk_1"))
+	var hero := panel.current_hero
+	panel.setup(hero)
+	assert_eq(panel.role_list_container.get_child_count(), 2, "retired role panels are detached immediately")
+	var immediate_focus := get_viewport().gui_get_focus_owner()
+	assert_true(panel.is_ancestor_of(immediate_focus))
+	assert_true(panel._current_role_panel().is_ancestor_of(immediate_focus))
+	assert_false(immediate_focus.is_queued_for_deletion())
+	await get_tree().process_frame
+	var settled_focus := get_viewport().gui_get_focus_owner()
+	assert_not_null(settled_focus)
+	if settled_focus:
+		assert_true(panel._current_role_panel().is_ancestor_of(settled_focus))
+		assert_false(settled_focus.is_queued_for_deletion())
+	panel.free()
+	await get_tree().process_frame
+
+
+func test_roles_single_role_rebuild_has_one_panel_and_no_role_glyphs() -> void:
+	var panel := await _skill_panel_with_multi_page_role()
+	var hero := _hero()
+	hero.unlocked_role_ids.assign(["gun"])
+	hero.role_definitions.assign([_role("gun")])
+	panel.setup(hero)
+	assert_eq(panel.role_list_container.get_child_count(), 1)
+	var role_panel := panel.role_list_container.get_child(0) as RolePanel
+	assert_false(role_panel.get_node("Content/PreviousRoleGlyph").visible)
+	assert_false(role_panel.get_node("Content/NextRoleGlyph").visible)
+	await get_tree().process_frame
+	assert_eq(panel.role_list_container.get_child_count(), 1)
+	panel.free()
+	await get_tree().process_frame
+
+
 func test_roles_restore_stable_node_per_hero_role_and_page() -> void:
 	var panel := await _skill_panel_with_multi_page_role()
 	assert_true(panel.focus_node("gun.atk_1"))
@@ -290,10 +357,18 @@ func test_inventory_restores_item_focus_by_resource_identity_after_rebuild() -> 
 	var key: String = panel.focus_key(original.get_focus_control())
 	assert_eq(key, "equipment:%s" % pistol.id)
 	panel._clear_grid()
-	await get_tree().process_frame
 	var replacement := panel._spawn_grid_button(pistol, Equipment.Slot.WEAPON, 1) as ItemButton
 	assert_true(panel.restore_focus(key))
 	assert_same(get_viewport().gui_get_focus_owner(), replacement.get_focus_control())
+	assert_eq(panel.grid.get_child_count(), 1, "retired item controls are detached immediately")
+	assert_false(replacement.get_focus_control().is_queued_for_deletion())
+	await get_tree().process_frame
+	assert_same(get_viewport().gui_get_focus_owner(), replacement.get_focus_control())
+	var settled_focus := get_viewport().gui_get_focus_owner()
+	assert_not_null(settled_focus)
+	if settled_focus:
+		assert_true(panel.grid.is_ancestor_of(settled_focus))
+		assert_false(settled_focus.is_queued_for_deletion())
 
 
 func test_pointer_hero_change_in_content_keeps_memory_content_scoped() -> void:
@@ -1071,3 +1146,13 @@ func _action_event(action: StringName) -> InputEventAction:
 	event.action = action
 	event.pressed = true
 	return event
+
+
+func _push_action_event(action: StringName) -> void:
+	get_viewport().push_input(_action_event(action))
+	await get_tree().process_frame
+	var released := InputEventAction.new()
+	released.action = action
+	released.pressed = false
+	get_viewport().push_input(released)
+	await get_tree().process_frame

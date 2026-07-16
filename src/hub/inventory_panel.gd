@@ -303,7 +303,8 @@ func _on_unequip_mod_clicked():
 func _clear_grid():
 	if not grid: return
 	for child in grid.get_children():
-		child.queue_free()
+		grid.remove_child(child)
+		child.free()
 
 func _spawn_grid_button(resource: Resource, slot: int, count: int) -> Control:
 	var btn = item_button_scene.instantiate() as ItemButton

@@ -121,7 +121,8 @@ func render_tree(page_index: int):
 func _clear_tree():
 	generated_nodes.clear()
 	for child in node_layer.get_children():
-		child.queue_free()
+		node_layer.remove_child(child)
+		child.free()
 
 func _spawn_node(data_node: ProgressionNodeDefinition) -> void:
 	var ui_node: Control

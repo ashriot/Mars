@@ -22,6 +22,7 @@ var focused_node_id: String = ""
 var _focus_memory: Dictionary = {}
 var _hero_context_memory: Dictionary = {}
 var _display_profile: int = DisplayProfileService.Profile.DESKTOP
+var _role_navigation_owner: Callable
 
 
 func _ready() -> void:
@@ -62,7 +63,8 @@ func setup(hero: HeroData):
 
 func _refresh_role_list():
 	for child in role_list_container.get_children():
-		child.queue_free()
+		role_list_container.remove_child(child)
+		child.free()
 
 	var roles = current_hero.unlocked_roles
 	var rendered_roles: Array[RoleDefinition] = []
@@ -114,7 +116,7 @@ func _on_role_node_focused(node_id: String, role_panel: RolePanel) -> void:
 	var node := role_panel.generated_nodes.get(node_id) as Control
 	if node:
 		_publish_hints(node)
-		call_deferred(&"ensure_node_visible", node)
+		call_deferred(&"ensure_node_visible", node.get_instance_id())
 
 func _on_role_panel_selected(selected_panel: RolePanel):
 	var panels = role_list_container.get_children()
@@ -128,7 +130,7 @@ func _on_role_panel_selected(selected_panel: RolePanel):
 	_refresh_role_shortcuts()
 	update_tabs(selected_panel.def.color)
 	_update_tab_visuals()
-	call_deferred(&"ensure_node_visible", selected_panel)
+	call_deferred(&"ensure_node_visible", selected_panel.get_instance_id())
 
 func update_tabs(color: Color, animate: bool = true):
 	var pos = current_role_idx * 290 + current_role_idx * 20
@@ -198,12 +200,13 @@ func focus_node(node_id: String) -> bool:
 	_focus_memory[_memory_key()] = target_id
 	if target.is_inside_tree() and target.is_visible_in_tree(): target.grab_focus()
 	_publish_hints(target)
-	call_deferred(&"ensure_node_visible", target)
+	call_deferred(&"ensure_node_visible", target.get_instance_id())
 	return true
 
 
-func ensure_node_visible(node: Control) -> void:
-	if is_instance_valid(node):
+func ensure_node_visible(instance_id: int) -> void:
+	var node := instance_from_id(instance_id) as Control
+	if is_instance_valid(node) and node.is_inside_tree() and role_scroll.is_ancestor_of(node):
 		role_scroll.ensure_control_visible(node)
 
 
@@ -282,6 +285,10 @@ func cancel_navigation() -> bool:
 	return false
 
 
+func set_role_navigation_owner(owner: Callable) -> void:
+	_role_navigation_owner = owner
+
+
 func set_chrome_active(active: bool) -> void:
 	for child in role_list_container.get_children():
 		if child is RolePanel:
@@ -308,9 +315,9 @@ func _page_tabs_own_focus() -> bool:
 func _unhandled_input(event: InputEvent) -> void:
 	if not is_visible_in_tree():
 		return
-	if event.is_action_pressed(&"hub_role_previous"):
+	if _owns_role_navigation() and event.is_action_pressed(&"hub_role_previous"):
 		change_role(-1)
-	elif event.is_action_pressed(&"hub_role_next"):
+	elif _owns_role_navigation() and event.is_action_pressed(&"hub_role_next"):
 		change_role(1)
 	elif _node_owns_focus() and event.is_action_pressed(&"nav_up"):
 		move_focus(Vector2.UP)
@@ -328,6 +335,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	else:
 		return
 	get_viewport().set_input_as_handled()
+
+
+func _owns_role_navigation() -> bool:
+	return _role_navigation_owner.is_null() or bool(_role_navigation_owner.call())
 
 
 func _current_role_panel() -> RolePanel:

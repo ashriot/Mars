@@ -118,6 +118,23 @@ func test_controller_only_glyph_resolves_every_runtime_family() -> void:
 			assert_not_null(InputIconMap.get_glyph(family, action), "%s %s" % [family, action])
 
 
+func test_clearing_texture_kills_and_releases_active_fade_tween() -> void:
+	var glyph := DynamicGlyph.new()
+	glyph.controller_only = true
+	glyph.fade_duration = 1.0
+	add_child_autofree(glyph)
+	glyph.set_action(&"hub_tab_previous")
+	glyph.refresh(true, InputIconMap.ControllerType.PLAYSTATION)
+	var fade := glyph._fade_tween
+	assert_not_null(fade)
+	assert_true(fade.is_valid())
+	glyph.set_action(&"not_real")
+	assert_false(fade.is_valid())
+	assert_null(glyph._fade_tween)
+	assert_null(glyph.texture_normal)
+	assert_false(glyph.visible)
+
+
 func _pressed_joy_button() -> InputEventJoypadButton:
 	var event := InputEventJoypadButton.new()
 	event.device = SYNTHETIC_UNCONNECTED_JOY_DEVICE
