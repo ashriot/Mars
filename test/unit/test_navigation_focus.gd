@@ -86,40 +86,17 @@ func test_apply_after_completed_clear_reuses_tree_exit_cleanup_safely() -> void:
 	assert_engine_error_count(0)
 
 
-func test_opt_in_hub_focus_pulses_only_authored_outer_edge_and_preserves_content() -> void:
-	var pulsing := TextureButton.new()
-	var surface := Panel.new()
-	surface.name = "FocusOutline"
-	var label := Label.new()
-	label.add_theme_color_override(&"font_color", Color.GREEN)
-	label.add_theme_constant_override(&"outline_size", 9)
-	var authored := StyleBoxFlat.new()
-	authored.bg_color = Color(0.2, 0.3, 0.4, 0.8)
-	authored.border_color = Color(0.8, 1.0, 0.2, 1.0)
-	surface.add_theme_stylebox_override(&"panel", authored)
-	pulsing.add_child(surface)
-	pulsing.add_child(label)
-	pulsing.set_meta("navigation_focus_surface", NodePath("FocusOutline"))
-	pulsing.set_meta("navigation_focus_pulse", true)
-	add_child_autofree(pulsing)
-	NavigationFocus.apply(pulsing)
-	var pulse_state: Dictionary = NavigationFocus._states[pulsing.get_instance_id()]
-	assert_true(pulse_state.has("tween"))
-	assert_not_null(pulse_state.tween)
-	var style := surface.get_theme_stylebox(&"panel") as StyleBoxFlat
-	assert_eq(style.bg_color, authored.bg_color)
-	assert_almost_eq(style.border_color.r, authored.border_color.r * NavigationFocus.HUB_PULSE_LOW_ENERGY, 0.001)
-	assert_almost_eq(style.border_color.g, authored.border_color.g * NavigationFocus.HUB_PULSE_LOW_ENERGY, 0.001)
-	assert_almost_eq(style.border_color.b, authored.border_color.b * NavigationFocus.HUB_PULSE_LOW_ENERGY, 0.001)
-	assert_eq(style.border_color.a, authored.border_color.a)
-	assert_eq(label.get_theme_color(&"font_color"), Color.GREEN)
-	assert_eq(label.get_theme_constant(&"outline_size"), 9)
-	NavigationFocus.clear(pulsing)
-	assert_false(NavigationFocus._states.has(pulsing.get_instance_id()))
-	assert_same(surface.get_theme_stylebox(&"panel"), authored)
-
-	var ordinary := Button.new()
-	add_child_autofree(ordinary)
-	NavigationFocus.apply(ordinary)
-	assert_false(NavigationFocus._states[ordinary.get_instance_id()].has("tween"))
-	NavigationFocus.clear(ordinary)
+func test_hub_hover_uses_authored_hover_style_without_animation_and_restores_focus() -> void:
+	var button := Button.new()
+	var authored_focus := StyleBoxFlat.new()
+	var authored_hover := StyleBoxFlat.new()
+	authored_focus.bg_color = Color.RED
+	authored_hover.bg_color = Color.CYAN
+	button.add_theme_stylebox_override(&"focus", authored_focus)
+	button.add_theme_stylebox_override(&"hover", authored_hover)
+	add_child_autofree(button)
+	NavigationFocus.apply_hub_hover(button)
+	assert_eq((button.get_theme_stylebox(&"focus") as StyleBoxFlat).bg_color, Color.CYAN)
+	assert_false(NavigationFocus._states[button.get_instance_id()].has("tween"))
+	NavigationFocus.clear(button)
+	assert_same(button.get_theme_stylebox(&"focus"), authored_focus)

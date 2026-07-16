@@ -9,6 +9,39 @@ const HUB_PULSE_HIGH_ENERGY := 1.0
 static var _states: Dictionary = {}
 
 
+static func apply_hub_hover(control: Control) -> void:
+	if not is_instance_valid(control) or _states.has(control.get_instance_id()):
+		return
+	var state: Dictionary
+	if control is Button:
+		var hover := control.get_theme_stylebox(&"hover")
+		if not is_instance_valid(hover):
+			return
+		state = {
+			"kind": &"hub_button",
+			"control": weakref(control),
+			"had_style_override": control.has_theme_stylebox_override(&"focus"),
+			"style": control.get_theme_stylebox(&"focus"),
+		}
+		control.add_theme_stylebox_override(&"focus", hover.duplicate())
+	elif control is TextureButton:
+		if not is_instance_valid(control.texture_hover):
+			return
+		state = {
+			"kind": &"hub_texture_button",
+			"control": weakref(control),
+			"texture_focused": control.texture_focused,
+		}
+		control.texture_focused = control.texture_hover
+	else:
+		return
+	var key := control.get_instance_id()
+	_states[key] = state
+	var cleanup := _release_state.bind(key)
+	if not control.tree_exiting.is_connected(cleanup):
+		control.tree_exiting.connect(cleanup, CONNECT_ONE_SHOT)
+
+
 static func apply(control: Control) -> void:
 	if not is_instance_valid(control) or _states.has(control.get_instance_id()):
 		return
@@ -33,6 +66,7 @@ static func apply(control: Control) -> void:
 		label.add_theme_constant_override(&"outline_size", 0)
 	var focus := _focus_style_and_tween(control, surface, style_name)
 	var state := {
+		"kind": &"standard",
 		"control": weakref(control),
 		"surface": weakref(surface),
 		"style_name": style_name,
@@ -60,6 +94,17 @@ static func clear(control: Control) -> void:
 	var key := control.get_instance_id()
 	var state: Dictionary = _states[key]
 	_kill_tween(state)
+	if state.kind == &"hub_button":
+		if state.had_style_override:
+			control.add_theme_stylebox_override(&"focus", state.style)
+		else:
+			control.remove_theme_stylebox_override(&"focus")
+		_states.erase(key)
+		return
+	if state.kind == &"hub_texture_button":
+		(control as TextureButton).texture_focused = state.texture_focused
+		_states.erase(key)
+		return
 	var surface := state.surface.get_ref() as Control
 	if is_instance_valid(surface):
 		if state.had_style_override:

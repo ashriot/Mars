@@ -95,6 +95,52 @@ func _three_button_screen() -> Dictionary:
 	return {"ux": ux, "screen": screen, "top": top, "middle": middle, "bottom": bottom}
 
 
+func _party_button_screen() -> Dictionary:
+	InputManager._set_presentation_mode(InputManager.PresentationMode.FOCUS)
+	var ux := UXScene.instantiate() as NavigationUXLayer
+	add_child_autofree(ux)
+	var party := Control.new()
+	party.name = "PartyMenu"
+	var button := Button.new()
+	button.focus_mode = Control.FOCUS_ALL
+	button.custom_minimum_size = Vector2(200, 48)
+	party.add_child(button)
+	add_child_autofree(party)
+	ux.register_screen(party, button)
+	await get_tree().process_frame
+	return {"ux": ux, "party": party, "button": button}
+
+
+func test_controller_focus_inside_party_menu_shows_hub_cursor_only() -> void:
+	var ux := UXScene.instantiate() as NavigationUXLayer
+	add_child_autofree(ux)
+	var party := Control.new()
+	party.name = "PartyMenu"
+	var button := Button.new()
+	button.focus_mode = Control.FOCUS_ALL
+	button.custom_minimum_size = Vector2(200, 48)
+	party.add_child(button)
+	add_child_autofree(party)
+	ux.register_screen(party, button)
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	InputManager._set_presentation_mode(InputManager.PresentationMode.FOCUS)
+	button.grab_focus()
+	await get_tree().process_frame
+	assert_true(ux.cursor.is_tracking_hub_target())
+	assert_same(ux.cursor._hub_target.get_ref(), button)
+
+
+func test_pointer_handoff_hides_only_hub_cursor_and_preserves_focus_origin() -> void:
+	var setup := await _party_button_screen()
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	setup.button.grab_focus()
+	await get_tree().process_frame
+	InputManager._input(_mouse_button_at(Vector2(500, 300), MOUSE_BUTTON_LEFT, true))
+	assert_false(setup.ux.cursor.is_tracking_hub_target())
+	assert_same(setup.ux.get_focus_target(), setup.button)
+	InputManager._input(_mouse_button_at(Vector2(500, 300), MOUSE_BUTTON_LEFT, false))
+
+
 func test_mouse_motion_hides_focus_but_retains_navigation_origin() -> void:
 	var setup := await _three_button_screen()
 	var ux: NavigationUXLayer = setup.ux

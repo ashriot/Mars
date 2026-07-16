@@ -45,6 +45,7 @@ func set_adapter(adapter: Object) -> void:
 	_adapter = adapter
 	if is_instance_valid(_focus_target):
 		NavigationFocus.clear(_focus_target)
+	cursor.clear_hub_target()
 	_focus_target = null
 
 
@@ -220,9 +221,34 @@ func _update_focus_target(control: Control) -> void:
 	if is_instance_valid(_focus_target):
 		NavigationFocus.clear(_focus_target)
 	_focus_target = control
-	if _is_focusable(control) \
-		and InputManager.get_presentation_mode() == InputManager.PresentationMode.FOCUS:
-		NavigationFocus.apply(control)
+	if InputManager.get_presentation_mode() == InputManager.PresentationMode.FOCUS:
+		_apply_focus_presentation(control)
+	else:
+		cursor.clear_hub_target()
+
+
+func _apply_focus_presentation(control: Control) -> void:
+	if not _is_focusable(control):
+		cursor.clear_hub_target()
+		return
+	if _party_menu_for(control):
+		NavigationFocus.apply_hub_hover(control)
+		if InputManager.get_active_mode() == InputManager.InputMode.CONTROLLER:
+			cursor.track_hub_target(control)
+		else:
+			cursor.clear_hub_target()
+		return
+	cursor.clear_hub_target()
+	NavigationFocus.apply(control)
+
+
+func _party_menu_for(control: Control) -> Control:
+	var ancestor: Node = control
+	while is_instance_valid(ancestor):
+		if ancestor is Control and ancestor.name == &"PartyMenu":
+			return ancestor as Control if (ancestor as Control).is_visible_in_tree() else null
+		ancestor = ancestor.get_parent()
+	return null
 
 
 func _on_presentation_mode_changed(mode: InputManager.PresentationMode) -> void:
@@ -230,6 +256,7 @@ func _on_presentation_mode_changed(mode: InputManager.PresentationMode) -> void:
 	if mode == InputManager.PresentationMode.POINTER:
 		if is_instance_valid(_focus_target):
 			NavigationFocus.clear(_focus_target)
+		cursor.clear_hub_target()
 		return
 	if InputManager.get_active_mode() == InputManager.InputMode.CONTROLLER:
 		_refresh_pointer_hover.call_deferred()
@@ -238,7 +265,7 @@ func _on_presentation_mode_changed(mode: InputManager.PresentationMode) -> void:
 	if not had_valid_origin and _is_focusable(_focus_target):
 		InputManager.consume_controller_direction_for_focus_recovery()
 	if _is_focusable(_focus_target):
-		NavigationFocus.apply(_focus_target)
+		_apply_focus_presentation(_focus_target)
 
 
 func _refresh_pointer_hover() -> void:
@@ -445,4 +472,5 @@ func _apply_deferred_modal_focus(root_reference: WeakRef, control_reference: Wea
 func _clear_presentation() -> void:
 	if is_instance_valid(_focus_target):
 		NavigationFocus.clear(_focus_target)
+	cursor.clear_hub_target()
 	_focus_target = null
