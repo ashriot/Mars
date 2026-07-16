@@ -13,13 +13,20 @@ var _restoring_focus := false
 var _modal_focus_generation := 0
 var _published_hints: Array[Dictionary] = []
 var _published_hint_owner: WeakRef
+var _suppressed_hover: WeakRef
+var _suppressed_hover_behavior: Control.MouseBehaviorRecursive = Control.MOUSE_BEHAVIOR_INHERITED
 
 
 func _ready() -> void:
 	get_viewport().gui_focus_changed.connect(_on_focus_changed)
+	InputManager.input_mode_changed.connect(_on_input_mode_changed)
 	InputManager.presentation_mode_changed.connect(_on_presentation_mode_changed)
 	_on_presentation_mode_changed(InputManager.get_presentation_mode())
 	process_mode = Node.PROCESS_MODE_ALWAYS
+
+
+func _exit_tree() -> void:
+	_restore_pointer_hover()
 
 
 func register_screen(root: Control, default_focus: Control = null) -> void:
@@ -254,12 +261,12 @@ func _party_menu_for(control: Control) -> Control:
 func _on_presentation_mode_changed(mode: InputManager.PresentationMode) -> void:
 	pointer_input_blocker.visible = mode == InputManager.PresentationMode.FOCUS
 	if mode == InputManager.PresentationMode.POINTER:
+		_restore_pointer_hover()
 		if is_instance_valid(_focus_target):
 			NavigationFocus.clear(_focus_target)
 		cursor.clear_hub_target()
 		return
-	if InputManager.get_active_mode() == InputManager.InputMode.CONTROLLER:
-		_refresh_pointer_hover.call_deferred()
+	_suppress_pointer_hover()
 	var had_valid_origin := _is_focusable(_focus_target)
 	ensure_valid_focus()
 	if not had_valid_origin and _is_focusable(_focus_target):
@@ -268,14 +275,31 @@ func _on_presentation_mode_changed(mode: InputManager.PresentationMode) -> void:
 		_apply_focus_presentation(_focus_target)
 
 
-func _refresh_pointer_hover() -> void:
-	if InputManager.get_active_mode() != InputManager.InputMode.CONTROLLER \
-		or InputManager.get_presentation_mode() != InputManager.PresentationMode.FOCUS:
+func _on_input_mode_changed(_mode: InputManager.InputMode) -> void:
+	if InputManager.get_presentation_mode() != InputManager.PresentationMode.FOCUS:
 		return
-	var motion := InputEventMouseMotion.new()
-	motion.position = get_viewport().get_mouse_position()
-	motion.global_position = motion.position
-	get_viewport().push_input(motion, true)
+	if _is_focusable(_focus_target):
+		_apply_focus_presentation(_focus_target)
+	else:
+		cursor.clear_hub_target()
+
+
+func _suppress_pointer_hover() -> void:
+	if is_instance_valid(_weak_get(_suppressed_hover)):
+		return
+	var hovered := get_viewport().gui_get_hovered_control()
+	if not is_instance_valid(hovered):
+		return
+	_suppressed_hover = weakref(hovered)
+	_suppressed_hover_behavior = hovered.mouse_behavior_recursive
+	hovered.mouse_behavior_recursive = Control.MOUSE_BEHAVIOR_DISABLED
+
+
+func _restore_pointer_hover() -> void:
+	var hovered := _weak_get(_suppressed_hover) as Control
+	if is_instance_valid(hovered):
+		hovered.mouse_behavior_recursive = _suppressed_hover_behavior
+	_suppressed_hover = null
 
 
 func _first_focusable(root: Control) -> Control:

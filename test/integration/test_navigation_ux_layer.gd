@@ -15,6 +15,14 @@ class RecordingCursor extends NavigationCursor:
 		requested_modes.append(mode)
 
 
+class InputMotionRecorder extends Node:
+	var motion_count := 0
+
+	func _input(event: InputEvent) -> void:
+		if event is InputEventMouseMotion:
+			motion_count += 1
+
+
 func before_each() -> void:
 	saved_input_mode = InputManager._active_mode
 	saved_presentation_mode = InputManager._presentation_mode
@@ -141,6 +149,53 @@ func test_pointer_handoff_hides_only_hub_cursor_and_preserves_focus_origin() -> 
 	InputManager._input(_mouse_button_at(Vector2(500, 300), MOUSE_BUTTON_LEFT, false))
 
 
+func test_controller_to_keyboard_handoff_hides_hub_cursor_while_focus_stays_presented() -> void:
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	var setup := await _party_button_screen()
+	assert_true(setup.ux.cursor.is_tracking_hub_target())
+
+	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
+
+	assert_eq(InputManager.get_presentation_mode(), InputManager.PresentationMode.FOCUS)
+	assert_same(setup.ux.get_focus_target(), setup.button)
+	assert_false(setup.ux.cursor.is_tracking_hub_target())
+
+
+func test_keyboard_to_controller_handoff_shows_hub_cursor_while_focus_stays_presented() -> void:
+	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
+	var setup := await _party_button_screen()
+	assert_false(setup.ux.cursor.is_tracking_hub_target())
+
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+
+	assert_eq(InputManager.get_presentation_mode(), InputManager.PresentationMode.FOCUS)
+	assert_same(setup.ux.get_focus_target(), setup.button)
+	assert_true(setup.ux.cursor.is_tracking_hub_target())
+
+
+func test_controller_focus_does_not_push_synthetic_mouse_motion() -> void:
+	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
+	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)
+	var recorder := InputMotionRecorder.new()
+	add_child_autofree(recorder)
+	var ux := UXScene.instantiate() as NavigationUXLayer
+	add_child_autofree(ux)
+	var party := Control.new()
+	party.name = "PartyMenu"
+	var button := Button.new()
+	party.add_child(button)
+	add_child_autofree(party)
+	ux.register_screen(party, button)
+	recorder.motion_count = 0
+
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	InputManager._set_presentation_mode(InputManager.PresentationMode.FOCUS)
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	assert_eq(recorder.motion_count, 0)
+
+
 func test_mouse_motion_hides_focus_but_retains_navigation_origin() -> void:
 	var setup := await _three_button_screen()
 	var ux: NavigationUXLayer = setup.ux
@@ -261,6 +316,12 @@ func test_controller_handoff_clears_existing_pointer_hover_without_mouse_motion(
 	assert_eq(InputManager.get_active_mode(), InputManager.InputMode.CONTROLLER)
 	assert_true(setup.ux.pointer_input_blocker.visible)
 	assert_false(middle.is_hovered(), "controller focus clears stale pointer hover immediately")
+
+	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)
+	get_viewport().push_input(_mouse_motion_at(Vector2.ZERO), true)
+	get_viewport().push_input(_mouse_motion_at(middle_position, middle_position), true)
+	await get_tree().process_frame
+	assert_true(middle.is_hovered(), "pointer mode restores the prior control's mouse behavior")
 
 
 func test_keyboard_direction_from_controller_moves_immediately_and_reveals_mouse() -> void:
