@@ -101,6 +101,15 @@ func test_controller_mouse_handoff_consumes_press_and_matching_release() -> void
 	assert_eq(manager._consumed_mouse_button, MOUSE_BUTTON_NONE)
 
 
+func test_touch_press_leaves_controller_mode_and_selects_pointer_presentation() -> void:
+	manager._input(_unconnected_joy_button(JOY_BUTTON_A))
+	var touch := InputEventScreenTouch.new()
+	touch.pressed = true
+	manager._input(touch)
+	assert_eq(manager.get_active_mode(), manager.InputMode.KEYBOARD_MOUSE)
+	assert_eq(manager.get_presentation_mode(), manager.PresentationMode.POINTER)
+
+
 func test_consumed_mouse_transaction_survives_interleaved_controller_and_keyboard_input() -> void:
 	manager._input(_unconnected_joy_button(JOY_BUTTON_A))
 	manager._input(_mouse_button(MOUSE_BUTTON_LEFT, true))
@@ -287,13 +296,33 @@ func test_nintendo_rebinds_terminal_security_to_a_and_keeps_b_as_cancel() -> voi
 func test_required_semantic_actions_exist() -> void:
 	for action in [
 		&"nav_up", &"nav_down", &"nav_left", &"nav_right", &"confirm", &"cancel",
-		&"page_previous", &"page_next", &"section_previous", &"section_next",
+		&"hub_tab_previous", &"hub_tab_next", &"hub_role_previous", &"hub_role_next",
 		&"action_1", &"action_2", &"action_3", &"action_4", &"shift_left", &"shift_right",
 		&"terminal_security", &"terminal_scan", &"terminal_medical", &"terminal_finance", &"terminal_extract",
 		&"camera_pan_left", &"camera_pan_right", &"camera_pan_up", &"camera_pan_down",
 		&"zoom_in", &"zoom_out", &"recenter", &"refund_progression",
 	]:
 		assert_true(InputMap.has_action(action), str(action))
+
+
+func test_hub_shoulder_actions_are_controller_only() -> void:
+	var expected := {
+		&"hub_tab_previous": [JOY_AXIS_TRIGGER_LEFT, -1],
+		&"hub_tab_next": [JOY_AXIS_TRIGGER_RIGHT, -1],
+		&"hub_role_previous": [-1, JOY_BUTTON_LEFT_SHOULDER],
+		&"hub_role_next": [-1, JOY_BUTTON_RIGHT_SHOULDER],
+	}
+	for action: StringName in expected:
+		assert_true(InputMap.has_action(action), str(action))
+		assert_eq(InputMap.action_get_events(action).filter(func(event): return event is InputEventKey).size(), 0, "%s has no keyboard shortcut" % action)
+		if expected[action][0] >= 0:
+			assert_true(_has_joy_axis(action, expected[action][0], 1.0), str(action))
+		else:
+			assert_true(_has_joy_button(action, expected[action][1]), str(action))
+	assert_false(InputMap.has_action(&"page_previous"))
+	assert_false(InputMap.has_action(&"page_next"))
+	assert_false(InputMap.has_action(&"section_previous"))
+	assert_false(InputMap.has_action(&"section_next"))
 
 
 func test_combat_shift_actions_use_directional_keys_and_triggers() -> void:

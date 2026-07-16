@@ -94,6 +94,30 @@ func test_input_manager_family_signal_refreshes_glyph_texture() -> void:
 	assert_ne(glyph.texture_normal, old_texture)
 
 
+func test_controller_only_glyph_keeps_controller_texture_and_layout_in_keyboard_mode() -> void:
+	var glyph := DynamicGlyph.new()
+	glyph.controller_only = true
+	glyph.fade_duration = 0.0
+	add_child_autofree(glyph)
+	glyph.set_action(&"hub_tab_previous")
+	glyph.refresh(true, InputIconMap.ControllerType.PLAYSTATION)
+	assert_true(glyph.visible)
+	assert_eq(glyph.texture_normal.resource_path.get_file(), "playstation_trigger_l2.svg")
+	assert_eq(glyph.modulate.a, 1.0)
+	glyph.refresh(false, InputIconMap.ControllerType.PLAYSTATION)
+	assert_true(glyph.visible, "retains layout space")
+	assert_eq(glyph.texture_normal.resource_path.get_file(), "playstation_trigger_l2.svg")
+	assert_eq(glyph.modulate.a, 0.0)
+
+
+func test_controller_only_glyph_resolves_every_runtime_family() -> void:
+	for family: InputIconMap.ControllerType in InputIconMap.runtime_controller_types():
+		if family == InputIconMap.ControllerType.KEYBOARD_MOUSE:
+			continue
+		for action: StringName in [&"hub_tab_previous", &"hub_tab_next", &"hub_role_previous", &"hub_role_next"]:
+			assert_not_null(InputIconMap.get_glyph(family, action), "%s %s" % [family, action])
+
+
 func _pressed_joy_button() -> InputEventJoypadButton:
 	var event := InputEventJoypadButton.new()
 	event.device = SYNTHETIC_UNCONNECTED_JOY_DEVICE

@@ -43,6 +43,10 @@ func _input(event: InputEvent) -> void:
 		return
 	if not is_meaningful_event(event):
 		return
+	if event is InputEventScreenTouch:
+		_set_active_mode(InputMode.KEYBOARD_MOUSE)
+		_set_presentation_mode(PresentationMode.POINTER)
+		return
 	if event is InputEventJoypadButton or event is InputEventJoypadMotion:
 		_processing_controller_direction = _is_directional_navigation_event(event)
 		_set_active_mode(InputMode.CONTROLLER)
@@ -96,6 +100,8 @@ func _set_presentation_mode(mode: PresentationMode) -> void:
 
 
 func is_meaningful_event(event: InputEvent) -> bool:
+	if event is InputEventScreenTouch:
+		return event.pressed
 	if event is InputEventKey:
 		return event.pressed and not event.echo
 	if event is InputEventMouseButton:
