@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://bc5k1xyxevh03"]
+[gd_scene load_steps=12 format=3 uid="uid://bc5k1xyxevh03"]
 
 [ext_resource type="Script" uid="uid://buqjp13pekb4p" path="res://src/hub/equipment_panel.gd" id="1_8e66j"]
 [ext_resource type="Texture2D" uid="uid://bmfgtwon1vl3q" path="res://assets/graphics/icons/equipment/rifle.png" id="2_pnfj5"]
@@ -24,6 +24,18 @@ corner_radius_bottom_left = 12
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tune_focus"]
 bg_color = Color(0, 0, 0, 0)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_focus_outline"]
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 6
+border_width_top = 6
+border_width_right = 6
+border_width_bottom = 6
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
 [node name="EquipmentPanel" type="Panel"]
 clip_contents = true
 custom_minimum_size = Vector2(400, 96)
@@ -31,6 +43,17 @@ offset_right = 400.0
 offset_bottom = 96.0
 mouse_filter = 2
 script = ExtResource("1_8e66j")
+
+[node name="FocusOutline" type="Panel" parent="."]
+z_index = 10
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_focus_outline")
 
 [node name="Header" type="Panel" parent="."]
 layout_mode = 1

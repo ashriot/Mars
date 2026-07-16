@@ -267,6 +267,77 @@ func test_party_content_entry_back_and_stub_tabs_keep_focus_valid() -> void:
 	assert_eq(party.current_tab, PartyMenu.Tab.ROLES)
 
 
+func test_analog_tab_trigger_requires_release_before_another_tab_move() -> void:
+	var party := await _opened_party_with_three_heroes()
+	var press := _joy_motion(JOY_AXIS_TRIGGER_RIGHT, 1.0)
+	party._unhandled_input(press)
+	assert_eq(party.current_tab, PartyMenu.Tab.ITEMS)
+	party._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.92))
+	party._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.81))
+	assert_eq(party.current_tab, PartyMenu.Tab.ITEMS, "held trigger changes exactly one tab")
+	party._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.0))
+	party._unhandled_input(press)
+	assert_eq(party.current_tab, PartyMenu.Tab.OPTIONS, "release rearms the trigger")
+
+
+func test_analog_tab_trigger_rearms_when_released_under_nested_modal() -> void:
+	var navigation := preload("res://src/ui/navigation/navigation_ux_layer.tscn").instantiate() as NavigationUXLayer
+	add_child_autofree(navigation)
+	await get_tree().process_frame
+	var party := await _opened_party_with_three_heroes()
+	party._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 1.0))
+	assert_eq(party.current_tab, PartyMenu.Tab.ITEMS)
+	var nested := Control.new()
+	add_child_autofree(nested)
+	navigation.push_modal(nested, null, true, true)
+	party._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.0))
+	navigation.pop_modal(nested)
+	party._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 1.0))
+	assert_eq(party.current_tab, PartyMenu.Tab.OPTIONS, "release under a nested modal rearms the next pull")
+
+
+func test_hub_focus_and_depth_styles_never_change_content_colors() -> void:
+	var party := await _opened_party_with_three_heroes()
+	var hero := party.hero_list_container.get_child(0) as HeroPanel
+	var header_style: StyleBox = hero.get_node("Content/Header").get_theme_stylebox(&"panel")
+	var stats_modulate: Color = hero.get_node("Content/Stats/HP").modulate
+	assert_true(hero.has_node("FocusOutline"))
+	assert_eq(hero.get_meta("navigation_focus_surface"), NodePath("FocusOutline"))
+	NavigationFocus.apply(hero)
+	assert_same(hero.get_node("Content/Header").get_theme_stylebox(&"panel"), header_style)
+	assert_eq(hero.get_node("Content/Stats/HP").modulate, stats_modulate)
+	var focus_style := hero.get_node("FocusOutline").get_theme_stylebox(&"panel") as StyleBoxFlat
+	assert_eq(focus_style.bg_color.a, 0.0)
+	NavigationFocus.clear(hero)
+	party.enter_content()
+	assert_same(hero.get_node("Content/Header").get_theme_stylebox(&"panel"), header_style)
+	assert_eq(hero.get_node("Content/Stats/HP").modulate, stats_modulate)
+
+
+func test_items_mode_pulses_change_only_dedicated_outer_edges() -> void:
+	var party := await _opened_party_with_three_heroes()
+	party.change_tab(1)
+	assert_true(party.enter_content())
+	var hero := party.hero_list_container.get_child(0) as HeroPanel
+	var equipment := hero.weapon_panel
+	var header_modulate := equipment.header.modulate
+	var gauge := equipment.get_node("Border/Content/XP/Gauge") as Control
+	var gauge_modulate := gauge.modulate
+	equipment.set_visual_state("equip")
+	equipment._highlight_tween.custom_step(0.25)
+	assert_eq(equipment.header.modulate, header_modulate)
+	assert_eq(gauge.modulate, gauge_modulate)
+	assert_ne(equipment.get_node("FocusOutline").modulate, Color.WHITE)
+
+	var slot := equipment.mods_container.get_child(0) as ModSlot
+	var slot_content_modulate := slot.self_modulate
+	slot.pulse(Color.CYAN)
+	slot._pulse_tween.custom_step(0.25)
+	assert_eq(slot.self_modulate, slot_content_modulate)
+	assert_true(slot.has_node("SelectionOutline"))
+	assert_ne(slot.get_node("SelectionOutline").modulate, Color.WHITE)
+
+
 func test_pointer_tab_and_hero_selection_update_controller_context() -> void:
 	var party := await _opened_party_with_three_heroes()
 	party.tab_buttons[PartyMenu.Tab.ITEMS].pressed.emit()
@@ -319,15 +390,16 @@ func test_items_nested_back_restores_each_originating_equipment_control() -> voi
 
 	weapon.equip_button.pressed.emit()
 	assert_eq(party.inventory_view.current_mode, InventoryPanel.Mode.EQUIP)
-	hero_panel.armor_panel.tune_btn.grab_focus()
+	hero_panel.armor_panel.equip_button.grab_focus()
 	party._unhandled_input(_action_event(&"cancel"))
 	assert_same(get_viewport().gui_get_focus_owner(), weapon.equip_button)
 
-	weapon.tune_btn.pressed.emit()
+	weapon.equip_button.grab_focus()
+	party._unhandled_input(_action_event(&"hub_upgrade"))
 	assert_eq(party.inventory_view.current_mode, InventoryPanel.Mode.TUNE)
 	hero_panel.armor_panel.equip_button.grab_focus()
 	party._unhandled_input(_action_event(&"cancel"))
-	assert_same(get_viewport().gui_get_focus_owner(), weapon.tune_btn)
+	assert_same(get_viewport().gui_get_focus_owner(), weapon.equip_button)
 
 	hero_panel.data.weapon.tier = 1
 	weapon.setup(hero_panel.data.weapon)
@@ -344,10 +416,35 @@ func test_items_restore_stable_equipment_and_inventory_focus() -> void:
 	party.change_tab(1)
 	assert_true(party.enter_content())
 	var hero_panel := party.hero_list_container.get_child(0) as HeroPanel
-	hero_panel.armor_panel.tune_btn.grab_focus()
+	hero_panel.armor_panel.equip_button.grab_focus()
 	party.return_to_hero_rail()
 	assert_true(party.enter_content())
-	assert_same(get_viewport().gui_get_focus_owner(), hero_panel.armor_panel.tune_btn)
+	assert_same(get_viewport().gui_get_focus_owner(), hero_panel.armor_panel.equip_button)
+
+
+func test_items_use_equipment_rows_and_controller_upgrade_hotkey() -> void:
+	var replacement := (load("res://data/equipment/weapons/rifle.tres") as Equipment).duplicate(true) as Equipment
+	SaveSystem.inventory_equipment.assign([replacement])
+	var party := await _opened_party_with_three_heroes()
+	party.change_tab(1)
+	assert_true(party.enter_content())
+	var hero := party.hero_list_container.get_child(0) as HeroPanel
+	var weapon := hero.weapon_panel
+	var armor := hero.armor_panel
+	assert_same(get_viewport().gui_get_focus_owner(), weapon.equip_button)
+	assert_eq(weapon.tune_btn.focus_mode, Control.FOCUS_NONE)
+	assert_eq(weapon.equip_button.focus_neighbor_bottom, weapon.equip_button.get_path_to(armor.equip_button))
+	assert_eq(armor.equip_button.focus_neighbor_top, armor.equip_button.get_path_to(weapon.equip_button))
+
+	party._unhandled_input(_action_event(&"hub_upgrade"))
+	assert_eq(party.inventory_view.current_mode, InventoryPanel.Mode.TUNE)
+	party._unhandled_input(_action_event(&"cancel"))
+	assert_same(get_viewport().gui_get_focus_owner(), weapon.equip_button)
+
+	weapon.equip_button.pressed.emit()
+	await get_tree().process_frame
+	assert_eq(party.inventory_view.current_mode, InventoryPanel.Mode.EQUIP)
+	assert_same(get_viewport().gui_get_focus_owner(), party.inventory_view.default_focus())
 
 
 func test_inventory_restores_item_focus_by_resource_identity_after_rebuild() -> void:
@@ -876,7 +973,7 @@ func test_inventory_and_equipment_controls_use_shared_focus_surfaces() -> void:
 	var item := preload("res://src/hub/item_button.tscn").instantiate() as ItemButton
 	add_child(item)
 	assert_eq(item.get_focus_control().focus_mode, Control.FOCUS_ALL)
-	assert_eq(item.get_focus_control().get_meta("navigation_focus_surface"), NodePath("Header"))
+	assert_eq(item.get_focus_control().get_meta("navigation_focus_surface"), NodePath("FocusOutline"))
 	var slot := preload("res://src/hub/mod_slot.tscn").instantiate() as ModSlot
 	add_child(slot)
 	slot.setup(null, true)
@@ -898,7 +995,6 @@ func test_nonstandard_hub_controls_expose_valid_focus_surfaces() -> void:
 		item.get_focus_control(),
 		slot.get_focus_control(),
 		equipment.equip_button,
-		equipment.tune_btn,
 	]
 	for control in controls:
 		assert_true(control.has_meta("navigation_focus_surface"))
@@ -908,11 +1004,20 @@ func test_nonstandard_hub_controls_expose_valid_focus_surfaces() -> void:
 		assert_not_null(surface)
 		if not surface:
 			continue
-		NavigationFocus.apply(control)
 		var style_name := &"focus" if surface is Button else &"panel"
+		var authored_style := surface.get_theme_stylebox(style_name) as StyleBoxFlat
+		var authored_bg := authored_style.bg_color
+		var authored_border_alpha := authored_style.border_color.a
+		NavigationFocus.apply(control)
 		var style := surface.get_theme_stylebox(style_name) as StyleBoxFlat
-		assert_almost_eq(style.bg_color.a, NavigationFocus.HUB_PULSE_LOW_ALPHA, 0.001)
+		if bool(control.get_meta("navigation_focus_pulse", false)):
+			assert_eq(style.bg_color, authored_bg)
+			assert_almost_eq(style.border_color.get_luminance(), authored_style.border_color.get_luminance() * NavigationFocus.HUB_PULSE_LOW_ENERGY, 0.001)
+			assert_eq(style.border_color.a, authored_border_alpha)
+		else:
+			assert_almost_eq(style.bg_color.a, NavigationFocus.FOCUS_STYLE.bg_color.a, 0.001)
 		NavigationFocus.clear(control)
+	assert_eq(equipment.tune_btn.focus_mode, Control.FOCUS_NONE)
 
 
 func test_roles_cancel_returns_outward_without_moving_node_focus() -> void:
@@ -1183,6 +1288,13 @@ func _action_event(action: StringName) -> InputEventAction:
 	var event := InputEventAction.new()
 	event.action = action
 	event.pressed = true
+	return event
+
+
+func _joy_motion(axis: JoyAxis, value: float) -> InputEventJoypadMotion:
+	var event := InputEventJoypadMotion.new()
+	event.axis = axis
+	event.axis_value = value
 	return event
 
 

@@ -7,6 +7,7 @@ signal clicked
 @onready var tier: Label = $Tier
 @onready var plus: Label = $Plus
 @onready var button: BaseButton = $Button # Assuming you have a button overlay
+@onready var selection_outline: Panel = $SelectionOutline
 
 var is_active: bool
 var _pulse_tween: Tween
@@ -46,18 +47,18 @@ func setup(mod: EquipmentMod, enable: bool):
 func pulse(color: Color):
 	if _pulse_tween and _pulse_tween.is_running():
 		_pulse_tween.kill()
-	self.self_modulate = Color.WHITE
+	selection_outline.modulate = Color(color.r, color.g, color.b, 0.35)
 
 	_pulse_tween = create_tween().set_loops()
 	_pulse_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
-	_pulse_tween.tween_property(self, "self_modulate", color, 0.5)
-	_pulse_tween.tween_property(self, "self_modulate", Color.WHITE, 0.5)
+	_pulse_tween.tween_property(selection_outline, "modulate:a", 1.0, 0.5)
+	_pulse_tween.tween_property(selection_outline, "modulate:a", 0.35, 0.5)
 
 func stop_pulse():
 	if _pulse_tween:
 		_pulse_tween.kill()
-	self.self_modulate = Color.WHITE
+	selection_outline.modulate = Color(1, 1, 1, 0)
 
 func _on_button_pressed() -> void:
 	clicked.emit()

@@ -18,9 +18,9 @@ var disabled: bool:
 
 func _ready() -> void:
 	$Button.focus_mode = Control.FOCUS_ALL
-	$Button.set_meta("navigation_focus_surface", NodePath("Header"))
+	$Button.set_meta("navigation_focus_surface", NodePath("FocusOutline"))
 	$Button.set_meta("navigation_focus_pulse", true)
-	HubChrome.capture($Button/Header)
+	HubChrome.capture($Button/FocusOutline)
 
 
 func apply_display_profile(profile: int) -> void:
@@ -55,7 +55,7 @@ func get_focus_key() -> String:
 
 
 func set_chrome_active(active: bool) -> void:
-	HubChrome.set_active($Button/Header, active)
+	HubChrome.set_active($Button/FocusOutline, active)
 
 
 func update_quantity(amount: int):

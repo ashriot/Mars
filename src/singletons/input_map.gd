@@ -40,6 +40,7 @@ const GLYPH_FILES := {
 		&"shift_left": "xbox_lt.svg", &"shift_right": "xbox_rt.svg",
 		&"hub_tab_previous": "xbox_lt.svg", &"hub_tab_next": "xbox_rt.svg",
 		&"hub_role_previous": "xbox_lb.svg", &"hub_role_next": "xbox_rb.svg",
+		&"hub_upgrade": "xbox_button_y.svg",
 	},
 	ControllerType.PLAYSTATION: {
 		&"confirm": "playstation_button_cross.svg", &"cancel": "playstation_button_circle.svg",
@@ -51,6 +52,7 @@ const GLYPH_FILES := {
 		&"shift_left": "playstation_trigger_l2.svg", &"shift_right": "playstation_trigger_r2.svg",
 		&"hub_tab_previous": "playstation_trigger_l2.svg", &"hub_tab_next": "playstation_trigger_r2.svg",
 		&"hub_role_previous": "playstation_trigger_l1.svg", &"hub_role_next": "playstation_trigger_r1.svg",
+		&"hub_upgrade": "playstation_button_triangle.svg",
 	},
 	ControllerType.NINTENDO_SWITCH: {
 		&"confirm": "switch_button_a.svg", &"cancel": "switch_button_b.svg",
@@ -62,6 +64,7 @@ const GLYPH_FILES := {
 		&"shift_left": "switch_button_zl.svg", &"shift_right": "switch_button_zr.svg",
 		&"hub_tab_previous": "switch_button_zl.svg", &"hub_tab_next": "switch_button_zr.svg",
 		&"hub_role_previous": "switch_button_l.svg", &"hub_role_next": "switch_button_r.svg",
+		&"hub_upgrade": "switch_button_x.svg",
 	},
 	ControllerType.NINTENDO_SWITCH_2: {
 		&"confirm": "switch_button_a.svg", &"cancel": "switch_button_b.svg",
@@ -73,6 +76,7 @@ const GLYPH_FILES := {
 		&"shift_left": "switch_button_zl.svg", &"shift_right": "switch_button_zr.svg",
 		&"hub_tab_previous": "switch_button_zl.svg", &"hub_tab_next": "switch_button_zr.svg",
 		&"hub_role_previous": "switch_button_l.svg", &"hub_role_next": "switch_button_r.svg",
+		&"hub_upgrade": "switch_button_x.svg",
 	},
 	ControllerType.STEAM_CONTROLLER: {
 		&"confirm": "steam_button_a.svg", &"cancel": "steam_button_b.svg",
@@ -84,6 +88,7 @@ const GLYPH_FILES := {
 		&"shift_left": "controller_button_l2.svg", &"shift_right": "controller_button_r2.svg",
 		&"hub_tab_previous": "controller_button_l2.svg", &"hub_tab_next": "controller_button_r2.svg",
 		&"hub_role_previous": "controller_button_l1.svg", &"hub_role_next": "controller_button_r1.svg",
+		&"hub_upgrade": "steam_button_y.svg",
 	},
 	ControllerType.STEAM_DECK: {
 		&"confirm": "steamdeck_button_a.svg", &"cancel": "steamdeck_button_b.svg",
@@ -95,6 +100,7 @@ const GLYPH_FILES := {
 		&"shift_left": "steamdeck_button_l2.svg", &"shift_right": "steamdeck_button_r2.svg",
 		&"hub_tab_previous": "steamdeck_button_l2.svg", &"hub_tab_next": "steamdeck_button_r2.svg",
 		&"hub_role_previous": "steamdeck_button_l1.svg", &"hub_role_next": "steamdeck_button_r1.svg",
+		&"hub_upgrade": "steamdeck_button_y.svg",
 	},
 }
 

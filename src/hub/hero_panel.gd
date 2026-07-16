@@ -33,10 +33,10 @@ var _is_expanded := false
 
 func _ready():
 	DisplayProfile.bind(apply_display_profile)
-	set_meta("navigation_focus_surface", NodePath("Content/Header"))
+	set_meta("navigation_focus_surface", NodePath("FocusOutline"))
 	set_meta("navigation_focus_pulse", true)
 	custom_minimum_size.y = collapsed_y
-	HubChrome.capture($Content/Header)
+	HubChrome.capture($FocusOutline)
 	# 1. WEAPON SIGNALS
 	weapon_panel.equip_requested.connect(func(item):
 		equip_requested.emit(item, Equipment.Slot.WEAPON)
@@ -74,6 +74,14 @@ func setup(hero_data: HeroData):
 	_refresh_stats()
 	weapon_panel.setup(data.weapon)
 	armor_panel.setup(data.armor)
+	_refresh_items_focus_neighbors()
+
+
+func _refresh_items_focus_neighbors() -> void:
+	weapon_panel.equip_button.focus_neighbor_top = weapon_panel.equip_button.get_path_to(armor_panel.equip_button)
+	weapon_panel.equip_button.focus_neighbor_bottom = weapon_panel.equip_button.get_path_to(armor_panel.equip_button)
+	armor_panel.equip_button.focus_neighbor_top = armor_panel.equip_button.get_path_to(weapon_panel.equip_button)
+	armor_panel.equip_button.focus_neighbor_bottom = armor_panel.equip_button.get_path_to(weapon_panel.equip_button)
 
 func _refresh_stats():
 	data.calculate_stats()
@@ -105,13 +113,13 @@ func _gui_input(event: InputEvent):
 
 
 func set_chrome_active(active: bool) -> void:
-	HubChrome.set_active($Content/Header, active)
+	HubChrome.set_active($FocusOutline, active)
 	weapon_panel.set_chrome_active(active)
 	armor_panel.set_chrome_active(active)
 
 
 func items_default_focus() -> Control:
-	for control: Control in [weapon_panel.equip_button, armor_panel.equip_button, weapon_panel.tune_btn, armor_panel.tune_btn]:
+	for control: Control in [weapon_panel.equip_button, armor_panel.equip_button]:
 		if control.is_visible_in_tree() and not (control is BaseButton and control.disabled):
 			return control
 	return null

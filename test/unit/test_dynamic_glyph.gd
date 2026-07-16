@@ -114,7 +114,7 @@ func test_controller_only_glyph_resolves_every_runtime_family() -> void:
 	for family: InputIconMap.ControllerType in InputIconMap.runtime_controller_types():
 		if family == InputIconMap.ControllerType.KEYBOARD_MOUSE:
 			continue
-		for action: StringName in [&"hub_tab_previous", &"hub_tab_next", &"hub_role_previous", &"hub_role_next"]:
+		for action: StringName in [&"hub_tab_previous", &"hub_tab_next", &"hub_role_previous", &"hub_role_next", &"hub_upgrade"]:
 			assert_not_null(InputIconMap.get_glyph(family, action), "%s %s" % [family, action])
 
 

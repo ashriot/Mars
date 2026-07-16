@@ -25,12 +25,10 @@ var _highlight_tween: Tween
 
 
 func _ready() -> void:
-	equip_button.set_meta("navigation_focus_surface", NodePath("../Header"))
+	equip_button.set_meta("navigation_focus_surface", NodePath("../FocusOutline"))
 	equip_button.set_meta("navigation_focus_pulse", true)
-	tune_btn.set_meta("navigation_focus_surface", NodePath("../TuneFocusSurface"))
-	tune_btn.set_meta("navigation_focus_pulse", true)
-	HubChrome.capture(header)
-	HubChrome.capture($Border/Content/XP/TuneFocusSurface)
+	tune_btn.focus_mode = Control.FOCUS_NONE
+	HubChrome.capture($FocusOutline)
 	DisplayProfile.bind(apply_display_profile)
 
 
@@ -62,8 +60,7 @@ func get_expanded_minimum_height() -> float:
 
 
 func set_chrome_active(active: bool) -> void:
-	HubChrome.set_active(header, active)
-	HubChrome.set_active($Border/Content/XP/TuneFocusSurface, active)
+	HubChrome.set_active($FocusOutline, active)
 	for slot in mods_container.get_children():
 		if slot is ModSlot and (slot as ModSlot).is_active:
 			(slot as ModSlot).set_chrome_active(active)
@@ -80,7 +77,7 @@ func setup(item: Equipment):
 	equip_button.disabled = false
 	equip_button.focus_mode = Control.FOCUS_ALL
 	tune_btn.disabled = false
-	tune_btn.focus_mode = Control.FOCUS_ALL
+	tune_btn.focus_mode = Control.FOCUS_NONE
 	if equipment.stats_changed.is_connected(_refresh_details):
 		equipment.stats_changed.disconnect(_refresh_details)
 
@@ -190,11 +187,11 @@ func _on_mod_slot_clicked(slot_index: int):
 func set_visual_state(mode: String):
 	if _highlight_tween: _highlight_tween.kill()
 	header.modulate = Color.WHITE
+	$FocusOutline.modulate = Color.WHITE
 
 	# 3. Handle Tune Button State
 	# We forcibly set the button state to match the mode
 	tune_btn.set_pressed_no_signal(mode == "tune")
-	tune_btn.modulate = Color.WHITE
 
 	var target_color = Color.WHITE
 	var do_pulse = false
@@ -205,7 +202,6 @@ func set_visual_state(mode: String):
 			do_pulse = true
 		"tune":
 			target_color = Color.GREEN
-			tune_btn.modulate = target_color
 			do_pulse = true
 		"mod":
 			target_color = Color.CYAN
@@ -216,8 +212,8 @@ func set_visual_state(mode: String):
 	if do_pulse:
 		_highlight_tween = create_tween().set_loops()
 		_highlight_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		_highlight_tween.tween_property(header, "modulate", target_color, 0.5)
-		_highlight_tween.tween_property(header, "modulate", Color.WHITE, 0.5)
+		_highlight_tween.tween_property($FocusOutline, "modulate", target_color, 0.5)
+		_highlight_tween.tween_property($FocusOutline, "modulate", Color.WHITE, 0.5)
 
 	if mode != "mod":
 		var ui_slots = mods_container.get_children()
@@ -235,6 +231,13 @@ func _on_equip_btn_pressed() -> void:
 func _on_tune_btn_pressed() -> void:
 	if equipment:
 		tune_requested.emit(equipment)
+
+
+func activate_upgrade_hotkey() -> bool:
+	if equipment == null or tune_btn.disabled:
+		return false
+	_on_tune_btn_pressed()
+	return true
 
 
 func _clear_equipment() -> void:

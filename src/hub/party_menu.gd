@@ -26,6 +26,10 @@ var current_tab: Tab = Tab.ROLES
 var current_depth: Depth = Depth.HERO_RAIL
 var _content_focus_memory: Dictionary = {}
 var _items_navigation_origin: Dictionary = {}
+var _held_tab_triggers := {
+	JOY_AXIS_TRIGGER_LEFT: false,
+	JOY_AXIS_TRIGGER_RIGHT: false,
+}
 var progression_service: ProgressionService = ProgressionSystem.service
 var progression_catalog: ProgressionCatalog = ProgressionSystem.catalog
 var save_progression: Callable = SaveSystem.save_current_slot
@@ -79,6 +83,7 @@ func open():
 	if party_roster.is_empty(): return
 
 	current_depth = Depth.HERO_RAIL
+	_reset_tab_triggers()
 	_refresh_hero_list()
 	_select_hero(0)
 	show()
@@ -94,8 +99,16 @@ func _on_back_pressed() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if not visible:
+		return
 	var navigation := _navigation_ux_layer()
-	if not visible or (navigation and not navigation.is_top_modal(self)):
+	if event is InputEventJoypadMotion and event.axis in _held_tab_triggers and event.axis_value <= 0.25:
+		_held_tab_triggers[event.axis] = false
+		return
+	if navigation and not navigation.is_top_modal(self):
+		return
+	if event is InputEventJoypadMotion and event.axis in _held_tab_triggers:
+		_handle_tab_trigger_motion(event)
 		return
 	if event.is_action_pressed(&"hub_tab_previous"):
 		get_viewport().set_input_as_handled()
@@ -104,6 +117,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"hub_tab_next"):
 		get_viewport().set_input_as_handled()
 		change_tab(1)
+		return
+	if event.is_action_pressed(&"hub_upgrade") and _activate_items_upgrade_hotkey():
+		get_viewport().set_input_as_handled()
 		return
 	if current_depth == Depth.CONTENT and event.is_action_pressed(&"nav_left"):
 		get_viewport().set_input_as_handled()
@@ -205,6 +221,8 @@ func _on_inventory_mode_changed(mode, item, slot):
 			active_panel.set_active_mode(active_panel.weapon_panel, "mod")
 		else:
 			active_panel.set_active_mode(active_panel.armor_panel, "mod")
+	_publish_hints()
+	call_deferred(&"_focus_inventory_mode_default")
 
 func _on_hero_panel_selected(selected_panel: HeroPanel):
 	var index := selected_panel.get_index()
@@ -263,7 +281,7 @@ func _on_hero_tune_requested(item, hero_index):
 	_handle_auto_select_hero(hero_index)
 	var panel := _get_panel_by_index(current_hero_idx)
 	if panel:
-		_remember_items_origin(panel.weapon_panel.tune_btn if item == panel.data.weapon else panel.armor_panel.tune_btn)
+		_remember_items_origin(panel.weapon_panel.equip_button if item == panel.data.weapon else panel.armor_panel.equip_button)
 	inventory_view.request_tune_mode(item)
 
 func _on_hero_mod_requested(item, slot, hero_index):
@@ -352,6 +370,7 @@ func _on_gui_focus_changed(control: Control) -> void:
 	if current_depth == Depth.CONTENT:
 		if current_tab == Tab.ITEMS:
 			_store_items_focus()
+			_publish_hints()
 			return
 		_remember_content_focus(control)
 
@@ -494,6 +513,7 @@ func _update_depth_presentation() -> void:
 	var content_active := current_depth == Depth.CONTENT
 	skill_view.set_chrome_active(content_active and current_tab == Tab.ROLES)
 	inventory_view.set_chrome_active(content_active and current_tab == Tab.ITEMS)
+	_publish_hints()
 
 func _get_panel_by_index(index: int) -> HeroPanel:
 	if index >= 0 and index < hero_list_container.get_child_count():
@@ -533,7 +553,53 @@ func _close() -> void:
 		return
 	if navigation:
 		navigation.pop_modal(self)
+	_reset_tab_triggers()
 	hide()
+
+
+func _handle_tab_trigger_motion(event: InputEventJoypadMotion) -> void:
+	if event.axis_value <= 0.25:
+		_held_tab_triggers[event.axis] = false
+		return
+	if event.axis_value < 0.75 or bool(_held_tab_triggers[event.axis]):
+		return
+	_held_tab_triggers[event.axis] = true
+	get_viewport().set_input_as_handled()
+	change_tab(-1 if event.axis == JOY_AXIS_TRIGGER_LEFT else 1)
+
+
+func _reset_tab_triggers() -> void:
+	_held_tab_triggers[JOY_AXIS_TRIGGER_LEFT] = false
+	_held_tab_triggers[JOY_AXIS_TRIGGER_RIGHT] = false
+
+
+func _activate_items_upgrade_hotkey() -> bool:
+	if current_depth != Depth.CONTENT or current_tab != Tab.ITEMS or inventory_view.current_mode != InventoryPanel.Mode.VIEW:
+		return false
+	var owner := get_viewport().gui_get_focus_owner()
+	var panel := _get_panel_by_index(current_hero_idx)
+	if panel == null or owner == null:
+		return false
+	var equipment_panel: EquipmentPanel
+	if panel.weapon_panel == owner or panel.weapon_panel.is_ancestor_of(owner):
+		equipment_panel = panel.weapon_panel
+	elif panel.armor_panel == owner or panel.armor_panel.is_ancestor_of(owner):
+		equipment_panel = panel.armor_panel
+	if equipment_panel == null:
+		return false
+	_remember_items_origin(owner)
+	return equipment_panel.activate_upgrade_hotkey()
+
+
+func _focus_inventory_mode_default() -> void:
+	if not visible or current_depth != Depth.CONTENT or current_tab != Tab.ITEMS or inventory_view.current_mode == InventoryPanel.Mode.VIEW:
+		return
+	var navigation := _navigation_ux_layer()
+	if navigation and not navigation.is_top_modal(self):
+		return
+	var target := inventory_view.default_focus()
+	if target:
+		target.grab_focus()
 
 
 func _navigation_ux_layer() -> NavigationUXLayer:
@@ -548,10 +614,22 @@ func _owns_roles_content_input() -> bool:
 func _publish_hints() -> void:
 	var navigation := _navigation_ux_layer()
 	if navigation and navigation.is_top_modal(self):
-		navigation.publish_hints([
+		var hints: Array[Dictionary] = [
 			{action = &"confirm", label = "Select", enabled = true},
 			{action = &"cancel", label = "Back", enabled = true},
-		])
+		]
+		if current_depth == Depth.CONTENT and current_tab == Tab.ITEMS:
+			hints.insert(1, {action = &"hub_upgrade", label = "Upgrade", enabled = _items_upgrade_available()})
+		navigation.publish_hints(hints)
+
+
+func _items_upgrade_available() -> bool:
+	var owner := get_viewport().gui_get_focus_owner()
+	var panel := _get_panel_by_index(current_hero_idx)
+	return inventory_view.current_mode == InventoryPanel.Mode.VIEW and panel != null and owner != null and (
+		panel.weapon_panel == owner or panel.weapon_panel.is_ancestor_of(owner)
+		or panel.armor_panel == owner or panel.armor_panel.is_ancestor_of(owner)
+	)
 
 
 func _grab_focus_if_valid(control: Control) -> void:

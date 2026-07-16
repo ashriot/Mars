@@ -43,7 +43,7 @@ func _ready():
 	clip_contents = true
 	custom_minimum_size.x = collapsed_x
 	is_currently_expanded = false
-	HubChrome.capture($Header)
+	HubChrome.capture($DepthOutline)
 
 func setup(role_def: RoleDefinition, tree: RoleTreeDefinition, hero: HeroData):
 	def = role_def
@@ -102,7 +102,7 @@ func set_role_shortcuts_enabled(enabled: bool) -> void:
 
 func set_chrome_active(active: bool) -> void:
 	_chrome_active = active
-	HubChrome.set_active($Header, active)
+	HubChrome.set_active($DepthOutline, active)
 	for child in generated_nodes.values():
 		if child is SkillTreeNode or child is RoleAnchorNode:
 			child.set_chrome_active(active)

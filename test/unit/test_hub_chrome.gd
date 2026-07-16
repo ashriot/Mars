@@ -13,8 +13,12 @@ func test_inactive_chrome_darkens_only_edges_and_restores_authored_style() -> vo
 	HubChrome.set_active(surface, false)
 	var inactive := surface.get_theme_stylebox(&"panel") as StyleBoxFlat
 	assert_eq(inactive.bg_color, authored.bg_color)
-	assert_lt(inactive.border_color.get_luminance(), authored.border_color.get_luminance())
-	assert_lt(inactive.shadow_color.get_luminance(), authored.shadow_color.get_luminance())
+	assert_almost_eq(inactive.border_color.r, 0.48, 0.001)
+	assert_almost_eq(inactive.border_color.g, 0.60, 0.001)
+	assert_almost_eq(inactive.border_color.b, 0.12, 0.001)
+	assert_almost_eq(inactive.shadow_color.r, 0.48, 0.001)
+	assert_almost_eq(inactive.shadow_color.g, 0.60, 0.001)
+	assert_almost_eq(inactive.shadow_color.b, 0.12, 0.001)
 	HubChrome.set_active(surface, true)
 	var restored := surface.get_theme_stylebox(&"panel") as StyleBoxFlat
 	assert_eq(restored.bg_color, authored.bg_color)

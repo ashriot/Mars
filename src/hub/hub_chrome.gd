@@ -1,6 +1,7 @@
 extends RefCounted
 class_name HubChrome
 
+const INACTIVE_EDGE_ENERGY := 0.60
 const BASE_STYLE_META := &"hub_chrome_base_style"
 const STYLE_NAME_META := &"hub_chrome_style_name"
 const ACTIVE_META := &"hub_chrome_active"
@@ -32,7 +33,7 @@ static func get_base_style(surface: Control) -> StyleBoxFlat:
 	return base.duplicate() as StyleBoxFlat if base else null
 
 
-static func set_active(surface: Control, active: bool, energy: float = 0.22) -> void:
+static func set_active(surface: Control, active: bool, energy: float = INACTIVE_EDGE_ENERGY) -> void:
 	if not is_instance_valid(surface):
 		return
 	if not surface.has_meta(BASE_STYLE_META):
