@@ -13,7 +13,7 @@ game_scene = ExtResource("3_fyndt")
 title_scene = ExtResource("4_kmhfv")
 
 [node name="WorldLayer" type="Node2D" parent="."]
-position = Vector2(960, 540)
+position = Vector2(0, 0)
 
 [node name="MenuLayer" type="CanvasLayer" parent="."]
 

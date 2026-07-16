@@ -14,24 +14,22 @@ const SaveCodec = preload("res://src/map/dungeon_save_codec.gd")
 
 var current_instance: Node = null
 
-func _ready():
+func _ready() -> void:
+	DisplayProfile.bind(_on_display_profile_changed)
 	load_title_screen()
-	get_tree().root.size_changed.connect(_on_viewport_resized)
-	_on_viewport_resized()
 
-func _on_viewport_resized():
-	var base_size = Vector2(1920, 1080)
-	var window_size = get_viewport().get_visible_rect().size
 
-	# Scale uniformly based on smallest dimension
-	var scale_x = window_size.x / base_size.x
-	var scale_y = window_size.y / base_size.y
-	var scale_factor = min(scale_x, scale_y)  # Use min to prevent stretching
+func _on_display_profile_changed(_profile: int, _window_size: Vector2i, viewport_size: Vector2) -> void:
+	apply_display_layout(viewport_size)
 
-	world_layer.scale = Vector2(scale_factor, scale_factor)
 
-	# Center the scaled content
-	world_layer.position = (window_size - base_size * scale_factor) / 2
+func apply_display_layout(viewport_size: Vector2) -> void:
+	if world_layer == null:
+		return
+	var safe_rect := DisplayProfileService.safe_rect_for(viewport_size)
+	var scale_factor := safe_rect.size.x / DisplayProfileService.REFERENCE_SIZE.x
+	world_layer.scale = Vector2.ONE * scale_factor
+	world_layer.position = safe_rect.position
 
 func load_title_screen():
 	await _fade_out()
