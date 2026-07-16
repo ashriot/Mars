@@ -14,6 +14,7 @@ Use this page as the index for project knowledge that is more detailed or more l
 
 - [Coordinate spaces and positioning](coordinate-spaces.md) — Authoritative world, viewport, UI, cursor, reticle, and camera conversion rules.
 - [Refactor notes](refactor.md) — Research and candidates for the later refactor phase.
+- [Steam Deck responsive UI](superpowers/specs/2026-07-15-steam-deck-responsive-ui-design.md) — Project-wide native `1280x800` handheld and `1920x1080` desktop resolution design.
 - [CTB recovery and deterministic timing](superpowers/specs/2026-07-15-ctb-recovery-and-horizontal-queue-design.md) — Authoritative deterministic and normalized CT and action-recovery design.
 - [CTB scrollable rail animation](superpowers/specs/2026-07-15-ctb-scrollable-rail-animation-design.md) — Superseding current rail presentation and animation design.
 - [Combat target presentation](superpowers/specs/2026-07-14-combat-target-presentation-design.md) — Current hero/enemy target availability, selection, CTB preview, and input behavior.
