@@ -26,6 +26,10 @@ var _display_profile: int = DisplayProfileService.Profile.DESKTOP
 
 func _ready() -> void:
 	DisplayProfile.bind(apply_display_profile)
+	for index in range(tabs_container.get_child_count()):
+		var button := tabs_container.get_child(index) as Button
+		button.pressed.connect(_on_tab_pressed.bind(index))
+		button.set_meta("navigation_focus_pulse", true)
 
 
 func apply_display_profile(profile: int, _window_size: Vector2i, _logical_size: Vector2) -> void:
@@ -85,7 +89,9 @@ func _refresh_role_list():
 		else:
 			panel.set_expanded(false, current_page, false)
 		rendered_index += 1
+	_refresh_role_shortcuts()
 	update_tabs(color)
+	_update_tab_visuals()
 
 func refresh_progression_state(hero: HeroData) -> void:
 	for child in role_list_container.get_children():
@@ -119,7 +125,9 @@ func _on_role_panel_selected(selected_panel: RolePanel):
 			p.set_expanded(true, current_page)
 		else:
 			p.set_expanded(false, current_page)
+	_refresh_role_shortcuts()
 	update_tabs(selected_panel.def.color)
+	_update_tab_visuals()
 	call_deferred(&"ensure_node_visible", selected_panel)
 
 func update_tabs(color: Color, animate: bool = true):
@@ -134,8 +142,12 @@ func update_tabs(color: Color, animate: bool = true):
 	tab_tween.tween_property(tabs_container, "modulate", color, 0.3)
 
 func _on_tab_pressed(page_index: int):
-	if current_page == page_index: return
+	var button := tabs_container.get_child(page_index) as Button
+	if button == null or not button.visible or button.disabled or current_page == page_index:
+		return
 
+	var anchor := _focused_position()
+	_store_focus_memory()
 	current_page = page_index
 
 	var panels = role_list_container.get_children()
@@ -144,13 +156,31 @@ func _on_tab_pressed(page_index: int):
 			child.render_tree(current_page)
 
 	_update_tab_visuals()
-	focus_node(_remembered_node_for_current_context())
+	var remembered := _remembered_node_for_current_context()
+	if remembered.is_empty() and anchor != Vector2.INF:
+		focus_node(_nearest_node_to(anchor))
+	else:
+		focus_node(remembered)
 
 func _update_tab_visuals():
+	var supported_pages := _supported_pages(_current_role_panel())
+	var visible_buttons: Array[Button] = []
 	for i in range(tabs_container.get_child_count()):
-		var btn = tabs_container.get_child(i) as Button
-		if i == current_page:
-			btn.set_pressed_no_signal(true)
+		var btn := tabs_container.get_child(i) as Button
+		var supported := i in supported_pages
+		btn.visible = supported
+		btn.disabled = not supported
+		btn.set_pressed_no_signal(i == current_page)
+		btn.focus_neighbor_left = NodePath()
+		btn.focus_neighbor_right = NodePath()
+		if supported:
+			visible_buttons.append(btn)
+	for index in range(visible_buttons.size()):
+		var button := visible_buttons[index]
+		var previous := visible_buttons[posmod(index - 1, visible_buttons.size())]
+		var next := visible_buttons[posmod(index + 1, visible_buttons.size())]
+		button.focus_neighbor_left = button.get_path_to(previous)
+		button.focus_neighbor_right = button.get_path_to(next)
 
 
 func focus_node(node_id: String) -> bool:
@@ -238,32 +268,65 @@ func confirm_focused_node() -> void:
 		_on_purchase_requested(current_hero, _current_role_panel().role_id, node.node_definition.id)
 
 
-func cancel_focus_layer() -> bool:
-	var owner := get_viewport().gui_get_focus_owner()
-	var node := get_focused_node()
-	if node and (owner == node or node.is_ancestor_of(owner)):
-		var tab := tabs_container.get_child(current_page) as Button
-		if tab and tab.visible and not tab.disabled:
-			tab.grab_focus()
-			return true
+func remember_focus() -> String:
+	_store_focus_memory()
+	_store_hero_context()
+	return focused_node_id
+
+
+func restore_focus() -> bool:
+	return focus_node(_remembered_node_for_current_context())
+
+
+func cancel_navigation() -> bool:
 	return false
 
 
+func set_chrome_active(active: bool) -> void:
+	for child in role_list_container.get_children():
+		if child is RolePanel:
+			(child as RolePanel).set_chrome_active(active)
+
+
+func focus_current_page_tab() -> bool:
+	var button := tabs_container.get_child(current_page) as Button
+	if button == null or not button.visible or button.disabled:
+		return false
+	button.grab_focus()
+	return true
+
+
+func focus_node_from_page_tabs() -> bool:
+	return focus_node(_remembered_node_for_current_context())
+
+
+func _page_tabs_own_focus() -> bool:
+	var owner := get_viewport().gui_get_focus_owner()
+	return owner != null and (owner == tabs_container or tabs_container.is_ancestor_of(owner))
+
+
 func _unhandled_input(event: InputEvent) -> void:
-	if not is_visible_in_tree(): return
-	if event.is_action_pressed(&"section_previous"): change_role(-1)
-	elif event.is_action_pressed(&"section_next"): change_role(1)
-	elif event.is_action_pressed(&"page_previous"): change_page(-1)
-	elif event.is_action_pressed(&"page_next"): change_page(1)
-	elif not _node_owns_focus(): return
-	elif event.is_action_pressed(&"nav_up"): move_focus(Vector2.UP)
-	elif event.is_action_pressed(&"nav_down"): move_focus(Vector2.DOWN)
-	elif event.is_action_pressed(&"nav_left"): move_focus(Vector2.LEFT)
-	elif event.is_action_pressed(&"nav_right"): move_focus(Vector2.RIGHT)
-	elif event.is_action_pressed(&"confirm"): confirm_focused_node()
-	elif event.is_action_pressed(&"cancel"):
-		if not cancel_focus_layer(): return
-	else: return
+	if not is_visible_in_tree():
+		return
+	if event.is_action_pressed(&"hub_role_previous"):
+		change_role(-1)
+	elif event.is_action_pressed(&"hub_role_next"):
+		change_role(1)
+	elif _node_owns_focus() and event.is_action_pressed(&"nav_up"):
+		move_focus(Vector2.UP)
+	elif _node_owns_focus() and event.is_action_pressed(&"nav_down"):
+		if not move_focus(Vector2.DOWN):
+			focus_current_page_tab()
+	elif _node_owns_focus() and event.is_action_pressed(&"nav_left"):
+		move_focus(Vector2.LEFT)
+	elif _node_owns_focus() and event.is_action_pressed(&"nav_right"):
+		move_focus(Vector2.RIGHT)
+	elif _page_tabs_own_focus() and event.is_action_pressed(&"nav_up"):
+		focus_node_from_page_tabs()
+	elif _node_owns_focus() and event.is_action_pressed(&"confirm"):
+		confirm_focused_node()
+	else:
+		return
 	get_viewport().set_input_as_handled()
 
 
@@ -343,6 +406,13 @@ func _supported_pages(panel: RolePanel) -> Array[int]:
 	return pages
 
 
+func _refresh_role_shortcuts() -> void:
+	var enabled := role_list_container.get_child_count() > 1
+	for child in role_list_container.get_children():
+		if child is RolePanel:
+			(child as RolePanel).set_role_shortcuts_enabled(enabled)
+
+
 func _publish_hints(node: Control) -> void:
 	var navigation := get_tree().root.find_child("NavigationUXLayer", true, false) as NavigationUXLayer
 	if navigation:
@@ -351,9 +421,6 @@ func _publish_hints(node: Control) -> void:
 		var hints: Array[Dictionary] = [
 			{action = &"confirm", label = "Upgrade" if purchasable else "Inspect", enabled = purchasable or inspectable},
 			{action = &"cancel", label = "Back", enabled = true},
-			{action = &"section_previous", label = "Role", enabled = true},
+			{action = &"hub_role_previous", label = "Role", enabled = role_list_container.get_child_count() > 1},
 		]
-		var role_panel := _current_role_panel()
-		if _supported_pages(role_panel).size() > 1:
-			hints.insert(2, {action = &"page_previous", label = "Page", enabled = true})
 		navigation.publish_hints(hints)

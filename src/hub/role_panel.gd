@@ -25,6 +25,8 @@ var expanded_x: float = 900.0
 var _size_tween: Tween
 var _current_page: int = 0
 var _display_profile: int = DisplayProfileService.Profile.DESKTOP
+var _role_shortcuts_enabled := false
+var _chrome_active := true
 
 var is_currently_expanded: bool = false
 
@@ -41,6 +43,7 @@ func _ready():
 	clip_contents = true
 	custom_minimum_size.x = collapsed_x
 	is_currently_expanded = false
+	HubChrome.capture($Header)
 
 func setup(role_def: RoleDefinition, tree: RoleTreeDefinition, hero: HeroData):
 	def = role_def
@@ -76,6 +79,7 @@ func set_expanded(is_expanded: bool, current_page: int, animate: bool = true):
 	# Update State
 	is_currently_expanded = is_expanded
 	$Button.visible = not is_expanded
+	set_role_shortcuts_enabled(_role_shortcuts_enabled)
 	var target_w = expanded_x if is_expanded else collapsed_x
 
 	if not animate:
@@ -88,6 +92,20 @@ func set_expanded(is_expanded: bool, current_page: int, animate: bool = true):
 		_size_tween.tween_property(self, "custom_minimum_size:x", target_w, 0.3)
 
 	render_tree(current_page)
+
+
+func set_role_shortcuts_enabled(enabled: bool) -> void:
+	_role_shortcuts_enabled = enabled
+	$Content/PreviousRoleGlyph.visible = enabled and is_currently_expanded
+	$Content/NextRoleGlyph.visible = enabled and is_currently_expanded
+
+
+func set_chrome_active(active: bool) -> void:
+	_chrome_active = active
+	HubChrome.set_active($Header, active)
+	for child in generated_nodes.values():
+		if child is SkillTreeNode or child is RoleAnchorNode:
+			child.set_chrome_active(active)
 
 func render_tree(page_index: int):
 	_current_page = page_index
@@ -127,6 +145,8 @@ func _spawn_node(data_node: ProgressionNodeDefinition) -> void:
 		ui_node.node_clicked.connect(_on_node_clicked)
 	ui_node.focus_entered.connect(_on_generated_node_focused.bind(data_node.id))
 	generated_nodes[data_node.id] = ui_node
+	if ui_node is SkillTreeNode or ui_node is RoleAnchorNode:
+		ui_node.set_chrome_active(_chrome_active)
 
 
 func _on_generated_node_focused(node_id: String) -> void:

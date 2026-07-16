@@ -1,8 +1,9 @@
-[gd_scene load_steps=5 format=3 uid="uid://xpuok17oufft"]
+[gd_scene load_steps=6 format=3 uid="uid://xpuok17oufft"]
 
 [ext_resource type="Script" uid="uid://b5mb18febmqwh" path="res://src/hub/role_panel.gd" id="1_n8shc"]
 [ext_resource type="PackedScene" uid="uid://cqsffo424v35" path="res://src/hub/skill_tree_node.tscn" id="2_13wgo"]
 [ext_resource type="PackedScene" path="res://src/hub/role_anchor_node.tscn" id="3_anchor"]
+[ext_resource type="Script" uid="uid://b684sdqsvpn3p" path="res://src/battle/dynamic_glyph.gd" id="4_glyph"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_13wgo"]
 bg_color = Color(0.6, 0.6, 0.6, 0)
@@ -69,12 +70,49 @@ layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -438.0
-offset_right = -93.0
+offset_left = -127.0
+offset_right = 127.0
 offset_bottom = 41.0
 grow_horizontal = 2
 text = "GUNNER"
+horizontal_alignment = 1
 uppercase = true
+
+[node name="PreviousRoleGlyph" type="TextureButton" parent="Content"]
+visible = false
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -181.0
+offset_top = 1.0
+offset_right = -141.0
+offset_bottom = 41.0
+grow_horizontal = 2
+mouse_filter = 2
+ignore_texture_size = true
+stretch_mode = 0
+script = ExtResource("4_glyph")
+action = &"hub_role_previous"
+controller_only = true
+
+[node name="NextRoleGlyph" type="TextureButton" parent="Content"]
+visible = false
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = 141.0
+offset_top = 1.0
+offset_right = 181.0
+offset_bottom = 41.0
+grow_horizontal = 2
+mouse_filter = 2
+ignore_texture_size = true
+stretch_mode = 0
+script = ExtResource("4_glyph")
+action = &"hub_role_next"
+controller_only = true
 
 [node name="XPDisplay" type="Label" parent="Content"]
 modulate = Color(0.11764706, 0.11764706, 0.11764706, 1)

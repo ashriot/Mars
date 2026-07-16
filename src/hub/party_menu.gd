@@ -115,7 +115,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _handle_back() -> void:
-	if current_depth == Depth.CONTENT and skill_view.visible and skill_view.cancel_focus_layer():
+	if current_depth == Depth.CONTENT and skill_view.visible and skill_view.cancel_navigation():
 		return
 	if current_depth == Depth.CONTENT and inventory_view.visible and inventory_view.cancel_navigation():
 		return
@@ -310,6 +310,9 @@ func _content_memory_key() -> String:
 func _store_content_focus() -> void:
 	if current_depth != Depth.CONTENT:
 		return
+	if current_tab == Tab.ROLES:
+		_store_roles_focus()
+		return
 	_remember_content_focus(get_viewport().gui_get_focus_owner())
 
 
@@ -327,6 +330,8 @@ func _remember_content_focus(control: Control) -> void:
 
 
 func _restore_content_focus() -> bool:
+	if current_tab == Tab.ROLES:
+		return _restore_roles_focus()
 	var remembered: Control
 	var remembered_path: NodePath = _content_focus_memory.get(_content_memory_key(), NodePath())
 	if not remembered_path.is_empty():
@@ -334,8 +339,6 @@ func _restore_content_focus() -> bool:
 	if _is_valid_content_focus(remembered):
 		remembered.grab_focus()
 		return true
-	if current_tab == Tab.ROLES:
-		return skill_view.focus_node("")
 	if current_tab == Tab.ITEMS:
 		var panel := _get_panel_by_index(current_hero_idx)
 		var fallback := _first_focusable_descendant(panel)
@@ -343,6 +346,14 @@ func _restore_content_focus() -> bool:
 			fallback.grab_focus()
 			return true
 	return false
+
+
+func _store_roles_focus() -> void:
+	_content_focus_memory[_content_memory_key()] = skill_view.remember_focus()
+
+
+func _restore_roles_focus() -> bool:
+	return skill_view.restore_focus()
 
 
 func _first_focusable_descendant(root: Control) -> Control:
@@ -408,6 +419,7 @@ func _update_depth_presentation() -> void:
 	for index in range(hero_list_container.get_child_count()):
 		var panel := hero_list_container.get_child(index) as HeroPanel
 		panel.set_chrome_active(current_depth == Depth.HERO_RAIL or index == current_hero_idx)
+	skill_view.set_chrome_active(current_depth == Depth.CONTENT and current_tab == Tab.ROLES)
 
 func _get_panel_by_index(index: int) -> HeroPanel:
 	if index >= 0 and index < hero_list_container.get_child_count():

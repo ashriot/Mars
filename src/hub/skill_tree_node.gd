@@ -23,6 +23,16 @@ var _can_afford := false
 @onready var arrow_right: TextureRect = $Arrows/Right
 
 
+func _ready() -> void:
+	set_meta("navigation_focus_surface", NodePath("Panel"))
+	set_meta("navigation_focus_pulse", true)
+	HubChrome.capture($Panel)
+
+
+func set_chrome_active(active: bool) -> void:
+	HubChrome.set_active($Panel, active)
+
+
 func apply_display_profile(profile: int) -> void:
 	custom_minimum_size = MINIMUM_SIZE_COMPACT if profile == DisplayProfileService.Profile.COMPACT else MINIMUM_SIZE_DESKTOP
 
