@@ -13,7 +13,12 @@ var _pulse_tween: Tween
 
 
 func _ready() -> void:
+	DisplayProfile.bind(apply_display_profile)
 	button.set_meta("navigation_focus_surface", NodePath(".."))
+
+
+func apply_display_profile(profile: int, _window_size: Vector2i, _logical_size: Vector2) -> void:
+	custom_minimum_size = Vector2(72.0, 72.0) if profile == DisplayProfileService.Profile.COMPACT else Vector2(64.0, 64.0)
 
 
 func setup(mod: EquipmentMod, enable: bool):

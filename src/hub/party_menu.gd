@@ -18,8 +18,12 @@ var progression_catalog: ProgressionCatalog = ProgressionSystem.catalog
 var save_progression: Callable = SaveSystem.save_current_slot
 var play_progression_audio: Callable = AudioManager.play_sfx
 var refresh_hero_stats: Callable = _refresh_matching_hero_stats
+var _display_profile: int = DisplayProfileService.Profile.DESKTOP
+var _display_window_size := DisplayProfileService.DESKTOP_WINDOW_SIZE
+var _display_logical_size := DisplayProfileService.REFERENCE_SIZE
 
 func _ready():
+	DisplayProfile.bind(apply_display_profile)
 	hide()
 	skill_view.purchase_requested.connect(_on_purchase_requested)
 	inventory_view.hero_stats_updated.connect(_on_hero_stats_updated)
@@ -29,6 +33,22 @@ func _ready():
 		btn.pressed.connect(_on_mode_changed.bind(i))
 		btn.focus_entered.connect(_publish_hints)
 	$BackBtn.focus_entered.connect(_publish_hints)
+
+
+func apply_display_profile(profile: int, window_size: Vector2i, logical_size: Vector2) -> void:
+	_display_profile = profile
+	_display_window_size = window_size
+	_display_logical_size = logical_size
+	var compact := profile == DisplayProfileService.Profile.COMPACT
+	$Header.offset_top = 411.0
+	$Header.offset_bottom = 483.0 if compact else 472.0
+	$BackBtn.offset_top = 489.0 if compact else 477.0
+	$BackBtn.offset_bottom = 561.0 if compact else 525.0
+	mode_tabs.add_theme_constant_override(&"separation", 12 if compact else 8)
+	inventory_view.apply_display_profile(profile, window_size, logical_size)
+	for child in hero_list_container.get_children():
+		if child is HeroPanel:
+			(child as HeroPanel).apply_display_profile(profile, window_size, logical_size)
 
 
 func _exit_tree() -> void:
@@ -87,6 +107,7 @@ func _refresh_hero_list():
 		var hero_data = party_roster[i]
 		var panel = hero_panel_scene.instantiate() as HeroPanel
 		hero_list_container.add_child(panel)
+		panel.apply_display_profile(_display_profile, _display_window_size, _display_logical_size)
 
 		panel.setup(hero_data)
 		panel.panel_selected.connect(_on_hero_panel_selected)

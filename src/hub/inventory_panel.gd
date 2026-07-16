@@ -10,7 +10,8 @@ signal mode_changed(mode, active_item, active_slot)
 # --- UI REFS ---
 # Adjust these paths to match your actual scene tree
 @onready var header_label: Label = $Header/Label
-@onready var grid: VBoxContainer = $InventoryGrid
+@onready var inventory_scroll: ScrollContainer = $InventoryScroll
+@onready var grid: VBoxContainer = $InventoryScroll/InventoryGrid
 
 # --- STATE ---
 enum Mode { VIEW, EQUIP, TUNE, MOD }
@@ -19,6 +20,18 @@ var active_hero: HeroData
 var active_equipment: Equipment
 var active_slot: Equipment.Slot
 var active_mod_slot_index: int = -1
+var _display_profile: int = DisplayProfileService.Profile.DESKTOP
+
+
+func _ready() -> void:
+	DisplayProfile.bind(apply_display_profile)
+
+
+func apply_display_profile(profile: int, _window_size: Vector2i, _logical_size: Vector2) -> void:
+	_display_profile = profile
+	for child in grid.get_children():
+		if child is ItemButton:
+			(child as ItemButton).apply_display_profile(profile)
 
 # --- SETUP ---
 func setup(hero: HeroData):
@@ -259,10 +272,16 @@ func _clear_grid():
 func _spawn_grid_button(resource: Resource, slot: int, count: int) -> Control:
 	var btn = item_button_scene.instantiate() as ItemButton
 	grid.add_child(btn)
+	btn.apply_display_profile(_display_profile)
 	btn.setup(resource, slot, count)
+	btn.get_focus_control().focus_entered.connect(_ensure_item_visible.bind(btn))
 	_refresh_grid_focus_neighbors()
 
 	return btn
+
+
+func _ensure_item_visible(item: Control) -> void:
+	inventory_scroll.ensure_control_visible(item)
 
 
 func _refresh_grid_focus_neighbors() -> void:

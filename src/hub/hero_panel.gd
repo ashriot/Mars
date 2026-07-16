@@ -27,9 +27,11 @@ var collapsed_y: float = 96.0
 var expanded_y: float = 296.0
 var data: HeroData
 var _size_tween: Tween
+var _is_expanded := false
 
 
 func _ready():
+	DisplayProfile.bind(apply_display_profile)
 	custom_minimum_size.y = collapsed_y
 	# 1. WEAPON SIGNALS
 	weapon_panel.equip_requested.connect(func(item):
@@ -52,6 +54,15 @@ func _ready():
 	armor_panel.mod_requested.connect(func(item, slot):
 		mod_requested.emit(item, slot)
 	)
+
+
+func apply_display_profile(profile: int, window_size: Vector2i, logical_size: Vector2) -> void:
+	var compact := profile == DisplayProfileService.Profile.COMPACT
+	collapsed_y = 126.0 if compact else 96.0
+	weapon_panel.apply_display_profile(profile, window_size, logical_size)
+	armor_panel.apply_display_profile(profile, window_size, logical_size)
+	expanded_y = maxf(296.0, maxf(weapon_panel.get_expanded_minimum_height(), armor_panel.get_expanded_minimum_height()))
+	set_expanded(_is_expanded, false)
 
 func setup(hero_data: HeroData):
 	data = hero_data
@@ -89,13 +100,13 @@ func set_mode(is_inventory_mode: bool):
 	armor_panel.visible = is_inventory_mode
 
 func set_expanded(is_expanded: bool, animate: bool = true):
+	_is_expanded = is_expanded
 	var target_h = expanded_y if is_expanded else collapsed_y
+	if _size_tween and _size_tween.is_running():
+		_size_tween.kill()
 	if not animate:
 		custom_minimum_size.y = target_h
 		return
-
-	if _size_tween and _size_tween.is_running():
-		_size_tween.kill()
 
 	_size_tween = create_tween().set_parallel(true)
 	_size_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)

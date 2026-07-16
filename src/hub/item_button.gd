@@ -21,6 +21,10 @@ func _ready() -> void:
 	$Button.set_meta("navigation_focus_surface", NodePath("Header"))
 
 
+func apply_display_profile(profile: int) -> void:
+	custom_minimum_size.y = 72.0 if profile == DisplayProfileService.Profile.COMPACT else 42.0
+
+
 func setup(resource: Resource, slot_type: int, amount: int):
 	_item_ref = resource
 	_target_slot_context = slot_type
