@@ -98,7 +98,7 @@ func test_real_queue_uses_one_uniform_scrollable_list() -> void:
 	assert_eq(queue.queue_items[2].occurrence_index, 1)
 
 
-func test_queue_uses_role_color_archivo_and_enemy_gauge_magenta() -> void:
+func test_queue_uses_role_color_archivo_and_faction_presentation() -> void:
 	var icon := GradientTexture2D.new()
 	var hero := _hero("Echo", icon, Color("4f6fff"))
 	var enemy := _enemy("Attack Drone A")
@@ -114,8 +114,15 @@ func test_queue_uses_role_color_archivo_and_enemy_gauge_magenta() -> void:
 	assert_same(queue.queue_items[1].enemy_label.get_theme_font("font"), ARCHIVO)
 	assert_eq(
 		queue.queue_items[1].enemy_label.get_theme_color("font_color"),
-		CTBGauge.ENEMY_COLORS[0],
+		CTBGauge.ENEMY_COLOR,
 	)
+	var hero_style := queue.queue_items[0].interior.get_theme_stylebox("panel") as StyleBoxFlat
+	var enemy_style := queue.queue_items[1].interior.get_theme_stylebox("panel") as StyleBoxFlat
+	assert_eq(hero_style.bg_color, ActorQueue.HERO_INTERIOR_COLOR)
+	assert_eq(enemy_style.bg_color, ActorQueue.ENEMY_INTERIOR_COLOR)
+	assert_eq(hero_style.bg_color.a, 1.0)
+	assert_eq(enemy_style.bg_color.a, 1.0)
+	assert_ne(hero_style, enemy_style)
 
 
 func test_current_action_ends_before_queue_rail_at_reference_viewport() -> void:

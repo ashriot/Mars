@@ -1,48 +1,36 @@
 extends GutTest
 
 
-func test_fixed_twenty_tick_bands_and_saturation() -> void:
-	assert_eq(CTBGauge.band_fills(0), [0.0, 0.0, 0.0])
-	assert_eq(CTBGauge.band_fills(10), [0.5, 0.0, 0.0])
-	assert_eq(CTBGauge.band_fills(20), [1.0, 0.0, 0.0])
-	assert_eq(CTBGauge.band_fills(31), [1.0, 0.55, 0.0])
-	assert_eq(CTBGauge.band_fills(55), [1.0, 1.0, 0.75])
-	assert_eq(CTBGauge.band_fills(70), [1.0, 1.0, 1.0])
+func test_readiness_fill_uses_fixed_inverse_zero_to_eighty_tick_scale() -> void:
+	assert_eq(CTBGauge.readiness_fill(-10), 1.0)
+	assert_eq(CTBGauge.readiness_fill(0), 1.0)
+	assert_eq(CTBGauge.readiness_fill(20), 0.75)
+	assert_eq(CTBGauge.readiness_fill(40), 0.5)
+	assert_eq(CTBGauge.readiness_fill(60), 0.25)
+	assert_eq(CTBGauge.readiness_fill(80), 0.0)
+	assert_eq(CTBGauge.readiness_fill(100), 0.0)
 
 
-func test_quarter_recovery_steps_map_to_half_band_steps() -> void:
-	assert_eq(CTBGauge.band_fills(30), [1.0, 0.5, 0.0]) # 75% CT
-	assert_eq(CTBGauge.band_fills(40), [1.0, 1.0, 0.0]) # 100% CT
-	assert_eq(CTBGauge.band_fills(50), [1.0, 1.0, 0.5]) # 125% CT
-	assert_eq(CTBGauge.band_fills(60), [1.0, 1.0, 1.0]) # 150% CT
+func test_readiness_gauge_uses_one_bright_faction_color() -> void:
+	assert_eq(CTBGauge.faction_color(CTBGauge.Faction.HERO), Color("56e5ff"))
+	assert_eq(CTBGauge.faction_color(CTBGauge.Faction.ENEMY), Color("ff5bc8"))
 
 
-func test_faction_strokes_overlay_light_medium_dark_at_one_width() -> void:
-	var hero := CTBGauge.faction_strokes(50.0, CTBGauge.Faction.HERO)
-	assert_eq(hero.size(), 3)
-	assert_eq(hero[0], {
-		"color": CTBGauge.HERO_COLORS[0],
-		"fraction": 1.0,
-		"width": CTBGauge.GAUGE_WIDTH,
-	})
-	assert_eq(hero[1], {
-		"color": CTBGauge.HERO_COLORS[1],
-		"fraction": 1.0,
-		"width": CTBGauge.GAUGE_WIDTH,
-	})
-	assert_eq(hero[2], {
-		"color": CTBGauge.HERO_COLORS[2],
-		"fraction": 0.5,
-		"width": CTBGauge.GAUGE_WIDTH,
-	})
+func test_rounded_path_starts_top_center_and_runs_clockwise_by_quarters() -> void:
+	var rect := Rect2(Vector2(3, 3), Vector2(66, 66))
+	var path := CTBGauge.rounded_rect_path(rect, 10.0)
+	assert_eq(path[0], Vector2(36, 3))
+	assert_eq(path[-1], path[0])
 
-	var enemy := CTBGauge.faction_strokes(30.0, CTBGauge.Faction.ENEMY)
-	assert_eq(enemy.size(), 2)
-	assert_eq(enemy[0].color, CTBGauge.ENEMY_COLORS[0])
-	assert_eq(enemy[0].width, CTBGauge.GAUGE_WIDTH)
-	assert_eq(enemy[1].color, CTBGauge.ENEMY_COLORS[1])
-	assert_eq(enemy[1].fraction, 0.5)
-	assert_eq(enemy[1].width, CTBGauge.GAUGE_WIDTH)
+	var quarter := CTBGauge.partial_polyline(path, 0.25)
+	assert_almost_eq(quarter[-1].x, 69.0, 0.01)
+	assert_almost_eq(quarter[-1].y, 36.0, 0.01)
+	var half := CTBGauge.partial_polyline(path, 0.5)
+	assert_almost_eq(half[-1].x, 36.0, 0.01)
+	assert_almost_eq(half[-1].y, 69.0, 0.01)
+	var three_quarters := CTBGauge.partial_polyline(path, 0.75)
+	assert_almost_eq(three_quarters[-1].x, 3.0, 0.01)
+	assert_almost_eq(three_quarters[-1].y, 36.0, 0.01)
 
 
 func test_partial_perimeter_has_exact_end_interpolation() -> void:
@@ -64,7 +52,7 @@ func test_gauge_interpolates_ticks_without_mutating_target() -> void:
 	assert_eq(gauge._target_ticks, 40.0)
 	gauge._advance_animation(CTBGauge.ANIMATION_DURATION * 0.5)
 	assert_eq(gauge.displayed_ticks, 30.0)
-	assert_eq(CTBGauge.band_fills(gauge.displayed_ticks), [1.0, 0.5, 0.0])
+	assert_eq(CTBGauge.readiness_fill(gauge.displayed_ticks), 0.625)
 	gauge._advance_animation(CTBGauge.ANIMATION_DURATION * 0.5)
 	assert_eq(gauge.displayed_ticks, 40.0)
 	assert_false(gauge._is_animating)

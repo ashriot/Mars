@@ -5,8 +5,11 @@ class_name ActorQueue
 const ITEM_SIZE := Vector2(72, 72)
 const ANIMATION_DURATION := 0.3
 const COMMITTED_EXIT_DISTANCE := 96.0
+const HERO_INTERIOR_COLOR := Color("04151b")
+const ENEMY_INTERIOR_COLOR := Color("1b0615")
 
 @onready var gauge: CTBGauge = $CTBGauge
+@onready var interior: Panel = $Interior
 @onready var role_icon: TextureRect = $Interior/RoleIcon
 @onready var enemy_label: Label = $Interior/EnemyLabel
 
@@ -25,6 +28,10 @@ func setup(
 ) -> void:
 	actor_ref = actor
 	occurrence_index = occurrence
+	var interior_style := interior.get_theme_stylebox("panel") as StyleBoxFlat
+	interior_style.bg_color = (
+		HERO_INTERIOR_COLOR if actor is HeroCard else ENEMY_INTERIOR_COLOR
+	)
 	custom_minimum_size = ITEM_SIZE
 	size = ITEM_SIZE
 	role_icon.visible = actor is HeroCard

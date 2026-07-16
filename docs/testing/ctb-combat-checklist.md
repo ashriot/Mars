@@ -10,7 +10,9 @@ All checks below are intentionally unchecked until performed interactively in co
 ## Queue rail layout
 
 - [ ] The unified rounded rail is black at 90% opacity and keeps icons/text readable over bright combat backgrounds.
-- [ ] Non-current gauges show a subtle dark-gray track with same-width opaque light, medium, and dark faction strokes covering one another, with no nested colored outlines.
+- [ ] Hero queue interiors are fully opaque dark cyan and enemy interiors are fully opaque dark magenta, with no battlefield art showing through.
+- [ ] Non-current gauges use one bright cyan or magenta readiness arc over the dark-gray track, with no shade layers, nested lines, separators, or pips.
+- [ ] The arc begins at top-center and fills clockwise as a turn approaches.
 - [ ] The acting battlefield card uses the exact queue gold for the full hero or enemy turn.
 - [ ] Target availability, selection outline, and pulse remain independently visible while the acting gold outline persists beneath them.
 - [ ] Every queue entry is a uniform `72x72` square, and only the current entry has a gold perimeter.
@@ -33,18 +35,15 @@ All checks below are intentionally unchecked until performed interactively in co
 ## Deterministic order and timeline presentation
 
 - [ ] Repeatedly hover the same non-CT target; enemies projected at equal ticks never reorder between identical previews.
-- [ ] Cyan hero and magenta enemy fixed bands retain the same meaning as actors move through the queue.
-- [ ] Projections at the `20`, `40`, and `60+` tick boundaries render the expected successive shade layers.
+- [ ] `80+` ticks is empty, `60` is one quarter, `40` is half, `20` is three quarters, and `0` is full.
 - [ ] Changing a hero's current role updates that hero's icons on subsequent projected turns.
 - [ ] Duplicate enemies retain readable abbreviations and deterministic A/B/C suffixes throughout the projection.
 
 ## Action recovery and CT effects
 
 - [ ] For otherwise identical actions, `75% CT` places the actor earlier than `100% CT`, while `125% CT` places the actor later.
-- [ ] Ordinary actors near the battle median show standard recovery at around two gauge bands instead of every future perimeter appearing full.
-- [ ] Before other CT changes, `75%`, `100%`, `125%`, and `150%` recovery visibly map to approximately `1.5`, `2`, `2.5`, and `3` gauge bands respectively.
-- [ ] Early-game and endgame battles retain readable gauge variation because each battle freezes its own median normalization scale.
-- [ ] Speed buffs and debuffs change the affected actor's future gauge and order without rescaling every other actor.
+- [ ] Delays visibly drain the arc and boosts visibly fill it without changing unrelated occurrences.
+- [ ] The actual current occurrence alone replaces the full faction arc with the full gold perimeter.
 - [ ] Action recovery modifiers render white when equal to the authored action value, green when faster, and red when slower.
 - [ ] Repeated reactive 10% delays stack below zero instead of clamping after the first delay.
 

@@ -4,20 +4,12 @@ class_name CTBGauge
 
 enum Faction { HERO, ENEMY }
 
-const TICKS_PER_BAND := 20
+const MAX_READINESS_TICKS := 80.0
 const ANIMATION_DURATION := 0.30
 const GAUGE_WIDTH := 6.0
 const CORNER_RADIUS := 10.0
-const HERO_COLORS := [
-	Color("56e5ff"),
-	Color("24b9e8"),
-	Color("127da8"),
-]
-const ENEMY_COLORS := [
-	Color("ff5bc8"),
-	Color("d52d9b"),
-	Color("941a70"),
-]
+const HERO_COLOR := Color("56e5ff")
+const ENEMY_COLOR := Color("ff5bc8")
 const CURRENT_COLOR := Color("ffc94a")
 const TRACK_COLOR := Color(0.12, 0.15, 0.2, 0.9)
 
@@ -30,26 +22,12 @@ var _faction := Faction.HERO
 var _is_current := false
 
 
-static func band_fills(ticks: float) -> Array[float]:
-	var fills: Array[float] = []
-	for band in 3:
-		fills.append(clampf(float(ticks - band * TICKS_PER_BAND) / TICKS_PER_BAND, 0.0, 1.0))
-	return fills
+static func readiness_fill(ticks: float) -> float:
+	return 1.0 - clampf(ticks / MAX_READINESS_TICKS, 0.0, 1.0)
 
 
-static func faction_strokes(ticks: float, faction: Faction) -> Array[Dictionary]:
-	var colors := HERO_COLORS if faction == Faction.HERO else ENEMY_COLORS
-	var fills := band_fills(ticks)
-	var strokes: Array[Dictionary] = []
-	for band in 3:
-		if fills[band] <= 0.0:
-			continue
-		strokes.append({
-			"color": colors[band],
-			"fraction": fills[band],
-			"width": GAUGE_WIDTH,
-		})
-	return strokes
+static func faction_color(faction: Faction) -> Color:
+	return HERO_COLOR if faction == Faction.HERO else ENEMY_COLOR
 
 
 static func partial_polyline(points: PackedVector2Array, fraction: float) -> PackedVector2Array:
@@ -87,12 +65,13 @@ static func rounded_rect_path(
 		Vector2(rect.position.x + r, rect.position.y + r),
 	]
 	var starts := [-PI * 0.5, 0.0, PI * 0.5, PI]
-	var points := PackedVector2Array()
+	var top_center := Vector2(rect.get_center().x, rect.position.y)
+	var points := PackedVector2Array([top_center])
 	for corner in 4:
 		for step in segments_per_corner + 1:
 			var angle: float = starts[corner] + PI * 0.5 * float(step) / segments_per_corner
 			points.append(centers[corner] + Vector2(cos(angle), sin(angle)) * r)
-	points.append(points[0])
+	points.append(top_center)
 	return points
 
 
@@ -151,14 +130,6 @@ func _draw() -> void:
 	if _is_current:
 		draw_polyline(path, CURRENT_COLOR, GAUGE_WIDTH, true)
 		return
-	for stroke: Dictionary in faction_strokes(displayed_ticks, _faction):
-		var partial := partial_polyline(path, float(stroke.fraction))
-		if partial.size() >= 2:
-			var stroke_color: Color = stroke.color
-			var stroke_width: float = stroke.width
-			draw_polyline(
-				partial,
-				stroke_color,
-				stroke_width,
-				true,
-			)
+	var partial := partial_polyline(path, readiness_fill(displayed_ticks))
+	if partial.size() >= 2:
+		draw_polyline(partial, faction_color(_faction), GAUGE_WIDTH, true)
