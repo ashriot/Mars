@@ -19,6 +19,8 @@ var disabled: bool:
 func _ready() -> void:
 	$Button.focus_mode = Control.FOCUS_ALL
 	$Button.set_meta("navigation_focus_surface", NodePath("Header"))
+	$Button.set_meta("navigation_focus_pulse", true)
+	HubChrome.capture($Button/Header)
 
 
 func apply_display_profile(profile: int) -> void:
@@ -40,6 +42,20 @@ func setup(resource: Resource, slot_type: int, amount: int):
 
 func get_focus_control() -> BaseButton:
 	return $Button
+
+
+func get_focus_key() -> String:
+	if _item_ref is Equipment:
+		return "equipment:%s" % (_item_ref as Equipment).id
+	if _item_ref is EquipmentMod:
+		return "mod:%s" % (_item_ref as EquipmentMod).id
+	if _item_ref is InventoryItem:
+		return "item:%s" % (_item_ref as InventoryItem).id
+	return ""
+
+
+func set_chrome_active(active: bool) -> void:
+	HubChrome.set_active($Button/Header, active)
 
 
 func update_quantity(amount: int):

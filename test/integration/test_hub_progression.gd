@@ -226,6 +226,76 @@ func test_pointer_back_returns_to_hero_rail_before_closing() -> void:
 	assert_false(party.visible)
 
 
+func test_items_back_unwinds_mode_before_returning_to_hero() -> void:
+	var party := await _opened_party_with_three_heroes()
+	party.change_tab(1)
+	assert_true(party.enter_content())
+	var hero_panel := party.hero_list_container.get_child(party.current_hero_idx) as HeroPanel
+	party.inventory_view.request_equip_mode(hero_panel.data.weapon, Equipment.Slot.WEAPON)
+	assert_eq(party.inventory_view.current_mode, InventoryPanel.Mode.EQUIP)
+	party._unhandled_input(_action_event(&"cancel"))
+	assert_eq(party.inventory_view.current_mode, InventoryPanel.Mode.VIEW)
+	assert_eq(party.current_depth, PartyMenu.Depth.CONTENT)
+	party._unhandled_input(_action_event(&"cancel"))
+	assert_eq(party.current_depth, PartyMenu.Depth.HERO_RAIL)
+
+
+func test_items_nested_back_restores_each_originating_equipment_control() -> void:
+	var party := await _opened_party_with_three_heroes()
+	party.change_tab(1)
+	assert_true(party.enter_content())
+	var hero_panel := party.hero_list_container.get_child(party.current_hero_idx) as HeroPanel
+	var weapon := hero_panel.weapon_panel
+
+	weapon.equip_button.pressed.emit()
+	assert_eq(party.inventory_view.current_mode, InventoryPanel.Mode.EQUIP)
+	hero_panel.armor_panel.tune_btn.grab_focus()
+	party._unhandled_input(_action_event(&"cancel"))
+	assert_same(get_viewport().gui_get_focus_owner(), weapon.equip_button)
+
+	weapon.tune_btn.pressed.emit()
+	assert_eq(party.inventory_view.current_mode, InventoryPanel.Mode.TUNE)
+	hero_panel.armor_panel.equip_button.grab_focus()
+	party._unhandled_input(_action_event(&"cancel"))
+	assert_same(get_viewport().gui_get_focus_owner(), weapon.tune_btn)
+
+	hero_panel.data.weapon.tier = 1
+	weapon.setup(hero_panel.data.weapon)
+	var mod_slot := weapon.mods_container.get_child(0) as ModSlot
+	mod_slot.get_focus_control().pressed.emit()
+	assert_eq(party.inventory_view.current_mode, InventoryPanel.Mode.MOD)
+	hero_panel.armor_panel.equip_button.grab_focus()
+	party._unhandled_input(_action_event(&"cancel"))
+	assert_same(get_viewport().gui_get_focus_owner(), mod_slot.get_focus_control())
+
+
+func test_items_restore_stable_equipment_and_inventory_focus() -> void:
+	var party := await _opened_party_with_three_heroes()
+	party.change_tab(1)
+	assert_true(party.enter_content())
+	var hero_panel := party.hero_list_container.get_child(0) as HeroPanel
+	hero_panel.armor_panel.tune_btn.grab_focus()
+	party.return_to_hero_rail()
+	assert_true(party.enter_content())
+	assert_same(get_viewport().gui_get_focus_owner(), hero_panel.armor_panel.tune_btn)
+
+
+func test_inventory_restores_item_focus_by_resource_identity_after_rebuild() -> void:
+	var panel := preload("res://src/hub/inventory_panel.tscn").instantiate() as InventoryPanel
+	add_child_autofree(panel)
+	await get_tree().process_frame
+	var pistol := load("res://data/equipment/weapons/pistol.tres") as Equipment
+	var original := panel._spawn_grid_button(pistol, Equipment.Slot.WEAPON, 1) as ItemButton
+	original.get_focus_control().grab_focus()
+	var key: String = panel.focus_key(original.get_focus_control())
+	assert_eq(key, "equipment:%s" % pistol.id)
+	panel._clear_grid()
+	await get_tree().process_frame
+	var replacement := panel._spawn_grid_button(pistol, Equipment.Slot.WEAPON, 1) as ItemButton
+	assert_true(panel.restore_focus(key))
+	assert_same(get_viewport().gui_get_focus_owner(), replacement.get_focus_control())
+
+
 func test_pointer_hero_change_in_content_keeps_memory_content_scoped() -> void:
 	var party := await _opened_party_with_three_heroes()
 	assert_true(party.enter_content())
@@ -728,7 +798,7 @@ func test_nonstandard_hub_controls_expose_valid_focus_surfaces() -> void:
 		NavigationFocus.apply(control)
 		var style_name := &"focus" if surface is Button else &"panel"
 		var style := surface.get_theme_stylebox(style_name) as StyleBoxFlat
-		assert_almost_eq(style.bg_color.a, 0.7, 0.001)
+		assert_almost_eq(style.bg_color.a, NavigationFocus.HUB_PULSE_LOW_ALPHA, 0.001)
 		NavigationFocus.clear(control)
 
 

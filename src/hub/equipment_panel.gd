@@ -25,18 +25,22 @@ var _highlight_tween: Tween
 
 
 func _ready() -> void:
-	DisplayProfile.bind(apply_display_profile)
 	equip_button.set_meta("navigation_focus_surface", NodePath("../Header"))
+	equip_button.set_meta("navigation_focus_pulse", true)
 	tune_btn.set_meta("navigation_focus_surface", NodePath("../TuneFocusSurface"))
+	tune_btn.set_meta("navigation_focus_pulse", true)
+	HubChrome.capture(header)
+	HubChrome.capture($Border/Content/XP/TuneFocusSurface)
+	DisplayProfile.bind(apply_display_profile)
 
 
 func apply_display_profile(profile: int, _window_size: Vector2i, _logical_size: Vector2) -> void:
 	var compact := profile == DisplayProfileService.Profile.COMPACT
 	custom_minimum_size.x = 424.0 if compact else 400.0
 	custom_minimum_size.y = 126.0 if compact else 96.0
-	var header_style := header.get_theme_stylebox(&"panel").duplicate() as StyleBoxFlat
+	var header_style := HubChrome.get_base_style(header)
 	header_style.border_width_top = 72 if compact else 42
-	header.add_theme_stylebox_override(&"panel", header_style)
+	HubChrome.set_base_style(header, header_style)
 	equip_button.offset_bottom = 72.0 if compact else 42.0
 	$Border.offset_top = 76.0 if compact else 46.0
 	xp_container.offset_bottom = 72.0 if compact else 40.0
@@ -55,6 +59,14 @@ func apply_display_profile(profile: int, _window_size: Vector2i, _logical_size: 
 
 func get_expanded_minimum_height() -> float:
 	return $Border.offset_top + $Border/Content.size.y + 9.0
+
+
+func set_chrome_active(active: bool) -> void:
+	HubChrome.set_active(header, active)
+	HubChrome.set_active($Border/Content/XP/TuneFocusSurface, active)
+	for slot in mods_container.get_children():
+		if slot is ModSlot and (slot as ModSlot).is_active:
+			(slot as ModSlot).set_chrome_active(active)
 
 
 func setup(item: Equipment):

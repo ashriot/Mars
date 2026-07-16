@@ -24,6 +24,7 @@ var current_hero_idx: int = 0
 var current_tab: Tab = Tab.ROLES
 var current_depth: Depth = Depth.HERO_RAIL
 var _content_focus_memory: Dictionary = {}
+var _items_navigation_origin: Dictionary = {}
 var progression_service: ProgressionService = ProgressionSystem.service
 var progression_catalog: ProgressionCatalog = ProgressionSystem.catalog
 var save_progression: Callable = SaveSystem.save_current_slot
@@ -118,6 +119,11 @@ func _handle_back() -> void:
 	if current_depth == Depth.CONTENT and skill_view.visible and skill_view.cancel_navigation():
 		return
 	if current_depth == Depth.CONTENT and inventory_view.visible and inventory_view.cancel_navigation():
+		var origin_key: String = _items_navigation_origin.get(_items_memory_key(), "")
+		var panel := _get_panel_by_index(current_hero_idx)
+		if origin_key.is_empty() or panel == null or not panel.restore_items_focus(origin_key):
+			_restore_items_focus()
+		_items_navigation_origin.erase(_items_memory_key())
 		return
 	if current_depth == Depth.CONTENT:
 		return_to_hero_rail()
@@ -237,14 +243,26 @@ func _on_hero_equip_requested(item, slot, hero_index):
 		return
 
 	_handle_auto_select_hero(hero_index)
+	var panel := _get_panel_by_index(current_hero_idx)
+	if panel:
+		_remember_items_origin(panel.weapon_panel.equip_button if slot == Equipment.Slot.WEAPON else panel.armor_panel.equip_button)
 	inventory_view.request_equip_mode(item, slot)
 
 func _on_hero_tune_requested(item, hero_index):
 	_handle_auto_select_hero(hero_index)
+	var panel := _get_panel_by_index(current_hero_idx)
+	if panel:
+		_remember_items_origin(panel.weapon_panel.tune_btn if item == panel.data.weapon else panel.armor_panel.tune_btn)
 	inventory_view.request_tune_mode(item)
 
 func _on_hero_mod_requested(item, slot, hero_index):
 	_handle_auto_select_hero(hero_index)
+	var panel := _get_panel_by_index(current_hero_idx)
+	if panel:
+		var equipment_panel := panel.weapon_panel if item == panel.data.weapon else panel.armor_panel
+		var mod_slot := equipment_panel.mods_container.get_child(slot) as ModSlot if slot >= 0 and slot < equipment_panel.mods_container.get_child_count() else null
+		if mod_slot:
+			_remember_items_origin(mod_slot.get_focus_control())
 	inventory_view.request_mod_mode(item, slot)
 
 func _handle_auto_select_hero(index: int):
@@ -313,11 +331,17 @@ func _store_content_focus() -> void:
 	if current_tab == Tab.ROLES:
 		_store_roles_focus()
 		return
+	if current_tab == Tab.ITEMS:
+		_store_items_focus()
+		return
 	_remember_content_focus(get_viewport().gui_get_focus_owner())
 
 
 func _on_gui_focus_changed(control: Control) -> void:
 	if current_depth == Depth.CONTENT:
+		if current_tab == Tab.ITEMS:
+			_store_items_focus()
+			return
 		_remember_content_focus(control)
 
 
@@ -332,6 +356,8 @@ func _remember_content_focus(control: Control) -> void:
 func _restore_content_focus() -> bool:
 	if current_tab == Tab.ROLES:
 		return _restore_roles_focus()
+	if current_tab == Tab.ITEMS:
+		return _restore_items_focus()
 	var remembered: Control
 	var remembered_path: NodePath = _content_focus_memory.get(_content_memory_key(), NodePath())
 	if not remembered_path.is_empty():
@@ -339,12 +365,6 @@ func _restore_content_focus() -> bool:
 	if _is_valid_content_focus(remembered):
 		remembered.grab_focus()
 		return true
-	if current_tab == Tab.ITEMS:
-		var panel := _get_panel_by_index(current_hero_idx)
-		var fallback := _first_focusable_descendant(panel)
-		if fallback:
-			fallback.grab_focus()
-			return true
 	return false
 
 
@@ -354,6 +374,37 @@ func _store_roles_focus() -> void:
 
 func _restore_roles_focus() -> bool:
 	return skill_view.restore_focus()
+
+
+func _items_memory_key() -> String:
+	return "items:%s" % party_roster[current_hero_idx].hero_id
+
+
+func _store_items_focus() -> void:
+	var owner := get_viewport().gui_get_focus_owner()
+	if owner == null:
+		return
+	var panel := _get_panel_by_index(current_hero_idx)
+	var key := panel.items_focus_key(owner) if panel and panel.is_ancestor_of(owner) else inventory_view.focus_key(owner)
+	if not key.is_empty():
+		_content_focus_memory[_items_memory_key()] = key
+
+
+func _restore_items_focus() -> bool:
+	var key: String = _content_focus_memory.get(_items_memory_key(), "")
+	var panel := _get_panel_by_index(current_hero_idx)
+	if (key.is_empty() or key.begins_with("hero:")) and panel and panel.restore_items_focus(key):
+		return true
+	return inventory_view.restore_focus(key)
+
+
+func _remember_items_origin(control: Control) -> void:
+	var panel := _get_panel_by_index(current_hero_idx)
+	if panel == null:
+		return
+	var key := panel.items_focus_key(control)
+	if not key.is_empty():
+		_items_navigation_origin[_items_memory_key()] = key
 
 
 func _first_focusable_descendant(root: Control) -> Control:
@@ -419,7 +470,9 @@ func _update_depth_presentation() -> void:
 	for index in range(hero_list_container.get_child_count()):
 		var panel := hero_list_container.get_child(index) as HeroPanel
 		panel.set_chrome_active(current_depth == Depth.HERO_RAIL or index == current_hero_idx)
-	skill_view.set_chrome_active(current_depth == Depth.CONTENT and current_tab == Tab.ROLES)
+	var content_active := current_depth == Depth.CONTENT
+	skill_view.set_chrome_active(content_active and current_tab == Tab.ROLES)
+	inventory_view.set_chrome_active(content_active and current_tab == Tab.ITEMS)
 
 func _get_panel_by_index(index: int) -> HeroPanel:
 	if index >= 0 and index < hero_list_container.get_child_count():

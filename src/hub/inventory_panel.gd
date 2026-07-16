@@ -73,6 +73,42 @@ func cancel_navigation() -> bool:
 	_close_panel()
 	return true
 
+
+func focus_key(control: Control) -> String:
+	for child in grid.get_children():
+		if child is ItemButton and ((child as ItemButton).get_focus_control() == control or child.is_ancestor_of(control)):
+			return (child as ItemButton).get_focus_key()
+	return ""
+
+
+func default_focus() -> Control:
+	for child in grid.get_children():
+		if child is ItemButton:
+			var control := (child as ItemButton).get_focus_control()
+			if not control.disabled and control.visible:
+				return control
+	return null
+
+
+func restore_focus(key: String) -> bool:
+	for child in grid.get_children():
+		if child is ItemButton and (child as ItemButton).get_focus_key() == key:
+			var control := (child as ItemButton).get_focus_control()
+			if not control.disabled and control.is_visible_in_tree():
+				control.grab_focus()
+				return true
+	var fallback := default_focus()
+	if fallback:
+		fallback.grab_focus()
+		return true
+	return false
+
+
+func set_chrome_active(active: bool) -> void:
+	for child in grid.get_children():
+		if child is ItemButton:
+			(child as ItemButton).set_chrome_active(active)
+
 func on_equip_requested(item: Equipment, slot_type: Equipment.Slot):
 	current_mode = Mode.EQUIP
 

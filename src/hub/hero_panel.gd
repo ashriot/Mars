@@ -106,6 +106,30 @@ func _gui_input(event: InputEvent):
 
 func set_chrome_active(active: bool) -> void:
 	HubChrome.set_active($Content/Header, active)
+	weapon_panel.set_chrome_active(active)
+	armor_panel.set_chrome_active(active)
+
+
+func items_default_focus() -> Control:
+	for control: Control in [weapon_panel.equip_button, armor_panel.equip_button, weapon_panel.tune_btn, armor_panel.tune_btn]:
+		if control.is_visible_in_tree() and not (control is BaseButton and control.disabled):
+			return control
+	return null
+
+
+func items_focus_key(control: Control) -> String:
+	return "hero:%s" % get_path_to(control) if is_instance_valid(control) and is_ancestor_of(control) else ""
+
+
+func restore_items_focus(key: String) -> bool:
+	var relative_path := key.trim_prefix("hero:")
+	var control := get_node_or_null(NodePath(relative_path)) as Control if key.begins_with("hero:") else items_default_focus()
+	if control == null or not control.is_visible_in_tree() or (control is BaseButton and control.disabled):
+		control = items_default_focus()
+	if control == null:
+		return false
+	control.grab_focus()
+	return true
 
 func set_mode(is_inventory_mode: bool):
 	weapon_panel.visible = is_inventory_mode
