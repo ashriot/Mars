@@ -21,15 +21,17 @@ Hero entries display the current role icon tinted with the role's authored color
 
 Enemy entries display the existing stable abbreviation. The abbreviation uses the project's Archivo font and the bright magenta used by the outer enemy CT gauge (`CTBGauge.ENEMY_COLORS[0]`). The active occurrence retains the same entry content; its gold perimeter is sufficient to show current-turn state.
 
-The rail backing supplies contrast for both hero icons and enemy text. Individual entries retain their existing dark interior treatment only where needed for legibility; the result should read as one unified rail rather than a stack of unrelated black panels.
+The rail backing supplies overall contrast, while every entry uses a fully opaque faction-tinted near-black interior so bright battlefield art cannot show through its icon or abbreviation. Hero interiors use dark cyan `#04151B`; enemy interiors use dark magenta `#1B0615`. Both retain the existing rounded interior geometry. The tint is deliberately subtle enough that the bright perimeter, role icon, and enemy abbreviation remain the primary faction signals.
 
 ## Gauge Composition
 
-Each non-current CT gauge begins with the existing subtle dark-gray perimeter track. The three 20-tick faction bands are then painted over that track in light, medium, and dark cyan for heroes or magenta for enemies.
+Each non-current CT gauge begins with the existing subtle dark-gray perimeter track and paints one continuous six-pixel faction-colored readiness arc over it: bright cyan for heroes or bright magenta for enemies. The arc has one fixed origin at the top-center of the rounded square and grows clockwise as the occurrence approaches its turn.
 
-All three faction strokes use the same six-pixel width and are fully opaque. The light band paints first, the medium band paints over it, and the dark band paints last. A partial later band covers only its filled fraction of the same perimeter. The bands never use progressively narrower widths, so the result has no concentric or nested colored lines.
+The readiness arc uses a fixed absolute 0-to-80-tick scale rather than normalizing against the visible projection. At 80 or more ticks away the arc is empty; 60 ticks is one quarter full, 40 is half full, 20 is three quarters full, and 0 ticks is full. Values above 80 remain empty. This stable mapping ensures an unrelated queue change or hover preview never changes an occurrence's gauge unless its projected tick distance actually changed.
 
-The current queue occurrence remains a single full gold perimeter using `CTBGauge.CURRENT_COLOR` (`#FFC94A`).
+The square's side midpoints and corners provide the quarter landmarks. The gauge uses no shade changes, nested strokes, separator lines, or disconnected pips. Delays drain the arc toward the top-center origin; boosts fill it forward. Existing 0.3-second interpolation remains.
+
+The current queue occurrence remains a single full gold perimeter using `CTBGauge.CURRENT_COLOR` (`#FFC94A`). If another non-current occurrence is also projected at 0 ticks because of an exact tie, it remains fully faction-colored until it becomes the actual current occurrence.
 
 ## Acting Unit Outline
 
@@ -77,8 +79,8 @@ Automated coverage will protect:
 
 - uniform 72 by 72 entry sizing and removal of the separate active name;
 - one scroll container containing current and future entries;
-- role-color icon tint, Archivo enemy font, and bright-magenta enemy text;
-- 90%-opaque rail backing and same-width light/medium/dark gauge overlays;
+- role-color icon tint, Archivo enemy font, bright-magenta enemy text, and opaque faction-tinted near-black entry interiors;
+- 90%-opaque rail backing and the fixed inverse 0-to-80-tick single-color readiness arc with a top-center origin;
 - persistent gold acting-card outline on hero and enemy turns without disrupting target presentation;
 - inset scrollbar visibility at the top and away from the top;
 - preview scroll preservation and committed-update snap-to-top behavior;
@@ -86,4 +88,4 @@ Automated coverage will protect:
 - stale tween cancellation under rapid projections;
 - empty-queue cleanup and unchanged right-stick selection behavior.
 
-Manual acceptance at the 1920 by 1080 reference viewport will confirm contrast, rounded-rail composition, non-nested gauge readability, acting-card/queue visual correspondence, readable crossing animations, scrollbar placement, and mouse/controller/touch feel.
+Manual acceptance at the 1920 by 1080 reference viewport will confirm contrast, opaque faction-tinted interiors, top-center gauge origin, quarter readability, readiness-fill direction, acting-card/queue visual correspondence, readable crossing animations, scrollbar placement, and mouse/controller/touch feel.
