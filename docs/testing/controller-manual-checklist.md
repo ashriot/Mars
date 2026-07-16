@@ -107,13 +107,14 @@ Run this sequence once over USB and once over Bluetooth. Fill in both rows befor
 
 - [ ] Title: initial focus is visible and enabled; confirm starts/continues only the focused choice; disabled Load is skipped.
 - [ ] Hub outer depth: navigate every enabled action, confirm opens the selected panel, and cancel/return behavior is stable.
-- [ ] Party hero-list depth: traverse every hero, enter content, return to the remembered hero, and close outward.
-- [ ] Skill role/page depth: traverse each unlocked role and every authored page; remembered role, page, and node restore after leaving and returning.
-- [ ] Skill node depth: D-pad geometry is deterministic; available, affordable, locked, and owned nodes show the correct focus/hint state; confirm never purchases twice.
-- [ ] L1/R1 page controls wrap only among authored pages; one-page roles omit or disable page hints.
-- [ ] L2/R2 role controls remain active at hero, page, and node depths and restore a valid node.
-- [ ] Inventory depth: traverse all slots, begin/cancel held-item mode, and verify valid versus invalid equipment/mod targets.
-- [ ] Equipment depth: navigate equipment and mod slots, confirm the existing action path, cancel held state before leaving, and never act on an empty/stale hero.
+- [ ] Party menu opens on the selected expanded hero; Up/Down immediately selects, expands, and pulses exactly one hero.
+- [ ] Right or Confirm enters content; Left or Back returns directly to the selected hero; Back again closes party management.
+- [ ] L2/R2 wrap Roles, Items, Options, and Journal from hero and content depth; top controller-family glyphs match and fade without layout shift after keyboard input, mouse click, or touch.
+- [ ] Options and Journal show `COMING SOON`, keep focus on the selected hero, and never leave focus null.
+- [ ] In Roles, L1/R1 wrap unlocked roles; D-pad reaches every authored rank-page button and stable node focus restores per hero, role, and page.
+- [ ] In Items, Back cancels Equip/Tune/Mod before returning to the hero rail; equipment and inventory focus restore to a valid stable context.
+- [ ] Exact controller focus uses one neutral background pulse. Hero/content depth darkens only inactive white/neon edges; text, icons, stats, costs, gauges, and backgrounds remain fully readable.
+- [ ] Mouse/touch directly select heroes, tabs, roles, pages, equipment, and items, and the next controller input resumes from synchronized focus state.
 - [ ] Open nested hub/terminal-style modals; directional input and confirm stay in the top modal, cancel closes only the top layer, and the prior focus/hints restore.
 
 ## Dungeon map and terminal

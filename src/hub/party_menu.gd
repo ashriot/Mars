@@ -10,6 +10,7 @@ enum Depth { HERO_RAIL, CONTENT }
 @onready var hero_list_container: VBoxContainer = $HeroList
 @onready var skill_view: SkillTreePanel = $Content/SkillTreePanel
 @onready var inventory_view: InventoryPanel = $Content/InventoryPanel
+@onready var mode_tabs: HBoxContainer = $Header/TabStrip
 @onready var tab_buttons: Array[Button] = [
 	$Header/TabStrip/Roles,
 	$Header/TabStrip/Items,
@@ -50,9 +51,17 @@ func apply_display_profile(profile: int, window_size: Vector2i, logical_size: Ve
 	_display_window_size = window_size
 	_display_logical_size = logical_size
 	var compact := profile == DisplayProfileService.Profile.COMPACT
+	$Header.offset_top = 20.0
+	$Header.offset_bottom = 92.0 if compact else 84.0
+	$Header.offset_left = 30.0
+	$Header.offset_right = -30.0
+	$HeroList.offset_top = -500.0 if compact else -452.0
+	$HeroList.offset_bottom = 360.0 if compact else 408.0
 	$BackBtn.offset_top = 489.0 if compact else 477.0
 	$BackBtn.offset_bottom = 561.0 if compact else 525.0
-	$Header/TabStrip.add_theme_constant_override(&"separation", 12 if compact else 8)
+	$Content.offset_top = -500.0 if compact else -452.0
+	$Content.offset_bottom = 532.0
+	mode_tabs.add_theme_constant_override(&"separation", 12 if compact else 8)
 	inventory_view.apply_display_profile(profile, window_size, logical_size)
 	for child in hero_list_container.get_children():
 		if child is HeroPanel:

@@ -216,10 +216,15 @@ func test_controller_events_route_the_complete_playable_loop() -> void:
 	_assert_fresh_starting_kits()
 	var hub := router.current_instance as Hub
 	SaveSystem.party_roster[0].current_xp = 200
-	(hub.get_node("Actions/Button3") as Button).grab_focus()
-	await _send(&"confirm")
+	var party := hub.party_menu
+	party.open()
 	await get_tree().process_frame
-	var skill_view := hub.party_menu.skill_view
+	assert_same(get_viewport().gui_get_focus_owner(), party.hero_list_container.get_child(0))
+	await _send_semantic(&"confirm")
+	assert_eq(party.current_depth, PartyMenu.Depth.CONTENT)
+	await _send_semantic(&"hub_role_next")
+	await _send_semantic(&"hub_role_previous")
+	var skill_view := party.skill_view
 	watch_signals(skill_view)
 	assert_true(skill_view.focus_node("gun.anchor"))
 	await _send_semantic(&"confirm")
@@ -239,7 +244,8 @@ func test_controller_events_route_the_complete_playable_loop() -> void:
 	await _send_semantic(&"confirm")
 	assert_signal_emitted_with_parameters(skill_view, "purchase_requested", [SaveSystem.party_roster[0], "gun", "gun.atk_1"])
 	assert_signal_emit_count(skill_view, "purchase_requested", 1)
-	hub.party_menu._on_back_pressed()
+	party._on_back_pressed()
+	party._on_back_pressed()
 	await get_tree().process_frame
 	hub.head_out_button.grab_focus()
 	_assert_focus(router.current_instance.head_out_button)

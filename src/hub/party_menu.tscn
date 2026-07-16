@@ -36,9 +36,9 @@ anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
 offset_left = 30.0
-offset_top = -532.0
+offset_top = -452.0
 offset_right = 330.0
-offset_bottom = 328.0
+offset_bottom = 408.0
 grow_vertical = 2
 theme_override_constants/separation = 16
 
@@ -46,10 +46,10 @@ theme_override_constants/separation = 16
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_left = 360.0
-offset_top = 16.0
+offset_left = 30.0
+offset_top = 20.0
 offset_right = -30.0
-offset_bottom = 72.0
+offset_bottom = 84.0
 grow_horizontal = 2
 
 [node name="TabStrip" type="HBoxContainer" parent="Header"]
@@ -136,7 +136,7 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -619.0
-offset_top = -532.0
+offset_top = -452.0
 offset_right = 952.0
 offset_bottom = 532.0
 grow_horizontal = 2

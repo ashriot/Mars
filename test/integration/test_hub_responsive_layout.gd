@@ -23,13 +23,24 @@ func test_compact_hub_shell_and_inventory_scroll_fit_deck_output() -> void:
 	var scroll := menu.get_node("Content/InventoryPanel/InventoryScroll") as ScrollContainer
 
 	assert_true(ResponsiveFixture.fits_output(menu.get_node("HeroList"), DECK_SIZE))
-	assert_true(ResponsiveFixture.fits_output(menu.get_node("Header"), DECK_SIZE))
 	assert_true(ResponsiveFixture.fits_output(menu.get_node("BackBtn"), DECK_SIZE))
 	assert_true(ResponsiveFixture.fits_output(menu.get_node("Content"), DECK_SIZE))
 	assert_gte(ResponsiveFixture.physical_rect(menu.get_node("BackBtn"), DECK_SIZE).size.y, 48.0)
 	assert_eq(scroll.vertical_scroll_mode, ScrollContainer.SCROLL_MODE_AUTO)
 	assert_eq(scroll.horizontal_scroll_mode, ScrollContainer.SCROLL_MODE_DISABLED)
 	assert_eq(menu.inventory_view.grid, scroll.get_node("InventoryGrid"))
+
+
+func test_compact_hub_top_tabs_and_stub_content_fit_deck_output() -> void:
+	var menu := await _compact_party_menu()
+	var tab_strip := menu.get_node("Header/TabStrip") as Control
+	assert_true(ResponsiveFixture.fits_output(tab_strip, DECK_SIZE))
+	for button: Button in menu.tab_buttons:
+		assert_true(ResponsiveFixture.fits_output(button, DECK_SIZE))
+		assert_gte(ResponsiveFixture.physical_rect(button, DECK_SIZE).size.y, 48.0)
+	menu.change_tab(2)
+	assert_true(ResponsiveFixture.fits_output(menu.get_node("Content/OptionsComingSoon"), DECK_SIZE))
+	assert_same(menu.get_viewport().gui_get_focus_owner(), menu.hero_list_container.get_child(menu.current_hero_idx))
 
 
 func test_compact_inventory_scrolls_and_wraps_enabled_button_focus() -> void:
