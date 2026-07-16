@@ -19,7 +19,7 @@ The selected-action panel must no longer reserve space for the removed active na
 
 Hero entries display the current role icon tinted with the role's authored color. A role shift updates every visible occurrence of that hero.
 
-Enemy entries display the existing stable abbreviation. The abbreviation uses the project's Archivo font and the bright magenta used by the outer enemy CT gauge (`CTBGauge.ENEMY_COLORS[0]`). The active occurrence retains the same entry content; its gold perimeter is sufficient to show current-turn state.
+Enemy entries display the existing stable abbreviation. The abbreviation uses the project's Archivo font and the bright magenta used by the outer enemy CT gauge (`CTBGauge.ENEMY_COLOR`). The active occurrence retains the same entry content; its gold perimeter is sufficient to show current-turn state.
 
 The rail backing supplies overall contrast, while every entry uses a fully opaque faction-tinted near-black interior so bright battlefield art cannot show through its icon or abbreviation. Hero interiors use dark cyan `#04151B`; enemy interiors use dark magenta `#1B0615`. Both retain the existing rounded interior geometry. The tint is deliberately subtle enough that the bright perimeter, role icon, and enemy abbreviation remain the primary faction signals.
 

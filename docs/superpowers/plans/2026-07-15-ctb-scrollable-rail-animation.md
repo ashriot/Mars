@@ -13,7 +13,8 @@
 - Preserve normalized CT, deterministic tie ordering, signed CT, action recovery, and all combat rules unchanged.
 - Use one 120 by 764 pixel rounded black rail and uniform 72 by 72 pixel entries.
 - The rail background is black at 90% opacity.
-- Non-current gauges keep the dark-gray track and paint light, medium, then dark faction bands as fully opaque same-width six-pixel strokes; later bands cover earlier bands without nested widths.
+- Non-current gauges keep the dark-gray track and paint one continuous bright faction-colored six-pixel readiness arc from top-center, using a fixed inverse 0-to-80-tick scale.
+- Every queue entry uses a fully opaque faction-tinted near-black interior: hero `#04151B`, enemy `#1B0615`.
 - The battlefield current actor keeps a `#FFC94A` acting outline beneath independent target outline and pulse layers for the full turn.
 - The current occurrence scrolls with the rest and is identified only by its gold perimeter.
 - Hover previews preserve scroll; commits and turn advances reset it to zero.
@@ -1162,4 +1163,226 @@ Expected: import and all focused/full suites exit zero with no parser errors, cr
 ```bash
 git add src/battle/actor_queue.gd src/battle/turn_queue.gd src/battle/turn_queue.tscn test/integration/test_turn_queue.gd docs/testing/ctb-combat-checklist.md
 git commit -m "fix: slide consumed CTB turn left"
+```
+
+### Task 6: Replace Layered Tick Bands with a Readiness Arc
+
+**Files:**
+- Modify: `src/battle/ctb_gauge.gd`
+- Modify: `src/battle/actor_queue.gd`
+- Modify: `src/battle/actor_queue.tscn`
+- Modify: `test/unit/test_ctb_gauge.gd`
+- Modify: `test/integration/test_turn_queue.gd`
+- Modify: `docs/testing/ctb-combat-checklist.md`
+
+**Interfaces:**
+- Produces: `CTBGauge.MAX_READINESS_TICKS := 80.0`, `HERO_COLOR`, `ENEMY_COLOR`, `readiness_fill(ticks: float) -> float`, and `faction_color(faction: Faction) -> Color`.
+- Preserves: `CTBGauge.TRACK_COLOR`, `CURRENT_COLOR`, `partial_polyline()`, 0.3-second tick interpolation, and full-gold current rendering.
+- Produces: `ActorQueue.HERO_INTERIOR_COLOR := Color("04151b")`, `ENEMY_INTERIOR_COLOR := Color("1b0615")`, and `interior: Panel`.
+- Removes: the obsolete `TICKS_PER_BAND`, `HERO_COLORS`, `ENEMY_COLORS`, `band_fills()`, and `faction_strokes()` layered-band API.
+
+- [ ] **Step 1: Replace layered-band tests with fixed inverse-readiness tests**
+
+In `test/unit/test_ctb_gauge.gd`, replace `test_fixed_twenty_tick_bands_and_saturation()`, `test_quarter_recovery_steps_map_to_half_band_steps()`, and `test_faction_strokes_overlay_light_medium_dark_at_one_width()` with:
+
+```gdscript
+func test_readiness_fill_uses_fixed_inverse_zero_to_eighty_tick_scale() -> void:
+	assert_eq(CTBGauge.readiness_fill(-10), 1.0)
+	assert_eq(CTBGauge.readiness_fill(0), 1.0)
+	assert_eq(CTBGauge.readiness_fill(20), 0.75)
+	assert_eq(CTBGauge.readiness_fill(40), 0.5)
+	assert_eq(CTBGauge.readiness_fill(60), 0.25)
+	assert_eq(CTBGauge.readiness_fill(80), 0.0)
+	assert_eq(CTBGauge.readiness_fill(100), 0.0)
+
+
+func test_readiness_gauge_uses_one_bright_faction_color() -> void:
+	assert_eq(CTBGauge.faction_color(CTBGauge.Faction.HERO), Color("56e5ff"))
+	assert_eq(CTBGauge.faction_color(CTBGauge.Faction.ENEMY), Color("ff5bc8"))
+```
+
+Add a path-origin and quarter-landmark regression:
+
+```gdscript
+func test_rounded_path_starts_top_center_and_runs_clockwise_by_quarters() -> void:
+	var rect := Rect2(Vector2(3, 3), Vector2(66, 66))
+	var path := CTBGauge.rounded_rect_path(rect, 10.0)
+	assert_eq(path[0], Vector2(36, 3))
+	assert_eq(path[-1], path[0])
+
+	var quarter := CTBGauge.partial_polyline(path, 0.25)
+	assert_almost_eq(quarter[-1].x, 69.0, 0.01)
+	assert_almost_eq(quarter[-1].y, 36.0, 0.01)
+	var half := CTBGauge.partial_polyline(path, 0.5)
+	assert_almost_eq(half[-1].x, 36.0, 0.01)
+	assert_almost_eq(half[-1].y, 69.0, 0.01)
+	var three_quarters := CTBGauge.partial_polyline(path, 0.75)
+	assert_almost_eq(three_quarters[-1].x, 3.0, 0.01)
+	assert_almost_eq(three_quarters[-1].y, 36.0, 0.01)
+```
+
+In `test_gauge_interpolates_ticks_without_mutating_target()`, replace the obsolete band assertion with:
+
+```gdscript
+	assert_eq(CTBGauge.readiness_fill(gauge.displayed_ticks), 0.625)
+```
+
+- [ ] **Step 2: Add failing faction-interior integration assertions**
+
+Rename `test_queue_uses_role_color_archivo_and_enemy_gauge_magenta()` in `test/integration/test_turn_queue.gd` to `test_queue_uses_role_color_archivo_and_faction_presentation()`. After the existing icon and font assertions, replace the old `ENEMY_COLORS[0]` assertion and add opaque interior assertions:
+
+```gdscript
+	assert_eq(
+		queue.queue_items[1].enemy_label.get_theme_color("font_color"),
+		CTBGauge.ENEMY_COLOR,
+	)
+	var hero_style := queue.queue_items[0].interior.get_theme_stylebox("panel") as StyleBoxFlat
+	var enemy_style := queue.queue_items[1].interior.get_theme_stylebox("panel") as StyleBoxFlat
+	assert_eq(hero_style.bg_color, ActorQueue.HERO_INTERIOR_COLOR)
+	assert_eq(enemy_style.bg_color, ActorQueue.ENEMY_INTERIOR_COLOR)
+	assert_eq(hero_style.bg_color.a, 1.0)
+	assert_eq(enemy_style.bg_color.a, 1.0)
+	assert_ne(hero_style, enemy_style)
+```
+
+The final identity assertion protects per-instance style ownership: configuring an enemy entry must not recolor the hero entry through a shared `StyleBoxFlat` resource.
+
+- [ ] **Step 3: Run focused suites and verify RED**
+
+Run:
+
+```bash
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect ctb_gauge -gexit
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect turn_queue -gexit
+```
+
+Expected: the gauge suite fails because `readiness_fill()`, `faction_color()`, `HERO_COLOR`, and `ENEMY_COLOR` do not exist and the rounded path begins near the upper-right corner. The queue suite fails because `ActorQueue.interior`, `HERO_INTERIOR_COLOR`, and `ENEMY_INTERIOR_COLOR` do not exist. No production file changes before these failures are observed.
+
+- [ ] **Step 4: Replace layered bands with the single inverse readiness mapping**
+
+In `src/battle/ctb_gauge.gd`, replace the band and color-array constants with:
+
+```gdscript
+const MAX_READINESS_TICKS := 80.0
+const HERO_COLOR := Color("56e5ff")
+const ENEMY_COLOR := Color("ff5bc8")
+```
+
+Replace `band_fills()` and `faction_strokes()` with:
+
+```gdscript
+static func readiness_fill(ticks: float) -> float:
+	return 1.0 - clampf(ticks / MAX_READINESS_TICKS, 0.0, 1.0)
+
+
+static func faction_color(faction: Faction) -> Color:
+	return HERO_COLOR if faction == Faction.HERO else ENEMY_COLOR
+```
+
+This is an absolute mapping. Do not derive the fill from queue length, the last projected occurrence, scroll position, actor count, or any other projection-relative value.
+
+- [ ] **Step 5: Move the rounded path origin to top-center**
+
+In `rounded_rect_path()`, initialize the path with the top-center point before appending the existing clockwise corner samples, then close it back at top-center:
+
+```gdscript
+	var top_center := Vector2(rect.get_center().x, rect.position.y)
+	var points := PackedVector2Array([top_center])
+	for corner in 4:
+		for step in segments_per_corner + 1:
+			var angle: float = starts[corner] + PI * 0.5 * float(step) / segments_per_corner
+			points.append(centers[corner] + Vector2(cos(angle), sin(angle)) * r)
+	points.append(top_center)
+	return points
+```
+
+The first existing corner sample is the top-right tangent and the final sample is the top-left tangent, so this order travels clockwise and makes each 25% of the square perimeter land at the next side midpoint.
+
+- [ ] **Step 6: Draw one faction arc over the existing track**
+
+Replace the non-current layered loop in `_draw()` with:
+
+```gdscript
+	var partial := partial_polyline(path, readiness_fill(displayed_ticks))
+	if partial.size() >= 2:
+		draw_polyline(partial, faction_color(_faction), GAUGE_WIDTH, true)
+```
+
+Keep the track draw before this block. Keep the current-state early return so the actual current occurrence is always a complete gold perimeter, while a tied non-current occurrence at zero ticks is a complete faction-colored perimeter.
+
+- [ ] **Step 7: Give each entry its own opaque faction-tinted interior**
+
+In `src/battle/actor_queue.tscn`, make the interior style local to each scene instance and use the hero color as its authored default:
+
+```text
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_interior"]
+resource_local_to_scene = true
+bg_color = Color(0.015686275, 0.08235294, 0.105882354, 1)
+```
+
+Retain the existing four seven-pixel corner radii.
+
+In `src/battle/actor_queue.gd`, add:
+
+```gdscript
+const HERO_INTERIOR_COLOR := Color("04151b")
+const ENEMY_INTERIOR_COLOR := Color("1b0615")
+
+@onready var interior: Panel = $Interior
+```
+
+At the start of `setup()`, after assigning `actor_ref` and `occurrence_index`, set the local style:
+
+```gdscript
+	var interior_style := interior.get_theme_stylebox("panel") as StyleBoxFlat
+	interior_style.bg_color = (
+		HERO_INTERIOR_COLOR if actor is HeroCard else ENEMY_INTERIOR_COLOR
+	)
+```
+
+Update the authored enemy label color in `src/battle/actor_queue.tscn` only if necessary to keep its existing exact `#FF5BC8` value. The new `CTBGauge.ENEMY_COLOR` constant becomes the code-level source used by tests.
+
+- [ ] **Step 8: Run focused suites and verify GREEN**
+
+Run:
+
+```bash
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect ctb_gauge -gexit
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect actor_queue -gexit
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect turn_queue -gexit
+```
+
+Expected: all focused suites pass. The readiness tests prove 80+ empty, 60 quarter, 40 half, 20 three-quarters, and 0 full; the path test proves the fixed top-center clockwise origin; the integration test proves distinct fully opaque dark-cyan and dark-magenta interiors.
+
+- [ ] **Step 9: Update manual acceptance**
+
+In `docs/testing/ctb-combat-checklist.md`, replace all layered-shade checks with unchecked checks that:
+
+- hero queue interiors are fully opaque dark cyan and enemy interiors are fully opaque dark magenta, with no battlefield art showing through;
+- non-current gauges use one bright cyan or magenta readiness arc over the dark-gray track, with no shade layers, nested lines, separators, or pips;
+- the arc begins at top-center and fills clockwise as a turn approaches;
+- 80+ ticks is empty, 60 is one quarter, 40 is half, 20 is three quarters, and 0 is full;
+- delays visibly drain the arc and boosts visibly fill it without changing unrelated occurrences;
+- the actual current occurrence alone replaces the full faction arc with the full gold perimeter.
+
+- [ ] **Step 10: Import, run focused tests, then run the complete suite**
+
+Run:
+
+```bash
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" --editor --quit
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect ctb_gauge -gexit
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect actor_queue -gexit
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect turn_queue -gexit
+HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gexit
+git diff --check
+```
+
+Expected: import and every focused/full suite exit zero with no parser errors, crashes, or unexpected runtime errors. Record exact totals; the documented CA and engine-shutdown diagnostics remain acceptable. Complete the new visual checks manually at the 1920 by 1080 reference viewport.
+
+- [ ] **Step 11: Commit Task 6**
+
+```bash
+git add src/battle/ctb_gauge.gd src/battle/actor_queue.gd src/battle/actor_queue.tscn test/unit/test_ctb_gauge.gd test/integration/test_turn_queue.gd docs/testing/ctb-combat-checklist.md
+git commit -m "fix: simplify CTB readiness gauge"
 ```
