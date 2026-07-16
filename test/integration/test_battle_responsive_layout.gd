@@ -53,6 +53,12 @@ func test_compact_battle_metadata_remains_readable_at_deck_scale() -> void:
 		24,
 	)
 	assert_eq(turn_queue.queue_items[0].enemy_label.get_theme_font_size(&"font_size"), 24)
+	battle.apply_display_profile(
+		DisplayProfileService.Profile.DESKTOP,
+		Vector2i(1920, 1080),
+		Vector2(1920, 1080),
+	)
+	assert_eq(turn_queue.queue_items[0].enemy_label.get_theme_font_size(&"font_size"), 20)
 	assert_gte(
 		(action_bar.get_node("Actions/ActionButtonD/Title") as Label).get_theme_font_size(&"font_size"),
 		30,
