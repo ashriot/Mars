@@ -20,8 +20,11 @@ static func apply(control: Control) -> void:
 			"label": weakref(label),
 			"had_override": label.has_theme_color_override(&"font_color"),
 			"color": label.get_theme_color(&"font_color"),
+			"had_outline_override": label.has_theme_constant_override(&"outline_size"),
+			"outline_size": label.get_theme_constant(&"outline_size"),
 		})
 		label.add_theme_color_override(&"font_color", FOCUS_FOREGROUND)
+		label.add_theme_constant_override(&"outline_size", 0)
 	var state := {
 		"control": weakref(control),
 		"surface": weakref(surface),
@@ -61,6 +64,10 @@ static func clear(control: Control) -> void:
 			label.add_theme_color_override(&"font_color", label_state.color)
 		else:
 			label.remove_theme_color_override(&"font_color")
+		if label_state.had_outline_override:
+			label.add_theme_constant_override(&"outline_size", label_state.outline_size)
+		else:
+			label.remove_theme_constant_override(&"outline_size")
 	if control is Button:
 		if state.had_font_focus_override:
 			control.add_theme_color_override(&"font_focus_color", state.font_focus_color)
@@ -85,6 +92,6 @@ static func _focus_labels(control: Control, surface: Control) -> Array[Label]:
 	var labels: Array[Label] = []
 	for root in [control, surface]:
 		for child in root.find_children("*", "Label", true, false):
-			if child is Label and not labels.has(child):
+			if child is Label and not child.get_meta("navigation_focus_exclude", false) and not labels.has(child):
 				labels.append(child)
 	return labels

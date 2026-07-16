@@ -38,6 +38,35 @@ func test_clear_restores_authored_style_and_label_colors() -> void:
 	assert_eq(label.get_theme_color(&"font_color"), Color.GREEN)
 
 
+func test_focus_suppresses_primary_outline_but_preserves_excluded_metadata_label() -> void:
+	var control := TextureButton.new()
+	var surface := Panel.new()
+	surface.name = "Panel"
+	var label := Label.new()
+	var metadata_label := Label.new()
+	control.add_child(surface)
+	control.add_child(label)
+	control.add_child(metadata_label)
+	control.set_meta("navigation_focus_surface", NodePath("Panel"))
+	label.add_theme_constant_override(&"outline_size", 12)
+	metadata_label.add_theme_color_override(&"font_color", Color.GREEN)
+	metadata_label.add_theme_constant_override(&"outline_size", 10)
+	metadata_label.set_meta("navigation_focus_exclude", true)
+	add_child_autofree(control)
+
+	NavigationFocus.apply(control)
+
+	assert_eq(label.get_theme_constant(&"outline_size"), 0)
+	assert_eq(metadata_label.get_theme_color(&"font_color"), Color.GREEN)
+	assert_eq(metadata_label.get_theme_constant(&"outline_size"), 10)
+
+	NavigationFocus.clear(control)
+
+	assert_eq(label.get_theme_constant(&"outline_size"), 12)
+	assert_eq(metadata_label.get_theme_color(&"font_color"), Color.GREEN)
+	assert_eq(metadata_label.get_theme_constant(&"outline_size"), 10)
+
+
 func test_freed_highlighted_control_releases_saved_state() -> void:
 	var control := Button.new()
 	add_child(control)

@@ -13,6 +13,7 @@ class TestInputManager extends InputManager:
 	var mouse_modes: Array[Input.MouseMode] = []
 	var handled_event_count := 0
 	var custom_cursor_hotspot := Vector2.INF
+	var connected_device_names: Array[String] = []
 
 	func _set_mouse_mode(mode: Input.MouseMode) -> void:
 		mouse_modes.append(mode)
@@ -22,6 +23,9 @@ class TestInputManager extends InputManager:
 
 	func _mark_input_handled() -> void:
 		handled_event_count += 1
+
+	func _connected_device_names() -> Array[String]:
+		return connected_device_names
 
 
 func before_each() -> void:
@@ -212,6 +216,25 @@ func test_connect_and_reconnect_update_controller_family() -> void:
 	manager.handle_joy_connection_changed([])
 	manager.handle_joy_connection_changed(["Nintendo Switch Pro Controller"])
 	assert_eq(manager.get_active_controller_type(), InputIconMap.ControllerType.NINTENDO_SWITCH)
+
+
+func test_controller_connection_claims_input_ownership() -> void:
+	manager.handle_joy_connection_changed(["Xbox Wireless Controller"])
+
+	assert_eq(manager.get_active_mode(), manager.InputMode.CONTROLLER)
+	assert_eq(manager.get_presentation_mode(), manager.PresentationMode.FOCUS)
+	assert_true(not manager.mouse_modes.is_empty() and manager.mouse_modes.back() == Input.MOUSE_MODE_HIDDEN)
+
+
+func test_ready_with_connected_controller_claims_input_ownership() -> void:
+	var connected_names: Array[String] = ["DualSense Wireless Controller"]
+	manager.connected_device_names = connected_names
+
+	manager._ready()
+
+	assert_eq(manager.get_active_mode(), manager.InputMode.CONTROLLER)
+	assert_eq(manager.get_presentation_mode(), manager.PresentationMode.FOCUS)
+	assert_true(not manager.mouse_modes.is_empty() and manager.mouse_modes.back() == Input.MOUSE_MODE_HIDDEN)
 
 
 func test_mode_and_family_signals_emit_only_on_actual_changes() -> void:

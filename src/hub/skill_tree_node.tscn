@@ -103,6 +103,7 @@ theme_override_constants/outline_size = 10
 theme_override_font_sizes/font_size = 20
 text = "100 XP"
 horizontal_alignment = 2
+metadata/navigation_focus_exclude = true
 
 [node name="Arrows" type="Control" parent="."]
 layout_mode = 1

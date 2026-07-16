@@ -26,7 +26,7 @@ func _ready() -> void:
 	Input.joy_connection_changed.connect(_on_joy_connection_changed)
 	_install_hardware_cursor(HARDWARE_CURSOR, HARDWARE_CURSOR_HOTSPOT)
 	_set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-	update_controller_from_connected_names(_connected_device_names())
+	handle_joy_connection_changed(_connected_device_names())
 
 
 func _input(event: InputEvent) -> void:
@@ -116,6 +116,10 @@ func update_controller_from_connected_names(device_names: Array) -> void:
 
 func handle_joy_connection_changed(connected_device_names: Array) -> void:
 	update_controller_from_connected_names(connected_device_names)
+	if connected_device_names.is_empty():
+		return
+	_set_active_mode(InputMode.CONTROLLER)
+	_set_presentation_mode(PresentationMode.FOCUS)
 
 
 func _on_joy_connection_changed(_device_id: int, _connected: bool) -> void:
