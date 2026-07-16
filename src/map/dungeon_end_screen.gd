@@ -16,11 +16,20 @@ var _confirmed := false
 
 
 func _ready() -> void:
+	DisplayProfile.bind(apply_display_profile)
 	var navigation := _navigation_ux_layer()
 	if navigation:
 		navigation.push_modal(self, continue_button)
 		navigation.publish_hints([{action = &"confirm", label = "Continue", enabled = true}])
 	_grab_focus_if_valid.call_deferred(continue_button)
+
+
+func apply_display_profile(_profile: int, _window_size: Vector2i, logical_size: Vector2) -> void:
+	var target := Vector2(minf(1100.0, logical_size.x - 96.0), minf(801.0, logical_size.y - 96.0))
+	$Panel.offset_left = -target.x * 0.5
+	$Panel.offset_right = target.x * 0.5
+	$Panel.offset_top = -target.y * 0.5
+	$Panel.offset_bottom = target.y * 0.5
 
 
 func _exit_tree() -> void:

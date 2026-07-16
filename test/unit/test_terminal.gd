@@ -73,7 +73,7 @@ func test_setup_orders_protocols_by_keyboard_and_controller_shortcuts() -> void:
 
 
 func test_terminal_panel_and_protocols_fit_minimum_and_desktop_viewports() -> void:
-	for size in [Vector2i(1200, 800), Vector2i(1920, 1080)]:
+	for size in [Vector2i(1200, 800), Vector2i(1280, 800), Vector2i(1920, 1080)]:
 		var fixture := await _terminal_in_viewport(size)
 		var terminal = fixture.terminal
 		var panel: Control = terminal.get_node("Panel")

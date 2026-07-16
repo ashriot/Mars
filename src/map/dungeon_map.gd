@@ -140,6 +140,8 @@ func _ready():
 	player_cursor.visible = false
 	player_reticle.visible = false
 	_setup_camera()
+	get_viewport().size_changed.connect(_on_viewport_size_changed)
+	_on_viewport_size_changed()
 
 	alert_gauge.modulate = Color.MEDIUM_SEA_GREEN
 	alert_gauge.value = 0
@@ -360,6 +362,18 @@ func _sync_camera_tuning() -> void:
 	camera_controller.smooth_speed = camera_smooth_speed
 	camera_controller.scanner_dead_zone_ratio = Vector2.ONE * scan_dead_zone_ratio
 	camera_controller.scanner_follow_response = scan_camera_follow_response
+
+
+func _on_viewport_size_changed() -> void:
+	if not is_instance_valid(camera_controller) or not is_instance_valid(camera):
+		return
+	_sync_camera_tuning()
+	var viewport_size := get_viewport_rect().size
+	var cover_zoom := camera_controller.cover_zoom(viewport_size).x
+	var minimum_allowed := minf(maxf(min_zoom, cover_zoom), max_zoom)
+	var zoom_value := clampf(maxf(camera.zoom.x, minimum_allowed), minimum_allowed, max_zoom)
+	camera.zoom = Vector2.ONE * zoom_value
+	camera.position = camera_controller.clamp_position(camera.position, camera.zoom, viewport_size)
 
 func _unhandled_input(event):
 	if _event_input_is_suppressed():

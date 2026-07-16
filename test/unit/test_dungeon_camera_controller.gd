@@ -163,6 +163,27 @@ func test_cover_zoom_and_hybrid_position_preserve_existing_formula() -> void:
 	assert_eq(controller.hybrid_position(Vector2(300, 150), Vector2.ONE, Vector2(900, 600)), Vector2(300, 150))
 
 
+func test_cover_zoom_uses_complete_expanded_viewport() -> void:
+	var fixture := _fixture()
+	var controller: DungeonCameraController = fixture.controller
+	var viewport_size := Vector2(1920, 1200)
+	var expected := Vector2.ONE * maxf(1920.0 / 2400.0, 1200.0 / 1800.0) * 1.02
+
+	assert_eq(controller.cover_zoom(viewport_size), expected)
+	assert_eq(controller.hybrid_position(Vector2(300, 150), expected, viewport_size), Vector2.ZERO)
+
+
+func test_clamp_position_uses_complete_expanded_viewport() -> void:
+	var fixture := _fixture()
+	var controller: DungeonCameraController = fixture.controller
+	var viewport_size := Vector2(1920, 1200)
+
+	assert_eq(
+		controller.clamp_position(Vector2(100000, 100000), Vector2.ONE, viewport_size),
+		Vector2(960, 800),
+	)
+
+
 func test_party_zoom_tweens_zoom_and_hybrid_position() -> void:
 	var fixture := _fixture()
 	var controller: DungeonCameraController = fixture.controller
