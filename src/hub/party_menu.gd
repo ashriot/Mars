@@ -41,6 +41,7 @@ func _ready():
 	inventory_view.mode_changed.connect(_on_inventory_mode_changed)
 	for index in range(tab_buttons.size()):
 		tab_buttons[index].pressed.connect(_on_tab_pressed.bind(index))
+	get_viewport().gui_focus_changed.connect(_on_gui_focus_changed)
 
 
 func apply_display_profile(profile: int, window_size: Vector2i, logical_size: Vector2) -> void:
@@ -77,8 +78,8 @@ func open():
 	_publish_hints()
 	_grab_focus_if_valid.call_deferred(selected_hero)
 
-func _on_back_pressed():
-	_close()
+func _on_back_pressed() -> void:
+	_handle_back()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -110,14 +111,18 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed(&"cancel"):
 		get_viewport().set_input_as_handled()
-		if current_depth == Depth.CONTENT and skill_view.visible and skill_view.cancel_focus_layer():
-			return
-		if current_depth == Depth.CONTENT and inventory_view.visible and inventory_view.cancel_navigation():
-			return
-		if current_depth == Depth.CONTENT:
-			return_to_hero_rail()
-			return
-		_close()
+		_handle_back()
+
+
+func _handle_back() -> void:
+	if current_depth == Depth.CONTENT and skill_view.visible and skill_view.cancel_focus_layer():
+		return
+	if current_depth == Depth.CONTENT and inventory_view.visible and inventory_view.cancel_navigation():
+		return
+	if current_depth == Depth.CONTENT:
+		return_to_hero_rail()
+		return
+	_close()
 
 func _refresh_hero_list():
 	for child in hero_list_container.get_children():
@@ -248,8 +253,13 @@ func _handle_auto_select_hero(index: int):
 		_select_hero(index)
 
 func _select_hero(index: int):
+	var hero_changed := current_hero_idx != index
+	if hero_changed and current_depth == Depth.CONTENT:
+		_store_content_focus()
 	current_hero_idx = index
 	_update_active_view()
+	if hero_changed and current_depth == Depth.CONTENT:
+		_restore_content_focus()
 
 
 func _on_tab_pressed(tab_index: int) -> void:
@@ -300,12 +310,20 @@ func _content_memory_key() -> String:
 func _store_content_focus() -> void:
 	if current_depth != Depth.CONTENT:
 		return
+	_remember_content_focus(get_viewport().gui_get_focus_owner())
+
+
+func _on_gui_focus_changed(control: Control) -> void:
+	if current_depth == Depth.CONTENT:
+		_remember_content_focus(control)
+
+
+func _remember_content_focus(control: Control) -> void:
 	var key := _content_memory_key()
 	if key.is_empty():
 		return
-	var owner := get_viewport().gui_get_focus_owner()
-	if owner and is_ancestor_of(owner):
-		_content_focus_memory[key] = get_path_to(owner)
+	if _is_valid_content_focus(control):
+		_content_focus_memory[key] = get_path_to(control)
 
 
 func _restore_content_focus() -> bool:
@@ -313,7 +331,7 @@ func _restore_content_focus() -> bool:
 	var remembered_path: NodePath = _content_focus_memory.get(_content_memory_key(), NodePath())
 	if not remembered_path.is_empty():
 		remembered = get_node_or_null(remembered_path) as Control
-	if _is_valid_focus(remembered):
+	if _is_valid_content_focus(remembered):
 		remembered.grab_focus()
 		return true
 	if current_tab == Tab.ROLES:
@@ -338,7 +356,20 @@ func _first_focusable_descendant(root: Control) -> Control:
 
 
 func _is_valid_focus(control: Control) -> bool:
-	return is_instance_valid(control) and control.is_visible_in_tree() and control.focus_mode == Control.FOCUS_ALL and not (control is BaseButton and control.disabled)
+	return is_instance_valid(control) and not control.is_queued_for_deletion() and control.is_visible_in_tree() and control.focus_mode == Control.FOCUS_ALL and not (control is BaseButton and control.disabled)
+
+
+func _is_valid_content_focus(control: Control) -> bool:
+	if not _is_valid_focus(control):
+		return false
+	if current_tab == Tab.ROLES:
+		return skill_view.is_ancestor_of(control)
+	if current_tab == Tab.ITEMS:
+		if inventory_view.is_ancestor_of(control):
+			return true
+		var panel := _get_panel_by_index(current_hero_idx)
+		return panel != null and control != panel and panel.is_ancestor_of(control)
+	return false
 
 
 func _focus_selected_hero() -> void:
@@ -409,10 +440,6 @@ func _on_purchase_requested(hero: HeroData, role_id: String, node_id: String) ->
 	refresh_hero_stats.call(hero)
 	if skill_view:
 		skill_view.refresh_progression_state(hero)
-
-func _on_back_btn_pressed() -> void:
-	_close()
-
 
 func _close() -> void:
 	var navigation := _navigation_ux_layer()

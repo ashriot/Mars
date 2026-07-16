@@ -163,6 +163,61 @@ func test_pointer_tab_and_hero_selection_update_controller_context() -> void:
 	assert_same(get_viewport().gui_get_focus_owner(), second)
 
 
+func test_pointer_back_unwinds_nested_content_then_hero_rail_before_closing() -> void:
+	var party := await _opened_party_with_three_heroes()
+	assert_true(party.enter_content())
+	assert_eq(party.current_depth, PartyMenu.Depth.CONTENT)
+	assert_true(party.skill_view.is_ancestor_of(get_viewport().gui_get_focus_owner()))
+
+	party.back_button.pressed.emit()
+	assert_true(party.visible)
+	assert_eq(party.current_depth, PartyMenu.Depth.CONTENT)
+	var nested_focus := get_viewport().gui_get_focus_owner()
+	assert_not_null(nested_focus)
+	if nested_focus:
+		assert_true(party.skill_view.is_ancestor_of(nested_focus))
+
+	party.back_button.pressed.emit()
+	assert_true(party.visible)
+	assert_eq(party.current_depth, PartyMenu.Depth.HERO_RAIL)
+	assert_same(get_viewport().gui_get_focus_owner(), party.hero_list_container.get_child(0))
+
+	party.back_button.pressed.emit()
+	assert_false(party.visible)
+
+
+func test_pointer_hero_change_in_content_keeps_memory_content_scoped() -> void:
+	var party := await _opened_party_with_three_heroes()
+	assert_true(party.enter_content())
+	var first := party.hero_list_container.get_child(0) as HeroPanel
+	var second := party.hero_list_container.get_child(1) as HeroPanel
+	party._content_focus_memory["echo:0"] = party.get_path_to(second)
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+
+	# Godot may focus a FOCUS_ALL Control before its mouse event reaches _gui_input.
+	second.grab_focus()
+	second._gui_input(click)
+
+	assert_eq(party.current_hero_idx, 1)
+	assert_eq(party.current_depth, PartyMenu.Depth.CONTENT)
+	var second_focus := get_viewport().gui_get_focus_owner()
+	assert_true(party.skill_view.is_ancestor_of(second_focus))
+	assert_ne(second_focus, second)
+	var first_memory := party.get_node_or_null(party._content_focus_memory.get("asher:0", NodePath())) as Control
+	assert_not_null(first_memory)
+	if first_memory:
+		assert_true(party.skill_view.is_ancestor_of(first_memory))
+	assert_ne(first_memory, first)
+
+	first._gui_input(click)
+
+	assert_eq(party.current_hero_idx, 0)
+	assert_eq(party.current_depth, PartyMenu.Depth.CONTENT)
+	assert_true(party.skill_view.is_ancestor_of(get_viewport().gui_get_focus_owner()))
+
+
 func test_role_panel_submits_stable_ids_without_mutating_progression() -> void:
 	var hero := _hero()
 	var panel := RolePanel.new()
