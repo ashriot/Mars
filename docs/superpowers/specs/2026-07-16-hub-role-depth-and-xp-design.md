@@ -41,7 +41,7 @@ The complete Roles path is therefore:
 6. Back from `ROLE_SELECT` returns to the selected hero.
 7. Back from the hero rail closes party management.
 
-The selected role remains expanded in both Roles sub-depths. Expansion communicates persistent role selection; the single pulsing outer edge communicates the exact current controller target. Thus the expanded role pulses in `ROLE_SELECT`, while the focused node or page control pulses in `TREE`.
+The selected role remains expanded in both Roles sub-depths. Expansion communicates persistent role selection; the hub-only controller cursor defined in `2026-07-16-hub-controller-cursor-design.md` communicates the exact current controller target. Thus the cursor points to the expanded role in `ROLE_SELECT`, then moves to the focused node or page control in `TREE`.
 
 Each hero remembers its selected role, current supported rank page, and stable focused node per role/page. Re-entering Roles begins at `ROLE_SELECT` for that remembered role rather than dropping directly into its tree. Entering `TREE` restores the remembered node or the existing deterministic nearest-node fallback.
 
