@@ -84,3 +84,23 @@ func test_apply_after_completed_clear_reuses_tree_exit_cleanup_safely() -> void:
 	NavigationFocus.clear(control)
 	NavigationFocus.apply(control)
 	assert_engine_error_count(0)
+
+
+func test_opt_in_hub_focus_uses_pulsing_fill_and_default_focus_does_not() -> void:
+	var pulsing := Button.new()
+	pulsing.set_meta("navigation_focus_pulse", true)
+	add_child_autofree(pulsing)
+	NavigationFocus.apply(pulsing)
+	var pulse_state: Dictionary = NavigationFocus._states[pulsing.get_instance_id()]
+	assert_true(pulse_state.has("tween"))
+	assert_not_null(pulse_state.tween)
+	var style := pulsing.get_theme_stylebox(&"focus") as StyleBoxFlat
+	assert_almost_eq(style.bg_color.a, 0.45, 0.001)
+	NavigationFocus.clear(pulsing)
+	assert_false(NavigationFocus._states.has(pulsing.get_instance_id()))
+
+	var ordinary := Button.new()
+	add_child_autofree(ordinary)
+	NavigationFocus.apply(ordinary)
+	assert_false(NavigationFocus._states[ordinary.get_instance_id()].has("tween"))
+	NavigationFocus.clear(ordinary)

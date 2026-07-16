@@ -3,6 +3,8 @@ class_name NavigationFocus
 
 const FOCUS_STYLE := preload("res://data/theme/styleboxes/button_focus.tres")
 const FOCUS_FOREGROUND := Color(0.19607843, 0.19607843, 0.19607843, 1)
+const HUB_PULSE_LOW_ALPHA := 0.45
+const HUB_PULSE_HIGH_ALPHA := 0.80
 
 static var _states: Dictionary = {}
 
@@ -25,6 +27,7 @@ static func apply(control: Control) -> void:
 		})
 		label.add_theme_color_override(&"font_color", FOCUS_FOREGROUND)
 		label.add_theme_constant_override(&"outline_size", 0)
+	var focus := _focus_style_and_tween(control, surface)
 	var state := {
 		"control": weakref(control),
 		"surface": weakref(surface),
@@ -35,9 +38,11 @@ static func apply(control: Control) -> void:
 		"had_font_focus_override": control.has_theme_color_override(&"font_focus_color"),
 		"font_focus_color": control.get_theme_color(&"font_focus_color"),
 	}
+	if focus.has("tween"):
+		state["tween"] = focus.tween
 	var key := control.get_instance_id()
 	_states[key] = state
-	surface.add_theme_stylebox_override(style_name, FOCUS_STYLE)
+	surface.add_theme_stylebox_override(style_name, focus.style)
 	if control is Button:
 		control.add_theme_color_override(&"font_focus_color", FOCUS_FOREGROUND)
 	var cleanup := _release_state.bind(key)
@@ -50,6 +55,7 @@ static func clear(control: Control) -> void:
 		return
 	var key := control.get_instance_id()
 	var state: Dictionary = _states[key]
+	_kill_tween(state)
 	var surface := state.surface.get_ref() as Control
 	if is_instance_valid(surface):
 		if state.had_style_override:
@@ -77,7 +83,28 @@ static func clear(control: Control) -> void:
 
 
 static func _release_state(key: int) -> void:
+	if _states.has(key):
+		_kill_tween(_states[key])
 	_states.erase(key)
+
+
+static func _focus_style_and_tween(control: Control, surface: Control) -> Dictionary:
+	var style := FOCUS_STYLE.duplicate() as StyleBoxFlat
+	if not bool(control.get_meta("navigation_focus_pulse", false)):
+		return {"style": style}
+	style.bg_color.a = HUB_PULSE_LOW_ALPHA
+	var tween := surface.create_tween().set_loops()
+	tween.tween_property(style, "bg_color:a", HUB_PULSE_HIGH_ALPHA, 0.35).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(style, "bg_color:a", HUB_PULSE_LOW_ALPHA, 0.65).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	return {"style": style, "tween": tween}
+
+
+static func _kill_tween(state: Dictionary) -> void:
+	if not state.has("tween"):
+		return
+	var tween := state.tween as Tween
+	if is_instance_valid(tween) and tween.is_valid():
+		tween.kill()
 
 
 static func _resolve_surface(control: Control) -> Control:
