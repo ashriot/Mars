@@ -114,16 +114,16 @@ func setup_base(stats: ActorStats):
 
 func on_turn_started() -> void:
 	next_panel.hide()
-	await battle_manager.wait(0.1)
 	highlight(true)
+	await battle_manager.wait(0.1)
 	await _fire_condition_event(Trigger.TriggerType.ON_TURN_START)
 
 	return
 
 func on_turn_ended() -> void:
 	await battle_manager.wait(0.1)
-	highlight(false)
 	await _fire_condition_event(Trigger.TriggerType.ON_TURN_END)
+	highlight(false)
 
 func take_one_hit(damage: int, damage_effect: Effect_Damage, attacker: ActorCard, damage_type: Action.DamageType, is_crit: bool) -> void:
 	if is_defeated: return

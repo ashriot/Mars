@@ -4,6 +4,30 @@ const HeroCardScene := preload("res://src/battle/hero_card.tscn")
 const EnemyCardScene := preload("res://src/battle/enemy_card.tscn")
 
 
+class LifecycleBattleManager extends BattleManager:
+	signal wait_released
+	signal effect_released
+
+	var hold_wait := false
+	var effect_started := false
+
+
+	func wait(_duration: float = 0.01) -> void:
+		if hold_wait:
+			await wait_released
+
+
+	func execute_triggered_effect(
+		_actor: ActorCard,
+		_effect: ActionEffect,
+		_targets: Array,
+		_action: Action,
+		_context: Dictionary = {},
+	) -> void:
+		effect_started = true
+		await effect_released
+
+
 func _cards() -> Array[ActorCard]:
 	var cards: Array[ActorCard] = []
 	for scene: PackedScene in [HeroCardScene, EnemyCardScene]:
@@ -11,6 +35,19 @@ func _cards() -> Array[ActorCard]:
 		add_child_autofree(card)
 		cards.append(card)
 	return cards
+
+
+func _condition_for(event_type: Trigger.TriggerType, owner: ActorCard) -> Condition:
+	var effect := ActionEffect.new()
+	effect.target_type = Action.TargetType.SELF
+	var trigger := Trigger.new()
+	trigger.trigger_type = event_type
+	trigger.effects_to_run = [effect]
+	var condition := Condition.new()
+	condition.condition_name = "Lifecycle boundary"
+	condition.attacker = owner
+	condition.triggers = [trigger]
+	return condition
 
 
 func test_hero_and_enemy_share_normal_available_and_selected_target_states() -> void:
@@ -79,6 +116,38 @@ func test_acting_outline_matches_queue_gold_and_stays_independent_of_targeting()
 		assert_false(acting_outline.visible)
 		assert_true(card.target_outline.visible)
 		assert_true(card.target_pulse.visible)
+
+
+func test_acting_outline_starts_before_turn_start_wait_completes() -> void:
+	var card := _cards()[1]
+	var manager := LifecycleBattleManager.new()
+	manager.hold_wait = true
+	card.battle_manager = manager
+
+	card.on_turn_started()
+
+	assert_true(card.highlight_panel.visible)
+	manager.wait_released.emit()
+	await get_tree().process_frame
+	assert_true(card.highlight_panel.visible)
+	manager.free()
+
+
+func test_acting_outline_ends_after_turn_end_triggers_complete() -> void:
+	var card := _cards()[1]
+	var manager := LifecycleBattleManager.new()
+	card.battle_manager = manager
+	card.active_conditions = [_condition_for(Trigger.TriggerType.ON_TURN_END, card)]
+	card.highlight(true)
+
+	card.on_turn_ended()
+
+	assert_true(manager.effect_started)
+	assert_true(card.highlight_panel.visible)
+	manager.effect_released.emit()
+	await get_tree().process_frame
+	assert_false(card.highlight_panel.visible)
+	manager.free()
 
 
 func test_selected_target_pulse_fades_from_transparent_to_at_most_half_opacity() -> void:

@@ -43,6 +43,8 @@ static func partial_polyline(points: PackedVector2Array, fraction: float) -> Pac
 	var result := PackedVector2Array([points[0]])
 	for index in range(1, points.size()):
 		var segment := points[index - 1].distance_to(points[index])
+		if is_zero_approx(segment):
+			continue
 		if traversed + segment >= target:
 			var weight := (target - traversed) / segment
 			result.append(points[index - 1].lerp(points[index], weight))

@@ -42,6 +42,16 @@ func test_partial_perimeter_has_exact_end_interpolation() -> void:
 	assert_eq(half[-1], Vector2(10, 10))
 
 
+func test_partial_perimeter_skips_zero_length_duplicate_segments() -> void:
+	var duplicate_run := PackedVector2Array([
+		Vector2(10, 10), Vector2(10, 10), Vector2(10, 10),
+	])
+	var half := CTBGauge.partial_polyline(duplicate_run, 0.5)
+
+	assert_true(half[-1].is_finite())
+	assert_eq(half[-1], Vector2(10, 10))
+
+
 func test_gauge_interpolates_ticks_without_mutating_target() -> void:
 	var gauge := CTBGauge.new()
 	add_child_autofree(gauge)
