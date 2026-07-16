@@ -10,6 +10,35 @@ All device checks below are intentionally unchecked until performed on the named
 - [ ] Connect two controllers, remove the active one, and verify the remaining controller becomes authoritative without invalid focus.
 - [ ] Use an unknown/generic controller through Steam Input and verify the Steam Deck glyph family with an Xbox-compatible button layout and semantic actions.
 
+## Responsive controller-only acceptance
+
+These are interactive visual checks. Record the date, OS, controller and connection, physical window resolution, and tested commit. Keep the desktop-proxy and Steam Deck hardware results separate.
+
+### Full `1280x800` desktop-proxy path
+
+- [ ] Set the physical game window to `1280x800`, use only the controller after launch, and verify the title background covers the viewport; title copy, glyphs, focus decoration, and buttons are readable and unclipped. Start or continue into the hub without using a mouse, keyboard, or touch input.
+- [ ] On the hub landing screen, reach every enabled destination and return using only controller navigation. Verify the background and overlays cover 16:10, edge controls remain in bounds, focus is always visible, and text, glyphs, and actionable controls remain physically readable.
+- [ ] Traverse every party member and hero detail, including status and equipment summaries. Open inventory and equipment, scroll to every item and slot, exercise equip/unequip and held-item cancel paths, and verify selected-item details, comparison values, costs, ranks, and mod slots remain reachable without overlap or clipped focus.
+- [ ] Exercise every available tuning and modification flow. Scroll all constrained lists or grids to their ends and verify controller focus reveals the selected control before confirm; returning between party, inventory, equipment, and tuning restores a valid visible focus.
+- [ ] Open every available hero role and every authored skill-tree page. Navigate to every reachable node, including edge and dense-tree nodes; verify connectors, role anchors, costs, owned/available/locked states, prompts, and focus outlines remain distinguishable and scrolling/panning reveals the active node.
+- [ ] Start a dungeon and reach the map using only the controller. Verify the HUD, team state, Alert, Bits, node count, warning, full-screen background, nested overlays, and dungeon end screen stay within bounds and remain readable at `1280x800`.
+- [ ] Exercise adjacent-node traversal, pan, zoom, recenter, and scanner entry. Verify the scan cursor and reticle agree with the intended world hex at center, edges, and corners; the camera covers 16:10 without exposing empty space; focus, modal input ownership, and overlays do not drift into world-safe coordinates.
+- [ ] Open a terminal, scroll or traverse all protocol content, activate and cancel representative protocols, enter and cancel scan, open and cancel extraction confirmation, and close the terminal. Verify its header, five rows, footer, glyphs, typing state, nested confirmation, focus, and restored map state remain fully visible.
+- [ ] Enter representative combat and use all four displayed action inputs where legal. Select and cancel hero and enemy targets, inspect tooltips near every viewport edge, scroll the complete CTB rail to both ends, and verify actor cards, status effects, controls, hints, focus/target outlines, and tooltips remain readable and do not overlap.
+- [ ] Observe CTB preview reorder/clear, current-actor promotion, acting-card movement, and committed result transitions. Verify animation paths remain contained or intentionally exit their owning surface without being clipped incorrectly, the selected target stays clear, and no compact-layout element jumps or becomes stranded.
+- [ ] Complete, retreat from, or lose the run; inspect the result/reward and dungeon end presentation, confirm once, and return to the hub. Verify totals, Continue focus, transitions, backgrounds, and return navigation remain readable, in bounds, and controller-only.
+
+### Short `1920x1080` desktop regression
+
+- [ ] Set the physical game window to `1920x1080`; use only the controller to launch from title, enter the hub, open one party member's inventory/equipment, and visit one representative dense skill tree. Verify the established desktop composition, focus, readable details, and scroll reveal remain intact.
+- [ ] Start or continue a dungeon; traverse one node, pan/zoom/recenter, scan a distant hex, exercise one terminal protocol and extraction-cancel path, and verify HUD, background coverage, cursor/reticle alignment, overlays, and terminal bounds.
+- [ ] Enter combat; activate an action, change and cancel a target, inspect an edge tooltip, scroll the CTB rail, observe one preview reorder and one acting transition, then reach a result screen and return. Verify desktop spacing, focus, animations, and transition layout have not regressed.
+
+### Steam Deck hardware acceptance
+
+- [ ] On Steam Deck in Gaming Mode, launch an exported build and verify it starts borderless at the native `1280x800` output.
+- [ ] Repeat the full `1280x800` controller-only path on the physical Steam Deck. Record physical readability, control-size, glyph, focus, scrolling, and control-feel issues separately; a desktop-proxy pass is not a hardware pass.
+
 ## Focus and pointer ownership
 
 - [ ] Ordinary controller navigation hides the hardware arrow and shows no snapped cursor on focused buttons.

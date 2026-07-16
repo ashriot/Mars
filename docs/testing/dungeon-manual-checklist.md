@@ -14,6 +14,27 @@
 
 The current automated-test baseline and canonical commands are documented in [Testing](README.md). Complete automated checks do not replace the interactive crawl below.
 
+## Responsive dungeon acceptance pending
+
+These items are intentionally unchecked until performed interactively with a controller. Record the date, OS/device, controller and connection, physical resolution, tested commit, and concise notes. The completed historical stabilization crawl below does not satisfy this responsive acceptance.
+
+### Full `1280x800` controller-only path
+
+- [ ] At a physical `1280x800` window, enter a fresh dungeon using only the controller. Verify the background and camera cover the complete 16:10 viewport and Team Status, Bits, Alert, Node count, warnings, prompts, and every overlay remain readable, unclipped, and separated at all map positions.
+- [ ] Traverse completed and unrevealed adjacent nodes with stick and D-pad, then pan in all directions, zoom to both limits, and recenter. Verify the reticle reveals eligible choices, focus and hints remain visible, map content does not expose empty background, and camera movement/clamping uses the expanded viewport.
+- [ ] Enter scanning; move the aim partially and fully, detach with right-stick pan, reattach, and resolve hexes at the center, edges, and corners. Verify cursor, reticle, and selected world hex stay aligned, the OS pointer remains independent, cancel restores the terminal, and confirm consumes the terminal only once.
+- [ ] Open a terminal and inspect the header, every protocol row, glyph, footer, typing state, and extraction confirmation. Execute representative Security, Medical, Finance, and Scan flows; cancel nested overlays; scroll any overflow; and verify focus/input stays trapped in the top modal while all content remains within `1280x800`.
+- [ ] Complete each available dungeon outcome: extraction, Exit completion, boss victory, and party defeat. Verify exactly one responsive end screen appears, totals and Continue focus are readable and in bounds, confirmation settles rewards once, and the transition back to the hub covers the full viewport.
+
+### Short `1920x1080` controller regression
+
+- [ ] At a physical `1920x1080` window, enter a dungeon, traverse one node, pan/zoom/recenter, and scan a distant hex. Verify the desktop HUD composition, background/camera coverage, reticle/cursor coordinates, and focus remain intact.
+- [ ] Open a terminal, execute one protocol, enter and cancel scan, open and cancel extraction confirmation, then reach one end-screen outcome. Verify the terminal, overlays, result layout, animation/transition coverage, and controller return path remain readable and unclipped.
+
+### Steam Deck hardware acceptance
+
+- [ ] On Steam Deck, verify an exported build launches borderless at native `1280x800`, then repeat the full controller-only dungeon path. Record physical readability and control-size concerns; do not substitute a desktop-proxy result.
+
 ## Manual verification completed
 
 Interactive verification was confirmed complete on 2026-07-11 against `2059db2`.

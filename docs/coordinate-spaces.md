@@ -12,6 +12,17 @@ Use an explicit coordinate space for every position. Cursor, UI, camera, and wor
 
 Name ambiguous values with their space, such as `pointer_screen_position`, `query_global_world_position`, `pointer_map_position`, or `viewport_size`.
 
+## Responsive display spaces
+
+Redshift keeps `1920x1080` as its authoring reference canvas and uses Godot's `canvas_items` stretch mode with `expand` aspect handling. Do not treat that reference size as the physical window size or assume that every logical viewport is `1920x1080`.
+
+- **Physical window size** is the output size reported by `DisplayServer`. `DisplayProfile` classifies the window as compact when its width is `1366` pixels or less or its height is `800` pixels or less. A compact display uses its available size in borderless fullscreen at startup; a larger desktop display defaults to a `1920x1080` window.
+- **Expanded logical canvas** is the root viewport's visible logical size after stretch handling. A native `1280x800` output maps to a `1920x1200` logical canvas; a `1920x1080` output maps to `1920x1080` logical pixels.
+- **Centered world safe rectangle** is the largest centered rectangle, no larger than the `1920x1080` reference, returned by `DisplayProfileService.safe_rect_for()`. Authored world subjects and critical staging stay inside it without nonuniform stretching. At the Deck target, the safe rectangle is `Rect2(0, 60, 1920, 1080)` in logical coordinates.
+- **Full-viewport UI** belongs to `Control` nodes or `CanvasLayer` overlays that anchor against the complete expanded logical canvas. Backgrounds, cameras, fades, HUD edge groups, responsive overlays, and modal backdrops may cover or use the additional 16:10 area outside the world safe rectangle.
+
+`Main.apply_display_layout()` applies the centered safe rectangle to `WorldLayer`; it does not redefine viewport coordinates for `MenuLayer` or full-viewport UI. Convert world, screen, and control coordinates through their actual canvas boundaries. In particular, do not offset a full-viewport control by the world safe rectangle, and do not use a control's expanded-canvas position directly for a world physics query.
+
 ## Dungeon scan conversions
 
 Convert a viewport pointer from screen space to global world space before a physics query:
@@ -69,7 +80,9 @@ For keyboard-and-mouse input, the viewport mouse position becomes the scan point
 
 Positioning regressions should cover:
 
-- A non-square runtime aspect ratio such as `1920x1080` or `1200x800`.
+- Both supported acceptance outputs: native `1280x800` (expanded `1920x1200` logical canvas) and `1920x1080`.
+- A narrower terminal regression output such as `1200x800` where relevant.
+- Correct separation between the centered world safe rectangle and controls that intentionally use the full viewport.
 - Nonidentity parent transforms matching the live `WorldLayer` and `DungeonMap` hierarchy.
 - A nonzero camera position and at least one non-default zoom level.
 - Screen center, viewport edge, and corner positions.
