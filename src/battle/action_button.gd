@@ -3,6 +3,11 @@ class_name ActionButton
 
 signal pressed(action_button: ActionButton)
 
+const CONTROL_HEIGHT_DESKTOP := 86.0
+const CONTROL_HEIGHT_COMPACT := 86.0
+const PRIMARY_FONT_SIZE_DESKTOP := 36
+const PRIMARY_FONT_SIZE_COMPACT := 36
+
 @onready var tooltip: RichTooltip = $RichTooltip
 @onready var label = $Title
 @onready var icon: TextureRect = $Mask/Icon
@@ -36,6 +41,17 @@ var disabled:
 func _ready() -> void:
 	_ensure_glyph_backing()
 	dynamic_glyph.set_action(glyph_action)
+	apply_display_profile(DisplayProfile.current_profile)
+
+
+func apply_display_profile(profile: int) -> void:
+	var compact := profile == DisplayProfileService.Profile.COMPACT
+	custom_minimum_size.y = CONTROL_HEIGHT_COMPACT if compact else CONTROL_HEIGHT_DESKTOP
+	if label:
+		label.add_theme_font_size_override(
+			&"font_size",
+			PRIMARY_FONT_SIZE_COMPACT if compact else PRIMARY_FONT_SIZE_DESKTOP,
+		)
 
 
 func _ensure_glyph_backing() -> void:

@@ -5,6 +5,8 @@ class_name TurnQueue
 const ITEM_SPACING := 8
 const RIGHT_STICK_DEAD_ZONE := 0.25
 const RIGHT_STICK_SCROLL_SPEED := 700.0
+const ITEM_SIZE_DESKTOP := Vector2(72, 72)
+const ITEM_SIZE_COMPACT := Vector2(72, 72)
 
 @export var actor_queue_scene: PackedScene
 @export var battle_manager: BattleManager
@@ -23,15 +25,26 @@ var _right_stick_max_scroll := -1
 var _projection_generation := 0
 var _recoverable_exits: Array[ActorQueue] = []
 var _committed_exits: Array[ActorQueue] = []
+var _display_profile: int = DisplayProfileService.Profile.DESKTOP
 
 
 func _ready() -> void:
+	DisplayProfile.bind(apply_display_profile)
 	if is_instance_valid(battle_manager):
 		battle_manager.turn_order_updated.connect(_on_turn_order_updated)
 	var bar := queue_scroll.get_v_scroll_bar()
 	bar.value_changed.connect(_on_scroll_changed)
 	bar.custom_minimum_size.x = 6.0
 	_on_scroll_changed(queue_scroll.scroll_vertical)
+
+
+func apply_display_profile(profile: int, _window_size: Vector2i, _logical_size: Vector2) -> void:
+	_display_profile = profile
+	var item_size := ITEM_SIZE_COMPACT if profile == DisplayProfileService.Profile.COMPACT else ITEM_SIZE_DESKTOP
+	for item: ActorQueue in queue_items:
+		item.custom_minimum_size = item_size
+		item.size = item_size
+		item.apply_display_profile(profile)
 
 
 func _input(event: InputEvent) -> void:
@@ -129,6 +142,7 @@ func _on_turn_order_updated(
 		else:
 			item.prepare_for_reuse()
 		item.setup(actor, int(turn_data.ticks_needed), index == 0, occurrence, reused)
+		item.apply_display_profile(_display_profile)
 		item.z_index = index
 		if reused:
 			item.animate_to(_target_position(index))

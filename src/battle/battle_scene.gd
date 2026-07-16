@@ -13,8 +13,13 @@ var _last_controller_direction := Vector2.ZERO
 var _direction_hold_time := 0.0
 const REPEAT_DELAY := 0.32
 const REPEAT_INTERVAL := 0.12
+const TURN_QUEUE_TOP_MARGIN_DESKTOP := 16.0
+const TURN_QUEUE_BOTTOM_MARGIN_DESKTOP := 300.0
+const TURN_QUEUE_TOP_MARGIN_COMPACT := 16.0
+const TURN_QUEUE_BOTTOM_MARGIN_COMPACT := 300.0
 
 func _ready():
+	DisplayProfile.bind(apply_display_profile)
 	manager.battle_ended.connect(_on_battle_ended)
 	manager.battle_state_changed.connect(_on_battle_state_changed)
 	manager.target_hovered.connect(_on_target_hovered)
@@ -31,6 +36,22 @@ func _ready():
 		navigation.set_adapter(self)
 	_refresh_targeting()
 	_publish_controller_hints()
+
+
+func apply_display_profile(profile: int, window_size: Vector2i, logical_size: Vector2) -> void:
+	var compact := profile == DisplayProfileService.Profile.COMPACT
+	var turn_queue := get_node_or_null("UI/TurnQueue") as TurnQueue
+	if turn_queue:
+		turn_queue.offset_top = (
+			TURN_QUEUE_TOP_MARGIN_COMPACT if compact else TURN_QUEUE_TOP_MARGIN_DESKTOP
+		)
+		turn_queue.offset_bottom = -(
+			TURN_QUEUE_BOTTOM_MARGIN_COMPACT if compact else TURN_QUEUE_BOTTOM_MARGIN_DESKTOP
+		)
+		turn_queue.apply_display_profile(profile, window_size, logical_size)
+	var action_bar := get_node_or_null("UI/ActionBar") as ActionBar
+	if action_bar:
+		action_bar.apply_display_profile(profile, window_size, logical_size)
 
 
 func _exit_tree() -> void:

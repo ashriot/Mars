@@ -7,6 +7,8 @@ const ANIMATION_DURATION := 0.3
 const COMMITTED_EXIT_DISTANCE := 96.0
 const HERO_INTERIOR_COLOR := Color("04151b")
 const ENEMY_INTERIOR_COLOR := Color("1b0615")
+const ABBREVIATION_FONT_SIZE_DESKTOP := 19
+const ABBREVIATION_FONT_SIZE_COMPACT := 24
 
 @onready var gauge: CTBGauge = $CTBGauge
 @onready var interior: Panel = $Interior
@@ -17,6 +19,15 @@ var actor_ref: ActorCard
 var occurrence_index := 0
 var _move_tween: Tween
 var _exit_tween: Tween
+
+
+func apply_display_profile(profile: int) -> void:
+	enemy_label.add_theme_font_size_override(
+		&"font_size",
+		ABBREVIATION_FONT_SIZE_COMPACT
+		if profile == DisplayProfileService.Profile.COMPACT
+		else ABBREVIATION_FONT_SIZE_DESKTOP,
+	)
 
 
 func setup(

@@ -7,6 +7,11 @@ signal action_cancelled
 signal shift_button_pressed(direction)
 signal availability_changed
 
+const ACTION_CONTROL_HEIGHT_DESKTOP := 86.0
+const ACTION_CONTROL_HEIGHT_COMPACT := 86.0
+const HEADER_FONT_SIZE_DESKTOP := 20
+const HEADER_FONT_SIZE_COMPACT := 24
+
 @export var ActionButtonScene : PackedScene
 @export var battle_manager : BattleManager
 
@@ -29,6 +34,7 @@ var buttons_disabled: bool
 
 
 func _ready():
+	DisplayProfile.bind(apply_display_profile)
 	battle_manager.battle_state_changed.connect(_on_state_changed)
 	left_shift_button.pressed.connect(_on_shift_button_pressed.bind("left"))
 	right_shift_button.pressed.connect(_on_shift_button_pressed.bind("right"))
@@ -42,6 +48,31 @@ func _ready():
 	buttons_disabled = false
 
 	slide_out(0.0)
+
+
+func apply_display_profile(profile: int, _window_size: Vector2i, _logical_size: Vector2) -> void:
+	var compact := profile == DisplayProfileService.Profile.COMPACT
+	var control_height := (
+		ACTION_CONTROL_HEIGHT_COMPACT if compact else ACTION_CONTROL_HEIGHT_DESKTOP
+	)
+	var header_size := HEADER_FONT_SIZE_COMPACT if compact else HEADER_FONT_SIZE_DESKTOP
+	for path in ["Actions/Passive", "Actions/ShiftAction", "LeftShift", "RightShift"]:
+		var control := get_node_or_null(path) as Control
+		if control:
+			control.custom_minimum_size.y = control_height
+	for path in [
+		"Actions/Passive/Header",
+		"Actions/ShiftAction/Header",
+		"LeftShift/Header",
+		"RightShift/Header",
+	]:
+		var header := get_node_or_null(path) as Label
+		if header:
+			header.add_theme_font_size_override(&"font_size", header_size)
+	if actions_ui:
+		for child in actions_ui.get_children():
+			if child is ActionButton:
+				(child as ActionButton).apply_display_profile(profile)
 
 func load_actions(hero_card: HeroCard, shifted: bool = false):
 	active_hero = hero_card

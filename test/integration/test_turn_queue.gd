@@ -4,6 +4,7 @@ extends GutTest
 const TURN_QUEUE_SCENE := preload("res://src/battle/turn_queue.tscn")
 const BATTLE_SCENE := preload("res://src/battle/battle_scene.tscn")
 const ARCHIVO := preload("res://data/theme/fonts/archivo.tres")
+const ResponsiveFixture = preload("res://test/fixtures/responsive_viewport_fixture.gd")
 
 var queue: TurnQueue
 var manager: BattleManager
@@ -144,12 +145,25 @@ func test_current_action_ends_before_queue_rail_at_reference_viewport() -> void:
 	)
 
 
-func test_rail_allocation_fully_exposes_eight_queue_cards() -> void:
-	assert_gte(queue.queue_scroll.size.y, float(8 * 72 + 7 * 8))
-	assert_eq(
-		queue.queue_scroll.horizontal_scroll_mode,
-		ScrollContainer.SCROLL_MODE_DISABLED,
-	)
+func test_rail_allocation_fully_exposes_eight_queue_cards_at_acceptance_sizes() -> void:
+	for window_size in [Vector2i(1920, 1080), Vector2i(1280, 800)]:
+		var viewport := SubViewport.new()
+		viewport.size = Vector2i(ResponsiveFixture.logical_size_for(window_size))
+		add_child_autofree(viewport)
+		var battle := BATTLE_SCENE.instantiate() as BattleScene
+		viewport.add_child(battle)
+		battle.apply_display_profile(
+			DisplayProfileService.profile_for(window_size),
+			window_size,
+			viewport.size,
+		)
+		await get_tree().process_frame
+		var viewport_queue := battle.get_node("UI/TurnQueue") as TurnQueue
+		assert_gte(viewport_queue.queue_scroll.size.y, float(8 * 72 + 7 * 8))
+		assert_eq(
+			viewport_queue.queue_scroll.horizontal_scroll_mode,
+			ScrollContainer.SCROLL_MODE_DISABLED,
+		)
 
 
 func test_rail_background_and_scrollbar_stay_inside_queue() -> void:
