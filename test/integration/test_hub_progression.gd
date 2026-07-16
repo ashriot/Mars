@@ -8,6 +8,7 @@ var saved_slot: int
 var saved_storage_root: String
 var saved_input_mode: InputManager.InputMode
 var saved_presentation_mode: InputManager.PresentationMode
+var saved_inventory_equipment: Array[Equipment] = []
 
 
 func before_each() -> void:
@@ -17,6 +18,7 @@ func before_each() -> void:
 	saved_storage_root = SaveSystem.storage_root_override
 	saved_input_mode = InputManager._active_mode
 	saved_presentation_mode = InputManager._presentation_mode
+	saved_inventory_equipment.assign(SaveSystem.inventory_equipment)
 	SaveSystem.storage_root_override = TEST_SAVE_ROOT
 	SaveSystem.current_slot_index = TEST_SLOT
 	SaveSystem.party_roster.clear()
@@ -28,6 +30,7 @@ func after_each() -> void:
 	for player in AudioManager._sfx_players:
 		player.stop()
 	SaveSystem.party_roster.assign(saved_roster)
+	SaveSystem.inventory_equipment.assign(saved_inventory_equipment)
 	SaveSystem.current_slot_index = saved_slot
 	DirAccess.remove_absolute(SaveSystem._get_slot_path(TEST_SLOT))
 	SaveSystem.storage_root_override = saved_storage_root
@@ -369,6 +372,41 @@ func test_inventory_restores_item_focus_by_resource_identity_after_rebuild() -> 
 	if settled_focus:
 		assert_true(panel.grid.is_ancestor_of(settled_focus))
 		assert_false(settled_focus.is_queued_for_deletion())
+
+
+func test_equipment_item_button_survives_its_pressed_dispatch_until_queued_cleanup() -> void:
+	var navigation := preload("res://src/ui/navigation/navigation_ux_layer.tscn").instantiate() as NavigationUXLayer
+	navigation.name = "NavigationUXLayer"
+	add_child_autofree(navigation)
+	var replacement := (load("res://data/equipment/weapons/rifle.tres") as Equipment).duplicate(true) as Equipment
+	SaveSystem.inventory_equipment.assign([replacement])
+	var party := await _opened_party_with_three_heroes()
+	party.change_tab(1)
+	assert_true(party.enter_content())
+	var hero_panel := party.hero_list_container.get_child(party.current_hero_idx) as HeroPanel
+	hero_panel.weapon_panel.equip_button.pressed.emit()
+	assert_eq(party.inventory_view.current_mode, InventoryPanel.Mode.EQUIP)
+	assert_eq(party.inventory_view.grid.get_child_count(), 1)
+	var emitter := party.inventory_view.grid.get_child(0) as ItemButton
+	var emitter_id := emitter.get_instance_id()
+	emitter.get_focus_control().grab_focus()
+	emitter.get_focus_control().pressed.emit()
+
+	assert_same(hero_panel.data.weapon, replacement)
+	assert_eq(party.inventory_view.current_mode, InventoryPanel.Mode.VIEW)
+	assert_eq(party.inventory_view.grid.get_child_count(), 0, "retired emitter is detached during its pressed dispatch")
+	assert_true(is_instance_valid(emitter), "emitter remains alive until signal dispatch unwinds")
+	if is_instance_valid(emitter):
+		assert_true(emitter.is_queued_for_deletion())
+		assert_false(party.inventory_view.grid.is_ancestor_of(emitter))
+	await get_tree().process_frame
+	assert_null(instance_from_id(emitter_id), "queued emitter is gone on the next frame")
+	var focus := get_viewport().gui_get_focus_owner()
+	assert_not_null(focus)
+	if focus:
+		assert_true(party == focus or party.is_ancestor_of(focus))
+		assert_false(focus.is_queued_for_deletion())
+	assert_engine_error_count(0)
 
 
 func test_pointer_hero_change_in_content_keeps_memory_content_scoped() -> void:

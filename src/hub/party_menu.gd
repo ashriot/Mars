@@ -180,6 +180,7 @@ func _on_inventory_mode_changed(mode, item, slot):
 
 	# B. If we are in VIEW mode, stop here.
 	if mode == InventoryPanel.Mode.VIEW:
+		call_deferred(&"_restore_items_focus_after_mode_close")
 		return
 
 	# C. Apply Highlight based on the authoritative state
@@ -406,6 +407,16 @@ func _restore_items_focus() -> bool:
 	if (key.is_empty() or key.begins_with("hero:")) and panel and panel.restore_items_focus(key):
 		return true
 	return inventory_view.restore_focus(key)
+
+
+func _restore_items_focus_after_mode_close() -> void:
+	if not visible or current_depth != Depth.CONTENT or current_tab != Tab.ITEMS:
+		return
+	var origin_key: String = _items_navigation_origin.get(_items_memory_key(), "")
+	var panel := _get_panel_by_index(current_hero_idx)
+	if origin_key.is_empty() or panel == null or not panel.restore_items_focus(origin_key):
+		_restore_items_focus()
+	_items_navigation_origin.erase(_items_memory_key())
 
 
 func _remember_items_origin(control: Control) -> void:

@@ -21,9 +21,12 @@ var active_equipment: Equipment
 var active_slot: Equipment.Slot
 var active_mod_slot_index: int = -1
 var _display_profile: int = DisplayProfileService.Profile.DESKTOP
+var _retired_grid_items := Node.new()
 
 
 func _ready() -> void:
+	_retired_grid_items.name = "RetiredGridItems"
+	add_child(_retired_grid_items)
 	DisplayProfile.bind(apply_display_profile)
 
 
@@ -304,7 +307,10 @@ func _clear_grid():
 	if not grid: return
 	for child in grid.get_children():
 		grid.remove_child(child)
-		child.free()
+		if child is CanvasItem:
+			(child as CanvasItem).hide()
+		_retired_grid_items.add_child(child)
+		child.queue_free()
 
 func _spawn_grid_button(resource: Resource, slot: int, count: int) -> Control:
 	var btn = item_button_scene.instantiate() as ItemButton
