@@ -23,10 +23,18 @@ var generated_nodes: Dictionary = {}
 var collapsed_x: float = 290.0
 var expanded_x: float = 900.0
 var _size_tween: Tween
+var _current_page: int = 0
+var _display_profile: int = DisplayProfileService.Profile.DESKTOP
 
 var is_currently_expanded: bool = false
 
 const VERTICAL_SPACING = 90
+const VERTICAL_SPACING_COMPACT = 108
+const NODE_MINIMUM_SIZE_DESKTOP := Vector2(250, 50)
+const NODE_MINIMUM_SIZE_COMPACT := Vector2(250, 72)
+const NODE_LAYER_TOP_COMPACT := 40.0
+const NODE_LAYER_TOP_DESKTOP := -397.0
+const NODE_LAYER_BOTTOM_DESKTOP := 443.0
 const HORIZONTAL_SPACING = 300
 
 func _ready():
@@ -44,6 +52,20 @@ func setup(role_def: RoleDefinition, tree: RoleTreeDefinition, hero: HeroData):
 	role_name_label.text = def.role_name
 	modulate = def.color
 	_refresh_xp_ui()
+
+
+func apply_display_profile(profile: int) -> void:
+	if _display_profile == profile:
+		return
+	_display_profile = profile
+	var compact := profile == DisplayProfileService.Profile.COMPACT
+	content.offset_bottom = 0.0 if compact else -9.0
+	node_layer.anchor_top = 0.0 if compact else 0.5
+	node_layer.anchor_bottom = 0.0 if compact else 0.5
+	node_layer.offset_top = NODE_LAYER_TOP_COMPACT if compact else NODE_LAYER_TOP_DESKTOP
+	node_layer.offset_bottom = NODE_LAYER_TOP_COMPACT + (NODE_LAYER_BOTTOM_DESKTOP - NODE_LAYER_TOP_DESKTOP) if compact else NODE_LAYER_BOTTOM_DESKTOP
+	if tree_definition != null:
+		render_tree(_current_page)
 
 func _on_button_gui_input(event: InputEvent):
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
@@ -68,6 +90,7 @@ func set_expanded(is_expanded: bool, current_page: int, animate: bool = true):
 	render_tree(current_page)
 
 func render_tree(page_index: int):
+	_current_page = page_index
 	_clear_tree()
 	if tree_definition == null: return
 	var min_rank := (page_index * 10) + 1
@@ -89,7 +112,12 @@ func _spawn_node(data_node: ProgressionNodeDefinition) -> void:
 	else:
 		ui_node = node_scene.instantiate() as SkillTreeNode
 	node_layer.add_child(ui_node)
-	ui_node.position = Vector2(expanded_x / 2.0 - 10.0 + data_node.column * HORIZONTAL_SPACING, ((data_node.rank - 1) % 10) * VERTICAL_SPACING)
+	if ui_node is SkillTreeNode:
+		ui_node.apply_display_profile(_display_profile)
+	else:
+		ui_node.custom_minimum_size = NODE_MINIMUM_SIZE_COMPACT if _display_profile == DisplayProfileService.Profile.COMPACT else NODE_MINIMUM_SIZE_DESKTOP
+	var vertical_spacing := VERTICAL_SPACING_COMPACT if _display_profile == DisplayProfileService.Profile.COMPACT else VERTICAL_SPACING
+	ui_node.position = Vector2(expanded_x / 2.0 - 10.0 + data_node.column * HORIZONTAL_SPACING, ((data_node.rank - 1) % 10) * vertical_spacing)
 	ui_node.position.x -= ui_node.size.x / 2
 	ui_node.pivot_offset = ui_node.size / 2
 	if data_node.kind == ProgressionNodeDefinition.NodeKind.ROLE_ANCHOR:

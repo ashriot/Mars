@@ -157,6 +157,30 @@ func test_role_panel_renders_explicit_rank_column_and_indexed_links() -> void:
 	panel.free()
 
 
+func test_role_panel_profile_switch_restores_authored_node_geometry() -> void:
+	var panel := preload("res://src/hub/role_panel.tscn").instantiate() as RolePanel
+	add_child(panel)
+	panel.setup(_legacy_role(), _tree(), _hero())
+	panel.set_expanded(true, 0, false)
+
+	panel.apply_display_profile(DisplayProfileService.Profile.COMPACT)
+	var compact_root := panel.generated_nodes["gun.root"] as SkillTreeNode
+	assert_eq(compact_root.custom_minimum_size, Vector2(250, 72))
+	assert_eq(compact_root.position.y, 108.0)
+	assert_eq(panel.content.offset_bottom, 0.0)
+	assert_eq(panel.node_layer.anchor_top, 0.0)
+	assert_eq(panel.node_layer.offset_top, 40.0)
+
+	panel.apply_display_profile(DisplayProfileService.Profile.DESKTOP)
+	var desktop_root := panel.generated_nodes["gun.root"] as SkillTreeNode
+	assert_eq(desktop_root.custom_minimum_size, Vector2(250, 50))
+	assert_eq(desktop_root.position.y, 90.0)
+	assert_eq(panel.content.offset_bottom, -9.0)
+	assert_eq(panel.node_layer.anchor_top, 0.5)
+	assert_eq(panel.node_layer.offset_top, -397.0)
+	panel.free()
+
+
 func test_role_panel_renders_focusable_starting_role_header_geometry() -> void:
 	var role := _legacy_role()
 	role.description = "Reliable ranged pressure."

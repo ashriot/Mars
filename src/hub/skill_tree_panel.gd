@@ -6,7 +6,8 @@ signal progression_refreshed(hero: HeroData)
 
 @export var role_panel_scene: PackedScene
 
-@onready var role_list_container: HBoxContainer = $RoleList
+@onready var role_scroll: ScrollContainer = $RoleScroll
+@onready var role_list_container: HBoxContainer = $RoleScroll/RoleList
 @onready var tabs_container: HBoxContainer = $Tabs/Container
 
 # --- STATE ---
@@ -20,6 +21,20 @@ var progression_catalog: ProgressionCatalog
 var focused_node_id: String = ""
 var _focus_memory: Dictionary = {}
 var _hero_context_memory: Dictionary = {}
+var _display_profile: int = DisplayProfileService.Profile.DESKTOP
+
+
+func _ready() -> void:
+	DisplayProfile.bind(apply_display_profile)
+
+
+func apply_display_profile(profile: int, _window_size: Vector2i, _logical_size: Vector2) -> void:
+	_display_profile = profile
+	for child in role_list_container.get_children():
+		if child is RolePanel:
+			child.apply_display_profile(profile)
+	if not focused_node_id.is_empty():
+		focus_node(focused_node_id)
 
 
 func setup(hero: HeroData):
@@ -58,6 +73,7 @@ func _refresh_role_list():
 		var tree := progression_catalog.get_role(def.role_id)
 		var panel = role_panel_scene.instantiate() as RolePanel
 		role_list_container.add_child(panel)
+		panel.apply_display_profile(_display_profile)
 		panel.setup(def, tree, current_hero)
 		panel.panel_selected.connect(_on_role_panel_selected)
 		panel.purchase_requested.connect(_on_purchase_requested)
@@ -84,13 +100,15 @@ func _on_purchase_requested(hero: HeroData, role_id: String, node_id: String) ->
 
 
 func _on_role_node_focused(node_id: String, role_panel: RolePanel) -> void:
-	if role_panel != _current_role_panel() or focused_node_id == node_id:
+	if role_panel != _current_role_panel():
 		return
-	focused_node_id = node_id
-	_focus_memory[_memory_key()] = node_id
+	if focused_node_id != node_id:
+		focused_node_id = node_id
+		_focus_memory[_memory_key()] = node_id
 	var node := role_panel.generated_nodes.get(node_id) as Control
 	if node:
 		_publish_hints(node)
+		call_deferred(&"ensure_node_visible", node)
 
 func _on_role_panel_selected(selected_panel: RolePanel):
 	var panels = role_list_container.get_children()
@@ -102,6 +120,7 @@ func _on_role_panel_selected(selected_panel: RolePanel):
 		else:
 			p.set_expanded(false, current_page)
 	update_tabs(selected_panel.def.color)
+	call_deferred(&"ensure_node_visible", selected_panel)
 
 func update_tabs(color: Color, animate: bool = true):
 	var pos = current_role_idx * 290 + current_role_idx * 20
@@ -149,7 +168,13 @@ func focus_node(node_id: String) -> bool:
 	_focus_memory[_memory_key()] = target_id
 	if target.is_inside_tree() and target.is_visible_in_tree(): target.grab_focus()
 	_publish_hints(target)
+	call_deferred(&"ensure_node_visible", target)
 	return true
+
+
+func ensure_node_visible(node: Control) -> void:
+	if is_instance_valid(node):
+		role_scroll.ensure_control_visible(node)
 
 
 func get_focused_node() -> Control:

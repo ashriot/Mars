@@ -5,6 +5,9 @@ signal node_clicked(node_ui)
 
 enum NodeState { LOCKED, AVAILABLE, UNLOCKED }
 
+const MINIMUM_SIZE_DESKTOP := Vector2(250, 50)
+const MINIMUM_SIZE_COMPACT := Vector2(250, 72)
+
 var node_definition: ProgressionNodeDefinition
 var tree_definition: RoleTreeDefinition
 var state: NodeState = NodeState.LOCKED
@@ -18,6 +21,10 @@ var _can_afford := false
 @onready var arrow_left: TextureRect = $Arrows/Left
 @onready var arrow_down: TextureRect = $Arrows/Down
 @onready var arrow_right: TextureRect = $Arrows/Right
+
+
+func apply_display_profile(profile: int) -> void:
+	custom_minimum_size = MINIMUM_SIZE_COMPACT if profile == DisplayProfileService.Profile.COMPACT else MINIMUM_SIZE_DESKTOP
 
 
 func setup(node: ProgressionNodeDefinition, hero: HeroData, tree: RoleTreeDefinition):

@@ -15,7 +15,7 @@ grow_vertical = 2
 script = ExtResource("1_heh8r")
 role_panel_scene = ExtResource("2_q0e1y")
 
-[node name="RoleList" type="HBoxContainer" parent="."]
+[node name="RoleScroll" type="ScrollContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -23,6 +23,14 @@ anchor_bottom = 1.0
 offset_bottom = -78.0
 grow_horizontal = 2
 grow_vertical = 2
+focus_mode = 0
+horizontal_scroll_mode = 1
+vertical_scroll_mode = 0
+
+[node name="RoleList" type="HBoxContainer" parent="RoleScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 theme_override_constants/separation = 20
 
 [node name="Tabs" type="Control" parent="."]
