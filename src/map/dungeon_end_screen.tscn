@@ -178,6 +178,7 @@ horizontal_alignment = 2
 vertical_alignment = 1
 
 [node name="Button" type="Button" parent="Panel"]
+custom_minimum_size = Vector2(0, 72)
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0

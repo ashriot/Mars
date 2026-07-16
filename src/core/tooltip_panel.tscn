@@ -25,7 +25,6 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_527p7")
 script = ExtResource("1_527p7")
 
 [node name="Label" type="RichTextLabel" parent="."]
-custom_minimum_size = Vector2(600, 0)
 layout_mode = 2
 mouse_filter = 2
 bbcode_enabled = true
