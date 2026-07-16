@@ -29,6 +29,7 @@ offset_top = -540.0
 offset_right = 300.0
 offset_bottom = -244.0
 grow_vertical = 2
+focus_mode = 2
 script = ExtResource("1_r4b5v")
 
 [node name="Content" type="Control" parent="."]

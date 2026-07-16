@@ -1,18 +1,29 @@
 extends Control
 class_name PartyMenu
 
+enum Tab { ROLES, ITEMS, OPTIONS, JOURNAL }
+enum Depth { HERO_RAIL, CONTENT }
+
 @export var hero_panel_scene: PackedScene
 
 # --- REFERENCES ---
 @onready var hero_list_container: VBoxContainer = $HeroList
 @onready var skill_view: SkillTreePanel = $Content/SkillTreePanel
 @onready var inventory_view: InventoryPanel = $Content/InventoryPanel
-@onready var mode_tabs: HBoxContainer = $Header/ModeTabs
+@onready var tab_buttons: Array[Button] = [
+	$Header/TabStrip/Roles,
+	$Header/TabStrip/Items,
+	$Header/TabStrip/Options,
+	$Header/TabStrip/Journal,
+]
+@onready var back_button: Button = $BackBtn
 
 # --- STATE ---
 var party_roster: Array[HeroData] = []
 var current_hero_idx: int = 0
-var current_mode: int = 0 # 0=Skills, 1=Inventory
+var current_tab: Tab = Tab.ROLES
+var current_depth: Depth = Depth.HERO_RAIL
+var _content_focus_memory: Dictionary = {}
 var progression_service: ProgressionService = ProgressionSystem.service
 var progression_catalog: ProgressionCatalog = ProgressionSystem.catalog
 var save_progression: Callable = SaveSystem.save_current_slot
@@ -28,11 +39,8 @@ func _ready():
 	skill_view.purchase_requested.connect(_on_purchase_requested)
 	inventory_view.hero_stats_updated.connect(_on_hero_stats_updated)
 	inventory_view.mode_changed.connect(_on_inventory_mode_changed)
-	for i in range(mode_tabs.get_child_count()):
-		var btn = mode_tabs.get_child(i) as Button
-		btn.pressed.connect(_on_mode_changed.bind(i))
-		btn.focus_entered.connect(_publish_hints)
-	$BackBtn.focus_entered.connect(_publish_hints)
+	for index in range(tab_buttons.size()):
+		tab_buttons[index].pressed.connect(_on_tab_pressed.bind(index))
 
 
 func apply_display_profile(profile: int, window_size: Vector2i, logical_size: Vector2) -> void:
@@ -40,11 +48,9 @@ func apply_display_profile(profile: int, window_size: Vector2i, logical_size: Ve
 	_display_window_size = window_size
 	_display_logical_size = logical_size
 	var compact := profile == DisplayProfileService.Profile.COMPACT
-	$Header.offset_top = 411.0
-	$Header.offset_bottom = 483.0 if compact else 472.0
 	$BackBtn.offset_top = 489.0 if compact else 477.0
 	$BackBtn.offset_bottom = 561.0 if compact else 525.0
-	mode_tabs.add_theme_constant_override(&"separation", 12 if compact else 8)
+	$Header/TabStrip.add_theme_constant_override(&"separation", 12 if compact else 8)
 	inventory_view.apply_display_profile(profile, window_size, logical_size)
 	for child in hero_list_container.get_children():
 		if child is HeroPanel:
@@ -60,16 +66,16 @@ func open():
 	party_roster = SaveSystem.party_roster
 	if party_roster.is_empty(): return
 
+	current_depth = Depth.HERO_RAIL
 	_refresh_hero_list()
 	_select_hero(0)
-	var btn: Button = mode_tabs.get_child(0)
-	btn.set_pressed_no_signal(true)
 	show()
+	var selected_hero := _get_panel_by_index(current_hero_idx)
 	var navigation := _navigation_ux_layer()
 	if navigation:
-		navigation.push_modal(self, btn)
+		navigation.push_modal(self, selected_hero)
 	_publish_hints()
-	_grab_focus_if_valid.call_deferred(btn)
+	_grab_focus_if_valid.call_deferred(selected_hero)
 
 func _on_back_pressed():
 	_close()
@@ -77,30 +83,45 @@ func _on_back_pressed():
 
 func _unhandled_input(event: InputEvent) -> void:
 	var navigation := _navigation_ux_layer()
-	if visible and event.is_action_pressed(&"confirm") and (navigation == null or navigation.is_top_modal(self)):
+	if not visible or (navigation and not navigation.is_top_modal(self)):
+		return
+	if event.is_action_pressed(&"hub_tab_previous"):
+		get_viewport().set_input_as_handled()
+		change_tab(-1)
+		return
+	if event.is_action_pressed(&"hub_tab_next"):
+		get_viewport().set_input_as_handled()
+		change_tab(1)
+		return
+	if current_depth == Depth.CONTENT and event.is_action_pressed(&"nav_left"):
+		get_viewport().set_input_as_handled()
+		return_to_hero_rail()
+		return
+	if event.is_action_pressed(&"confirm"):
+		var owner := get_viewport().gui_get_focus_owner()
+		if owner == _get_panel_by_index(current_hero_idx):
+			get_viewport().set_input_as_handled()
+			enter_content()
+			return
 		var focused := get_viewport().gui_get_focus_owner() as BaseButton
 		if focused and not (focused is SkillTreeNode) and not focused.disabled and (focused == self or is_ancestor_of(focused)):
 			get_viewport().set_input_as_handled()
 			focused.pressed.emit()
 		return
-	if visible and navigation and navigation.is_top_modal(self) and event.is_action_pressed(&"cancel"):
+	if event.is_action_pressed(&"cancel"):
 		get_viewport().set_input_as_handled()
-		if skill_view.visible and skill_view.cancel_focus_layer():
+		if current_depth == Depth.CONTENT and skill_view.visible and skill_view.cancel_focus_layer():
 			return
-		if inventory_view.visible and inventory_view.cancel_navigation():
+		if current_depth == Depth.CONTENT and inventory_view.visible and inventory_view.cancel_navigation():
 			return
-		var owner := get_viewport().gui_get_focus_owner()
-		var in_content := owner and (skill_view.is_ancestor_of(owner) or inventory_view.is_ancestor_of(owner))
-		if in_content:
-			var hero_panel := _get_panel_by_index(current_hero_idx)
-			if hero_panel:
-				hero_panel.focus_mode = Control.FOCUS_ALL
-				hero_panel.grab_focus()
-				return
+		if current_depth == Depth.CONTENT:
+			return_to_hero_rail()
+			return
 		_close()
 
 func _refresh_hero_list():
 	for child in hero_list_container.get_children():
+		hero_list_container.remove_child(child)
 		child.queue_free()
 
 	for i in range(party_roster.size()):
@@ -111,6 +132,8 @@ func _refresh_hero_list():
 
 		panel.setup(hero_data)
 		panel.panel_selected.connect(_on_hero_panel_selected)
+		panel.focus_entered.connect(_on_hero_panel_selected.bind(panel))
+		panel.content_requested.connect(_on_hero_content_requested)
 		panel.equip_requested.connect(_on_hero_equip_requested.bind(i))
 		panel.tune_requested.connect(_on_hero_tune_requested.bind(i))
 		panel.mod_requested.connect(_on_hero_mod_requested.bind(i))
@@ -120,6 +143,13 @@ func _refresh_hero_list():
 			panel.set_expanded(true)
 		else:
 			panel.set_expanded(false)
+
+	for index in range(hero_list_container.get_child_count()):
+		var panel := hero_list_container.get_child(index) as HeroPanel
+		var previous := hero_list_container.get_child(posmod(index - 1, hero_list_container.get_child_count())) as HeroPanel
+		var next := hero_list_container.get_child(posmod(index + 1, hero_list_container.get_child_count())) as HeroPanel
+		panel.focus_neighbor_top = panel.get_path_to(previous)
+		panel.focus_neighbor_bottom = panel.get_path_to(next)
 
 func _on_inventory_mode_changed(mode, item, slot):
 	# A. Clear ALL highlights first (Safety)
@@ -155,14 +185,18 @@ func _on_inventory_mode_changed(mode, item, slot):
 			active_panel.set_active_mode(active_panel.armor_panel, "mod")
 
 func _on_hero_panel_selected(selected_panel: HeroPanel):
-	var panels = hero_list_container.get_children()
-	for i in range(panels.size()):
-		var p = panels[i] as HeroPanel
-		if p == selected_panel:
-			p.set_expanded(true)
-			_select_hero(i)
-		else:
-			p.set_expanded(false)
+	var index := selected_panel.get_index()
+	if index < 0 or index >= hero_list_container.get_child_count():
+		return
+	if current_hero_idx != index:
+		_select_hero(index)
+	if current_depth == Depth.HERO_RAIL and not selected_panel.has_focus():
+		_grab_focus_if_valid(selected_panel)
+
+
+func _on_hero_content_requested(selected_panel: HeroPanel) -> void:
+	_on_hero_panel_selected(selected_panel)
+	enter_content()
 
 func _perform_party_swap(hero_a_idx: int, hero_b_idx: int, slot: Equipment.Slot):
 	var hero_a = party_roster[hero_a_idx]
@@ -217,16 +251,104 @@ func _select_hero(index: int):
 	current_hero_idx = index
 	_update_active_view()
 
-func _on_mode_changed(mode_index: int):
-	if current_mode == mode_index: return
-	current_mode = mode_index
-	var btn: Button = mode_tabs.get_child(mode_index)
-	btn.button_pressed = true
+
+func _on_tab_pressed(tab_index: int) -> void:
+	change_tab(tab_index - int(current_tab))
+
+
+# Retained for callers transitioning from the former two-mode menu API.
+func _on_mode_changed(mode_index: int) -> void:
+	if mode_index in [Tab.ROLES, Tab.ITEMS]:
+		_on_tab_pressed(mode_index)
+
+
+func change_tab(delta: int) -> void:
+	if delta == 0:
+		return
+	_store_content_focus()
+	current_tab = posmod(int(current_tab) + delta, tab_buttons.size()) as Tab
+	if current_tab in [Tab.OPTIONS, Tab.JOURNAL]:
+		current_depth = Depth.HERO_RAIL
 	_update_active_view()
+	if current_depth == Depth.CONTENT and current_tab in [Tab.ROLES, Tab.ITEMS]:
+		_restore_content_focus()
+	else:
+		_focus_selected_hero()
+
+
+func enter_content() -> bool:
+	if current_tab in [Tab.OPTIONS, Tab.JOURNAL]:
+		return false
+	current_depth = Depth.CONTENT
+	_update_depth_presentation()
+	return _restore_content_focus()
+
+
+func return_to_hero_rail() -> void:
+	_store_content_focus()
+	current_depth = Depth.HERO_RAIL
+	_update_depth_presentation()
+	_focus_selected_hero()
+
+
+func _content_memory_key() -> String:
+	if party_roster.is_empty() or current_hero_idx < 0 or current_hero_idx >= party_roster.size():
+		return ""
+	return "%s:%d" % [party_roster[current_hero_idx].hero_id, int(current_tab)]
+
+
+func _store_content_focus() -> void:
+	if current_depth != Depth.CONTENT:
+		return
+	var key := _content_memory_key()
+	if key.is_empty():
+		return
+	var owner := get_viewport().gui_get_focus_owner()
+	if owner and is_ancestor_of(owner):
+		_content_focus_memory[key] = get_path_to(owner)
+
+
+func _restore_content_focus() -> bool:
+	var remembered: Control
+	var remembered_path: NodePath = _content_focus_memory.get(_content_memory_key(), NodePath())
+	if not remembered_path.is_empty():
+		remembered = get_node_or_null(remembered_path) as Control
+	if _is_valid_focus(remembered):
+		remembered.grab_focus()
+		return true
+	if current_tab == Tab.ROLES:
+		return skill_view.focus_node("")
+	if current_tab == Tab.ITEMS:
+		var panel := _get_panel_by_index(current_hero_idx)
+		var fallback := _first_focusable_descendant(panel)
+		if fallback:
+			fallback.grab_focus()
+			return true
+	return false
+
+
+func _first_focusable_descendant(root: Control) -> Control:
+	if root == null:
+		return null
+	for child in root.find_children("*", "Control", true, false):
+		var control := child as Control
+		if _is_valid_focus(control):
+			return control
+	return null
+
+
+func _is_valid_focus(control: Control) -> bool:
+	return is_instance_valid(control) and control.is_visible_in_tree() and control.focus_mode == Control.FOCUS_ALL and not (control is BaseButton and control.disabled)
+
+
+func _focus_selected_hero() -> void:
+	_grab_focus_if_valid(_get_panel_by_index(current_hero_idx))
 
 func _update_active_view():
+	if party_roster.is_empty() or current_hero_idx < 0 or current_hero_idx >= party_roster.size():
+		return
 	var hero = party_roster[current_hero_idx]
-	var is_inventory = (current_mode == 1)
+	var is_inventory := current_tab == Tab.ITEMS
 	for i in range(hero_list_container.get_child_count()):
 		var panel = hero_list_container.get_child(i) as HeroPanel
 		panel.set_mode(is_inventory)
@@ -236,18 +358,25 @@ func _update_active_view():
 			panel.set_expanded(false)
 			panel.clear_highlights()
 
-	if current_mode == 0:
-		# SKILLS
-		inventory_view.hide()
-		skill_view.show()
+	skill_view.visible = current_tab == Tab.ROLES
+	inventory_view.visible = current_tab == Tab.ITEMS
+	$Content/OptionsComingSoon.visible = current_tab == Tab.OPTIONS
+	$Content/JournalComingSoon.visible = current_tab == Tab.JOURNAL
+	for index in range(tab_buttons.size()):
+		tab_buttons[index].set_pressed_no_signal(index == current_tab)
+
+	if current_tab == Tab.ROLES:
 		skill_view.progression_catalog = progression_catalog
 		skill_view.setup(hero)
-
-	elif current_mode == 1:
-		# INVENTORY
-		skill_view.hide()
-		inventory_view.show()
+	elif current_tab == Tab.ITEMS:
 		inventory_view.setup(hero)
+	_update_depth_presentation()
+
+
+func _update_depth_presentation() -> void:
+	for index in range(hero_list_container.get_child_count()):
+		var panel := hero_list_container.get_child(index) as HeroPanel
+		panel.set_chrome_active(current_depth == Depth.HERO_RAIL or index == current_hero_idx)
 
 func _get_panel_by_index(index: int) -> HeroPanel:
 	if index >= 0 and index < hero_list_container.get_child_count():

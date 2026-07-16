@@ -48,50 +48,20 @@ func test_disabled_and_hidden_choices_are_excluded_from_navigation() -> void:
 	assert_ne(get_viewport().gui_get_focus_owner(), title.load_button)
 
 
-func test_party_menu_authored_focus_neighbors_resolve_from_each_control() -> void:
-	var party := PartyScene.instantiate() as PartyMenu
-	add_child_autofree(party)
-	var skills := party.get_node("Header/ModeTabs/Skills") as Button
-	var inventory := party.get_node("Header/ModeTabs/Inventory") as Button
-	var back := party.get_node("BackBtn") as Button
-	assert_eq(skills.get_node_or_null(skills.focus_neighbor_left), back)
-	assert_eq(skills.get_node_or_null(skills.focus_neighbor_right), inventory)
-	assert_eq(inventory.get_node_or_null(inventory.focus_neighbor_left), skills)
-	assert_eq(inventory.get_node_or_null(inventory.focus_neighbor_right), back)
-	assert_eq(back.get_node_or_null(back.focus_neighbor_top), skills)
-	assert_eq(back.get_node_or_null(back.focus_neighbor_bottom), skills)
-
-
-func test_party_tabs_arrow_and_wasd_move_focus_to_same_destination() -> void:
-	var ux := _add_ux()
-	var hero := load("res://data/heroes/asher/asher.tres").duplicate(true) as HeroData
-	SaveSystem.party_roster.assign([hero])
+func test_party_tab_strip_is_clickable_but_controller_default_is_selected_hero() -> void:
+	_add_ux()
+	SaveSystem.party_roster.assign([load("res://data/heroes/asher/asher.tres").duplicate(true)])
 	var hub := HubScene.instantiate() as Hub
 	add_child_autofree(hub)
 	await get_tree().process_frame
 	hub.party_menu.open()
 	await get_tree().process_frame
-	var skills := hub.party_menu.get_node("Header/ModeTabs/Skills") as Button
-	var inventory := hub.party_menu.get_node("Header/ModeTabs/Inventory") as Button
-
-	for event: InputEventKey in [_key(KEY_RIGHT), _physical_key(KEY_D)]:
-		InputManager._set_presentation_mode(InputManager.PresentationMode.FOCUS)
-		skills.grab_focus()
-		await get_tree().process_frame
-		var focus_transitions: Array[Control] = []
-		var record_focus := func(control: Control) -> void: focus_transitions.append(control)
-		get_viewport().gui_focus_changed.connect(record_focus)
-		get_viewport().push_input(event)
-		await get_tree().process_frame
-		get_viewport().gui_focus_changed.disconnect(record_focus)
-		assert_same(get_viewport().gui_get_focus_owner(), inventory)
-		assert_eq(focus_transitions, [inventory], "one focus transition per key press")
-		assert_same(ux.get_focus_target(), inventory)
-		assert_true(NavigationFocus._states.has(inventory.get_instance_id()))
-		assert_eq(InputManager.get_active_mode(), InputManager.InputMode.KEYBOARD_MOUSE)
-		event.pressed = false
-		get_viewport().push_input(event)
-		await get_tree().process_frame
+	assert_same(get_viewport().gui_get_focus_owner(), hub.party_menu.hero_list_container.get_child(0))
+	for button: Button in hub.party_menu.tab_buttons:
+		assert_true(button.visible)
+		assert_false(button.disabled)
+		assert_eq(button.focus_mode, Control.FOCUS_NONE)
+	assert_eq(hub.party_menu.back_button.focus_mode, Control.FOCUS_NONE)
 
 func test_nested_party_and_terminal_cancel_only_top_and_restore_each_layer() -> void:
 	var ux := _add_ux()
@@ -108,7 +78,7 @@ func test_nested_party_and_terminal_cancel_only_top_and_restore_each_layer() -> 
 	var party := hub.party_menu
 	party.open()
 	await get_tree().process_frame
-	var party_default := party.mode_tabs.get_child(0) as Button
+	var party_default := party.hero_list_container.get_child(0) as HeroPanel
 	var underlying_pressed := [0]
 	for button: BaseButton in party.find_children("*", "BaseButton", true, false):
 		button.pressed.connect(func() -> void: underlying_pressed[0] += 1)

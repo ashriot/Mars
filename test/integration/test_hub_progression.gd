@@ -106,6 +106,63 @@ func _record_stats(_purchased_hero: HeroData) -> void:
 	calls.append("stats")
 
 
+func _opened_party_with_three_heroes() -> PartyMenu:
+	SaveSystem.party_roster.assign([
+		load("res://data/heroes/asher/asher.tres").duplicate(true),
+		load("res://data/heroes/echo/echo.tres").duplicate(true),
+		load("res://data/heroes/sands/sands.tres").duplicate(true),
+	])
+	var party := preload("res://src/hub/party_menu.tscn").instantiate() as PartyMenu
+	add_child_autofree(party)
+	party.open()
+	await get_tree().process_frame
+	return party
+
+
+func test_party_opens_on_expanded_hero_and_up_down_select_immediately() -> void:
+	var party := await _opened_party_with_three_heroes()
+	assert_eq(party.current_depth, PartyMenu.Depth.HERO_RAIL)
+	assert_eq(party.current_hero_idx, 0)
+	assert_same(get_viewport().gui_get_focus_owner(), party.hero_list_container.get_child(0))
+	party.hero_list_container.get_child(1).grab_focus()
+	await get_tree().process_frame
+	assert_eq(party.current_hero_idx, 1)
+	assert_true((party.hero_list_container.get_child(1) as HeroPanel)._is_expanded)
+	assert_false((party.hero_list_container.get_child(0) as HeroPanel)._is_expanded)
+
+
+func test_party_content_entry_back_and_stub_tabs_keep_focus_valid() -> void:
+	var party := await _opened_party_with_three_heroes()
+	assert_true(party.enter_content())
+	assert_eq(party.current_depth, PartyMenu.Depth.CONTENT)
+	assert_true(party.skill_view.is_ancestor_of(get_viewport().gui_get_focus_owner()))
+	party.change_tab(1)
+	assert_eq(party.current_tab, PartyMenu.Tab.ITEMS)
+	party.change_tab(1)
+	assert_eq(party.current_tab, PartyMenu.Tab.OPTIONS)
+	assert_eq(party.current_depth, PartyMenu.Depth.HERO_RAIL)
+	assert_same(get_viewport().gui_get_focus_owner(), party.hero_list_container.get_child(party.current_hero_idx))
+	assert_true(party.get_node("Content/OptionsComingSoon").visible)
+	party.change_tab(1)
+	assert_true(party.get_node("Content/JournalComingSoon").visible)
+	party.change_tab(1)
+	assert_eq(party.current_tab, PartyMenu.Tab.ROLES)
+
+
+func test_pointer_tab_and_hero_selection_update_controller_context() -> void:
+	var party := await _opened_party_with_three_heroes()
+	party.tab_buttons[PartyMenu.Tab.ITEMS].pressed.emit()
+	assert_eq(party.current_tab, PartyMenu.Tab.ITEMS)
+	var second := party.hero_list_container.get_child(1) as HeroPanel
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	second._gui_input(click)
+	assert_eq(party.current_hero_idx, 1)
+	party.return_to_hero_rail()
+	assert_same(get_viewport().gui_get_focus_owner(), second)
+
+
 func test_role_panel_submits_stable_ids_without_mutating_progression() -> void:
 	var hero := _hero()
 	var panel := RolePanel.new()
