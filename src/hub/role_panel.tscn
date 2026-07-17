@@ -22,6 +22,7 @@ clip_contents = true
 custom_minimum_size = Vector2(300, 0)
 offset_right = 900.0
 offset_bottom = 900.0
+focus_mode = 2
 script = ExtResource("1_n8shc")
 node_scene = ExtResource("2_13wgo")
 anchor_scene = ExtResource("3_anchor")

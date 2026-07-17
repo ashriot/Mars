@@ -110,7 +110,20 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"hub_upgrade") and _activate_items_upgrade_hotkey():
 		get_viewport().set_input_as_handled()
 		return
-	if current_depth == Depth.CONTENT and event.is_action_pressed(&"nav_left"):
+	if current_depth == Depth.CONTENT and current_tab == Tab.ROLES and skill_view.navigation_depth == SkillTreePanel.NavigationDepth.ROLE_SELECT:
+		if event.is_action_pressed(&"nav_left"):
+			get_viewport().set_input_as_handled()
+			skill_view.select_adjacent_role(-1)
+			return
+		if event.is_action_pressed(&"nav_right"):
+			get_viewport().set_input_as_handled()
+			skill_view.select_adjacent_role(1)
+			return
+		if event.is_action_pressed(&"confirm") or event.is_action_pressed(&"nav_down"):
+			get_viewport().set_input_as_handled()
+			skill_view.enter_tree()
+			return
+	if current_depth == Depth.CONTENT and current_tab != Tab.ROLES and event.is_action_pressed(&"nav_left"):
 		get_viewport().set_input_as_handled()
 		return_to_hero_rail()
 		return
@@ -327,7 +340,12 @@ func enter_content() -> bool:
 		return false
 	current_depth = Depth.CONTENT
 	_update_depth_presentation()
-	return _restore_content_focus()
+	var restored := _restore_content_focus()
+	if current_tab == Tab.ROLES and not restored:
+		current_depth = Depth.HERO_RAIL
+		_update_depth_presentation()
+		_focus_selected_hero()
+	return restored
 
 
 func return_to_hero_rail() -> void:
@@ -392,7 +410,7 @@ func _store_roles_focus() -> void:
 
 
 func _restore_roles_focus() -> bool:
-	return skill_view.restore_focus()
+	return skill_view.enter_role_select()
 
 
 func _items_memory_key() -> String:

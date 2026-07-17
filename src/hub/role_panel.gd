@@ -43,6 +43,13 @@ func _ready():
 	custom_minimum_size.x = collapsed_x
 	is_currently_expanded = false
 
+
+func focus_for_selection() -> bool:
+	if not is_inside_tree() or not is_visible_in_tree():
+		return false
+	grab_focus()
+	return true
+
 func setup(role_def: RoleDefinition, tree: RoleTreeDefinition, hero: HeroData):
 	def = role_def
 	tree_definition = tree

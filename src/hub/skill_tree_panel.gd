@@ -1,6 +1,8 @@
 extends Control
 class_name SkillTreePanel
 
+enum NavigationDepth { ROLE_SELECT, TREE }
+
 signal purchase_requested(hero: HeroData, role_id: String, node_id: String)
 signal progression_refreshed(hero: HeroData)
 
@@ -26,6 +28,7 @@ var current_hero: HeroData
 var current_hero_idx: int = 0
 var current_role_idx: int = 0
 var current_page: int = 0
+var navigation_depth := NavigationDepth.ROLE_SELECT
 var progression_catalog: ProgressionCatalog
 var focused_node_id: String = ""
 var _focus_memory: Dictionary = {}
@@ -52,7 +55,7 @@ func apply_display_profile(profile: int, _window_size: Vector2i, _logical_size: 
 	for child in role_list_container.get_children():
 		if child is RolePanel:
 			child.apply_display_profile(profile)
-	if not focused_node_id.is_empty():
+	if navigation_depth == NavigationDepth.TREE and not focused_node_id.is_empty():
 		focus_node(focused_node_id)
 
 
@@ -68,11 +71,8 @@ func setup(hero: HeroData):
 	# Setup the View
 	_refresh_role_list()
 	_update_tab_visuals()
-	focus_node(_remembered_node_for_current_context())
-
-	# Trigger initial selection
-	# (Your existing logic to select role 0)
-	#_on_role_panel_selected(role_list_container.get_child(0))
+	navigation_depth = NavigationDepth.ROLE_SELECT
+	_set_role_panel_focus_enabled(true)
 
 
 func _refresh_role_list():
@@ -134,16 +134,27 @@ func _on_role_node_focused(node_id: String, role_panel: RolePanel) -> void:
 
 func _on_role_panel_selected(selected_panel: RolePanel):
 	var panels = role_list_container.get_children()
+	var selected_index := panels.find(selected_panel)
+	if selected_index < 0:
+		return
+	navigation_depth = NavigationDepth.ROLE_SELECT
+	_set_role_panel_focus_enabled(true)
+	if selected_index != current_role_idx:
+		_store_focus_memory()
+		current_role_idx = selected_index
+		current_page = _closest_supported_page(selected_panel, current_page)
 	for i in range(panels.size()):
 		var p = panels[i] as RolePanel
 		if p == selected_panel:
-			current_role_idx = i
 			p.set_expanded(true, current_page)
 		else:
 			p.set_expanded(false, current_page)
 	_refresh_role_shortcuts()
 	update_tabs(selected_panel.def.color)
 	_update_tab_visuals()
+	if navigation_depth == NavigationDepth.ROLE_SELECT:
+		selected_panel.focus_for_selection()
+		_publish_role_select_hints()
 	call_deferred(&"ensure_node_visible", selected_panel.get_instance_id())
 
 func update_tabs(color: Color, animate: bool = true):
@@ -211,6 +222,8 @@ func focus_node(node_id: String) -> bool:
 	var target := role_panel.generated_nodes.get(target_id) as Control
 	if target == null:
 		return false
+	navigation_depth = NavigationDepth.TREE
+	_set_role_panel_focus_enabled(false)
 	focused_node_id = target_id
 	_focus_memory[_memory_key()] = target_id
 	if target.is_inside_tree() and target.is_visible_in_tree(): target.grab_focus()
@@ -263,21 +276,7 @@ func change_page(delta: int) -> void:
 
 
 func change_role(delta: int) -> void:
-	var count := role_list_container.get_child_count()
-	if delta == 0 or count == 0: return
-	var anchor := _focused_position()
-	_store_focus_memory()
-	current_role_idx = posmod(current_role_idx + delta, count)
-	var selected := role_list_container.get_child(current_role_idx) as RolePanel
-	current_page = _closest_supported_page(selected, current_page)
-	_on_role_panel_selected(selected)
-	var remembered := _remembered_node_for_current_context()
-	if selected.generated_nodes.has(remembered):
-		focus_node(remembered)
-	elif anchor != Vector2.INF:
-		focus_node(_nearest_node_to(anchor))
-	else:
-		focus_node("")
+	select_adjacent_role(delta)
 
 
 func confirm_focused_node() -> void:
@@ -293,11 +292,46 @@ func remember_focus() -> String:
 
 
 func restore_focus() -> bool:
-	return focus_node(_remembered_node_for_current_context())
+	return enter_role_select()
 
 
 func cancel_navigation() -> bool:
-	return false
+	if navigation_depth != NavigationDepth.TREE:
+		return false
+	return enter_role_select()
+
+
+func enter_role_select() -> bool:
+	navigation_depth = NavigationDepth.ROLE_SELECT
+	_set_role_panel_focus_enabled(true)
+	var panel := _current_role_panel()
+	if panel == null:
+		return false
+	_publish_role_select_hints()
+	return panel.focus_for_selection()
+
+
+func enter_tree() -> bool:
+	var panel := _current_role_panel()
+	if panel == null or panel.generated_nodes.is_empty():
+		return false
+	navigation_depth = NavigationDepth.TREE
+	_set_role_panel_focus_enabled(false)
+	return focus_node(_remembered_node_for_current_context())
+
+
+func select_adjacent_role(delta: int) -> bool:
+	var next := current_role_idx + delta
+	if next < 0 or next >= role_list_container.get_child_count():
+		return false
+	_store_focus_memory()
+	navigation_depth = NavigationDepth.ROLE_SELECT
+	_set_role_panel_focus_enabled(true)
+	current_role_idx = next
+	var selected := role_list_container.get_child(current_role_idx) as RolePanel
+	current_page = _closest_supported_page(selected, current_page)
+	_on_role_panel_selected(selected)
+	return selected.focus_for_selection()
 
 
 func set_role_navigation_owner(owner: Callable) -> void:
@@ -330,18 +364,24 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventJoypadMotion and event.axis in _held_page_triggers:
 		_handle_page_trigger_motion(event)
 		return
-	if _node_owns_focus() and event.is_action_pressed(&"nav_up"):
+	if navigation_depth == NavigationDepth.ROLE_SELECT and _role_panel_owns_focus() and event.is_action_pressed(&"nav_left"):
+		select_adjacent_role(-1)
+	elif navigation_depth == NavigationDepth.ROLE_SELECT and _role_panel_owns_focus() and event.is_action_pressed(&"nav_right"):
+		select_adjacent_role(1)
+	elif navigation_depth == NavigationDepth.ROLE_SELECT and _role_panel_owns_focus() and (event.is_action_pressed(&"confirm") or event.is_action_pressed(&"nav_down")):
+		enter_tree()
+	elif navigation_depth == NavigationDepth.TREE and _node_owns_focus() and event.is_action_pressed(&"nav_up"):
 		move_focus(Vector2.UP)
-	elif _node_owns_focus() and event.is_action_pressed(&"nav_down"):
+	elif navigation_depth == NavigationDepth.TREE and _node_owns_focus() and event.is_action_pressed(&"nav_down"):
 		if not move_focus(Vector2.DOWN):
 			focus_current_page_tab()
-	elif _node_owns_focus() and event.is_action_pressed(&"nav_left"):
+	elif navigation_depth == NavigationDepth.TREE and _node_owns_focus() and event.is_action_pressed(&"nav_left"):
 		move_focus(Vector2.LEFT)
-	elif _node_owns_focus() and event.is_action_pressed(&"nav_right"):
+	elif navigation_depth == NavigationDepth.TREE and _node_owns_focus() and event.is_action_pressed(&"nav_right"):
 		move_focus(Vector2.RIGHT)
-	elif _page_tabs_own_focus() and event.is_action_pressed(&"nav_up"):
+	elif navigation_depth == NavigationDepth.TREE and _page_tabs_own_focus() and event.is_action_pressed(&"nav_up"):
 		focus_node_from_page_tabs()
-	elif _node_owns_focus() and event.is_action_pressed(&"confirm"):
+	elif navigation_depth == NavigationDepth.TREE and _node_owns_focus() and event.is_action_pressed(&"confirm"):
 		confirm_focused_node()
 	else:
 		return
@@ -354,7 +394,7 @@ func _handle_page_trigger_motion(event: InputEventJoypadMotion) -> void:
 		return
 	if event.axis_value < 0.75 or bool(_held_page_triggers[event.axis]):
 		return
-	if not _owns_role_navigation() or not (_node_owns_focus() or _page_tabs_own_focus()):
+	if navigation_depth != NavigationDepth.TREE or not _owns_role_navigation() or not (_node_owns_focus() or _page_tabs_own_focus()):
 		return
 	_held_page_triggers[event.axis] = true
 	change_page(-1 if event.axis == JOY_AXIS_TRIGGER_LEFT else 1)
@@ -398,6 +438,16 @@ func _node_owns_focus() -> bool:
 	var owner := get_viewport().gui_get_focus_owner()
 	var node := get_focused_node()
 	return node != null and owner != null and (owner == node or node.is_ancestor_of(owner))
+
+
+func _role_panel_owns_focus() -> bool:
+	return get_viewport().gui_get_focus_owner() == _current_role_panel()
+
+
+func _set_role_panel_focus_enabled(enabled: bool) -> void:
+	for child in role_list_container.get_children():
+		if child is RolePanel:
+			(child as RolePanel).focus_mode = Control.FOCUS_ALL if enabled else Control.FOCUS_NONE
 
 
 func _focused_position() -> Vector2:
@@ -458,6 +508,9 @@ func _on_page_glyph_input_state_changed(_value: Variant) -> void:
 
 
 func _publish_hints(node: Control) -> void:
+	if navigation_depth != NavigationDepth.TREE:
+		_publish_role_select_hints()
+		return
 	var navigation := get_tree().root.find_child("NavigationUXLayer", true, false) as NavigationUXLayer
 	if navigation:
 		var purchasable: bool = node is SkillTreeNode and node.is_purchasable()
@@ -466,4 +519,16 @@ func _publish_hints(node: Control) -> void:
 			{action = &"confirm", label = "Upgrade" if purchasable else "Inspect", enabled = purchasable or inspectable},
 			{action = &"cancel", label = "Back", enabled = true},
 		]
+		if _supported_pages(_current_role_panel()).size() > 1:
+			hints.append({action = &"hub_page_previous", label = "Previous Page", enabled = true})
+			hints.append({action = &"hub_page_next", label = "Next Page", enabled = true})
 		navigation.publish_hints(hints)
+
+
+func _publish_role_select_hints() -> void:
+	var navigation := get_tree().root.find_child("NavigationUXLayer", true, false) as NavigationUXLayer
+	if navigation:
+		navigation.publish_hints([
+			{action = &"confirm", label = "Open Role", enabled = true},
+			{action = &"cancel", label = "Back", enabled = true},
+		])

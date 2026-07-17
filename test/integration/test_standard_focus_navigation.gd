@@ -63,6 +63,16 @@ func test_party_tab_strip_is_clickable_but_controller_default_is_selected_hero()
 		assert_eq(button.focus_mode, Control.FOCUS_NONE)
 	assert_eq(hub.party_menu.back_button.focus_mode, Control.FOCUS_NONE)
 
+
+func test_role_panel_root_is_the_software_cursor_focus_target() -> void:
+	var role := preload("res://src/hub/role_panel.tscn").instantiate() as RolePanel
+	add_child_autofree(role)
+	await get_tree().process_frame
+	assert_eq(role.focus_mode, Control.FOCUS_ALL)
+	assert_false(role.has_meta("navigation_focus_pulse"))
+	assert_true(role.focus_for_selection())
+	assert_same(get_viewport().gui_get_focus_owner(), role)
+
 func test_nested_party_and_terminal_cancel_only_top_and_restore_each_layer() -> void:
 	var ux := _add_ux()
 	var hero := load("res://data/heroes/asher/asher.tres").duplicate(true) as HeroData

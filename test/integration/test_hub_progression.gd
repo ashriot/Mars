@@ -195,6 +195,122 @@ func test_party_opens_on_expanded_hero_and_up_down_select_immediately() -> void:
 	assert_false((party.hero_list_container.get_child(0) as HeroPanel)._is_expanded)
 
 
+func test_roles_unwind_hero_role_tree_one_depth_at_a_time() -> void:
+	var party := await _opened_party_with_three_heroes()
+	assert_true(party.enter_content())
+	assert_eq(party.skill_view.navigation_depth, SkillTreePanel.NavigationDepth.ROLE_SELECT)
+	assert_same(get_viewport().gui_get_focus_owner(), party.skill_view._current_role_panel())
+	party._unhandled_input(_action_event(&"confirm"))
+	assert_eq(party.skill_view.navigation_depth, SkillTreePanel.NavigationDepth.TREE)
+	assert_same(get_viewport().gui_get_focus_owner(), party.skill_view.get_focused_node())
+	party._unhandled_input(_action_event(&"cancel"))
+	assert_eq(party.skill_view.navigation_depth, SkillTreePanel.NavigationDepth.ROLE_SELECT)
+	assert_same(get_viewport().gui_get_focus_owner(), party.skill_view._current_role_panel())
+	party._unhandled_input(_action_event(&"cancel"))
+	assert_eq(party.current_depth, PartyMenu.Depth.HERO_RAIL)
+
+
+func test_role_selection_uses_down_to_enter_and_left_right_clamp() -> void:
+	var panel := await _skill_panel_with_multi_page_role()
+	assert_true(panel.enter_role_select())
+	assert_false(panel.select_adjacent_role(-1), "role selection does not wrap before the first role")
+	assert_eq(panel.current_role_idx, 0)
+	panel._unhandled_input(_action_event(&"nav_right"))
+	assert_eq(panel.current_role_idx, 1)
+	assert_same(get_viewport().gui_get_focus_owner(), panel._current_role_panel())
+	assert_false(panel.select_adjacent_role(1), "role selection does not wrap after the last role")
+	panel._unhandled_input(_action_event(&"nav_down"))
+	assert_eq(panel.navigation_depth, SkillTreePanel.NavigationDepth.TREE)
+	assert_same(get_viewport().gui_get_focus_owner(), panel.get_focused_node())
+	panel.free()
+	await get_tree().process_frame
+
+
+func test_role_selection_ignores_page_triggers_until_tree_entry() -> void:
+	var panel := await _skill_panel_with_multi_page_role()
+	assert_true(panel.enter_role_select())
+	panel._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 1.0))
+	assert_eq(panel.current_page, 0)
+	panel._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.0))
+	assert_true(panel.enter_tree())
+	panel._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 1.0))
+	assert_eq(panel.current_page, 1)
+	panel.free()
+	await get_tree().process_frame
+
+
+func test_roles_publish_depth_specific_hints_without_role_shoulders() -> void:
+	var navigation := preload("res://src/ui/navigation/navigation_ux_layer.tscn").instantiate() as NavigationUXLayer
+	navigation.name = "NavigationUXLayer"
+	add_child(navigation)
+	var panel := await _skill_panel_with_multi_page_role()
+	assert_true(panel.enter_role_select())
+	var role_hints := {}
+	for index in navigation.hint_bar.get_hint_count():
+		var hint := navigation.hint_bar.get_hint(index)
+		role_hints[hint.action] = hint.label.text
+	assert_eq(role_hints, {
+		&"confirm": "Open Role",
+		&"cancel": "Back",
+	})
+	assert_true(panel.enter_tree())
+	var tree_hints := {}
+	for index in navigation.hint_bar.get_hint_count():
+		var hint := navigation.hint_bar.get_hint(index)
+		tree_hints[hint.action] = hint.label.text
+	assert_eq(tree_hints.get(&"confirm"), "Inspect")
+	assert_eq(tree_hints.get(&"cancel"), "Back")
+	assert_eq(tree_hints.get(&"hub_page_previous"), "Previous Page")
+	assert_eq(tree_hints.get(&"hub_page_next"), "Next Page")
+	assert_false(tree_hints.has(&"hub_role_previous"))
+	assert_false(tree_hints.has(&"hub_role_next"))
+	panel.free()
+	navigation.free()
+	await get_tree().process_frame
+
+
+func test_roles_remember_role_per_hero_but_reenter_at_role_selection() -> void:
+	var party := await _opened_party_with_three_heroes()
+	assert_true(party.enter_content())
+	assert_true(party.skill_view.select_adjacent_role(1))
+	var remembered_role := party.skill_view._current_role_panel().role_id
+	assert_true(party.skill_view.enter_tree())
+	party._select_hero(1)
+	party._select_hero(0)
+	assert_eq(party.skill_view._current_role_panel().role_id, remembered_role)
+	assert_eq(party.skill_view.navigation_depth, SkillTreePanel.NavigationDepth.ROLE_SELECT)
+	assert_same(get_viewport().gui_get_focus_owner(), party.skill_view._current_role_panel())
+	party.change_tab(1)
+	party.change_tab(-1)
+	assert_eq(party.skill_view._current_role_panel().role_id, remembered_role)
+	assert_eq(party.skill_view.navigation_depth, SkillTreePanel.NavigationDepth.ROLE_SELECT)
+
+
+func test_role_selection_is_safe_without_rendered_roles_or_tree_nodes() -> void:
+	var no_roles := preload("res://src/hub/skill_tree_panel.tscn").instantiate() as SkillTreePanel
+	no_roles.progression_catalog = ProgressionCatalog.from_validated_trees([])
+	add_child(no_roles)
+	no_roles.setup(_hero())
+	assert_false(no_roles.enter_role_select())
+	assert_false(no_roles.enter_tree())
+	assert_false(no_roles.cancel_navigation())
+	no_roles.free()
+
+	var empty := preload("res://src/hub/skill_tree_panel.tscn").instantiate() as SkillTreePanel
+	empty.progression_catalog = ProgressionCatalog.from_validated_trees([_tree()])
+	add_child(empty)
+	var hero := _hero()
+	hero.role_definitions.assign([_legacy_role()])
+	empty.setup(hero)
+	empty.current_page = 4
+	empty._current_role_panel().render_tree(empty.current_page)
+	assert_true(empty.enter_role_select())
+	assert_false(empty.enter_tree())
+	assert_eq(empty.navigation_depth, SkillTreePanel.NavigationDepth.ROLE_SELECT)
+	empty.free()
+	await get_tree().process_frame
+
+
 func test_roles_are_spatial_and_rank_pages_use_triggers() -> void:
 	var panel := await _skill_panel_with_multi_page_role()
 	var role_before := panel.current_role_idx
@@ -232,21 +348,21 @@ func test_page_triggers_require_roles_owner_and_tree_or_page_focus() -> void:
 	await get_tree().process_frame
 
 
-func test_roles_same_frame_rebuild_restores_focus_to_current_subtree() -> void:
+func test_roles_same_frame_rebuild_restores_focus_to_current_role() -> void:
 	var panel := await _skill_panel_with_multi_page_role()
 	assert_true(panel.focus_node("gun.atk_1"))
 	var hero := panel.current_hero
 	panel.setup(hero)
+	assert_true(panel.enter_role_select())
 	assert_eq(panel.role_list_container.get_child_count(), 2, "retired role panels are detached immediately")
 	var immediate_focus := get_viewport().gui_get_focus_owner()
-	assert_true(panel.is_ancestor_of(immediate_focus))
-	assert_true(panel._current_role_panel().is_ancestor_of(immediate_focus))
+	assert_same(immediate_focus, panel._current_role_panel())
 	assert_false(immediate_focus.is_queued_for_deletion())
 	await get_tree().process_frame
 	var settled_focus := get_viewport().gui_get_focus_owner()
 	assert_not_null(settled_focus)
 	if settled_focus:
-		assert_true(panel._current_role_panel().is_ancestor_of(settled_focus))
+		assert_same(settled_focus, panel._current_role_panel())
 		assert_false(settled_focus.is_queued_for_deletion())
 	panel.free()
 	await get_tree().process_frame
@@ -276,6 +392,9 @@ func test_roles_restore_stable_node_per_hero_role_and_page() -> void:
 	panel.change_role(1)
 	panel.change_role(-1)
 	assert_true(panel.restore_focus())
+	assert_eq(panel.focused_node_id, "gun.atk_1")
+	assert_same(get_viewport().gui_get_focus_owner(), panel._current_role_panel())
+	assert_true(panel.enter_tree())
 	assert_eq(panel.focused_node_id, "gun.atk_1")
 	panel.free()
 	await get_tree().process_frame
@@ -566,7 +685,7 @@ func test_equipment_item_button_survives_its_pressed_dispatch_until_queued_clean
 func test_pointer_hero_change_in_content_keeps_memory_content_scoped() -> void:
 	var party := await _opened_party_with_three_heroes()
 	assert_true(party.enter_content())
-	var first_node_id := party.skill_view.focused_node_id
+	var first_role_id := party.skill_view._current_role_panel().role_id
 	var first := party.hero_list_container.get_child(0) as HeroPanel
 	var second := party.hero_list_container.get_child(1) as HeroPanel
 	var click := InputEventMouseButton.new()
@@ -582,16 +701,14 @@ func test_pointer_hero_change_in_content_keeps_memory_content_scoped() -> void:
 	var second_focus := get_viewport().gui_get_focus_owner()
 	assert_true(party.skill_view.is_ancestor_of(second_focus))
 	assert_ne(second_focus, second)
-	var first_memory: String = party._content_focus_memory.get("asher:0", "")
-	assert_false(first_memory.is_empty())
-	assert_eq(first_memory, first_node_id)
+	assert_same(second_focus, party.skill_view._current_role_panel())
 
 	first._gui_input(click)
 
 	assert_eq(party.current_hero_idx, 0)
 	assert_eq(party.current_depth, PartyMenu.Depth.CONTENT)
-	assert_true(party.skill_view.is_ancestor_of(get_viewport().gui_get_focus_owner()))
-	assert_eq(party.skill_view.focused_node_id, first_node_id)
+	assert_same(get_viewport().gui_get_focus_owner(), party.skill_view._current_role_panel())
+	assert_eq(party.skill_view._current_role_panel().role_id, first_role_id)
 
 
 func test_role_panel_submits_stable_ids_without_mutating_progression() -> void:
@@ -999,6 +1116,8 @@ func test_skill_navigation_changes_page_and_role_and_restores_stable_node() -> v
 	panel.change_role(1)
 	assert_eq(panel.current_role_idx, 1)
 	panel.change_role(-1)
+	assert_same(get_viewport().gui_get_focus_owner(), panel._current_role_panel())
+	assert_true(panel.enter_tree())
 	assert_eq(panel.focused_node_id, "gun.root")
 	panel.free()
 	await get_tree().process_frame
@@ -1067,7 +1186,7 @@ func test_nonstandard_hub_controls_expose_valid_focus_surfaces() -> void:
 	assert_eq(equipment.tune_btn.focus_mode, Control.FOCUS_NONE)
 
 
-func test_roles_cancel_returns_outward_without_moving_node_focus() -> void:
+func test_roles_cancel_unwinds_tree_to_role_selection_then_returns_outward() -> void:
 	var hero := _hero()
 	hero.role_definitions.assign([_legacy_role()])
 	var panel := preload("res://src/hub/skill_tree_panel.tscn").instantiate() as SkillTreePanel
@@ -1075,9 +1194,9 @@ func test_roles_cancel_returns_outward_without_moving_node_focus() -> void:
 	add_child(panel)
 	panel.setup(hero)
 	panel.focus_node("gun.root")
-	var focused := panel.get_focused_node()
+	assert_true(panel.cancel_navigation())
+	assert_same(get_viewport().gui_get_focus_owner(), panel._current_role_panel())
 	assert_false(panel.cancel_navigation())
-	assert_same(get_viewport().gui_get_focus_owner(), focused)
 	panel.free()
 	await get_tree().process_frame
 
@@ -1145,9 +1264,9 @@ func test_role_change_selects_closest_supported_page_and_keeps_focus() -> void:
 	panel.change_page(1)
 	assert_eq(panel.current_page, 1)
 	var source_center := panel._current_role_panel().node_positions()["gun.page2"] as Vector2
-	panel.change_role(1)
+	assert_true(panel.select_adjacent_role(1))
 	assert_eq(panel.current_page, 0, "equal-distance supported pages prefer the lower page")
-	assert_eq(panel.focused_node_id, "snp.start2")
+	assert_same(get_viewport().gui_get_focus_owner(), panel._current_role_panel())
 	var target_positions := panel._current_role_panel().node_positions()
 	assert_eq(target_positions["snp.start2"], source_center, "the starting skill occupies the exact prior screen coordinate")
 	assert_lt(
@@ -1155,6 +1274,8 @@ func test_role_change_selects_closest_supported_page_and_keeps_focus() -> void:
 		(target_positions["snp.root"] as Vector2).distance_squared_to(source_center),
 		"nearest-focus restoration must choose the zero-distance starting skill over the paid root",
 	)
+	assert_true(panel.enter_tree())
+	assert_eq(panel.focused_node_id, "snp.anchor")
 	assert_eq(get_viewport().gui_get_focus_owner(), panel.get_focused_node())
 	panel.free()
 	await get_tree().process_frame
