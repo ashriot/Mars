@@ -34,48 +34,37 @@ class DamageTypeDecision extends RefCounted:
 
 
 func get_presentation(context: EffectPresentationContext) -> EffectPresentation:
-	var sequence: DamagePreview.Sequence = null
-	if context.target != null:
-		var sequence_targets: Array[ActorCard] = [context.target]
-		sequence = DamagePreview.for_plan(
-			self,
-			context.actor,
-			sequence_targets,
-			context.action,
-			context.critical,
-		)
+	if not context.is_complete or context.targets.is_empty():
+		return _get_authored_presentation(context)
+	var sequence := DamagePreview.for_plan(
+		self,
+		context.actor,
+		context.targets,
+		context.action,
+		context.critical,
+		context.battle_manager,
+	)
 	var sequence_results: Array[DamageResult] = []
 	if sequence != null:
 		sequence_results.assign(sequence.results)
-	var result := sequence_results[0] if not sequence_results.is_empty() \
-		else DamagePreview.for_effect(
-			self,
-			context.actor,
-			context.target,
-			context.action,
-			context.distribution_count,
-			context.critical,
-		)
-	var contextual_scaling := _get_contextual_scaling_text(result.request.contributions)
+	if not sequence.is_complete or sequence_results.is_empty():
+		return _get_authored_presentation(context)
+	var result := sequence_results[0]
+	var contributions := _get_sequence_contributions(sequence_results)
+	var contextual_scaling := _get_contextual_scaling_text(contributions)
 	var split_behavior := ""
-	var amount_qualifier := ""
-	var hit_count_text := "x%d" % hit_count if hit_count > 1 else ""
-	var amount: Variant = result.final_damage
-	var damage_type_icon := _get_damage_type_icon(result.request.damage_type)
-	if sequence != null and not sequence_results.is_empty():
-		var sequence_bindings := _get_sequence_bindings(sequence)
-		amount = sequence_bindings.amount
-		damage_type_icon = sequence_bindings.damage_type
-		hit_count_text = sequence_bindings.hit_count_text
+	var sequence_bindings := _get_sequence_bindings(sequence)
+	var amount: Variant = sequence_bindings.amount
+	var amount_qualifier: String = sequence_bindings.amount_qualifier
+	var damage_type_icon: String = sequence_bindings.damage_type
+	var hit_count_text: String = sequence_bindings.hit_count_text
 	if split_damage:
-		if _has_unavailable_group_distribution(context):
-			amount_qualifier = " total"
-			hit_count_text = ""
-			split_behavior = " split across all targets"
+		if _is_group_target_action(context.action):
+			split_behavior = " split across %d targets" % sequence.target_count
 			if hit_count > 1:
-				split_behavior += " and %d hits" % hit_count
+				split_behavior += " and %d hits each" % hit_count
 		else:
-			split_behavior = " split across %d hits" % context.distribution_count
+			split_behavior = " split across %d hits" % sequence.distribution_count
 	var bindings := {
 		"amount": amount,
 		"amount_qualifier": amount_qualifier,
@@ -85,13 +74,64 @@ func get_presentation(context: EffectPresentationContext) -> EffectPresentation:
 		"hit_count_text": hit_count_text,
 		"split_behavior": split_behavior,
 		"contextual_scaling": contextual_scaling,
+		"is_exact": true,
 	}
 	var details: Array[String] = [
 		"Selected power: %d" % result.request.base_power,
 		"Resolved potency: %s%%" % _format_percent(result.request.potency),
 	]
-	for contribution: DamageContribution in result.request.contributions:
+	for contribution: DamageContribution in contributions:
 		details.append(_get_contribution_detail(contribution))
+	return _new_damage_presentation(bindings, details)
+
+
+func _get_authored_presentation(
+	context: EffectPresentationContext,
+) -> EffectPresentation:
+	var resolved_hit_count := _resolve_hit_count(context.actor)
+	var split_behavior := ""
+	var amount_qualifier := ""
+	var hit_count_text := "x%d" % resolved_hit_count \
+		if resolved_hit_count > 1 else ""
+	if split_damage:
+		if _has_unavailable_group_distribution(context):
+			hit_count_text = ""
+			amount_qualifier = " total"
+			split_behavior = " split across all targets"
+			if resolved_hit_count > 1:
+				split_behavior += " and %d hits" % resolved_hit_count
+		else:
+			split_behavior = " split across %d hits" % maxi(
+			1, context.distribution_count,
+		)
+	var selected_power := context.actor.get_power(power_type) \
+		if context.actor != null and context.actor.current_stats != null else 0
+	var bindings := {
+		"amount": "%s%% %s" % [
+			_format_percent(potency), _get_power_label(power_type),
+		],
+		"amount_qualifier": amount_qualifier,
+		"selected_power": selected_power,
+		"damage_type": _get_damage_type_icon(damage_type),
+		"hit_count": resolved_hit_count,
+		"hit_count_text": hit_count_text,
+		"split_behavior": split_behavior,
+		"contextual_scaling": " (includes contextual scaling)" \
+			if not scaling_rules.is_empty() else "",
+		"is_exact": false,
+	}
+	var details: Array[String] = [
+		"Selected power: %d" % selected_power,
+		"Authored potency: %s%%" % _format_percent(potency),
+		"Exact damage unavailable until targets are known",
+	]
+	return _new_damage_presentation(bindings, details)
+
+
+func _new_damage_presentation(
+	bindings: Dictionary,
+	details: Array[String],
+) -> EffectPresentation:
 	return EffectPresentation.new(
 		"Deals {amount}{amount_qualifier}{hit_count_text} {damage_type} damage"
 			+ "{split_behavior}{contextual_scaling}.",
@@ -100,29 +140,86 @@ func get_presentation(context: EffectPresentationContext) -> EffectPresentation:
 	)
 
 
-func _get_sequence_bindings(sequence: DamagePreview.Sequence) -> Dictionary:
+func _get_sequence_bindings(
+	sequence: DamagePreview.Sequence,
+	icon_size: int = 24,
+) -> Dictionary:
 	var results := sequence.results
 	if results.is_empty():
-		return {"amount": "", "damage_type": "", "hit_count_text": ""}
-	if _sequence_results_are_identical(results):
+		return {
+			"amount": "",
+			"amount_qualifier": "",
+			"damage_type": "",
+			"hit_count_text": "",
+		}
+	if sequence.is_ordered and _sequence_results_are_identical(results):
 		return {
 			"amount": results[0].final_damage,
-			"damage_type": _get_damage_type_icon(results[0].request.damage_type),
+			"amount_qualifier": "",
+			"damage_type": _get_damage_type_icon(
+				results[0].request.damage_type, icon_size,
+			),
 			"hit_count_text": "x%d" % results.size() if results.size() > 1 else "",
 		}
+	if not sequence.is_ordered:
+		return _get_unordered_sequence_bindings(results, icon_size)
 	var segments: Array[String] = []
 	for result: DamageResult in results:
 		segments.append(
 			"%d %s" % [
 				result.final_damage,
-				_get_damage_type_icon(result.request.damage_type),
+				_get_damage_type_icon(result.request.damage_type, icon_size),
 			],
 		)
 	return {
 		"amount": " → ".join(segments),
+		"amount_qualifier": "",
 		"damage_type": "",
 		"hit_count_text": "",
 	}
+
+
+func _get_unordered_sequence_bindings(
+	results: Array[DamageResult],
+	icon_size: int,
+) -> Dictionary:
+	var values_by_type: Dictionary = {}
+	for result: DamageResult in results:
+		var resolved_type := result.request.damage_type
+		var values: Array = values_by_type.get(resolved_type, [])
+		values.append(result.final_damage)
+		values_by_type[resolved_type] = values
+	var resolved_types := values_by_type.keys()
+	resolved_types.sort()
+	if resolved_types.size() == 1:
+		var resolved_type: Action.DamageType = resolved_types[0]
+		return {
+			"amount": _format_damage_range(values_by_type[resolved_type]),
+			"amount_qualifier": " per target",
+			"damage_type": _get_damage_type_icon(resolved_type, icon_size),
+			"hit_count_text": "",
+		}
+	var segments: Array[String] = []
+	for resolved_type: Action.DamageType in resolved_types:
+		segments.append("%s %s" % [
+			_format_damage_range(values_by_type[resolved_type]),
+			_get_damage_type_icon(resolved_type, icon_size),
+		])
+	return {
+		"amount": " / ".join(segments),
+		"amount_qualifier": " per target",
+		"damage_type": "",
+		"hit_count_text": "",
+	}
+
+
+func _format_damage_range(values: Array) -> String:
+	values.sort()
+	if values.is_empty():
+		return ""
+	if values[0] == values[-1]:
+		return str(values[0])
+	return "%d-%d" % [values[0], values[-1]]
 
 
 func _sequence_results_are_identical(results: Array[DamageResult]) -> bool:
@@ -137,8 +234,11 @@ func _sequence_results_are_identical(results: Array[DamageResult]) -> bool:
 
 
 func _has_unavailable_group_distribution(context: EffectPresentationContext) -> bool:
-	return context.action != null \
-		and context.action.target_type in [
+	return not context.is_complete and _is_group_target_action(context.action)
+
+
+func _is_group_target_action(action: Action) -> bool:
+	return action != null and action.target_type in [
 			Action.TargetType.ALL_ENEMIES,
 			Action.TargetType.ENEMY_GROUP,
 			Action.TargetType.ALL_ALLIES,
@@ -146,15 +246,41 @@ func _has_unavailable_group_distribution(context: EffectPresentationContext) -> 
 		]
 
 
-func _get_damage_type_icon(resolved_damage_type: Action.DamageType) -> String:
+func _get_damage_type_icon(
+	resolved_damage_type: Action.DamageType,
+	size: int = 24,
+) -> String:
 	match resolved_damage_type:
 		Action.DamageType.KINETIC:
-			return Action._get_bbcode_icon("kinetic")
+			return Action._get_bbcode_icon("kinetic", size)
 		Action.DamageType.ENERGY:
-			return Action._get_bbcode_icon("energy")
+			return Action._get_bbcode_icon("energy", size)
 		Action.DamageType.PIERCING:
-			return Action._get_bbcode_icon("pierce")
+			return Action._get_bbcode_icon("pierce", size)
 	return ""
+
+
+func _get_power_label(resolved_power_type: Action.PowerType) -> String:
+	return "PSY" if resolved_power_type == Action.PowerType.PSYCHE else "ATK"
+
+
+func _get_sequence_contributions(
+	results: Array[DamageResult],
+) -> Array[DamageContribution]:
+	var contributions: Array[DamageContribution] = []
+	var seen: Dictionary = {}
+	for result: DamageResult in results:
+		for contribution: DamageContribution in result.request.contributions:
+			var key := "%s:%d:%s" % [
+				contribution.source,
+				contribution.stage,
+				contribution.amount,
+			]
+			if seen.has(key):
+				continue
+			seen[key] = true
+			contributions.append(contribution)
+	return contributions
 
 
 func _get_contextual_scaling_text(contributions: Array[DamageContribution]) -> String:

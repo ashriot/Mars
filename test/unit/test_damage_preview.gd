@@ -25,6 +25,15 @@ class TargetHpPotencyRule extends DamageScalingRule:
 		)
 
 
+class LivingEnemyPotencyRule extends DamageScalingRule:
+	func resolve(_base_potency: float, context: DamageContext) -> DamageContribution:
+		return DamageContribution.new(
+			&"other_living_enemies",
+			DamageContribution.Stage.POTENCY,
+			float(context.other_living_enemies) * 0.1,
+		)
+
+
 class FixedContributionRule extends DamageScalingRule:
 	var contribution_source: StringName
 	var contribution_stage: DamageContribution.Stage
@@ -40,16 +49,19 @@ class FixedContributionRule extends DamageScalingRule:
 
 func test_focused_bolt_preview_uses_post_cost_remaining_focus_curve() -> void:
 	var attacker := _hero(100, 5)
+	var target := _target(false, 0, 0)
 	var action := load("res://data/heroes/echo/actions/focused_bolt.tres") as Action
 	var effect := action.effects[0] as Effect_Damage
-	var result := DamagePreview.for_effect(effect, attacker, null, Action.new(), 1, false)
+	var result := DamagePreview.for_effect(effect, attacker, target, Action.new(), 1, false)
 	assert_eq(result.request.potency, 1.2)
 	assert_eq(result.final_damage, 120)
 	attacker.free()
+	target.free()
 
 
 func test_preview_uses_post_cost_focus_without_mutating_attacker() -> void:
 	var attacker := _hero(100, 5)
+	var target := _target(false, 0, 0)
 	var rule := DamageScalingFlatPerResource.new()
 	rule.resource = DamageScalingFlatPerResource.ResourceType.FOCUS
 	rule.potency_per_point = 0.2
@@ -59,12 +71,13 @@ func test_preview_uses_post_cost_focus_without_mutating_attacker() -> void:
 	var action := Action.new()
 	action.focus_cost = 2
 
-	var result := DamagePreview.for_effect(effect, attacker, null, action, 1, false)
+	var result := DamagePreview.for_effect(effect, attacker, target, action, 1, false)
 
 	assert_almost_eq(result.request.potency, 0.6, 0.0001)
 	assert_eq(result.final_damage, 60)
 	assert_eq(attacker.current_focus, 5)
 	attacker.free()
+	target.free()
 
 
 func test_target_preview_matches_runtime_request_for_normal_and_critical_hits() -> void:
@@ -294,15 +307,12 @@ func test_preview_pre_hit_type_precedence_retains_forced_condition_and_modifier(
 	target.free()
 
 
-func test_no_target_preview_uses_explicit_neutral_target_state() -> void:
+func test_no_target_single_hit_preview_is_unavailable() -> void:
 	var attacker := _hero(100, 0, 50)
 	var result := DamagePreview.for_effect(
 		_damage_effect(1.0), attacker, null, Action.new(), 1, false,
 	)
-	assert_eq(result.request.overload_power, 0)
-	assert_eq(result.request.defense, 0)
-	assert_eq(result.request.incoming_modifier, 0.0)
-	assert_eq(result.final_damage, 100)
+	assert_null(result)
 	attacker.free()
 
 
@@ -440,7 +450,7 @@ func test_damage_presentation_labels_each_contribution_stage_accurately() -> voi
 	target.free()
 
 
-func test_all_target_split_without_target_count_describes_total_budget() -> void:
+func test_all_target_split_without_target_context_describes_authored_budget() -> void:
 	var action := Action.new()
 	action.target_type = Action.TargetType.ALL_ENEMIES
 	var effect := _damage_effect(1.0)
@@ -451,10 +461,68 @@ func test_all_target_split_without_target_count_describes_total_budget() -> void
 
 	var text := action.get_rich_description(attacker)
 
-	assert_string_contains(text, "100 total")
+	assert_string_contains(text, "100% ATK total")
 	assert_string_contains(text, "split across all targets and 3 hits")
 	assert_false(text.contains("33"))
 	assert_false(text.contains("100x3"))
+	attacker.free()
+
+
+func test_complete_group_context_uses_fixed_divisor_and_per_target_range() -> void:
+	var manager := BattleManager.new()
+	manager.hero_area = Control.new()
+	manager.enemy_area = Control.new()
+	manager.add_child(manager.hero_area)
+	manager.add_child(manager.enemy_area)
+	var attacker := _hero(100, 0)
+	var unarmored := _enemy_target(0)
+	var armored := _enemy_target(50)
+	manager.hero_area.add_child(attacker)
+	manager.enemy_area.add_child(unarmored)
+	manager.enemy_area.add_child(armored)
+	manager.current_actor = attacker
+	manager.actor_list = [attacker, unarmored, armored]
+	var effect := _damage_effect(1.0)
+	effect.split_damage = true
+	var action := Action.new()
+	action.target_type = Action.TargetType.ALL_ENEMIES
+	action.description = "{effect:1}"
+	action.effects = [effect]
+
+	var text := manager._get_rich_description(action)
+
+	assert_string_contains(text, "25-50")
+	assert_string_contains(text, "per target")
+	assert_false(text.contains("37"), "heterogeneous targets are never averaged")
+	assert_false(text.contains("100 total"))
+	manager.free()
+
+
+func test_incomplete_target_and_battlefield_scaling_render_authored_relationships() -> void:
+	var attacker := _attacker()
+	var target_rule := TargetHpPotencyRule.new()
+	target_rule.phase = DamageScalingRule.Phase.CURRENT_HIT
+	var living_rule := LivingEnemyPotencyRule.new()
+	for rule: DamageScalingRule in [target_rule, living_rule]:
+		var effect := _damage_effect(1.0)
+		effect.scaling_rules = [rule]
+		var action := Action.new()
+		action.description = "{effect:1}"
+		action.effects = [effect]
+
+		var text := action.get_rich_description(attacker)
+		var incomplete := DamagePreview.for_plan(
+			effect, attacker, [], action, false,
+		)
+
+		assert_false(incomplete.is_complete)
+		assert_true(incomplete.results.is_empty())
+		assert_string_contains(text, "100% ATK")
+		assert_string_contains(text, "contextual scaling")
+		assert_false(
+			text.contains("Deals 100 " + Action._get_bbcode_icon("kinetic")),
+			"missing context never fabricates a final damage total",
+		)
 	attacker.free()
 
 
@@ -494,13 +562,41 @@ func test_enemy_intent_displays_per_target_preview_range_without_averaging() -> 
 
 	enemy._update_intent_ui()
 
-	assert_string_contains(enemy.intent_text.text, "25-50x3")
+	assert_string_contains(enemy.intent_text.text, "25-50")
+	assert_string_contains(enemy.intent_text.text, "3 hits")
+	assert_false(enemy.intent_text.text.contains("x3"))
 	assert_string_contains(enemy.intent_text.text, "RANDOM")
 	enemy.intent_text.free()
 	enemy.intent_tooltip.free()
 	enemy.free()
 	unarmored.free()
 	armored.free()
+
+
+func test_enemy_intent_uses_sequential_guard_to_breach_preview() -> void:
+	var enemy := _intent_enemy(100)
+	enemy.current_stats.overload = 50
+	var effect := _damage_effect(1.0)
+	effect.hit_count = 2
+	var action := Action.new()
+	action.action_name = "Guard Sequence"
+	action.target_type = Action.TargetType.ONE_ENEMY
+	action.effects = [effect]
+	var target := _intent_hero_target(50)
+	target.current_guard = 1
+	var original_hp := target.current_hp
+	enemy.intended_action = action
+	enemy.intended_targets = [target]
+
+	enemy._update_intent_ui()
+
+	assert_string_contains(enemy.intent_text.text, "50")
+	assert_string_contains(enemy.intent_text.text, "75")
+	assert_false(enemy.intent_text.text.contains("x2"))
+	assert_eq(target.current_hp, original_hp)
+	assert_eq(target.current_guard, 1)
+	assert_false(target.is_breached)
+	_free_intent_enemy(enemy, [target])
 
 
 func test_enemy_intent_uses_resolved_damage_type_icon() -> void:
@@ -539,14 +635,14 @@ func test_enemy_intent_keeps_heterogeneous_resolved_types_separate() -> void:
 	_free_intent_enemy(enemy, [kinetic, piercing])
 
 
-func test_enemy_intent_without_valid_target_uses_neutral_preview_segment() -> void:
+func test_enemy_intent_without_valid_target_uses_authored_relationship() -> void:
 	var enemy := _intent_enemy(100)
 	enemy.intended_action = _intent_action()
 	enemy.intended_targets = []
 
 	enemy._update_intent_ui()
 
-	assert_string_contains(enemy.intent_text.text, "100")
+	assert_string_contains(enemy.intent_text.text, "100% ATK")
 	assert_string_contains(
 		enemy.intent_text.text, Action._get_bbcode_icon("kinetic", 28),
 	)
@@ -567,6 +663,18 @@ func _intent_action() -> Action:
 	action.target_type = Action.TargetType.ALL_ENEMIES
 	action.effects = [_damage_effect(1.0)]
 	return action
+
+
+func _intent_hero_target(defense: int) -> HeroCard:
+	var target := _hero(0, 0)
+	target.current_stats.kinetic_defense = defense
+	target.current_stats.energy_defense = defense
+	var definition := RoleDefinition.new()
+	definition.color = Color.WHITE
+	var role := RoleData.new()
+	role.source_definition = definition
+	target.loaded_roles = [role]
+	return target
 
 
 func _free_intent_enemy(enemy: IntentEnemy, targets: Array[ActorCard]) -> void:
@@ -615,6 +723,14 @@ func _target(
 		var modifier := Condition.new()
 		modifier.damage_taken_scalar = incoming_modifier
 		target.active_conditions = [modifier]
+	return target
+
+
+func _enemy_target(defense: int) -> EnemyCard:
+	var target := EnemyCard.new()
+	target.current_stats = _stats(0, 0, 0, 0, defense)
+	target.current_hp = target.current_stats.max_hp
+	target.is_defeated = false
 	return target
 
 

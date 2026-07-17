@@ -162,13 +162,12 @@ static func for_effect(
 	critical: bool,
 	pre_hit_context: Dictionary = {},
 ) -> DamageResult:
+	if target == null:
+		return null
 	var resolver_target := target
-	var neutral_target := resolver_target == null
-	var owns_resolver_target := neutral_target
-	if neutral_target:
-		resolver_target = _neutral_target()
+	var owns_resolver_target := false
 	var decision := effect._resolve_damage_type_decision(
-		attacker, null if neutral_target else target, pre_hit_context,
+		attacker, target, pre_hit_context,
 	)
 	if decision.condition_to_consume != null:
 		resolver_target = _target_without_condition(
@@ -182,7 +181,7 @@ static func for_effect(
 		resolver_target,
 		action,
 		resolved_damage_type,
-		neutral_target,
+		false,
 	)
 	var effect_context := DamageContext.new(
 		hit_context.attacker,

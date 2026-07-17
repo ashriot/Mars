@@ -552,7 +552,7 @@ func test_damage_validator_rejects_unsupported_scaling_rule_classes_and_phases()
 	assert_string_contains("\n".join(errors), "unsupported scaling phase")
 
 
-func test_direct_damage_validator_compares_structured_presentation_to_runtime() -> void:
+func test_direct_damage_validator_compares_structured_incomplete_relationship() -> void:
 	var action := Action.new()
 	var effect := Effect_Damage.new()
 	effect.potency = 1.25
@@ -566,7 +566,7 @@ func test_direct_damage_validator_compares_structured_presentation_to_runtime() 
 	assert_eq(
 		_direct_damage_presentation_errors(action, effect, 0),
 		[],
-		"ordinary direct damage presentation matches the runtime preview",
+		"ordinary direct damage presentation matches its authored relationship",
 	)
 
 	var misleading := MisleadingDamagePresentation.new()
@@ -700,7 +700,7 @@ func test_booster_shots_executes_and_presents_three_fifty_percent_hits() -> void
 	assert_eq(effect.power_type, Action.PowerType.ATTACK)
 	assert_eq(effect.hit_count, 3)
 	assert_string_contains(action.description, "{effect:1}")
-	assert_string_contains(action.get_rich_description(_presentation_actor), "50x3")
+	assert_string_contains(action.get_rich_description(_presentation_actor), "50% ATKx3")
 	assert_false("twice" in action.description.to_lower())
 
 
@@ -934,30 +934,28 @@ func _direct_damage_presentation_errors(
 	if presentation == null:
 		errors.append("direct damage presentation is null")
 		return errors
-	var preview := DamagePreview.for_effect(
-		effect,
-		_presentation_actor,
-		null,
-		action,
-		distribution_count,
-		false,
-	)
 	var expected_bindings := _expected_direct_damage_bindings(
 		action,
 		effect,
 		distribution_count,
-		preview,
 	)
 	var actual_bindings := presentation.bindings
 	for binding_name: String in expected_bindings:
 		if not actual_bindings.has(binding_name):
 			errors.append("%s presentation binding is missing" % binding_name)
-		elif actual_bindings[binding_name] != expected_bindings[binding_name]:
+		else:
+			var actual_value: Variant = actual_bindings[binding_name]
+			var expected_value: Variant = expected_bindings[binding_name]
+			var mismatches := typeof(actual_value) != typeof(expected_value)
+			if not mismatches:
+				mismatches = actual_value != expected_value
+			if not mismatches:
+				continue
 			errors.append(
-				"%s presentation binding mismatches runtime: %s != %s" % [
+				"%s presentation binding mismatches authored relationship: %s != %s" % [
 					binding_name,
-					actual_bindings[binding_name],
-					expected_bindings[binding_name],
+					actual_value,
+					expected_value,
 				],
 			)
 	for binding_name: String in [
@@ -990,7 +988,6 @@ func _expected_direct_damage_bindings(
 	action: Action,
 	effect: Effect_Damage,
 	distribution_count: int,
-	preview: DamageResult,
 ) -> Dictionary:
 	var group_distribution_unavailable := action.target_type in [
 		Action.TargetType.ALL_ENEMIES,
@@ -1010,18 +1007,27 @@ func _expected_direct_damage_bindings(
 				split_behavior += " and %d hits" % effect.hit_count
 		else:
 			split_behavior = " split across %d hits" % distribution_count
+	var power_label := "PSY" \
+		if effect.power_type == Action.PowerType.PSYCHE else "ATK"
 	return {
-		"amount": preview.final_damage,
+		"amount": "%s%% %s" % [
+			_format_damage_number(effect.potency * 100.0), power_label,
+		],
 		"amount_qualifier": amount_qualifier,
-		"selected_power": preview.request.base_power,
-		"damage_type": _damage_type_icon(preview.request.damage_type),
+		"selected_power": _presentation_actor.get_power(effect.power_type),
+		"damage_type": _damage_type_icon(effect.damage_type),
 		"hit_count": effect.hit_count,
 		"hit_count_text": hit_count_text,
 		"split_behavior": split_behavior,
-		"contextual_scaling": _contextual_scaling_text(
-			preview.request.contributions,
-		),
+		"contextual_scaling": " (includes contextual scaling)" \
+			if not effect.scaling_rules.is_empty() else "",
+		"is_exact": false,
 	}
+
+
+func _format_damage_number(value: float) -> String:
+	return str(roundi(value)) if is_equal_approx(value, roundf(value)) \
+		else "%.1f" % value
 
 
 func _damage_type_icon(damage_type: Action.DamageType) -> String:
@@ -1033,21 +1039,6 @@ func _damage_type_icon(damage_type: Action.DamageType) -> String:
 		Action.DamageType.PIERCING:
 			return Action._get_bbcode_icon("pierce")
 	return ""
-
-
-func _contextual_scaling_text(contributions: Array[DamageContribution]) -> String:
-	if contributions.is_empty():
-		return ""
-	var labels: Array[String] = []
-	for contribution: DamageContribution in contributions:
-		match contribution.source:
-			&"remaining_focus":
-				labels.append("remaining Focus after paying the cost")
-			&"current_guard":
-				labels.append("current Guard")
-			_:
-				labels.append(str(contribution.source).replace("_", " "))
-	return " (includes contextual scaling from %s)" % ", ".join(labels)
 
 
 func _validate_description_formulas(description: String, path: String) -> void:

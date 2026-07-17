@@ -371,6 +371,7 @@ func test_exact_target_changes_refresh_selected_action_presentation_and_fall_bac
 	var neutral_text := action.get_rich_description(hero)
 	label.text = neutral_text
 	selected_button.tooltip.bbcode_text = neutral_text
+	assert_string_contains(neutral_text, "100% ATK")
 
 	scene._set_current_target(defended)
 	assert_string_contains(label.text, "Deals 50")
@@ -381,29 +382,29 @@ func test_exact_target_changes_refresh_selected_action_presentation_and_fall_bac
 	assert_string_contains(selected_button.tooltip.bbcode_text, "Deals 150")
 
 	scene._clear_current_target(false)
-	assert_string_contains(label.text, "Deals 100")
-	assert_string_contains(selected_button.tooltip.bbcode_text, "Deals 100")
+	assert_string_contains(label.text, "100% ATK")
+	assert_string_contains(selected_button.tooltip.bbcode_text, "100% ATK")
 
 	breached.current_stats = null
 	scene._set_current_target(breached)
-	assert_string_contains(label.text, "Deals 100")
-	assert_string_contains(selected_button.tooltip.bbcode_text, "Deals 100")
+	assert_string_contains(label.text, "100% ATK")
+	assert_string_contains(selected_button.tooltip.bbcode_text, "100% ATK")
 
 	breached.current_stats = ActorStats.new()
 	action.target_type = Action.TargetType.RANDOM_ENEMY
 	scene._set_current_target(defended)
-	assert_string_contains(label.text, "Deals 100")
-	assert_string_contains(selected_button.tooltip.bbcode_text, "Deals 100")
+	assert_string_contains(label.text, "100% ATK")
+	assert_string_contains(selected_button.tooltip.bbcode_text, "100% ATK")
 	scene._set_current_target(breached)
-	assert_string_contains(label.text, "Deals 100")
-	assert_string_contains(selected_button.tooltip.bbcode_text, "Deals 100")
+	assert_string_contains(label.text, "100% ATK")
+	assert_string_contains(selected_button.tooltip.bbcode_text, "100% ATK")
 
 	action.target_type = Action.TargetType.ONE_ENEMY
 	scene._set_current_target(defended)
 	assert_string_contains(selected_button.tooltip.bbcode_text, "Deals 50")
 	var replacement_button := fixture.bar.actions_ui.get_child(1) as ActionButton
 	manager._focus_button(replacement_button)
-	assert_string_contains(selected_button.tooltip.bbcode_text, "Deals 100")
+	assert_string_contains(selected_button.tooltip.bbcode_text, "100% ATK")
 
 	manager._focus_button(selected_button)
 	manager.current_action = action
@@ -412,7 +413,7 @@ func test_exact_target_changes_refresh_selected_action_presentation_and_fall_bac
 	scene._set_current_target(defended)
 	assert_string_contains(selected_button.tooltip.bbcode_text, "Deals 50")
 	scene.cancel_targeting()
-	assert_string_contains(selected_button.tooltip.bbcode_text, "Deals 100")
+	assert_string_contains(selected_button.tooltip.bbcode_text, "100% ATK")
 
 
 func test_shift_action_completion_resets_exact_target_button_presentation() -> void:
@@ -445,7 +446,7 @@ func test_shift_action_completion_resets_exact_target_button_presentation() -> v
 	assert_string_contains(selected_button.tooltip.bbcode_text, "Deals 50")
 	await manager._finish_hero_turn()
 
-	assert_string_contains(selected_button.tooltip.bbcode_text, "Deals 100")
+	assert_string_contains(selected_button.tooltip.bbcode_text, "100% ATK")
 	assert_null(manager.focused_button)
 
 

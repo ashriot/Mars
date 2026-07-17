@@ -42,9 +42,16 @@ var is_attack: bool :
 				return true
 		return false
 
-func get_rich_description(user: ActorCard, target: ActorCard = null) -> String:
+func get_rich_description(
+	user: ActorCard,
+	target: ActorCard = null,
+	presentation_targets: Array[ActorCard] = [],
+	battle_manager: BattleManager = null,
+) -> String:
 	_init_regex()
-	var final_desc := _compose_effect_presentations(description, user, target)
+	var final_desc := _compose_effect_presentations(
+		description, user, target, presentation_targets, battle_manager,
+	)
 
 	var input_names = PackedStringArray(["atk", "psy", "hp", "spd", "focus", "grd"])
 
@@ -98,11 +105,15 @@ func _compose_effect_presentations(
 	template: String,
 	user: ActorCard,
 	target: ActorCard,
+	presentation_targets: Array[ActorCard],
+	battle_manager: BattleManager,
 ) -> String:
 	if template.is_empty():
 		var clauses: Array[String] = []
 		for effect_index in effects.size():
-			var presentation := _get_effect_presentation(effect_index, user, target)
+			var presentation := _get_effect_presentation(
+				effect_index, user, target, presentation_targets, battle_manager,
+			)
 			if presentation != null:
 				clauses.append(presentation.render())
 		return "[p]".join(clauses)
@@ -116,7 +127,9 @@ func _compose_effect_presentations(
 		if not index_text.is_valid_int():
 			continue
 		var effect_index := index_text.to_int() - 1
-		var presentation := _get_effect_presentation(effect_index, user, target)
+		var presentation := _get_effect_presentation(
+			effect_index, user, target, presentation_targets, battle_manager,
+		)
 		if presentation != null:
 			composed = composed.replace(match_result.get_string(0), presentation.render())
 	return composed
@@ -126,28 +139,38 @@ func _get_effect_presentation(
 	effect_index: int,
 	user: ActorCard,
 	target: ActorCard,
+	presentation_targets: Array[ActorCard],
+	battle_manager: BattleManager,
 ) -> EffectPresentation:
 	if effect_index < 0 or effect_index >= effects.size():
 		return null
 	var effect := effects[effect_index]
 	if effect == null:
 		return null
+	var resolved_targets: Array[ActorCard] = []
+	resolved_targets.assign(presentation_targets)
+	if target != null and resolved_targets.is_empty():
+		resolved_targets.append(target)
 	var distribution_count := 1
-	var group_distribution_unavailable := target_type in [
+	var is_group_target := target_type in [
 		TargetType.ALL_ENEMIES,
 		TargetType.ENEMY_GROUP,
 		TargetType.ALL_ALLIES,
 		TargetType.ALLIES_ONLY,
 	]
-	if effect is Effect_Damage \
-		and (effect as Effect_Damage).split_damage \
-		and not group_distribution_unavailable:
-		distribution_count = maxi(
-			1,
-			(effect as Effect_Damage)._resolve_hit_count(user),
-		)
+	if effect is Effect_Damage:
+		var damage_effect := effect as Effect_Damage
+		var resolved_hit_count := damage_effect._resolve_hit_count(user)
+		if not resolved_targets.is_empty():
+			var plan := damage_effect._build_hit_plan(
+				resolved_targets, self, resolved_hit_count,
+			)
+			distribution_count = plan.distribution_count
+		elif damage_effect.split_damage and not is_group_target:
+			distribution_count = maxi(1, resolved_hit_count)
 	var context := EffectPresentationContext.new(
 		user, target, self, effect_index, distribution_count, false,
+		null, resolved_targets, battle_manager, not resolved_targets.is_empty(),
 	)
 	return effect.get_presentation(context)
 

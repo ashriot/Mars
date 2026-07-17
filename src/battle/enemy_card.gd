@@ -285,50 +285,34 @@ func _update_intent_ui():
 	if first_effect is Effect_Damage:
 		var damage_effect: Effect_Damage = first_effect
 		var resolved_hit_count := damage_effect._resolve_hit_count(self)
-		var plan := damage_effect._build_hit_plan(
-			intended_targets, intended_action, resolved_hit_count,
+		var sequence := DamagePreview.for_plan(
+			damage_effect,
+			self,
+			intended_targets,
+			intended_action,
+			false,
+			battle_manager,
 		)
-		var intended_damage_by_type: Dictionary = {}
-		var previewed_targets: Array[ActorCard] = []
-		for target: ActorCard in intended_targets:
-			if target == null or target in previewed_targets:
-				continue
-			previewed_targets.append(target)
-			var result := DamagePreview.for_effect(
-				damage_effect,
-				self,
-				target,
-				intended_action,
-				plan.distribution_count,
-				false,
+		var damage_bindings: Dictionary
+		if sequence.is_complete and not sequence.results.is_empty():
+			damage_bindings = damage_effect._get_sequence_bindings(sequence, 28)
+		else:
+			var context := EffectPresentationContext.new(
+				self, null, intended_action,
 			)
-			_append_intent_damage(intended_damage_by_type, result)
-		if intended_damage_by_type.is_empty():
-			var result := DamagePreview.for_effect(
-				damage_effect,
-				self,
-				null,
-				intended_action,
-				plan.distribution_count,
-				false,
+			damage_bindings = damage_effect.get_presentation(context).bindings
+			damage_bindings.damage_type = damage_effect._get_damage_type_icon(
+				damage_effect.damage_type, 28,
 			)
-			_append_intent_damage(intended_damage_by_type, result)
-		var hits_text = "x" + str(resolved_hit_count) if resolved_hit_count > 1 else ""
-		var resolved_damage_types := intended_damage_by_type.keys()
-		resolved_damage_types.sort()
-		var damage_segments: Array[String] = []
-		for resolved_damage_type: int in resolved_damage_types:
-			var values: Array = intended_damage_by_type[resolved_damage_type]
-			values.sort()
-			var damage_text := str(values[0])
-			if values[0] != values[-1]:
-				damage_text = "%d-%d" % [values[0], values[-1]]
-			damage_segments.append(
-				damage_text + hits_text + " "
-				+ _get_intent_damage_type_icon(resolved_damage_type),
-			)
-
-		var final_text := " / ".join(damage_segments)
+		var final_text := "%s%s%s %s" % [
+			damage_bindings.amount,
+			damage_bindings.amount_qualifier,
+			damage_bindings.hit_count_text,
+			damage_bindings.damage_type,
+		]
+		if intended_action.target_type == Action.TargetType.RANDOM_ENEMY \
+			and resolved_hit_count > 1:
+			final_text += " (%d hits)" % resolved_hit_count
 		if intended_action.effects.size() > 1:
 			final_text += " *"
 
@@ -356,31 +340,10 @@ func _update_intent_ui():
 		intent_text.text = final_text
 	var tooltip_target: ActorCard = intended_targets[0] \
 		if intended_targets.size() == 1 else null
-	intent_tooltip.bbcode_text = intended_action.get_rich_description(self, tooltip_target)
+	intent_tooltip.bbcode_text = intended_action.get_rich_description(
+		self, tooltip_target, intended_targets, battle_manager,
+	)
 	flash_intent()
-
-
-func _append_intent_damage(
-	damage_by_type: Dictionary,
-	result: DamageResult,
-) -> void:
-	var resolved_damage_type := result.request.damage_type
-	var damage_values: Array = damage_by_type.get(resolved_damage_type, [])
-	damage_values.append(result.final_damage)
-	damage_by_type[resolved_damage_type] = damage_values
-
-
-func _get_intent_damage_type_icon(
-	resolved_damage_type: Action.DamageType,
-) -> String:
-	match resolved_damage_type:
-		Action.DamageType.KINETIC:
-			return Action._get_bbcode_icon("kinetic", 28)
-		Action.DamageType.ENERGY:
-			return Action._get_bbcode_icon("energy", 28)
-		Action.DamageType.PIERCING:
-			return Action._get_bbcode_icon("pierce", 28)
-	return ""
 
 func clear_intent():
 	intended_action = null

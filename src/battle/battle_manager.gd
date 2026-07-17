@@ -399,7 +399,7 @@ func _reset_action_button_presentation(button: ActionButton) -> void:
 		or not is_instance_valid(current_actor) \
 		or current_actor.current_stats == null:
 		return
-	button.tooltip.bbcode_text = button.action.get_rich_description(current_actor)
+	button.tooltip.bbcode_text = _get_rich_description(button.action)
 
 
 func _finish_hero_turn():
@@ -764,7 +764,28 @@ func _get_effect_targets(effect: ActionEffect, user: ActorCard, selected_target:
 			return []
 
 func _get_rich_description(action: Action, target: ActorCard = null) -> String:
-	return action.get_rich_description(current_actor, target)
+	var presentation_target: ActorCard = null
+	var presentation_targets: Array[ActorCard] = []
+	if action_uses_exact_selected_target(action) \
+		and is_instance_valid(target) \
+		and target.current_stats != null:
+		presentation_target = target
+		presentation_targets.append(target)
+	elif is_group_target_action(action):
+		var resolved_targets := get_targets(
+			action.target_type, current_actor is HeroCard, [], current_actor,
+		)
+		for resolved_target: ActorCard in resolved_targets:
+			if is_instance_valid(resolved_target) \
+				and resolved_target.current_stats != null \
+				and not resolved_target.is_defeated:
+				presentation_targets.append(resolved_target)
+	return action.get_rich_description(
+		current_actor,
+		presentation_target,
+		presentation_targets,
+		self,
+	)
 
 func _check_if_battle_ended() -> bool:
 	var heroes_alive = not get_living_heroes().is_empty()
