@@ -7,6 +7,19 @@ All checks below are intentionally unchecked until performed interactively in co
 - [ ] Launch the project with the isolated test `HOME`, enter a representative combat with multiple heroes and duplicate enemy types, and complete the named `1280x800` and `1920x1080` paths below.
 - [ ] Exercise mouse, keyboard, controller, and direct touch input where each check names them; a simulated input family does not count as a physical-device pass.
 
+## Damage architecture acceptance
+
+Record the viewport, input method, tested commit, and concise observed values for each check.
+
+- [ ] Confirm Kinetic and Energy hits remove Guard and can cause Breach; confirm the hit that causes Breach receives the OVR bonus.
+- [ ] Confirm intrinsic Piercing and Targeting-Laser-converted Piercing bypass Defense without removing Guard or causing Breach.
+- [ ] Trigger a critical hit and confirm its popup reflects PRE and the resolved damage type.
+- [ ] Use Focused Bolt at multiple remaining-Focus values and confirm its preview and executed damage follow 20% power plus 20% per remaining Focus after paying its cost.
+- [ ] Use Mind Storm and confirm its preview uses remaining Focus after paying its cost.
+- [ ] Use Rapid Fire where a target dies during the action and confirm later hits retain the original fixed damage distribution.
+- [ ] For the same target state, confirm enemy intent and action tooltip numbers match observed noncritical damage.
+- [ ] Use lifedrain against a target with less HP than the attempted damage and confirm healing uses actual HP removed, excluding overkill.
+
 ## Responsive controller-only acceptance
 
 Record the date, OS/device, controller and connection, physical resolution, tested commit, and concise notes. Keep desktop-proxy and Steam Deck hardware results separate.

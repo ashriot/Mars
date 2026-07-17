@@ -125,7 +125,7 @@ It does not own the universal arithmetic and must not reproduce it in private br
 
 ### Read-Only Combat Context
 
-Context-sensitive mechanics receive a read-only `CombatSnapshot` or narrower `DamageContext`, not unrestricted mutation access to `BattleManager`. The context exposes facts needed for authored rules, such as:
+Context-sensitive mechanics receive a read-only `DamageContext`, not unrestricted mutation access to `BattleManager`. `DamageContext` contains read-only `CombatantSnapshot` values for the attacker and target and exposes facts needed for authored rules, such as:
 
 - attacker and target combat state;
 - living allies and enemies;
@@ -173,7 +173,7 @@ The calculator never queries the battlefield. It performs only the universal ari
 
 ### Inheritance and Composition
 
-Inheritance remains a supported first-class extension mechanism. `Effect_Damage` exposes narrow override hooks for custom hit planning, target behavior, contextual resolution, and request adjustment. Specialized effects call the base behavior and eventually submit a typed request to the same calculator.
+Inheritance remains a supported first-class extension mechanism. `Effect_Damage` exposes narrow override hooks for custom hit planning, target behavior, contextual resolution, and request adjustment. The implemented hooks are `_resolve_hit_count()`, `_build_hit_plan()`, `_resolve_planned_target()`, `_resolve_potency()`, and `_modify_damage_request()`. Specialized effects call the base behavior and eventually submit a typed request to the same calculator.
 
 Use inheritance when an effect changes control flow, hit planning, targeting, context timing, or requires a genuinely unique algorithm. `Effect_Damage_Inversion`, whose hit count comes from Guard gained in trigger context, is an appropriate subclass.
 
@@ -202,6 +202,8 @@ When an exact target is available, a preview can show the target-specific noncri
 `ActionEffect` exposes a generic presentation method that accepts an `EffectPresentationContext` and returns an immutable `EffectPresentation`. The presentation contains an effect-owned clause template, typed or named bindings sourced from effect data/resolver output, and optional labeled breakdown details. It has no dependency on tooltip nodes or action-button layout.
 
 Damage is the first complete effect adopter. `Effect_Damage` owns the authoritative clause for its selected power, resolved potency, hit count, split behavior, damage type, and contextual scaling. It obtains exact numbers and breakdowns from the shared damage resolver/calculator rather than duplicating arithmetic. Direct child damage effects can therefore bind into an action immediately. Damage nested behind an apply-condition or trigger effect remains reachable only through that parent effect's legacy prose until condition/trigger presentation adopts the same interface; focused content validation keeps that transitional prose aligned with its nested resource.
+
+Rejuvenate remains an explicit exception to mechanic-parity claims in this damage effort. Its healing-only authored formula and `Effect_Healing` potency/Focus behavior do not agree; resolving that mismatch is deferred to the focused healing/presentation follow-up rather than changing healing balance during damage reconciliation.
 
 `Action` owns composition. A simple action with no authored description template may join the available child-effect clauses in effect order. A nuanced action retains authored prose and composes child clauses through generic one-based `{effect:N}` bindings. The action owns sequencing words, paragraphs, emphasis, and relationships between effects; it does not own the effect's numbers or mechanical labels.
 
