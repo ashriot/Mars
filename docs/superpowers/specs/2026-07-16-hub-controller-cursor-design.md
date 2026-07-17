@@ -2,7 +2,7 @@
 
 ## Summary
 
-Replace the hub's pulsing focus and inactive-edge darkening with a controller-only software cursor. The cursor points to the exact logical focus target from outside its lower-right corner, while focused buttons use their existing authored hover appearance without animation. Mouse and keyboard handoff hides the software cursor and preserves the independent physical mouse position.
+Replace the hub's pulsing focus and inactive-edge darkening with a controller-only software cursor. A classic east-pointing RPG hand identifies the exact logical focus target from its upper-left edge, while focused buttons use their existing authored hover appearance without animation. Mouse and keyboard handoff hides the software cursor and preserves the independent physical mouse position.
 
 This design supersedes the exact-focus pulse, hub focus-style mutation, inactive-depth chrome, and “no software pointer” decisions in `2026-07-16-hub-controller-navigation-design.md`. It also amends the focus presentation described in `2026-07-16-hub-role-depth-and-xp-design.md`. The approved role depths, controls, role-name swap, XP presentation, stable focus, controller glyphs, and modal ownership remain unchanged.
 
@@ -20,11 +20,11 @@ Battle, dungeon, scan, terminal, and non-hub menu presentation do not change. Th
 
 ## Presentation
 
-The existing up-left-pointing pointer artwork is reused at `128x128` for hub navigation while the scan pointer retains its original size. At rest, the hub cursor slightly overlaps the focused control's lower-right edge without crossing its readable center.
+Hub navigation uses the authored east-pointing `hand_point_e.svg` at `64x64`, while the scan pointer retains its original artwork and size. At rest, the hand sits outside the focused control's upper-left edge with its fingertip overlapping the border by `8 px`. Large composite panels use their header or first-row height rather than their full vertical center.
 
-When the requested outside position would clip the pointer against the viewport, the complete cursor rectangle is clamped inside a small screen margin. This may bring it against the target's lower-right corner, but it must not move across the control's readable center.
+When the requested outside position would clip the hand against the viewport, the complete cursor rectangle is clamped inside a small screen margin. Edge placement must not move the hand across the control's readable center.
 
-Controller focus changes logical target immediately. The visible cursor moves to the new anchor with a `70 ms` ease-out tween. A newer focus target cancels and replaces an in-flight cursor tween. The cursor then breathes by drifting `12 px` diagonally away over `650 ms` and returning over `160 ms`; breathing pauses and resets during focus travel. Initial appearance, focus restoration after a hidden or freed target, and mouse takeover do not wait for a tween before input becomes valid.
+Controller focus changes logical target immediately. The visible hand moves to the new anchor with a `70 ms` ease-out tween. A newer focus target cancels and replaces an in-flight cursor tween. The hand then drifts `6 px` left over `650 ms` and returns over `160 ms`; this horizontal animation pauses and resets during focus travel. Initial appearance, focus restoration after a hidden or freed target, and mouse takeover do not wait for a tween before input becomes valid.
 
 The cursor continuously follows the target's current global rectangle while the target moves because of:
 
@@ -79,7 +79,7 @@ Only one visible pointer authority may exist at a time:
 
 `NavigationFocus` stops applying hub pulse metadata and inactive depth colors. Its ordinary non-hub focus treatment remains unchanged. For hub buttons it applies and restores only the authored static hover-equivalent style required by this design.
 
-Hub controls may expose optional cursor-anchor metadata only when the default lower-right global-rectangle anchor is visually unsuitable. The default must work for the current hero, role, node, page, equipment, modification, and inventory controls; per-control offsets are exceptions rather than a parallel layout system.
+Hub controls may expose optional cursor-anchor metadata only when the default upper-left global-rectangle anchor is visually unsuitable. The default must work for the current hero, role, node, page, equipment, modification, and inventory controls; per-control offsets are exceptions rather than a parallel layout system.
 
 `HubChrome` is removed from hub depth transitions or becomes unused by those transitions. Authored panel styles remain unchanged at every hub depth.
 
@@ -87,7 +87,7 @@ Hub controls may expose optional cursor-anchor metadata only when the default lo
 
 Regression coverage protects:
 
-- controller focus shows one `128x128` software cursor slightly overlapping the target's lower-right edge;
+- controller focus shows one `64x64` east-pointing hand whose fingertip overlaps the target's upper-left edge;
 - cursor movement completes in `70 ms`, and a newer target replaces an in-flight tween;
 - position-only breathing moves slowly away and quickly returns, and stops during focus travel or non-hub ownership;
 - viewport-edge targets keep the complete cursor visible without moving over readable content;
@@ -108,7 +108,7 @@ Final verification includes focused cursor, input-manager, navigation-layer, hub
 At `1920x1080` and `1280x800`, verify with a physical controller that:
 
 - the cursor clearly identifies heroes, roles, nodes, pages, equipment, mods, and inventory items;
-- its lower-right placement does not cover readable content;
+- its upper-left placement does not cover readable content;
 - its short tween communicates direction without producing lag or ambiguity;
 - its slow-away, quick-return breathing remains visible without feeling distracting;
 - rapid navigation never leaves duplicate cursors or a cursor between targets;

@@ -4,10 +4,12 @@ class_name NavigationCursor
 signal hub_target_invalidated
 
 const POINTER_TEXTURE := preload("res://assets/graphics/glyphs/cursors/outline/pointer_c.svg")
+const HUB_POINTER_TEXTURE := preload("res://assets/graphics/glyphs/cursors/outline/hand_point_e.svg")
 const HUB_MOVE_DURATION := 0.07
-const HUB_RENDER_SCALE := Vector2(4, 4)
-const HUB_REST_OVERLAP := Vector2(12, 12)
-const HUB_BREATH_DISTANCE := 12.0
+const HUB_RENDER_SCALE := Vector2(2, 2)
+const HUB_REST_OVERLAP := 8.0
+const HUB_HEADER_TIP_Y := 28.0
+const HUB_BREATH_DISTANCE := 6.0
 const HUB_BREATH_AWAY_DURATION := 0.65
 const HUB_BREATH_RETURN_DURATION := 0.16
 const VIEWPORT_MARGIN := 4.0
@@ -36,6 +38,7 @@ func show_at_screen_position(screen_position: Vector2) -> void:
 	_move_tween = null
 	_hub_target = null
 	_owner = PointerOwner.EXTERNAL
+	texture = POINTER_TEXTURE
 	scale = Vector2.ONE
 	_anchor_position = screen_position
 	position = screen_position
@@ -62,6 +65,7 @@ func track_hub_target(target: Control, animate: bool = true) -> void:
 		_move_tween.kill()
 	_owner = PointerOwner.HUB
 	_hub_target = weakref(target)
+	texture = HUB_POINTER_TEXTURE
 	scale = HUB_RENDER_SCALE
 	var start := position
 	if not visible or not animate:
@@ -114,29 +118,27 @@ func _process(_delta: float) -> void:
 
 func _hub_position(target: Control) -> Vector2:
 	var target_rect := target.get_global_rect()
-	var requested := target_rect.end - HUB_REST_OVERLAP
 	var viewport_size := Vector2(get_viewport_rect().size)
 	var cursor_size := _effective_cursor_size()
-	var preferred := _clamp_to_viewport(requested, cursor_size, viewport_size)
+	var tip_y := minf(target_rect.size.y * 0.5, HUB_HEADER_TIP_Y)
+	var requested := Vector2(
+		target_rect.position.x - cursor_size.x + HUB_REST_OVERLAP,
+		target_rect.position.y + tip_y - HUB_HEADER_TIP_Y,
+	)
+	var preferred := _clamp_hub_anchor(requested, cursor_size, viewport_size)
 	var readable_center := _readable_center_rect(target_rect)
 	if not Rect2(preferred, cursor_size).intersects(readable_center, false):
 		return preferred
 
-	var left := target_rect.position.x - cursor_size.x + HUB_REST_OVERLAP.x
-	var above := target_rect.position.y - cursor_size.y + HUB_REST_OVERLAP.y
 	var candidates: Array[Vector2] = [
-		Vector2(left, requested.y),
-		Vector2(requested.x, above),
-		Vector2(left, above),
-		Vector2(readable_center.position.x - cursor_size.x + HUB_REST_OVERLAP.x, preferred.y),
-		Vector2(readable_center.end.x - HUB_REST_OVERLAP.x, preferred.y),
-		Vector2(preferred.x, readable_center.position.y - cursor_size.y + HUB_REST_OVERLAP.y),
-		Vector2(preferred.x, readable_center.end.y - HUB_REST_OVERLAP.y),
+		Vector2(requested.x, readable_center.position.y - cursor_size.y),
+		Vector2(requested.x, readable_center.end.y),
+		Vector2(target_rect.end.x - HUB_REST_OVERLAP, requested.y),
 	]
 	var best := preferred
 	var best_distance := INF
 	for raw_candidate in candidates:
-		var candidate := _clamp_to_viewport(raw_candidate, cursor_size, viewport_size)
+		var candidate := _clamp_hub_anchor(raw_candidate, cursor_size, viewport_size)
 		if Rect2(candidate, cursor_size).intersects(readable_center, false):
 			continue
 		var distance := candidate.distance_squared_to(preferred)
@@ -183,18 +185,22 @@ func _apply_visual_position() -> void:
 	if _owner != PointerOwner.HUB or not _valid_hub_target(target):
 		position = _anchor_position
 		return
-	var target_center := target.get_global_rect().get_center()
-	var cursor_center := _anchor_position + _effective_cursor_size() * 0.5
-	var away_sign := (cursor_center - target_center).sign()
-	if is_zero_approx(away_sign.x):
-		away_sign.x = 1.0
-	if is_zero_approx(away_sign.y):
-		away_sign.y = 1.0
-	var away := away_sign.normalized() * HUB_BREATH_DISTANCE * _breath_weight
+	var away := Vector2.LEFT * HUB_BREATH_DISTANCE * _breath_weight
 	position = _clamp_to_viewport(
 		_anchor_position + away,
 		_effective_cursor_size(),
 		Vector2(get_viewport_rect().size),
+	)
+
+
+func _clamp_hub_anchor(requested: Vector2, cursor_size: Vector2, viewport_size: Vector2) -> Vector2:
+	return Vector2(
+		clampf(
+			requested.x,
+			VIEWPORT_MARGIN + HUB_BREATH_DISTANCE,
+			maxf(VIEWPORT_MARGIN + HUB_BREATH_DISTANCE, viewport_size.x - cursor_size.x - VIEWPORT_MARGIN),
+		),
+		clampf(requested.y, VIEWPORT_MARGIN, maxf(VIEWPORT_MARGIN, viewport_size.y - cursor_size.y - VIEWPORT_MARGIN)),
 	)
 
 

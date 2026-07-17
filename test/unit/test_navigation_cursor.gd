@@ -49,20 +49,21 @@ func test_show_at_screen_position_moves_and_shows_without_touching_mouse() -> vo
 	assert_false(cursor.visible)
 
 
-func test_hub_target_uses_lower_right_anchor_and_preserves_physical_mouse() -> void:
+func test_hub_target_uses_east_hand_at_upper_left_and_preserves_physical_mouse() -> void:
 	var cursor := CursorScript.new()
 	add_child_autofree(cursor)
 	var target := _target_at(Vector2(100, 80), Vector2(240, 60))
 	var physical_mouse := get_viewport().get_mouse_position()
 	cursor.track_hub_target(target, false)
 	assert_true(cursor.visible)
-	assert_eq(cursor.scale, Vector2(4, 4))
-	assert_eq(cursor._effective_cursor_size(), Vector2(128, 128))
-	assert_eq(cursor.position, Vector2(328, 128))
+	assert_eq(cursor.texture.resource_path.get_file(), "hand_point_e.svg")
+	assert_eq(cursor.scale, Vector2(2, 2))
+	assert_eq(cursor._effective_cursor_size(), Vector2(64, 64))
+	assert_eq(cursor.position, Vector2(44, 80))
 	assert_eq(get_viewport().get_mouse_position(), physical_mouse)
 
 
-func test_hub_cursor_breathes_slowly_away_then_returns_quickly() -> void:
+func test_hub_hand_drifts_left_slowly_then_returns_quickly() -> void:
 	var cursor := CursorScript.new()
 	add_child_autofree(cursor)
 	var target := _target_at(Vector2(100, 80), Vector2(240, 60))
@@ -71,9 +72,9 @@ func test_hub_cursor_breathes_slowly_away_then_returns_quickly() -> void:
 
 	cursor._breath_tween.custom_step(0.65)
 	var away_position := cursor.position
-	assert_gt(away_position.x, resting_position.x)
-	assert_gt(away_position.y, resting_position.y)
-	assert_almost_eq(away_position.distance_to(resting_position), 12.0, 0.1)
+	assert_lt(away_position.x, resting_position.x)
+	assert_almost_eq(away_position.y, resting_position.y, 0.01)
+	assert_almost_eq(away_position.distance_to(resting_position), 6.0, 0.1)
 
 	cursor._breath_tween.custom_step(0.16)
 	assert_almost_eq(cursor.position.x, resting_position.x, 0.01)
@@ -151,7 +152,7 @@ func test_moving_target_crosses_edge_avoidance_boundary_deterministically() -> v
 	target.position = interior_position
 	cursor._process(0.0)
 	_assert_cursor_clears_readable_center(cursor, target)
-	assert_eq(cursor.position, interior_cursor_position, "reverse crossing restores the exact lower-right anchor")
+	assert_eq(cursor.position, interior_cursor_position, "reverse crossing restores the exact upper-left hand anchor")
 
 
 func test_hub_target_clamps_complete_cursor_inside_viewport() -> void:
@@ -238,6 +239,7 @@ func test_scan_position_clears_hub_tracking_without_changing_scan_api() -> void:
 	cursor.show_at_screen_position(Vector2(320, 180))
 	assert_false(cursor.is_tracking_hub_target())
 	assert_eq(cursor.position, Vector2(320, 180))
+	assert_eq(cursor.texture.resource_path.get_file(), "pointer_c.svg")
 	assert_eq(cursor.scale, Vector2.ONE)
 	assert_true(cursor._breath_tween == null or not cursor._breath_tween.is_running())
 
