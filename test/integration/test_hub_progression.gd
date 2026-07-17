@@ -122,13 +122,6 @@ func _opened_party_with_three_heroes() -> PartyMenu:
 	return party
 
 
-func _assert_visible_controls_have_no_navigation_focus_pulse(node: Node) -> void:
-	if node is Control and (node as Control).is_visible_in_tree():
-		assert_false(node.has_meta("navigation_focus_pulse"), "%s must not use navigation focus pulse metadata" % node.get_path())
-	for child in node.get_children():
-		_assert_visible_controls_have_no_navigation_focus_pulse(child)
-
-
 func test_hero_xp_uses_adaptive_shorthand() -> void:
 	var expected := {
 		-1: "0",
@@ -657,9 +650,7 @@ func test_hub_focus_and_depth_styles_never_change_content_colors() -> void:
 	var hp_modulate: Color = hero.get_node("Content/Stats/Summary/HP").modulate
 	var role := party.skill_view.role_list_container.get_child(0) as RolePanel
 	var role_header_modulate: Color = role.get_node("Header").modulate
-	assert_false(hero.has_meta("navigation_focus_pulse"))
 	assert_false(hero.has_node("FocusOutline"))
-	_assert_visible_controls_have_no_navigation_focus_pulse(party)
 	assert_true(party.enter_content())
 	assert_same(hero.get_node("Content/Header").get_theme_stylebox(&"panel"), header_style)
 	assert_eq(hero.get_node("Content/Stats/Summary/HP").modulate, hp_modulate)
@@ -677,7 +668,6 @@ func test_hub_focus_and_depth_styles_never_change_content_colors() -> void:
 	var item := party.inventory_view.grid.get_child(0) as ItemButton
 	var item_header_modulate: Color = item.get_node("Button/Header").modulate
 	assert_false(item.has_node("Button/FocusOutline"))
-	_assert_visible_controls_have_no_navigation_focus_pulse(party)
 	party.return_to_hero_rail()
 	assert_same(hero.get_node("Content/Header").get_theme_stylebox(&"panel"), header_style)
 	assert_eq(hero.get_node("Content/Stats/Summary/HP").modulate, hp_modulate)

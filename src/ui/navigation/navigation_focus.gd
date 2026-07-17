@@ -3,8 +3,6 @@ class_name NavigationFocus
 
 const FOCUS_STYLE := preload("res://data/theme/styleboxes/button_focus.tres")
 const FOCUS_FOREGROUND := Color(0.19607843, 0.19607843, 0.19607843, 1)
-const HUB_PULSE_LOW_ENERGY := 0.65
-const HUB_PULSE_HIGH_ENERGY := 1.0
 
 static var _states: Dictionary = {}
 
@@ -49,12 +47,8 @@ static func apply(control: Control) -> void:
 	if not is_instance_valid(surface):
 		return
 	var style_name := &"focus" if surface is Button else &"panel"
-	var pulsing := bool(control.get_meta("navigation_focus_pulse", false))
 	var labels: Array[Dictionary] = []
-	var focus_labels: Array[Label] = []
-	if not pulsing:
-		focus_labels = _focus_labels(control, surface)
-	for label in focus_labels:
+	for label in _focus_labels(control, surface):
 		labels.append({
 			"label": weakref(label),
 			"had_override": label.has_theme_color_override(&"font_color"),
@@ -64,7 +58,6 @@ static func apply(control: Control) -> void:
 		})
 		label.add_theme_color_override(&"font_color", FOCUS_FOREGROUND)
 		label.add_theme_constant_override(&"outline_size", 0)
-	var focus := _focus_style_and_tween(control, surface, style_name)
 	var state := {
 		"kind": &"standard",
 		"control": weakref(control),
@@ -76,12 +69,10 @@ static func apply(control: Control) -> void:
 		"had_font_focus_override": control.has_theme_color_override(&"font_focus_color"),
 		"font_focus_color": control.get_theme_color(&"font_focus_color"),
 	}
-	if focus.has("tween"):
-		state["tween"] = focus.tween
 	var key := control.get_instance_id()
 	_states[key] = state
-	surface.add_theme_stylebox_override(style_name, focus.style)
-	if control is Button and not pulsing:
+	surface.add_theme_stylebox_override(style_name, FOCUS_STYLE.duplicate() as StyleBoxFlat)
+	if control is Button:
 		control.add_theme_color_override(&"font_focus_color", FOCUS_FOREGROUND)
 	var cleanup := _release_state.bind(key)
 	if not control.tree_exiting.is_connected(cleanup):
@@ -93,7 +84,6 @@ static func clear(control: Control) -> void:
 		return
 	var key := control.get_instance_id()
 	var state: Dictionary = _states[key]
-	_kill_tween(state)
 	if state.kind == &"hub_button":
 		if state.had_style_override:
 			control.add_theme_stylebox_override(&"focus", state.style)
@@ -132,35 +122,7 @@ static func clear(control: Control) -> void:
 
 
 static func _release_state(key: int) -> void:
-	if _states.has(key):
-		_kill_tween(_states[key])
 	_states.erase(key)
-
-
-static func _focus_style_and_tween(control: Control, surface: Control, style_name: StringName) -> Dictionary:
-	if not bool(control.get_meta("navigation_focus_pulse", false)):
-		return {"style": FOCUS_STYLE.duplicate() as StyleBoxFlat}
-	var authored := surface.get_theme_stylebox(style_name) as StyleBoxFlat
-	var style := authored.duplicate() as StyleBoxFlat if authored else FOCUS_STYLE.duplicate() as StyleBoxFlat
-	var high_color := style.border_color
-	var low_color := _edge_color(high_color, HUB_PULSE_LOW_ENERGY)
-	style.border_color = low_color
-	var tween := surface.create_tween().set_loops()
-	tween.tween_property(style, "border_color", _edge_color(high_color, HUB_PULSE_HIGH_ENERGY), 0.35).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	tween.tween_property(style, "border_color", low_color, 0.65).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	return {"style": style, "tween": tween}
-
-
-static func _edge_color(color: Color, energy: float) -> Color:
-	return Color(color.r * energy, color.g * energy, color.b * energy, color.a)
-
-
-static func _kill_tween(state: Dictionary) -> void:
-	if not state.has("tween"):
-		return
-	var tween := state.tween as Tween
-	if is_instance_valid(tween) and tween.is_valid():
-		tween.kill()
 
 
 static func _resolve_surface(control: Control) -> Control:

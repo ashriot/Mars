@@ -26,6 +26,7 @@ func test_hub_target_uses_lower_right_anchor_and_preserves_physical_mouse() -> v
 	var cursor := CursorScript.new()
 	add_child_autofree(cursor)
 	var target := Control.new()
+	target.focus_mode = Control.FOCUS_ALL
 	target.position = Vector2(100, 80)
 	target.size = Vector2(240, 60)
 	add_child_autofree(target)
@@ -40,6 +41,7 @@ func test_hub_target_clamps_complete_cursor_inside_viewport() -> void:
 	var cursor := CursorScript.new()
 	add_child_autofree(cursor)
 	var target := Control.new()
+	target.focus_mode = Control.FOCUS_ALL
 	target.position = Vector2(1130, 650)
 	target.size = Vector2(145, 145)
 	add_child_autofree(target)
@@ -54,6 +56,8 @@ func test_new_hub_target_replaces_in_flight_cursor_tween() -> void:
 	add_child_autofree(cursor)
 	var first := Control.new()
 	var second := Control.new()
+	first.focus_mode = Control.FOCUS_ALL
+	second.focus_mode = Control.FOCUS_ALL
 	first.position = Vector2(40, 40)
 	second.position = Vector2(400, 300)
 	first.size = Vector2(100, 40)
@@ -72,9 +76,69 @@ func test_scan_position_clears_hub_tracking_without_changing_scan_api() -> void:
 	var cursor := CursorScript.new()
 	add_child_autofree(cursor)
 	var target := Control.new()
+	target.focus_mode = Control.FOCUS_ALL
 	target.size = Vector2(100, 40)
 	add_child_autofree(target)
 	cursor.track_hub_target(target, false)
 	cursor.show_at_screen_position(Vector2(320, 180))
 	assert_false(cursor.is_tracking_hub_target())
+	assert_eq(cursor.position, Vector2(320, 180))
+
+
+func test_tracked_hub_button_clears_when_disabled() -> void:
+	var cursor := CursorScript.new()
+	add_child_autofree(cursor)
+	var first := Control.new()
+	first.focus_mode = Control.FOCUS_ALL
+	first.size = Vector2(100, 40)
+	var target := Button.new()
+	target.position = Vector2(400, 300)
+	target.size = Vector2(100, 40)
+	add_child_autofree(first)
+	add_child_autofree(target)
+	cursor.track_hub_target(first, false)
+	cursor.track_hub_target(target, true)
+	assert_true(cursor.is_tracking_hub_target())
+	assert_true(cursor._move_tween.is_running())
+	var physical_mouse := get_viewport().get_mouse_position()
+
+	target.disabled = true
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	assert_false(cursor.is_tracking_hub_target())
+	assert_false(cursor.visible)
+	assert_eq(get_viewport().get_mouse_position(), physical_mouse)
+
+
+func test_tracked_hub_control_clears_when_focus_is_disabled() -> void:
+	var cursor := CursorScript.new()
+	add_child_autofree(cursor)
+	var target := Control.new()
+	target.focus_mode = Control.FOCUS_ALL
+	target.size = Vector2(100, 40)
+	add_child_autofree(target)
+	cursor.track_hub_target(target, false)
+	assert_true(cursor.is_tracking_hub_target())
+
+	target.focus_mode = Control.FOCUS_NONE
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	assert_false(cursor.is_tracking_hub_target())
+	assert_false(cursor.visible)
+
+
+func test_invalid_hub_target_does_not_clear_external_scan_pointer() -> void:
+	var cursor := CursorScript.new()
+	add_child_autofree(cursor)
+	var target := Button.new()
+	target.disabled = true
+	add_child_autofree(target)
+	cursor.show_at_screen_position(Vector2(320, 180))
+
+	cursor.track_hub_target(target, false)
+
+	assert_false(cursor.is_tracking_hub_target())
+	assert_true(cursor.visible)
 	assert_eq(cursor.position, Vector2(320, 180))

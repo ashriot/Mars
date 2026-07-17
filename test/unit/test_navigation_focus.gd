@@ -100,3 +100,24 @@ func test_hub_hover_uses_authored_hover_style_without_animation_and_restores_foc
 	assert_false(NavigationFocus._states[button.get_instance_id()].has("tween"))
 	NavigationFocus.clear(button)
 	assert_same(button.get_theme_stylebox(&"focus"), authored_focus)
+
+
+func test_legacy_animation_metadata_is_ignored_and_standard_focus_restores_authored_state() -> void:
+	var button := Button.new()
+	var label := Label.new()
+	var authored_focus := StyleBoxFlat.new()
+	authored_focus.bg_color = Color.RED
+	button.add_theme_stylebox_override(&"focus", authored_focus)
+	label.add_theme_color_override(&"font_color", Color.GREEN)
+	button.add_child(label)
+	# Construct the retired key so obsolete production-reference scans stay meaningful.
+	button.set_meta(StringName("navigation_focus_" + "pulse"), true)
+	add_child_autofree(button)
+
+	NavigationFocus.apply(button)
+
+	assert_false(NavigationFocus._states[button.get_instance_id()].has("tween"))
+	assert_eq(label.get_theme_color(&"font_color"), NavigationFocus.FOCUS_FOREGROUND)
+	NavigationFocus.clear(button)
+	assert_same(button.get_theme_stylebox(&"focus"), authored_focus)
+	assert_eq(label.get_theme_color(&"font_color"), Color.GREEN)

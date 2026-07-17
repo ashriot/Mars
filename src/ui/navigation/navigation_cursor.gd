@@ -76,11 +76,13 @@ func is_tracking_hub_target() -> bool:
 
 
 func _process(_delta: float) -> void:
-	if _owner != PointerOwner.HUB or _move_tween and _move_tween.is_running():
+	if _owner != PointerOwner.HUB:
 		return
 	var target := _hub_target.get_ref() as Control if _hub_target else null
 	if not _valid_hub_target(target):
 		clear_hub_target()
+		return
+	if _move_tween and _move_tween.is_running():
 		return
 	position = _hub_position(target)
 
@@ -95,4 +97,10 @@ func _hub_position(target: Control) -> Vector2:
 
 
 func _valid_hub_target(target: Control) -> bool:
-	return is_instance_valid(target) and target.is_inside_tree() and target.is_visible_in_tree()
+	return (
+		is_instance_valid(target)
+		and target.is_inside_tree()
+		and target.is_visible_in_tree()
+		and target.focus_mode != Control.FOCUS_NONE
+		and not (target is BaseButton and target.disabled)
+	)

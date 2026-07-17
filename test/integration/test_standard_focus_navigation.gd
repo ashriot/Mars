@@ -69,7 +69,6 @@ func test_role_panel_root_is_the_software_cursor_focus_target() -> void:
 	add_child_autofree(role)
 	await get_tree().process_frame
 	assert_eq(role.focus_mode, Control.FOCUS_ALL)
-	assert_false(role.has_meta("navigation_focus_pulse"))
 	assert_true(role.focus_for_selection())
 	assert_same(get_viewport().gui_get_focus_owner(), role)
 
