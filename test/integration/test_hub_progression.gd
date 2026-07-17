@@ -731,6 +731,51 @@ func test_viewport_role_select_trigger_hold_stays_inert_after_tree_entry() -> vo
 	await get_tree().process_frame
 
 
+func test_hidden_roles_panel_latches_items_trigger_until_release() -> void:
+	var navigation := preload("res://src/ui/navigation/navigation_ux_layer.tscn").instantiate() as NavigationUXLayer
+	navigation.name = "NavigationUXLayer"
+	add_child_autofree(navigation)
+	await get_tree().process_frame
+	var party := await _opened_party_with_three_heroes()
+	party.change_tab(1)
+	assert_eq(party.current_tab, PartyMenu.Tab.ITEMS)
+	assert_true(party.enter_content())
+	party.progression_catalog = ProgressionCatalog.from_validated_trees([
+		_tree_with_paid("gun", 2, [
+			ProgressionNodeDefinition.progression("gun.atk_1", "gun.anchor", 2, 0, 100, ProgressionEffect.stat("ATK", 1)),
+			ProgressionNodeDefinition.progression("gun.page2", "gun.atk_1", 11, 0, 100, ProgressionEffect.stat("AIM", 1)),
+		]),
+		_single_tree("snp"),
+	])
+	var items_owner := get_viewport().gui_get_focus_owner()
+	var items_hints := _hint_snapshot(navigation)
+	get_viewport().push_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.0))
+	await get_tree().process_frame
+
+	get_viewport().push_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 1.0))
+	await get_tree().process_frame
+	assert_eq(party.current_tab, PartyMenu.Tab.ITEMS)
+	assert_same(get_viewport().gui_get_focus_owner(), items_owner, "hidden latch observation cannot steal Items focus")
+	assert_eq(_hint_snapshot(navigation), items_hints, "hidden latch observation cannot replace Items hints")
+	assert_eq(party.skill_view.current_page, 0)
+	assert_true(party.skill_view._held_page_triggers[JOY_AXIS_TRIGGER_RIGHT], "hidden Roles panel observes the physical hold")
+
+	party.change_tab(-1)
+	assert_eq(party.current_tab, PartyMenu.Tab.ROLES)
+	assert_true(party.skill_view.enter_tree())
+	get_viewport().push_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.9))
+	await get_tree().process_frame
+	assert_eq(party.skill_view.current_page, 0, "hold begun in Items stays inert after switching to Roles")
+	get_viewport().push_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.0))
+	await get_tree().process_frame
+	get_viewport().push_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 1.0))
+	await get_tree().process_frame
+	assert_eq(party.skill_view.current_page, 1, "release and fresh pull page once")
+	party.free()
+	navigation.free()
+	await get_tree().process_frame
+
+
 func test_hub_focus_and_depth_styles_never_change_content_colors() -> void:
 	var party := await _opened_party_with_three_heroes()
 	var hero := party.hero_list_container.get_child(0) as HeroPanel

@@ -382,13 +382,10 @@ func _page_tabs_own_focus() -> bool:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventJoypadMotion and event.axis in _held_page_triggers and event.axis_value <= 0.25:
+	if event is InputEventJoypadMotion and event.axis in _held_page_triggers:
 		_handle_page_trigger_motion(event)
 		return
 	if not is_visible_in_tree():
-		return
-	if event is InputEventJoypadMotion and event.axis in _held_page_triggers:
-		_handle_page_trigger_motion(event)
 		return
 	if navigation_depth == NavigationDepth.ROLE_SELECT and _role_panel_owns_focus() and event.is_action_pressed(&"nav_left"):
 		select_adjacent_role(-1)
