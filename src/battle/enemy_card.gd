@@ -312,6 +312,7 @@ func _update_intent_ui():
 				plan.distribution_count,
 				false,
 			)
+			_append_intent_damage(intended_damage_by_type, result)
 		var hits_text = "x" + str(resolved_hit_count) if resolved_hit_count > 1 else ""
 		var resolved_damage_types := intended_damage_by_type.keys()
 		resolved_damage_types.sort()

@@ -448,13 +448,6 @@ func _resolve_damage_type_decision(
 	)
 
 
-func _resolve_preview_damage_type(
-	attacker: ActorCard,
-	target: ActorCard,
-) -> Action.DamageType:
-	return _resolve_damage_type_decision(attacker, target, {}).resolved_damage_type
-
-
 func _find_forced_damage_condition(
 	attacker: ActorCard,
 	target: ActorCard,

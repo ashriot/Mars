@@ -397,6 +397,20 @@ func test_enemy_intent_keeps_heterogeneous_resolved_types_separate() -> void:
 	_free_intent_enemy(enemy, [kinetic, piercing])
 
 
+func test_enemy_intent_without_valid_target_uses_neutral_preview_segment() -> void:
+	var enemy := _intent_enemy(100)
+	enemy.intended_action = _intent_action()
+	enemy.intended_targets = []
+
+	enemy._update_intent_ui()
+
+	assert_string_contains(enemy.intent_text.text, "100")
+	assert_string_contains(
+		enemy.intent_text.text, Action._get_bbcode_icon("kinetic", 28),
+	)
+	_free_intent_enemy(enemy, [])
+
+
 func _intent_enemy(attack: int) -> IntentEnemy:
 	var enemy := IntentEnemy.new()
 	enemy.current_stats = _stats(attack, 0, 0, 0, 0)
