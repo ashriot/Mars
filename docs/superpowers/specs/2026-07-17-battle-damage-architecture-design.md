@@ -189,6 +189,8 @@ Damage application and trigger payloads use the resolved damage type, including 
 
 Damage-related event context includes the `DamageResult`, attempted damage, actual damage dealt, attacker, target, source effect, source action when present, resolved damage type, critical state, and Breach state used by the calculation. Existing trigger ordering must be made explicit and protected by orchestration tests, including lethal-hit behavior, before implementation changes that reorder reactions.
 
+For compatibility with `Action.TargetType.PARENT`, every singular damage event also carries `targets: [target]`. The singular `target` remains the authoritative hit subject, while the array preserves the established parent-target routing contract for triggered effects. Nested damage retains the originating action identity and its own effect identity through this route.
+
 Guard mutation, damage calculation, HP mutation, lifedrain, and reaction dispatch remain separate steps. The calculator performs none of them.
 
 ## Presentation and Authoring
@@ -196,6 +198,18 @@ Guard mutation, damage calculation, HP mutation, lifedrain, and reaction dispatc
 Runtime execution, selected-target previews, enemy intent, and numeric action-description fragments consume the same contextual resolver and calculator. They may request different presentation modes, but they cannot maintain independent formulas.
 
 When an exact target is available, a preview can show the target-specific noncritical and critical result breakdown without rolling RNG. When required battlefield context is unavailable, presentation shows the authored relationship, such as “20% power plus 20% per remaining Focus,” instead of fabricating an exact number.
+
+### Sequential Preview State
+
+Multihit presentation uses a presentation-only sequence value rather than treating one synthetic hit as representative of every hit. It owns an ordered list of ordinary single-hit `DamageResult` values plus fixed-plan metadata and a completeness flag; it does not change `DamageResult` or the pure calculator contract.
+
+For complete context, preview builds the same fixed hit plan as runtime and copies only mutable target state needed by later hits: HP, Guard, Breach, defeat state, and the active-condition list. It then advances Guard/Breach, one-use damage conversion, HP, and current-hit context on those copies after each synthetic hit. It never calls application events, consumes live conditions, or mutates live actors. Effect-start facts and the split divisor remain fixed for the sequence, while current-hit facts come from the copied state for that hit.
+
+Exact/group presentation receives an explicit target collection and, when available, the battle manager that owns living-combatant counts. A missing target collection or other required battlefield input marks the preview incomplete. Incomplete presentation renders authored potency × ATK/PSY and authored contextual-scaling relationships without a fabricated final total.
+
+Identical ordered results with one resolved type may use compact `xN` notation. Ordered hits whose amount or resolved type changes render ordered segments when order is meaningful. Unordered/group results of one type render a min–max per-target range. Different resolved types stay separate; presentation never averages heterogeneous results. Enemy intent consumes the same sequence output and rendering policy.
+
+Breakdown data retains authored base potency separately from resolved potency. Condition, trait, and scaling-rule modifiers enter the request as source-labeled typed contributions; the category totals used by the calculator are derived from those contributions so explanation and arithmetic cannot drift.
 
 ### Generic Effect Presentation Boundary
 
