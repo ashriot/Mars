@@ -41,9 +41,9 @@ These are interactive visual checks. Record the date, OS, controller and connect
 
 ## Focus and pointer ownership
 
-- [ ] Ordinary controller navigation hides the hardware arrow and shows no snapped cursor on focused buttons.
-- [ ] Focused buttons and button-like controls use the clear 70% neutral fill with readable dark foregrounds across title orange, hub blue, terminal, and result palettes.
-- [ ] Focus clears without scaling or tweening, and every authored style and foreground color is restored exactly.
+- [ ] Outside hub party management and security scanning, ordinary controller navigation hides the hardware arrow and shows no software cursor on focused controls; the hub and scan use their dedicated controller cursor policies below.
+- [ ] Focused buttons and button-like controls outside the hub retain their documented focus treatment across title orange, terminal, and result palettes.
+- [ ] Outside the hub, focus clears without scaling or tweening, and every authored style and foreground color is restored exactly.
 - [ ] Mouse motion in controller mode changes neither ownership nor visible focus; the first click reveals the independent pointer and activates nothing, while the matching release is also consumed and the second click activates exactly once.
 - [ ] Mouse motion in keyboard-and-mouse mode hides visible focus but retains its logical origin; mouse hover is temporary visual ownership and does not replace that origin. The first arrow/WASD press restores the retained focus without moving and the second moves.
 - [ ] Any keyboard input after controller presentation reveals the hardware pointer and performs its action; keyboard direction moves immediately.
@@ -105,15 +105,20 @@ Run this sequence once over USB and once over Bluetooth. Fill in both rows befor
 
 ## Title and hub
 
-- [ ] Title: initial focus is visible and enabled; confirm starts/continues only the focused choice; disabled Load is skipped.
+- [ ] Title: initial focus is visible and enabled; confirm starts/continues only the focused choice; disabled Load is skipped; the hub-only software cursor is not shown.
 - [ ] Hub outer depth: navigate every enabled action, confirm opens the selected panel, and cancel/return behavior is stable.
-- [ ] Party menu opens on the selected expanded hero; Up/Down immediately selects, expands, and pulses exactly one hero.
-- [ ] Right or Confirm enters content; Left or Back returns directly to the selected hero; Back again closes party management.
-- [ ] L2/R2 wrap Roles, Items, Options, and Journal from hero and content depth; top controller-family glyphs match and fade without layout shift after keyboard input, mouse click, or touch.
+- [ ] Inside party management with controller ownership, exactly one software cursor points from outside the focused target's lower-right corner, stays fully inside the viewport without covering readable content, and completes each directional movement in 70 ms without delaying logical focus.
+- [ ] Rapidly change focus while the cursor is moving and while panels expand, scroll, or reflow; the newest target replaces the in-flight movement and the cursor continues following the current target without duplicates or stale positions.
+- [ ] Focus every authored hub button and verify it uses its static authored hover appearance; hero panels, role panels, text, icons, stats, gauges, costs, and inactive edges retain authored colors and brightness with no pulse, flash, or focus-driven darkening.
+- [ ] Click the physical mouse from controller-owned hub navigation; the hub cursor hides immediately, the independent hardware pointer appears at its actual position without a warp or accidental activation, and returning to controller input restores the hub cursor at the current logical focus.
+- [ ] Party management opens on the selected expanded hero; Up/Down immediately selects and expands exactly one hero, Right or Confirm enters the selected tab, and Back from hero depth closes party management.
+- [ ] L1/R1 wrap Roles, Items, Options, and Journal from hero and content depth; top controller-family glyphs match and hide without layout shift after keyboard input, mouse click, or touch.
 - [ ] Options and Journal show `COMING SOON`, keep focus on the selected hero, and never leave focus null.
-- [ ] In Roles, L1/R1 wrap unlocked roles; D-pad reaches every authored rank-page button and stable node focus restores per hero, role, and page.
+- [ ] In Roles, controller entry begins at role selection; Left/Right select adjacent unlocked roles without wrapping, Confirm or Down enters the selected role's tree, L2/R2 wrap only its supported rank pages, and stable node focus restores per hero, role, and page.
+- [ ] Back unwinds Roles one depth at a time from Tree → Role → Hero, without skipping a depth or closing party management early.
+- [ ] Every collapsed role shows only its uppercase abbreviated role ID, every expanded role shows only its uppercase full role name, and no expansion frame displays both labels or an overlap.
+- [ ] Every hero card shows readable exact HP plus compact hero-wide XP; after a successful progression purchase, the compact hero XP and the expanded role header's exact comma-formatted `AVAILABLE XP` both refresh to the remaining balance while collapsed roles show no XP readout.
 - [ ] In Items, Back cancels Equip/Tune/Mod before returning to the hero rail; equipment and inventory focus restore to a valid stable context.
-- [ ] Exact controller focus uses one neutral background pulse. Hero/content depth darkens only inactive white/neon edges; text, icons, stats, costs, gauges, and backgrounds remain fully readable.
 - [ ] Mouse/touch directly select heroes, tabs, roles, pages, equipment, and items, and the next controller input resumes from synchronized focus state.
 - [ ] Open nested hub/terminal-style modals; directional input and confirm stay in the top modal, cancel closes only the top layer, and the prior focus/hints restore.
 
