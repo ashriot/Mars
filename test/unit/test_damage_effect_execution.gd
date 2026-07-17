@@ -89,6 +89,8 @@ class RecordingDamageEffect extends Effect_Damage:
 	var defeat_first_target_after_hit := false
 	var first_target: ActorCard
 	var clear_attacker_guard_after_first_hit := false
+	var battle_manager_to_end_after_hit: BattleManager
+	var defeat_attacker_after_hit := false
 
 	func _roll_percent(chance: int) -> bool:
 		rolled_chances.append(chance)
@@ -128,6 +130,10 @@ class RecordingDamageEffect extends Effect_Damage:
 			target.is_defeated = true
 		if clear_attacker_guard_after_first_hit and results.size() == 1:
 			attacker.current_guard = 0
+		if battle_manager_to_end_after_hit != null:
+			battle_manager_to_end_after_hit.current_state = BattleManager.State.BATTLE_OVER
+		if defeat_attacker_after_hit:
+			attacker.is_defeated = true
 
 
 func test_energy_causes_breach_before_damage_and_same_hit_gets_ovr() -> void:
@@ -244,6 +250,20 @@ func test_random_split_keeps_initial_divisor_after_target_defeat() -> void:
 
 
 func test_early_lethal_nonrandom_hit_waits_before_after_attacked_event() -> void:
+	assert_eq(await _early_lethal_nonrandom_event_log(), ["wait", "after"])
+
+
+func test_early_lethal_nonrandom_hit_stops_after_wait_when_battle_ends() -> void:
+	assert_eq(await _early_lethal_nonrandom_event_log(&"battle_over"), ["wait"])
+
+
+func test_early_lethal_nonrandom_hit_stops_after_wait_when_attacker_is_defeated() -> void:
+	assert_eq(await _early_lethal_nonrandom_event_log(&"attacker_defeated"), ["wait"])
+
+
+func _early_lethal_nonrandom_event_log(
+	terminal_state_after_hit: StringName = &"",
+) -> Array[String]:
 	var attacker := _recording_actor(100, 0, 0)
 	var target := _recording_actor(0, 0, 0)
 	var event_log: Array[String] = []
@@ -256,12 +276,16 @@ func test_early_lethal_nonrandom_hit_waits_before_after_attacked_event() -> void
 	effect.hit_count = 2
 	effect.first_target = target
 	effect.defeat_first_target_after_hit = true
+	if terminal_state_after_hit == &"battle_over":
+		effect.battle_manager_to_end_after_hit = manager
+	elif terminal_state_after_hit == &"attacker_defeated":
+		effect.defeat_attacker_after_hit = true
 
 	await effect.execute(attacker, [target], manager)
 
 	assert_eq(effect.results.size(), 1)
-	assert_eq(event_log, ["wait", "after"])
 	_free_recorded_nodes(manager, [attacker, target])
+	return event_log
 
 
 func test_execute_action_pays_scaled_focus_once_and_passes_cost_context() -> void:

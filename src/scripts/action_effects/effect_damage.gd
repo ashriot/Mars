@@ -52,6 +52,10 @@ func execute(
 
 		if _should_wait_between_hits(plan, hit_index, target):
 			await battle_manager.wait(0.15)
+			if battle_manager.current_state == BattleManager.State.BATTLE_OVER:
+				return
+			if attacker.is_defeated:
+				return
 
 		if plan.target_mode != DamageHitPlan.TargetMode.RANDOM \
 			and not after_attack_fired.has(target) \
