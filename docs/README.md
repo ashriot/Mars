@@ -19,6 +19,7 @@ Use this page as the index for project knowledge that is more detailed or more l
 - [CTB recovery and deterministic timing](superpowers/specs/2026-07-15-ctb-recovery-and-horizontal-queue-design.md) — Authoritative deterministic and normalized CT and action-recovery design.
 - [CTB scrollable rail animation](superpowers/specs/2026-07-15-ctb-scrollable-rail-animation-design.md) — Superseding current rail presentation and animation design.
 - [Combat target presentation](superpowers/specs/2026-07-14-combat-target-presentation-design.md) — Current hero/enemy target availability, selection, CTB preview, and input behavior.
+- [Battle damage architecture](superpowers/specs/2026-07-17-battle-damage-architecture-design.md) — Authoritative damage math, contextual scaling, extension boundaries, presentation, and verification design.
 - [Controller-driven scan cursor](superpowers/specs/2026-07-14-controller-driven-scan-cursor-design.md) — Historical initial controller scan-pointer and edge-scroll design.
 - [Terminal-to-scan correction](superpowers/specs/2026-07-14-terminal-scan-transition-correction-design.md) — Current terminal shortcut, modal transition, world-aim cursor, and scan-camera behavior.
 - [Design records](superpowers/specs/) — Approved feature designs and decisions captured before implementation.
