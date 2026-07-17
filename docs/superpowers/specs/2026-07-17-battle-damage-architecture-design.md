@@ -29,7 +29,9 @@ Resource-based values used by one damage effect are resolved after action cost p
 
 ### Guard and Breach
 
-Guard shredding and damage type are independent authored properties. Converting a hit to Piercing never implicitly enables or disables Guard shredding.
+Guard interaction is an intrinsic consequence of the hit's resolved damage type. Kinetic and Energy hits always shred Guard and advance the existing Vulnerable-to-Breached sequence. Piercing hits never shred Guard or cause Breach. This applies regardless of whether Piercing was authored on the effect or produced by a pre-hit conversion.
+
+Damage-type conversion resolves before Guard interaction. Converting a Kinetic or Energy hit to Piercing therefore suppresses that hit's Guard damage. The separate authored `shreds_guard` Boolean is removed because it permits contradictory combinations and obscures the core damage-type contract.
 
 The hit sequence processes Guard before damage. Reducing the target's final Guard point makes the target Vulnerable according to the existing two-step Guard/Breach model. A later shredding hit against a Vulnerable target causes Breach, and that same breach-causing hit receives the OVR bonus.
 
@@ -54,7 +56,7 @@ AIM is the critical-hit percentage. The final chance, including contextual bonus
 
 ### Defense and Damage Type
 
-KIN and NRG Defense are literal percentage reductions. Each is clamped to 0 through 90 at the calculation boundary for every actor, even if an upstream stat-generation path produces invalid data. Piercing ignores Defense.
+KIN and NRG Defense are literal percentage reductions. Each is clamped to 0 through 90 at the calculation boundary for every actor, even if an upstream stat-generation path produces invalid data. Piercing ignores Defense in exchange for never shredding Guard or causing Breach.
 
 ```text
 kinetic multiplier = 1 - clamp(KIN Defense, 0, 90) / 100
@@ -211,7 +213,7 @@ Implementation planning must account for every confirmed defect found during the
 - Reverberate describes PSY-powered damage but its action damage defaults to ATK.
 - Shrapnel's described potency/type does not match its primary authored damage effect.
 - Several Sands actions expose unresolved `{dmg1}` placeholders.
-- Forced damage-type conversion currently bypasses Guard shredding because the branches are incorrectly coupled.
+- The separate `shreds_guard` Boolean allows damage resources to contradict the intrinsic type rule and must be removed; Kinetic/Energy resources such as Psionic Pulse and Static Charge currently opt out, while some Piercing resources can inherit the shredding default.
 - Damage-received events currently inspect the effect's authored type instead of the resolved type.
 - Rapid Fire divides by the current number of living targets while its intent preview hardcodes a divisor of three.
 - Enemy intent, action descriptions, and runtime execution independently calculate incomplete versions of damage.
@@ -260,7 +262,8 @@ Focused integration tests protect:
 - Focus payment before remaining-Focus scaling;
 - AIM clamping and deterministic critical-roll boundaries;
 - the Vulnerable-to-Breached hit receiving OVR;
-- damage-type conversion remaining independent from Guard shredding;
+- intrinsic Kinetic and Energy hits always shredding Guard;
+- intrinsic and converted Piercing hits never shredding Guard or causing Breach;
 - resolved damage-type event dispatch;
 - stable split budgets across target death and repeated random selection;
 - actual-damage lifedrain excluding overkill;
