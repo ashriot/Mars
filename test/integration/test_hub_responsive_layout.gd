@@ -128,6 +128,15 @@ func test_compact_role_headers_fit_widest_abbreviation_and_six_digit_exact_xp() 
 	assert_true(_contains_control(panel, panel.xp_display), "%s must remain inside %s" % [panel.xp_display.get_global_rect(), panel.get_global_rect()])
 
 
+func test_rank_page_glyphs_fit_beside_explicit_page_buttons() -> void:
+	var menu := await _compact_party_menu()
+	var panel := menu.skill_view
+	assert_eq(panel.page_buttons.size(), 5)
+	assert_eq(panel.tabs_container.get_child(0), panel.previous_page_glyph)
+	assert_eq(panel.tabs_container.get_child(panel.tabs_container.get_child_count() - 1), panel.next_page_glyph)
+	assert_true(ResponsiveFixture.fits_output(panel.tabs_container, DECK_SIZE))
+
+
 func test_desktop_profile_restores_authored_hub_control_sizes() -> void:
 	var menu := await _compact_party_menu()
 	menu.apply_display_profile(DisplayProfileService.Profile.DESKTOP, Vector2i(1920, 1080), Vector2(1920, 1080))

@@ -195,13 +195,16 @@ func test_party_opens_on_expanded_hero_and_up_down_select_immediately() -> void:
 	assert_false((party.hero_list_container.get_child(0) as HeroPanel)._is_expanded)
 
 
-func test_roles_use_bumpers_and_rank_pages_are_spatial() -> void:
+func test_roles_are_spatial_and_rank_pages_use_triggers() -> void:
 	var panel := await _skill_panel_with_multi_page_role()
 	var role_before := panel.current_role_idx
-	panel._unhandled_input(_action_event(&"hub_role_next"))
+	panel._on_role_panel_selected(panel.role_list_container.get_child(1))
 	assert_eq(panel.current_role_idx, posmod(role_before + 1, panel.role_list_container.get_child_count()))
+	panel._on_role_panel_selected(panel.role_list_container.get_child(0))
 	panel.focus_node(panel._nearest_node_id(panel._current_role_panel()))
-	assert_true(panel.move_focus(Vector2.DOWN) or panel.focus_current_page_tab())
+	panel._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 1.0))
+	assert_eq(panel.current_page, 1)
+	assert_true(panel.focus_current_page_tab())
 	assert_true(panel.tabs_container.is_ancestor_of(get_viewport().gui_get_focus_owner()) or get_viewport().gui_get_focus_owner() in panel.tabs_container.get_children())
 	assert_true(panel.focus_node_from_page_tabs())
 	assert_true(panel._node_owns_focus())
@@ -209,35 +212,24 @@ func test_roles_use_bumpers_and_rank_pages_are_spatial() -> void:
 	await get_tree().process_frame
 
 
-func test_role_bumpers_only_route_from_top_modal_roles_content() -> void:
-	var navigation := preload("res://src/ui/navigation/navigation_ux_layer.tscn").instantiate() as NavigationUXLayer
-	navigation.name = "NavigationUXLayer"
-	add_child_autofree(navigation)
-	var party := await _opened_party_with_three_heroes()
-	var panel := party.skill_view
-	var initial_role := panel.current_role_idx
-
-	await _push_action_event(&"hub_role_next")
-	assert_eq(panel.current_role_idx, initial_role, "hero rail does not own role shoulders")
-
-	assert_true(party.enter_content())
-	await _push_action_event(&"hub_role_next")
-	assert_eq(panel.current_role_idx, posmod(initial_role + 1, panel.role_list_container.get_child_count()), "Roles content owns role shoulders")
-	var roles_content_role := panel.current_role_idx
-
-	party.change_tab(1)
-	assert_eq(party.current_tab, PartyMenu.Tab.ITEMS)
-	await _push_action_event(&"hub_role_next")
-	assert_eq(panel.current_role_idx, roles_content_role, "Items does not leak role shoulders")
-
-	party.change_tab(-1)
-	var nested := Control.new()
-	add_child_autofree(nested)
-	navigation.push_modal(nested, null, true, true)
-	assert_true(navigation.is_top_modal(nested))
-	await _push_action_event(&"hub_role_next")
-	assert_eq(panel.current_role_idx, roles_content_role, "nested modal blocks underlying role shoulders")
-	navigation.pop_modal(nested)
+func test_page_triggers_require_roles_owner_and_tree_or_page_focus() -> void:
+	var panel := await _skill_panel_with_multi_page_role()
+	var ownership := {"owns_roles": false}
+	panel.set_role_navigation_owner(func() -> bool: return ownership.owns_roles)
+	panel.focus_node(panel._nearest_node_id(panel._current_role_panel()))
+	panel._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 1.0))
+	assert_eq(panel.current_page, 0, "non-owner does not route page triggers")
+	ownership.owns_roles = true
+	panel._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 1.0))
+	assert_eq(panel.current_page, 1, "Roles tree focus owns page triggers")
+	panel._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.0))
+	var outsider := Button.new()
+	add_child_autofree(outsider)
+	outsider.grab_focus()
+	panel._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 1.0))
+	assert_eq(panel.current_page, 1, "focus outside tree and page strip does not route triggers")
+	panel.free()
+	await get_tree().process_frame
 
 
 func test_roles_same_frame_rebuild_restores_focus_to_current_subtree() -> void:
@@ -307,33 +299,38 @@ func test_party_content_entry_back_and_stub_tabs_keep_focus_valid() -> void:
 	assert_eq(party.current_tab, PartyMenu.Tab.ROLES)
 
 
-func test_analog_tab_trigger_requires_release_before_another_tab_move() -> void:
-	var party := await _opened_party_with_three_heroes()
+func test_analog_page_trigger_requires_release_before_another_page_move() -> void:
+	var panel := await _skill_panel_with_multi_page_role()
+	panel.focus_node(panel._nearest_node_id(panel._current_role_panel()))
 	var press := _joy_motion(JOY_AXIS_TRIGGER_RIGHT, 1.0)
-	party._unhandled_input(press)
-	assert_eq(party.current_tab, PartyMenu.Tab.ITEMS)
-	party._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.92))
-	party._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.81))
-	assert_eq(party.current_tab, PartyMenu.Tab.ITEMS, "held trigger changes exactly one tab")
-	party._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.0))
-	party._unhandled_input(press)
-	assert_eq(party.current_tab, PartyMenu.Tab.OPTIONS, "release rearms the trigger")
+	panel._unhandled_input(press)
+	assert_eq(panel.current_page, 1)
+	panel._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.92))
+	panel._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.81))
+	assert_eq(panel.current_page, 1, "held trigger changes exactly one page")
+	panel._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.0))
+	panel._unhandled_input(press)
+	assert_eq(panel.current_page, 0, "release rearms the trigger")
 
 
-func test_analog_tab_trigger_rearms_when_released_under_nested_modal() -> void:
+func test_analog_page_trigger_rearms_when_released_under_nested_modal() -> void:
 	var navigation := preload("res://src/ui/navigation/navigation_ux_layer.tscn").instantiate() as NavigationUXLayer
+	navigation.name = "NavigationUXLayer"
 	add_child_autofree(navigation)
 	await get_tree().process_frame
-	var party := await _opened_party_with_three_heroes()
-	party._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 1.0))
-	assert_eq(party.current_tab, PartyMenu.Tab.ITEMS)
+	var panel := await _skill_panel_with_multi_page_role()
+	panel.focus_node(panel._nearest_node_id(panel._current_role_panel()))
+	navigation.push_modal(panel, panel.get_focused_node())
+	panel.set_role_navigation_owner(func() -> bool: return navigation.is_top_modal(panel))
+	panel._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 1.0))
+	assert_eq(panel.current_page, 1)
 	var nested := Control.new()
 	add_child_autofree(nested)
 	navigation.push_modal(nested, null, true, true)
-	party._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.0))
+	panel._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.0))
 	navigation.pop_modal(nested)
-	party._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 1.0))
-	assert_eq(party.current_tab, PartyMenu.Tab.OPTIONS, "release under a nested modal rearms the next pull")
+	panel._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 1.0))
+	assert_eq(panel.current_page, 0, "release under a nested modal rearms the next pull")
 
 
 func test_hub_focus_and_depth_styles_never_change_content_colors() -> void:
@@ -1210,20 +1207,15 @@ func test_disabled_mod_slot_cannot_focus_or_activate() -> void:
 	slot.free()
 
 
-func test_role_bumpers_change_roles_at_every_focus_depth() -> void:
-	var hero := _hero()
-	hero.unlocked_role_ids.assign(["gun", "snp"])
-	hero.role_definitions.assign([_role("gun"), _role("snp")])
-	var panel := preload("res://src/hub/skill_tree_panel.tscn").instantiate() as SkillTreePanel
-	panel.progression_catalog = ProgressionCatalog.from_validated_trees([_tree(), _single_tree("snp")])
-	add_child(panel)
-	panel.setup(hero)
-	panel.focus_node("gun.root")
-	panel._unhandled_input(_action_event(&"hub_role_next"))
-	assert_eq(panel.current_role_idx, 1)
-	panel.get_focused_node().release_focus()
-	panel._unhandled_input(_action_event(&"hub_role_previous"))
-	assert_eq(panel.current_role_idx, 0, "role shoulders remain active at every focus depth")
+func test_page_triggers_work_from_tree_nodes_and_page_strip() -> void:
+	var panel := await _skill_panel_with_multi_page_role()
+	panel.focus_node(panel._nearest_node_id(panel._current_role_panel()))
+	panel._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 1.0))
+	assert_eq(panel.current_page, 1)
+	panel._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.0))
+	assert_true(panel.focus_current_page_tab())
+	panel._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_LEFT, 1.0))
+	assert_eq(panel.current_page, 0, "page strip retains page-trigger ownership")
 	panel.free()
 	await get_tree().process_frame
 
@@ -1277,7 +1269,7 @@ func test_keyboard_and_controller_skill_navigation_share_retained_focus() -> voi
 	await get_tree().process_frame
 
 
-func test_single_role_advertises_disabled_role_bumper_hint() -> void:
+func test_single_role_does_not_advertise_removed_role_bumper_hint() -> void:
 	var hero := _hero()
 	hero.role_definitions.assign([_legacy_role()])
 	var navigation := preload("res://src/ui/navigation/navigation_ux_layer.tscn").instantiate() as NavigationUXLayer
@@ -1294,9 +1286,7 @@ func test_single_role_advertises_disabled_role_bumper_hint() -> void:
 		var hint := navigation.hint_bar.get_hint(index)
 		if hint.action == &"hub_role_previous":
 			role_hint = hint
-	assert_not_null(role_hint)
-	if role_hint:
-		assert_false(role_hint.enabled)
+	assert_null(role_hint)
 	panel.free()
 	navigation.free()
 	await get_tree().process_frame
@@ -1315,8 +1305,12 @@ func test_rank_page_buttons_switch_across_supported_pages_and_focus_nearest_node
 	add_child(panel)
 	panel.setup(hero)
 	panel.focus_node("gun.root")
-	assert_true(panel.tabs_container.get_child(2).visible)
-	assert_false(panel.tabs_container.get_child(1).visible)
+	assert_true(panel.page_buttons[2].visible)
+	assert_false(panel.page_buttons[1].visible)
+	assert_eq(panel.tabs_container.get_child(0), panel.previous_page_glyph)
+	assert_eq(panel.tabs_container.get_child(panel.tabs_container.get_child_count() - 1), panel.next_page_glyph)
+	assert_true(panel.previous_page_glyph.visible)
+	assert_true(panel.next_page_glyph.visible)
 	panel._on_tab_pressed(2)
 	assert_eq(panel.current_page, 2)
 	assert_eq(panel.focused_node_id, "gun.page3.near")

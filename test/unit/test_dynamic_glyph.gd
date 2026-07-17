@@ -102,11 +102,11 @@ func test_controller_only_glyph_keeps_controller_texture_and_layout_in_keyboard_
 	glyph.set_action(&"hub_tab_previous")
 	glyph.refresh(true, InputIconMap.ControllerType.PLAYSTATION)
 	assert_true(glyph.visible)
-	assert_eq(glyph.texture_normal.resource_path.get_file(), "playstation_trigger_l2.svg")
+	assert_eq(glyph.texture_normal.resource_path.get_file(), "playstation_trigger_l1.svg")
 	assert_eq(glyph.modulate.a, 1.0)
 	glyph.refresh(false, InputIconMap.ControllerType.PLAYSTATION)
 	assert_true(glyph.visible, "retains layout space")
-	assert_eq(glyph.texture_normal.resource_path.get_file(), "playstation_trigger_l2.svg")
+	assert_eq(glyph.texture_normal.resource_path.get_file(), "playstation_trigger_l1.svg")
 	assert_eq(glyph.modulate.a, 0.0)
 
 
@@ -114,8 +114,12 @@ func test_controller_only_glyph_resolves_every_runtime_family() -> void:
 	for family: InputIconMap.ControllerType in InputIconMap.runtime_controller_types():
 		if family == InputIconMap.ControllerType.KEYBOARD_MOUSE:
 			continue
-		for action: StringName in [&"hub_tab_previous", &"hub_tab_next", &"hub_role_previous", &"hub_role_next", &"hub_upgrade"]:
+		for action: StringName in [&"hub_tab_previous", &"hub_tab_next", &"hub_page_previous", &"hub_page_next", &"hub_upgrade"]:
 			assert_not_null(InputIconMap.get_glyph(family, action), "%s %s" % [family, action])
+	assert_eq(InputIconMap.get_glyph(InputIconMap.ControllerType.PLAYSTATION, &"hub_tab_previous").resource_path.get_file(), "playstation_trigger_l1.svg")
+	assert_eq(InputIconMap.get_glyph(InputIconMap.ControllerType.PLAYSTATION, &"hub_tab_next").resource_path.get_file(), "playstation_trigger_r1.svg")
+	assert_eq(InputIconMap.get_glyph(InputIconMap.ControllerType.PLAYSTATION, &"hub_page_previous").resource_path.get_file(), "playstation_trigger_l2.svg")
+	assert_eq(InputIconMap.get_glyph(InputIconMap.ControllerType.PLAYSTATION, &"hub_page_next").resource_path.get_file(), "playstation_trigger_r2.svg")
 
 
 func test_clearing_texture_kills_and_releases_active_fade_tween() -> void:

@@ -26,10 +26,6 @@ var current_tab: Tab = Tab.ROLES
 var current_depth: Depth = Depth.HERO_RAIL
 var _content_focus_memory: Dictionary = {}
 var _items_navigation_origin: Dictionary = {}
-var _held_tab_triggers := {
-	JOY_AXIS_TRIGGER_LEFT: false,
-	JOY_AXIS_TRIGGER_RIGHT: false,
-}
 var progression_service: ProgressionService = ProgressionSystem.service
 var progression_catalog: ProgressionCatalog = ProgressionSystem.catalog
 var save_progression: Callable = SaveSystem.save_current_slot
@@ -83,7 +79,6 @@ func open():
 	if party_roster.is_empty(): return
 
 	current_depth = Depth.HERO_RAIL
-	_reset_tab_triggers()
 	_refresh_hero_list()
 	_select_hero(0)
 	show()
@@ -102,13 +97,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
 	var navigation := _navigation_ux_layer()
-	if event is InputEventJoypadMotion and event.axis in _held_tab_triggers and event.axis_value <= 0.25:
-		_held_tab_triggers[event.axis] = false
-		return
 	if navigation and not navigation.is_top_modal(self):
-		return
-	if event is InputEventJoypadMotion and event.axis in _held_tab_triggers:
-		_handle_tab_trigger_motion(event)
 		return
 	if event.is_action_pressed(&"hub_tab_previous"):
 		get_viewport().set_input_as_handled()
@@ -547,24 +536,7 @@ func _close() -> void:
 		return
 	if navigation:
 		navigation.pop_modal(self)
-	_reset_tab_triggers()
 	hide()
-
-
-func _handle_tab_trigger_motion(event: InputEventJoypadMotion) -> void:
-	if event.axis_value <= 0.25:
-		_held_tab_triggers[event.axis] = false
-		return
-	if event.axis_value < 0.75 or bool(_held_tab_triggers[event.axis]):
-		return
-	_held_tab_triggers[event.axis] = true
-	get_viewport().set_input_as_handled()
-	change_tab(-1 if event.axis == JOY_AXIS_TRIGGER_LEFT else 1)
-
-
-func _reset_tab_triggers() -> void:
-	_held_tab_triggers[JOY_AXIS_TRIGGER_LEFT] = false
-	_held_tab_triggers[JOY_AXIS_TRIGGER_RIGHT] = false
 
 
 func _activate_items_upgrade_hotkey() -> bool:

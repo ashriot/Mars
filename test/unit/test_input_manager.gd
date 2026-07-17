@@ -296,7 +296,7 @@ func test_nintendo_rebinds_terminal_security_to_a_and_keeps_b_as_cancel() -> voi
 func test_required_semantic_actions_exist() -> void:
 	for action in [
 		&"nav_up", &"nav_down", &"nav_left", &"nav_right", &"confirm", &"cancel",
-		&"hub_tab_previous", &"hub_tab_next", &"hub_role_previous", &"hub_role_next", &"hub_upgrade",
+		&"hub_tab_previous", &"hub_tab_next", &"hub_page_previous", &"hub_page_next", &"hub_upgrade",
 		&"action_1", &"action_2", &"action_3", &"action_4", &"shift_left", &"shift_right",
 		&"terminal_security", &"terminal_scan", &"terminal_medical", &"terminal_finance", &"terminal_extract",
 		&"camera_pan_left", &"camera_pan_right", &"camera_pan_up", &"camera_pan_down",
@@ -307,10 +307,10 @@ func test_required_semantic_actions_exist() -> void:
 
 func test_hub_shoulder_actions_are_controller_only() -> void:
 	var expected := {
-		&"hub_tab_previous": [JOY_AXIS_TRIGGER_LEFT, -1],
-		&"hub_tab_next": [JOY_AXIS_TRIGGER_RIGHT, -1],
-		&"hub_role_previous": [-1, JOY_BUTTON_LEFT_SHOULDER],
-		&"hub_role_next": [-1, JOY_BUTTON_RIGHT_SHOULDER],
+		&"hub_tab_previous": [-1, JOY_BUTTON_LEFT_SHOULDER],
+		&"hub_tab_next": [-1, JOY_BUTTON_RIGHT_SHOULDER],
+		&"hub_page_previous": [JOY_AXIS_TRIGGER_LEFT, -1],
+		&"hub_page_next": [JOY_AXIS_TRIGGER_RIGHT, -1],
 		&"hub_upgrade": [-1, JOY_BUTTON_Y],
 	}
 	for action: StringName in expected:
@@ -320,6 +320,8 @@ func test_hub_shoulder_actions_are_controller_only() -> void:
 			assert_true(_has_joy_axis(action, expected[action][0], 1.0), str(action))
 		else:
 			assert_true(_has_joy_button(action, expected[action][1]), str(action))
+	assert_false(InputMap.has_action(&"hub_role_previous"))
+	assert_false(InputMap.has_action(&"hub_role_next"))
 	assert_false(InputMap.has_action(&"page_previous"))
 	assert_false(InputMap.has_action(&"page_next"))
 	assert_false(InputMap.has_action(&"section_previous"))

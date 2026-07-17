@@ -9,6 +9,15 @@ signal progression_refreshed(hero: HeroData)
 @onready var role_scroll: ScrollContainer = $RoleScroll
 @onready var role_list_container: HBoxContainer = $RoleScroll/RoleList
 @onready var tabs_container: HBoxContainer = $Tabs/Container
+@onready var previous_page_glyph: DynamicGlyph = $Tabs/Container/PreviousPageGlyph
+@onready var next_page_glyph: DynamicGlyph = $Tabs/Container/NextPageGlyph
+@onready var page_buttons: Array[Button] = [
+	$Tabs/Container/Tier1,
+	$Tabs/Container/Tier2,
+	$Tabs/Container/Tier3,
+	$Tabs/Container/Tier4,
+	$Tabs/Container/Tier5,
+]
 
 # --- STATE ---
 var party_roster: Array[HeroData] = []
@@ -23,13 +32,19 @@ var _focus_memory: Dictionary = {}
 var _hero_context_memory: Dictionary = {}
 var _display_profile: int = DisplayProfileService.Profile.DESKTOP
 var _role_navigation_owner: Callable
+var _held_page_triggers := {
+	JOY_AXIS_TRIGGER_LEFT: false,
+	JOY_AXIS_TRIGGER_RIGHT: false,
+}
 
 
 func _ready() -> void:
 	DisplayProfile.bind(apply_display_profile)
-	for index in range(tabs_container.get_child_count()):
-		var button := tabs_container.get_child(index) as Button
+	for index in range(page_buttons.size()):
+		var button := page_buttons[index]
 		button.pressed.connect(_on_tab_pressed.bind(index))
+	InputManager.input_mode_changed.connect(_on_page_glyph_input_state_changed)
+	InputManager.controller_type_changed.connect(_on_page_glyph_input_state_changed)
 
 
 func apply_display_profile(profile: int, _window_size: Vector2i, _logical_size: Vector2) -> void:
@@ -143,7 +158,7 @@ func update_tabs(color: Color, animate: bool = true):
 	tab_tween.tween_property(tabs_container, "modulate", color, 0.3)
 
 func _on_tab_pressed(page_index: int):
-	var button := tabs_container.get_child(page_index) as Button
+	var button := page_buttons[page_index] if page_index >= 0 and page_index < page_buttons.size() else null
 	if button == null or not button.visible or button.disabled or current_page == page_index:
 		return
 
@@ -166,8 +181,8 @@ func _on_tab_pressed(page_index: int):
 func _update_tab_visuals():
 	var supported_pages := _supported_pages(_current_role_panel())
 	var visible_buttons: Array[Button] = []
-	for i in range(tabs_container.get_child_count()):
-		var btn := tabs_container.get_child(i) as Button
+	for i in range(page_buttons.size()):
+		var btn := page_buttons[i]
 		var supported := i in supported_pages
 		btn.visible = supported
 		btn.disabled = not supported
@@ -182,6 +197,7 @@ func _update_tab_visuals():
 		var next := visible_buttons[posmod(index + 1, visible_buttons.size())]
 		button.focus_neighbor_left = button.get_path_to(previous)
 		button.focus_neighbor_right = button.get_path_to(next)
+	_set_page_glyph_visibility(supported_pages.size() > 1)
 
 
 func focus_node(node_id: String) -> bool:
@@ -289,7 +305,7 @@ func set_role_navigation_owner(owner: Callable) -> void:
 
 
 func focus_current_page_tab() -> bool:
-	var button := tabs_container.get_child(current_page) as Button
+	var button := page_buttons[current_page] if current_page >= 0 and current_page < page_buttons.size() else null
 	if button == null or not button.visible or button.disabled:
 		return false
 	button.grab_focus()
@@ -306,13 +322,15 @@ func _page_tabs_own_focus() -> bool:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventJoypadMotion and event.axis in _held_page_triggers and event.axis_value <= 0.25:
+		_handle_page_trigger_motion(event)
+		return
 	if not is_visible_in_tree():
 		return
-	if _owns_role_navigation() and event.is_action_pressed(&"hub_role_previous"):
-		change_role(-1)
-	elif _owns_role_navigation() and event.is_action_pressed(&"hub_role_next"):
-		change_role(1)
-	elif _node_owns_focus() and event.is_action_pressed(&"nav_up"):
+	if event is InputEventJoypadMotion and event.axis in _held_page_triggers:
+		_handle_page_trigger_motion(event)
+		return
+	if _node_owns_focus() and event.is_action_pressed(&"nav_up"):
 		move_focus(Vector2.UP)
 	elif _node_owns_focus() and event.is_action_pressed(&"nav_down"):
 		if not move_focus(Vector2.DOWN):
@@ -327,6 +345,19 @@ func _unhandled_input(event: InputEvent) -> void:
 		confirm_focused_node()
 	else:
 		return
+	get_viewport().set_input_as_handled()
+
+
+func _handle_page_trigger_motion(event: InputEventJoypadMotion) -> void:
+	if event.axis_value <= 0.25:
+		_held_page_triggers[event.axis] = false
+		return
+	if event.axis_value < 0.75 or bool(_held_page_triggers[event.axis]):
+		return
+	if not _owns_role_navigation() or not (_node_owns_focus() or _page_tabs_own_focus()):
+		return
+	_held_page_triggers[event.axis] = true
+	change_page(-1 if event.axis == JOY_AXIS_TRIGGER_LEFT else 1)
 	get_viewport().set_input_as_handled()
 
 
@@ -417,6 +448,15 @@ func _refresh_role_shortcuts() -> void:
 			(child as RolePanel).set_role_shortcuts_enabled(enabled)
 
 
+func _set_page_glyph_visibility(show_glyphs: bool) -> void:
+	previous_page_glyph.visible = show_glyphs
+	next_page_glyph.visible = show_glyphs
+
+
+func _on_page_glyph_input_state_changed(_value: Variant) -> void:
+	_set_page_glyph_visibility(_supported_pages(_current_role_panel()).size() > 1)
+
+
 func _publish_hints(node: Control) -> void:
 	var navigation := get_tree().root.find_child("NavigationUXLayer", true, false) as NavigationUXLayer
 	if navigation:
@@ -425,6 +465,5 @@ func _publish_hints(node: Control) -> void:
 		var hints: Array[Dictionary] = [
 			{action = &"confirm", label = "Upgrade" if purchasable else "Inspect", enabled = purchasable or inspectable},
 			{action = &"cancel", label = "Back", enabled = true},
-			{action = &"hub_role_previous", label = "Role", enabled = role_list_container.get_child_count() > 1},
 		]
 		navigation.publish_hints(hints)
