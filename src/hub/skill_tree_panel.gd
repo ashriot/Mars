@@ -58,6 +58,8 @@ func apply_display_profile(profile: int, _window_size: Vector2i, _logical_size: 
 	var tree_owns_navigation := navigation_depth == NavigationDepth.TREE
 	_set_role_panel_focus_enabled(not tree_owns_navigation)
 	_set_tree_nodes_interactive(tree_owns_navigation)
+	if not _owns_role_navigation():
+		return
 	if tree_owns_navigation:
 		var panel := _current_role_panel()
 		if panel and not panel.generated_nodes.is_empty():

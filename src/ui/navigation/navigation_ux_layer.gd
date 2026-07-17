@@ -352,6 +352,8 @@ func _restore_from_entry(entry: Dictionary) -> void:
 	if _is_focusable(restore) and (is_instance_valid(_screen_for(restore)) or _belongs_to(restore, top_modal_root)):
 		restore.grab_focus()
 		return
+	if is_instance_valid(top_modal_root) and top_modal_root.has_method(&"restore_modal_focus") and bool(top_modal_root.call(&"restore_modal_focus")):
+		return
 	if is_instance_valid(restore_screen) and _screens.has(restore_screen):
 		var screen_fallback := _screen_fallback(restore_screen)
 		if screen_fallback:

@@ -367,6 +367,7 @@ func test_role_selection_disables_tree_focus_and_rejects_node_activation_until_e
 
 func test_role_selection_profile_changes_keep_every_tree_node_isolated() -> void:
 	var panel := await _skill_panel_with_multi_page_role()
+	panel.set_role_navigation_owner(func() -> bool: return true)
 	assert_true(panel.enter_role_select())
 	for profile in [DisplayProfileService.Profile.COMPACT, DisplayProfileService.Profile.DESKTOP]:
 		panel.apply_display_profile(profile, Vector2i.ZERO, Vector2.ZERO)
@@ -393,6 +394,7 @@ func test_role_selection_profile_changes_keep_every_tree_node_isolated() -> void
 
 func test_tree_profile_change_restores_current_node_and_only_current_tree_interaction() -> void:
 	var panel := await _skill_panel_with_multi_page_role()
+	panel.set_role_navigation_owner(func() -> bool: return true)
 	assert_true(panel.enter_tree())
 	assert_true(panel.focus_node("gun.atk_1"))
 	panel.apply_display_profile(DisplayProfileService.Profile.COMPACT, Vector2i.ZERO, Vector2.ZERO)
@@ -411,6 +413,70 @@ func test_tree_profile_change_restores_current_node_and_only_current_tree_intera
 	assert_eq(panel.navigation_depth, SkillTreePanel.NavigationDepth.ROLE_SELECT)
 	assert_same(get_viewport().gui_get_focus_owner(), panel._current_role_panel())
 	panel.free()
+	await get_tree().process_frame
+
+
+func test_party_hero_rail_profile_change_keeps_hero_focus_and_hints() -> void:
+	var navigation := preload("res://src/ui/navigation/navigation_ux_layer.tscn").instantiate() as NavigationUXLayer
+	navigation.name = "NavigationUXLayer"
+	add_child(navigation)
+	var party := await _opened_party_with_three_heroes()
+	var hero := party.hero_list_container.get_child(0) as HeroPanel
+	var hints_before := _hint_snapshot(navigation)
+	party.skill_view.apply_display_profile(DisplayProfileService.Profile.COMPACT, Vector2i.ZERO, Vector2.ZERO)
+	assert_eq(party.current_depth, PartyMenu.Depth.HERO_RAIL)
+	assert_same(get_viewport().gui_get_focus_owner(), hero)
+	assert_eq(_hint_snapshot(navigation), hints_before)
+	party.free()
+	navigation.free()
+	await get_tree().process_frame
+
+
+func test_other_party_tab_profile_change_cannot_take_focus_or_hints() -> void:
+	var navigation := preload("res://src/ui/navigation/navigation_ux_layer.tscn").instantiate() as NavigationUXLayer
+	navigation.name = "NavigationUXLayer"
+	add_child(navigation)
+	var party := await _opened_party_with_three_heroes()
+	assert_true(party.enter_content())
+	assert_true(party.skill_view.enter_tree())
+	party.change_tab(1)
+	assert_eq(party.current_tab, PartyMenu.Tab.ITEMS)
+	var owner := get_viewport().gui_get_focus_owner()
+	var hints_before := _hint_snapshot(navigation)
+	party.skill_view.apply_display_profile(DisplayProfileService.Profile.COMPACT, Vector2i.ZERO, Vector2.ZERO)
+	assert_same(get_viewport().gui_get_focus_owner(), owner)
+	assert_eq(_hint_snapshot(navigation), hints_before)
+	assert_eq(party.current_tab, PartyMenu.Tab.ITEMS)
+	party.free()
+	navigation.free()
+	await get_tree().process_frame
+
+
+func test_nested_modal_profile_change_preserves_modal_then_restores_roles_tree() -> void:
+	var navigation := preload("res://src/ui/navigation/navigation_ux_layer.tscn").instantiate() as NavigationUXLayer
+	navigation.name = "NavigationUXLayer"
+	add_child(navigation)
+	var party := await _opened_party_with_three_heroes()
+	assert_true(party.enter_content())
+	assert_true(party.skill_view.enter_tree())
+	assert_true(party.skill_view.focus_node("gun.atk_1"))
+	var nested := Control.new()
+	var nested_focus := Button.new()
+	nested.add_child(nested_focus)
+	add_child(nested)
+	navigation.push_modal(nested, nested_focus)
+	navigation.publish_hints([{action = &"confirm", label = "Nested", enabled = true}])
+	party.skill_view.apply_display_profile(DisplayProfileService.Profile.COMPACT, Vector2i.ZERO, Vector2.ZERO)
+	assert_same(get_viewport().gui_get_focus_owner(), nested_focus)
+	assert_eq(_hint_snapshot(navigation), ["confirm:Nested"])
+	navigation.pop_modal(nested)
+	await get_tree().process_frame
+	assert_eq(party.skill_view.navigation_depth, SkillTreePanel.NavigationDepth.TREE)
+	assert_eq(party.skill_view.focused_node_id, "gun.atk_1")
+	assert_same(get_viewport().gui_get_focus_owner(), party.skill_view.get_focused_node())
+	nested.free()
+	party.free()
+	navigation.free()
 	await get_tree().process_frame
 
 
@@ -1593,6 +1659,14 @@ func _joy_motion(axis: JoyAxis, value: float) -> InputEventJoypadMotion:
 	event.axis = axis
 	event.axis_value = value
 	return event
+
+
+func _hint_snapshot(navigation: NavigationUXLayer) -> Array[String]:
+	var snapshot: Array[String] = []
+	for index in navigation.hint_bar.get_hint_count():
+		var hint := navigation.hint_bar.get_hint(index)
+		snapshot.append("%s:%s" % [hint.action, hint.label.text])
+	return snapshot
 
 
 func _push_action_event(action: StringName) -> void:

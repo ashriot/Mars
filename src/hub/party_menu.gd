@@ -355,6 +355,17 @@ func return_to_hero_rail() -> void:
 	_focus_selected_hero()
 
 
+func restore_modal_focus() -> bool:
+	if not visible:
+		return false
+	if current_depth == Depth.CONTENT and current_tab == Tab.ROLES:
+		return skill_view.enter_tree() if skill_view.navigation_depth == SkillTreePanel.NavigationDepth.TREE else skill_view.enter_role_select()
+	if current_depth == Depth.CONTENT:
+		return _restore_content_focus()
+	_focus_selected_hero()
+	return true
+
+
 func _content_memory_key() -> String:
 	if party_roster.is_empty() or current_hero_idx < 0 or current_hero_idx >= party_roster.size():
 		return ""
