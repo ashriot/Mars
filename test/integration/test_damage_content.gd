@@ -578,7 +578,7 @@ func test_direct_damage_validator_compares_structured_incomplete_relationship() 
 	var errors := _direct_damage_presentation_errors(action, misleading, 0)
 	var combined_errors := "\n".join(errors)
 	for binding_name: String in [
-		"amount", "selected_power", "damage_type", "hit_count",
+		"amount", "amount_qualifier", "selected_power", "damage_type", "hit_count",
 		"hit_count_text", "split_behavior", "contextual_scaling",
 	]:
 		assert_string_contains(
@@ -999,9 +999,9 @@ func _expected_direct_damage_bindings(
 	var hit_count_text := "x%d" % effect.hit_count if effect.hit_count > 1 else ""
 	var split_behavior := ""
 	if effect.split_damage:
+		amount_qualifier = " total"
+		hit_count_text = ""
 		if group_distribution_unavailable:
-			amount_qualifier = " total"
-			hit_count_text = ""
 			split_behavior = " split across all targets"
 			if effect.hit_count > 1:
 				split_behavior += " and %d hits" % effect.hit_count

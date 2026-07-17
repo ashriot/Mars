@@ -311,7 +311,8 @@ func _update_intent_ui():
 			damage_bindings.damage_type,
 		]
 		if intended_action.target_type == Action.TargetType.RANDOM_ENEMY \
-			and resolved_hit_count > 1:
+			and resolved_hit_count > 1 \
+			and damage_bindings.hit_count_text.is_empty():
 			final_text += " (%d hits)" % resolved_hit_count
 		if intended_action.effects.size() > 1:
 			final_text += " *"

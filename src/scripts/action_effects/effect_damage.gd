@@ -94,9 +94,9 @@ func _get_authored_presentation(
 	var hit_count_text := "x%d" % resolved_hit_count \
 		if resolved_hit_count > 1 else ""
 	if split_damage:
+		hit_count_text = ""
+		amount_qualifier = " total"
 		if _has_unavailable_group_distribution(context):
-			hit_count_text = ""
-			amount_qualifier = " total"
 			split_behavior = " split across all targets"
 			if resolved_hit_count > 1:
 				split_behavior += " and %d hits" % resolved_hit_count

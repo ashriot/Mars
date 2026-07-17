@@ -700,6 +700,49 @@ func test_enemy_intent_displays_per_target_preview_range_without_averaging() -> 
 	armored.free()
 
 
+func test_enemy_intent_incomplete_random_split_uses_authored_total_budget() -> void:
+	var manager := BattleManager.new()
+	var enemy := _intent_enemy(120)
+	enemy.battle_manager = manager
+	var low_hp_target := _intent_hero_target(0)
+	var healthy_target := _intent_hero_target(0)
+	low_hp_target.current_hp = 50
+	manager.actor_list = [enemy, low_hp_target, healthy_target]
+	var action := (load(
+		"res://data/enemies/actions/rapid_fire.tres"
+	) as Action).duplicate(true) as Action
+	var effect := action.effects[0] as Effect_Damage
+	var rule := LivingEnemyPotencyRule.new()
+	rule.phase = DamageScalingRule.Phase.CURRENT_HIT
+	effect.scaling_rules = [rule]
+	enemy.intended_action = action
+	enemy.intended_targets = [low_hp_target, healthy_target]
+	var sequence := DamagePreview.for_plan(
+		effect,
+		enemy,
+		enemy.intended_targets,
+		action,
+		false,
+		manager,
+	)
+
+	enemy._update_intent_ui()
+
+	assert_false(sequence.is_complete)
+	assert_string_contains(enemy.intent_text.text, "125% ATK total")
+	assert_string_contains(enemy.intent_text.text, "(3 hits)")
+	assert_false(enemy.intent_text.text.contains("x3"))
+	assert_string_contains(enemy.intent_tooltip.bbcode_text, "125% ATK total")
+	assert_string_contains(enemy.intent_tooltip.bbcode_text, "split across 3 hits")
+	assert_false(enemy.intent_tooltip.bbcode_text.contains("x3"))
+	assert_eq(low_hp_target.current_hp, 50)
+	assert_false(low_hp_target.is_defeated)
+	assert_eq(healthy_target.current_hp, healthy_target.current_stats.max_hp)
+	assert_false(healthy_target.is_defeated)
+	_free_intent_enemy(enemy, [low_hp_target, healthy_target])
+	manager.free()
+
+
 func test_enemy_intent_uses_sequential_guard_to_breach_preview() -> void:
 	var enemy := _intent_enemy(100)
 	enemy.current_stats.overload = 50
