@@ -55,8 +55,19 @@ func apply_display_profile(profile: int, _window_size: Vector2i, _logical_size: 
 	for child in role_list_container.get_children():
 		if child is RolePanel:
 			child.apply_display_profile(profile)
-	if navigation_depth == NavigationDepth.TREE and not focused_node_id.is_empty():
-		focus_node(focused_node_id)
+	var tree_owns_navigation := navigation_depth == NavigationDepth.TREE
+	_set_role_panel_focus_enabled(not tree_owns_navigation)
+	_set_tree_nodes_interactive(tree_owns_navigation)
+	if tree_owns_navigation:
+		var panel := _current_role_panel()
+		if panel and not panel.generated_nodes.is_empty():
+			focus_node(focused_node_id)
+		return
+	var owner := get_viewport().gui_get_focus_owner()
+	if not owner is RolePanel or not role_list_container.is_ancestor_of(owner):
+		var panel := _current_role_panel()
+		if panel:
+			panel.focus_for_selection()
 
 
 func setup(hero: HeroData):

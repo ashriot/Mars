@@ -365,6 +365,55 @@ func test_role_selection_disables_tree_focus_and_rejects_node_activation_until_e
 	await get_tree().process_frame
 
 
+func test_role_selection_profile_changes_keep_every_tree_node_isolated() -> void:
+	var panel := await _skill_panel_with_multi_page_role()
+	assert_true(panel.enter_role_select())
+	for profile in [DisplayProfileService.Profile.COMPACT, DisplayProfileService.Profile.DESKTOP]:
+		panel.apply_display_profile(profile, Vector2i.ZERO, Vector2.ZERO)
+		assert_eq(panel.navigation_depth, SkillTreePanel.NavigationDepth.ROLE_SELECT)
+		for child in panel.role_list_container.get_children():
+			var role_panel := child as RolePanel
+			assert_eq(role_panel.focus_mode, Control.FOCUS_ALL)
+			for node: Control in role_panel.generated_nodes.values():
+				assert_eq(node.focus_mode, Control.FOCUS_NONE)
+				assert_eq(node.mouse_filter, Control.MOUSE_FILTER_IGNORE)
+		var tab := InputEventKey.new()
+		tab.keycode = KEY_TAB
+		tab.pressed = true
+		get_viewport().push_input(tab)
+		await get_tree().process_frame
+		var owner := get_viewport().gui_get_focus_owner()
+		for child in panel.role_list_container.get_children():
+			for node: Control in (child as RolePanel).generated_nodes.values():
+				assert_false(owner == node or (owner != null and node.is_ancestor_of(owner)), "Tab cannot enter a generated tree node")
+	assert_false(panel.cancel_navigation(), "Back still belongs to the outward depth at role selection")
+	panel.free()
+	await get_tree().process_frame
+
+
+func test_tree_profile_change_restores_current_node_and_only_current_tree_interaction() -> void:
+	var panel := await _skill_panel_with_multi_page_role()
+	assert_true(panel.enter_tree())
+	assert_true(panel.focus_node("gun.atk_1"))
+	panel.apply_display_profile(DisplayProfileService.Profile.COMPACT, Vector2i.ZERO, Vector2.ZERO)
+	assert_eq(panel.navigation_depth, SkillTreePanel.NavigationDepth.TREE)
+	assert_eq(panel.focused_node_id, "gun.atk_1")
+	assert_same(get_viewport().gui_get_focus_owner(), panel.get_focused_node())
+	for index in range(panel.role_list_container.get_child_count()):
+		var role_panel := panel.role_list_container.get_child(index) as RolePanel
+		assert_eq(role_panel.focus_mode, Control.FOCUS_NONE)
+		for node: Control in role_panel.generated_nodes.values():
+			var expected_focus := Control.FOCUS_ALL if index == panel.current_role_idx else Control.FOCUS_NONE
+			var expected_mouse := Control.MOUSE_FILTER_STOP if index == panel.current_role_idx else Control.MOUSE_FILTER_IGNORE
+			assert_eq(node.focus_mode, expected_focus)
+			assert_eq(node.mouse_filter, expected_mouse)
+	assert_true(panel.cancel_navigation())
+	assert_eq(panel.navigation_depth, SkillTreePanel.NavigationDepth.ROLE_SELECT)
+	assert_same(get_viewport().gui_get_focus_owner(), panel._current_role_panel())
+	panel.free()
+	await get_tree().process_frame
+
+
 func test_role_selection_is_safe_without_rendered_roles_or_tree_nodes() -> void:
 	var no_roles := preload("res://src/hub/skill_tree_panel.tscn").instantiate() as SkillTreePanel
 	no_roles.progression_catalog = ProgressionCatalog.from_validated_trees([])
