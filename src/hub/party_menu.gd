@@ -507,12 +507,6 @@ func _update_active_view():
 
 
 func _update_depth_presentation() -> void:
-	for index in range(hero_list_container.get_child_count()):
-		var panel := hero_list_container.get_child(index) as HeroPanel
-		panel.set_chrome_active(current_depth == Depth.HERO_RAIL or index == current_hero_idx)
-	var content_active := current_depth == Depth.CONTENT
-	skill_view.set_chrome_active(content_active and current_tab == Tab.ROLES)
-	inventory_view.set_chrome_active(content_active and current_tab == Tab.ITEMS)
 	_publish_hints()
 
 func _get_panel_by_index(index: int) -> HeroPanel:

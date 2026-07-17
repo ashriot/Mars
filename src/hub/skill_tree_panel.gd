@@ -30,7 +30,6 @@ func _ready() -> void:
 	for index in range(tabs_container.get_child_count()):
 		var button := tabs_container.get_child(index) as Button
 		button.pressed.connect(_on_tab_pressed.bind(index))
-		button.set_meta("navigation_focus_pulse", true)
 
 
 func apply_display_profile(profile: int, _window_size: Vector2i, _logical_size: Vector2) -> void:
@@ -287,12 +286,6 @@ func cancel_navigation() -> bool:
 
 func set_role_navigation_owner(owner: Callable) -> void:
 	_role_navigation_owner = owner
-
-
-func set_chrome_active(active: bool) -> void:
-	for child in role_list_container.get_children():
-		if child is RolePanel:
-			(child as RolePanel).set_chrome_active(active)
 
 
 func focus_current_page_tab() -> bool:

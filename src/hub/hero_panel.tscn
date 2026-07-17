@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://c3sqmfckgaala"]
+[gd_scene load_steps=7 format=3 uid="uid://c3sqmfckgaala"]
 
 [ext_resource type="Script" uid="uid://lqyabhv1vfuk" path="res://src/hub/hero_panel.gd" id="1_r4b5v"]
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="1_tilru"]
@@ -9,18 +9,6 @@
 bg_color = Color(0.6, 0.6, 0.6, 0)
 border_width_left = 6
 border_width_top = 42
-border_width_right = 6
-border_width_bottom = 6
-border_color = Color(1, 1, 1, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_focus_outline"]
-bg_color = Color(0, 0, 0, 0)
-border_width_left = 6
-border_width_top = 6
 border_width_right = 6
 border_width_bottom = 6
 border_color = Color(1, 1, 1, 1)
@@ -43,17 +31,6 @@ offset_bottom = -244.0
 grow_vertical = 2
 focus_mode = 2
 script = ExtResource("1_r4b5v")
-
-[node name="FocusOutline" type="Panel" parent="."]
-z_index = 10
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_focus_outline")
 
 [node name="Content" type="Control" parent="."]
 clip_contents = true

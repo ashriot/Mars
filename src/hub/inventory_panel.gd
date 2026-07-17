@@ -107,11 +107,6 @@ func restore_focus(key: String) -> bool:
 	return false
 
 
-func set_chrome_active(active: bool) -> void:
-	for child in grid.get_children():
-		if child is ItemButton:
-			(child as ItemButton).set_chrome_active(active)
-
 func on_equip_requested(item: Equipment, slot_type: Equipment.Slot):
 	current_mode = Mode.EQUIP
 

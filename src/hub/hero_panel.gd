@@ -33,10 +33,7 @@ var _is_expanded := false
 
 func _ready():
 	DisplayProfile.bind(apply_display_profile)
-	set_meta("navigation_focus_surface", NodePath("FocusOutline"))
-	set_meta("navigation_focus_pulse", true)
 	custom_minimum_size.y = collapsed_y
-	HubChrome.capture($FocusOutline)
 	# 1. WEAPON SIGNALS
 	weapon_panel.equip_requested.connect(func(item):
 		equip_requested.emit(item, Equipment.Slot.WEAPON)
@@ -110,12 +107,6 @@ func _gui_input(event: InputEvent):
 	if has_focus() and (event.is_action_pressed(&"confirm") or event.is_action_pressed(&"nav_right")):
 		get_viewport().set_input_as_handled()
 		content_requested.emit(self)
-
-
-func set_chrome_active(active: bool) -> void:
-	HubChrome.set_active($FocusOutline, active)
-	weapon_panel.set_chrome_active(active)
-	armor_panel.set_chrome_active(active)
 
 
 func items_default_focus() -> Control:

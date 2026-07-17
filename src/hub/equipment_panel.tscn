@@ -44,7 +44,8 @@ offset_bottom = 96.0
 mouse_filter = 2
 script = ExtResource("1_8e66j")
 
-[node name="FocusOutline" type="Panel" parent="."]
+[node name="ModeOutline" type="Panel" parent="."]
+modulate = Color(1, 1, 1, 0)
 z_index = 10
 layout_mode = 1
 anchors_preset = 15

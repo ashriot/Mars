@@ -14,12 +14,6 @@ var node_id: String = ""
 
 func _ready() -> void:
 	set_meta("navigation_focus_surface", NodePath("Panel"))
-	set_meta("navigation_focus_pulse", true)
-	HubChrome.capture($Panel)
-
-
-func set_chrome_active(active: bool) -> void:
-	HubChrome.set_active($Panel, active)
 
 
 func setup(role: RoleDefinition, tree: RoleTreeDefinition) -> void:

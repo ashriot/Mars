@@ -122,6 +122,13 @@ func _opened_party_with_three_heroes() -> PartyMenu:
 	return party
 
 
+func _assert_visible_controls_have_no_navigation_focus_pulse(node: Node) -> void:
+	if node is Control and (node as Control).is_visible_in_tree():
+		assert_false(node.has_meta("navigation_focus_pulse"), "%s must not use navigation focus pulse metadata" % node.get_path())
+	for child in node.get_children():
+		_assert_visible_controls_have_no_navigation_focus_pulse(child)
+
+
 func _skill_panel_with_multi_page_role() -> SkillTreePanel:
 	var hero := _hero()
 	hero.unlocked_role_ids.assign(["gun", "snp"])
@@ -300,18 +307,34 @@ func test_hub_focus_and_depth_styles_never_change_content_colors() -> void:
 	var party := await _opened_party_with_three_heroes()
 	var hero := party.hero_list_container.get_child(0) as HeroPanel
 	var header_style: StyleBox = hero.get_node("Content/Header").get_theme_stylebox(&"panel")
-	var stats_modulate: Color = hero.get_node("Content/Stats/HP").modulate
-	assert_true(hero.has_node("FocusOutline"))
-	assert_eq(hero.get_meta("navigation_focus_surface"), NodePath("FocusOutline"))
-	NavigationFocus.apply(hero)
+	var hp_modulate: Color = hero.get_node("Content/Stats/HP").modulate
+	var role := party.skill_view.role_list_container.get_child(0) as RolePanel
+	var role_header_modulate: Color = role.get_node("Header").modulate
+	assert_false(hero.has_meta("navigation_focus_pulse"))
+	assert_false(hero.has_node("FocusOutline"))
+	_assert_visible_controls_have_no_navigation_focus_pulse(party)
+	assert_true(party.enter_content())
 	assert_same(hero.get_node("Content/Header").get_theme_stylebox(&"panel"), header_style)
-	assert_eq(hero.get_node("Content/Stats/HP").modulate, stats_modulate)
-	var focus_style := hero.get_node("FocusOutline").get_theme_stylebox(&"panel") as StyleBoxFlat
-	assert_eq(focus_style.bg_color.a, 0.0)
-	NavigationFocus.clear(hero)
-	party.enter_content()
+	assert_eq(hero.get_node("Content/Stats/HP").modulate, hp_modulate)
+	assert_eq(role.get_node("Header").modulate, role_header_modulate)
+	party.return_to_hero_rail()
 	assert_same(hero.get_node("Content/Header").get_theme_stylebox(&"panel"), header_style)
-	assert_eq(hero.get_node("Content/Stats/HP").modulate, stats_modulate)
+	assert_eq(hero.get_node("Content/Stats/HP").modulate, hp_modulate)
+	assert_eq(role.get_node("Header").modulate, role_header_modulate)
+
+	var replacement := hero.data.weapon.duplicate(true) as Equipment
+	SaveSystem.inventory_equipment.assign([replacement])
+	party.change_tab(1)
+	assert_true(party.enter_content())
+	party.inventory_view.request_equip_mode(hero.data.weapon, Equipment.Slot.WEAPON)
+	var item := party.inventory_view.grid.get_child(0) as ItemButton
+	var item_header_modulate: Color = item.get_node("Button/Header").modulate
+	assert_false(item.has_node("Button/FocusOutline"))
+	_assert_visible_controls_have_no_navigation_focus_pulse(party)
+	party.return_to_hero_rail()
+	assert_same(hero.get_node("Content/Header").get_theme_stylebox(&"panel"), header_style)
+	assert_eq(hero.get_node("Content/Stats/HP").modulate, hp_modulate)
+	assert_eq(item.get_node("Button/Header").modulate, item_header_modulate)
 
 
 func test_items_mode_pulses_change_only_dedicated_outer_edges() -> void:
@@ -327,7 +350,7 @@ func test_items_mode_pulses_change_only_dedicated_outer_edges() -> void:
 	equipment._highlight_tween.custom_step(0.25)
 	assert_eq(equipment.header.modulate, header_modulate)
 	assert_eq(gauge.modulate, gauge_modulate)
-	assert_ne(equipment.get_node("FocusOutline").modulate, Color.WHITE)
+	assert_ne(equipment.get_node("ModeOutline").modulate.a, 0.0)
 
 	var slot := equipment.mods_container.get_child(0) as ModSlot
 	var slot_content_modulate := slot.self_modulate
@@ -969,16 +992,17 @@ func test_confirm_emits_existing_purchase_signal_once_and_locked_node_is_inspect
 	await get_tree().process_frame
 
 
-func test_inventory_and_equipment_controls_use_shared_focus_surfaces() -> void:
+func test_inventory_and_equipment_controls_keep_only_semantic_mode_surfaces() -> void:
 	var item := preload("res://src/hub/item_button.tscn").instantiate() as ItemButton
 	add_child(item)
 	assert_eq(item.get_focus_control().focus_mode, Control.FOCUS_ALL)
-	assert_eq(item.get_focus_control().get_meta("navigation_focus_surface"), NodePath("FocusOutline"))
+	assert_false(item.get_focus_control().has_meta("navigation_focus_surface"))
 	var slot := preload("res://src/hub/mod_slot.tscn").instantiate() as ModSlot
 	add_child(slot)
 	slot.setup(null, true)
 	assert_eq(slot.get_focus_control().focus_mode, Control.FOCUS_ALL)
 	assert_eq(slot.get_focus_control().get_meta("navigation_focus_surface"), NodePath(".."))
+	assert_true(slot.has_node("SelectionOutline"))
 	item.free()
 	slot.free()
 
@@ -991,31 +1015,18 @@ func test_nonstandard_hub_controls_expose_valid_focus_surfaces() -> void:
 	add_child_autofree(slot)
 	add_child_autofree(equipment)
 	await get_tree().process_frame
-	var controls: Array[Control] = [
-		item.get_focus_control(),
-		slot.get_focus_control(),
-		equipment.equip_button,
-	]
-	for control in controls:
+	assert_false(item.get_focus_control().has_meta("navigation_focus_surface"))
+	assert_false(equipment.equip_button.has_meta("navigation_focus_surface"))
+	for control in [slot.get_focus_control()]:
 		assert_true(control.has_meta("navigation_focus_surface"))
-		if not control.has_meta("navigation_focus_surface"):
-			continue
 		var surface := control.get_node_or_null(control.get_meta("navigation_focus_surface")) as Control
 		assert_not_null(surface)
 		if not surface:
 			continue
 		var style_name := &"focus" if surface is Button else &"panel"
-		var authored_style := surface.get_theme_stylebox(style_name) as StyleBoxFlat
-		var authored_bg := authored_style.bg_color
-		var authored_border_alpha := authored_style.border_color.a
 		NavigationFocus.apply(control)
 		var style := surface.get_theme_stylebox(style_name) as StyleBoxFlat
-		if bool(control.get_meta("navigation_focus_pulse", false)):
-			assert_eq(style.bg_color, authored_bg)
-			assert_almost_eq(style.border_color.get_luminance(), authored_style.border_color.get_luminance() * NavigationFocus.HUB_PULSE_LOW_ENERGY, 0.001)
-			assert_eq(style.border_color.a, authored_border_alpha)
-		else:
-			assert_almost_eq(style.bg_color.a, NavigationFocus.FOCUS_STYLE.bg_color.a, 0.001)
+		assert_almost_eq(style.bg_color.a, NavigationFocus.FOCUS_STYLE.bg_color.a, 0.001)
 		NavigationFocus.clear(control)
 	assert_eq(equipment.tune_btn.focus_mode, Control.FOCUS_NONE)
 

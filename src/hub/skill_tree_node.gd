@@ -25,12 +25,6 @@ var _can_afford := false
 
 func _ready() -> void:
 	set_meta("navigation_focus_surface", NodePath("Panel"))
-	set_meta("navigation_focus_pulse", true)
-	HubChrome.capture($Panel)
-
-
-func set_chrome_active(active: bool) -> void:
-	HubChrome.set_active($Panel, active)
 
 
 func apply_display_profile(profile: int) -> void:

@@ -25,10 +25,7 @@ var _highlight_tween: Tween
 
 
 func _ready() -> void:
-	equip_button.set_meta("navigation_focus_surface", NodePath("../FocusOutline"))
-	equip_button.set_meta("navigation_focus_pulse", true)
 	tune_btn.focus_mode = Control.FOCUS_NONE
-	HubChrome.capture($FocusOutline)
 	DisplayProfile.bind(apply_display_profile)
 
 
@@ -36,9 +33,9 @@ func apply_display_profile(profile: int, _window_size: Vector2i, _logical_size: 
 	var compact := profile == DisplayProfileService.Profile.COMPACT
 	custom_minimum_size.x = 424.0 if compact else 400.0
 	custom_minimum_size.y = 126.0 if compact else 96.0
-	var header_style := HubChrome.get_base_style(header)
+	var header_style := header.get_theme_stylebox(&"panel").duplicate() as StyleBoxFlat
 	header_style.border_width_top = 72 if compact else 42
-	HubChrome.set_base_style(header, header_style)
+	header.add_theme_stylebox_override(&"panel", header_style)
 	equip_button.offset_bottom = 72.0 if compact else 42.0
 	$Border.offset_top = 76.0 if compact else 46.0
 	xp_container.offset_bottom = 72.0 if compact else 40.0
@@ -57,13 +54,6 @@ func apply_display_profile(profile: int, _window_size: Vector2i, _logical_size: 
 
 func get_expanded_minimum_height() -> float:
 	return $Border.offset_top + $Border/Content.size.y + 9.0
-
-
-func set_chrome_active(active: bool) -> void:
-	HubChrome.set_active($FocusOutline, active)
-	for slot in mods_container.get_children():
-		if slot is ModSlot and (slot as ModSlot).is_active:
-			(slot as ModSlot).set_chrome_active(active)
 
 
 func setup(item: Equipment):
@@ -187,7 +177,7 @@ func _on_mod_slot_clicked(slot_index: int):
 func set_visual_state(mode: String):
 	if _highlight_tween: _highlight_tween.kill()
 	header.modulate = Color.WHITE
-	$FocusOutline.modulate = Color.WHITE
+	$ModeOutline.modulate = Color(1, 1, 1, 0)
 
 	# 3. Handle Tune Button State
 	# We forcibly set the button state to match the mode
@@ -210,10 +200,13 @@ func set_visual_state(mode: String):
 			do_pulse = false
 
 	if do_pulse:
+		target_color.a = 0.35
+		$ModeOutline.modulate = target_color
+		var bright_color := Color(target_color.r, target_color.g, target_color.b, 1.0)
 		_highlight_tween = create_tween().set_loops()
 		_highlight_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		_highlight_tween.tween_property($FocusOutline, "modulate", target_color, 0.5)
-		_highlight_tween.tween_property($FocusOutline, "modulate", Color.WHITE, 0.5)
+		_highlight_tween.tween_property($ModeOutline, "modulate", bright_color, 0.5)
+		_highlight_tween.tween_property($ModeOutline, "modulate", target_color, 0.5)
 
 	if mode != "mod":
 		var ui_slots = mods_container.get_children()

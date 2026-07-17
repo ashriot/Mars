@@ -15,8 +15,6 @@ var _pulse_tween: Tween
 
 func _ready() -> void:
 	button.set_meta("navigation_focus_surface", NodePath(".."))
-	button.set_meta("navigation_focus_pulse", true)
-	HubChrome.capture(self)
 	DisplayProfile.bind(apply_display_profile)
 
 
@@ -66,7 +64,3 @@ func _on_button_pressed() -> void:
 
 func get_focus_control() -> BaseButton:
 	return button
-
-
-func set_chrome_active(active: bool) -> void:
-	HubChrome.set_active(self, active)
