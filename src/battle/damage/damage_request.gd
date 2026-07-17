@@ -4,6 +4,7 @@ extends RefCounted
 var _base_power: int
 var _overload_power: int
 var _precision_power: int
+var _base_potency: float
 var _potency: float
 var _distribution_count: int
 var _damage_type: Action.DamageType
@@ -19,6 +20,8 @@ var overload_power: int:
 	get: return _overload_power
 var precision_power: int:
 	get: return _precision_power
+var base_potency: float:
+	get: return _base_potency
 var potency: float:
 	get: return _potency
 var distribution_count: int:
@@ -49,10 +52,13 @@ func _init(
 	request_incoming_modifier: float = 0.0,
 	request_contributions: Array[DamageContribution] = [],
 	request_power_bonus: float = 0.0,
+	request_base_potency: float = NAN,
 ) -> void:
 	_base_power = request_base_power
 	_overload_power = request_overload_power
 	_precision_power = request_precision_power
+	_base_potency = request_potency \
+		if is_nan(request_base_potency) else request_base_potency
 	_potency = request_potency
 	_distribution_count = request_distribution_count
 	_damage_type = request_damage_type

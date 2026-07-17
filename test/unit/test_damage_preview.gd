@@ -53,6 +53,7 @@ func test_focused_bolt_preview_uses_post_cost_remaining_focus_curve() -> void:
 	var action := load("res://data/heroes/echo/actions/focused_bolt.tres") as Action
 	var effect := action.effects[0] as Effect_Damage
 	var result := DamagePreview.for_effect(effect, attacker, target, Action.new(), 1, false)
+	assert_almost_eq(result.request.base_potency, effect.potency, 0.0001)
 	assert_eq(result.request.potency, 1.2)
 	assert_eq(result.final_damage, 120)
 	attacker.free()

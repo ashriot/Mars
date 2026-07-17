@@ -623,21 +623,91 @@ func get_crit_damage_bonus() -> int:
 	return current_stats.precision
 
 func get_damage_dealt_modifier(target: ActorCard) -> float:
-	var modifier := 0.0
-	for condition in active_conditions:
-		modifier += condition.get_damage_dealt_modifier(self, target)
-	for trait_item in active_traits:
-		modifier += trait_item.get_damage_dealt_modifier(target)
-	return modifier
+	return _damage_contribution_total(get_damage_dealt_contributions(target))
+
+
+func get_damage_dealt_contributions(
+	target: ActorCard,
+) -> Array[DamageContribution]:
+	var contributions: Array[DamageContribution] = []
+	for condition: Condition in active_conditions:
+		var amount := condition.get_damage_dealt_modifier(self, target)
+		if is_zero_approx(amount):
+			continue
+		contributions.append(DamageContribution.new(
+			_damage_modifier_source(
+				"condition", condition.condition_name, condition.resource_path,
+			),
+			DamageContribution.Stage.OUTGOING,
+			amount,
+		))
+	for trait_item: Trait in active_traits:
+		var amount := trait_item.get_damage_dealt_modifier(target)
+		if is_zero_approx(amount):
+			continue
+		contributions.append(DamageContribution.new(
+			_damage_modifier_source(
+				"trait", trait_item.trait_name, trait_item.resource_path,
+			),
+			DamageContribution.Stage.OUTGOING,
+			amount,
+		))
+	return contributions
 
 
 func get_damage_taken_modifier(attacker: ActorCard) -> float:
-	var modifier := 0.0
-	for condition in active_conditions:
-		modifier += condition.get_damage_taken_modifier(attacker, self)
-	for trait_item in active_traits:
-		modifier += trait_item.get_damage_taken_modifier(attacker)
-	return modifier
+	return _damage_contribution_total(get_damage_taken_contributions(attacker))
+
+
+func get_damage_taken_contributions(
+	attacker: ActorCard,
+) -> Array[DamageContribution]:
+	var contributions: Array[DamageContribution] = []
+	for condition: Condition in active_conditions:
+		var amount := condition.get_damage_taken_modifier(attacker, self)
+		if is_zero_approx(amount):
+			continue
+		contributions.append(DamageContribution.new(
+			_damage_modifier_source(
+				"condition", condition.condition_name, condition.resource_path,
+			),
+			DamageContribution.Stage.INCOMING,
+			amount,
+		))
+	for trait_item: Trait in active_traits:
+		var amount := trait_item.get_damage_taken_modifier(attacker)
+		if is_zero_approx(amount):
+			continue
+		contributions.append(DamageContribution.new(
+			_damage_modifier_source(
+				"trait", trait_item.trait_name, trait_item.resource_path,
+			),
+			DamageContribution.Stage.INCOMING,
+			amount,
+		))
+	return contributions
+
+
+func _damage_contribution_total(
+	contributions: Array[DamageContribution],
+) -> float:
+	var total := 0.0
+	for contribution: DamageContribution in contributions:
+		total += contribution.amount
+	return total
+
+
+func _damage_modifier_source(
+	prefix: String,
+	display_name: String,
+	modifier_resource_path: String,
+) -> StringName:
+	var identity := display_name.strip_edges()
+	if identity.is_empty() and not modifier_resource_path.is_empty():
+		identity = modifier_resource_path.get_file().get_basename()
+	if identity.is_empty():
+		identity = "unnamed"
+	return StringName("%s_%s" % [prefix, identity.to_snake_case()])
 
 func _update_conditions_ui():
 	for child in buffs_panel.get_children():

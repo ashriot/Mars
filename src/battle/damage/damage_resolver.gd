@@ -109,16 +109,20 @@ static func resolve_hit(
 	if was_breached:
 		overload_power = attacker.current_stats.overload
 	var precision_power := attacker.get_crit_damage_bonus() if is_critical else 0
+	var contributions: Array[DamageContribution] = []
+	contributions.assign(resolved_potency.contributions)
+	contributions.append_array(attacker.get_damage_dealt_contributions(target))
+	contributions.append_array(target.get_damage_taken_contributions(attacker))
 	var power_bonus := _contribution_total(
-		resolved_potency.contributions,
+		contributions,
 		DamageContribution.Stage.POWER,
 	)
 	var outgoing_bonus := _contribution_total(
-		resolved_potency.contributions,
+		contributions,
 		DamageContribution.Stage.OUTGOING,
 	)
 	var incoming_bonus := _contribution_total(
-		resolved_potency.contributions,
+		contributions,
 		DamageContribution.Stage.INCOMING,
 	)
 	var defense := 0
@@ -135,10 +139,11 @@ static func resolve_hit(
 		distribution_count,
 		resolved_damage_type,
 		defense,
-		attacker.get_damage_dealt_modifier(target) + outgoing_bonus,
-		target.get_damage_taken_modifier(attacker) + incoming_bonus,
-		resolved_potency.contributions,
+		outgoing_bonus,
+		incoming_bonus,
+		contributions,
 		power_bonus,
+		resolved_potency.base_potency,
 	)
 	if request_modifier.is_valid():
 		request = request_modifier.call(request, hit_context) as DamageRequest
