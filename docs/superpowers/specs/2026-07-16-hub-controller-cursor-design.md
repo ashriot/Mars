@@ -20,11 +20,11 @@ Battle, dungeon, scan, terminal, and non-hub menu presentation do not change. Th
 
 ## Presentation
 
-The existing up-left-pointing pointer artwork is reused. Its tip targets a point just outside the focused control's lower-right corner. The cursor does not cover labels, icons, stats, costs, or other content.
+The existing up-left-pointing pointer artwork is reused at `128x128` for hub navigation while the scan pointer retains its original size. At rest, the hub cursor slightly overlaps the focused control's lower-right edge without crossing its readable center.
 
 When the requested outside position would clip the pointer against the viewport, the complete cursor rectangle is clamped inside a small screen margin. This may bring it against the target's lower-right corner, but it must not move across the control's readable center.
 
-Controller focus changes logical target immediately. The visible cursor moves to the new anchor with a `70 ms` ease-out tween. A newer focus target cancels and replaces an in-flight cursor tween. Initial appearance, focus restoration after a hidden or freed target, and mouse takeover do not wait for a tween before input becomes valid.
+Controller focus changes logical target immediately. The visible cursor moves to the new anchor with a `70 ms` ease-out tween. A newer focus target cancels and replaces an in-flight cursor tween. The cursor then breathes by drifting `12 px` diagonally away over `650 ms` and returning over `160 ms`; breathing pauses and resets during focus travel. Initial appearance, focus restoration after a hidden or freed target, and mouse takeover do not wait for a tween before input becomes valid.
 
 The cursor continuously follows the target's current global rectangle while the target moves because of:
 
@@ -87,8 +87,9 @@ Hub controls may expose optional cursor-anchor metadata only when the default lo
 
 Regression coverage protects:
 
-- controller focus shows one software cursor at the target's lower-right anchor;
+- controller focus shows one `128x128` software cursor slightly overlapping the target's lower-right edge;
 - cursor movement completes in `70 ms`, and a newer target replaces an in-flight tween;
+- position-only breathing moves slowly away and quickly returns, and stops during focus travel or non-hub ownership;
 - viewport-edge targets keep the complete cursor visible without moving over readable content;
 - cursor tracking follows scrolling and animated panel movement;
 - controller cursor movement does not alter the physical mouse position;
@@ -109,6 +110,7 @@ At `1920x1080` and `1280x800`, verify with a physical controller that:
 - the cursor clearly identifies heroes, roles, nodes, pages, equipment, mods, and inventory items;
 - its lower-right placement does not cover readable content;
 - its short tween communicates direction without producing lag or ambiguity;
+- its slow-away, quick-return breathing remains visible without feeling distracting;
 - rapid navigation never leaves duplicate cursors or a cursor between targets;
 - edge clamping keeps the complete pointer visible;
 - buttons show their familiar hover appearance without flashing;

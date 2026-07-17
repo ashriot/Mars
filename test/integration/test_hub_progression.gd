@@ -126,7 +126,8 @@ func test_hero_xp_uses_adaptive_shorthand() -> void:
 	var expected := {
 		-1: "0",
 		0: "0",
-		9999: "9,999",
+		1000: "1000",
+		9999: "9999",
 		10000: "10.0K",
 		99949: "99.9K",
 		99950: "100K",

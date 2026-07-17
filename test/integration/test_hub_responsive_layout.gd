@@ -92,6 +92,8 @@ func test_compact_equipment_controls_are_large_and_content_stays_inside_panel() 
 func test_hero_summary_aligns_hp_and_xp_inside_desktop_and_compact_cards() -> void:
 	var menu := await _compact_party_menu()
 	var hero_panel := menu.hero_list_container.get_child(0) as HeroPanel
+	hero_panel.data.current_xp = 9999
+	hero_panel.refresh_stats()
 	for profile: int in [DisplayProfileService.Profile.COMPACT, DisplayProfileService.Profile.DESKTOP]:
 		var window_size := DECK_SIZE if profile == DisplayProfileService.Profile.COMPACT else Vector2i(1920, 1080)
 		menu.apply_display_profile(profile, window_size, Vector2(window_size))
@@ -101,9 +103,15 @@ func test_hero_summary_aligns_hp_and_xp_inside_desktop_and_compact_cards() -> vo
 		var xp_group := summary.get_node("XP") as Control
 		assert_lt(hp_group.get_global_rect().position.x, xp_group.get_global_rect().position.x)
 		assert_eq(hp_group.get_global_rect().position.x, summary.get_global_rect().position.x)
-		assert_eq(xp_group.get_global_rect().end.x, summary.get_global_rect().end.x)
+		var gap := xp_group.get_global_rect().position.x - hp_group.get_global_rect().end.x
+		var right_padding := summary.get_global_rect().end.x - xp_group.get_global_rect().end.x
+		assert_lte(gap, 8.0, "HP and XP use only the authored compact gap")
+		assert_gte(right_padding, 8.0, "XP retains a readable right inset")
+		assert_eq(hero_panel.xp.text, "9999")
+		assert_false(hero_panel.xp.text.contains(","))
 		assert_true(_contains_control(hero_panel, hp_group))
 		assert_true(_contains_control(hero_panel, xp_group))
+		assert_true(_contains_control(hero_panel, hero_panel.xp))
 
 
 func test_compact_role_headers_fit_widest_abbreviation_and_six_digit_exact_xp() -> void:

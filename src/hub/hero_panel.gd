@@ -78,7 +78,7 @@ func setup(hero_data: HeroData):
 static func format_xp(value: int) -> String:
 	var safe := maxi(value, 0)
 	if safe < 10000:
-		return Utils.commafy(safe)
+		return str(safe)
 	if safe < 99950:
 		return "%.1fK" % (safe / 1000.0)
 	if safe < 1000000:

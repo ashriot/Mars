@@ -80,7 +80,7 @@ theme_override_constants/separation = -2
 [node name="Summary" type="HBoxContainer" parent="Content/Stats"]
 custom_minimum_size = Vector2(0, 41)
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 0
 
 [node name="HP" type="HBoxContainer" parent="Content/Stats/Summary"]
 modulate = Color(0.30588236, 0.7607843, 0.34117648, 1)
@@ -97,7 +97,7 @@ text = "HP"
 horizontal_alignment = 2
 
 [node name="Value" type="RichTextLabel" parent="Content/Stats/Summary/HP"]
-custom_minimum_size = Vector2(100, 0)
+custom_minimum_size = Vector2(90, 0)
 layout_mode = 2
 mouse_filter = 2
 theme_override_fonts/normal_font = ExtResource("1_tilru")
@@ -106,8 +106,8 @@ bbcode_enabled = true
 text = "[color=\"fff2\"]0[color=\"fff\"]100"
 
 [node name="Spacer" type="Control" parent="Content/Stats/Summary"]
+custom_minimum_size = Vector2(8, 0)
 layout_mode = 2
-size_flags_horizontal = 3
 mouse_filter = 2
 
 [node name="XP" type="HBoxContainer" parent="Content/Stats/Summary"]
@@ -123,7 +123,7 @@ theme_override_font_sizes/normal_font_size = 32
 text = "XP"
 
 [node name="Value" type="RichTextLabel" parent="Content/Stats/Summary/XP"]
-custom_minimum_size = Vector2(70, 0)
+custom_minimum_size = Vector2(95, 0)
 layout_mode = 2
 mouse_filter = 2
 theme_override_fonts/normal_font = ExtResource("1_tilru")

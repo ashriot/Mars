@@ -13,11 +13,11 @@ func _target_at(position: Vector2, target_size: Vector2) -> Control:
 
 
 func _assert_cursor_clears_readable_center(cursor: NavigationCursor, target: Control) -> void:
-	var cursor_rect := Rect2(cursor.position, cursor.size)
+	var cursor_rect := Rect2(cursor.position, cursor._effective_cursor_size())
 	var target_rect := target.get_global_rect()
 	var readable_center := Rect2(target_rect.position + target_rect.size * 0.25, target_rect.size * 0.5)
 	assert_false(
-		cursor_rect.intersects(readable_center, true),
+		cursor_rect.intersects(readable_center, false),
 		"cursor rectangle must not overlap the target's readable center",
 	)
 	var viewport_size := Vector2(get_viewport().get_visible_rect().size)
@@ -32,6 +32,7 @@ func test_scan_pointer_starts_hidden_with_arrow_texture() -> void:
 	add_child_autofree(cursor)
 	assert_false(cursor.visible)
 	assert_eq(cursor.texture.resource_path.get_file(), "pointer_c.svg")
+	assert_eq(cursor.scale, Vector2.ONE)
 
 
 func test_show_at_screen_position_moves_and_shows_without_touching_mouse() -> void:
@@ -42,6 +43,8 @@ func test_show_at_screen_position_moves_and_shows_without_touching_mouse() -> vo
 	assert_eq(cursor.position, Vector2(320, 180))
 	assert_true(cursor.visible)
 	assert_eq(cursor.get_viewport().get_mouse_position(), physical_mouse)
+	assert_eq(cursor.scale, Vector2.ONE)
+	assert_eq(cursor._effective_cursor_size(), Vector2(32, 32))
 	cursor.hide_pointer()
 	assert_false(cursor.visible)
 
@@ -53,8 +56,45 @@ func test_hub_target_uses_lower_right_anchor_and_preserves_physical_mouse() -> v
 	var physical_mouse := get_viewport().get_mouse_position()
 	cursor.track_hub_target(target, false)
 	assert_true(cursor.visible)
-	assert_eq(cursor.position, Vector2(346, 146))
+	assert_eq(cursor.scale, Vector2(4, 4))
+	assert_eq(cursor._effective_cursor_size(), Vector2(128, 128))
+	assert_eq(cursor.position, Vector2(328, 128))
 	assert_eq(get_viewport().get_mouse_position(), physical_mouse)
+
+
+func test_hub_cursor_breathes_slowly_away_then_returns_quickly() -> void:
+	var cursor := CursorScript.new()
+	add_child_autofree(cursor)
+	var target := _target_at(Vector2(100, 80), Vector2(240, 60))
+	cursor.track_hub_target(target, false)
+	var resting_position := cursor.position
+
+	cursor._breath_tween.custom_step(0.65)
+	var away_position := cursor.position
+	assert_gt(away_position.x, resting_position.x)
+	assert_gt(away_position.y, resting_position.y)
+	assert_almost_eq(away_position.distance_to(resting_position), 12.0, 0.1)
+
+	cursor._breath_tween.custom_step(0.16)
+	assert_almost_eq(cursor.position.x, resting_position.x, 0.01)
+	assert_almost_eq(cursor.position.y, resting_position.y, 0.01)
+
+
+func test_focus_move_pauses_breathing_then_restarts_at_latest_target() -> void:
+	var cursor := CursorScript.new()
+	add_child_autofree(cursor)
+	var first := _target_at(Vector2(40, 40), Vector2(100, 40))
+	var latest := _target_at(Vector2(400, 300), Vector2(100, 40))
+	cursor.track_hub_target(first, false)
+	assert_true(cursor._breath_tween.is_running())
+
+	cursor.track_hub_target(latest, true)
+	assert_true(cursor._breath_tween == null or not cursor._breath_tween.is_running())
+	cursor._move_tween.custom_step(0.07)
+	cursor._move_tween.custom_step(0.001)
+
+	assert_eq(cursor.position, cursor._hub_position(latest))
+	assert_true(cursor._breath_tween.is_running())
 
 
 func test_narrow_right_edge_target_keeps_cursor_out_of_readable_center() -> void:
@@ -94,7 +134,7 @@ func test_moving_target_crosses_edge_avoidance_boundary_deterministically() -> v
 	var cursor := CursorScript.new()
 	add_child_autofree(cursor)
 	var viewport_size := Vector2(get_viewport().get_visible_rect().size)
-	var interior_position := viewport_size - Vector2(120, 120)
+	var interior_position := viewport_size - Vector2(260, 260)
 	var target := _target_at(interior_position, Vector2(48, 48))
 	cursor.track_hub_target(target, false)
 	var interior_cursor_position := cursor.position
@@ -124,8 +164,9 @@ func test_hub_target_clamps_complete_cursor_inside_viewport() -> void:
 	add_child_autofree(target)
 	cursor.track_hub_target(target, false)
 	var viewport_size := Vector2(get_viewport().get_visible_rect().size)
-	assert_lte(cursor.position.x + cursor.size.x, viewport_size.x - cursor.VIEWPORT_MARGIN)
-	assert_lte(cursor.position.y + cursor.size.y, viewport_size.y - cursor.VIEWPORT_MARGIN)
+	var cursor_size := cursor._effective_cursor_size()
+	assert_lte(cursor.position.x + cursor_size.x, viewport_size.x - cursor.VIEWPORT_MARGIN)
+	assert_lte(cursor.position.y + cursor_size.y, viewport_size.y - cursor.VIEWPORT_MARGIN)
 
 
 func test_new_hub_target_replaces_in_flight_cursor_tween() -> void:
@@ -197,6 +238,8 @@ func test_scan_position_clears_hub_tracking_without_changing_scan_api() -> void:
 	cursor.show_at_screen_position(Vector2(320, 180))
 	assert_false(cursor.is_tracking_hub_target())
 	assert_eq(cursor.position, Vector2(320, 180))
+	assert_eq(cursor.scale, Vector2.ONE)
+	assert_true(cursor._breath_tween == null or not cursor._breath_tween.is_running())
 
 
 func test_tracked_hub_button_clears_when_disabled() -> void:

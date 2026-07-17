@@ -99,7 +99,7 @@ The existing HP row becomes a two-sided summary row:
 
 HP retains its existing exact padded presentation. XP uses adaptive shorthand:
 
-- `0–9,999`: exact comma-formatted value.
+- `0–9,999`: exact value without separators, preserving the hero card's four-digit budget.
 - `10,000–99,949`: one decimal in thousands, such as `10.0K` or `47.3K`.
 - `99,950–999,999`: whole thousands, such as `100K` or `200K`.
 - `1,000,000+`: one decimal in millions, such as `1.2M`.
@@ -173,7 +173,7 @@ Regression coverage protects:
 - L1/R1 change top tabs and no longer change roles;
 - L2/R2 change only supported rank pages and require trigger release before another change;
 - rank-page trigger glyphs resolve for every controller family and hide in keyboard/mouse mode;
-- hero XP formatting at `0`, `9,999`, `10,000`, `99,949`, `99,950`, `200,000`, and `1,000,000`;
+- hero XP formatting at `0`, `1000`, `9999`, `10,000`, `99,949`, `99,950`, `200,000`, and `1,000,000`;
 - hero HP/XP alignment and bounds at `1920x1080` and `1280x800`;
 - expanded role exact `AVAILABLE XP` refresh after a purchase;
 - collapsed roles never show the XP readout; and
