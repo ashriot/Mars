@@ -11,8 +11,7 @@ class_name Effect_Damage
 @export var power_type: Action.PowerType = Action.PowerType.ATTACK
 @export var damage_type: Action.DamageType = Action.DamageType.KINETIC
 
-@export var potency_per_guard: float = 0.0
-@export var potency_scalar_per_focus: float = 0.0
+@export var scaling_rules: Array[DamageScalingRule] = []
 @export var lifedrain_scalar: float = 0.0
 @export var on_hit_triggers: Array[HitTrigger]
 @export var pre_hit_triggers: Array[PreHitTrigger]
@@ -21,10 +20,7 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 	var final_targets: Array = parent_targets.duplicate()
 
 	var random = false
-	var focus_cost = 0
-
 	if action:
-		focus_cost = action.focus_cost
 		if action.target_type == Action.TargetType.RANDOM_ENEMY:
 			random = true
 			if final_targets.is_empty():
@@ -51,7 +47,7 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 				break
 
 			var pre_hit_context = _get_pre_hit_triggers(attacker, target)
-			var dynamic_potency = _get_dynamic_potency(attacker, target, context)
+			var dynamic_potency = _get_dynamic_potency(attacker, target, context, battle_manager, action)
 			print("Final Potency: ", dynamic_potency)
 
 			var final_damage_type = damage_type
@@ -129,20 +125,15 @@ func _filter_valid_targets(list: Array) -> Array:
 func _get_dynamic_hit_count(_attacker: ActorCard, _target: ActorCard, _context: Dictionary = {}) -> int:
 	return hit_count
 
-func _get_dynamic_potency(attacker: ActorCard, _target: ActorCard, _context: Dictionary = {}) -> float:
-	if potency_per_guard > 0.0:
-		var guard = 0
-		guard = attacker.current_guard
-		return potency + potency_per_guard * guard
-
-	if potency_scalar_per_focus > 0.0:
-		var remaining_focus = 0
-		if attacker is HeroCard:
-			remaining_focus = max(0, attacker.current_focus)
-		print("Focus Potency: ", potency * (1.0 + (potency_scalar_per_focus * remaining_focus)))
-		return potency * (1.0 + (potency_scalar_per_focus * remaining_focus))
-
-	return potency
+func _get_dynamic_potency(
+	attacker: ActorCard,
+	target: ActorCard,
+	context: Dictionary = {},
+	battle_manager: BattleManager = null,
+	action: Action = null,
+) -> float:
+	var damage_context := DamageContext.capture(attacker, target, battle_manager, action, self, context)
+	return DamageResolver.resolve_potency(potency, scaling_rules, damage_context).potency
 
 func _get_pre_hit_triggers(attacker: ActorCard, target: ActorCard) -> Dictionary:
 	var context = {}
