@@ -571,6 +571,15 @@ func _requires_battlefield_context() -> bool:
 	return false
 
 
+func _has_current_hit_battlefield_scaling() -> bool:
+	for rule: DamageScalingRule in scaling_rules:
+		if rule != null \
+			and rule.phase == DamageScalingRule.Phase.CURRENT_HIT \
+			and rule.requires_battlefield_context():
+			return true
+	return false
+
+
 func _resolve_current_hit_potency(
 	effect_start_potency: DamageResolver.ResolvedPotency,
 	context: DamageContext,

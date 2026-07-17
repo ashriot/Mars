@@ -87,7 +87,7 @@ static func for_plan(
 		for live_target: ActorCard in valid_targets:
 			var preview_target := _copy_target(live_target)
 			var preview_targets := {live_target: preview_target}
-			for _hit_index in plan.planned_hit_count:
+			for hit_index in plan.planned_hit_count:
 				if preview_target.is_defeated:
 					break
 				results.append(_resolve_preview_hit(
@@ -105,6 +105,19 @@ static func for_plan(
 					effect_start_potency,
 					plan.distribution_count,
 				))
+				if preview_target.is_defeated \
+					and hit_index < plan.planned_hit_count - 1 \
+					and valid_targets.size() > 1 \
+					and effect._has_current_hit_battlefield_scaling():
+					preview_target.free()
+					return Sequence.new(
+						[],
+						false,
+						false,
+						plan.planned_hit_count,
+						plan.distribution_count,
+						valid_targets.size(),
+					)
 			preview_target.free()
 		return Sequence.new(
 			results,

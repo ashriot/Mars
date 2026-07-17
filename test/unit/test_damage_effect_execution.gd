@@ -544,6 +544,37 @@ func test_each_planned_hit_builds_one_request_and_result() -> void:
 	_free_recorded_nodes(manager, [attacker, target])
 
 
+func test_production_inversion_context_builds_three_canonical_results() -> void:
+	var attacker := _recording_actor(10, 0, 0)
+	attacker.current_stats.psyche = 80
+	var target := _recording_actor(0, 0, 0)
+	var manager := RecordingBattleManager.new()
+	manager.actor_list = [attacker, target]
+	var inversion := (load(
+		"res://data/heroes/echo/conditions/inversion.tres"
+	) as Condition).duplicate(true) as Condition
+	var effect := inversion.triggers[0].effects_to_run[0] as Effect_Damage_Inversion
+
+	await effect.execute(
+		attacker, [target], manager, null, {"guard_gained": 3},
+	)
+
+	assert_eq(attacker.on_hit_contexts.size(), 3)
+	var result_ids: Dictionary = {}
+	var request_ids: Dictionary = {}
+	for hit_context: Dictionary in attacker.on_hit_contexts:
+		assert_true(hit_context.damage_result is DamageResult)
+		var result := hit_context.damage_result as DamageResult
+		result_ids[result.get_instance_id()] = true
+		request_ids[result.request.get_instance_id()] = true
+		assert_same(result.source_effect, effect)
+		assert_eq(result.request.distribution_count, 1)
+		assert_eq(result.request.damage_type, Action.DamageType.PIERCING)
+	assert_eq(result_ids.size(), 3)
+	assert_eq(request_ids.size(), 3)
+	_free_recorded_nodes(manager, [attacker, target])
+
+
 func test_empty_context_attacker_buff_trigger_counts_buffs_not_debuffs() -> void:
 	assert_eq(await _empty_context_buff_trigger_count(Condition.ConditionType.BUFF), 1)
 	assert_eq(await _empty_context_buff_trigger_count(Condition.ConditionType.DEBUFF), 0)

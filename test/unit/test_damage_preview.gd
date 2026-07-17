@@ -392,6 +392,55 @@ func test_group_preview_updates_living_counts_after_previewed_defeat() -> void:
 	manager.free()
 
 
+func test_random_multihit_redirect_with_living_scaling_is_incomplete() -> void:
+	var manager := BattleManager.new()
+	manager.hero_area = Control.new()
+	manager.enemy_area = Control.new()
+	manager.add_child(manager.hero_area)
+	manager.add_child(manager.enemy_area)
+	var attacker := _hero(100, 0)
+	var low_hp_target := _enemy_target(0)
+	var healthy_target := _enemy_target(0)
+	low_hp_target.current_hp = 50
+	manager.hero_area.add_child(attacker)
+	manager.enemy_area.add_child(low_hp_target)
+	manager.enemy_area.add_child(healthy_target)
+	manager.actor_list = [attacker, low_hp_target, healthy_target]
+	var rule := LivingEnemyPotencyRule.new()
+	rule.phase = DamageScalingRule.Phase.CURRENT_HIT
+	var effect := _damage_effect(1.0)
+	effect.damage_type = Action.DamageType.PIERCING
+	effect.hit_count = 2
+	effect.scaling_rules = [rule]
+	var action := Action.new()
+	action.target_type = Action.TargetType.RANDOM_ENEMY
+	action.description = "{effect:1}"
+	action.effects = [effect]
+
+	var sequence := DamagePreview.for_plan(
+		effect,
+		attacker,
+		[low_hp_target, healthy_target],
+		action,
+		false,
+		manager,
+	)
+	var text := action.get_rich_description(
+		attacker, null, [low_hp_target, healthy_target], manager,
+	)
+
+	assert_false(sequence.is_complete)
+	assert_true(sequence.results.is_empty())
+	assert_string_contains(text, "100% ATK")
+	assert_string_contains(text, "contextual scaling")
+	assert_false(text.contains("110 per target"))
+	assert_eq(low_hp_target.current_hp, 50)
+	assert_false(low_hp_target.is_defeated)
+	assert_eq(healthy_target.current_hp, healthy_target.current_stats.max_hp)
+	assert_false(healthy_target.is_defeated)
+	manager.free()
+
+
 func test_effect_tokens_bind_by_action_effect_index() -> void:
 	var action := Action.new()
 	action.description = "First {effect:1}; second {effect:2}"
