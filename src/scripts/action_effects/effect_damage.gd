@@ -491,7 +491,10 @@ func _process_on_hit_triggers(
 					condition_met = target.has_condition(hit_trigger.context)
 			HitTrigger.HitCondition.IF_ATTACKER_HAS_BUFF:
 				if hit_trigger.context.is_empty():
-					condition_met = attacker.count_debuffs() > 0
+					condition_met = attacker.active_conditions.any(func(condition):
+						return condition.condition_type == Condition.ConditionType.BUFF \
+							and not condition.is_passive
+					)
 				else:
 					condition_met = attacker.has_condition(hit_trigger.context)
 

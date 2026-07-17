@@ -85,7 +85,7 @@ func calculate_stats() -> ActorStats:
 		if ratings.has(ActorStats.Stats.OVR):
 			stats.overload = _calc_stat(ratings[ActorStats.Stats.OVR], 0) * 4
 		if ratings.has(ActorStats.Stats.AIM):
-			stats.aim = (ratings[ActorStats.Stats.KIN_DEF] * 5) + 10
+			stats.aim = (ratings[ActorStats.Stats.AIM] * 5) + 10
 			stats.precision = _calc_stat(ratings[ActorStats.Stats.PRE])
 
 	if ratings.has(ActorStats.Stats.SPD):

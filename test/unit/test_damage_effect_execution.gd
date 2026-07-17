@@ -272,6 +272,11 @@ func test_each_planned_hit_builds_one_request_and_result() -> void:
 	_free_recorded_nodes(manager, [attacker, target])
 
 
+func test_empty_context_attacker_buff_trigger_counts_buffs_not_debuffs() -> void:
+	assert_eq(await _empty_context_buff_trigger_count(Condition.ConditionType.BUFF), 1)
+	assert_eq(await _empty_context_buff_trigger_count(Condition.ConditionType.DEBUFF), 0)
+
+
 func test_effect_start_potency_is_stable_across_hits() -> void:
 	var attacker := _recording_actor(100, 0, 2)
 	var target := _recording_actor(0, 0, 0)
@@ -541,6 +546,32 @@ func _recording_action_manager() -> RecordingBattleManager:
 	manager.add_child(manager.enemy_area)
 	manager.add_child(manager.current_action_panel)
 	return manager
+
+
+func _empty_context_buff_trigger_count(condition_type: Condition.ConditionType) -> int:
+	var attacker := _recording_actor(100, 0, 0)
+	var target := _recording_actor(0, 0, 0)
+	var condition := Condition.new()
+	condition.condition_type = condition_type
+	attacker.active_conditions = [condition]
+	var manager := RecordingBattleManager.new()
+	manager.hero_area = Control.new()
+	manager.enemy_area = Control.new()
+	manager.add_child(manager.hero_area)
+	manager.add_child(manager.enemy_area)
+	manager.actor_list = [attacker, target]
+	var recording_effect := RecordingActionEffect.new()
+	var trigger := HitTrigger.new()
+	trigger.condition = HitTrigger.HitCondition.IF_ATTACKER_HAS_BUFF
+	trigger.effects_to_run = [recording_effect]
+	var damage_effect := Effect_Damage.new()
+	damage_effect.on_hit_triggers = [trigger]
+
+	await damage_effect._process_on_hit_triggers(attacker, target, manager, {})
+
+	var count := recording_effect.received_contexts.size()
+	_free_recorded_nodes(manager, [attacker, target])
+	return count
 
 
 func _free_recorded_nodes(manager: BattleManager, actors: Array) -> void:

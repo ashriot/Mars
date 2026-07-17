@@ -12,7 +12,7 @@
 script = ExtResource("7_hi87s")
 potency = 2.0
 power_type = 1
-damage_type = 2
+damage_type = 1
 target_type = 4
 metadata/_custom_type_script = "uid://d0eibi4b735ay"
 
@@ -26,7 +26,7 @@ metadata/_custom_type_script = "uid://cdugd6pnm6py"
 script = ExtResource("2_vqlpy")
 condition_name = "Static Charge"
 icon = ExtResource("1_q8ka4")
-description = "This enemy is slowed and at the start of their next turn will take Energy damage."
+description = "This enemy is slowed and at the start of their next turn takes {psy*2.0} {nrg} damage that shreds {grd}."
 speed_scalar = -0.25
 triggers = Array[ExtResource("3_q1na2")]([SubResource("Resource_6r8sd")])
 remove_on_triggers = Array[int]([1])
