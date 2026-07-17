@@ -50,6 +50,9 @@ func execute(
 			attacker, target, battle_manager, action, context, plan, resolved_potency,
 		)
 
+		if _should_wait_between_hits(plan, hit_index, target):
+			await battle_manager.wait(0.15)
+
 		if plan.target_mode != DamageHitPlan.TargetMode.RANDOM \
 			and not after_attack_fired.has(target) \
 			and _is_target_sequence_complete(plan, hit_index, target):
@@ -57,9 +60,6 @@ func execute(
 			await target._fire_condition_event(
 				Trigger.TriggerType.AFTER_BEING_ATTACKED, context,
 			)
-
-		if _should_wait_between_hits(plan, hit_index, target):
-			await battle_manager.wait(0.15)
 
 
 func _build_hit_plan(
@@ -199,8 +199,6 @@ func _should_wait_between_hits(
 		return false
 	if plan.target_mode == DamageHitPlan.TargetMode.RANDOM:
 		return true
-	if target.is_defeated:
-		return false
 	if plan.target_mode == DamageHitPlan.TargetMode.SINGLE:
 		return true
 	var plan_candidates := plan.candidates

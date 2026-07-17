@@ -13,14 +13,17 @@ class RecordedHitOutcome extends RefCounted:
 
 
 class RecordingBattleManager extends BattleManager:
+	var event_log: Array[String] = []
+
 	func wait(_duration: float = 0.01) -> void:
-		return
+		event_log.append("wait")
 
 
 class RecordingActor extends ActorCard:
 	var breach_calls := 0
 	var guard_changes: Array[int] = []
 	var focus_changes: Array[int] = []
+	var event_log: Array[String] = []
 
 	func modify_guard(amount: int, _is_recovering: bool = false) -> void:
 		guard_changes.append(amount)
@@ -48,10 +51,11 @@ class RecordingActor extends ActorCard:
 		return
 
 	func _fire_condition_event(
-		_event_type: Trigger.TriggerType,
+		event_type: Trigger.TriggerType,
 		_context: Dictionary = {},
 	) -> void:
-		return
+		if event_type == Trigger.TriggerType.AFTER_BEING_ATTACKED:
+			event_log.append("after")
 
 
 class RecordingHero extends HeroCard:
@@ -237,6 +241,27 @@ func test_random_split_keeps_initial_divisor_after_target_defeat() -> void:
 	for result in effect.results:
 		assert_eq(result.request.distribution_count, 3)
 	_free_recorded_nodes(manager, [attacker, first_target, second_target])
+
+
+func test_early_lethal_nonrandom_hit_waits_before_after_attacked_event() -> void:
+	var attacker := _recording_actor(100, 0, 0)
+	var target := _recording_actor(0, 0, 0)
+	var event_log: Array[String] = []
+	var manager := RecordingBattleManager.new()
+	manager.actor_list = [attacker, target]
+	manager.event_log = event_log
+	target.event_log = event_log
+	var effect := RecordingDamageEffect.new()
+	effect.damage_type = Action.DamageType.PIERCING
+	effect.hit_count = 2
+	effect.first_target = target
+	effect.defeat_first_target_after_hit = true
+
+	await effect.execute(attacker, [target], manager)
+
+	assert_eq(effect.results.size(), 1)
+	assert_eq(event_log, ["wait", "after"])
+	_free_recorded_nodes(manager, [attacker, target])
 
 
 func test_execute_action_pays_scaled_focus_once_and_passes_cost_context() -> void:
