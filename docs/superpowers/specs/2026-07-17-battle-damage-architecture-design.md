@@ -207,6 +207,8 @@ For complete context, preview builds the same fixed hit plan as runtime and copi
 
 Exact/group presentation receives an explicit target collection and, when available, the battle manager that owns living-combatant counts. A missing target collection or other required battlefield input marks the preview incomplete. Incomplete presentation renders authored potency × ATK/PSY and authored contextual-scaling relationships without a fabricated final total.
 
+Scaling rules that consume living-combatant or other battle-manager-owned facts declare that dependency through `requires_battlefield_context()`. Target presence alone does not make those previews complete. Sequential preview derives later current-hit counts from its copied defeat state while leaving the live battlefield unchanged.
+
 Identical ordered results with one resolved type may use compact `xN` notation. Ordered hits whose amount or resolved type changes render ordered segments when order is meaningful. Unordered/group results of one type render a min–max per-target range. Different resolved types stay separate; presentation never averages heterogeneous results. Enemy intent consumes the same sequence output and rendering policy.
 
 Breakdown data retains authored base potency separately from resolved potency. Condition, trait, and scaling-rule modifiers enter the request as source-labeled typed contributions; the category totals used by the calculator are derived from those contributions so explanation and arithmetic cannot drift.

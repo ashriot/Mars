@@ -60,6 +60,4 @@ func _init(
 	if presentation_target != null and _targets.is_empty():
 		_targets.append(presentation_target)
 	_battle_manager = presentation_battle_manager
-	_is_complete = presentation_is_complete \
-		or presentation_target != null \
-		or not _targets.is_empty()
+	_is_complete = presentation_is_complete

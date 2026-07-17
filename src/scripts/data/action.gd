@@ -152,6 +152,7 @@ func _get_effect_presentation(
 	if target != null and resolved_targets.is_empty():
 		resolved_targets.append(target)
 	var distribution_count := 1
+	var presentation_is_complete := not resolved_targets.is_empty()
 	var is_group_target := target_type in [
 		TargetType.ALL_ENEMIES,
 		TargetType.ENEMY_GROUP,
@@ -160,6 +161,9 @@ func _get_effect_presentation(
 	]
 	if effect is Effect_Damage:
 		var damage_effect := effect as Effect_Damage
+		if damage_effect._requires_battlefield_context() \
+			and battle_manager == null:
+			presentation_is_complete = false
 		var resolved_hit_count := damage_effect._resolve_hit_count(user)
 		if not resolved_targets.is_empty():
 			var plan := damage_effect._build_hit_plan(
@@ -170,7 +174,7 @@ func _get_effect_presentation(
 			distribution_count = maxi(1, resolved_hit_count)
 	var context := EffectPresentationContext.new(
 		user, target, self, effect_index, distribution_count, false,
-		null, resolved_targets, battle_manager, not resolved_targets.is_empty(),
+		null, resolved_targets, battle_manager, presentation_is_complete,
 	)
 	return effect.get_presentation(context)
 

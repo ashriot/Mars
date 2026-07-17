@@ -26,6 +26,9 @@ class TargetHpPotencyRule extends DamageScalingRule:
 
 
 class LivingEnemyPotencyRule extends DamageScalingRule:
+	func requires_battlefield_context() -> bool:
+		return true
+
 	func resolve(_base_potency: float, context: DamageContext) -> DamageContribution:
 		return DamageContribution.new(
 			&"other_living_enemies",
@@ -145,7 +148,9 @@ func test_multihit_presentation_advances_guard_to_breach_without_mutating_target
 	var original_hp := target.current_hp
 
 	var presentation := effect.get_presentation(
-		EffectPresentationContext.new(attacker, target, action),
+		EffectPresentationContext.new(
+			attacker, target, action, -1, 1, false, null, [target], null, true,
+		),
 	)
 	var text := presentation.render()
 
@@ -175,7 +180,9 @@ func test_multihit_presentation_consumes_forced_type_only_in_preview_copy() -> v
 	var original_hp := target.current_hp
 
 	var presentation := effect.get_presentation(
-		EffectPresentationContext.new(attacker, target, action),
+		EffectPresentationContext.new(
+			attacker, target, action, -1, 1, false, null, [target], null, true,
+		),
 	)
 	var text := presentation.render()
 
@@ -345,6 +352,46 @@ func test_current_hit_preview_uses_the_exact_target_snapshot() -> void:
 	second_target.free()
 
 
+func test_group_preview_updates_living_counts_after_previewed_defeat() -> void:
+	var manager := BattleManager.new()
+	manager.hero_area = Control.new()
+	manager.enemy_area = Control.new()
+	manager.add_child(manager.hero_area)
+	manager.add_child(manager.enemy_area)
+	var attacker := _hero(100, 0)
+	var first_target := _enemy_target(0)
+	var second_target := _enemy_target(0)
+	first_target.current_hp = 50
+	manager.hero_area.add_child(attacker)
+	manager.enemy_area.add_child(first_target)
+	manager.enemy_area.add_child(second_target)
+	manager.actor_list = [attacker, first_target, second_target]
+	var rule := LivingEnemyPotencyRule.new()
+	rule.phase = DamageScalingRule.Phase.CURRENT_HIT
+	var effect := _damage_effect(1.0)
+	effect.damage_type = Action.DamageType.PIERCING
+	effect.scaling_rules = [rule]
+	var action := Action.new()
+	action.target_type = Action.TargetType.ALL_ENEMIES
+	action.effects = [effect]
+	var sequence := DamagePreview.for_plan(
+		effect,
+		attacker,
+		[first_target, second_target],
+		action,
+		false,
+		manager,
+	)
+	var results := sequence.results
+
+	assert_eq(results.size(), 2)
+	assert_almost_eq(results[0].request.potency, 1.1, 0.0001)
+	assert_almost_eq(results[1].request.potency, 1.0, 0.0001)
+	assert_eq(first_target.current_hp, 50, "preview leaves the live target unchanged")
+	assert_false(first_target.is_defeated)
+	manager.free()
+
+
 func test_effect_tokens_bind_by_action_effect_index() -> void:
 	var action := Action.new()
 	action.description = "First {effect:1}; second {effect:2}"
@@ -405,7 +452,7 @@ func test_damage_presentation_exposes_generic_render_bindings() -> void:
 	effect.hit_count = 3
 	effect.split_damage = true
 	var context := EffectPresentationContext.new(
-		attacker, target, action, 0, 3, false,
+		attacker, target, action, 0, 3, false, null, [target], null, true,
 	)
 	var presentation := effect.get_presentation(context)
 	var bindings := presentation.bindings
@@ -440,7 +487,9 @@ func test_damage_presentation_labels_each_contribution_stage_accurately() -> voi
 		),
 	]
 	var presentation := effect.get_presentation(
-		EffectPresentationContext.new(attacker, target),
+		EffectPresentationContext.new(
+			attacker, target, null, -1, 1, false, null, [target], null, true,
+		),
 	)
 
 	assert_has(presentation.details, "potency bonus: 50% potency")
@@ -525,6 +574,34 @@ func test_incomplete_target_and_battlefield_scaling_render_authored_relationship
 			"missing context never fabricates a final damage total",
 		)
 	attacker.free()
+
+
+func test_exact_target_battlefield_scaling_without_manager_is_incomplete() -> void:
+	var attacker := _attacker()
+	var target := _target(false, 0, 0.0)
+	var effect := _damage_effect(1.0)
+	effect.scaling_rules = [LivingEnemyPotencyRule.new()]
+	var action := Action.new()
+	action.description = "{effect:1}"
+	action.effects = [effect]
+	var sequence := DamagePreview.for_plan(
+		effect, attacker, [target], action, false,
+	)
+	var incomplete_context := EffectPresentationContext.new(attacker, target)
+	var text := action.get_rich_description(attacker, target)
+
+	assert_false(incomplete_context.is_complete)
+	assert_eq(incomplete_context.targets, [target])
+	assert_false(sequence.is_complete)
+	assert_true(sequence.results.is_empty())
+	assert_string_contains(text, "100% ATK")
+	assert_string_contains(text, "contextual scaling")
+	assert_false(
+		text.contains("Deals 100 " + Action._get_bbcode_icon("kinetic")),
+		"missing battlefield context never fabricates a final damage total",
+	)
+	attacker.free()
+	target.free()
 
 
 func test_legacy_expression_and_icon_description_remain_compatible() -> void:

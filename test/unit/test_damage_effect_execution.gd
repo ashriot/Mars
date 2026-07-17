@@ -112,15 +112,17 @@ class RecordingHero extends HeroCard:
 
 class RecordingActionEffect extends ActionEffect:
 	var received_contexts: Array[Dictionary] = []
+	var received_target_sets: Array = []
 
 	func execute(
 		_attacker: ActorCard,
-		_parent_targets: Array,
+		parent_targets: Array,
 		_battle_manager: BattleManager,
 		_action: Action = null,
 		context: Dictionary = {},
 	) -> void:
 		received_contexts.append(context.duplicate(true))
+		received_target_sets.append(parent_targets.duplicate())
 
 
 class TargetHpPotencyRule extends DamageScalingRule:
@@ -350,6 +352,40 @@ func test_damage_source_identity_reaches_target_on_hit_and_attacker_contexts() -
 		assert_same(event_context.source_action, action)
 		assert_same(event_context.damage_result.source_effect, damage_effect)
 		assert_same(event_context.damage_result.source_action, action)
+
+
+func test_attacker_on_hit_parent_effect_receives_the_hit_target() -> void:
+	var attacker := ActorCard.new()
+	attacker.current_stats = ActorStats.new()
+	attacker.current_stats.attack = 100
+	attacker.current_stats.max_hp = 1000
+	attacker.current_hp = 1000
+	var target := _recording_actor(0, 0, 0)
+	var manager := RecordingBattleManager.new()
+	manager.hero_area = Control.new()
+	manager.enemy_area = Control.new()
+	manager.add_child(manager.hero_area)
+	manager.add_child(manager.enemy_area)
+	manager.actor_list = [attacker, target]
+	attacker.battle_manager = manager
+	var parent_effect := RecordingActionEffect.new()
+	parent_effect.target_type = Action.TargetType.PARENT
+	var trigger := Trigger.new()
+	trigger.trigger_type = Trigger.TriggerType.ON_HIT
+	trigger.effects_to_run = [parent_effect]
+	var condition := Condition.new()
+	condition.condition_name = "Parent hit reaction"
+	condition.attacker = attacker
+	condition.triggers = [trigger]
+	attacker.active_conditions = [condition]
+	var damage_effect := RecordingDamageEffect.new()
+	damage_effect.damage_type = Action.DamageType.PIERCING
+
+	await damage_effect.execute(attacker, [target], manager)
+
+	assert_eq(parent_effect.received_target_sets.size(), 1)
+	assert_eq(parent_effect.received_target_sets[0], [target])
+	_free_recorded_nodes(manager, [attacker, target])
 
 
 func test_production_reverberate_routes_parent_target_and_removes_after_energy_hit() -> void:

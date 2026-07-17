@@ -15,3 +15,7 @@ static func is_supported_phase(value: int) -> bool:
 
 func resolve(_base_potency: float, _context: DamageContext) -> DamageContribution:
 	return DamageContribution.new(&"unused", DamageContribution.Stage.POTENCY, 0.0)
+
+
+func requires_battlefield_context() -> bool:
+	return false

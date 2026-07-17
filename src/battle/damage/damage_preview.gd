@@ -55,6 +55,8 @@ static func for_plan(
 	var resolved_hit_count := effect._resolve_hit_count(attacker)
 	if attacker == null or attacker.current_stats == null or targets.is_empty():
 		return Sequence.new([], false, false, resolved_hit_count, 1, targets.size())
+	if effect._requires_battlefield_context() and battle_manager == null:
+		return Sequence.new([], false, false, resolved_hit_count, 1, targets.size())
 	var valid_targets: Array[ActorCard] = []
 	for target: ActorCard in targets:
 		if not is_instance_valid(target) \
@@ -84,6 +86,7 @@ static func for_plan(
 	if plan.target_mode == DamageHitPlan.TargetMode.RANDOM:
 		for live_target: ActorCard in valid_targets:
 			var preview_target := _copy_target(live_target)
+			var preview_targets := {live_target: preview_target}
 			for _hit_index in plan.planned_hit_count:
 				if preview_target.is_defeated:
 					break
@@ -95,6 +98,7 @@ static func for_plan(
 					preview_target,
 					action,
 					battle_manager,
+					preview_targets,
 					critical,
 					pre_hit_context,
 					trigger_context,
@@ -135,6 +139,7 @@ static func for_plan(
 			preview_target,
 			action,
 			battle_manager,
+			preview_targets,
 			critical,
 			pre_hit_context,
 			trigger_context,
@@ -221,6 +226,7 @@ static func _resolve_preview_hit(
 	preview_target: ActorCard,
 	action: Action,
 	battle_manager: BattleManager,
+	preview_targets: Dictionary,
 	critical: bool,
 	pre_hit_context: Dictionary,
 	trigger_context: Dictionary,
@@ -234,7 +240,9 @@ static func _resolve_preview_hit(
 		preview_target.active_conditions.erase(decision.condition_to_consume)
 	var resolved_damage_type := decision.resolved_damage_type
 	_apply_preview_guard(effect, preview_target, resolved_damage_type)
-	var hit_counts := _living_counts(attacker, live_target, battle_manager)
+	var hit_counts := _living_counts(
+		attacker, live_target, battle_manager, preview_targets,
+	)
 	var hit_context := DamageContext.new(
 		preview_attacker,
 		CombatantSnapshot.capture(preview_target),
@@ -303,13 +311,29 @@ static func _living_counts(
 	attacker: ActorCard,
 	target: ActorCard,
 	battle_manager: BattleManager,
+	preview_targets: Dictionary = {},
 ) -> Dictionary:
 	if battle_manager == null:
 		return {"allies": 0, "enemies": 0}
-	var captured := DamageContext.capture(attacker, target, battle_manager)
+	var other_living_allies := 0
+	var other_living_enemies := 0
+	for combatant: ActorCard in battle_manager.actor_list:
+		if not is_instance_valid(combatant):
+			continue
+		var defeated := combatant.is_defeated
+		if preview_targets.has(combatant):
+			defeated = (preview_targets[combatant] as ActorCard).is_defeated
+		if defeated:
+			continue
+		var is_attacker_ally := (combatant is HeroCard) == (attacker is HeroCard)
+		if is_attacker_ally:
+			if combatant != attacker:
+				other_living_allies += 1
+		elif combatant != target:
+			other_living_enemies += 1
 	return {
-		"allies": captured.other_living_allies,
-		"enemies": captured.other_living_enemies,
+		"allies": other_living_allies,
+		"enemies": other_living_enemies,
 	}
 
 

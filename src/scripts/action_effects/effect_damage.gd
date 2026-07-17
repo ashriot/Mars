@@ -481,6 +481,7 @@ func _execute_one_hit(
 	hit_event_context.merge({
 		"attacker": attacker,
 		"target": target,
+		"targets": [target],
 		"damage_result": result,
 		"attempted_damage": result.final_damage,
 		"actual_damage": actual_damage,
@@ -561,6 +562,13 @@ func _filter_valid_targets(list: Array) -> Array:
 
 func _resolve_potency(context: DamageContext) -> DamageResolver.ResolvedPotency:
 	return DamageResolver.resolve_potency(potency, scaling_rules, context)
+
+
+func _requires_battlefield_context() -> bool:
+	for rule: DamageScalingRule in scaling_rules:
+		if rule != null and rule.requires_battlefield_context():
+			return true
+	return false
 
 
 func _resolve_current_hit_potency(
