@@ -352,6 +352,65 @@ func test_damage_source_identity_reaches_target_on_hit_and_attacker_contexts() -
 		assert_same(event_context.damage_result.source_action, action)
 
 
+func test_production_reverberate_routes_parent_target_and_removes_after_energy_hit() -> void:
+	var action := load("res://data/heroes/echo/actions/reverberate.tres") as Action
+	var fixture := _application_fixture(200, 200)
+	fixture.attacker.current_stats.attack = 5
+	fixture.attacker.current_stats.psyche = 40
+	fixture.target.current_guard = 1
+	fixture.battle_manager.hero_area = Control.new()
+	fixture.battle_manager.enemy_area = Control.new()
+	fixture.battle_manager.add_child(fixture.battle_manager.hero_area)
+	fixture.battle_manager.add_child(fixture.battle_manager.enemy_area)
+	fixture.battle_manager.actor_list = [fixture.attacker, fixture.target]
+	var condition := (load(
+		"res://data/heroes/echo/conditions/reverberate.tres"
+	) as Condition).duplicate(true) as Condition
+	condition.attacker = fixture.attacker
+	var nested_damage := condition.triggers[0].effects_to_run[0] as Effect_Damage
+	fixture.target.active_conditions = [
+		condition,
+		_recording_condition(
+			fixture.target,
+			fixture.attacker,
+			Trigger.TriggerType.ON_TAKING_ENERGY_DAMAGE,
+		),
+	]
+	var result := DamageResult.with_hit_facts(
+		DamageCalculator.calculate(_request_for_final_damage(10)),
+		false,
+		false,
+		action.effects[0],
+		action,
+	)
+
+	await fixture.target.take_one_hit(
+		result,
+		action.effects[0],
+		fixture.attacker,
+		Action.DamageType.KINETIC,
+	)
+
+	assert_eq(fixture.target.current_hp, 130)
+	assert_false(fixture.target.has_condition("Reverberate"))
+	assert_has(
+		fixture.target.recorded_events,
+		Trigger.TriggerType.ON_TAKING_ENERGY_DAMAGE,
+	)
+	if not assert_false(fixture.target.last_damage_context.is_empty()):
+		return
+	assert_eq(
+		fixture.target.last_damage_context.resolved_damage_type,
+		Action.DamageType.ENERGY,
+	)
+	assert_same(fixture.target.last_damage_context.source_effect, nested_damage)
+	assert_same(fixture.target.last_damage_context.source_action, action)
+	assert_same(
+		fixture.target.last_damage_context.damage_result.source_effect,
+		nested_damage,
+	)
+
+
 func test_nested_damage_inherits_source_action_for_its_own_damage_contexts() -> void:
 	var fixture := _application_fixture(300, 300)
 	var manager := fixture.battle_manager

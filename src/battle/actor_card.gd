@@ -155,6 +155,7 @@ func take_one_hit(
 	var event_context := {
 		"attacker": attacker,
 		"target": self,
+		"targets": [self],
 		"damage_result": result,
 		"attempted_damage": result.final_damage,
 		"actual_damage": actual_damage,
