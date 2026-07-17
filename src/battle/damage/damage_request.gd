@@ -11,6 +11,7 @@ var _defense: int
 var _outgoing_modifier: float
 var _incoming_modifier: float
 var _contributions: Array[DamageContribution]
+var _power_bonus: float
 
 var base_power: int:
 	get: return _base_power
@@ -32,6 +33,8 @@ var incoming_modifier: float:
 	get: return _incoming_modifier
 var contributions: Array[DamageContribution]:
 	get: return _contributions.duplicate()
+var power_bonus: float:
+	get: return _power_bonus
 
 
 func _init(
@@ -45,6 +48,7 @@ func _init(
 	request_outgoing_modifier: float = 0.0,
 	request_incoming_modifier: float = 0.0,
 	request_contributions: Array[DamageContribution] = [],
+	request_power_bonus: float = 0.0,
 ) -> void:
 	_base_power = request_base_power
 	_overload_power = request_overload_power
@@ -56,3 +60,4 @@ func _init(
 	_outgoing_modifier = request_outgoing_modifier
 	_incoming_modifier = request_incoming_modifier
 	_contributions = request_contributions.duplicate()
+	_power_bonus = request_power_bonus

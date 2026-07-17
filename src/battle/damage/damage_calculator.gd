@@ -3,7 +3,11 @@ extends RefCounted
 
 
 static func calculate(request: DamageRequest) -> DamageResult:
-	var effective_power := maxi(0, request.base_power + request.overload_power + request.precision_power)
+	var effective_power := maxf(
+		0.0,
+		float(request.base_power + request.overload_power + request.precision_power)
+			+ request.power_bonus,
+	)
 	var clamped_defense := 0
 	if request.damage_type in [Action.DamageType.KINETIC, Action.DamageType.ENERGY]:
 		clamped_defense = clampi(request.defense, 0, 90)

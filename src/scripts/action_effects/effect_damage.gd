@@ -70,12 +70,7 @@ func get_presentation(context: EffectPresentationContext) -> EffectPresentation:
 		"Resolved potency: %s%%" % _format_percent(result.request.potency),
 	]
 	for contribution: DamageContribution in result.request.contributions:
-		details.append(
-			"%s: %s%% potency" % [
-				_get_contribution_label(contribution.source),
-				_format_percent(contribution.amount),
-			],
-		)
+		details.append(_get_contribution_detail(contribution))
 	return EffectPresentation.new(
 		"Deals {amount}{amount_qualifier}{hit_count_text} {damage_type} damage"
 			+ "{split_behavior}{contextual_scaling}.",
@@ -123,10 +118,35 @@ func _get_contribution_label(source: StringName) -> String:
 	return str(source).replace("_", " ")
 
 
+func _get_contribution_detail(contribution: DamageContribution) -> String:
+	var label := _get_contribution_label(contribution.source)
+	match contribution.stage:
+		DamageContribution.Stage.POTENCY:
+			return "%s: %s%% potency" % [
+				label, _format_percent(contribution.amount),
+			]
+		DamageContribution.Stage.POWER:
+			return "%s: %s power" % [
+				label, _format_number(contribution.amount),
+			]
+		DamageContribution.Stage.OUTGOING:
+			return "%s: %s%% outgoing damage" % [
+				label, _format_percent(contribution.amount),
+			]
+		DamageContribution.Stage.INCOMING:
+			return "%s: %s%% incoming damage" % [
+				label, _format_percent(contribution.amount),
+			]
+	return "%s: %s" % [label, _format_number(contribution.amount)]
+
+
 func _format_percent(value: float) -> String:
-	var percent := value * 100.0
-	return str(roundi(percent)) if is_equal_approx(percent, roundf(percent)) \
-		else "%.1f" % percent
+	return _format_number(value * 100.0)
+
+
+func _format_number(value: float) -> String:
+	return str(roundi(value)) if is_equal_approx(value, roundf(value)) \
+		else "%.1f" % value
 
 
 func execute(
@@ -138,8 +158,9 @@ func execute(
 ) -> void:
 	var resolved_hit_count := _resolve_hit_count(attacker, context)
 	var plan := _build_hit_plan(parent_targets, action, resolved_hit_count)
+	var source_action := _resolve_source_action(action, context)
 	var effect_context := DamageContext.capture(
-		attacker, null, battle_manager, action, self, context,
+		attacker, null, battle_manager, source_action, self, context,
 	)
 	var resolved_potency := _resolve_potency(effect_context)
 	print("\n--- Damage Effect for ", plan.planned_hit_count, " hit(s) ---")
@@ -160,7 +181,13 @@ func execute(
 			continue
 
 		await _execute_one_hit(
-			attacker, target, battle_manager, action, context, plan, resolved_potency,
+			attacker,
+			target,
+			battle_manager,
+			source_action,
+			context,
+			plan,
+			resolved_potency,
 		)
 
 		if _should_wait_between_hits(plan, hit_index, target):
@@ -230,7 +257,7 @@ func _execute_one_hit(
 	attacker: ActorCard,
 	target: ActorCard,
 	battle_manager: BattleManager,
-	action: Action,
+	source_action: Action,
 	context: Dictionary,
 	plan: DamageHitPlan,
 	resolved_potency: DamageResolver.ResolvedPotency,
@@ -245,8 +272,9 @@ func _execute_one_hit(
 	await _apply_guard_behavior(target, resolved_damage_type)
 
 	var hit_context := DamageContext.capture(
-		attacker, target, battle_manager, action, self, context,
+		attacker, target, battle_manager, source_action, self, context,
 	)
+	var hit_potency := _resolve_current_hit_potency(resolved_potency, hit_context)
 	var crit_chance := attacker.get_aim() + target.get_incoming_aim_mods()
 	crit_chance += int(pre_hit_context.get("aim_bonus", 0))
 	var is_critical := _roll_percent(clampi(crit_chance, 0, 100))
@@ -254,7 +282,7 @@ func _execute_one_hit(
 		attacker,
 		target,
 		power_type,
-		resolved_potency,
+		hit_potency,
 		plan.distribution_count,
 		resolved_damage_type,
 		is_critical,
@@ -274,8 +302,10 @@ func _execute_one_hit(
 		"attempted_damage": result.final_damage,
 		"actual_damage": actual_damage,
 		"resolved_damage_type": resolved_damage_type,
-		"is_critical": result.request.precision_power > 0,
-		"was_breached": result.request.overload_power > 0,
+		"is_critical": result.is_critical,
+		"was_breached": result.was_breached,
+		"source_effect": result.source_effect,
+		"source_action": result.source_action,
 	}, true)
 	await _process_on_hit_triggers(attacker, target, battle_manager, hit_event_context)
 	await attacker._fire_condition_event(Trigger.TriggerType.ON_HIT, hit_event_context)
@@ -350,6 +380,23 @@ func _resolve_potency(context: DamageContext) -> DamageResolver.ResolvedPotency:
 	return DamageResolver.resolve_potency(potency, scaling_rules, context)
 
 
+func _resolve_current_hit_potency(
+	effect_start_potency: DamageResolver.ResolvedPotency,
+	context: DamageContext,
+) -> DamageResolver.ResolvedPotency:
+	var current_hit_potency := DamageResolver.resolve_potency(
+		potency,
+		scaling_rules,
+		context,
+		DamageScalingRule.Phase.CURRENT_HIT,
+	)
+	return DamageResolver.combine_potency(
+		potency,
+		effect_start_potency,
+		current_hit_potency,
+	)
+
+
 func _get_dynamic_potency(
 	attacker: ActorCard,
 	target: ActorCard,
@@ -357,10 +404,27 @@ func _get_dynamic_potency(
 	battle_manager: BattleManager = null,
 	action: Action = null,
 ) -> float:
-	var damage_context := DamageContext.capture(
-		attacker, target, battle_manager, action, self, context,
+	var source_action := _resolve_source_action(action, context)
+	var effect_context := DamageContext.capture(
+		attacker, null, battle_manager, source_action, self, context,
 	)
-	return _resolve_potency(damage_context).potency
+	var effect_start_potency := _resolve_potency(effect_context)
+	if target == null:
+		return effect_start_potency.potency
+	var hit_context := DamageContext.capture(
+		attacker, target, battle_manager, source_action, self, context,
+	)
+	return _resolve_current_hit_potency(effect_start_potency, hit_context).potency
+
+
+func _resolve_source_action(action: Action, context: Dictionary) -> Action:
+	if action != null:
+		return action
+	var inherited_source: Variant = context.get("source_action")
+	if inherited_source is Action:
+		return inherited_source as Action
+	var inherited_action: Variant = context.get("action")
+	return inherited_action as Action if inherited_action is Action else null
 
 
 func _roll_percent(chance: int) -> bool:

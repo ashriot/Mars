@@ -1,9 +1,35 @@
 extends GutTest
 
 
+class UnsupportedScalingRule extends DamageScalingRule:
+	func resolve(_base_potency: float, _context: DamageContext) -> DamageContribution:
+		return DamageContribution.new(&"unsupported", DamageContribution.Stage.POTENCY, 0.5)
+
+
+class MisleadingDamagePresentation extends Effect_Damage:
+	func get_presentation(_context: EffectPresentationContext) -> EffectPresentation:
+		return EffectPresentation.new(
+			"Deals {amount} {damage_type} damage.",
+			{
+				"amount": 999,
+				"amount_qualifier": "",
+				"selected_power": 999,
+				"damage_type": "wrong type",
+				"hit_count": 99,
+				"hit_count_text": "x99",
+				"split_behavior": " wrong split",
+				"contextual_scaling": " wrong scaling",
+			},
+		)
+
+
 const CONTENT_ROOTS: Array[String] = [
 	"res://data/heroes",
 	"res://data/enemies",
+]
+const SUPPORTED_DAMAGE_SCALING_RULE_SCRIPTS: Array[String] = [
+	"res://src/battle/damage/damage_scaling_flat_per_resource.gd",
+	"res://src/battle/damage/damage_scaling_base_per_resource.gd",
 ]
 const APPROVED_DESCRIPTION_FORMULAS: Dictionary = {
 	"res://data/enemies/actions/shrapnel.tres": ["{atk*1.0}"],
@@ -513,6 +539,55 @@ func test_all_production_damage_resources_are_structured_and_valid() -> void:
 			_validate_condition(resource as Condition, path, {})
 
 
+func test_damage_validator_rejects_unsupported_scaling_rule_classes_and_phases() -> void:
+	var effect := Effect_Damage.new()
+	effect.scaling_rules = [UnsupportedScalingRule.new()]
+	var errors := _damage_effect_errors(effect)
+	assert_string_contains("\n".join(errors), "unsupported scaling rule class")
+
+	var invalid_phase_rule := DamageScalingFlatPerResource.new()
+	invalid_phase_rule.set("phase", 99)
+	effect.scaling_rules = [invalid_phase_rule]
+	errors = _damage_effect_errors(effect)
+	assert_string_contains("\n".join(errors), "unsupported scaling phase")
+
+
+func test_direct_damage_validator_compares_structured_presentation_to_runtime() -> void:
+	var action := Action.new()
+	var effect := Effect_Damage.new()
+	effect.potency = 1.25
+	effect.hit_count = 3
+	effect.split_damage = true
+	var rule := DamageScalingFlatPerResource.new()
+	rule.resource = DamageScalingFlatPerResource.ResourceType.FOCUS
+	rule.potency_per_point = 0.1
+	effect.scaling_rules = [rule]
+	action.effects = [effect]
+	assert_eq(
+		_direct_damage_presentation_errors(action, effect, 0),
+		[],
+		"ordinary direct damage presentation matches the runtime preview",
+	)
+
+	var misleading := MisleadingDamagePresentation.new()
+	misleading.potency = effect.potency
+	misleading.hit_count = effect.hit_count
+	misleading.split_damage = effect.split_damage
+	misleading.scaling_rules = [rule]
+	action.effects = [misleading]
+	var errors := _direct_damage_presentation_errors(action, misleading, 0)
+	var combined_errors := "\n".join(errors)
+	for binding_name: String in [
+		"amount", "selected_power", "damage_type", "hit_count",
+		"hit_count_text", "split_behavior", "contextual_scaling",
+	]:
+		assert_string_contains(
+			combined_errors,
+			"%s presentation binding" % binding_name,
+		)
+	assert_string_contains(combined_errors, "presentation clause missing")
+
+
 func test_nested_condition_content_matches_referenced_topology_and_mechanics() -> void:
 	for expected: Dictionary in NESTED_COMPATIBILITY_CASES:
 		var action: Action = null
@@ -746,6 +821,12 @@ func _validate_action(action: Action, path: String) -> void:
 		var effect := action.effects[effect_index]
 		if effect is Effect_Damage:
 			assert_eq(int(binding_counts.get(effect_index, 0)), 1, "%s effect %d has exactly one structured binding" % [path, effect_index + 1])
+			_validate_direct_damage_presentation(
+				action,
+				effect as Effect_Damage,
+				path,
+				effect_index,
+			)
 	_validate_effects(action.effects, path, {})
 
 
@@ -783,6 +864,190 @@ func _validate_damage_effect(effect: Effect_Damage, path: String, effect_index: 
 	assert_false(effect.get_property_list().any(func(property):
 		return property.name == "shreds_guard"
 	), "%s effect %d has no obsolete Guard override" % [path, effect_index])
+	var errors := _damage_effect_errors(effect)
+	assert_eq(
+		errors,
+		[],
+		"%s effect %d has supported scaling configuration: %s" % [
+			path, effect_index, errors,
+		],
+	)
+
+
+func _damage_effect_errors(effect: Effect_Damage) -> Array[String]:
+	var errors: Array[String] = []
+	for rule_index in effect.scaling_rules.size():
+		var rule := effect.scaling_rules[rule_index]
+		if rule == null:
+			errors.append("scaling rule %d is null" % [rule_index + 1])
+			continue
+		var rule_script := rule.get_script() as Script
+		var script_path := rule_script.resource_path if rule_script != null else ""
+		if script_path not in SUPPORTED_DAMAGE_SCALING_RULE_SCRIPTS:
+			errors.append(
+				"scaling rule %d has unsupported scaling rule class %s" % [
+					rule_index + 1,
+					script_path if not script_path.is_empty() else rule.get_class(),
+				],
+			)
+		if not DamageScalingRule.is_supported_phase(rule.phase):
+			errors.append(
+				"scaling rule %d has unsupported scaling phase %s" % [
+					rule_index + 1, rule.phase,
+				],
+			)
+	return errors
+
+
+func _validate_direct_damage_presentation(
+	action: Action,
+	effect: Effect_Damage,
+	path: String,
+	effect_index: int,
+) -> void:
+	var errors := _direct_damage_presentation_errors(action, effect, effect_index)
+	assert_eq(
+		errors,
+		[],
+		"%s effect %d presentation matches runtime configuration: %s" % [
+			path, effect_index + 1, errors,
+		],
+	)
+
+
+func _direct_damage_presentation_errors(
+	action: Action,
+	effect: Effect_Damage,
+	effect_index: int,
+) -> Array[String]:
+	var errors: Array[String] = []
+	var distribution_count := _direct_damage_distribution_count(action, effect)
+	var context := EffectPresentationContext.new(
+		_presentation_actor,
+		null,
+		action,
+		effect_index,
+		distribution_count,
+		false,
+	)
+	var presentation := effect.get_presentation(context)
+	if presentation == null:
+		errors.append("direct damage presentation is null")
+		return errors
+	var preview := DamagePreview.for_effect(
+		effect,
+		_presentation_actor,
+		null,
+		action,
+		distribution_count,
+		false,
+	)
+	var expected_bindings := _expected_direct_damage_bindings(
+		action,
+		effect,
+		distribution_count,
+		preview,
+	)
+	var actual_bindings := presentation.bindings
+	for binding_name: String in expected_bindings:
+		if not actual_bindings.has(binding_name):
+			errors.append("%s presentation binding is missing" % binding_name)
+		elif actual_bindings[binding_name] != expected_bindings[binding_name]:
+			errors.append(
+				"%s presentation binding mismatches runtime: %s != %s" % [
+					binding_name,
+					actual_bindings[binding_name],
+					expected_bindings[binding_name],
+				],
+			)
+	for binding_name: String in [
+		"amount",
+		"amount_qualifier",
+		"hit_count_text",
+		"damage_type",
+		"split_behavior",
+		"contextual_scaling",
+	]:
+		if not ("{%s}" % binding_name) in presentation.clause_template:
+			errors.append("presentation clause missing {%s}" % binding_name)
+	if "{" in presentation.render():
+		errors.append("presentation contains an unresolved binding")
+	return errors
+
+
+func _direct_damage_distribution_count(action: Action, effect: Effect_Damage) -> int:
+	if not effect.split_damage or action.target_type in [
+		Action.TargetType.ALL_ENEMIES,
+		Action.TargetType.ENEMY_GROUP,
+		Action.TargetType.ALL_ALLIES,
+		Action.TargetType.ALLIES_ONLY,
+	]:
+		return 1
+	return maxi(1, effect._resolve_hit_count(_presentation_actor))
+
+
+func _expected_direct_damage_bindings(
+	action: Action,
+	effect: Effect_Damage,
+	distribution_count: int,
+	preview: DamageResult,
+) -> Dictionary:
+	var group_distribution_unavailable := action.target_type in [
+		Action.TargetType.ALL_ENEMIES,
+		Action.TargetType.ENEMY_GROUP,
+		Action.TargetType.ALL_ALLIES,
+		Action.TargetType.ALLIES_ONLY,
+	]
+	var amount_qualifier := ""
+	var hit_count_text := "x%d" % effect.hit_count if effect.hit_count > 1 else ""
+	var split_behavior := ""
+	if effect.split_damage:
+		if group_distribution_unavailable:
+			amount_qualifier = " total"
+			hit_count_text = ""
+			split_behavior = " split across all targets"
+			if effect.hit_count > 1:
+				split_behavior += " and %d hits" % effect.hit_count
+		else:
+			split_behavior = " split across %d hits" % distribution_count
+	return {
+		"amount": preview.final_damage,
+		"amount_qualifier": amount_qualifier,
+		"selected_power": preview.request.base_power,
+		"damage_type": _damage_type_icon(preview.request.damage_type),
+		"hit_count": effect.hit_count,
+		"hit_count_text": hit_count_text,
+		"split_behavior": split_behavior,
+		"contextual_scaling": _contextual_scaling_text(
+			preview.request.contributions,
+		),
+	}
+
+
+func _damage_type_icon(damage_type: Action.DamageType) -> String:
+	match damage_type:
+		Action.DamageType.KINETIC:
+			return Action._get_bbcode_icon("kinetic")
+		Action.DamageType.ENERGY:
+			return Action._get_bbcode_icon("energy")
+		Action.DamageType.PIERCING:
+			return Action._get_bbcode_icon("pierce")
+	return ""
+
+
+func _contextual_scaling_text(contributions: Array[DamageContribution]) -> String:
+	if contributions.is_empty():
+		return ""
+	var labels: Array[String] = []
+	for contribution: DamageContribution in contributions:
+		match contribution.source:
+			&"remaining_focus":
+				labels.append("remaining Focus after paying the cost")
+			&"current_guard":
+				labels.append("current Guard")
+			_:
+				labels.append(str(contribution.source).replace("_", " "))
+	return " (includes contextual scaling from %s)" % ", ".join(labels)
 
 
 func _validate_description_formulas(description: String, path: String) -> void:

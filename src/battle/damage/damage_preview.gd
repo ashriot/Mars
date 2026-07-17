@@ -25,7 +25,7 @@ static func for_effect(
 		)
 		owns_resolver_target = true
 	var resolved_damage_type := decision.resolved_damage_type
-	var damage_context := _capture_preview_context(
+	var hit_context := _capture_preview_context(
 		effect,
 		attacker,
 		resolver_target,
@@ -33,7 +33,20 @@ static func for_effect(
 		resolved_damage_type,
 		neutral_target,
 	)
-	var resolved_potency := effect._resolve_potency(damage_context)
+	var effect_context := DamageContext.new(
+		hit_context.attacker,
+		null,
+		hit_context.other_living_allies,
+		hit_context.other_living_enemies,
+		hit_context.source_action,
+		hit_context.source_effect,
+		hit_context.trigger_context,
+	)
+	var effect_start_potency := effect._resolve_potency(effect_context)
+	var resolved_potency := effect._resolve_current_hit_potency(
+		effect_start_potency,
+		hit_context,
+	)
 	var result := DamageResolver.resolve_hit(
 		attacker,
 		resolver_target,
@@ -42,7 +55,7 @@ static func for_effect(
 		distribution_count,
 		resolved_damage_type,
 		critical,
-		damage_context,
+		hit_context,
 		Callable(effect, "_modify_damage_request"),
 	)
 	if owns_resolver_target:

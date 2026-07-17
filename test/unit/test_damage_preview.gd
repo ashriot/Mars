@@ -15,6 +15,29 @@ class ConditionTarget extends ActorCard:
 		return
 
 
+class TargetHpPotencyRule extends DamageScalingRule:
+	func resolve(_base_potency: float, context: DamageContext) -> DamageContribution:
+		var target_hp := context.target.current_hp if context.target != null else 0
+		return DamageContribution.new(
+			&"target_hp",
+			DamageContribution.Stage.POTENCY,
+			float(target_hp) / 1000.0,
+		)
+
+
+class FixedContributionRule extends DamageScalingRule:
+	var contribution_source: StringName
+	var contribution_stage: DamageContribution.Stage
+	var contribution_amount: float
+
+	func resolve(_base_potency: float, _context: DamageContext) -> DamageContribution:
+		return DamageContribution.new(
+			contribution_source,
+			contribution_stage,
+			contribution_amount,
+		)
+
+
 func test_focused_bolt_preview_uses_post_cost_remaining_focus_curve() -> void:
 	var attacker := _hero(100, 5)
 	var action := load("res://data/heroes/echo/actions/focused_bolt.tres") as Action
@@ -51,9 +74,9 @@ func test_target_preview_matches_runtime_request_for_normal_and_critical_hits() 
 	effect.potency = 1.0
 	var normal := DamagePreview.for_effect(effect, attacker, target, Action.new(), 1, false)
 	var critical := DamagePreview.for_effect(effect, attacker, target, Action.new(), 1, true)
-	assert_eq(normal.effective_power, 150)
+	assert_almost_eq(normal.effective_power, 150.0, 0.0001)
 	assert_eq(normal.final_damage, 75)
-	assert_eq(critical.effective_power, 350)
+	assert_almost_eq(critical.effective_power, 350.0, 0.0001)
 	assert_eq(critical.final_damage, 175)
 	attacker.free()
 	target.free()
@@ -79,7 +102,7 @@ func test_exact_target_preview_uses_current_unbreached_state() -> void:
 		_damage_effect(1.0), attacker, target, Action.new(), 1, false,
 	)
 	assert_eq(result.request.overload_power, 0)
-	assert_eq(result.effective_power, 100)
+	assert_almost_eq(result.effective_power, 100.0, 0.0001)
 	attacker.free()
 	target.free()
 
@@ -91,7 +114,7 @@ func test_danger_target_preview_matches_runtime_breach_before_damage() -> void:
 		_damage_effect(1.0), attacker, target, Action.new(), 1, false,
 	)
 	assert_eq(result.request.overload_power, 50)
-	assert_eq(result.effective_power, 150)
+	assert_almost_eq(result.effective_power, 150.0, 0.0001)
 	assert_false(target.is_breached, "preview does not mutate the target")
 	attacker.free()
 	target.free()
@@ -223,6 +246,34 @@ func test_no_target_preview_uses_explicit_neutral_target_state() -> void:
 	attacker.free()
 
 
+func test_current_hit_preview_uses_the_exact_target_snapshot() -> void:
+	var attacker := _hero(100, 0)
+	var first_target := _target(false, 0, 0.0)
+	var second_target := _target(false, 0, 0.0)
+	first_target.current_hp = 250
+	second_target.current_hp = 750
+	var rule := TargetHpPotencyRule.new()
+	rule.phase = DamageScalingRule.Phase.CURRENT_HIT
+	var effect := _damage_effect(1.0)
+	effect.damage_type = Action.DamageType.PIERCING
+	effect.scaling_rules = [rule]
+
+	var first := DamagePreview.for_effect(
+		effect, attacker, first_target, Action.new(), 1, false,
+	)
+	var second := DamagePreview.for_effect(
+		effect, attacker, second_target, Action.new(), 1, false,
+	)
+
+	assert_almost_eq(first.request.potency, 1.25, 0.0001)
+	assert_almost_eq(second.request.potency, 1.75, 0.0001)
+	assert_eq(first.request.contributions[0].source, &"target_hp")
+	assert_eq(second.request.contributions[0].source, &"target_hp")
+	attacker.free()
+	first_target.free()
+	second_target.free()
+
+
 func test_effect_tokens_bind_by_action_effect_index() -> void:
 	var action := Action.new()
 	action.description = "First {effect:1}; second {effect:2}"
@@ -294,6 +345,37 @@ func test_damage_presentation_exposes_generic_render_bindings() -> void:
 	assert_false(presentation.render().contains("{amount}"))
 	bindings.amount = 999
 	assert_eq(presentation.bindings.amount, 50, "presentation bindings are defensive")
+	attacker.free()
+	target.free()
+
+
+func test_damage_presentation_labels_each_contribution_stage_accurately() -> void:
+	var attacker := _hero(100, 0)
+	var target := _target(false, 0, 0.0)
+	var effect := _damage_effect(1.0)
+	effect.damage_type = Action.DamageType.PIERCING
+	effect.scaling_rules = [
+		_fixed_contribution_rule(
+			&"potency_bonus", DamageContribution.Stage.POTENCY, 0.5,
+		),
+		_fixed_contribution_rule(
+			&"power_bonus", DamageContribution.Stage.POWER, 20.0,
+		),
+		_fixed_contribution_rule(
+			&"outgoing_bonus", DamageContribution.Stage.OUTGOING, 0.25,
+		),
+		_fixed_contribution_rule(
+			&"incoming_bonus", DamageContribution.Stage.INCOMING, 0.2,
+		),
+	]
+	var presentation := effect.get_presentation(
+		EffectPresentationContext.new(attacker, target),
+	)
+
+	assert_has(presentation.details, "potency bonus: 50% potency")
+	assert_has(presentation.details, "power bonus: 20 power")
+	assert_has(presentation.details, "outgoing bonus: 25% outgoing damage")
+	assert_has(presentation.details, "incoming bonus: 20% incoming damage")
 	attacker.free()
 	target.free()
 
@@ -488,6 +570,18 @@ func _damage_effect(effect_potency: float) -> Effect_Damage:
 	effect.potency = effect_potency
 	effect.damage_type = Action.DamageType.KINETIC
 	return effect
+
+
+func _fixed_contribution_rule(
+	source: StringName,
+	stage: DamageContribution.Stage,
+	amount: float,
+) -> FixedContributionRule:
+	var rule := FixedContributionRule.new()
+	rule.contribution_source = source
+	rule.contribution_stage = stage
+	rule.contribution_amount = amount
+	return rule
 
 
 func _stats(

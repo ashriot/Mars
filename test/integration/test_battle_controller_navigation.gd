@@ -328,6 +328,127 @@ func test_pointer_hover_selects_real_hero_and_enemy_cards_and_exit_clears_select
 	assert_null(manager.preview_targets.back())
 
 
+func test_exact_target_changes_refresh_selected_action_presentation_and_fall_back_to_neutral() -> void:
+	var fixture := await _navigation_fixture()
+	var scene: BattleScene = fixture.scene
+	var manager: TrackingBattleManager = fixture.manager
+	var hero: HeroCard = fixture.hero
+	var defended: EnemyCard = fixture.enemy
+	var breached: EnemyCard = fixture.second_enemy
+	hero.current_stats = ActorStats.new()
+	hero.current_stats.attack = 100
+	hero.current_stats.overload = 50
+	hero.current_stats.max_hp = 100
+	hero.current_hp = 100
+	defended.current_stats = ActorStats.new()
+	defended.current_stats.kinetic_defense = 50
+	defended.current_guard = 1
+	breached.current_stats = ActorStats.new()
+	breached.is_breached = true
+	defended.is_valid_target = true
+	breached.is_valid_target = true
+	var effect := Effect_Damage.new()
+	effect.damage_type = Action.DamageType.KINETIC
+	effect.potency = 1.0
+	var action := Action.new()
+	action.target_type = Action.TargetType.ONE_ENEMY
+	action.description = "{effect:1}"
+	action.effects = [effect]
+	manager.current_actor = hero
+	manager.current_action = action
+	var selected_button := fixture.bar.actions_ui.get_child(0) as ActionButton
+	selected_button.action = action
+	manager.focused_button = selected_button
+	var panel := PanelContainer.new()
+	var container := HBoxContainer.new()
+	container.name = "HBoxContainer"
+	var label := RichTextLabel.new()
+	label.name = "Label"
+	container.add_child(label)
+	panel.add_child(container)
+	manager.add_child(panel)
+	manager.current_action_panel = panel
+	var neutral_text := action.get_rich_description(hero)
+	label.text = neutral_text
+	selected_button.tooltip.bbcode_text = neutral_text
+
+	scene._set_current_target(defended)
+	assert_string_contains(label.text, "Deals 50")
+	assert_string_contains(selected_button.tooltip.bbcode_text, "Deals 50")
+
+	scene._set_current_target(breached)
+	assert_string_contains(label.text, "Deals 150")
+	assert_string_contains(selected_button.tooltip.bbcode_text, "Deals 150")
+
+	scene._clear_current_target(false)
+	assert_string_contains(label.text, "Deals 100")
+	assert_string_contains(selected_button.tooltip.bbcode_text, "Deals 100")
+
+	breached.current_stats = null
+	scene._set_current_target(breached)
+	assert_string_contains(label.text, "Deals 100")
+	assert_string_contains(selected_button.tooltip.bbcode_text, "Deals 100")
+
+	breached.current_stats = ActorStats.new()
+	action.target_type = Action.TargetType.RANDOM_ENEMY
+	scene._set_current_target(defended)
+	assert_string_contains(label.text, "Deals 100")
+	assert_string_contains(selected_button.tooltip.bbcode_text, "Deals 100")
+	scene._set_current_target(breached)
+	assert_string_contains(label.text, "Deals 100")
+	assert_string_contains(selected_button.tooltip.bbcode_text, "Deals 100")
+
+	action.target_type = Action.TargetType.ONE_ENEMY
+	scene._set_current_target(defended)
+	assert_string_contains(selected_button.tooltip.bbcode_text, "Deals 50")
+	var replacement_button := fixture.bar.actions_ui.get_child(1) as ActionButton
+	manager._focus_button(replacement_button)
+	assert_string_contains(selected_button.tooltip.bbcode_text, "Deals 100")
+
+	manager._focus_button(selected_button)
+	manager.current_action = action
+	defended.is_valid_target = true
+	breached.is_valid_target = true
+	scene._set_current_target(defended)
+	assert_string_contains(selected_button.tooltip.bbcode_text, "Deals 50")
+	scene.cancel_targeting()
+	assert_string_contains(selected_button.tooltip.bbcode_text, "Deals 100")
+
+
+func test_shift_action_completion_resets_exact_target_button_presentation() -> void:
+	var fixture := await _navigation_fixture()
+	var manager: TrackingBattleManager = fixture.manager
+	var hero: HeroCard = fixture.hero
+	var defended: EnemyCard = fixture.enemy
+	hero.current_stats = ActorStats.new()
+	hero.current_stats.attack = 100
+	hero.current_stats.max_hp = 100
+	hero.current_hp = 100
+	defended.current_stats = ActorStats.new()
+	defended.current_stats.kinetic_defense = 50
+	var effect := Effect_Damage.new()
+	effect.damage_type = Action.DamageType.KINETIC
+	effect.potency = 1.0
+	var action := Action.new()
+	action.target_type = Action.TargetType.ONE_ENEMY
+	action.description = "{effect:1}"
+	action.effects = [effect]
+	action.is_shift_action = true
+	var selected_button := fixture.bar.actions_ui.get_child(0) as ActionButton
+	selected_button.action = action
+	manager.current_actor = hero
+	manager.focused_button = selected_button
+	manager.executing_action = action
+	manager.current_state = BattleManager.State.EXECUTING_ACTION
+	selected_button.tooltip.bbcode_text = action.get_rich_description(hero, defended)
+
+	assert_string_contains(selected_button.tooltip.bbcode_text, "Deals 50")
+	await manager._finish_hero_turn()
+
+	assert_string_contains(selected_button.tooltip.bbcode_text, "Deals 100")
+	assert_null(manager.focused_button)
+
+
 func test_controller_owned_pointer_hover_cannot_replace_current_target() -> void:
 	var fixture := await _navigation_fixture()
 	fixture.hero.is_valid_target = true

@@ -166,8 +166,7 @@ func cancel_targeting() -> void:
 	if manager.current_action_panel:
 		manager.current_action_panel.hide()
 	if manager.focused_button:
-		manager.focused_button.focused(false)
-		manager.focused_button = null
+		manager.release_focused_button()
 	manager.change_state(BattleManager.State.PLAYER_ACTION)
 	manager.update_turn_order()
 	_publish_controller_hints()
@@ -332,7 +331,10 @@ func _clear_current_target(retain_origin: bool) -> void:
 
 func _refresh_target_preview() -> void:
 	if manager and is_instance_valid(manager.current_actor) and manager.current_action:
-		var preview_target: ActorCard = null if _is_group_targeting() else _current_target
+		var preview_target: ActorCard = _current_target \
+			if manager.action_uses_exact_selected_target(manager.current_action) \
+			else null
+		manager.refresh_current_action_presentation(preview_target)
 		manager.preview_action_turn_order(manager.current_actor, manager.current_action, preview_target)
 
 

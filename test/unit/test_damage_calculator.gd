@@ -6,13 +6,13 @@ func test_plain_defended_and_critical_power() -> void:
 	var critical := DamageCalculator.calculate(_request(200, 0, 400, 0.5, 1, Action.DamageType.KINETIC, 50))
 	assert_eq(normal.final_damage, 50)
 	assert_eq(critical.final_damage, 150)
-	assert_eq(critical.effective_power, 600)
+	assert_almost_eq(critical.effective_power, 600.0, 0.0001)
 
 
 func test_ovr_is_universal_for_attack_psyche_and_piercing() -> void:
 	for damage_type in [Action.DamageType.KINETIC, Action.DamageType.ENERGY, Action.DamageType.PIERCING]:
 		var result := DamageCalculator.calculate(_request(100, 75, 0, 1.0, 1, damage_type, 0))
-		assert_eq(result.effective_power, 175)
+		assert_almost_eq(result.effective_power, 175.0, 0.0001)
 		assert_eq(result.final_damage, 175)
 
 

@@ -295,7 +295,7 @@ func _on_actor_revived(actor: ActorCard):
 func set_current_action(action: Action):
 	current_action = action
 	current_action_panel.get_node("HBoxContainer/Mask/Icon").texture = current_action.icon
-	current_action_panel.get_node("HBoxContainer/Label").text = _get_rich_description(current_action)
+	refresh_current_action_presentation()
 	var final_percent := current_actor.get_action_ct_percent(current_action)
 	var ct_label := current_action_panel.get_node("HBoxContainer/CTPercent") as Label
 	ct_label.text = "%d%% CT" % final_percent
@@ -310,6 +310,34 @@ func set_current_action(action: Action):
 	current_action_panel.show()
 	var targets := get_targets(action.target_type, true)
 	_apply_target_presentation(action, targets)
+
+
+func refresh_current_action_presentation(target: ActorCard = null) -> void:
+	if current_action == null \
+		or not is_instance_valid(current_actor) \
+		or current_actor.current_stats == null:
+		return
+	var panel_label: RichTextLabel = null
+	if is_instance_valid(current_action_panel):
+		panel_label = current_action_panel.get_node_or_null(
+			"HBoxContainer/Label"
+		) as RichTextLabel
+	var selected_tooltip: RichTooltip = null
+	if is_instance_valid(focused_button) \
+		and focused_button.action == current_action \
+		and focused_button.tooltip != null:
+		selected_tooltip = focused_button.tooltip
+	if panel_label == null and selected_tooltip == null:
+		return
+	var presentation_target := target
+	if not is_instance_valid(presentation_target) \
+		or presentation_target.current_stats == null:
+		presentation_target = null
+	var description := _get_rich_description(current_action, presentation_target)
+	if panel_label != null:
+		panel_label.text = description
+	if selected_tooltip != null:
+		selected_tooltip.bbcode_text = description
 
 
 static func _action_ct_color(base_percent: int, final_percent: int) -> Color:
@@ -328,6 +356,15 @@ func is_group_target_action(action: Action) -> bool:
 	]
 
 
+func action_uses_exact_selected_target(action: Action) -> bool:
+	return action != null and action.target_type in [
+		Action.TargetType.ONE_ENEMY,
+		Action.TargetType.SELF,
+		Action.TargetType.ONE_ALLY,
+		Action.TargetType.ALLY_ONLY,
+	]
+
+
 func _apply_target_presentation(action: Action, targets: Array) -> void:
 	var presentation := ActorCard.TargetPresentation.SELECTED \
 		if is_group_target_action(action) \
@@ -340,19 +377,37 @@ func _apply_target_presentation(action: Action, targets: Array) -> void:
 
 func _focus_button(button: ActionButton):
 	if focused_button:
-		focused_button.focused(false)
 		_clear_all_targeting_ui()
-		focused_button = null
+		release_focused_button()
 	focused_button = button
 	focused_button.focused(true)
+
+
+func release_focused_button() -> void:
+	if not is_instance_valid(focused_button):
+		focused_button = null
+		return
+	_reset_action_button_presentation(focused_button)
+	focused_button.focused(false)
+	focused_button = null
+
+
+func _reset_action_button_presentation(button: ActionButton) -> void:
+	if not is_instance_valid(button) \
+		or button.action == null \
+		or button.tooltip == null \
+		or not is_instance_valid(current_actor) \
+		or current_actor.current_stats == null:
+		return
+	button.tooltip.bbcode_text = button.action.get_rich_description(current_actor)
+
 
 func _finish_hero_turn():
 	if current_state == State.BATTLE_OVER:
 		return
 	var is_shift_action = executing_action.is_shift_action
-	if focused_button and not is_shift_action:
-		focused_button.focused(false)
-		focused_button = null
+	if focused_button:
+		release_focused_button()
 	executing_action = null
 	change_state(BattleManager.State.PLAYER_ACTION)
 	if not is_shift_action:
@@ -515,8 +570,7 @@ func _on_shift_button_pressed(direction: String):
 	if current_state in [State.LOADING, State.FORCED_TARGET]: return
 	_clear_all_targeting_ui()
 	if focused_button:
-		focused_button.focused(false)
-		focused_button = null
+		release_focused_button()
 	if current_action_panel:
 		current_action_panel.hide()
 	change_state(State.LOADING)
@@ -709,11 +763,8 @@ func _get_effect_targets(effect: ActionEffect, user: ActorCard, selected_target:
 		_:
 			return []
 
-func _get_rich_description(action: Action) -> String:
-	var hero = current_actor as HeroCard
-	var description = action.get_rich_description(hero)
-
-	return description
+func _get_rich_description(action: Action, target: ActorCard = null) -> String:
+	return action.get_rich_description(current_actor, target)
 
 func _check_if_battle_ended() -> bool:
 	var heroes_alive = not get_living_heroes().is_empty()

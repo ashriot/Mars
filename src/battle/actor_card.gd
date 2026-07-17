@@ -138,7 +138,7 @@ func take_one_hit(
 	_spawn_damage_popup(
 		result.final_damage,
 		resolved_damage_type,
-		result.request.precision_power > 0,
+		result.is_critical,
 	)
 	var pos = get_global_rect().get_center()
 	spawn_particles.emit(pos, "gunshot")
@@ -159,8 +159,10 @@ func take_one_hit(
 		"attempted_damage": result.final_damage,
 		"actual_damage": actual_damage,
 		"resolved_damage_type": resolved_damage_type,
-		"is_critical": result.request.precision_power > 0,
-		"was_breached": result.request.overload_power > 0,
+		"is_critical": result.is_critical,
+		"was_breached": result.was_breached,
+		"source_effect": result.source_effect,
+		"source_action": result.source_action,
 	}
 	if resolved_damage_type == Action.DamageType.KINETIC:
 		await _fire_condition_event(Trigger.TriggerType.ON_TAKING_KINETIC_DAMAGE, event_context)

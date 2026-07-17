@@ -13,6 +13,14 @@ class ApplicationFixture extends RefCounted:
 class RecordingApplicationTarget extends ActorCard:
 	var recorded_events: Array[Trigger.TriggerType] = []
 	var last_damage_context: Dictionary = {}
+	var popup_critical_states: Array[bool] = []
+
+	func _spawn_damage_popup(
+		_amount: int,
+		_damage_type: Action.DamageType,
+		is_critical: bool,
+	) -> void:
+		popup_critical_states.append(is_critical)
 
 
 class RecordingConditionEffect extends ActionEffect:
@@ -58,6 +66,7 @@ class RecordingActor extends ActorCard:
 	var guard_changes: Array[int] = []
 	var focus_changes: Array[int] = []
 	var event_log: Array[String] = []
+	var on_hit_contexts: Array[Dictionary] = []
 
 	func modify_guard(amount: int, _is_recovering: bool = false) -> void:
 		guard_changes.append(amount)
@@ -85,10 +94,12 @@ class RecordingActor extends ActorCard:
 
 	func _fire_condition_event(
 		event_type: Trigger.TriggerType,
-		_context: Dictionary = {},
+		context: Dictionary = {},
 	) -> void:
 		if event_type == Trigger.TriggerType.AFTER_BEING_ATTACKED:
 			event_log.append("after")
+		elif event_type == Trigger.TriggerType.ON_HIT:
+			on_hit_contexts.append(context.duplicate(true))
 
 
 class RecordingHero extends HeroCard:
@@ -112,6 +123,26 @@ class RecordingActionEffect extends ActionEffect:
 		received_contexts.append(context.duplicate(true))
 
 
+class TargetHpPotencyRule extends DamageScalingRule:
+	func resolve(_base_potency: float, context: DamageContext) -> DamageContribution:
+		var target_hp := context.target.current_hp if context.target != null else 0
+		return DamageContribution.new(
+			&"target_hp",
+			DamageContribution.Stage.POTENCY,
+			float(target_hp) / 1000.0,
+		)
+
+
+class ApplyingDamageEffect extends Effect_Damage:
+	var roll_value := 100
+
+	func _roll_percent(chance: int) -> bool:
+		return roll_value <= chance
+
+	func _play_hit_audio() -> void:
+		return
+
+
 class RecordingDamageEffect extends Effect_Damage:
 	var forced_damage_type := Action.DamageType.NONE
 	var roll_value := 100
@@ -124,6 +155,16 @@ class RecordingDamageEffect extends Effect_Damage:
 	var clear_attacker_guard_after_first_hit := false
 	var battle_manager_to_end_after_hit: BattleManager
 	var defeat_attacker_after_hit := false
+	var overridden_effect_start_potency := -1.0
+
+	func _resolve_potency(context: DamageContext) -> DamageResolver.ResolvedPotency:
+		if overridden_effect_start_potency >= 0.0:
+			return DamageResolver.ResolvedPotency.new(
+				potency,
+				overridden_effect_start_potency,
+				[],
+			)
+		return super._resolve_potency(context)
 
 	func _roll_percent(chance: int) -> bool:
 		rolled_chances.append(chance)
@@ -178,7 +219,7 @@ func test_energy_causes_breach_before_damage_and_same_hit_gets_ovr() -> void:
 	assert_eq(outcome.breach_calls, 1)
 	assert_true(outcome.breached_when_request_built)
 	assert_eq(outcome.result.request.overload_power, 75)
-	assert_eq(outcome.result.effective_power, 175)
+	assert_almost_eq(outcome.result.effective_power, 175.0, 0.0001)
 
 
 func test_intrinsic_and_converted_piercing_never_touch_guard() -> void:
@@ -241,6 +282,111 @@ func test_existing_lethal_hit_reaction_order_is_preserved() -> void:
 	assert_eq(fixture.target.recorded_events, [])
 
 
+func test_zero_pre_critical_remains_explicit_in_result_and_popup() -> void:
+	var fixture := _application_fixture(200, 200)
+	fixture.attacker.current_stats.attack = 20
+	fixture.attacker.current_stats.precision = 0
+	var result := _resolved_application_result(fixture, true, false)
+
+	assert_eq(result.request.precision_power, 0)
+	assert_true(result.is_critical)
+	await fixture.target.take_one_hit(
+		result,
+		fixture.effect,
+		fixture.attacker,
+		Action.DamageType.PIERCING,
+	)
+	assert_eq(fixture.target.popup_critical_states, [true])
+
+
+func test_zero_ovr_breached_hit_remains_explicit_in_target_event_context() -> void:
+	var fixture := _application_fixture(200, 200)
+	fixture.attacker.current_stats.attack = 20
+	fixture.attacker.current_stats.overload = 0
+	var result := _resolved_application_result(fixture, false, true)
+
+	assert_eq(result.request.overload_power, 0)
+	assert_true(result.was_breached)
+	await fixture.target.take_one_hit(
+		result,
+		fixture.effect,
+		fixture.attacker,
+		Action.DamageType.PIERCING,
+	)
+	assert_true(fixture.target.last_damage_context.was_breached)
+
+
+func test_damage_source_identity_reaches_target_on_hit_and_attacker_contexts() -> void:
+	var fixture := _application_fixture(200, 200)
+	var manager := fixture.battle_manager
+	manager.hero_area = Control.new()
+	manager.enemy_area = Control.new()
+	manager.add_child(manager.hero_area)
+	manager.add_child(manager.enemy_area)
+	var attacker := _recording_actor(100, 0, 0)
+	autofree(attacker)
+	manager.actor_list = [attacker, fixture.target]
+	var triggered_effect := RecordingActionEffect.new()
+	triggered_effect.target_type = Action.TargetType.PARENT
+	var trigger := HitTrigger.new()
+	trigger.condition = HitTrigger.HitCondition.ALWAYS
+	trigger.effects_to_run = [triggered_effect]
+	var damage_effect := ApplyingDamageEffect.new()
+	damage_effect.damage_type = Action.DamageType.PIERCING
+	damage_effect.on_hit_triggers = [trigger]
+	var action := Action.new()
+	action.effects = [damage_effect]
+
+	await damage_effect.execute(attacker, [fixture.target], manager, action)
+
+	assert_eq(triggered_effect.received_contexts.size(), 1)
+	assert_eq(attacker.on_hit_contexts.size(), 1)
+	for event_context: Dictionary in [
+		fixture.target.last_damage_context,
+		triggered_effect.received_contexts[0],
+		attacker.on_hit_contexts[0],
+	]:
+		assert_same(event_context.source_effect, damage_effect)
+		assert_same(event_context.source_action, action)
+		assert_same(event_context.damage_result.source_effect, damage_effect)
+		assert_same(event_context.damage_result.source_action, action)
+
+
+func test_nested_damage_inherits_source_action_for_its_own_damage_contexts() -> void:
+	var fixture := _application_fixture(300, 300)
+	var manager := fixture.battle_manager
+	manager.hero_area = Control.new()
+	manager.enemy_area = Control.new()
+	manager.add_child(manager.hero_area)
+	manager.add_child(manager.enemy_area)
+	var attacker := _recording_actor(100, 0, 0)
+	autofree(attacker)
+	manager.actor_list = [attacker, fixture.target]
+	var nested_damage := ApplyingDamageEffect.new()
+	nested_damage.damage_type = Action.DamageType.PIERCING
+	nested_damage.target_type = Action.TargetType.PARENT
+	var trigger := HitTrigger.new()
+	trigger.condition = HitTrigger.HitCondition.ALWAYS
+	trigger.effects_to_run = [nested_damage]
+	var outer_damage := ApplyingDamageEffect.new()
+	outer_damage.damage_type = Action.DamageType.PIERCING
+	outer_damage.on_hit_triggers = [trigger]
+	var action := Action.new()
+	action.effects = [outer_damage]
+
+	await outer_damage.execute(attacker, [fixture.target], manager, action)
+
+	assert_same(fixture.target.last_damage_context.source_effect, nested_damage)
+	assert_same(fixture.target.last_damage_context.source_action, action)
+	assert_same(
+		fixture.target.last_damage_context.damage_result.source_action,
+		action,
+	)
+	assert_eq(attacker.on_hit_contexts.size(), 2)
+	assert_same(attacker.on_hit_contexts[0].source_effect, nested_damage)
+	assert_same(attacker.on_hit_contexts[0].source_action, action)
+
+
 func test_aim_is_clamped_at_roll_boundary() -> void:
 	var below := await _execute_recorded_hit(
 		Action.DamageType.PIERCING, 0, false, Action.DamageType.NONE,
@@ -297,6 +443,95 @@ func test_effect_start_potency_is_stable_across_hits() -> void:
 	assert_eq(effect.results.size(), 2)
 	assert_eq(effect.results[0].request.potency, 2.0)
 	assert_eq(effect.results[1].request.potency, 2.0)
+	_free_recorded_nodes(manager, [attacker, target])
+
+
+func test_current_hit_scaling_uses_each_exact_target_snapshot() -> void:
+	var attacker := _recording_actor(100, 0, 0)
+	var first_target := _recording_actor(0, 0, 0)
+	var second_target := _recording_actor(0, 0, 0)
+	first_target.current_hp = 250
+	second_target.current_hp = 750
+	var manager := RecordingBattleManager.new()
+	manager.actor_list = [attacker, first_target, second_target]
+	var rule := TargetHpPotencyRule.new()
+	rule.phase = DamageScalingRule.Phase.CURRENT_HIT
+	var effect := RecordingDamageEffect.new()
+	effect.damage_type = Action.DamageType.PIERCING
+	effect.potency = 1.0
+	effect.scaling_rules = [rule]
+
+	await effect.execute(attacker, [first_target, second_target], manager)
+
+	assert_eq(effect.results.size(), 2)
+	assert_almost_eq(effect.results[0].request.potency, 1.25, 0.0001)
+	assert_almost_eq(effect.results[1].request.potency, 1.75, 0.0001)
+	assert_eq(effect.results[0].request.contributions[0].source, &"target_hp")
+	assert_eq(effect.results[1].request.contributions[0].source, &"target_hp")
+	_free_recorded_nodes(manager, [attacker, first_target, second_target])
+
+
+func test_phase_composition_preserves_custom_effect_start_potency_hook() -> void:
+	var attacker := _recording_actor(100, 0, 0)
+	var target := _recording_actor(0, 0, 0)
+	var manager := RecordingBattleManager.new()
+	manager.actor_list = [attacker, target]
+	var effect := RecordingDamageEffect.new()
+	effect.damage_type = Action.DamageType.PIERCING
+	effect.potency = 1.0
+	effect.overridden_effect_start_potency = 2.5
+	var action := Action.new()
+	action.effects = [effect]
+
+	var preview := DamagePreview.for_effect(
+		effect,
+		attacker,
+		target,
+		action,
+		1,
+		false,
+	)
+	await effect.execute(attacker, [target], manager, action)
+
+	assert_almost_eq(preview.request.potency, 2.5, 0.0001)
+	assert_eq(effect.results.size(), 1)
+	assert_almost_eq(effect.results[0].request.potency, 2.5, 0.0001)
+	_free_recorded_nodes(manager, [attacker, target])
+
+
+func test_phase_composition_clamps_once_after_negative_and_positive_rules() -> void:
+	var attacker := _recording_actor(100, 0, 1)
+	var target := _recording_actor(0, 0, 0)
+	var manager := RecordingBattleManager.new()
+	manager.actor_list = [attacker, target]
+	var effect_start_rule := DamageScalingFlatPerResource.new()
+	effect_start_rule.resource = DamageScalingFlatPerResource.ResourceType.GUARD
+	effect_start_rule.potency_per_point = -2.0
+	var current_hit_rule := DamageScalingFlatPerResource.new()
+	current_hit_rule.resource = DamageScalingFlatPerResource.ResourceType.GUARD
+	current_hit_rule.potency_per_point = 2.0
+	current_hit_rule.phase = DamageScalingRule.Phase.CURRENT_HIT
+	var effect := RecordingDamageEffect.new()
+	effect.damage_type = Action.DamageType.PIERCING
+	effect.potency = 1.0
+	effect.scaling_rules = [effect_start_rule, current_hit_rule]
+	var action := Action.new()
+	action.effects = [effect]
+
+	var preview := DamagePreview.for_effect(
+		effect,
+		attacker,
+		target,
+		action,
+		1,
+		false,
+	)
+	await effect.execute(attacker, [target], manager, action)
+
+	assert_almost_eq(preview.request.potency, 1.0, 0.0001)
+	assert_eq(effect.results.size(), 1)
+	assert_almost_eq(effect.results[0].request.potency, 1.0, 0.0001)
+	assert_eq(effect.results[0].request.contributions.size(), 2)
 	_free_recorded_nodes(manager, [attacker, target])
 
 
@@ -534,6 +769,32 @@ func _request_for_final_damage(amount: int) -> DamageRequest:
 		0,
 		0.0,
 		0.0,
+	)
+
+
+func _resolved_application_result(
+	fixture: ApplicationFixture,
+	is_critical: bool,
+	is_breached: bool,
+) -> DamageResult:
+	fixture.target.is_breached = is_breached
+	var action := Action.new()
+	var hit_context := DamageContext.capture(
+		fixture.attacker,
+		fixture.target,
+		fixture.battle_manager,
+		action,
+		fixture.effect,
+	)
+	return DamageResolver.resolve_hit(
+		fixture.attacker,
+		fixture.target,
+		Action.PowerType.ATTACK,
+		DamageResolver.resolve_potency(1.0, [], hit_context),
+		1,
+		Action.DamageType.PIERCING,
+		is_critical,
+		hit_context,
 	)
 
 
