@@ -19,6 +19,7 @@ var _suppressed_hover_behavior: Control.MouseBehaviorRecursive = Control.MOUSE_B
 
 func _ready() -> void:
 	get_viewport().gui_focus_changed.connect(_on_focus_changed)
+	cursor.hub_target_invalidated.connect(_on_hub_target_invalidated)
 	InputManager.input_mode_changed.connect(_on_input_mode_changed)
 	InputManager.presentation_mode_changed.connect(_on_presentation_mode_changed)
 	_on_presentation_mode_changed(InputManager.get_presentation_mode())
@@ -271,7 +272,7 @@ func _on_presentation_mode_changed(mode: InputManager.PresentationMode) -> void:
 	ensure_valid_focus()
 	if not had_valid_origin and _is_focusable(_focus_target):
 		InputManager.consume_controller_direction_for_focus_recovery()
-	if _is_focusable(_focus_target):
+	if is_instance_valid(_focus_target) and _is_focusable(_focus_target):
 		_apply_focus_presentation(_focus_target)
 
 
@@ -282,6 +283,15 @@ func _on_input_mode_changed(_mode: InputManager.InputMode) -> void:
 		_apply_focus_presentation(_focus_target)
 	else:
 		cursor.clear_hub_target()
+
+
+func _on_hub_target_invalidated() -> void:
+	if InputManager.get_presentation_mode() != InputManager.PresentationMode.FOCUS:
+		return
+	if is_instance_valid(_focus_target) and _is_focusable(_focus_target):
+		return
+	_clear_presentation()
+	ensure_valid_focus()
 
 
 func _suppress_pointer_hover() -> void:
@@ -411,9 +421,11 @@ func _is_active_presentation_owner(owner: Control) -> bool:
 func _screen_fallback(root: Control) -> Control:
 	if not is_instance_valid(root) or not _screens.has(root):
 		return null
-	var default_focus: Control = _screens[root]
-	if _is_focusable(default_focus) and (default_focus == root or root.is_ancestor_of(default_focus)):
-		return default_focus
+	var default_value: Variant = _screens[root]
+	if is_instance_valid(default_value):
+		var default_focus := default_value as Control
+		if _is_focusable(default_focus) and (default_focus == root or root.is_ancestor_of(default_focus)):
+			return default_focus
 	return _first_focusable(root)
 
 

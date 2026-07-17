@@ -643,6 +643,39 @@ func test_analog_page_trigger_rearms_when_released_under_nested_modal() -> void:
 	await get_tree().process_frame
 
 
+func test_viewport_page_trigger_hold_and_nested_modal_release_rearm() -> void:
+	var navigation := preload("res://src/ui/navigation/navigation_ux_layer.tscn").instantiate() as NavigationUXLayer
+	navigation.name = "NavigationUXLayer"
+	add_child_autofree(navigation)
+	await get_tree().process_frame
+	var panel := await _skill_panel_with_multi_page_role()
+	panel.focus_node(panel._nearest_node_id(panel._current_role_panel()))
+	navigation.push_modal(panel, panel.get_focused_node())
+	panel.set_role_navigation_owner(func() -> bool: return navigation.is_top_modal(panel))
+
+	get_viewport().push_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 1.0))
+	await get_tree().process_frame
+	assert_eq(panel.current_page, 1)
+	get_viewport().push_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.9))
+	await get_tree().process_frame
+	assert_eq(panel.current_page, 1, "held trigger pages exactly once through the viewport")
+
+	var nested := Control.new()
+	add_child_autofree(nested)
+	navigation.push_modal(nested, null, true, true)
+	get_viewport().push_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 1.0))
+	await get_tree().process_frame
+	assert_eq(panel.current_page, 1, "nested modal owns and consumes trigger presses")
+	get_viewport().push_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.0))
+	await get_tree().process_frame
+	navigation.pop_modal(nested)
+	get_viewport().push_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 1.0))
+	await get_tree().process_frame
+	assert_eq(panel.current_page, 0, "release under the modal rearms the next viewport press")
+	panel.free()
+	await get_tree().process_frame
+
+
 func test_hub_focus_and_depth_styles_never_change_content_colors() -> void:
 	var party := await _opened_party_with_three_heroes()
 	var hero := party.hero_list_container.get_child(0) as HeroPanel

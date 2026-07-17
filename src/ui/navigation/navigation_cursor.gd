@@ -1,10 +1,13 @@
 extends TextureRect
 class_name NavigationCursor
 
+signal hub_target_invalidated
+
 const POINTER_TEXTURE := preload("res://assets/graphics/glyphs/cursors/outline/pointer_c.svg")
 const HUB_MOVE_DURATION := 0.07
 const HUB_ANCHOR_OFFSET := Vector2(6, 6)
 const VIEWPORT_MARGIN := 4.0
+const READABLE_CENTER_SCALE := 0.5
 
 enum PointerOwner { NONE, HUB, EXTERNAL }
 
@@ -81,6 +84,7 @@ func _process(_delta: float) -> void:
 	var target := _hub_target.get_ref() as Control if _hub_target else null
 	if not _valid_hub_target(target):
 		clear_hub_target()
+		hub_target_invalidated.emit()
 		return
 	if _move_tween and _move_tween.is_running():
 		return
@@ -88,12 +92,58 @@ func _process(_delta: float) -> void:
 
 
 func _hub_position(target: Control) -> Vector2:
-	var requested := target.get_global_rect().end + HUB_ANCHOR_OFFSET
+	var target_rect := target.get_global_rect()
+	var requested := target_rect.end + HUB_ANCHOR_OFFSET
 	var viewport_size := Vector2(get_viewport_rect().size)
+	var cursor_size := _effective_cursor_size()
+	var preferred := _clamp_to_viewport(requested, cursor_size, viewport_size)
+	var readable_center := _readable_center_rect(target_rect)
+	if not Rect2(preferred, cursor_size).intersects(readable_center, true):
+		return preferred
+
+	var left := target_rect.position.x - cursor_size.x - HUB_ANCHOR_OFFSET.x
+	var above := target_rect.position.y - cursor_size.y - HUB_ANCHOR_OFFSET.y
+	var candidates: Array[Vector2] = [
+		Vector2(left, requested.y),
+		Vector2(requested.x, above),
+		Vector2(left, above),
+		Vector2(readable_center.position.x - cursor_size.x - HUB_ANCHOR_OFFSET.x, preferred.y),
+		Vector2(readable_center.end.x + HUB_ANCHOR_OFFSET.x, preferred.y),
+		Vector2(preferred.x, readable_center.position.y - cursor_size.y - HUB_ANCHOR_OFFSET.y),
+		Vector2(preferred.x, readable_center.end.y + HUB_ANCHOR_OFFSET.y),
+	]
+	var best := preferred
+	var best_distance := INF
+	for raw_candidate in candidates:
+		var candidate := _clamp_to_viewport(raw_candidate, cursor_size, viewport_size)
+		if Rect2(candidate, cursor_size).intersects(readable_center, true):
+			continue
+		var distance := candidate.distance_squared_to(preferred)
+		if distance < best_distance:
+			best = candidate
+			best_distance = distance
+	return best
+
+
+func _effective_cursor_size() -> Vector2:
+	var result := size
+	if is_instance_valid(texture):
+		var texture_size := texture.get_size()
+		result.x = maxf(result.x, texture_size.x)
+		result.y = maxf(result.y, texture_size.y)
+	return result
+
+
+func _clamp_to_viewport(requested: Vector2, cursor_size: Vector2, viewport_size: Vector2) -> Vector2:
 	return Vector2(
-		clampf(requested.x, VIEWPORT_MARGIN, viewport_size.x - size.x - VIEWPORT_MARGIN),
-		clampf(requested.y, VIEWPORT_MARGIN, viewport_size.y - size.y - VIEWPORT_MARGIN),
+		clampf(requested.x, VIEWPORT_MARGIN, maxf(VIEWPORT_MARGIN, viewport_size.x - cursor_size.x - VIEWPORT_MARGIN)),
+		clampf(requested.y, VIEWPORT_MARGIN, maxf(VIEWPORT_MARGIN, viewport_size.y - cursor_size.y - VIEWPORT_MARGIN)),
 	)
+
+
+func _readable_center_rect(target_rect: Rect2) -> Rect2:
+	var readable_size := target_rect.size * READABLE_CENTER_SCALE
+	return Rect2(target_rect.get_center() - readable_size * 0.5, readable_size)
 
 
 func _valid_hub_target(target: Control) -> bool:

@@ -119,6 +119,29 @@ func _party_button_screen() -> Dictionary:
 	return {"ux": ux, "party": party, "button": button}
 
 
+func _party_two_button_screen() -> Dictionary:
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	InputManager._set_presentation_mode(InputManager.PresentationMode.FOCUS)
+	var ux := UXScene.instantiate() as NavigationUXLayer
+	add_child_autofree(ux)
+	var party := VBoxContainer.new()
+	party.name = "PartyMenu"
+	var primary := Button.new()
+	primary.text = "PRIMARY"
+	primary.focus_mode = Control.FOCUS_ALL
+	primary.custom_minimum_size = Vector2(200, 48)
+	var fallback := Button.new()
+	fallback.text = "FALLBACK"
+	fallback.focus_mode = Control.FOCUS_ALL
+	fallback.custom_minimum_size = Vector2(200, 48)
+	party.add_child(primary)
+	party.add_child(fallback)
+	add_child_autofree(party)
+	ux.register_screen(party, primary)
+	await get_tree().process_frame
+	return {"ux": ux, "party": party, "primary": primary, "fallback": fallback}
+
+
 func test_controller_focus_inside_party_menu_shows_hub_cursor_only() -> void:
 	var ux := UXScene.instantiate() as NavigationUXLayer
 	add_child_autofree(ux)
@@ -171,6 +194,105 @@ func test_keyboard_to_controller_handoff_shows_hub_cursor_while_focus_stays_pres
 	assert_eq(InputManager.get_presentation_mode(), InputManager.PresentationMode.FOCUS)
 	assert_same(setup.ux.get_focus_target(), setup.button)
 	assert_true(setup.ux.cursor.is_tracking_hub_target())
+
+
+func test_disabled_tracked_hub_button_restores_hover_and_falls_back() -> void:
+	var setup := await _party_two_button_screen()
+	var primary: Button = setup.primary
+	var fallback: Button = setup.fallback
+	assert_true(NavigationFocus._states.has(primary.get_instance_id()))
+	assert_true(setup.ux.cursor.is_tracking_hub_target())
+
+	primary.disabled = true
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	assert_false(NavigationFocus._states.has(primary.get_instance_id()), "authored focus override is restored")
+	assert_same(setup.ux.get_focus_target(), fallback)
+	assert_same(get_viewport().gui_get_focus_owner(), fallback)
+	assert_true(setup.ux.cursor.is_tracking_hub_target())
+	assert_same(setup.ux.cursor._hub_target.get_ref(), fallback)
+
+
+func test_focus_none_tracked_hub_button_restores_hover_and_falls_back() -> void:
+	var setup := await _party_two_button_screen()
+	var primary: Button = setup.primary
+	var fallback: Button = setup.fallback
+	primary.focus_mode = Control.FOCUS_NONE
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	assert_false(NavigationFocus._states.has(primary.get_instance_id()))
+	assert_same(setup.ux.get_focus_target(), fallback)
+	assert_same(get_viewport().gui_get_focus_owner(), fallback)
+	assert_same(setup.ux.cursor._hub_target.get_ref(), fallback)
+
+
+func test_hidden_tracked_hub_button_restores_hover_and_falls_back() -> void:
+	var setup := await _party_two_button_screen()
+	var primary: Button = setup.primary
+	var fallback: Button = setup.fallback
+	primary.hide()
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	assert_false(NavigationFocus._states.has(primary.get_instance_id()))
+	assert_same(setup.ux.get_focus_target(), fallback)
+	assert_same(get_viewport().gui_get_focus_owner(), fallback)
+	assert_same(setup.ux.cursor._hub_target.get_ref(), fallback)
+
+
+func test_freed_tracked_hub_button_falls_back_without_stale_presentation() -> void:
+	var setup := await _party_two_button_screen()
+	var primary: Button = setup.primary
+	var primary_id := primary.get_instance_id()
+	var fallback: Button = setup.fallback
+	primary.free()
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	assert_false(NavigationFocus._states.has(primary_id))
+	assert_same(setup.ux.get_focus_target(), fallback)
+	assert_same(get_viewport().gui_get_focus_owner(), fallback)
+	assert_true(setup.ux.cursor.is_tracking_hub_target())
+	assert_same(setup.ux.cursor._hub_target.get_ref(), fallback)
+
+
+func test_invalid_stale_hub_cursor_does_not_steal_focusless_modal() -> void:
+	var setup := await _party_two_button_screen()
+	var primary: Button = setup.primary
+	var modal := Control.new()
+	var unusable_default := Button.new()
+	unusable_default.focus_mode = Control.FOCUS_NONE
+	modal.add_child(unusable_default)
+	add_child_autofree(modal)
+	setup.ux.push_modal(modal, unusable_default, true, true)
+	setup.ux.cursor.track_hub_target(primary, false)
+	primary.disabled = true
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	assert_true(setup.ux.is_top_modal(modal))
+	assert_null(setup.ux.get_focus_target())
+	assert_null(get_viewport().gui_get_focus_owner())
+	assert_false(setup.ux.cursor.visible)
+	assert_false(setup.ux.cursor.is_tracking_hub_target())
+
+
+func test_external_scan_pointer_ownership_survives_old_hub_target_invalidation() -> void:
+	var setup := await _party_two_button_screen()
+	var primary: Button = setup.primary
+	var adapter := RefCounted.new()
+	setup.ux.set_adapter(adapter)
+	setup.ux.cursor.show_at_screen_position(Vector2(420, 240))
+	primary.disabled = true
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	assert_null(setup.ux.get_focus_target())
+	assert_true(setup.ux.cursor.visible)
+	assert_false(setup.ux.cursor.is_tracking_hub_target())
+	assert_eq(setup.ux.cursor.position, Vector2(420, 240))
 
 
 func test_controller_focus_does_not_push_synthetic_mouse_motion() -> void:
