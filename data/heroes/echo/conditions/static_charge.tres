@@ -27,6 +27,7 @@ script = ExtResource("2_vqlpy")
 condition_name = "Static Charge"
 icon = ExtResource("1_q8ka4")
 description = "This enemy is slowed and at the start of their next turn takes {psy*2.0} {nrg} damage that shreds {grd}."
+condition_type = 1
 speed_scalar = -0.25
 triggers = Array[ExtResource("3_q1na2")]([SubResource("Resource_6r8sd")])
 remove_on_triggers = Array[int]([1])

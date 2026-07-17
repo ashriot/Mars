@@ -31,8 +31,11 @@ const NESTED_COMPATIBILITY_CASES: Array[Dictionary] = [
 		"id": "bleed",
 		"action": "res://data/enemies/actions/shrapnel.tres",
 		"condition": "res://data/enemies/conditions/bleed.tres",
+		"condition_type": Condition.ConditionType.DEBUFF,
 		"trigger_type": Trigger.TriggerType.ON_TURN_START,
 		"remove_on_triggers": [],
+		"required_action_prose": ["applies debuff", "at the start of your turn"],
+		"required_condition_prose": ["at the start of this hero's turn"],
 		"formula": "{atk*1.0}",
 		"icon": "{prc}",
 		"shreds_guard": false,
@@ -52,8 +55,19 @@ const NESTED_COMPATIBILITY_CASES: Array[Dictionary] = [
 		"id": "fusion_ammo",
 		"action": "res://data/heroes/asher/actions/fusion_ammo.tres",
 		"condition": "res://data/heroes/asher/conditions/fusion_ammo.tres",
+		"condition_type": Condition.ConditionType.BUFF,
 		"trigger_type": Trigger.TriggerType.AFTER_ATTACKING,
 		"remove_on_triggers": [Trigger.TriggerType.ON_BREACHED, Trigger.TriggerType.ON_SHIFT],
+		"required_action_prose": [
+			"boosts asher's next turn by 15%",
+			"gains buff",
+			"attacks land an extra",
+			"lasts until asher shifts or is breached",
+		],
+		"required_condition_prose": [
+			"attacks land an extra",
+			"lasts until asher shifts or is breached",
+		],
 		"formula": "{psy*0.5}",
 		"icon": "{nrg}",
 		"shreds_guard": true,
@@ -73,8 +87,11 @@ const NESTED_COMPATIBILITY_CASES: Array[Dictionary] = [
 		"id": "energy_barrier",
 		"action": "res://data/heroes/echo/actions/energy_barrier.tres",
 		"condition": "res://data/heroes/echo/conditions/energy_barrier.tres",
+		"condition_type": Condition.ConditionType.BUFF,
 		"trigger_type": Trigger.TriggerType.ON_BEING_HIT,
 		"remove_on_triggers": [Trigger.TriggerType.ON_BEING_HIT],
+		"required_action_prose": ["grants any hero", "buff", "next enemy to hit this hero"],
+		"required_condition_prose": ["next enemy to hit this hero"],
 		"formula": "{psy*2.0}",
 		"icon": "{nrg}",
 		"shreds_guard": true,
@@ -94,8 +111,13 @@ const NESTED_COMPATIBILITY_CASES: Array[Dictionary] = [
 		"id": "feedback",
 		"action": "res://data/heroes/echo/actions/feedback.tres",
 		"condition": "res://data/heroes/echo/conditions/feedback.tres",
+		"condition_type": Condition.ConditionType.DEBUFF,
 		"trigger_type": Trigger.TriggerType.ON_HIT,
 		"remove_on_triggers": [Trigger.TriggerType.AFTER_ATTACKING],
+		"required_action_prose": [
+			"applies debuff", "next time this enemy attacks", "for each hit",
+		],
+		"required_condition_prose": ["next time this enemy attacks", "for each hit"],
 		"formula": "{psy*0.5}",
 		"icon": "{prc}",
 		"shreds_guard": false,
@@ -115,8 +137,15 @@ const NESTED_COMPATIBILITY_CASES: Array[Dictionary] = [
 		"id": "inversion",
 		"action": "res://data/heroes/echo/actions/inversion.tres",
 		"condition": "res://data/heroes/echo/conditions/inversion.tres",
+		"condition_type": Condition.ConditionType.DEBUFF,
 		"trigger_type": Trigger.TriggerType.ON_GAINING_GUARD,
 		"remove_on_triggers": [Trigger.TriggerType.ON_GAINING_GUARD],
+		"required_action_prose": [
+			"applies debuff", "next time this enemy gains", "for each point of",
+		],
+		"required_condition_prose": [
+			"next time this enemy gains guard", "for each point of guard",
+		],
 		"formula": "{psy*0.75}",
 		"icon": "{prc}",
 		"shreds_guard": false,
@@ -137,8 +166,13 @@ const NESTED_COMPATIBILITY_CASES: Array[Dictionary] = [
 		"id": "pain_transfer",
 		"action": "res://data/heroes/echo/actions/pain_transfer.tres",
 		"condition": "res://data/heroes/echo/conditions/pain_transfer.tres",
+		"condition_type": Condition.ConditionType.DEBUFF,
 		"trigger_type": Trigger.TriggerType.ON_BEING_HIT,
 		"remove_on_triggers": [],
+		"required_action_prose": [
+			"applies debuff", "heal themselves on each hit", "lasts until echo's next turn",
+		],
+		"required_condition_prose": ["heal hp", "for each hit", "on this enemy"],
 		"formula": "{psy*0.75}",
 		"effect": {
 			"script": "res://src/scripts/action_effects/effect_healing.gd",
@@ -167,13 +201,16 @@ const NESTED_COMPATIBILITY_CASES: Array[Dictionary] = [
 		"id": "psionic_pulse",
 		"action": "res://data/heroes/echo/actions/psionic_pulse.tres",
 		"condition": "res://data/heroes/echo/conditions/psionic_pulse_cond.tres",
+		# Passive-only marker: intentionally outside Buff/Debuff gameplay classification.
+		"condition_type": 2,
 		"trigger_type": Trigger.TriggerType.ON_TURN_START,
 		"remove_on_triggers": [Trigger.TriggerType.ON_SHIFT],
 		"is_passive": true,
+		"required_action_prose": ["at the start of echo's next turn", "all enemies take"],
+		"required_condition_prose": ["at the start of echo's next turn", "all enemies take"],
 		"formula": "{psy*0.5}",
 		"icon": "{nrg}",
 		"shreds_guard": true,
-		"timing": "at the start of Echo's next turn",
 		"effect": {
 			"script": "res://src/scripts/action_effects/effect_damage.gd",
 			"target_type": Action.TargetType.ALL_ENEMIES,
@@ -190,8 +227,15 @@ const NESTED_COMPATIBILITY_CASES: Array[Dictionary] = [
 		"id": "reverberate",
 		"action": "res://data/heroes/echo/actions/reverberate.tres",
 		"condition": "res://data/heroes/echo/conditions/reverberate.tres",
+		"condition_type": Condition.ConditionType.DEBUFF,
 		"trigger_type": Trigger.TriggerType.ON_TAKING_KINETIC_DAMAGE,
 		"remove_on_triggers": [Trigger.TriggerType.ON_TAKING_ENERGY_DAMAGE],
+		"required_action_prose": [
+			"applies debuff", "next time this enemy takes {kin} damage", "damage hit",
+		],
+		"required_condition_prose": [
+			"next time this enemy takes {kin} damage", "damage hit",
+		],
 		"formula": "{psy*1.5}",
 		"icon": "{nrg}",
 		"shreds_guard": true,
@@ -211,8 +255,13 @@ const NESTED_COMPATIBILITY_CASES: Array[Dictionary] = [
 		"id": "static_charge",
 		"action": "res://data/heroes/echo/actions/static_charge.tres",
 		"condition": "res://data/heroes/echo/conditions/static_charge.tres",
+		"condition_type": Condition.ConditionType.DEBUFF,
 		"trigger_type": Trigger.TriggerType.ON_TURN_START,
 		"remove_on_triggers": [Trigger.TriggerType.ON_TURN_START],
+		"required_action_prose": [
+			"delays an enemy by 25%", "applies debuff", "at the start of their next turn",
+		],
+		"required_condition_prose": ["slowed", "at the start of their next turn"],
 		"formula": "{psy*2.0}",
 		"icon": "{nrg}",
 		"shreds_guard": true,
@@ -233,9 +282,11 @@ const NESTED_COMPATIBILITY_CASES: Array[Dictionary] = [
 		"id": "return_fire",
 		"action": "",
 		"condition": "res://data/heroes/sands/conditions/return_fire.tres",
+		"condition_type": Condition.ConditionType.BUFF,
 		"trigger_type": Trigger.TriggerType.ON_BEING_HIT,
 		"remove_on_triggers": [Trigger.TriggerType.ON_SHIFT],
 		"is_passive": true,
+		"required_condition_prose": ["counterattacks enemy hits", "with overwatch", "add a"],
 		"formula": "{atk*0.5}",
 		"effect": {
 			"script": "res://src/scripts/action_effects/effect_damage.gd",
@@ -288,6 +339,52 @@ func before_all() -> void:
 
 func after_all() -> void:
 	_presentation_actor.free()
+
+
+func test_static_charge_condition_is_authored_as_debuff() -> void:
+	var condition := load(
+		"res://data/heroes/echo/conditions/static_charge.tres"
+	) as Condition
+	assert_eq(condition.condition_type, Condition.ConditionType.DEBUFF)
+
+
+func test_each_compatibility_case_declares_classification_and_semantic_clauses() -> void:
+	var missing_requirements: Array[String] = []
+	for expected: Dictionary in NESTED_COMPATIBILITY_CASES:
+		if not expected.has("condition_type"):
+			missing_requirements.append("%s condition_type" % expected.id)
+		if not expected.has("required_condition_prose") \
+		or (expected.get("required_condition_prose", []) as Array).is_empty():
+			missing_requirements.append("%s condition prose" % expected.id)
+		if not str(expected.action).is_empty() \
+		and (not expected.has("required_action_prose") \
+		or (expected.get("required_action_prose", []) as Array).is_empty()):
+			missing_requirements.append("%s action prose" % expected.id)
+	assert_eq(
+		missing_requirements,
+		[],
+		"every compatibility case declares classification and semantic/timing prose",
+	)
+
+
+func test_nested_case_validator_rejects_condition_classification_drift() -> void:
+	var expected := _nested_case_by_id("feedback").duplicate(true)
+	expected["condition_type"] = Condition.ConditionType.DEBUFF
+	var action := load(expected.action) as Action
+	var condition := (load(expected.condition) as Condition).duplicate(true) as Condition
+	condition.condition_type = Condition.ConditionType.BUFF
+	var errors := _nested_case_errors(expected, action, condition)
+	assert_string_contains("\n".join(errors), "condition classification drifted")
+
+
+func test_semantic_clause_validator_rejects_missing_required_meaning() -> void:
+	assert_eq(
+		_missing_semantic_clauses(
+			"At the end of the turn, deal damage.",
+			["at the start of the turn", "heal"],
+		),
+		["at the start of the turn", "heal"],
+	)
 
 
 func test_formula_allowlist_covers_every_action_and_condition_description() -> void:
@@ -429,6 +526,23 @@ func test_nested_condition_content_matches_referenced_topology_and_mechanics() -
 			continue
 		var errors := _nested_case_errors(expected, action, condition)
 		assert_eq(errors, [], "%s topology and mechanics: %s" % [expected.id, errors])
+		if action != null:
+			var missing_action_clauses := _missing_semantic_clauses(
+				action.description, expected.required_action_prose,
+			)
+			assert_eq(
+				missing_action_clauses,
+				[],
+				"%s action semantic/timing prose: %s" % [expected.id, missing_action_clauses],
+			)
+		var missing_condition_clauses := _missing_semantic_clauses(
+			condition.description, expected.required_condition_prose,
+		)
+		assert_eq(
+			missing_condition_clauses,
+			[],
+			"%s condition semantic/timing prose: %s" % [expected.id, missing_condition_clauses],
+		)
 		var prose_descriptions: Array[String] = []
 		if action != null and APPROVED_DESCRIPTION_FORMULAS.has(expected.action):
 			prose_descriptions.append(action.description)
@@ -447,11 +561,6 @@ func test_nested_condition_content_matches_referenced_topology_and_mechanics() -
 				assert_false(
 					"lose" in normalized_guard_prose and "guard" in normalized_guard_prose,
 					"%s Piercing does not claim intrinsic Guard loss" % expected.condition,
-				)
-			if expected.has("timing"):
-				assert_string_contains(
-					prose.to_lower(), str(expected.timing).to_lower(),
-					"%s trigger timing prose" % expected.condition,
 				)
 
 
@@ -691,6 +800,19 @@ func _description_formulas(description: String) -> Array[String]:
 	return formulas
 
 
+func _missing_semantic_clauses(prose: String, required_clauses: Array) -> Array[String]:
+	var normalized_prose := prose.to_lower()
+	for separator: String in ["\n", "\r", "\t", "[p]", "[/p]", "[i]", "[/i]"]:
+		normalized_prose = normalized_prose.replace(separator, " ")
+	while "  " in normalized_prose:
+		normalized_prose = normalized_prose.replace("  ", " ")
+	var missing: Array[String] = []
+	for required_clause: String in required_clauses:
+		if not required_clause.to_lower() in normalized_prose:
+			missing.append(required_clause)
+	return missing
+
+
 func _has_serialized_shreds_guard(source_text: String) -> bool:
 	for raw_line: String in source_text.split("\n"):
 		var line := raw_line.strip_edges()
@@ -730,6 +852,8 @@ func _nested_case_errors(
 		return errors
 	if condition.resource_path != condition_path:
 		errors.append("condition resource path drifted from %s" % condition_path)
+	if int(condition.condition_type) != int(expected.condition_type):
+		errors.append("%s condition classification drifted" % condition_path)
 	if condition.triggers.size() != 1:
 		errors.append("%s expected exactly one owning trigger" % condition_path)
 		return errors
