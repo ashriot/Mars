@@ -65,17 +65,19 @@ func setup(hero: HeroData):
 	current_hero = hero
 
 	var remembered: Dictionary = _hero_context_memory.get(hero.hero_id, {})
-	current_role_idx = int(remembered.get("role", 0))
+	var remembered_role_id: String = remembered.get("role", "")
 	current_page = int(remembered.get("page", 0))
 
 	# Setup the View
-	_refresh_role_list()
+	_refresh_role_list(remembered_role_id)
 	_update_tab_visuals()
 	navigation_depth = NavigationDepth.ROLE_SELECT
 	_set_role_panel_focus_enabled(true)
+	_set_tree_nodes_interactive(false)
+	focused_node_id = _remembered_node_for_current_context()
 
 
-func _refresh_role_list():
+func _refresh_role_list(remembered_role_id: String = ""):
 	for child in role_list_container.get_children():
 		role_list_container.remove_child(child)
 		child.free()
@@ -85,10 +87,12 @@ func _refresh_role_list():
 	for candidate: RoleDefinition in roles:
 		if progression_catalog and progression_catalog.get_role(candidate.role_id):
 			rendered_roles.append(candidate)
-	current_role_idx = clampi(current_role_idx, 0, rendered_roles.size() - 1) if not rendered_roles.is_empty() else 0
+	current_role_idx = 0
+	for index in range(rendered_roles.size()):
+		if rendered_roles[index].role_id == remembered_role_id:
+			current_role_idx = index
+			break
 
-	var color := Color.WHITE
-	var rendered_index := 0
 	for def: RoleDefinition in rendered_roles:
 		var tree := progression_catalog.get_role(def.role_id)
 		var panel = role_panel_scene.instantiate() as RolePanel
@@ -99,14 +103,13 @@ func _refresh_role_list():
 		panel.purchase_requested.connect(_on_purchase_requested)
 		panel.node_focused.connect(_on_role_node_focused.bind(panel))
 
-		if rendered_index == current_role_idx:
-			panel.set_expanded(true, current_page, true)
-			color = panel.def.color
-		else:
-			panel.set_expanded(false, current_page, false)
-		rendered_index += 1
+	var selected := _current_role_panel()
+	current_page = _closest_supported_page(selected, current_page)
+	for index in range(role_list_container.get_child_count()):
+		var panel := role_list_container.get_child(index) as RolePanel
+		panel.set_expanded(index == current_role_idx, current_page, index == current_role_idx)
 	_refresh_role_shortcuts()
-	update_tabs(color)
+	update_tabs(selected.def.color if selected else Color.WHITE)
 	_update_tab_visuals()
 
 func refresh_progression_state(hero: HeroData) -> void:
@@ -118,11 +121,14 @@ func refresh_progression_state(hero: HeroData) -> void:
 
 
 func _on_purchase_requested(hero: HeroData, role_id: String, node_id: String) -> void:
+	var panel := _current_role_panel()
+	if navigation_depth != NavigationDepth.TREE or hero != current_hero or panel == null or role_id != panel.role_id:
+		return
 	purchase_requested.emit(hero, role_id, node_id)
 
 
 func _on_role_node_focused(node_id: String, role_panel: RolePanel) -> void:
-	if role_panel != _current_role_panel():
+	if navigation_depth != NavigationDepth.TREE or role_panel != _current_role_panel():
 		return
 	if focused_node_id != node_id:
 		focused_node_id = node_id
@@ -152,6 +158,8 @@ func _on_role_panel_selected(selected_panel: RolePanel):
 	_refresh_role_shortcuts()
 	update_tabs(selected_panel.def.color)
 	_update_tab_visuals()
+	_set_tree_nodes_interactive(false)
+	focused_node_id = _remembered_node_for_current_context()
 	if navigation_depth == NavigationDepth.ROLE_SELECT:
 		selected_panel.focus_for_selection()
 		_publish_role_select_hints()
@@ -224,6 +232,7 @@ func focus_node(node_id: String) -> bool:
 		return false
 	navigation_depth = NavigationDepth.TREE
 	_set_role_panel_focus_enabled(false)
+	_set_tree_nodes_interactive(true)
 	focused_node_id = target_id
 	_focus_memory[_memory_key()] = target_id
 	if target.is_inside_tree() and target.is_visible_in_tree(): target.grab_focus()
@@ -280,6 +289,8 @@ func change_role(delta: int) -> void:
 
 
 func confirm_focused_node() -> void:
+	if navigation_depth != NavigationDepth.TREE:
+		return
 	var node := get_focused_node()
 	if node is SkillTreeNode and node.is_purchasable():
 		_on_purchase_requested(current_hero, _current_role_panel().role_id, node.node_definition.id)
@@ -304,6 +315,7 @@ func cancel_navigation() -> bool:
 func enter_role_select() -> bool:
 	navigation_depth = NavigationDepth.ROLE_SELECT
 	_set_role_panel_focus_enabled(true)
+	_set_tree_nodes_interactive(false)
 	var panel := _current_role_panel()
 	if panel == null:
 		return false
@@ -317,6 +329,7 @@ func enter_tree() -> bool:
 		return false
 	navigation_depth = NavigationDepth.TREE
 	_set_role_panel_focus_enabled(false)
+	_set_tree_nodes_interactive(true)
 	return focus_node(_remembered_node_for_current_context())
 
 
@@ -416,12 +429,15 @@ func _memory_key() -> String:
 
 
 func _store_focus_memory() -> void:
-	if not focused_node_id.is_empty() and current_hero and _current_role_panel(): _focus_memory[_memory_key()] = focused_node_id
+	var panel := _current_role_panel()
+	if not focused_node_id.is_empty() and current_hero and panel and panel.generated_nodes.has(focused_node_id):
+		_focus_memory[_memory_key()] = focused_node_id
 
 
 func _store_hero_context() -> void:
+	var panel := _current_role_panel()
 	if current_hero:
-		_hero_context_memory[current_hero.hero_id] = {"role": current_role_idx, "page": current_page}
+		_hero_context_memory[current_hero.hero_id] = {"role": panel.role_id if panel else "", "page": current_page}
 
 
 func _remembered_node_for_current_context() -> String:
@@ -448,6 +464,16 @@ func _set_role_panel_focus_enabled(enabled: bool) -> void:
 	for child in role_list_container.get_children():
 		if child is RolePanel:
 			(child as RolePanel).focus_mode = Control.FOCUS_ALL if enabled else Control.FOCUS_NONE
+
+
+func _set_tree_nodes_interactive(enabled: bool) -> void:
+	for child in role_list_container.get_children():
+		if not child is RolePanel:
+			continue
+		var interactive := enabled and child == _current_role_panel()
+		for node: Control in (child as RolePanel).generated_nodes.values():
+			node.focus_mode = Control.FOCUS_ALL if interactive else Control.FOCUS_NONE
+			node.mouse_filter = Control.MOUSE_FILTER_STOP if interactive else Control.MOUSE_FILTER_IGNORE
 
 
 func _focused_position() -> Vector2:

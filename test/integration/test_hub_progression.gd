@@ -286,6 +286,85 @@ func test_roles_remember_role_per_hero_but_reenter_at_role_selection() -> void:
 	assert_eq(party.skill_view.navigation_depth, SkillTreePanel.NavigationDepth.ROLE_SELECT)
 
 
+func test_role_memory_uses_role_id_across_reorder_and_missing_role_fallback() -> void:
+	var panel := await _skill_panel_with_multi_page_role()
+	var hero := panel.current_hero
+	assert_true(panel.enter_role_select())
+	assert_true(panel.select_adjacent_role(1))
+	assert_eq(panel._current_role_panel().role_id, "snp")
+	panel.remember_focus()
+
+	hero.role_definitions.assign([_role("snp"), _role("gun")])
+	panel.setup(hero)
+	assert_true(panel.enter_role_select())
+	assert_eq(panel.current_role_idx, 0)
+	assert_eq(panel._current_role_panel().role_id, "snp", "semantic role memory survives authored reorder")
+
+	hero.unlocked_role_ids.assign(["gun"])
+	hero.role_definitions.assign([_role("snp"), _role("gun")])
+	panel.setup(hero)
+	assert_true(panel.enter_role_select())
+	assert_eq(panel.current_role_idx, 0)
+	assert_eq(panel._current_role_panel().role_id, "gun", "missing remembered role falls back to first rendered role")
+	panel.free()
+	await get_tree().process_frame
+
+
+func test_node_memory_never_leaks_between_heroes_at_role_selection() -> void:
+	var panel := await _skill_panel_with_multi_page_role()
+	var hero_a := panel.current_hero
+	var hero_b := _hero()
+	hero_b.hero_id = "echo"
+	hero_b.role_definitions.assign([_legacy_role()])
+	assert_true(panel.focus_node("gun.atk_1"))
+
+	panel.setup(hero_b)
+	assert_true(panel.enter_role_select())
+	assert_eq(panel.focused_node_id, "", "new hero loads only its own remembered node context")
+	panel.setup(hero_a)
+	assert_true(panel.enter_role_select())
+	panel.setup(hero_b)
+	assert_true(panel.enter_role_select())
+	assert_true(panel.enter_tree())
+	assert_ne(panel.focused_node_id, "gun.atk_1", "leaving the second hero at role selection does not persist the first hero's node")
+
+	panel.setup(hero_a)
+	assert_true(panel.enter_role_select())
+	assert_true(panel.enter_tree())
+	assert_eq(panel.focused_node_id, "gun.atk_1", "the first hero retains its own stable node")
+	panel.free()
+	await get_tree().process_frame
+
+
+func test_role_selection_disables_tree_focus_and_rejects_node_activation_until_entry() -> void:
+	var panel := await _skill_panel_with_multi_page_role()
+	assert_true(panel.enter_role_select())
+	var node := panel._current_role_panel().generated_nodes["gun.atk_1"] as SkillTreeNode
+	assert_eq(node.focus_mode, Control.FOCUS_NONE)
+	assert_eq(node.mouse_filter, Control.MOUSE_FILTER_IGNORE)
+	var tab := InputEventKey.new()
+	tab.keycode = KEY_TAB
+	tab.pressed = true
+	get_viewport().push_input(tab)
+	await get_tree().process_frame
+	assert_true(get_viewport().gui_get_focus_owner() is RolePanel, "Tab remains isolated to role selection targets")
+	watch_signals(panel)
+	node._pressed()
+	assert_signal_not_emitted(panel, "purchase_requested")
+
+	assert_true(panel.enter_tree())
+	assert_eq(node.focus_mode, Control.FOCUS_ALL)
+	assert_eq(node.mouse_filter, Control.MOUSE_FILTER_STOP)
+	var collapsed_node := (panel.role_list_container.get_child(1) as RolePanel).generated_nodes["snp.aaa"] as SkillTreeNode
+	assert_eq(collapsed_node.focus_mode, Control.FOCUS_NONE)
+	assert_eq(collapsed_node.mouse_filter, Control.MOUSE_FILTER_IGNORE)
+	node._pressed()
+	assert_signal_emitted_with_parameters(panel, "purchase_requested", [panel.current_hero, "gun", "gun.atk_1"])
+	assert_signal_emit_count(panel, "purchase_requested", 1)
+	panel.free()
+	await get_tree().process_frame
+
+
 func test_role_selection_is_safe_without_rendered_roles_or_tree_nodes() -> void:
 	var no_roles := preload("res://src/hub/skill_tree_panel.tscn").instantiate() as SkillTreePanel
 	no_roles.progression_catalog = ProgressionCatalog.from_validated_trees([])
@@ -864,6 +943,7 @@ func test_real_focus_events_update_stable_id_before_navigation_and_page_restorat
 	panel.progression_catalog = ProgressionCatalog.from_validated_trees([tree])
 	add_child(panel)
 	panel.setup(hero)
+	assert_true(panel.enter_tree())
 	var starting := panel._current_role_panel().generated_nodes["gun.start1"] as SkillTreeNode
 
 	starting.grab_focus()
@@ -886,6 +966,7 @@ func test_rendered_button_activation_only_requests_purchase_for_paid_available_n
 	panel.progression_catalog = ProgressionCatalog.from_validated_trees([_tree()])
 	add_child(panel)
 	panel.setup(hero)
+	assert_true(panel.enter_tree())
 	var role_panel := panel._current_role_panel()
 	var anchor := role_panel.generated_nodes["gun.anchor"] as Button
 	var starting := role_panel.generated_nodes["gun.start1"] as SkillTreeNode
@@ -981,6 +1062,7 @@ func test_stale_double_click_runs_success_side_effects_and_tree_refresh_once() -
 	SaveSystem.party_roster.assign([hero])
 	add_child(menu)
 	menu.open()
+	assert_true(menu.skill_view.enter_tree())
 	watch_signals(menu.skill_view)
 	var role_panel := menu.skill_view.role_list_container.get_child(0) as RolePanel
 	var node := role_panel.generated_nodes["gun.root"] as SkillTreeNode
@@ -1052,6 +1134,7 @@ func test_real_party_menu_purchase_writes_save_refreshes_matching_card_and_tree_
 	menu.play_progression_audio = _record_real_audio
 	add_child(menu)
 	menu.open()
+	assert_true(menu.skill_view.enter_tree())
 	var asher_card := menu.hero_list_container.get_child(0) as HeroPanel
 	var echo_card := menu.hero_list_container.get_child(1) as HeroPanel
 	asher_card.atk.text = "STALE"
