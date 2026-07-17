@@ -10,7 +10,6 @@
 
 [sub_resource type="Resource" id="Resource_deft0"]
 script = ExtResource("7_4fkk4")
-shreds_guard = false
 is_indirect = true
 damage_type = 2
 target_type = 4

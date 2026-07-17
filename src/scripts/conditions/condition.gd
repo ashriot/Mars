@@ -31,5 +31,9 @@ enum ConditionType { BUFF, DEBUFF }
 var id: String = resource_path.get_file().get_basename()
 var attacker: ActorCard
 
-func get_damage_dealt_scalar(_attacker: ActorCard, _target: ActorCard) -> float:
+func get_damage_dealt_modifier(_attacker: ActorCard, _target: ActorCard) -> float:
 	return damage_dealt_scalar
+
+
+func get_damage_taken_modifier(_attacker: ActorCard, _target: ActorCard) -> float:
+	return damage_taken_scalar

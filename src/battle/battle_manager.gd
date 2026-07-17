@@ -369,6 +369,13 @@ func _apply_role_passive(hero: HeroCard):
 		await execute_action(hero, action, [hero], false)
 
 func execute_action(actor: ActorCard, action: Action, targets: Array, display_name: bool = true, ends_turn: bool = false):
+	var paid_focus_cost := action.focus_cost
+	if actor is HeroCard:
+		paid_focus_cost = (actor as HeroCard).get_scaled_focus_cost(action.focus_cost)
+		if (actor as HeroCard).current_focus < paid_focus_cost:
+			return
+		await (actor as HeroCard).modify_focus(-paid_focus_cost)
+	var action_context := {"paid_focus_cost": paid_focus_cost}
 	var parent_targets = targets
 	executing_action = action
 	executing_action_ends_turn = ends_turn
@@ -378,7 +385,6 @@ func execute_action(actor: ActorCard, action: Action, targets: Array, display_na
 	current_action = null
 	if actor is HeroCard:
 		current_action_panel.hide()
-		actor.modify_focus(-action.focus_cost)
 		_clear_all_targeting_ui()
 		if display_name:
 			actor.show_action(action.action_name)
@@ -396,7 +402,7 @@ func execute_action(actor: ActorCard, action: Action, targets: Array, display_na
 				targets = [current_actor]
 			else:
 				targets = parent_targets
-		await effect.execute(actor, targets, self, action)
+		await effect.execute(actor, targets, self, action, action_context)
 	if action.is_attack:
 		var context = { "targets": targets, "action": action }
 		await actor._fire_condition_event(Trigger.TriggerType.AFTER_ATTACKING, context)

@@ -39,3 +39,42 @@ static func resolve_potency(
 		contributions.append(contribution)
 		final_potency += contribution.amount
 	return ResolvedPotency.new(base_potency, maxf(0.0, final_potency), contributions)
+
+
+static func resolve_hit(
+	attacker: ActorCard,
+	target: ActorCard,
+	power_type: Action.PowerType,
+	resolved_potency: ResolvedPotency,
+	distribution_count: int,
+	resolved_damage_type: Action.DamageType,
+	is_critical: bool,
+	hit_context: DamageContext,
+	request_modifier: Callable = Callable(),
+) -> DamageResult:
+	var base_power := attacker.get_power(power_type)
+	var overload_power := 0
+	if hit_context.target != null and hit_context.target.is_breached:
+		overload_power = attacker.current_stats.overload
+	var precision_power := attacker.get_crit_damage_bonus() if is_critical else 0
+	var defense := 0
+	if resolved_damage_type == Action.DamageType.KINETIC:
+		defense = target.current_stats.kinetic_defense
+	elif resolved_damage_type == Action.DamageType.ENERGY:
+		defense = target.current_stats.energy_defense
+
+	var request := DamageRequest.new(
+		base_power,
+		overload_power,
+		precision_power,
+		resolved_potency.potency,
+		distribution_count,
+		resolved_damage_type,
+		defense,
+		attacker.get_damage_dealt_modifier(target),
+		target.get_damage_taken_modifier(attacker),
+		resolved_potency.contributions,
+	)
+	if request_modifier.is_valid():
+		request = request_modifier.call(request, hit_context) as DamageRequest
+	return DamageCalculator.calculate(request)

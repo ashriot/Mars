@@ -19,10 +19,10 @@ func get_stat_mod(_stat: ActorStats.Stats, _rank: int) -> int:
 	return 0
 
 # 2. Damage Modifiers
-func get_damage_dealt_scalar(_target: ActorCard) -> float:
+func get_damage_dealt_modifier(_target: ActorCard) -> float:
 	return 0.0
 
-func get_damage_taken_scalar(_attacker: ActorCard, _rank: int) -> float:
+func get_damage_taken_modifier(_attacker: ActorCard) -> float:
 	return 0.0
 
 func get_action_ct_multiplier(_action: Action) -> float:

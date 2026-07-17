@@ -599,19 +599,22 @@ func get_incoming_aim_mods() -> int:
 func get_crit_damage_bonus() -> int:
 	return current_stats.precision
 
-func get_damage_dealt_scalar(target: ActorCard) -> float:
-	var scalar: float = 1.0
+func get_damage_dealt_modifier(target: ActorCard) -> float:
+	var modifier := 0.0
 	for condition in active_conditions:
-		scalar += condition.get_damage_dealt_scalar(self, target)
+		modifier += condition.get_damage_dealt_modifier(self, target)
 	for trait_item in active_traits:
-		scalar += trait_item.get_damage_dealt_scalar(target)
-	return scalar
+		modifier += trait_item.get_damage_dealt_modifier(target)
+	return modifier
 
-func get_damage_taken_scalar() -> float:
-	var scalar: float = 1.0
+
+func get_damage_taken_modifier(attacker: ActorCard) -> float:
+	var modifier := 0.0
 	for condition in active_conditions:
-		scalar += condition.damage_taken_scalar
-	return scalar
+		modifier += condition.get_damage_taken_modifier(attacker, self)
+	for trait_item in active_traits:
+		modifier += trait_item.get_damage_taken_modifier(attacker)
+	return modifier
 
 func _update_conditions_ui():
 	for child in buffs_panel.get_children():
