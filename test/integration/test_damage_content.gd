@@ -5,9 +5,11 @@ const CONTENT_ROOTS: Array[String] = [
 	"res://data/heroes",
 	"res://data/enemies",
 ]
-const LEGACY_ACTION_FORMULAS: Dictionary = {
+const APPROVED_DESCRIPTION_FORMULAS: Dictionary = {
 	"res://data/enemies/actions/shrapnel.tres": ["{atk*1.0}"],
+	"res://data/enemies/conditions/bleed.tres": ["{atk*1.0}"],
 	"res://data/heroes/asher/actions/fusion_ammo.tres": ["{psy*0.5}"],
+	"res://data/heroes/asher/conditions/fusion_ammo.tres": ["{psy*0.5}"],
 	"res://data/heroes/echo/actions/energy_barrier.tres": ["{psy*2.0}"],
 	"res://data/heroes/echo/actions/feedback.tres": ["{psy*0.5}"],
 	"res://data/heroes/echo/actions/inversion.tres": ["{psy*0.75}"],
@@ -16,88 +18,251 @@ const LEGACY_ACTION_FORMULAS: Dictionary = {
 	"res://data/heroes/echo/actions/rejuvenate.tres": ["{psy*1.5}"],
 	"res://data/heroes/echo/actions/reverberate.tres": ["{psy*1.5}"],
 	"res://data/heroes/echo/actions/static_charge.tres": ["{psy*2.0}"],
+	"res://data/heroes/echo/conditions/energy_barrier.tres": ["{psy*2.0}"],
+	"res://data/heroes/echo/conditions/feedback.tres": ["{psy*0.5}"],
+	"res://data/heroes/echo/conditions/inversion.tres": ["{psy*0.75}"],
+	"res://data/heroes/echo/conditions/psionic_pulse_cond.tres": ["{psy*0.5}"],
+	"res://data/heroes/echo/conditions/reverberate.tres": ["{psy*1.5}"],
+	"res://data/heroes/echo/conditions/static_charge.tres": ["{psy*2.0}"],
+	"res://data/heroes/sands/conditions/return_fire.tres": ["{atk*0.5}", "{atk*0.5}"],
 }
-const NESTED_DAMAGE_CONTENT: Array[Dictionary] = [
+const NESTED_COMPATIBILITY_CASES: Array[Dictionary] = [
 	{
+		"id": "bleed",
 		"action": "res://data/enemies/actions/shrapnel.tres",
 		"condition": "res://data/enemies/conditions/bleed.tres",
-		"power": Action.PowerType.ATTACK,
-		"potency": 1.0,
-		"type": Action.DamageType.PIERCING,
+		"trigger_type": Trigger.TriggerType.ON_TURN_START,
+		"remove_on_triggers": [],
 		"formula": "{atk*1.0}",
 		"icon": "{prc}",
 		"shreds_guard": false,
+		"effect": {
+			"script": "res://src/scripts/action_effects/effect_damage.gd",
+			"target_type": Action.TargetType.SELF,
+			"kind": "damage",
+			"power": Action.PowerType.ATTACK,
+			"potency": 1.0,
+			"damage_type": Action.DamageType.PIERCING,
+			"hit_count": 1,
+			"split_damage": false,
+			"is_indirect": true,
+		},
 	},
 	{
+		"id": "fusion_ammo",
 		"action": "res://data/heroes/asher/actions/fusion_ammo.tres",
 		"condition": "res://data/heroes/asher/conditions/fusion_ammo.tres",
-		"power": Action.PowerType.PSYCHE,
-		"potency": 0.5,
-		"type": Action.DamageType.ENERGY,
+		"trigger_type": Trigger.TriggerType.AFTER_ATTACKING,
+		"remove_on_triggers": [Trigger.TriggerType.ON_BREACHED, Trigger.TriggerType.ON_SHIFT],
 		"formula": "{psy*0.5}",
 		"icon": "{nrg}",
 		"shreds_guard": true,
+		"effect": {
+			"script": "res://src/scripts/action_effects/effect_damage.gd",
+			"target_type": Action.TargetType.PARENT,
+			"kind": "damage",
+			"power": Action.PowerType.PSYCHE,
+			"potency": 0.5,
+			"damage_type": Action.DamageType.ENERGY,
+			"hit_count": 1,
+			"split_damage": false,
+			"is_indirect": false,
+		},
 	},
 	{
+		"id": "energy_barrier",
 		"action": "res://data/heroes/echo/actions/energy_barrier.tres",
 		"condition": "res://data/heroes/echo/conditions/energy_barrier.tres",
-		"power": Action.PowerType.PSYCHE,
-		"potency": 2.0,
-		"type": Action.DamageType.ENERGY,
+		"trigger_type": Trigger.TriggerType.ON_BEING_HIT,
+		"remove_on_triggers": [Trigger.TriggerType.ON_BEING_HIT],
 		"formula": "{psy*2.0}",
 		"icon": "{nrg}",
 		"shreds_guard": true,
+		"effect": {
+			"script": "res://src/scripts/action_effects/effect_damage.gd",
+			"target_type": Action.TargetType.ATTACKER,
+			"kind": "damage",
+			"power": Action.PowerType.PSYCHE,
+			"potency": 2.0,
+			"damage_type": Action.DamageType.ENERGY,
+			"hit_count": 1,
+			"split_damage": false,
+			"is_indirect": false,
+		},
 	},
 	{
+		"id": "feedback",
 		"action": "res://data/heroes/echo/actions/feedback.tres",
 		"condition": "res://data/heroes/echo/conditions/feedback.tres",
-		"power": Action.PowerType.PSYCHE,
-		"potency": 0.5,
-		"type": Action.DamageType.PIERCING,
+		"trigger_type": Trigger.TriggerType.ON_HIT,
+		"remove_on_triggers": [Trigger.TriggerType.AFTER_ATTACKING],
 		"formula": "{psy*0.5}",
 		"icon": "{prc}",
 		"shreds_guard": false,
+		"effect": {
+			"script": "res://src/scripts/action_effects/effect_damage.gd",
+			"target_type": Action.TargetType.SELF,
+			"kind": "damage",
+			"power": Action.PowerType.PSYCHE,
+			"potency": 0.5,
+			"damage_type": Action.DamageType.PIERCING,
+			"hit_count": 1,
+			"split_damage": false,
+			"is_indirect": false,
+		},
 	},
 	{
+		"id": "inversion",
 		"action": "res://data/heroes/echo/actions/inversion.tres",
 		"condition": "res://data/heroes/echo/conditions/inversion.tres",
-		"power": Action.PowerType.PSYCHE,
-		"potency": 0.75,
-		"type": Action.DamageType.PIERCING,
+		"trigger_type": Trigger.TriggerType.ON_GAINING_GUARD,
+		"remove_on_triggers": [Trigger.TriggerType.ON_GAINING_GUARD],
 		"formula": "{psy*0.75}",
 		"icon": "{prc}",
 		"shreds_guard": false,
+		"effect": {
+			"script": "res://src/scripts/action_effects/effect_damage_inversion.gd",
+			"target_type": Action.TargetType.PARENT,
+			"kind": "damage",
+			"power": Action.PowerType.PSYCHE,
+			"potency": 0.75,
+			"damage_type": Action.DamageType.PIERCING,
+			"hit_count": 1,
+			"split_damage": false,
+			"is_indirect": false,
+			"remove_guard_gained": true,
+		},
 	},
 	{
+		"id": "pain_transfer",
+		"action": "res://data/heroes/echo/actions/pain_transfer.tres",
+		"condition": "res://data/heroes/echo/conditions/pain_transfer.tres",
+		"trigger_type": Trigger.TriggerType.ON_BEING_HIT,
+		"remove_on_triggers": [],
+		"formula": "{psy*0.75}",
+		"effect": {
+			"script": "res://src/scripts/action_effects/effect_healing.gd",
+			"target_type": Action.TargetType.ATTACKER,
+			"kind": "healing",
+			"power": Action.PowerType.PSYCHE,
+			"potency": 0.75,
+			"focus_scalar": 0.0,
+			"scales_with_missing_hp": false,
+			"is_revive": false,
+		},
+		"auxiliary_removal": {
+			"action_effect_count": 3,
+			"apply_effect_index": 2,
+			"apply_target_type": Action.TargetType.SELF,
+			"condition_name": "Pain Transfer Removal",
+			"is_passive": true,
+			"trigger_type": Trigger.TriggerType.ON_TURN_START,
+			"remove_on_triggers": [Trigger.TriggerType.ON_TURN_START],
+			"effect_script": "res://src/scripts/action_effects/effect_remove_condition.gd",
+			"effect_target_type": Action.TargetType.ALL_ENEMIES,
+			"removed_condition_name": "Pain Transfer",
+		},
+	},
+	{
+		"id": "psionic_pulse",
 		"action": "res://data/heroes/echo/actions/psionic_pulse.tres",
 		"condition": "res://data/heroes/echo/conditions/psionic_pulse_cond.tres",
-		"power": Action.PowerType.PSYCHE,
-		"potency": 0.5,
-		"type": Action.DamageType.ENERGY,
+		"trigger_type": Trigger.TriggerType.ON_TURN_START,
+		"remove_on_triggers": [Trigger.TriggerType.ON_SHIFT],
+		"is_passive": true,
 		"formula": "{psy*0.5}",
 		"icon": "{nrg}",
 		"shreds_guard": true,
 		"timing": "at the start of Echo's next turn",
+		"effect": {
+			"script": "res://src/scripts/action_effects/effect_damage.gd",
+			"target_type": Action.TargetType.ALL_ENEMIES,
+			"kind": "damage",
+			"power": Action.PowerType.PSYCHE,
+			"potency": 0.5,
+			"damage_type": Action.DamageType.ENERGY,
+			"hit_count": 1,
+			"split_damage": false,
+			"is_indirect": false,
+		},
 	},
 	{
+		"id": "reverberate",
 		"action": "res://data/heroes/echo/actions/reverberate.tres",
 		"condition": "res://data/heroes/echo/conditions/reverberate.tres",
-		"power": Action.PowerType.PSYCHE,
-		"potency": 1.5,
-		"type": Action.DamageType.ENERGY,
+		"trigger_type": Trigger.TriggerType.ON_TAKING_KINETIC_DAMAGE,
+		"remove_on_triggers": [Trigger.TriggerType.ON_TAKING_ENERGY_DAMAGE],
 		"formula": "{psy*1.5}",
 		"icon": "{nrg}",
 		"shreds_guard": true,
+		"effect": {
+			"script": "res://src/scripts/action_effects/effect_damage.gd",
+			"target_type": Action.TargetType.PARENT,
+			"kind": "damage",
+			"power": Action.PowerType.PSYCHE,
+			"potency": 1.5,
+			"damage_type": Action.DamageType.ENERGY,
+			"hit_count": 1,
+			"split_damage": false,
+			"is_indirect": false,
+		},
 	},
 	{
+		"id": "static_charge",
 		"action": "res://data/heroes/echo/actions/static_charge.tres",
 		"condition": "res://data/heroes/echo/conditions/static_charge.tres",
-		"power": Action.PowerType.PSYCHE,
-		"potency": 2.0,
-		"type": Action.DamageType.ENERGY,
+		"trigger_type": Trigger.TriggerType.ON_TURN_START,
+		"remove_on_triggers": [Trigger.TriggerType.ON_TURN_START],
 		"formula": "{psy*2.0}",
 		"icon": "{nrg}",
 		"shreds_guard": true,
+		"condition_fields": {"speed_scalar": -0.25},
+		"effect": {
+			"script": "res://src/scripts/action_effects/effect_damage.gd",
+			"target_type": Action.TargetType.SELF,
+			"kind": "damage",
+			"power": Action.PowerType.PSYCHE,
+			"potency": 2.0,
+			"damage_type": Action.DamageType.ENERGY,
+			"hit_count": 1,
+			"split_damage": false,
+			"is_indirect": false,
+		},
+	},
+	{
+		"id": "return_fire",
+		"action": "",
+		"condition": "res://data/heroes/sands/conditions/return_fire.tres",
+		"trigger_type": Trigger.TriggerType.ON_BEING_HIT,
+		"remove_on_triggers": [Trigger.TriggerType.ON_SHIFT],
+		"is_passive": true,
+		"formula": "{atk*0.5}",
+		"effect": {
+			"script": "res://src/scripts/action_effects/effect_damage.gd",
+			"target_type": Action.TargetType.ATTACKER,
+			"kind": "damage",
+			"power": Action.PowerType.ATTACK,
+			"potency": 0.5,
+			"damage_type": Action.DamageType.PIERCING,
+			"hit_count": 1,
+			"split_damage": false,
+			"is_indirect": false,
+			"on_hit": {
+				"condition": HitTrigger.HitCondition.IF_ATTACKER_HAS_BUFF,
+				"context": "Overwatch",
+				"effect": {
+					"script": "res://src/scripts/action_effects/effect_damage.gd",
+					"target_type": Action.TargetType.ATTACKER,
+					"kind": "damage",
+					"power": Action.PowerType.ATTACK,
+					"potency": 0.5,
+					"damage_type": Action.DamageType.KINETIC,
+					"hit_count": 1,
+					"split_damage": false,
+					"is_indirect": false,
+				},
+			},
+		},
 	},
 ]
 
@@ -125,6 +290,113 @@ func after_all() -> void:
 	_presentation_actor.free()
 
 
+func test_formula_allowlist_covers_every_action_and_condition_description() -> void:
+	var paths: Array[String] = []
+	for root: String in CONTENT_ROOTS:
+		_collect_resource_paths(root, paths)
+	paths.sort()
+	var actual_formulas: Dictionary = {}
+	for path: String in paths:
+		var resource := ResourceLoader.load(path)
+		if not (resource is Action or resource is Condition):
+			continue
+		var description: String = resource.description
+		var formulas: Array[String] = []
+		for match_result: RegExMatch in _legacy_formula_regex.search_all(description):
+			formulas.append(match_result.get_string(0))
+		if not formulas.is_empty():
+			actual_formulas[path] = formulas
+	assert_eq(
+		actual_formulas,
+		APPROVED_DESCRIPTION_FORMULAS,
+		"the formula allowlist exactly covers Action and Condition descriptions",
+	)
+
+
+func test_nested_cases_cover_every_authorized_formula_except_rejuvenate() -> void:
+	var paths: Array[String] = []
+	for root: String in CONTENT_ROOTS:
+		_collect_resource_paths(root, paths)
+	paths.sort()
+	var formula_paths: Array[String] = []
+	for path: String in paths:
+		if path == "res://data/heroes/echo/actions/rejuvenate.tres":
+			continue
+		var resource := ResourceLoader.load(path)
+		if not (resource is Action or resource is Condition):
+			continue
+		if not _legacy_formula_regex.search_all(resource.description).is_empty():
+			formula_paths.append(path)
+	var covered_paths: Array[String] = []
+	for expected: Dictionary in NESTED_COMPATIBILITY_CASES:
+		for key: String in ["action", "condition"]:
+			var path: String = expected.get(key, "")
+			if not path.is_empty() and path in formula_paths:
+				covered_paths.append(path)
+	covered_paths.sort()
+	assert_eq(
+		covered_paths,
+		formula_paths,
+		"every non-deferred formula owner has an explicit compatibility case",
+	)
+
+
+func test_nested_case_validator_detects_topology_shape_and_healing_drift() -> void:
+	var inversion_expected := _nested_case_by_id("inversion")
+	assert_false(inversion_expected.is_empty())
+	var inversion := load(inversion_expected.condition) as Condition
+	var inversion_action := load(inversion_expected.action) as Action
+	var errors := _nested_case_errors(inversion_expected, inversion_action, inversion)
+	assert_eq(errors, [], "the authored Inversion topology is valid")
+
+	var trigger_drift := inversion.duplicate(true) as Condition
+	trigger_drift.triggers[0].trigger_type = Trigger.TriggerType.ON_TURN_END
+	errors = _nested_case_errors(inversion_expected, inversion_action, trigger_drift)
+	assert_string_contains("\n".join(errors), "owning trigger type drifted")
+
+	var target_drift := inversion.duplicate(true) as Condition
+	target_drift.triggers[0].effects_to_run[0].target_type = Action.TargetType.SELF
+	errors = _nested_case_errors(inversion_expected, inversion_action, target_drift)
+	assert_string_contains("\n".join(errors), "target type drifted")
+
+	var class_drift := inversion.duplicate(true) as Condition
+	var base_damage := Effect_Damage.new()
+	base_damage.potency = 0.75
+	base_damage.power_type = Action.PowerType.PSYCHE
+	base_damage.damage_type = Action.DamageType.PIERCING
+	class_drift.triggers[0].effects_to_run[0] = base_damage
+	errors = _nested_case_errors(inversion_expected, inversion_action, class_drift)
+	assert_string_contains("\n".join(errors), "script drifted")
+	assert_string_contains("\n".join(errors), "specialized Inversion shape")
+
+	var removal_drift := inversion.duplicate(true) as Condition
+	removal_drift.remove_on_triggers.clear()
+	errors = _nested_case_errors(inversion_expected, inversion_action, removal_drift)
+	assert_string_contains("\n".join(errors), "removal timing drifted")
+
+	var pain_expected := _nested_case_by_id("pain_transfer")
+	assert_false(pain_expected.is_empty())
+	var pain := load(pain_expected.condition) as Condition
+	var pain_action := load(pain_expected.action) as Action
+	errors = _nested_case_errors(pain_expected, pain_action, pain)
+	assert_eq(errors, [], "the authored Pain Transfer healing topology is valid")
+	var healing_drift := pain.duplicate(true) as Condition
+	(healing_drift.triggers[0].effects_to_run[0] as Effect_Healing).potency = 0.5
+	errors = _nested_case_errors(pain_expected, pain_action, healing_drift)
+	assert_string_contains("\n".join(errors), "healing potency drifted")
+
+
+func test_serialized_guard_override_scan_rejects_stale_property_text() -> void:
+	assert_true(
+		_has_serialized_shreds_guard("[resource]\n\tshreds_guard= true\n"),
+		"a serialized obsolete property is rejected even if loading ignores it",
+	)
+	assert_false(
+		_has_serialized_shreds_guard("description = \"shreds_guard = true\"\n"),
+		"ordinary source text is not mistaken for a serialized property",
+	)
+
+
 func test_all_production_damage_resources_are_structured_and_valid() -> void:
 	var paths: Array[String] = []
 	for root: String in CONTENT_ROOTS:
@@ -132,6 +404,10 @@ func test_all_production_damage_resources_are_structured_and_valid() -> void:
 	paths.sort()
 	assert_gt(paths.size(), 0, "production damage scan found resources")
 	for path: String in paths:
+		assert_false(
+			_has_serialized_shreds_guard(FileAccess.get_file_as_string(path)),
+			"%s has no serialized obsolete shreds_guard property" % path,
+		)
 		var resource := ResourceLoader.load(path)
 		assert_not_null(resource, "%s loads" % path)
 		if resource is Action:
@@ -140,29 +416,32 @@ func test_all_production_damage_resources_are_structured_and_valid() -> void:
 			_validate_condition(resource as Condition, path, {})
 
 
-func test_nested_condition_damage_prose_matches_referenced_mechanics() -> void:
-	for expected: Dictionary in NESTED_DAMAGE_CONTENT:
-		var action := load(expected.action) as Action
+func test_nested_condition_content_matches_referenced_topology_and_mechanics() -> void:
+	for expected: Dictionary in NESTED_COMPATIBILITY_CASES:
+		var action: Action = null
+		if not str(expected.action).is_empty():
+			action = load(expected.action) as Action
 		var condition := load(expected.condition) as Condition
-		assert_not_null(action, expected.action)
+		if not str(expected.action).is_empty():
+			assert_not_null(action, expected.action)
 		assert_not_null(condition, expected.condition)
-		if action == null or condition == null:
+		if (not str(expected.action).is_empty() and action == null) or condition == null:
 			continue
-		assert_true(_action_applies_condition(action, condition), expected.action)
-		var effect := _first_condition_damage(condition)
-		assert_not_null(effect, "%s nested damage" % expected.condition)
-		if effect == null:
-			continue
-		assert_eq(effect.power_type, expected.power, "%s power" % expected.condition)
-		assert_almost_eq(effect.potency, expected.potency, 0.0001, "%s potency" % expected.condition)
-		assert_eq(effect.damage_type, expected.type, "%s type" % expected.condition)
-		for prose: String in [action.description, condition.description]:
+		var errors := _nested_case_errors(expected, action, condition)
+		assert_eq(errors, [], "%s topology and mechanics: %s" % [expected.id, errors])
+		var prose_descriptions: Array[String] = []
+		if action != null and APPROVED_DESCRIPTION_FORMULAS.has(expected.action):
+			prose_descriptions.append(action.description)
+		if APPROVED_DESCRIPTION_FORMULAS.has(expected.condition):
+			prose_descriptions.append(condition.description)
+		for prose: String in prose_descriptions:
 			assert_string_contains(prose, expected.formula, "%s power and potency prose" % expected.condition)
-			assert_string_contains(prose, expected.icon, "%s type prose" % expected.condition)
-			if expected.shreds_guard:
+			if expected.has("icon"):
+				assert_string_contains(prose, expected.icon, "%s type prose" % expected.condition)
+			if expected.get("shreds_guard", false):
 				assert_string_contains(prose.to_lower(), "shred", "%s Guard behavior prose" % expected.condition)
 				assert_string_contains(prose, "{grd}", "%s Guard icon prose" % expected.condition)
-			else:
+			elif expected.has("shreds_guard"):
 				assert_false("shred" in prose.to_lower(), "%s Piercing does not claim to shred Guard" % expected.condition)
 				var normalized_guard_prose := prose.replace("{grd}", "Guard").to_lower()
 				assert_false(
@@ -174,6 +453,14 @@ func test_nested_condition_damage_prose_matches_referenced_mechanics() -> void:
 					prose.to_lower(), str(expected.timing).to_lower(),
 					"%s trigger timing prose" % expected.condition,
 				)
+
+
+func test_rejuvenate_formula_is_allowlisted_but_mechanic_parity_is_deferred() -> void:
+	const REJUVENATE_PATH := "res://data/heroes/echo/actions/rejuvenate.tres"
+	assert_eq(APPROVED_DESCRIPTION_FORMULAS[REJUVENATE_PATH], ["{psy*1.5}"])
+	assert_false(NESTED_COMPATIBILITY_CASES.any(func(expected: Dictionary):
+		return expected.get("action", "") == REJUVENATE_PATH
+	), "Rejuvenate remains outside nested/healing mechanic-parity claims")
 
 
 func test_return_fire_prose_matches_both_nested_damage_effects() -> void:
@@ -326,11 +613,7 @@ func _collect_resource_paths(root: String, paths: Array[String]) -> void:
 
 func _validate_action(action: Action, path: String) -> void:
 	assert_null(_obsolete_damage_binding_regex.search(action.description), "%s has no obsolete damage binding" % path)
-	var actual_formulas: Array[String] = []
-	for match_result: RegExMatch in _legacy_formula_regex.search_all(action.description):
-		actual_formulas.append(match_result.get_string(0))
-	var expected_formulas: Array = LEGACY_ACTION_FORMULAS.get(path, [])
-	assert_eq(actual_formulas, expected_formulas, "%s has only explicitly approved nested/healing formulas" % path)
+	_validate_description_formulas(action.description, path)
 	var binding_counts: Dictionary = {}
 	for match_result: RegExMatch in _effect_binding_regex.search_all(action.description):
 		var index_text := match_result.get_string(1)
@@ -361,6 +644,8 @@ func _validate_condition(condition: Condition, path: String, visited: Dictionary
 	if condition == null or visited.has(condition.get_instance_id()):
 		return
 	visited[condition.get_instance_id()] = true
+	if not condition.resource_path.is_empty():
+		_validate_description_formulas(condition.description, condition.resource_path)
 	for trigger: Trigger in condition.triggers:
 		if trigger != null:
 			_validate_effects(trigger.effects_to_run, path, visited)
@@ -391,12 +676,265 @@ func _validate_damage_effect(effect: Effect_Damage, path: String, effect_index: 
 	), "%s effect %d has no obsolete Guard override" % [path, effect_index])
 
 
-func _action_applies_condition(action: Action, condition: Condition) -> bool:
-	for effect: ActionEffect in action.effects:
-		if effect is Effect_ApplyCondition \
-			and (effect as Effect_ApplyCondition).condition == condition:
+func _validate_description_formulas(description: String, path: String) -> void:
+	assert_eq(
+		_description_formulas(description),
+		APPROVED_DESCRIPTION_FORMULAS.get(path, []),
+		"%s has only explicitly approved nested/healing formulas" % path,
+	)
+
+
+func _description_formulas(description: String) -> Array[String]:
+	var formulas: Array[String] = []
+	for match_result: RegExMatch in _legacy_formula_regex.search_all(description):
+		formulas.append(match_result.get_string(0))
+	return formulas
+
+
+func _has_serialized_shreds_guard(source_text: String) -> bool:
+	for raw_line: String in source_text.split("\n"):
+		var line := raw_line.strip_edges()
+		if not line.begins_with("shreds_guard"):
+			continue
+		var suffix := line.trim_prefix("shreds_guard").strip_edges()
+		if suffix.begins_with("="):
 			return true
 	return false
+
+
+func _nested_case_by_id(case_id: String) -> Dictionary:
+	for expected: Dictionary in NESTED_COMPATIBILITY_CASES:
+		if expected.id == case_id:
+			return expected
+	return {}
+
+
+func _nested_case_errors(
+	expected: Dictionary,
+	action: Action,
+	condition: Condition,
+) -> Array[String]:
+	var errors: Array[String] = []
+	var action_path := str(expected.get("action", ""))
+	var condition_path := str(expected.get("condition", ""))
+	if not action_path.is_empty():
+		if action == null:
+			errors.append("missing action %s" % action_path)
+		else:
+			if action.resource_path != action_path:
+				errors.append("action resource path drifted from %s" % action_path)
+			if _count_action_condition_references(action, condition_path) != 1:
+				errors.append("%s must directly apply %s exactly once" % [action_path, condition_path])
+	if condition == null:
+		errors.append("missing condition %s" % condition_path)
+		return errors
+	if condition.resource_path != condition_path:
+		errors.append("condition resource path drifted from %s" % condition_path)
+	if condition.triggers.size() != 1:
+		errors.append("%s expected exactly one owning trigger" % condition_path)
+		return errors
+	var trigger := condition.triggers[0] as Trigger
+	if trigger == null:
+		errors.append("%s owning trigger is null" % condition_path)
+		return errors
+	if trigger.trigger_type != expected.trigger_type:
+		errors.append("%s owning trigger type drifted" % condition_path)
+	if not _array_values_equal(condition.remove_on_triggers, expected.remove_on_triggers):
+		errors.append("%s removal timing drifted" % condition_path)
+	if expected.has("is_passive") and condition.is_passive != expected.is_passive:
+		errors.append("%s passive shape drifted" % condition_path)
+	for property_name: String in expected.get("condition_fields", {}).keys():
+		if not _values_equal(condition.get(property_name), expected.condition_fields[property_name]):
+			errors.append("%s condition field %s drifted" % [condition_path, property_name])
+	if trigger.effects_to_run.size() != 1:
+		errors.append("%s expected exactly one primary triggered effect" % condition_path)
+		return errors
+	_append_effect_spec_errors(
+		errors,
+		trigger.effects_to_run[0] as ActionEffect,
+		expected.effect,
+		"%s primary effect" % condition_path,
+	)
+	if expected.has("auxiliary_removal"):
+		_append_auxiliary_removal_errors(errors, action, expected.auxiliary_removal, action_path)
+	return errors
+
+
+func _append_effect_spec_errors(
+	errors: Array[String],
+	effect: ActionEffect,
+	expected: Dictionary,
+	label: String,
+) -> void:
+	if effect == null:
+		errors.append("%s is null" % label)
+		return
+	var effect_script := effect.get_script() as Script
+	var script_path := effect_script.resource_path if effect_script != null else ""
+	if script_path != expected.script:
+		errors.append("%s script drifted" % label)
+	if effect.target_type != expected.target_type:
+		errors.append("%s target type drifted" % label)
+	match str(expected.kind):
+		"damage":
+			if not effect is Effect_Damage:
+				errors.append("%s is not damage" % label)
+				return
+			var damage := effect as Effect_Damage
+			if damage.power_type != expected.power:
+				errors.append("%s power type drifted" % label)
+			if not is_equal_approx(damage.potency, float(expected.potency)):
+				errors.append("%s potency drifted" % label)
+			if damage.damage_type != expected.damage_type:
+				errors.append("%s damage type drifted" % label)
+			if damage.hit_count != expected.hit_count:
+				errors.append("%s hit count drifted" % label)
+			if damage.split_damage != expected.split_damage:
+				errors.append("%s split shape drifted" % label)
+			if damage.is_indirect != expected.is_indirect:
+				errors.append("%s indirect shape drifted" % label)
+			if not damage.scaling_rules.is_empty():
+				errors.append("%s unexpectedly has scaling rules" % label)
+			if not is_zero_approx(damage.lifedrain_scalar):
+				errors.append("%s unexpectedly has lifedrain" % label)
+			if not damage.pre_hit_triggers.is_empty():
+				errors.append("%s unexpectedly has pre-hit triggers" % label)
+			if expected.has("remove_guard_gained"):
+				if not damage is Effect_Damage_Inversion:
+					errors.append("%s lost its specialized Inversion shape" % label)
+				elif (damage as Effect_Damage_Inversion).remove_guard_gained \
+					!= expected.remove_guard_gained:
+					errors.append("%s Guard-removal shape drifted" % label)
+			_append_on_hit_spec_errors(errors, damage, expected.get("on_hit", null), label)
+		"healing":
+			if not effect is Effect_Healing:
+				errors.append("%s is not healing" % label)
+				return
+			var healing := effect as Effect_Healing
+			if healing.power_type != expected.power:
+				errors.append("%s healing power type drifted" % label)
+			if not is_equal_approx(healing.potency, float(expected.potency)):
+				errors.append("%s healing potency drifted" % label)
+			if not is_equal_approx(healing.focus_scalar, float(expected.focus_scalar)):
+				errors.append("%s healing Focus curve drifted" % label)
+			if healing.scales_with_missing_hp != expected.scales_with_missing_hp:
+				errors.append("%s missing-HP curve drifted" % label)
+			if healing.is_revive != expected.is_revive:
+				errors.append("%s revive shape drifted" % label)
+		_:
+			errors.append("%s has unsupported expected kind" % label)
+
+
+func _append_on_hit_spec_errors(
+	errors: Array[String],
+	damage: Effect_Damage,
+	expected_on_hit: Variant,
+	label: String,
+) -> void:
+	if expected_on_hit == null:
+		if not damage.on_hit_triggers.is_empty():
+			errors.append("%s unexpectedly has on-hit triggers" % label)
+		return
+	if damage.on_hit_triggers.size() != 1:
+		errors.append("%s expected exactly one on-hit trigger" % label)
+		return
+	var hit_trigger := damage.on_hit_triggers[0] as HitTrigger
+	if hit_trigger == null:
+		errors.append("%s on-hit trigger is null" % label)
+		return
+	if hit_trigger.condition != expected_on_hit.condition:
+		errors.append("%s on-hit condition drifted" % label)
+	if hit_trigger.context != expected_on_hit.context:
+		errors.append("%s on-hit context drifted" % label)
+	if hit_trigger.effects_to_run.size() != 1:
+		errors.append("%s expected exactly one on-hit effect" % label)
+		return
+	_append_effect_spec_errors(
+		errors,
+		hit_trigger.effects_to_run[0] as ActionEffect,
+		expected_on_hit.effect,
+		"%s on-hit effect" % label,
+	)
+
+
+func _append_auxiliary_removal_errors(
+	errors: Array[String],
+	action: Action,
+	expected: Dictionary,
+	label: String,
+) -> void:
+	if action == null:
+		errors.append("%s auxiliary removal has no action" % label)
+		return
+	if action.effects.size() != expected.action_effect_count:
+		errors.append("%s action effect shape drifted" % label)
+	var effect_index := int(expected.apply_effect_index)
+	if effect_index < 0 or effect_index >= action.effects.size():
+		errors.append("%s auxiliary removal effect is missing" % label)
+		return
+	var apply_effect := action.effects[effect_index] as Effect_ApplyCondition
+	if apply_effect == null:
+		errors.append("%s auxiliary removal is not ApplyCondition" % label)
+		return
+	if apply_effect.target_type != expected.apply_target_type:
+		errors.append("%s auxiliary apply target drifted" % label)
+	var removal_condition := apply_effect.condition
+	if removal_condition == null:
+		errors.append("%s auxiliary removal condition is null" % label)
+		return
+	if removal_condition.condition_name != expected.condition_name:
+		errors.append("%s auxiliary condition name drifted" % label)
+	if removal_condition.is_passive != expected.is_passive:
+		errors.append("%s auxiliary passive shape drifted" % label)
+	if not _array_values_equal(removal_condition.remove_on_triggers, expected.remove_on_triggers):
+		errors.append("%s auxiliary removal timing drifted" % label)
+	if removal_condition.triggers.size() != 1:
+		errors.append("%s auxiliary removal expected one trigger" % label)
+		return
+	var trigger := removal_condition.triggers[0] as Trigger
+	if trigger == null or trigger.trigger_type != expected.trigger_type:
+		errors.append("%s auxiliary trigger type drifted" % label)
+		return
+	if trigger.effects_to_run.size() != 1:
+		errors.append("%s auxiliary removal expected one effect" % label)
+		return
+	var remove_effect := trigger.effects_to_run[0] as Effect_RemoveCondition
+	if remove_effect == null:
+		errors.append("%s auxiliary effect is not RemoveCondition" % label)
+		return
+	var remove_script := remove_effect.get_script() as Script
+	var remove_script_path := remove_script.resource_path if remove_script != null else ""
+	if remove_script_path != expected.effect_script:
+		errors.append("%s auxiliary effect script drifted" % label)
+	if remove_effect.target_type != expected.effect_target_type:
+		errors.append("%s auxiliary effect target drifted" % label)
+	if remove_effect.condition_name != expected.removed_condition_name:
+		errors.append("%s auxiliary removed condition drifted" % label)
+
+
+func _count_action_condition_references(action: Action, condition_path: String) -> int:
+	var count := 0
+	for effect: ActionEffect in action.effects:
+		if effect is Effect_ApplyCondition:
+			var condition := (effect as Effect_ApplyCondition).condition
+			if condition != null and condition.resource_path == condition_path:
+				count += 1
+	return count
+
+
+func _array_values_equal(actual: Array, expected: Array) -> bool:
+	if actual.size() != expected.size():
+		return false
+	for index in actual.size():
+		if actual[index] != expected[index]:
+			return false
+	return true
+
+
+func _values_equal(actual: Variant, expected: Variant) -> bool:
+	if actual is float or expected is float:
+		return is_equal_approx(float(actual), float(expected))
+	return actual == expected
 
 
 func _first_condition_damage(condition: Condition) -> Effect_Damage:
