@@ -77,6 +77,9 @@ func set_expanded(is_expanded: bool, current_page: int, animate: bool = true):
 	# Update State
 	is_currently_expanded = is_expanded
 	$Button.visible = not is_expanded
+	header_label.visible = not is_expanded
+	role_name_label.visible = is_expanded
+	xp_display.visible = is_expanded
 	set_role_shortcuts_enabled(_role_shortcuts_enabled)
 	var target_w = expanded_x if is_expanded else collapsed_x
 
@@ -94,8 +97,6 @@ func set_expanded(is_expanded: bool, current_page: int, animate: bool = true):
 
 func set_role_shortcuts_enabled(enabled: bool) -> void:
 	_role_shortcuts_enabled = enabled
-	$Content/PreviousRoleGlyph.visible = enabled and is_currently_expanded
-	$Content/NextRoleGlyph.visible = enabled and is_currently_expanded
 
 
 func render_tree(page_index: int):
@@ -189,6 +190,5 @@ func node_positions() -> Dictionary:
 	return positions
 
 func _refresh_xp_ui():
-	# Use commafy if you have the util, or just str()
 	if xp_display:
-		xp_display.text = Utils.commafy(hero_data.current_xp) + " XP"
+		xp_display.text = "AVAILABLE XP %s" % Utils.commafy(hero_data.current_xp)

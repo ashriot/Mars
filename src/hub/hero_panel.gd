@@ -9,7 +9,8 @@ signal mod_requested(item, slot_index)
 
 @onready var stats_content: Control = $Content
 @onready var name_label: Label = $Content/Header/Label
-@onready var hp: RichTextLabel = $Content/Stats/HP/Value
+@onready var hp: RichTextLabel = $Content/Stats/Summary/HP/Value
+@onready var xp: RichTextLabel = $Content/Stats/Summary/XP/Value
 @onready var guard: RichTextLabel = $Content/Stats/Resources/Guard/Value
 @onready var focus: RichTextLabel = $Content/Stats/Resources/Focus/Value
 @onready var atk: RichTextLabel = $Content/Stats/POW/ATK/Value
@@ -74,6 +75,17 @@ func setup(hero_data: HeroData):
 	_refresh_items_focus_neighbors()
 
 
+static func format_xp(value: int) -> String:
+	var safe := maxi(value, 0)
+	if safe < 10000:
+		return Utils.commafy(safe)
+	if safe < 99950:
+		return "%.1fK" % (safe / 1000.0)
+	if safe < 1000000:
+		return "%dK" % roundi(safe / 1000.0)
+	return "%.1fM" % (safe / 1000000.0)
+
+
 func _refresh_items_focus_neighbors() -> void:
 	weapon_panel.equip_button.focus_neighbor_top = weapon_panel.equip_button.get_path_to(armor_panel.equip_button)
 	weapon_panel.equip_button.focus_neighbor_bottom = weapon_panel.equip_button.get_path_to(armor_panel.equip_button)
@@ -84,6 +96,7 @@ func _refresh_stats():
 	data.calculate_stats()
 	var stats = data.stats
 	hp.text = Utils.stringify(stats.max_hp, 4)
+	xp.text = format_xp(int(data.current_xp))
 	guard.text = Utils.stringify(stats.starting_guard)
 	guard.text += "  " + Utils.stringify(ceili(stats.starting_guard / 2.0))
 	focus.text = Utils.stringify(stats.starting_focus)

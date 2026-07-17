@@ -129,6 +129,39 @@ func _assert_visible_controls_have_no_navigation_focus_pulse(node: Node) -> void
 		_assert_visible_controls_have_no_navigation_focus_pulse(child)
 
 
+func test_hero_xp_uses_adaptive_shorthand() -> void:
+	var expected := {
+		-1: "0",
+		0: "0",
+		9999: "9,999",
+		10000: "10.0K",
+		99949: "99.9K",
+		99950: "100K",
+		200000: "200K",
+		1000000: "1.0M",
+		1260000: "1.3M",
+	}
+	for value: int in expected:
+		assert_eq(HeroPanel.format_xp(value), expected[value], str(value))
+
+
+func test_role_panel_swaps_names_and_exact_xp_before_expansion_tween() -> void:
+	var panel := preload("res://src/hub/role_panel.tscn").instantiate() as RolePanel
+	add_child(panel)
+	panel.setup(_legacy_role(), _tree(), _hero(200000))
+	panel.set_expanded(false, 0, false)
+
+	assert_true(panel.header_label.visible)
+	assert_false(panel.role_name_label.visible)
+	assert_false(panel.xp_display.visible)
+	panel.set_expanded(true, 0, true)
+	assert_false(panel.header_label.visible, "abbreviation hides synchronously before the width tween advances")
+	assert_true(panel.role_name_label.visible, "full role name shows synchronously before the width tween advances")
+	assert_true(panel.xp_display.visible, "exact XP shows synchronously before the width tween advances")
+	assert_eq(panel.xp_display.text, "AVAILABLE XP 200,000")
+	panel.free()
+
+
 func _skill_panel_with_multi_page_role() -> SkillTreePanel:
 	var hero := _hero()
 	hero.unlocked_role_ids.assign(["gun", "snp"])
@@ -227,7 +260,7 @@ func test_roles_same_frame_rebuild_restores_focus_to_current_subtree() -> void:
 	await get_tree().process_frame
 
 
-func test_roles_single_role_rebuild_has_one_panel_and_no_role_glyphs() -> void:
+func test_roles_single_role_rebuild_has_one_panel_and_no_obsolete_role_glyphs() -> void:
 	var panel := await _skill_panel_with_multi_page_role()
 	var hero := _hero()
 	hero.unlocked_role_ids.assign(["gun"])
@@ -235,8 +268,8 @@ func test_roles_single_role_rebuild_has_one_panel_and_no_role_glyphs() -> void:
 	panel.setup(hero)
 	assert_eq(panel.role_list_container.get_child_count(), 1)
 	var role_panel := panel.role_list_container.get_child(0) as RolePanel
-	assert_false(role_panel.get_node("Content/PreviousRoleGlyph").visible)
-	assert_false(role_panel.get_node("Content/NextRoleGlyph").visible)
+	assert_false(role_panel.has_node("Content/PreviousRoleGlyph"))
+	assert_false(role_panel.has_node("Content/NextRoleGlyph"))
 	await get_tree().process_frame
 	assert_eq(panel.role_list_container.get_child_count(), 1)
 	panel.free()
@@ -307,7 +340,7 @@ func test_hub_focus_and_depth_styles_never_change_content_colors() -> void:
 	var party := await _opened_party_with_three_heroes()
 	var hero := party.hero_list_container.get_child(0) as HeroPanel
 	var header_style: StyleBox = hero.get_node("Content/Header").get_theme_stylebox(&"panel")
-	var hp_modulate: Color = hero.get_node("Content/Stats/HP").modulate
+	var hp_modulate: Color = hero.get_node("Content/Stats/Summary/HP").modulate
 	var role := party.skill_view.role_list_container.get_child(0) as RolePanel
 	var role_header_modulate: Color = role.get_node("Header").modulate
 	assert_false(hero.has_meta("navigation_focus_pulse"))
@@ -315,11 +348,11 @@ func test_hub_focus_and_depth_styles_never_change_content_colors() -> void:
 	_assert_visible_controls_have_no_navigation_focus_pulse(party)
 	assert_true(party.enter_content())
 	assert_same(hero.get_node("Content/Header").get_theme_stylebox(&"panel"), header_style)
-	assert_eq(hero.get_node("Content/Stats/HP").modulate, hp_modulate)
+	assert_eq(hero.get_node("Content/Stats/Summary/HP").modulate, hp_modulate)
 	assert_eq(role.get_node("Header").modulate, role_header_modulate)
 	party.return_to_hero_rail()
 	assert_same(hero.get_node("Content/Header").get_theme_stylebox(&"panel"), header_style)
-	assert_eq(hero.get_node("Content/Stats/HP").modulate, hp_modulate)
+	assert_eq(hero.get_node("Content/Stats/Summary/HP").modulate, hp_modulate)
 	assert_eq(role.get_node("Header").modulate, role_header_modulate)
 
 	var replacement := hero.data.weapon.duplicate(true) as Equipment
@@ -333,7 +366,7 @@ func test_hub_focus_and_depth_styles_never_change_content_colors() -> void:
 	_assert_visible_controls_have_no_navigation_focus_pulse(party)
 	party.return_to_hero_rail()
 	assert_same(hero.get_node("Content/Header").get_theme_stylebox(&"panel"), header_style)
-	assert_eq(hero.get_node("Content/Stats/HP").modulate, hp_modulate)
+	assert_eq(hero.get_node("Content/Stats/Summary/HP").modulate, hp_modulate)
 	assert_eq(item.get_node("Button/Header").modulate, item_header_modulate)
 
 
@@ -807,7 +840,7 @@ func test_refresh_preserves_role_page_and_node_identity_and_updates_xp_affordabi
 
 	panel.refresh_progression_state(hero)
 
-	assert_eq(role_panel.xp_display.text, "50 XP")
+	assert_eq(role_panel.xp_display.text, "AVAILABLE XP 50")
 	assert_false(sibling.disabled)
 	assert_false(sibling.is_purchasable())
 	assert_eq(sibling.get_instance_id(), sibling_id)
@@ -875,8 +908,8 @@ func test_success_refreshes_all_matching_roles_and_leaves_other_hero_unchanged()
 
 	panel.refresh_progression_state(hero)
 
-	assert_eq(first.xp_display.text, "50 XP")
-	assert_eq(sibling.xp_display.text, "50 XP")
+	assert_eq(first.xp_display.text, "AVAILABLE XP 50")
+	assert_eq(sibling.xp_display.text, "AVAILABLE XP 50")
 	assert_false(sibling_node.disabled)
 	assert_false(sibling_node.is_purchasable())
 	assert_eq(sibling_node.get_instance_id(), sibling_id)
@@ -904,7 +937,8 @@ func test_real_party_menu_purchase_writes_save_refreshes_matching_card_and_tree_
 	var asher_card := menu.hero_list_container.get_child(0) as HeroPanel
 	var echo_card := menu.hero_list_container.get_child(1) as HeroPanel
 	asher_card.atk.text = "STALE"
-	var echo_before := [echo_card.hp.text, echo_card.atk.text, echo_card.psy.text]
+	asher_card.xp.text = "STALE"
+	var echo_before := [echo_card.hp.text, echo_card.xp.text, echo_card.atk.text, echo_card.psy.text]
 	watch_signals(menu.skill_view)
 	var role_panel := menu.skill_view.role_list_container.get_child(0) as RolePanel
 	var node := role_panel.generated_nodes["gun.root"] as SkillTreeNode
@@ -917,7 +951,8 @@ func test_real_party_menu_purchase_writes_save_refreshes_matching_card_and_tree_
 	assert_eq(calls.count("save"), 1)
 	assert_eq(calls.count("terminal"), 1)
 	assert_ne(asher_card.atk.text, "STALE")
-	assert_eq([echo_card.hp.text, echo_card.atk.text, echo_card.psy.text], echo_before)
+	assert_eq(asher_card.xp.text, "150")
+	assert_eq([echo_card.hp.text, echo_card.xp.text, echo_card.atk.text, echo_card.psy.text], echo_before)
 	assert_signal_emit_count(menu.skill_view, "progression_refreshed", 1)
 	menu.free()
 	await get_tree().process_frame

@@ -89,6 +89,45 @@ func test_compact_equipment_controls_are_large_and_content_stays_inside_panel() 
 			assert_true(_contains_control(equipment_panel, child), "%s %s must remain inside %s %s" % [child.name, child.get_global_rect(), equipment_panel.name, equipment_panel.get_global_rect()])
 
 
+func test_hero_summary_aligns_hp_and_xp_inside_desktop_and_compact_cards() -> void:
+	var menu := await _compact_party_menu()
+	var hero_panel := menu.hero_list_container.get_child(0) as HeroPanel
+	for profile: int in [DisplayProfileService.Profile.COMPACT, DisplayProfileService.Profile.DESKTOP]:
+		var window_size := DECK_SIZE if profile == DisplayProfileService.Profile.COMPACT else Vector2i(1920, 1080)
+		menu.apply_display_profile(profile, window_size, Vector2(window_size))
+		await get_tree().process_frame
+		var summary := hero_panel.get_node("Content/Stats/Summary") as Control
+		var hp_group := summary.get_node("HP") as Control
+		var xp_group := summary.get_node("XP") as Control
+		assert_lt(hp_group.get_global_rect().position.x, xp_group.get_global_rect().position.x)
+		assert_eq(hp_group.get_global_rect().position.x, summary.get_global_rect().position.x)
+		assert_eq(xp_group.get_global_rect().end.x, summary.get_global_rect().end.x)
+		assert_true(_contains_control(hero_panel, hp_group))
+		assert_true(_contains_control(hero_panel, xp_group))
+
+
+func test_compact_role_headers_fit_widest_abbreviation_and_six_digit_exact_xp() -> void:
+	var panel := preload("res://src/hub/role_panel.tscn").instantiate() as RolePanel
+	add_child_autofree(panel)
+	var role := RoleDefinition.new()
+	role.role_id = "WWW"
+	role.role_name = "Wide Role Name"
+	var hero := HeroData.new()
+	hero.current_xp = 200000
+	panel.setup(role, RoleTreeDefinition.new("WWW", 1, []), hero)
+	panel.apply_display_profile(DisplayProfileService.Profile.COMPACT)
+	panel.set_expanded(false, 0, false)
+	panel.size.x = panel.collapsed_x
+	await get_tree().process_frame
+	assert_true(_contains_control(panel, panel.header_label))
+	panel.set_expanded(true, 0, false)
+	panel.size.x = panel.expanded_x
+	await get_tree().process_frame
+	assert_eq(panel.xp_display.text, "AVAILABLE XP 200,000")
+	assert_true(_contains_control(panel, panel.role_name_label))
+	assert_true(_contains_control(panel, panel.xp_display), "%s must remain inside %s" % [panel.xp_display.get_global_rect(), panel.get_global_rect()])
+
+
 func test_desktop_profile_restores_authored_hub_control_sizes() -> void:
 	var menu := await _compact_party_menu()
 	menu.apply_display_profile(DisplayProfileService.Profile.DESKTOP, Vector2i(1920, 1080), Vector2(1920, 1080))
