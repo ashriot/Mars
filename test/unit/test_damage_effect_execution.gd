@@ -1,5 +1,34 @@
 extends GutTest
 
+const HeroCardScene := preload("res://src/battle/hero_card.tscn")
+
+
+class ApplicationFixture extends RefCounted:
+	var attacker: ActorCard
+	var target: RecordingApplicationTarget
+	var effect: Effect_Damage
+	var battle_manager: BattleManager
+
+
+class RecordingApplicationTarget extends ActorCard:
+	var recorded_events: Array[Trigger.TriggerType] = []
+	var last_damage_context: Dictionary = {}
+
+
+class RecordingConditionEffect extends ActionEffect:
+	var recording_target: RecordingApplicationTarget
+	var recorded_event: Trigger.TriggerType
+
+	func execute(
+		_attacker: ActorCard,
+		_parent_targets: Array,
+		_battle_manager: BattleManager,
+		_action: Action = null,
+		context: Dictionary = {},
+	) -> void:
+		recording_target.recorded_events.append(recorded_event)
+		recording_target.last_damage_context = context.duplicate(true)
+
 
 class RecordedHitOutcome extends RefCounted:
 	var result: DamageResult
@@ -17,6 +46,11 @@ class RecordingBattleManager extends BattleManager:
 
 	func wait(_duration: float = 0.01) -> void:
 		event_log.append("wait")
+
+
+class ApplicationBattleManager extends BattleManager:
+	func _ready() -> void:
+		return
 
 
 class RecordingActor extends ActorCard:
@@ -39,13 +73,12 @@ class RecordingActor extends ActorCard:
 		return
 
 	func take_one_hit(
-		_damage: int,
+		_result: DamageResult,
 		_damage_effect: Effect_Damage,
 		_attacker: ActorCard,
-		_damage_type: Action.DamageType,
-		_is_crit: bool,
-	) -> void:
-		return
+		_resolved_damage_type: Action.DamageType,
+	) -> int:
+		return 0
 
 	func take_healing(_heal_amount: int, _is_revive: bool = false) -> void:
 		return
@@ -124,7 +157,7 @@ class RecordingDamageEffect extends Effect_Damage:
 		attacker: ActorCard,
 		_resolved_damage_type: Action.DamageType,
 		_is_crit: bool,
-	) -> void:
+	) -> int:
 		results.append(result)
 		if defeat_first_target_after_hit and target == first_target:
 			target.is_defeated = true
@@ -134,6 +167,7 @@ class RecordingDamageEffect extends Effect_Damage:
 			battle_manager_to_end_after_hit.current_state = BattleManager.State.BATTLE_OVER
 		if defeat_attacker_after_hit:
 			attacker.is_defeated = true
+		return result.final_damage
 
 
 func test_energy_causes_breach_before_damage_and_same_hit_gets_ovr() -> void:
@@ -170,6 +204,41 @@ func test_kinetic_and_energy_always_shred_guard() -> void:
 		)
 		assert_eq(outcome.guard_changes, [-1])
 		assert_eq(outcome.remaining_guard, 1)
+
+
+func test_take_one_hit_returns_actual_hp_removed_and_lifedrain_excludes_overkill() -> void:
+	var fixture := _application_fixture(30, 200)
+	var result := DamageCalculator.calculate(_request_for_final_damage(100))
+	var actual := await fixture.target.take_one_hit(
+		result, fixture.effect, fixture.attacker, Action.DamageType.PIERCING,
+	)
+	var healing := Effect_Damage.lifedrain_amount(actual, 0.5)
+	assert_eq(result.final_damage, 100)
+	assert_eq(actual, 30)
+	assert_eq(healing, 15)
+
+
+func test_converted_damage_dispatches_only_resolved_type_event() -> void:
+	var fixture := _application_fixture(200, 200)
+	var result := DamageCalculator.calculate(_request_for_final_damage(20))
+	await fixture.target.take_one_hit(
+		result, fixture.effect, fixture.attacker, Action.DamageType.PIERCING,
+	)
+	assert_false(Trigger.TriggerType.ON_TAKING_KINETIC_DAMAGE in fixture.target.recorded_events)
+	assert_false(Trigger.TriggerType.ON_TAKING_ENERGY_DAMAGE in fixture.target.recorded_events)
+	assert_eq(
+		fixture.target.last_damage_context.resolved_damage_type,
+		Action.DamageType.PIERCING,
+	)
+
+
+func test_existing_lethal_hit_reaction_order_is_preserved() -> void:
+	var fixture := _application_fixture(10, 200)
+	var result := DamageCalculator.calculate(_request_for_final_damage(20))
+	await fixture.target.take_one_hit(
+		result, fixture.effect, fixture.attacker, Action.DamageType.KINETIC,
+	)
+	assert_eq(fixture.target.recorded_events, [])
 
 
 func test_aim_is_clamped_at_roll_boundary() -> void:
@@ -379,6 +448,88 @@ func _recording_actor(base_power: int, overload: int, guard: int) -> RecordingAc
 	actor.current_hp = 1000
 	actor.current_guard = guard
 	return actor
+
+
+func _application_fixture(hp: int, max_hp: int) -> ApplicationFixture:
+	var scene_card := HeroCardScene.instantiate() as ActorCard
+	_clear_scene_owners(scene_card)
+	var target := RecordingApplicationTarget.new()
+	target.damage_popup_scene = scene_card.damage_popup_scene
+	target.buff_scene = scene_card.buff_scene
+	target.debuff_scene = scene_card.debuff_scene
+	while scene_card.get_child_count() > 0:
+		var child := scene_card.get_child(0)
+		scene_card.remove_child(child)
+		target.add_child(child)
+	scene_card.free()
+	add_child_autofree(target)
+
+	var battle_manager := ApplicationBattleManager.new()
+	battle_manager.battle_speed = 1.0
+	add_child_autofree(battle_manager)
+	target.battle_manager = battle_manager
+	target.current_stats = ActorStats.new()
+	target.current_stats.max_hp = max_hp
+	target.current_hp = hp
+	target.current_guard = 0
+	target.update_health_bar()
+
+	var attacker := HeroCardScene.instantiate() as ActorCard
+	add_child_autofree(attacker)
+	attacker.current_stats = ActorStats.new()
+	var effect := Effect_Damage.new()
+	effect.damage_type = Action.DamageType.KINETIC
+	for event_type in [
+		Trigger.TriggerType.ON_TAKING_KINETIC_DAMAGE,
+		Trigger.TriggerType.ON_TAKING_ENERGY_DAMAGE,
+		Trigger.TriggerType.ON_BEING_HIT,
+	]:
+		target.active_conditions.append(_recording_condition(target, attacker, event_type))
+
+	var fixture := ApplicationFixture.new()
+	fixture.attacker = attacker
+	fixture.target = target
+	fixture.effect = effect
+	fixture.battle_manager = battle_manager
+	return fixture
+
+
+func _clear_scene_owners(node: Node) -> void:
+	node.owner = null
+	for child in node.get_children():
+		_clear_scene_owners(child)
+
+
+func _recording_condition(
+	target: RecordingApplicationTarget,
+	attacker: ActorCard,
+	event_type: Trigger.TriggerType,
+) -> Condition:
+	var effect := RecordingConditionEffect.new()
+	effect.recording_target = target
+	effect.recorded_event = event_type
+	effect.target_type = Action.TargetType.SELF
+	var trigger := Trigger.new()
+	trigger.trigger_type = event_type
+	trigger.effects_to_run = [effect]
+	var condition := Condition.new()
+	condition.attacker = attacker
+	condition.triggers = [trigger]
+	return condition
+
+
+func _request_for_final_damage(amount: int) -> DamageRequest:
+	return DamageRequest.new(
+		amount,
+		0,
+		0,
+		1.0,
+		1,
+		Action.DamageType.PIERCING,
+		0,
+		0.0,
+		0.0,
+	)
 
 
 func _recording_action_manager() -> RecordingBattleManager:

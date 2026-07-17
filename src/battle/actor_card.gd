@@ -125,33 +125,53 @@ func on_turn_ended() -> void:
 	await _fire_condition_event(Trigger.TriggerType.ON_TURN_END)
 	highlight(false)
 
-func take_one_hit(damage: int, damage_effect: Effect_Damage, attacker: ActorCard, damage_type: Action.DamageType, is_crit: bool) -> void:
-	if is_defeated: return
+func take_one_hit(
+	result: DamageResult,
+	damage_effect: Effect_Damage,
+	attacker: ActorCard,
+	resolved_damage_type: Action.DamageType,
+) -> int:
+	if is_defeated:
+		return 0
 
-	_spawn_damage_popup(damage, damage_type, is_crit)
+	var actual_damage := mini(result.final_damage, current_hp)
+	_spawn_damage_popup(
+		result.final_damage,
+		resolved_damage_type,
+		result.request.precision_power > 0,
+	)
 	var pos = get_global_rect().get_center()
 	spawn_particles.emit(pos, "gunshot")
-	current_hp = max(0, current_hp - damage)
+	current_hp -= actual_damage
 	hp_bar_actual.value = current_hp
 	hp_value.text = Utils.commafy(current_hp)
 	hp_changed.emit(current_hp, current_stats.max_hp)
-	print("Hit for ", damage, " damage!")
+	print("Hit for ", result.final_damage, " damage!")
 	update_guard_bar()
 
 	if current_hp == 0:
 		await defeated()
-		return
-	var context = { "attacker": attacker, "targets": [self] }
-	if damage_effect.damage_type == Action.DamageType.KINETIC:
-		await _fire_condition_event(Trigger.TriggerType.ON_TAKING_KINETIC_DAMAGE, context)
-	elif damage_effect.damage_type == Action.DamageType.ENERGY:
-		await _fire_condition_event(Trigger.TriggerType.ON_TAKING_ENERGY_DAMAGE, context)
+		return actual_damage
+	var event_context := {
+		"attacker": attacker,
+		"target": self,
+		"damage_result": result,
+		"attempted_damage": result.final_damage,
+		"actual_damage": actual_damage,
+		"resolved_damage_type": resolved_damage_type,
+		"is_critical": result.request.precision_power > 0,
+		"was_breached": result.request.overload_power > 0,
+	}
+	if resolved_damage_type == Action.DamageType.KINETIC:
+		await _fire_condition_event(Trigger.TriggerType.ON_TAKING_KINETIC_DAMAGE, event_context)
+	elif resolved_damage_type == Action.DamageType.ENERGY:
+		await _fire_condition_event(Trigger.TriggerType.ON_TAKING_ENERGY_DAMAGE, event_context)
 	if not damage_effect.is_indirect:
-		context = { "attacker": attacker, "damage_dealt": damage }
-		await _fire_condition_event(Trigger.TriggerType.ON_BEING_HIT, context)
+		await _fire_condition_event(Trigger.TriggerType.ON_BEING_HIT, event_context)
 
 	if current_hp == 0:
 		await defeated()
+	return actual_damage
 
 func in_danger(value: bool):
 	is_in_danger = value

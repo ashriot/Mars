@@ -150,13 +150,28 @@ func _execute_one_hit(
 	)
 
 	_play_hit_audio()
-	await _apply_calculated_hit(
+	var actual_damage := await _apply_calculated_hit(
 		target, result, attacker, resolved_damage_type, is_critical,
 	)
-	await _process_on_hit_triggers(attacker, target, battle_manager)
-	await attacker._fire_condition_event(Trigger.TriggerType.ON_HIT, context)
+	var hit_event_context := context.duplicate()
+	hit_event_context.merge({
+		"attacker": attacker,
+		"target": target,
+		"damage_result": result,
+		"attempted_damage": result.final_damage,
+		"actual_damage": actual_damage,
+		"resolved_damage_type": resolved_damage_type,
+		"is_critical": result.request.precision_power > 0,
+		"was_breached": result.request.overload_power > 0,
+	}, true)
+	await _process_on_hit_triggers(attacker, target, battle_manager, hit_event_context)
+	await attacker._fire_condition_event(Trigger.TriggerType.ON_HIT, hit_event_context)
 	if lifedrain_scalar > 0.0:
-		attacker.take_healing(int(result.raw_damage * lifedrain_scalar))
+		attacker.take_healing(lifedrain_amount(actual_damage, lifedrain_scalar))
+
+
+static func lifedrain_amount(actual_damage: int, scalar: float) -> int:
+	return maxi(0, floori(float(actual_damage) * maxf(0.0, scalar)))
 
 
 func _apply_guard_behavior(
@@ -260,10 +275,8 @@ func _apply_calculated_hit(
 	attacker: ActorCard,
 	resolved_damage_type: Action.DamageType,
 	is_critical: bool,
-) -> void:
-	await target.take_one_hit(
-		result.final_damage, self, attacker, resolved_damage_type, is_critical,
-	)
+) -> int:
+	return await target.take_one_hit(result, self, attacker, resolved_damage_type)
 
 
 func _get_pre_hit_triggers(attacker: ActorCard, target: ActorCard) -> Dictionary:
@@ -318,6 +331,7 @@ func _process_on_hit_triggers(
 	attacker: ActorCard,
 	target: ActorCard,
 	battle_manager: BattleManager,
+	context: Dictionary,
 ) -> void:
 	for hit_trigger in on_hit_triggers:
 		var condition_met := false
@@ -347,5 +361,5 @@ func _process_on_hit_triggers(
 				if effect is Effect_Damage:
 					await battle_manager.wait(0.25)
 				await battle_manager.execute_triggered_effect(
-					attacker, effect, targets, null,
+					attacker, effect, targets, null, context,
 				)
