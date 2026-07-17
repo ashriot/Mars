@@ -284,11 +284,41 @@ func _update_intent_ui():
 
 	if first_effect is Effect_Damage:
 		var damage_effect: Effect_Damage = first_effect
-		var power = get_power(damage_effect.power_type)
-
-		var intended_dmg = int(power * damage_effect.potency)
-		if damage_effect.split_damage:
-			intended_dmg /= 3
+		var resolved_hit_count := damage_effect._resolve_hit_count(self)
+		var plan := damage_effect._build_hit_plan(
+			intended_targets, intended_action, resolved_hit_count,
+		)
+		var intended_damage_values: Array[int] = []
+		var previewed_targets: Array[ActorCard] = []
+		for target: ActorCard in intended_targets:
+			if target == null or target in previewed_targets:
+				continue
+			previewed_targets.append(target)
+			var result := DamagePreview.for_effect(
+				damage_effect,
+				self,
+				target,
+				intended_action,
+				plan.distribution_count,
+				false,
+			)
+			intended_damage_values.append(result.final_damage)
+		if intended_damage_values.is_empty():
+			var result := DamagePreview.for_effect(
+				damage_effect,
+				self,
+				null,
+				intended_action,
+				plan.distribution_count,
+				false,
+			)
+			intended_damage_values.append(result.final_damage)
+		intended_damage_values.sort()
+		var intended_damage_text := str(intended_damage_values[0])
+		if intended_damage_values[0] != intended_damage_values[-1]:
+			intended_damage_text = "%d-%d" % [
+				intended_damage_values[0], intended_damage_values[-1],
+			]
 
 		var dmg_type = ""
 		match damage_effect.damage_type:
@@ -299,10 +329,10 @@ func _update_intent_ui():
 			Action.DamageType.PIERCING:
 				dmg_type = Action._get_bbcode_icon("pierce", 28)
 
-		var hits_text = "x" + str(damage_effect.hit_count) if damage_effect.hit_count > 1 else ""
+		var hits_text = "x" + str(resolved_hit_count) if resolved_hit_count > 1 else ""
 
 		# This is your final text string
-		var final_text = str(intended_dmg) + hits_text + " " + dmg_type
+		var final_text = intended_damage_text + hits_text + " " + dmg_type
 		if intended_action.effects.size() > 1:
 			final_text += " *"
 
@@ -328,7 +358,9 @@ func _update_intent_ui():
 				final_text += " " + intended_targets[0].actor_name
 
 		intent_text.text = final_text
-	intent_tooltip.bbcode_text = intended_action.get_rich_description(self)
+	var tooltip_target: ActorCard = intended_targets[0] \
+		if intended_targets.size() == 1 else null
+	intent_tooltip.bbcode_text = intended_action.get_rich_description(self, tooltip_target)
 	flash_intent()
 
 func clear_intent():

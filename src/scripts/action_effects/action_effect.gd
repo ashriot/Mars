@@ -11,3 +11,7 @@ func execute(
 	_context: Dictionary = {}
 ) -> void:
 	await battle_manager.wait()
+
+
+func get_presentation(_context: EffectPresentationContext) -> EffectPresentation:
+	return null

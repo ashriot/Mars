@@ -82,9 +82,15 @@ func _ensure_glyph_backing() -> void:
 	move_child(glyph_backing, dynamic_glyph.get_index())
 
 
-func setup(_action: Action, actor: HeroCard, scaled_focus: int, color: Color):
+func setup(
+	_action: Action,
+	actor: HeroCard,
+	scaled_focus: int,
+	color: Color,
+	target: ActorCard = null,
+):
 	action = _action
-	tooltip.bbcode_text = action.get_rich_description(actor)
+	tooltip.bbcode_text = action.get_rich_description(actor, target)
 	user_focus = actor.current_focus
 	focus_cost = scaled_focus
 	label.text = action.action_name

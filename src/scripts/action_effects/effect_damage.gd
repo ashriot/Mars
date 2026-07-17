@@ -16,6 +16,102 @@ class_name Effect_Damage
 @export var pre_hit_triggers: Array[PreHitTrigger]
 
 
+func get_presentation(context: EffectPresentationContext) -> EffectPresentation:
+	var result := DamagePreview.for_effect(
+		self,
+		context.actor,
+		context.target,
+		context.action,
+		context.distribution_count,
+		context.critical,
+	)
+	var contextual_scaling := _get_contextual_scaling_text(result.request.contributions)
+	var split_behavior := ""
+	var amount_qualifier := ""
+	var hit_count_text := "x%d" % hit_count if hit_count > 1 else ""
+	if split_damage:
+		if _has_unavailable_group_distribution(context):
+			amount_qualifier = " total"
+			hit_count_text = ""
+			split_behavior = " split across all targets"
+			if hit_count > 1:
+				split_behavior += " and %d hits" % hit_count
+		else:
+			split_behavior = " split across %d hits" % context.distribution_count
+	var bindings := {
+		"amount": result.final_damage,
+		"amount_qualifier": amount_qualifier,
+		"selected_power": result.request.base_power,
+		"damage_type": _get_damage_type_icon(result.request.damage_type),
+		"hit_count": hit_count,
+		"hit_count_text": hit_count_text,
+		"split_behavior": split_behavior,
+		"contextual_scaling": contextual_scaling,
+	}
+	var details: Array[String] = [
+		"Selected power: %d" % result.request.base_power,
+		"Resolved potency: %s%%" % _format_percent(result.request.potency),
+	]
+	for contribution: DamageContribution in result.request.contributions:
+		details.append(
+			"%s: %s%% potency" % [
+				_get_contribution_label(contribution.source),
+				_format_percent(contribution.amount),
+			],
+		)
+	return EffectPresentation.new(
+		"Deals {amount}{amount_qualifier}{hit_count_text} {damage_type} damage"
+			+ "{split_behavior}{contextual_scaling}.",
+		bindings,
+		details,
+	)
+
+
+func _has_unavailable_group_distribution(context: EffectPresentationContext) -> bool:
+	return context.action != null \
+		and context.action.target_type in [
+			Action.TargetType.ALL_ENEMIES,
+			Action.TargetType.ENEMY_GROUP,
+			Action.TargetType.ALL_ALLIES,
+			Action.TargetType.ALLIES_ONLY,
+		]
+
+
+func _get_damage_type_icon(resolved_damage_type: Action.DamageType) -> String:
+	match resolved_damage_type:
+		Action.DamageType.KINETIC:
+			return Action._get_bbcode_icon("kinetic")
+		Action.DamageType.ENERGY:
+			return Action._get_bbcode_icon("energy")
+		Action.DamageType.PIERCING:
+			return Action._get_bbcode_icon("pierce")
+	return ""
+
+
+func _get_contextual_scaling_text(contributions: Array[DamageContribution]) -> String:
+	if contributions.is_empty():
+		return ""
+	var labels: Array[String] = []
+	for contribution: DamageContribution in contributions:
+		labels.append(_get_contribution_label(contribution.source))
+	return " (includes contextual scaling from %s)" % ", ".join(labels)
+
+
+func _get_contribution_label(source: StringName) -> String:
+	match source:
+		&"remaining_focus":
+			return "remaining Focus after paying the cost"
+		&"current_guard":
+			return "current Guard"
+	return str(source).replace("_", " ")
+
+
+func _format_percent(value: float) -> String:
+	var percent := value * 100.0
+	return str(roundi(percent)) if is_equal_approx(percent, roundf(percent)) \
+		else "%.1f" % percent
+
+
 func execute(
 	attacker: ActorCard,
 	parent_targets: Array,
@@ -306,6 +402,33 @@ func _resolve_forced_damage_type(
 ) -> Action.DamageType:
 	if pre_hit_context.has("final_damage_type"):
 		return pre_hit_context.final_damage_type as Action.DamageType
+	var condition := _find_forced_damage_condition(attacker, target)
+	if condition == null:
+		return Action.DamageType.NONE
+	var forced_damage_type := condition.force_damage_type
+	for remove_trigger in condition.remove_on_triggers:
+		if remove_trigger == Trigger.TriggerType.ON_TRIGGERED:
+			target.remove_condition(condition.condition_name)
+			break
+	return forced_damage_type
+
+
+func _resolve_preview_damage_type(
+	attacker: ActorCard,
+	target: ActorCard,
+) -> Action.DamageType:
+	if target == null:
+		return damage_type
+	var condition := _find_forced_damage_condition(attacker, target)
+	return damage_type if condition == null else condition.force_damage_type
+
+
+func _find_forced_damage_condition(
+	attacker: ActorCard,
+	target: ActorCard,
+) -> Condition:
+	if target == null:
+		return null
 	var attacker_hero_type := Action.HeroType.ALL
 	if attacker is HeroCard:
 		var hero_name_key := attacker.actor_name.to_upper()
@@ -318,13 +441,8 @@ func _resolve_forced_damage_type(
 			continue
 		if condition.triggered_by not in [Action.HeroType.ALL, attacker_hero_type]:
 			continue
-		var forced_damage_type := condition.force_damage_type
-		for remove_trigger in condition.remove_on_triggers:
-			if remove_trigger == Trigger.TriggerType.ON_TRIGGERED:
-				target.remove_condition(condition.condition_name)
-				break
-		return forced_damage_type
-	return Action.DamageType.NONE
+		return condition
+	return null
 
 
 func _process_on_hit_triggers(

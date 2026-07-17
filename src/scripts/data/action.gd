@@ -42,9 +42,9 @@ var is_attack: bool :
 				return true
 		return false
 
-func get_rich_description(user: ActorCard) -> String:
+func get_rich_description(user: ActorCard, target: ActorCard = null) -> String:
 	_init_regex()
-	var final_desc = description
+	var final_desc := _compose_effect_presentations(description, user, target)
 
 	var input_names = PackedStringArray(["atk", "psy", "hp", "spd", "focus", "grd"])
 
@@ -61,9 +61,11 @@ func get_rich_description(user: ActorCard) -> String:
 		float(user.current_guard)
 	])
 
-	for match_result in _regex.search_all(description):
+	for match_result in _regex.search_all(final_desc):
 		var full_tag = match_result.get_string(0) # "{atk * 0.5}"
 		var formula_string = match_result.get_string(1) # "atk * 0.5"
+		if formula_string in ["foc", "grd", "kin", "nrg", "prc", "ct_effect", "cost"]:
+			continue
 
 		# A. Parse the formula
 		var error = _expression.parse(formula_string, input_names)
@@ -86,16 +88,68 @@ func get_rich_description(user: ActorCard) -> String:
 	final_desc = final_desc.replace("{grd}", _get_bbcode_icon("guard"))
 	final_desc = final_desc.replace("{kin}", _get_bbcode_icon("kinetic"))
 	final_desc = final_desc.replace("{nrg}", _get_bbcode_icon("energy"))
-	final_desc = final_desc.replace("{prc}", _get_bbcode_icon("piercing"))
+	final_desc = final_desc.replace("{prc}", _get_bbcode_icon("pierce"))
 	final_desc = final_desc.replace("{ct_effect}", get_ct_description())
 
 	return final_desc
 
-func _get_damage_string(damage_effect: Effect_Damage, attacker: ActorCard) -> String:
-	var dynamic_potency = damage_effect._get_dynamic_potency(attacker, null)
-	var base_power = attacker.get_power(damage_effect.power_type)
-	var final_damage = roundi(base_power * dynamic_potency)
-	return str(final_damage)
+
+func _compose_effect_presentations(
+	template: String,
+	user: ActorCard,
+	target: ActorCard,
+) -> String:
+	if template.is_empty():
+		var clauses: Array[String] = []
+		for effect_index in effects.size():
+			var presentation := _get_effect_presentation(effect_index, user, target)
+			if presentation != null:
+				clauses.append(presentation.render())
+		return "[p]".join(clauses)
+
+	var composed := template
+	for match_result in _regex.search_all(template):
+		var binding := match_result.get_string(1)
+		if not binding.begins_with("effect:"):
+			continue
+		var index_text := binding.trim_prefix("effect:")
+		if not index_text.is_valid_int():
+			continue
+		var effect_index := index_text.to_int() - 1
+		var presentation := _get_effect_presentation(effect_index, user, target)
+		if presentation != null:
+			composed = composed.replace(match_result.get_string(0), presentation.render())
+	return composed
+
+
+func _get_effect_presentation(
+	effect_index: int,
+	user: ActorCard,
+	target: ActorCard,
+) -> EffectPresentation:
+	if effect_index < 0 or effect_index >= effects.size():
+		return null
+	var effect := effects[effect_index]
+	if effect == null:
+		return null
+	var distribution_count := 1
+	var group_distribution_unavailable := target_type in [
+		TargetType.ALL_ENEMIES,
+		TargetType.ENEMY_GROUP,
+		TargetType.ALL_ALLIES,
+		TargetType.ALLIES_ONLY,
+	]
+	if effect is Effect_Damage \
+		and (effect as Effect_Damage).split_damage \
+		and not group_distribution_unavailable:
+		distribution_count = maxi(
+			1,
+			(effect as Effect_Damage)._resolve_hit_count(user),
+		)
+	var context := EffectPresentationContext.new(
+		user, target, self, effect_index, distribution_count, false,
+	)
+	return effect.get_presentation(context)
 
 func _init_regex():
 	if _regex.get_pattern() == "":
