@@ -523,8 +523,11 @@ func test_page_triggers_require_roles_owner_and_tree_or_page_focus() -> void:
 	panel._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 1.0))
 	assert_eq(panel.current_page, 0, "non-owner does not route page triggers")
 	ownership.owns_roles = true
+	panel._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.9))
+	assert_eq(panel.current_page, 0, "a pull begun by a non-owner stays inert until release")
+	panel._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.0))
 	panel._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 1.0))
-	assert_eq(panel.current_page, 1, "Roles tree focus owns page triggers")
+	assert_eq(panel.current_page, 1, "Roles tree focus owns a newly pulled page trigger")
 	panel._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.0))
 	var outsider := Button.new()
 	add_child_autofree(outsider)
@@ -672,6 +675,58 @@ func test_viewport_page_trigger_hold_and_nested_modal_release_rearm() -> void:
 	get_viewport().push_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 1.0))
 	await get_tree().process_frame
 	assert_eq(panel.current_page, 0, "release under the modal rearms the next viewport press")
+	panel.free()
+	await get_tree().process_frame
+
+
+func test_viewport_page_trigger_pressed_under_modal_stays_inert_until_release() -> void:
+	var navigation := preload("res://src/ui/navigation/navigation_ux_layer.tscn").instantiate() as NavigationUXLayer
+	navigation.name = "NavigationUXLayer"
+	add_child_autofree(navigation)
+	await get_tree().process_frame
+	var panel := await _skill_panel_with_multi_page_role()
+	panel.focus_node(panel._nearest_node_id(panel._current_role_panel()))
+	navigation.push_modal(panel, panel.get_focused_node())
+	panel.set_role_navigation_owner(func() -> bool: return navigation.is_top_modal(panel))
+	get_viewport().push_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.0))
+	await get_tree().process_frame
+
+	var nested := Control.new()
+	add_child_autofree(nested)
+	navigation.push_modal(nested, null, true, true)
+	get_viewport().push_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 1.0))
+	await get_tree().process_frame
+	assert_eq(panel.current_page, 0, "fresh pull under nested modal is inert")
+	navigation.pop_modal(nested)
+	get_viewport().push_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.9))
+	await get_tree().process_frame
+	assert_eq(panel.current_page, 0, "held jitter after modal close cannot page")
+	get_viewport().push_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.0))
+	await get_tree().process_frame
+	get_viewport().push_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 1.0))
+	await get_tree().process_frame
+	assert_eq(panel.current_page, 1, "release and a new pull pages exactly once")
+	panel.free()
+	await get_tree().process_frame
+
+
+func test_viewport_role_select_trigger_hold_stays_inert_after_tree_entry() -> void:
+	var panel := await _skill_panel_with_multi_page_role()
+	assert_true(panel.enter_role_select())
+	get_viewport().push_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.0))
+	await get_tree().process_frame
+	get_viewport().push_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 1.0))
+	await get_tree().process_frame
+	assert_eq(panel.current_page, 0)
+	assert_true(panel.enter_tree())
+	get_viewport().push_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.9))
+	await get_tree().process_frame
+	assert_eq(panel.current_page, 0, "ROLE_SELECT pull stays inert for its whole physical hold")
+	get_viewport().push_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.0))
+	await get_tree().process_frame
+	get_viewport().push_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 1.0))
+	await get_tree().process_frame
+	assert_eq(panel.current_page, 1)
 	panel.free()
 	await get_tree().process_frame
 

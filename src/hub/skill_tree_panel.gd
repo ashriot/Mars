@@ -420,9 +420,9 @@ func _handle_page_trigger_motion(event: InputEventJoypadMotion) -> void:
 		return
 	if event.axis_value < 0.75 or bool(_held_page_triggers[event.axis]):
 		return
+	_held_page_triggers[event.axis] = true
 	if navigation_depth != NavigationDepth.TREE or not _owns_role_navigation() or not (_node_owns_focus() or _page_tabs_own_focus()):
 		return
-	_held_page_triggers[event.axis] = true
 	change_page(-1 if event.axis == JOY_AXIS_TRIGGER_LEFT else 1)
 	get_viewport().set_input_as_handled()
 

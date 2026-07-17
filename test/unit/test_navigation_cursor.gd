@@ -90,6 +90,30 @@ func test_bottom_right_corner_target_keeps_cursor_out_of_readable_center() -> vo
 	_assert_cursor_clears_readable_center(cursor, target)
 
 
+func test_moving_target_crosses_edge_avoidance_boundary_deterministically() -> void:
+	var cursor := CursorScript.new()
+	add_child_autofree(cursor)
+	var viewport_size := Vector2(get_viewport().get_visible_rect().size)
+	var interior_position := viewport_size - Vector2(120, 120)
+	var target := _target_at(interior_position, Vector2(48, 48))
+	cursor.track_hub_target(target, false)
+	var interior_cursor_position := cursor.position
+	_assert_cursor_clears_readable_center(cursor, target)
+
+	target.position = viewport_size - Vector2(52, 52)
+	cursor._process(0.0)
+	var edge_cursor_position := cursor.position
+	_assert_cursor_clears_readable_center(cursor, target)
+	assert_ne(edge_cursor_position, interior_cursor_position, "edge crossing selects a clearing fallback")
+	cursor._process(0.0)
+	assert_eq(cursor.position, edge_cursor_position, "fixed edge placement does not oscillate between candidates")
+
+	target.position = interior_position
+	cursor._process(0.0)
+	_assert_cursor_clears_readable_center(cursor, target)
+	assert_eq(cursor.position, interior_cursor_position, "reverse crossing restores the exact lower-right anchor")
+
+
 func test_hub_target_clamps_complete_cursor_inside_viewport() -> void:
 	var cursor := CursorScript.new()
 	add_child_autofree(cursor)
