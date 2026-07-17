@@ -311,6 +311,8 @@ func test_analog_page_trigger_requires_release_before_another_page_move() -> voi
 	panel._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 0.0))
 	panel._unhandled_input(press)
 	assert_eq(panel.current_page, 0, "release rearms the trigger")
+	panel.free()
+	await get_tree().process_frame
 
 
 func test_analog_page_trigger_rearms_when_released_under_nested_modal() -> void:
@@ -331,6 +333,8 @@ func test_analog_page_trigger_rearms_when_released_under_nested_modal() -> void:
 	navigation.pop_modal(nested)
 	panel._unhandled_input(_joy_motion(JOY_AXIS_TRIGGER_RIGHT, 1.0))
 	assert_eq(panel.current_page, 0, "release under a nested modal rearms the next pull")
+	panel.free()
+	await get_tree().process_frame
 
 
 func test_hub_focus_and_depth_styles_never_change_content_colors() -> void:
