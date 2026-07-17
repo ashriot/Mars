@@ -288,7 +288,7 @@ func _update_intent_ui():
 		var plan := damage_effect._build_hit_plan(
 			intended_targets, intended_action, resolved_hit_count,
 		)
-		var intended_damage_values: Array[int] = []
+		var intended_damage_by_type: Dictionary = {}
 		var previewed_targets: Array[ActorCard] = []
 		for target: ActorCard in intended_targets:
 			if target == null or target in previewed_targets:
@@ -302,8 +302,8 @@ func _update_intent_ui():
 				plan.distribution_count,
 				false,
 			)
-			intended_damage_values.append(result.final_damage)
-		if intended_damage_values.is_empty():
+			_append_intent_damage(intended_damage_by_type, result)
+		if intended_damage_by_type.is_empty():
 			var result := DamagePreview.for_effect(
 				damage_effect,
 				self,
@@ -312,27 +312,22 @@ func _update_intent_ui():
 				plan.distribution_count,
 				false,
 			)
-			intended_damage_values.append(result.final_damage)
-		intended_damage_values.sort()
-		var intended_damage_text := str(intended_damage_values[0])
-		if intended_damage_values[0] != intended_damage_values[-1]:
-			intended_damage_text = "%d-%d" % [
-				intended_damage_values[0], intended_damage_values[-1],
-			]
-
-		var dmg_type = ""
-		match damage_effect.damage_type:
-			Action.DamageType.KINETIC:
-				dmg_type = Action._get_bbcode_icon("kinetic", 28)
-			Action.DamageType.ENERGY:
-				dmg_type = Action._get_bbcode_icon("energy", 28)
-			Action.DamageType.PIERCING:
-				dmg_type = Action._get_bbcode_icon("pierce", 28)
-
 		var hits_text = "x" + str(resolved_hit_count) if resolved_hit_count > 1 else ""
+		var resolved_damage_types := intended_damage_by_type.keys()
+		resolved_damage_types.sort()
+		var damage_segments: Array[String] = []
+		for resolved_damage_type: int in resolved_damage_types:
+			var values: Array = intended_damage_by_type[resolved_damage_type]
+			values.sort()
+			var damage_text := str(values[0])
+			if values[0] != values[-1]:
+				damage_text = "%d-%d" % [values[0], values[-1]]
+			damage_segments.append(
+				damage_text + hits_text + " "
+				+ _get_intent_damage_type_icon(resolved_damage_type),
+			)
 
-		# This is your final text string
-		var final_text = intended_damage_text + hits_text + " " + dmg_type
+		var final_text := " / ".join(damage_segments)
 		if intended_action.effects.size() > 1:
 			final_text += " *"
 
@@ -362,6 +357,29 @@ func _update_intent_ui():
 		if intended_targets.size() == 1 else null
 	intent_tooltip.bbcode_text = intended_action.get_rich_description(self, tooltip_target)
 	flash_intent()
+
+
+func _append_intent_damage(
+	damage_by_type: Dictionary,
+	result: DamageResult,
+) -> void:
+	var resolved_damage_type := result.request.damage_type
+	var damage_values: Array = damage_by_type.get(resolved_damage_type, [])
+	damage_values.append(result.final_damage)
+	damage_by_type[resolved_damage_type] = damage_values
+
+
+func _get_intent_damage_type_icon(
+	resolved_damage_type: Action.DamageType,
+) -> String:
+	match resolved_damage_type:
+		Action.DamageType.KINETIC:
+			return Action._get_bbcode_icon("kinetic", 28)
+		Action.DamageType.ENERGY:
+			return Action._get_bbcode_icon("energy", 28)
+		Action.DamageType.PIERCING:
+			return Action._get_bbcode_icon("pierce", 28)
+	return ""
 
 func clear_intent():
 	intended_action = null

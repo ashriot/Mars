@@ -9,21 +9,29 @@ static func for_effect(
 	action: Action,
 	distribution_count: int,
 	critical: bool,
+	pre_hit_context: Dictionary = {},
 ) -> DamageResult:
 	var resolver_target := target
-	var owns_neutral_target := resolver_target == null
-	if owns_neutral_target:
+	var neutral_target := resolver_target == null
+	var owns_resolver_target := neutral_target
+	if neutral_target:
 		resolver_target = _neutral_target()
-	var resolved_damage_type := effect._resolve_preview_damage_type(
-		attacker, null if owns_neutral_target else resolver_target,
+	var decision := effect._resolve_damage_type_decision(
+		attacker, null if neutral_target else target, pre_hit_context,
 	)
+	if decision.condition_to_consume != null:
+		resolver_target = _target_without_condition(
+			target, decision.condition_to_consume,
+		)
+		owns_resolver_target = true
+	var resolved_damage_type := decision.resolved_damage_type
 	var damage_context := _capture_preview_context(
 		effect,
 		attacker,
 		resolver_target,
 		action,
 		resolved_damage_type,
-		owns_neutral_target,
+		neutral_target,
 	)
 	var resolved_potency := effect._resolve_potency(damage_context)
 	var result := DamageResolver.resolve_hit(
@@ -37,7 +45,7 @@ static func for_effect(
 		damage_context,
 		Callable(effect, "_modify_damage_request"),
 	)
-	if owns_neutral_target:
+	if owns_resolver_target:
 		resolver_target.free()
 	return result
 
@@ -109,3 +117,27 @@ static func _neutral_target() -> ActorCard:
 	target.is_breached = false
 	target.is_defeated = false
 	return target
+
+
+static func _target_without_condition(
+	target: ActorCard,
+	excluded_condition: Condition,
+) -> ActorCard:
+	var preview_target := ActorCard.new()
+	preview_target.actor_name = target.actor_name
+	preview_target.current_stats = target.current_stats
+	preview_target.current_hp = target.current_hp
+	preview_target.current_guard = target.current_guard
+	preview_target.current_ct = target.current_ct
+	preview_target.ct_speed_scale = target.ct_speed_scale
+	preview_target.battle_priority = target.battle_priority
+	preview_target.is_breached = target.is_breached
+	preview_target.is_in_danger = target.is_in_danger
+	preview_target.is_defeated = target.is_defeated
+	var retained_conditions: Array[Condition] = []
+	for condition: Condition in target.active_conditions:
+		if condition != excluded_condition:
+			retained_conditions.append(condition)
+	preview_target.active_conditions = retained_conditions
+	preview_target.active_traits = target.active_traits.duplicate()
+	return preview_target

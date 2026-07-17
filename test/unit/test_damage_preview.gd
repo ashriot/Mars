@@ -6,6 +6,15 @@ class IntentEnemy extends EnemyCard:
 		return
 
 
+class NonPresentableEffect extends ActionEffect:
+	pass
+
+
+class ConditionTarget extends ActorCard:
+	func _update_conditions_ui() -> void:
+		return
+
+
 func test_focused_bolt_preview_uses_post_cost_remaining_focus_curve() -> void:
 	var attacker := _hero(100, 5)
 	var action := load("res://data/heroes/echo/actions/focused_bolt.tres") as Action
@@ -115,6 +124,93 @@ func test_forced_piercing_preview_bypasses_defense_without_consuming_condition()
 	target.free()
 
 
+func test_consumed_conversion_condition_is_excluded_from_preview_modifiers() -> void:
+	var attacker := _hero(100, 0)
+	var target := _target(false, 0, 0)
+	target.current_guard = 1
+	var forced_piercing := _forced_type_condition(Action.DamageType.PIERCING, 0.5)
+	target.active_conditions = [forced_piercing]
+
+	var result := DamagePreview.for_effect(
+		_damage_effect(1.0), attacker, target, Action.new(), 1, false,
+	)
+
+	assert_eq(result.request.damage_type, Action.DamageType.PIERCING)
+	assert_eq(result.request.incoming_modifier, 0.0)
+	assert_eq(result.final_damage, 100)
+	assert_eq(target.active_conditions, [forced_piercing], "preview retains live condition")
+	attacker.free()
+	target.free()
+
+
+func test_runtime_conversion_still_consumes_triggered_condition() -> void:
+	var attacker := _hero(100, 0)
+	var target := ConditionTarget.new()
+	target.current_stats = _stats(0, 0, 0, 0, 0)
+	var forced_piercing := _forced_type_condition(Action.DamageType.PIERCING)
+	target.active_conditions = [forced_piercing]
+
+	var resolved_type := _damage_effect(1.0)._resolve_forced_damage_type(
+		attacker, target, {},
+	)
+
+	assert_eq(resolved_type, Action.DamageType.PIERCING)
+	assert_true(target.active_conditions.is_empty())
+	attacker.free()
+	target.free()
+
+
+func test_conversion_decision_gives_pre_hit_context_precedence() -> void:
+	var attacker := _hero(100, 0)
+	var target := _target(false, 0, 0)
+	var forced_piercing := _forced_type_condition(Action.DamageType.PIERCING, 0.5)
+	target.active_conditions = [forced_piercing]
+	var effect := _damage_effect(1.0)
+
+	var decision = effect.call(
+		"_resolve_damage_type_decision",
+		attacker,
+		target,
+		{"final_damage_type": Action.DamageType.ENERGY},
+	)
+
+	if not assert_not_null(decision):
+		attacker.free()
+		target.free()
+		return
+	assert_eq(decision.resolved_damage_type, Action.DamageType.ENERGY)
+	assert_null(decision.condition_to_consume)
+	assert_eq(target.active_conditions, [forced_piercing])
+	attacker.free()
+	target.free()
+
+
+func test_preview_pre_hit_type_precedence_retains_forced_condition_and_modifier() -> void:
+	var attacker := _hero(100, 0)
+	var target := _target(false, 50, 0)
+	target.current_guard = 1
+	var forced_piercing := _forced_type_condition(Action.DamageType.PIERCING, 0.5)
+	target.active_conditions = [forced_piercing]
+
+	var result := DamagePreview.for_effect(
+		_damage_effect(1.0),
+		attacker,
+		target,
+		Action.new(),
+		1,
+		false,
+		{"final_damage_type": Action.DamageType.ENERGY},
+	)
+
+	assert_eq(result.request.damage_type, Action.DamageType.ENERGY)
+	assert_eq(result.request.defense, 50)
+	assert_eq(result.request.incoming_modifier, 0.5)
+	assert_eq(result.final_damage, 75)
+	assert_eq(target.active_conditions, [forced_piercing], "preview retains live condition")
+	attacker.free()
+	target.free()
+
+
 func test_no_target_preview_uses_explicit_neutral_target_state() -> void:
 	var attacker := _hero(100, 0, 50)
 	var result := DamagePreview.for_effect(
@@ -141,6 +237,20 @@ func test_effect_tokens_bind_by_action_effect_index() -> void:
 	target.free()
 
 
+func test_effect_token_uses_actual_child_index_after_non_presentable_effect() -> void:
+	var action := Action.new()
+	action.description = "Second {effect:2}"
+	action.effects = [NonPresentableEffect.new(), _damage_effect(1.0)]
+	var attacker := _attacker()
+
+	var text := action.get_rich_description(attacker)
+
+	assert_false(text.contains("{effect:"))
+	assert_string_contains(text, "Second ")
+	assert_string_contains(text, "100")
+	attacker.free()
+
+
 func test_empty_action_description_joins_presentable_effects_in_order() -> void:
 	var action := Action.new()
 	action.effects = [_damage_effect(0.5), _damage_effect(1.0)]
@@ -149,6 +259,19 @@ func test_empty_action_description_joins_presentable_effects_in_order() -> void:
 	assert_string_contains(text, "50")
 	assert_string_contains(text, "100")
 	assert_lt(text.find("50"), text.find("100"))
+	attacker.free()
+
+
+func test_empty_action_description_skips_null_presentations() -> void:
+	var action := Action.new()
+	action.effects = [null, NonPresentableEffect.new(), _damage_effect(1.0)]
+	var attacker := _attacker()
+
+	var text := action.get_rich_description(attacker)
+
+	assert_string_contains(text, "100")
+	assert_false(text.begins_with("[p]"))
+	assert_false(text.ends_with("[p]"))
 	attacker.free()
 
 
@@ -236,6 +359,78 @@ func test_enemy_intent_displays_per_target_preview_range_without_averaging() -> 
 	enemy.free()
 	unarmored.free()
 	armored.free()
+
+
+func test_enemy_intent_uses_resolved_damage_type_icon() -> void:
+	var enemy := _intent_enemy(100)
+	var action := _intent_action()
+	var first := _target(false, 0, 0)
+	var second := _target(false, 0, 0)
+	first.active_conditions = [_forced_type_condition(Action.DamageType.PIERCING)]
+	second.active_conditions = [_forced_type_condition(Action.DamageType.PIERCING)]
+	enemy.intended_action = action
+	enemy.intended_targets = [first, second]
+
+	enemy._update_intent_ui()
+
+	assert_string_contains(enemy.intent_text.text, Action._get_bbcode_icon("pierce", 28))
+	assert_false(enemy.intent_text.text.contains(Action._get_bbcode_icon("kinetic", 28)))
+	_free_intent_enemy(enemy, [first, second])
+
+
+func test_enemy_intent_keeps_heterogeneous_resolved_types_separate() -> void:
+	var enemy := _intent_enemy(100)
+	var action := _intent_action()
+	var kinetic := _target(false, 50, 0)
+	kinetic.current_guard = 1
+	var piercing := _target(false, 90, 0)
+	piercing.active_conditions = [_forced_type_condition(Action.DamageType.PIERCING)]
+	enemy.intended_action = action
+	enemy.intended_targets = [kinetic, piercing]
+
+	enemy._update_intent_ui()
+
+	assert_string_contains(enemy.intent_text.text, Action._get_bbcode_icon("kinetic", 28))
+	assert_string_contains(enemy.intent_text.text, Action._get_bbcode_icon("pierce", 28))
+	assert_string_contains(enemy.intent_text.text, "50")
+	assert_string_contains(enemy.intent_text.text, "100")
+	_free_intent_enemy(enemy, [kinetic, piercing])
+
+
+func _intent_enemy(attack: int) -> IntentEnemy:
+	var enemy := IntentEnemy.new()
+	enemy.current_stats = _stats(attack, 0, 0, 0, 0)
+	enemy.intent_text = RichTextLabel.new()
+	enemy.intent_tooltip = RichTooltip.new()
+	return enemy
+
+
+func _intent_action() -> Action:
+	var action := Action.new()
+	action.action_name = "Intent Test"
+	action.target_type = Action.TargetType.ALL_ENEMIES
+	action.effects = [_damage_effect(1.0)]
+	return action
+
+
+func _free_intent_enemy(enemy: IntentEnemy, targets: Array[ActorCard]) -> void:
+	enemy.intent_text.free()
+	enemy.intent_tooltip.free()
+	enemy.free()
+	for target: ActorCard in targets:
+		target.free()
+
+
+func _forced_type_condition(
+	forced_type: Action.DamageType,
+	incoming_modifier: float = 0.0,
+) -> Condition:
+	var condition := Condition.new()
+	condition.condition_name = "Forced type"
+	condition.force_damage_type = forced_type
+	condition.damage_taken_scalar = incoming_modifier
+	condition.remove_on_triggers = [Trigger.TriggerType.ON_TRIGGERED]
+	return condition
 
 
 func _hero(

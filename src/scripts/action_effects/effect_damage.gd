@@ -2,6 +2,23 @@
 extends ActionEffect
 class_name Effect_Damage
 
+
+class DamageTypeDecision extends RefCounted:
+	var resolved_damage_type: Action.DamageType
+	var forced_damage_type: Action.DamageType
+	var condition_to_consume: Condition
+
+
+	func _init(
+		resolved_type: Action.DamageType,
+		forced_type: Action.DamageType,
+		consumable_condition: Condition,
+	) -> void:
+		resolved_damage_type = resolved_type
+		forced_damage_type = forced_type
+		condition_to_consume = consumable_condition
+
+
 # --- Base Damage Properties ---
 @export var potency: float = 1.0
 @export var hit_count: int = 1
@@ -400,27 +417,42 @@ func _resolve_forced_damage_type(
 	target: ActorCard,
 	pre_hit_context: Dictionary,
 ) -> Action.DamageType:
+	var decision := _resolve_damage_type_decision(attacker, target, pre_hit_context)
+	if decision.condition_to_consume != null:
+		target.remove_condition(decision.condition_to_consume.condition_name)
+	return decision.forced_damage_type
+
+
+func _resolve_damage_type_decision(
+	attacker: ActorCard,
+	target: ActorCard,
+	pre_hit_context: Dictionary,
+) -> DamageTypeDecision:
 	if pre_hit_context.has("final_damage_type"):
-		return pre_hit_context.final_damage_type as Action.DamageType
+		var context_type := pre_hit_context.final_damage_type as Action.DamageType
+		var resolved_type := damage_type \
+			if context_type == Action.DamageType.NONE else context_type
+		return DamageTypeDecision.new(resolved_type, context_type, null)
 	var condition := _find_forced_damage_condition(attacker, target)
 	if condition == null:
-		return Action.DamageType.NONE
-	var forced_damage_type := condition.force_damage_type
-	for remove_trigger in condition.remove_on_triggers:
-		if remove_trigger == Trigger.TriggerType.ON_TRIGGERED:
-			target.remove_condition(condition.condition_name)
-			break
-	return forced_damage_type
+		return DamageTypeDecision.new(
+			damage_type, Action.DamageType.NONE, null,
+		)
+	var condition_to_consume: Condition = null
+	if Trigger.TriggerType.ON_TRIGGERED in condition.remove_on_triggers:
+		condition_to_consume = condition
+	return DamageTypeDecision.new(
+		condition.force_damage_type,
+		condition.force_damage_type,
+		condition_to_consume,
+	)
 
 
 func _resolve_preview_damage_type(
 	attacker: ActorCard,
 	target: ActorCard,
 ) -> Action.DamageType:
-	if target == null:
-		return damage_type
-	var condition := _find_forced_damage_condition(attacker, target)
-	return damage_type if condition == null else condition.force_damage_type
+	return _resolve_damage_type_decision(attacker, target, {}).resolved_damage_type
 
 
 func _find_forced_damage_condition(
