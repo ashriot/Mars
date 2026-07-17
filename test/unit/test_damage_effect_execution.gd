@@ -461,6 +461,37 @@ func test_aim_is_clamped_at_roll_boundary() -> void:
 	assert_gt(above.result.request.precision_power, 0)
 
 
+func test_asymmetric_psyche_power_matches_runtime_and_preview() -> void:
+	var attacker := _recording_actor(10, 20, 0)
+	attacker.current_stats.psyche = 100
+	attacker.current_stats.precision = 30
+	attacker.current_stats.aim = 100
+	var target := _recording_actor(0, 0, 0)
+	target.is_breached = true
+	var manager := RecordingBattleManager.new()
+	manager.actor_list = [attacker, target]
+	var effect := RecordingDamageEffect.new()
+	effect.power_type = Action.PowerType.PSYCHE
+	effect.damage_type = Action.DamageType.PIERCING
+	effect.roll_value = 1
+	var action := Action.new()
+	action.effects = [effect]
+	var preview := DamagePreview.for_effect(
+		effect, attacker, target, action, 1, true,
+	)
+
+	await effect.execute(attacker, [target], manager, action)
+
+	assert_eq(effect.results.size(), 1)
+	var runtime := effect.results[0]
+	assert_eq(preview.request.base_power, 100)
+	assert_eq(runtime.request.base_power, 100)
+	assert_almost_eq(preview.effective_power, 150.0, 0.0001)
+	assert_almost_eq(runtime.effective_power, 150.0, 0.0001)
+	assert_eq(runtime.final_damage, preview.final_damage)
+	_free_recorded_nodes(manager, [attacker, target])
+
+
 func test_each_planned_hit_builds_one_request_and_result() -> void:
 	var attacker := _recording_actor(100, 0, 0)
 	var target := _recording_actor(0, 0, 0)
