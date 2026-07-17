@@ -197,7 +197,17 @@ Runtime execution, selected-target previews, enemy intent, and numeric action-de
 
 When an exact target is available, a preview can show the target-specific noncritical and critical result breakdown without rolling RNG. When required battlefield context is unavailable, presentation shows the authored relationship, such as “20% power plus 20% per remaining Focus,” instead of fabricating an exact number.
 
-Narrative action descriptions remain authored prose. Numeric fragments and damage-type icons bind to structured effect data or structured resolver output. Handwritten expressions such as `{atk*1.25}` and opaque ordinal placeholders such as `{dmg1}` must not be independent authorities for executed damage.
+### Generic Effect Presentation Boundary
+
+`ActionEffect` exposes a generic presentation method that accepts an `EffectPresentationContext` and returns an immutable `EffectPresentation`. The presentation contains an effect-owned clause template, typed or named bindings sourced from effect data/resolver output, and optional labeled breakdown details. It has no dependency on tooltip nodes or action-button layout.
+
+Damage is the first complete effect adopter. `Effect_Damage` owns the authoritative clause for its selected power, resolved potency, hit count, split behavior, damage type, and contextual scaling. It obtains exact numbers and breakdowns from the shared damage resolver/calculator rather than duplicating arithmetic. Direct child damage effects can therefore bind into an action immediately. Damage nested behind an apply-condition or trigger effect remains reachable only through that parent effect's legacy prose until condition/trigger presentation adopts the same interface; focused content validation keeps that transitional prose aligned with its nested resource.
+
+`Action` owns composition. A simple action with no authored description template may join the available child-effect clauses in effect order. A nuanced action retains authored prose and composes child clauses through generic one-based `{effect:N}` bindings. The action owns sequencing words, paragraphs, emphasis, and relationships between effects; it does not own the effect's numbers or mechanical labels.
+
+Narrative action descriptions therefore remain possible without becoming a second mechanical authority. Handwritten expressions such as `{atk*1.25}`, damage-specific placeholders such as `{dmg1}`, and a temporary damage-only binding language must not be authoritative for executed damage.
+
+This damage effort establishes the generic presentation types, the `ActionEffect` interface, action-level automatic/template composition, and complete damage-effect presentation. Migrating every healing, Guard, Focus, CT, condition, and trigger description; redesigning tooltip visuals; and building localization infrastructure are explicitly deferred to a focused follow-up. Existing non-damage prose remains supported during that migration.
 
 Content validation reports invalid damage configuration, unresolved numeric bindings, unsupported scaling rules, and presentation/runtime mismatches with the resource path and effect index.
 
@@ -206,12 +216,12 @@ Content validation reports invalid damage configuration, unresolved numeric bind
 Implementation planning must account for every confirmed defect found during the audit:
 
 - Focused Bolt executes the approved 20% plus 20% per remaining Focus curve, but its description advertises a different formula.
-- Charged Shot executes at 150% potency while its description advertises 125%.
-- Booster Shots executes three hits while its description says twice.
+- Charged Shot remains at 150% ATK potency; its description must stop advertising 125%.
+- Booster Shots remains three 50% ATK hits; its description must stop saying twice.
 - Shatter says its damage is split across enemies but does not enable split damage.
 - Telekinesis describes Energy damage but defaults to Kinetic damage.
 - Reverberate describes PSY-powered damage but its action damage defaults to ATK.
-- Shrapnel's described potency/type does not match its primary authored damage effect.
+- Shrapnel's primary hit becomes 200% ATK Kinetic damage followed by its existing Piercing Bleed.
 - Several Sands actions expose unresolved `{dmg1}` placeholders.
 - The separate `shreds_guard` Boolean allows damage resources to contradict the intrinsic type rule and must be removed; Kinetic/Energy resources such as Psionic Pulse and Static Charge currently opt out, while some Piercing resources can inherit the shredding default.
 - Damage-received events currently inspect the effect's authored type instead of the resolved type.
