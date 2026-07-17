@@ -2,6 +2,157 @@ class_name DamagePreview
 extends RefCounted
 
 
+class Sequence extends RefCounted:
+	var _results: Array[DamageResult]
+	var _is_complete: bool
+	var _is_ordered: bool
+	var _planned_hit_count: int
+	var _distribution_count: int
+	var _target_count: int
+
+	var results: Array[DamageResult]:
+		get:
+			var copy: Array[DamageResult] = []
+			copy.assign(_results)
+			return copy
+	var is_complete: bool:
+		get: return _is_complete
+	var is_ordered: bool:
+		get: return _is_ordered
+	var planned_hit_count: int:
+		get: return _planned_hit_count
+	var distribution_count: int:
+		get: return _distribution_count
+	var target_count: int:
+		get: return _target_count
+
+
+	func _init(
+		sequence_results: Array[DamageResult],
+		sequence_is_complete: bool,
+		sequence_is_ordered: bool,
+		sequence_planned_hit_count: int,
+		sequence_distribution_count: int,
+		sequence_target_count: int,
+	) -> void:
+		_results = sequence_results.duplicate()
+		_is_complete = sequence_is_complete
+		_is_ordered = sequence_is_ordered
+		_planned_hit_count = sequence_planned_hit_count
+		_distribution_count = sequence_distribution_count
+		_target_count = sequence_target_count
+
+
+static func for_plan(
+	effect: Effect_Damage,
+	attacker: ActorCard,
+	targets: Array[ActorCard],
+	action: Action,
+	critical: bool,
+	battle_manager: BattleManager = null,
+	pre_hit_context: Dictionary = {},
+) -> Sequence:
+	var resolved_hit_count := effect._resolve_hit_count(attacker)
+	if attacker == null or attacker.current_stats == null or targets.is_empty():
+		return Sequence.new([], false, false, resolved_hit_count, 1, targets.size())
+	var valid_targets: Array[ActorCard] = []
+	for target: ActorCard in targets:
+		if not is_instance_valid(target) \
+			or target.current_stats == null \
+			or target.is_defeated:
+			return Sequence.new(
+				[], false, false, resolved_hit_count, 1, targets.size(),
+			)
+		valid_targets.append(target)
+	var plan := effect._build_hit_plan(valid_targets, action, resolved_hit_count)
+	var preview_attacker := _preview_attacker_snapshot(attacker, action)
+	var effect_counts := _living_counts(attacker, null, battle_manager)
+	var trigger_context := {
+		"paid_focus_cost": _paid_focus_cost(attacker, action),
+	}
+	var effect_context := DamageContext.new(
+		preview_attacker,
+		null,
+		effect_counts.allies,
+		effect_counts.enemies,
+		action,
+		effect,
+		trigger_context,
+	)
+	var effect_start_potency := effect._resolve_potency(effect_context)
+	var results: Array[DamageResult] = []
+	if plan.target_mode == DamageHitPlan.TargetMode.RANDOM:
+		for live_target: ActorCard in valid_targets:
+			var preview_target := _copy_target(live_target)
+			for _hit_index in plan.planned_hit_count:
+				if preview_target.is_defeated:
+					break
+				results.append(_resolve_preview_hit(
+					effect,
+					attacker,
+					preview_attacker,
+					live_target,
+					preview_target,
+					action,
+					battle_manager,
+					critical,
+					pre_hit_context,
+					trigger_context,
+					effect_start_potency,
+					plan.distribution_count,
+				))
+			preview_target.free()
+		return Sequence.new(
+			results,
+			true,
+			false,
+			plan.planned_hit_count,
+			plan.distribution_count,
+			valid_targets.size(),
+		)
+
+	var preview_targets: Dictionary = {}
+	var plan_candidates := plan.candidates
+	for hit_index in plan.planned_hit_count:
+		var live_target: ActorCard = null
+		if plan.target_mode == DamageHitPlan.TargetMode.SINGLE:
+			live_target = plan_candidates[0] as ActorCard \
+				if not plan_candidates.is_empty() else null
+		elif hit_index < plan_candidates.size():
+			live_target = plan_candidates[hit_index] as ActorCard
+		if live_target == null:
+			continue
+		if not preview_targets.has(live_target):
+			preview_targets[live_target] = _copy_target(live_target)
+		var preview_target := preview_targets[live_target] as ActorCard
+		if preview_target.is_defeated:
+			continue
+		results.append(_resolve_preview_hit(
+			effect,
+			attacker,
+			preview_attacker,
+			live_target,
+			preview_target,
+			action,
+			battle_manager,
+			critical,
+			pre_hit_context,
+			trigger_context,
+			effect_start_potency,
+			plan.distribution_count,
+		))
+	for preview_target: ActorCard in preview_targets.values():
+		preview_target.free()
+	return Sequence.new(
+		results,
+		true,
+		plan.target_mode == DamageHitPlan.TargetMode.SINGLE,
+		plan.planned_hit_count,
+		plan.distribution_count,
+		valid_targets.size(),
+	)
+
+
 static func for_effect(
 	effect: Effect_Damage,
 	attacker: ActorCard,
@@ -61,6 +212,123 @@ static func for_effect(
 	if owns_resolver_target:
 		resolver_target.free()
 	return result
+
+
+static func _resolve_preview_hit(
+	effect: Effect_Damage,
+	attacker: ActorCard,
+	preview_attacker: CombatantSnapshot,
+	live_target: ActorCard,
+	preview_target: ActorCard,
+	action: Action,
+	battle_manager: BattleManager,
+	critical: bool,
+	pre_hit_context: Dictionary,
+	trigger_context: Dictionary,
+	effect_start_potency: DamageResolver.ResolvedPotency,
+	distribution_count: int,
+) -> DamageResult:
+	var decision := effect._resolve_damage_type_decision(
+		attacker, preview_target, pre_hit_context,
+	)
+	if decision.condition_to_consume != null:
+		preview_target.active_conditions.erase(decision.condition_to_consume)
+	var resolved_damage_type := decision.resolved_damage_type
+	_apply_preview_guard(effect, preview_target, resolved_damage_type)
+	var hit_counts := _living_counts(attacker, live_target, battle_manager)
+	var hit_context := DamageContext.new(
+		preview_attacker,
+		CombatantSnapshot.capture(preview_target),
+		hit_counts.allies,
+		hit_counts.enemies,
+		action,
+		effect,
+		trigger_context,
+	)
+	var resolved_potency := effect._resolve_current_hit_potency(
+		effect_start_potency, hit_context,
+	)
+	var result := DamageResolver.resolve_hit(
+		attacker,
+		preview_target,
+		effect.power_type,
+		resolved_potency,
+		distribution_count,
+		resolved_damage_type,
+		critical,
+		hit_context,
+		Callable(effect, "_modify_damage_request"),
+	)
+	preview_target.current_hp = maxi(
+		0, preview_target.current_hp - result.final_damage,
+	)
+	preview_target.is_defeated = preview_target.current_hp == 0
+	return result
+
+
+static func _apply_preview_guard(
+	effect: Effect_Damage,
+	target: ActorCard,
+	resolved_damage_type: Action.DamageType,
+) -> void:
+	if not effect._resolved_type_shreds_guard(resolved_damage_type):
+		return
+	if not target.is_breached and target.current_guard == 0:
+		target.is_breached = true
+		return
+	target.current_guard = maxi(0, target.current_guard - 1)
+
+
+static func _preview_attacker_snapshot(
+	attacker: ActorCard,
+	action: Action,
+) -> CombatantSnapshot:
+	var attacker_state := CombatantSnapshot.capture(attacker)
+	return CombatantSnapshot.new(
+		attacker_state.current_hp,
+		maxi(0, attacker_state.current_focus - _paid_focus_cost(attacker, action)),
+		attacker_state.current_guard,
+		attacker_state.is_breached,
+		attacker_state.is_defeated,
+		attacker_state.condition_names,
+	)
+
+
+static func _paid_focus_cost(attacker: ActorCard, action: Action) -> int:
+	if attacker is HeroCard and action != null:
+		return (attacker as HeroCard).get_scaled_focus_cost(action.focus_cost)
+	return 0
+
+
+static func _living_counts(
+	attacker: ActorCard,
+	target: ActorCard,
+	battle_manager: BattleManager,
+) -> Dictionary:
+	if battle_manager == null:
+		return {"allies": 0, "enemies": 0}
+	var captured := DamageContext.capture(attacker, target, battle_manager)
+	return {
+		"allies": captured.other_living_allies,
+		"enemies": captured.other_living_enemies,
+	}
+
+
+static func _copy_target(target: ActorCard) -> ActorCard:
+	var preview_target := ActorCard.new()
+	preview_target.actor_name = target.actor_name
+	preview_target.current_stats = target.current_stats
+	preview_target.current_hp = target.current_hp
+	preview_target.current_guard = target.current_guard
+	preview_target.current_ct = target.current_ct
+	preview_target.ct_speed_scale = target.ct_speed_scale
+	preview_target.battle_priority = target.battle_priority
+	preview_target.is_breached = target.is_breached
+	preview_target.is_in_danger = target.is_in_danger
+	preview_target.is_defeated = target.is_defeated
+	preview_target.active_conditions = target.active_conditions.duplicate()
+	preview_target.active_traits = target.active_traits.duplicate()
+	return preview_target
 
 
 static func _capture_preview_context(

@@ -34,18 +34,39 @@ class DamageTypeDecision extends RefCounted:
 
 
 func get_presentation(context: EffectPresentationContext) -> EffectPresentation:
-	var result := DamagePreview.for_effect(
-		self,
-		context.actor,
-		context.target,
-		context.action,
-		context.distribution_count,
-		context.critical,
-	)
+	var sequence: DamagePreview.Sequence = null
+	if context.target != null:
+		var sequence_targets: Array[ActorCard] = [context.target]
+		sequence = DamagePreview.for_plan(
+			self,
+			context.actor,
+			sequence_targets,
+			context.action,
+			context.critical,
+		)
+	var sequence_results: Array[DamageResult] = []
+	if sequence != null:
+		sequence_results.assign(sequence.results)
+	var result := sequence_results[0] if not sequence_results.is_empty() \
+		else DamagePreview.for_effect(
+			self,
+			context.actor,
+			context.target,
+			context.action,
+			context.distribution_count,
+			context.critical,
+		)
 	var contextual_scaling := _get_contextual_scaling_text(result.request.contributions)
 	var split_behavior := ""
 	var amount_qualifier := ""
 	var hit_count_text := "x%d" % hit_count if hit_count > 1 else ""
+	var amount: Variant = result.final_damage
+	var damage_type_icon := _get_damage_type_icon(result.request.damage_type)
+	if sequence != null and not sequence_results.is_empty():
+		var sequence_bindings := _get_sequence_bindings(sequence)
+		amount = sequence_bindings.amount
+		damage_type_icon = sequence_bindings.damage_type
+		hit_count_text = sequence_bindings.hit_count_text
 	if split_damage:
 		if _has_unavailable_group_distribution(context):
 			amount_qualifier = " total"
@@ -56,10 +77,10 @@ func get_presentation(context: EffectPresentationContext) -> EffectPresentation:
 		else:
 			split_behavior = " split across %d hits" % context.distribution_count
 	var bindings := {
-		"amount": result.final_damage,
+		"amount": amount,
 		"amount_qualifier": amount_qualifier,
 		"selected_power": result.request.base_power,
-		"damage_type": _get_damage_type_icon(result.request.damage_type),
+		"damage_type": damage_type_icon,
 		"hit_count": hit_count,
 		"hit_count_text": hit_count_text,
 		"split_behavior": split_behavior,
@@ -77,6 +98,42 @@ func get_presentation(context: EffectPresentationContext) -> EffectPresentation:
 		bindings,
 		details,
 	)
+
+
+func _get_sequence_bindings(sequence: DamagePreview.Sequence) -> Dictionary:
+	var results := sequence.results
+	if results.is_empty():
+		return {"amount": "", "damage_type": "", "hit_count_text": ""}
+	if _sequence_results_are_identical(results):
+		return {
+			"amount": results[0].final_damage,
+			"damage_type": _get_damage_type_icon(results[0].request.damage_type),
+			"hit_count_text": "x%d" % results.size() if results.size() > 1 else "",
+		}
+	var segments: Array[String] = []
+	for result: DamageResult in results:
+		segments.append(
+			"%d %s" % [
+				result.final_damage,
+				_get_damage_type_icon(result.request.damage_type),
+			],
+		)
+	return {
+		"amount": " → ".join(segments),
+		"damage_type": "",
+		"hit_count_text": "",
+	}
+
+
+func _sequence_results_are_identical(results: Array[DamageResult]) -> bool:
+	if results.is_empty():
+		return false
+	var first := results[0]
+	for result: DamageResult in results:
+		if result.final_damage != first.final_damage \
+			or result.request.damage_type != first.request.damage_type:
+			return false
+	return true
 
 
 func _has_unavailable_group_distribution(context: EffectPresentationContext) -> bool:

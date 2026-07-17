@@ -120,6 +120,66 @@ func test_danger_target_preview_matches_runtime_breach_before_damage() -> void:
 	target.free()
 
 
+func test_multihit_presentation_advances_guard_to_breach_without_mutating_target() -> void:
+	var attacker := _hero(100, 0, 50)
+	var target := _target(false, 50, 0)
+	target.current_guard = 1
+	var effect := _damage_effect(1.0)
+	effect.hit_count = 2
+	var action := Action.new()
+	action.effects = [effect]
+	var original_hp := target.current_hp
+
+	var presentation := effect.get_presentation(
+		EffectPresentationContext.new(attacker, target, action),
+	)
+	var text := presentation.render()
+
+	assert_string_contains(text, "50")
+	assert_string_contains(text, "75")
+	assert_false(text.contains("x2"))
+	assert_eq(target.current_hp, original_hp)
+	assert_eq(target.current_guard, 1)
+	assert_false(target.is_breached)
+	attacker.free()
+	target.free()
+
+
+func test_multihit_presentation_consumes_forced_type_only_in_preview_copy() -> void:
+	var attacker := _hero(100, 0)
+	attacker.actor_name = "Asher"
+	var target := _target(false, 50, 0)
+	target.current_guard = 2
+	var targeting_laser := load(
+		"res://data/heroes/asher/conditions/targeting_laser.tres"
+	) as Condition
+	target.active_conditions = [targeting_laser]
+	var effect := _damage_effect(1.0)
+	effect.hit_count = 2
+	var action := Action.new()
+	action.effects = [effect]
+	var original_hp := target.current_hp
+
+	var presentation := effect.get_presentation(
+		EffectPresentationContext.new(attacker, target, action),
+	)
+	var text := presentation.render()
+
+	var piercing_icon := Action._get_bbcode_icon("pierce")
+	var kinetic_icon := Action._get_bbcode_icon("kinetic")
+	assert_string_contains(text, "100")
+	assert_string_contains(text, "50")
+	assert_string_contains(text, piercing_icon)
+	assert_string_contains(text, kinetic_icon)
+	assert_lt(text.find(piercing_icon), text.find(kinetic_icon))
+	assert_false(text.contains("x2"))
+	assert_eq(target.current_hp, original_hp)
+	assert_eq(target.current_guard, 2)
+	assert_eq(target.active_conditions, [targeting_laser])
+	attacker.free()
+	target.free()
+
+
 func test_forced_piercing_preview_bypasses_defense_without_consuming_condition() -> void:
 	var attacker := _hero(100, 0, 50)
 	attacker.actor_name = "Asher"
