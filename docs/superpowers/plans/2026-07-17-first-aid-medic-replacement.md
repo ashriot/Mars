@@ -155,3 +155,62 @@ Expected: no whitespace errors.
 git add assets/graphics/icons/skills/first-aid-kit.png assets/graphics/icons/skills/first-aid-kit.png.import data/heroes/sands/actions/first_aid.tres data/heroes/sands/roles/med.tres data/progression/sands/med.json test/integration/test_progression_content.gd docs/testing/starting-role-kit-checklist.md docs/superpowers/plans/2026-07-17-first-aid-medic-replacement.md
 git commit -m "feat: replace Immunize with First Aid"
 ```
+
+---
+
+### Task 2: Scale First Aid with missing HP
+
+**Files:**
+- Modify: `data/heroes/sands/actions/first_aid.tres`
+- Modify: `test/integration/test_progression_content.gd`
+
+**Interfaces:**
+- Consumes: `Effect_Healing.potency = 0.75` and `Effect_Healing.scales_with_missing_hp`.
+- Produces: a single-target heal equal to `0.75 × PSY × (1 + missing HP percentage)`.
+
+- [ ] **Step 1: Extend the First Aid content regression**
+
+In `test_medic_first_aid_matches_authored_healing()`, protect the shared Medic curve and tooltip:
+
+```gdscript
+	assert_almost_eq(healing.potency, 0.75, 0.001)
+	assert_true(healing.scales_with_missing_hp)
+	assert_eq(
+		action.description,
+		"Heals a team member for {psy*0.75} HP, increased by their missing HP percentage.",
+	)
+```
+
+- [ ] **Step 2: Run the focused test to verify RED**
+
+Run:
+
+```bash
+env HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path /Users/adam/github/mars -s addons/gut/gut_cmdln.gd -gselect progression_content -gexit
+```
+
+Expected: FAIL because the experimental working copy uses the default 1.0 potency, missing-HP scaling is disabled, and the tooltip omits the scaling clause.
+
+- [ ] **Step 3: Author the approved First Aid curve**
+
+Set the healing subresource to:
+
+```ini
+potency = 0.75
+scales_with_missing_hp = true
+```
+
+Set the action description to:
+
+```ini
+description = "Heals a team member for {psy*0.75} HP, increased by their missing HP percentage."
+```
+
+- [ ] **Step 4: Verify and commit**
+
+Run the isolated import, `progression_content`, `damage_content`, and the full GUT suite using the commands from Task 1. Confirm no new failures beyond the unrelated cursor and dungeon-layout baseline, then run `git diff --check`.
+
+```bash
+git add data/heroes/sands/actions/first_aid.tres test/integration/test_progression_content.gd docs/superpowers/plans/2026-07-17-first-aid-medic-replacement.md
+git commit -m "feat: scale First Aid with missing HP"
+```
