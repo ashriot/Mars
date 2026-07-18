@@ -51,24 +51,26 @@ func test_off_turn_condition_self_target_resolves_to_condition_owner() -> void:
 	enemy_area.free()
 
 
-func test_healing_effect_ignores_non_hero_target() -> void:
+func test_healing_effect_heals_living_enemy_without_hero_focus_scaling() -> void:
 	var manager := CapturingBattleManager.new()
-	var attacker := HeroCard.new()
-	var enemy := EnemyCard.new()
-	var attacker_stats := ActorStats.new()
-	attacker_stats.psyche = 10
-	attacker.current_stats = attacker_stats
-	var enemy_stats := ActorStats.new()
-	enemy_stats.max_hp = 10
-	enemy.current_stats = enemy_stats
-	enemy.current_hp = 1
-	enemy.is_defeated = false
+	var attacker := EnemyCard.new()
+	attacker.current_stats = ActorStats.new()
+	attacker.current_stats.psyche = 20
+	var target := EnemyCard.new()
+	target.current_stats = ActorStats.new()
+	target.current_stats.max_hp = 100
+	target.hp_bar_ghost = ProgressBar.new()
+	target.current_hp = 25
+	target.is_defeated = false
 	var effect := Effect_Healing.new()
-	effect.potency = 1.0
+	effect.potency = 1.5
+	effect.focus_scalar = 1.0
+	effect.is_revive = false
 
-	await effect.execute(attacker, [enemy], manager)
+	await effect.execute(attacker, [target], manager)
 
-	assert_eq(enemy.current_hp, 1)
+	assert_eq(target.current_hp, 55)
 	manager.free()
 	attacker.free()
-	enemy.free()
+	target.hp_bar_ghost.free()
+	target.free()

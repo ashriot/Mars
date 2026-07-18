@@ -40,6 +40,29 @@ func test_revive_flag_controls_defeated_ally_targeting() -> void:
 	assert_false(defeated.is_valid_target, "ordinary healing cannot target defeated allies")
 
 
+func test_non_revive_enemy_heal_ignores_defeated_target() -> void:
+	var manager := RevivalBattleManager.new()
+	var attacker := EnemyCard.new()
+	attacker.current_stats = ActorStats.new()
+	attacker.current_stats.psyche = 20
+	var target := EnemyCard.new()
+	target.current_stats = ActorStats.new()
+	target.current_stats.max_hp = 100
+	target.current_hp = 0
+	target.is_defeated = true
+	var effect := Effect_Healing.new()
+	effect.potency = 2.0
+	effect.is_revive = false
+
+	await effect.execute(attacker, [target], manager)
+
+	assert_eq(target.current_hp, 0)
+	assert_true(target.is_defeated)
+	manager.free()
+	attacker.free()
+	target.free()
+
+
 func test_defeated_card_finishes_delayed_damage_bar_after_leaving_actor_list() -> void:
 	var manager := RevivalBattleManager.new()
 	var hero_area := Control.new()
