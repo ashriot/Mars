@@ -42,6 +42,13 @@ var is_attack: bool :
 				return true
 		return false
 
+var can_revive_targets: bool:
+	get:
+		for effect in effects:
+			if effect is Effect_Healing and (effect as Effect_Healing).is_revive:
+				return true
+		return false
+
 func get_rich_description(
 	user: ActorCard,
 	target: ActorCard = null,

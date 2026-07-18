@@ -265,21 +265,25 @@ func _valid_targets() -> Array[ActorCard]:
 	var targets: Array[ActorCard] = []
 	if not manager:
 		return targets
-	var source: Array = manager.get_living_heroes() + manager.get_living_enemies()
-	for actor in source:
+	for actor in manager._all_actor_cards():
 		if actor is ActorCard \
 			and actor.is_visible_in_tree() \
 			and actor.is_valid_target \
-			and not actor.is_defeated:
+			and (not actor.is_defeated or _allows_defeated_target(actor)):
 			targets.append(actor)
 	return targets
+
+
+func _allows_defeated_target(actor: ActorCard) -> bool:
+	return actor is HeroCard \
+		and manager.current_action != null \
+		and manager.current_action.can_revive_targets
 
 
 func _is_valid_candidate(target: ActorCard) -> bool:
 	return is_instance_valid(target) \
 		and target.is_inside_tree() \
 		and target.is_valid_target \
-		and not target.is_defeated \
 		and _valid_targets().has(target)
 
 
@@ -349,10 +353,10 @@ func _restore_remembered_target() -> void:
 
 func _prune_target_memory() -> void:
 	if _last_enemy_target != null \
-		and (not is_instance_valid(_last_enemy_target) or _last_enemy_target.is_defeated):
+		and (not is_instance_valid(_last_enemy_target) or not _is_valid_candidate(_last_enemy_target)):
 		_last_enemy_target = null
 	if _last_hero_target != null \
-		and (not is_instance_valid(_last_hero_target) or _last_hero_target.is_defeated):
+		and (not is_instance_valid(_last_hero_target) or not _is_valid_candidate(_last_hero_target)):
 		_last_hero_target = null
 
 

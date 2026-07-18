@@ -308,7 +308,7 @@ func set_current_action(action: Action):
 		hero.get_current_role().color
 	)
 	current_action_panel.show()
-	var targets := get_targets(action.target_type, true)
+	var targets := get_targets(action.target_type, true, [], null, action.can_revive_targets)
 	_apply_target_presentation(action, targets)
 
 
@@ -451,7 +451,8 @@ func execute_action(actor: ActorCard, action: Action, targets: Array, display_na
 
 	for effect in action.effects:
 		if effect.target_type in [Action.TargetType.ALL_ALLIES, Action.TargetType.ALL_ENEMIES, Action.TargetType.ALLIES_ONLY, Action.TargetType.LEAST_GUARD_ALLY, Action.TargetType.LEAST_FOCUS_ALLY]:
-			targets = get_targets(effect.target_type, actor is HeroCard)
+			var revives_defeated := effect is Effect_Healing and (effect as Effect_Healing).is_revive
+			targets = get_targets(effect.target_type, actor is HeroCard, [], null, revives_defeated)
 		else:
 			if effect.target_type == Action.TargetType.SELF:
 				targets = [current_actor]
@@ -587,7 +588,9 @@ func _on_shift_button_pressed(direction: String):
 		var action = current_hero.get_current_role().shift_action
 		if action.auto_target:
 			print("Auto-executing shift action...")
-			var target_list = get_targets(action.target_type, true)
+			var target_list = get_targets(
+				action.target_type, true, [], null, action.can_revive_targets,
+			)
 
 			await execute_action(current_actor, action, target_list)
 			change_state(State.PLAYER_ACTION)
@@ -599,11 +602,21 @@ func _on_shift_button_pressed(direction: String):
 	else:
 		change_state(State.PLAYER_ACTION)
 
-func get_targets(target_type: Action.TargetType, friendly: bool, parent_targets: Array = [], attacker: ActorCard = null) -> Array:
+func get_targets(
+	target_type: Action.TargetType,
+	friendly: bool,
+	parent_targets: Array = [],
+	attacker: ActorCard = null,
+	include_defeated_heroes: bool = false,
+) -> Array:
 	var enemies = []
 	var heroes = []
 	enemies = get_living_enemies()
 	heroes = get_living_heroes()
+	if include_defeated_heroes and is_instance_valid(hero_area):
+		for child in hero_area.get_children():
+			if child is HeroCard and not heroes.has(child):
+				heroes.append(child)
 
 	var target_list = []
 	match target_type:
@@ -666,7 +679,7 @@ func get_targets(target_type: Action.TargetType, friendly: bool, parent_targets:
 
 func _flush_all_health_animations() -> void:
 	var tweens_to_await = []
-	for actor in actor_list:
+	for actor in _all_actor_cards():
 		var new_tween = actor.sync_visual_health()
 		if new_tween:
 			tweens_to_await.append(new_tween)
@@ -737,7 +750,9 @@ func preview_action_turn_order(actor: ActorCard, action: Action, selected_target
 	if is_instance_valid(selected_target):
 		primary_targets.append(selected_target)
 	elif is_group_target_action(action):
-		primary_targets = get_targets(action.target_type, actor is HeroCard, [], actor)
+		primary_targets = get_targets(
+			action.target_type, actor is HeroCard, [], actor, action.can_revive_targets,
+		)
 
 	for effect: ActionEffect in action.effects:
 		if not effect is Effect_ModifyCT:
@@ -773,12 +788,15 @@ func _get_rich_description(action: Action, target: ActorCard = null) -> String:
 		presentation_targets.append(target)
 	elif is_group_target_action(action):
 		var resolved_targets := get_targets(
-			action.target_type, current_actor is HeroCard, [], current_actor,
+			action.target_type,
+			current_actor is HeroCard,
+			[],
+			current_actor,
+			action.can_revive_targets,
 		)
 		for resolved_target: ActorCard in resolved_targets:
 			if is_instance_valid(resolved_target) \
-				and resolved_target.current_stats != null \
-				and not resolved_target.is_defeated:
+				and resolved_target.current_stats != null:
 				presentation_targets.append(resolved_target)
 	return action.get_rich_description(
 		current_actor,
