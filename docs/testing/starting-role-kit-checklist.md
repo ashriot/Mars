@@ -22,7 +22,7 @@ For every row, confirm the centered role header, the left and right starting-ski
 | Echo | `kin` | Kineticist | Telekinesis | Rejuvenate |
 | Echo | `dom` | Dominator | Displace | Feedback |
 | Sands | `van` | Vanguard | Draw Fire | Overwatch |
-| Sands | `med` | Medic | Immunize | Booster Shots |
+| Sands | `med` | Medic | First Aid | Booster Shots |
 | Sands | `stg` | Strategist | Tempo | Gambit |
 
 - [ ] All nine headers and role names match the matrix.

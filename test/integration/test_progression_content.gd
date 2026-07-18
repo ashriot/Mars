@@ -8,7 +8,7 @@ const STARTING_KITS := {
 	"dom": ["displace.tres", "feedback.tres"],
 	"kin": ["telekinesis.tres", "rejuvenate.tres"],
 	"psi": ["focused_bolt.tres", "energy_barrier.tres"],
-	"med": ["immunize.tres", "booster_shots.tres"],
+	"med": ["first_aid.tres", "booster_shots.tres"],
 	"stg": ["tempo.tres", "gambit.tres"],
 	"van": ["draw_fire.tres", "overwatch.tres"],
 }
@@ -116,7 +116,7 @@ const AUTHORED_NODES := {
 ],
 "med": [
 	["med.anchor", null, 1, 0, null, "role_anchor", false, null],
-	["med.root", "med.anchor", 1, -1, 0, "progression", true, {"resource":"res://data/heroes/sands/actions/immunize.tres","slot":1,"type":"action"}],
+	["med.root", "med.anchor", 1, -1, 0, "progression", true, {"resource":"res://data/heroes/sands/actions/first_aid.tres","slot":1,"type":"action"}],
 	["med.booster_shots", "med.anchor", 1, 1, 0, "progression", true, {"resource":"res://data/heroes/sands/actions/booster_shots.tres","slot":2,"type":"action"}],
 	["med.auto_shields", "med.anchor", 2, 0, 200, "progression", false, {"resource":"res://data/heroes/sands/actions/auto_shields.tres","slot":3,"type":"action"}],
 	["med.bastion", "med.auto_shields", 3, 0, 300, "progression", false, {"resource":"res://data/heroes/sands/actions/bastion.tres","slot":4,"type":"action"}],
@@ -169,6 +169,18 @@ func test_every_production_role_is_valid_and_matches_authored_summary() -> void:
 		assert_eq(summary.node_count, expected.nodes, role_id)
 		assert_eq(summary.total_xp, expected.xp, role_id)
 		assert_eq(summary.effect_counts, expected.effects, role_id)
+
+
+func test_medic_first_aid_matches_authored_healing() -> void:
+	var action := load("res://data/heroes/sands/actions/first_aid.tres") as Action
+	assert_not_null(action)
+	assert_eq(action.action_name, "First Aid")
+	assert_eq(action.target_type, Action.TargetType.ONE_ALLY)
+	assert_eq(action.effects.size(), 1)
+	var healing := action.effects[0] as Effect_Healing
+	assert_not_null(healing)
+	assert_almost_eq(healing.potency, 0.75, 0.001)
+	assert_eq(action.description, "Heals a team member for {psy*0.75} HP.")
 
 func test_every_production_role_fulfills_the_starting_kit_contract() -> void:
 	for role_id: String in STARTING_KITS:

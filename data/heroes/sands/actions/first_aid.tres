@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="Action" format=3 uid="uid://vbhxh66s54t6"]
+
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_jr015"]
+[ext_resource type="Script" uid="uid://nqyc4vuadjr5" path="res://src/scripts/action_effects/effect_healing.gd" id="2_g2sqe"]
+[ext_resource type="Texture2D" uid="uid://bquhgg733ytxa" path="res://assets/graphics/icons/skills/first-aid-kit.png" id="3_dj5c4"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="7_5y0jn"]
+
+[sub_resource type="Resource" id="Resource_swq55"]
+script = ExtResource("2_g2sqe")
+potency = 0.75
+metadata/_custom_type_script = "uid://nqyc4vuadjr5"
+
+[resource]
+script = ExtResource("7_5y0jn")
+action_name = "First Aid"
+icon = ExtResource("3_dj5c4")
+description = "Heals a team member for {psy*0.75} HP."
+focus_cost = null
+auto_target = null
+is_shift_action = null
+target_type = 5
+effects = Array[ExtResource("1_jr015")]([SubResource("Resource_swq55")])
+metadata/_custom_type_script = "uid://dm08rhkg3bai3"

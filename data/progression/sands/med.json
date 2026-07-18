@@ -11,7 +11,7 @@
     {
       "column": -1,
       "effect": {
-        "resource": "res://data/heroes/sands/actions/immunize.tres",
+        "resource": "res://data/heroes/sands/actions/first_aid.tres",
         "slot": 1,
         "type": "action"
       },

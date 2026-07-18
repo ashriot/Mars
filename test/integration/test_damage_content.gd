@@ -50,7 +50,12 @@ const APPROVED_DESCRIPTION_FORMULAS: Dictionary = {
 	"res://data/heroes/echo/conditions/psionic_pulse_cond.tres": ["{psy*0.5}"],
 	"res://data/heroes/echo/conditions/reverberate.tres": ["{psy*1.5}"],
 	"res://data/heroes/echo/conditions/static_charge.tres": ["{psy*2.0}"],
+	"res://data/heroes/sands/actions/first_aid.tres": ["{psy*0.75}"],
 	"res://data/heroes/sands/conditions/return_fire.tres": ["{atk*0.5}", "{atk*0.5}"],
+}
+const DEFERRED_DIRECT_HEALING_FORMULAS: Dictionary = {
+	"res://data/heroes/echo/actions/rejuvenate.tres": ["{psy*1.5}"],
+	"res://data/heroes/sands/actions/first_aid.tres": ["{psy*0.75}"],
 }
 const NESTED_COMPATIBILITY_CASES: Array[Dictionary] = [
 	{
@@ -436,14 +441,14 @@ func test_formula_allowlist_covers_every_action_and_condition_description() -> v
 	)
 
 
-func test_nested_cases_cover_every_authorized_formula_except_rejuvenate() -> void:
+func test_nested_cases_cover_every_authorized_formula_except_direct_healing_actions() -> void:
 	var paths: Array[String] = []
 	for root: String in CONTENT_ROOTS:
 		_collect_resource_paths(root, paths)
 	paths.sort()
 	var formula_paths: Array[String] = []
 	for path: String in paths:
-		if path == "res://data/heroes/echo/actions/rejuvenate.tres":
+		if DEFERRED_DIRECT_HEALING_FORMULAS.has(path):
 			continue
 		var resource := ResourceLoader.load(path)
 		if not (resource is Action or resource is Condition):
@@ -639,12 +644,15 @@ func test_nested_condition_content_matches_referenced_topology_and_mechanics() -
 				)
 
 
-func test_rejuvenate_formula_is_allowlisted_but_mechanic_parity_is_deferred() -> void:
-	const REJUVENATE_PATH := "res://data/heroes/echo/actions/rejuvenate.tres"
-	assert_eq(APPROVED_DESCRIPTION_FORMULAS[REJUVENATE_PATH], ["{psy*1.5}"])
-	assert_false(NESTED_COMPATIBILITY_CASES.any(func(expected: Dictionary):
-		return expected.get("action", "") == REJUVENATE_PATH
-	), "Rejuvenate remains outside nested/healing mechanic-parity claims")
+func test_direct_healing_formulas_are_allowlisted_but_mechanic_parity_is_deferred() -> void:
+	for path: String in DEFERRED_DIRECT_HEALING_FORMULAS:
+		assert_eq(
+			APPROVED_DESCRIPTION_FORMULAS[path],
+			DEFERRED_DIRECT_HEALING_FORMULAS[path],
+		)
+		assert_false(NESTED_COMPATIBILITY_CASES.any(func(expected: Dictionary):
+			return expected.get("action", "") == path
+		), "%s remains outside nested/healing mechanic-parity claims" % path)
 
 
 func test_return_fire_prose_matches_both_nested_damage_effects() -> void:

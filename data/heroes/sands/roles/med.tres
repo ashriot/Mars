@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="1_nkik1"]
 [ext_resource type="Texture2D" uid="uid://dtwo50io0wj1u" path="res://assets/graphics/icons/roles/caduceus.png" id="2_1cpdq"]
-[ext_resource type="Resource" uid="uid://bli3y5hj5i577" path="res://data/heroes/sands/actions/immunize.tres" id="2_633w3"]
+[ext_resource type="Resource" uid="uid://vbhxh66s54t6" path="res://data/heroes/sands/actions/first_aid.tres" id="2_633w3"]
 [ext_resource type="Resource" uid="uid://dbkrqjitp8c02" path="res://data/heroes/sands/actions/apply_painkillers.tres" id="3_c3eso"]
 [ext_resource type="Resource" uid="uid://epar5pumnvm7" path="res://data/heroes/sands/actions/booster_shots.tres" id="3_ykrgj"]
 [ext_resource type="Resource" uid="uid://dc2781k2lc1ma" path="res://data/heroes/sands/actions/auto_shields.tres" id="4_t4pui"]
