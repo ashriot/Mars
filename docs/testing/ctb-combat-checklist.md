@@ -20,6 +20,16 @@ Record the viewport, input method, tested commit, and concise observed values fo
 - [ ] For the same target state, confirm enemy intent and action tooltip numbers match observed noncritical damage.
 - [ ] Use lifedrain against a target with less HP than the attempted damage and confirm healing uses actual HP removed, excluding overkill.
 
+## Cooldown enemy AI acceptance
+
+Observe a current multi-action enemy across at least four of its own turns. Restart the encounter and repeat state changes where required; record the encounter seed, enemy type, authored cooldown gaps, and observed intent sequence.
+
+- [ ] Restart with the same seed and confirm the enemy's opening intent is identical.
+- [ ] Confirm cooldown abilities do not repeat before their authored turn gap.
+- [ ] Change Taunt or Breach while an intent is visible and confirm the intent updates without advancing any cooldown.
+- [ ] Observe duplicate enemies and confirm each keeps independent cooldown state.
+- [ ] For every observed intent, confirm its visible damage still matches the executed action.
+
 ## Responsive controller-only acceptance
 
 Record the date, OS/device, controller and connection, physical resolution, tested commit, and concise notes. Keep desktop-proxy and Steam Deck hardware results separate.
