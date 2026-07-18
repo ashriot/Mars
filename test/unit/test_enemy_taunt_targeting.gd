@@ -9,8 +9,10 @@ class QuietHero extends HeroCard:
 
 
 class QuietEnemy extends EnemyCard:
+	var intent_refresh_count := 0
+
 	func _update_intent_ui() -> void:
-		return
+		intent_refresh_count += 1
 
 
 class TargetingManager extends BattleManager:
@@ -48,6 +50,7 @@ func test_applying_draw_fire_immediately_retargets_existing_single_target_intent
 	await sands.add_condition(DRAW_FIRE)
 
 	assert_eq(enemy.intended_targets, [sands])
+	assert_eq(enemy.intent_refresh_count, 1)
 	_free_fixture(fixture)
 
 
@@ -89,8 +92,6 @@ func _fixture(target_type: Action.TargetType) -> Dictionary:
 	action.target_type = target_type
 	sands.actor_name = "Sands"
 	other.actor_name = "Asher"
-	sands.add_to_group("player")
-	other.add_to_group("player")
 	manager.heroes = [sands, other]
 	manager.enemies = [enemy]
 	enemy.battle_manager = manager

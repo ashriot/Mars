@@ -115,7 +115,7 @@ func _is_current_target_valid(hero_targets: Array[HeroCard]) -> bool:
 		return false
 
 	# 3. Check Faction Rules
-	if current.is_in_group("player"):
+	if current is HeroCard:
 		# A. Did they Stealth? (Decoy)
 		if current.is_untargetable():
 			return false
