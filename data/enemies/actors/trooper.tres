@@ -1,11 +1,118 @@
-[gd_resource type="Resource" script_class="EnemyData" load_steps=7 format=3 uid="uid://cpdokr12lby8i"]
+[gd_resource type="Resource" script_class="EnemyData" load_steps=26 format=3 uid="uid://cpdokr12lby8i"]
 
-[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="1_ih7pi"]
 [ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://src/scripts/data/enemy_data.gd" id="2_n3ati"]
 [ext_resource type="Resource" uid="uid://d0m01fmh2ig2s" path="res://data/enemies/actions/gunshot.tres" id="2_odqln"]
 [ext_resource type="Resource" uid="uid://40l6j7e7d5e2" path="res://data/enemies/actions/double_shot.tres" id="3_ln7e3"]
 [ext_resource type="Resource" uid="uid://1rrrrrgvw07f" path="res://data/enemies/actions/shrapnel.tres" id="3_n3t2y"]
 [ext_resource type="Resource" uid="uid://5sx21pdqqpbi" path="res://data/enemies/actions/rapid_fire.tres" id="4_42ig1"]
+[ext_resource type="Script" uid="uid://c8h2tm5pykaq" path="res://src/scripts/enemies/enemy_decision_condition.gd" id="5_condition"]
+[ext_resource type="Script" uid="uid://btr3kn6uh6qgm" path="res://src/scripts/enemies/enemy_target_selector.gd" id="6_selector"]
+[ext_resource type="Script" uid="uid://bwhnoji7ew1mg" path="res://src/scripts/enemies/enemy_decision_rule.gd" id="7_rule"]
+[ext_resource type="Script" uid="uid://ban2jvuk6cs6k" path="res://src/scripts/enemies/enemy_ability.gd" id="8_ability"]
+
+[sub_resource type="Resource" id="EnemyDecisionCondition_trooper_gunshot"]
+script = ExtResource("5_condition")
+type = 0
+metadata/_custom_type_script = "uid://c8h2tm5pykaq"
+
+[sub_resource type="Resource" id="EnemyTargetSelector_trooper_gunshot"]
+script = ExtResource("6_selector")
+type = 3
+metadata/_custom_type_script = "uid://btr3kn6uh6qgm"
+
+[sub_resource type="Resource" id="EnemyDecisionRule_trooper_gunshot"]
+script = ExtResource("7_rule")
+priority = 0
+conditions = Array[ExtResource("5_condition")]([SubResource("EnemyDecisionCondition_trooper_gunshot")])
+selector = SubResource("EnemyTargetSelector_trooper_gunshot")
+metadata/_custom_type_script = "uid://bwhnoji7ew1mg"
+
+[sub_resource type="Resource" id="EnemyAbility_trooper_gunshot"]
+script = ExtResource("8_ability")
+ability_id = &"trooper.gunshot"
+action = ExtResource("2_odqln")
+cooldown_turns = 0
+initial_cooldown = 0
+rules = Array[ExtResource("7_rule")]([SubResource("EnemyDecisionRule_trooper_gunshot")])
+metadata/_custom_type_script = "uid://ban2jvuk6cs6k"
+
+[sub_resource type="Resource" id="EnemyDecisionCondition_trooper_double_shot"]
+script = ExtResource("5_condition")
+type = 0
+metadata/_custom_type_script = "uid://c8h2tm5pykaq"
+
+[sub_resource type="Resource" id="EnemyTargetSelector_trooper_double_shot"]
+script = ExtResource("6_selector")
+type = 3
+metadata/_custom_type_script = "uid://btr3kn6uh6qgm"
+
+[sub_resource type="Resource" id="EnemyDecisionRule_trooper_double_shot"]
+script = ExtResource("7_rule")
+priority = 20
+conditions = Array[ExtResource("5_condition")]([SubResource("EnemyDecisionCondition_trooper_double_shot")])
+selector = SubResource("EnemyTargetSelector_trooper_double_shot")
+metadata/_custom_type_script = "uid://bwhnoji7ew1mg"
+
+[sub_resource type="Resource" id="EnemyAbility_trooper_double_shot"]
+script = ExtResource("8_ability")
+ability_id = &"trooper.double_shot"
+action = ExtResource("3_ln7e3")
+cooldown_turns = 2
+initial_cooldown = 1
+rules = Array[ExtResource("7_rule")]([SubResource("EnemyDecisionRule_trooper_double_shot")])
+metadata/_custom_type_script = "uid://ban2jvuk6cs6k"
+
+[sub_resource type="Resource" id="EnemyDecisionCondition_trooper_shrapnel"]
+script = ExtResource("5_condition")
+type = 0
+metadata/_custom_type_script = "uid://c8h2tm5pykaq"
+
+[sub_resource type="Resource" id="EnemyTargetSelector_trooper_shrapnel"]
+script = ExtResource("6_selector")
+type = 8
+metadata/_custom_type_script = "uid://btr3kn6uh6qgm"
+
+[sub_resource type="Resource" id="EnemyDecisionRule_trooper_shrapnel"]
+script = ExtResource("7_rule")
+priority = 30
+conditions = Array[ExtResource("5_condition")]([SubResource("EnemyDecisionCondition_trooper_shrapnel")])
+selector = SubResource("EnemyTargetSelector_trooper_shrapnel")
+metadata/_custom_type_script = "uid://bwhnoji7ew1mg"
+
+[sub_resource type="Resource" id="EnemyAbility_trooper_shrapnel"]
+script = ExtResource("8_ability")
+ability_id = &"trooper.shrapnel"
+action = ExtResource("3_n3t2y")
+cooldown_turns = 3
+initial_cooldown = 2
+rules = Array[ExtResource("7_rule")]([SubResource("EnemyDecisionRule_trooper_shrapnel")])
+metadata/_custom_type_script = "uid://ban2jvuk6cs6k"
+
+[sub_resource type="Resource" id="EnemyDecisionCondition_trooper_rapid_fire"]
+script = ExtResource("5_condition")
+type = 0
+metadata/_custom_type_script = "uid://c8h2tm5pykaq"
+
+[sub_resource type="Resource" id="EnemyTargetSelector_trooper_rapid_fire"]
+script = ExtResource("6_selector")
+type = 4
+metadata/_custom_type_script = "uid://btr3kn6uh6qgm"
+
+[sub_resource type="Resource" id="EnemyDecisionRule_trooper_rapid_fire"]
+script = ExtResource("7_rule")
+priority = 40
+conditions = Array[ExtResource("5_condition")]([SubResource("EnemyDecisionCondition_trooper_rapid_fire")])
+selector = SubResource("EnemyTargetSelector_trooper_rapid_fire")
+metadata/_custom_type_script = "uid://bwhnoji7ew1mg"
+
+[sub_resource type="Resource" id="EnemyAbility_trooper_rapid_fire"]
+script = ExtResource("8_ability")
+ability_id = &"trooper.rapid_fire"
+action = ExtResource("4_42ig1")
+cooldown_turns = 4
+initial_cooldown = 3
+rules = Array[ExtResource("7_rule")]([SubResource("EnemyDecisionRule_trooper_rapid_fire")])
+metadata/_custom_type_script = "uid://ban2jvuk6cs6k"
 
 [resource]
 script = ExtResource("2_n3ati")
@@ -18,5 +125,5 @@ overload_rank = 4
 speed_rank = 3
 kinetic_defense_rank = 3
 energy_defense_rank = 2
-action_deck = Array[ExtResource("1_ih7pi")]([ExtResource("2_odqln"), ExtResource("3_n3t2y"), ExtResource("3_ln7e3"), ExtResource("3_ln7e3"), ExtResource("4_42ig1")])
+abilities = Array[ExtResource("8_ability")]([SubResource("EnemyAbility_trooper_gunshot"), SubResource("EnemyAbility_trooper_double_shot"), SubResource("EnemyAbility_trooper_shrapnel"), SubResource("EnemyAbility_trooper_rapid_fire")])
 metadata/_custom_type_script = "uid://b3t5esgv1d2ku"

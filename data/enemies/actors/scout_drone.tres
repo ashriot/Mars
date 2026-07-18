@@ -1,12 +1,118 @@
-[gd_resource type="Resource" script_class="EnemyData" load_steps=8 format=3 uid="uid://s6fcg8egbavh"]
+[gd_resource type="Resource" script_class="EnemyData" load_steps=26 format=3 uid="uid://s6fcg8egbavh"]
 
-[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="1_dv6wa"]
 [ext_resource type="Resource" uid="uid://d0m01fmh2ig2s" path="res://data/enemies/actions/gunshot.tres" id="2_ka13y"]
 [ext_resource type="Resource" uid="uid://cbruwytkh444f" path="res://data/enemies/actions/potshot.tres" id="3_842et"]
 [ext_resource type="Resource" uid="uid://40l6j7e7d5e2" path="res://data/enemies/actions/double_shot.tres" id="4_3ihxs"]
 [ext_resource type="Resource" uid="uid://c0qexgdf5xce2" path="res://data/enemies/actions/mow_down.tres" id="5_rovij"]
-[ext_resource type="Script" uid="uid://bkbx3bonlo8gv" path="res://src/scripts/enemies/ai_override.gd" id="6_dv6wa"]
 [ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://src/scripts/data/enemy_data.gd" id="7_n6qc5"]
+[ext_resource type="Script" uid="uid://c8h2tm5pykaq" path="res://src/scripts/enemies/enemy_decision_condition.gd" id="8_condition"]
+[ext_resource type="Script" uid="uid://btr3kn6uh6qgm" path="res://src/scripts/enemies/enemy_target_selector.gd" id="9_selector"]
+[ext_resource type="Script" uid="uid://bwhnoji7ew1mg" path="res://src/scripts/enemies/enemy_decision_rule.gd" id="10_rule"]
+[ext_resource type="Script" uid="uid://ban2jvuk6cs6k" path="res://src/scripts/enemies/enemy_ability.gd" id="11_ability"]
+
+[sub_resource type="Resource" id="EnemyDecisionCondition_scout_gunshot"]
+script = ExtResource("8_condition")
+type = 0
+metadata/_custom_type_script = "uid://c8h2tm5pykaq"
+
+[sub_resource type="Resource" id="EnemyTargetSelector_scout_gunshot"]
+script = ExtResource("9_selector")
+type = 3
+metadata/_custom_type_script = "uid://btr3kn6uh6qgm"
+
+[sub_resource type="Resource" id="EnemyDecisionRule_scout_gunshot"]
+script = ExtResource("10_rule")
+priority = 0
+conditions = Array[ExtResource("8_condition")]([SubResource("EnemyDecisionCondition_scout_gunshot")])
+selector = SubResource("EnemyTargetSelector_scout_gunshot")
+metadata/_custom_type_script = "uid://bwhnoji7ew1mg"
+
+[sub_resource type="Resource" id="EnemyAbility_scout_gunshot"]
+script = ExtResource("11_ability")
+ability_id = &"scout.gunshot"
+action = ExtResource("2_ka13y")
+cooldown_turns = 0
+initial_cooldown = 0
+rules = Array[ExtResource("10_rule")]([SubResource("EnemyDecisionRule_scout_gunshot")])
+metadata/_custom_type_script = "uid://ban2jvuk6cs6k"
+
+[sub_resource type="Resource" id="EnemyDecisionCondition_scout_potshot"]
+script = ExtResource("8_condition")
+type = 0
+metadata/_custom_type_script = "uid://c8h2tm5pykaq"
+
+[sub_resource type="Resource" id="EnemyTargetSelector_scout_potshot"]
+script = ExtResource("9_selector")
+type = 3
+metadata/_custom_type_script = "uid://btr3kn6uh6qgm"
+
+[sub_resource type="Resource" id="EnemyDecisionRule_scout_potshot"]
+script = ExtResource("10_rule")
+priority = 10
+conditions = Array[ExtResource("8_condition")]([SubResource("EnemyDecisionCondition_scout_potshot")])
+selector = SubResource("EnemyTargetSelector_scout_potshot")
+metadata/_custom_type_script = "uid://bwhnoji7ew1mg"
+
+[sub_resource type="Resource" id="EnemyAbility_scout_potshot"]
+script = ExtResource("11_ability")
+ability_id = &"scout.potshot"
+action = ExtResource("3_842et")
+cooldown_turns = 2
+initial_cooldown = 1
+rules = Array[ExtResource("10_rule")]([SubResource("EnemyDecisionRule_scout_potshot")])
+metadata/_custom_type_script = "uid://ban2jvuk6cs6k"
+
+[sub_resource type="Resource" id="EnemyDecisionCondition_scout_double_shot"]
+script = ExtResource("8_condition")
+type = 0
+metadata/_custom_type_script = "uid://c8h2tm5pykaq"
+
+[sub_resource type="Resource" id="EnemyTargetSelector_scout_double_shot"]
+script = ExtResource("9_selector")
+type = 3
+metadata/_custom_type_script = "uid://btr3kn6uh6qgm"
+
+[sub_resource type="Resource" id="EnemyDecisionRule_scout_double_shot"]
+script = ExtResource("10_rule")
+priority = 20
+conditions = Array[ExtResource("8_condition")]([SubResource("EnemyDecisionCondition_scout_double_shot")])
+selector = SubResource("EnemyTargetSelector_scout_double_shot")
+metadata/_custom_type_script = "uid://bwhnoji7ew1mg"
+
+[sub_resource type="Resource" id="EnemyAbility_scout_double_shot"]
+script = ExtResource("11_ability")
+ability_id = &"scout.double_shot"
+action = ExtResource("4_3ihxs")
+cooldown_turns = 3
+initial_cooldown = 2
+rules = Array[ExtResource("10_rule")]([SubResource("EnemyDecisionRule_scout_double_shot")])
+metadata/_custom_type_script = "uid://ban2jvuk6cs6k"
+
+[sub_resource type="Resource" id="EnemyDecisionCondition_scout_mow_down"]
+script = ExtResource("8_condition")
+type = 0
+metadata/_custom_type_script = "uid://c8h2tm5pykaq"
+
+[sub_resource type="Resource" id="EnemyTargetSelector_scout_mow_down"]
+script = ExtResource("9_selector")
+type = 1
+metadata/_custom_type_script = "uid://btr3kn6uh6qgm"
+
+[sub_resource type="Resource" id="EnemyDecisionRule_scout_mow_down"]
+script = ExtResource("10_rule")
+priority = 30
+conditions = Array[ExtResource("8_condition")]([SubResource("EnemyDecisionCondition_scout_mow_down")])
+selector = SubResource("EnemyTargetSelector_scout_mow_down")
+metadata/_custom_type_script = "uid://bwhnoji7ew1mg"
+
+[sub_resource type="Resource" id="EnemyAbility_scout_mow_down"]
+script = ExtResource("11_ability")
+ability_id = &"scout.mow_down"
+action = ExtResource("5_rovij")
+cooldown_turns = 4
+initial_cooldown = 3
+rules = Array[ExtResource("10_rule")]([SubResource("EnemyDecisionRule_scout_mow_down")])
+metadata/_custom_type_script = "uid://ban2jvuk6cs6k"
 
 [resource]
 script = ExtResource("7_n6qc5")
@@ -21,5 +127,5 @@ speed_rank = 4
 aim_rank = 3
 kinetic_defense_rank = 2
 energy_defense_rank = 2
-action_deck = Array[ExtResource("1_dv6wa")]([ExtResource("2_ka13y"), ExtResource("3_842et"), ExtResource("4_3ihxs"), ExtResource("5_rovij")])
+abilities = Array[ExtResource("11_ability")]([SubResource("EnemyAbility_scout_gunshot"), SubResource("EnemyAbility_scout_potshot"), SubResource("EnemyAbility_scout_double_shot"), SubResource("EnemyAbility_scout_mow_down")])
 metadata/_custom_type_script = "uid://b3t5esgv1d2ku"

@@ -1,10 +1,64 @@
-[gd_resource type="Resource" script_class="EnemyData" load_steps=6 format=3 uid="uid://d0c5qshgc3e8"]
+[gd_resource type="Resource" script_class="EnemyData" load_steps=16 format=3 uid="uid://d0c5qshgc3e8"]
 
-[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="1_cbp0k"]
 [ext_resource type="Resource" uid="uid://d0m01fmh2ig2s" path="res://data/enemies/actions/gunshot.tres" id="2_wckpy"]
 [ext_resource type="Resource" uid="uid://m5wgycabl2ij" path="res://data/enemies/actions/fortify.tres" id="4_j7iu0"]
-[ext_resource type="Script" uid="uid://bkbx3bonlo8gv" path="res://src/scripts/enemies/ai_override.gd" id="7_4w2r0"]
 [ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://src/scripts/data/enemy_data.gd" id="8_rvaar"]
+[ext_resource type="Script" uid="uid://c8h2tm5pykaq" path="res://src/scripts/enemies/enemy_decision_condition.gd" id="9_condition"]
+[ext_resource type="Script" uid="uid://btr3kn6uh6qgm" path="res://src/scripts/enemies/enemy_target_selector.gd" id="10_selector"]
+[ext_resource type="Script" uid="uid://bwhnoji7ew1mg" path="res://src/scripts/enemies/enemy_decision_rule.gd" id="11_rule"]
+[ext_resource type="Script" uid="uid://ban2jvuk6cs6k" path="res://src/scripts/enemies/enemy_ability.gd" id="12_ability"]
+
+[sub_resource type="Resource" id="EnemyDecisionCondition_defense_fortify"]
+script = ExtResource("9_condition")
+type = 0
+metadata/_custom_type_script = "uid://c8h2tm5pykaq"
+
+[sub_resource type="Resource" id="EnemyTargetSelector_defense_fortify"]
+script = ExtResource("10_selector")
+type = 11
+metadata/_custom_type_script = "uid://btr3kn6uh6qgm"
+
+[sub_resource type="Resource" id="EnemyDecisionRule_defense_fortify"]
+script = ExtResource("11_rule")
+priority = 10
+conditions = Array[ExtResource("9_condition")]([SubResource("EnemyDecisionCondition_defense_fortify")])
+selector = SubResource("EnemyTargetSelector_defense_fortify")
+metadata/_custom_type_script = "uid://bwhnoji7ew1mg"
+
+[sub_resource type="Resource" id="EnemyAbility_defense_fortify"]
+script = ExtResource("12_ability")
+ability_id = &"defense.fortify"
+action = ExtResource("4_j7iu0")
+cooldown_turns = 0
+initial_cooldown = 0
+rules = Array[ExtResource("11_rule")]([SubResource("EnemyDecisionRule_defense_fortify")])
+metadata/_custom_type_script = "uid://ban2jvuk6cs6k"
+
+[sub_resource type="Resource" id="EnemyDecisionCondition_defense_gunshot"]
+script = ExtResource("9_condition")
+type = 0
+metadata/_custom_type_script = "uid://c8h2tm5pykaq"
+
+[sub_resource type="Resource" id="EnemyTargetSelector_defense_gunshot"]
+script = ExtResource("10_selector")
+type = 3
+metadata/_custom_type_script = "uid://btr3kn6uh6qgm"
+
+[sub_resource type="Resource" id="EnemyDecisionRule_defense_gunshot"]
+script = ExtResource("11_rule")
+priority = 20
+conditions = Array[ExtResource("9_condition")]([SubResource("EnemyDecisionCondition_defense_gunshot")])
+selector = SubResource("EnemyTargetSelector_defense_gunshot")
+metadata/_custom_type_script = "uid://bwhnoji7ew1mg"
+
+[sub_resource type="Resource" id="EnemyAbility_defense_gunshot"]
+script = ExtResource("12_ability")
+ability_id = &"defense.gunshot"
+action = ExtResource("2_wckpy")
+cooldown_turns = 2
+initial_cooldown = 1
+rules = Array[ExtResource("11_rule")]([SubResource("EnemyDecisionRule_defense_gunshot")])
+metadata/_custom_type_script = "uid://ban2jvuk6cs6k"
 
 [resource]
 script = ExtResource("8_rvaar")
@@ -18,5 +72,5 @@ speed_rank = 3
 aim_rank = 1
 kinetic_defense_rank = 1
 energy_defense_rank = 3
-action_deck = Array[ExtResource("1_cbp0k")]([ExtResource("4_j7iu0"), ExtResource("2_wckpy"), ExtResource("4_j7iu0"), ExtResource("2_wckpy")])
+abilities = Array[ExtResource("12_ability")]([SubResource("EnemyAbility_defense_fortify"), SubResource("EnemyAbility_defense_gunshot")])
 metadata/_custom_type_script = "uid://b3t5esgv1d2ku"

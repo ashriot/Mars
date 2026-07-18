@@ -1,10 +1,64 @@
 [gd_resource type="Resource" script_class="EnemyData" load_steps=6 format=3 uid="uid://dgxpex6ql7scx"]
 
-[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="1_8qyty"]
 [ext_resource type="Resource" uid="uid://cbruwytkh444f" path="res://data/enemies/actions/potshot.tres" id="3_kt2l0"]
 [ext_resource type="Resource" uid="uid://43gi1cxcpjxo" path="res://data/enemies/actions/stun_baton.tres" id="4_0ggm0"]
-[ext_resource type="Script" uid="uid://bkbx3bonlo8gv" path="res://src/scripts/enemies/ai_override.gd" id="6_sd7qb"]
 [ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://src/scripts/data/enemy_data.gd" id="7_2vyhf"]
+[ext_resource type="Script" uid="uid://c8h2tm5pykaq" path="res://src/scripts/enemies/enemy_decision_condition.gd" id="8_condition"]
+[ext_resource type="Script" uid="uid://btr3kn6uh6qgm" path="res://src/scripts/enemies/enemy_target_selector.gd" id="9_selector"]
+[ext_resource type="Script" uid="uid://bwhnoji7ew1mg" path="res://src/scripts/enemies/enemy_decision_rule.gd" id="10_rule"]
+[ext_resource type="Script" uid="uid://ban2jvuk6cs6k" path="res://src/scripts/enemies/enemy_ability.gd" id="11_ability"]
+
+[sub_resource type="Resource" id="EnemyDecisionCondition_riot_potshot"]
+script = ExtResource("8_condition")
+type = 0
+metadata/_custom_type_script = "uid://c8h2tm5pykaq"
+
+[sub_resource type="Resource" id="EnemyTargetSelector_riot_potshot"]
+script = ExtResource("9_selector")
+type = 3
+metadata/_custom_type_script = "uid://btr3kn6uh6qgm"
+
+[sub_resource type="Resource" id="EnemyDecisionRule_riot_potshot"]
+script = ExtResource("10_rule")
+priority = 0
+conditions = Array[ExtResource("8_condition")]([SubResource("EnemyDecisionCondition_riot_potshot")])
+selector = SubResource("EnemyTargetSelector_riot_potshot")
+metadata/_custom_type_script = "uid://bwhnoji7ew1mg"
+
+[sub_resource type="Resource" id="EnemyAbility_riot_potshot"]
+script = ExtResource("11_ability")
+ability_id = &"riot.potshot"
+action = ExtResource("3_kt2l0")
+cooldown_turns = 0
+initial_cooldown = 0
+rules = Array[ExtResource("10_rule")]([SubResource("EnemyDecisionRule_riot_potshot")])
+metadata/_custom_type_script = "uid://ban2jvuk6cs6k"
+
+[sub_resource type="Resource" id="EnemyDecisionCondition_riot_stun_baton"]
+script = ExtResource("8_condition")
+type = 0
+metadata/_custom_type_script = "uid://c8h2tm5pykaq"
+
+[sub_resource type="Resource" id="EnemyTargetSelector_riot_stun_baton"]
+script = ExtResource("9_selector")
+type = 9
+metadata/_custom_type_script = "uid://btr3kn6uh6qgm"
+
+[sub_resource type="Resource" id="EnemyDecisionRule_riot_stun_baton"]
+script = ExtResource("10_rule")
+priority = 20
+conditions = Array[ExtResource("8_condition")]([SubResource("EnemyDecisionCondition_riot_stun_baton")])
+selector = SubResource("EnemyTargetSelector_riot_stun_baton")
+metadata/_custom_type_script = "uid://bwhnoji7ew1mg"
+
+[sub_resource type="Resource" id="EnemyAbility_riot_stun_baton"]
+script = ExtResource("11_ability")
+ability_id = &"riot.stun_baton"
+action = ExtResource("4_0ggm0")
+cooldown_turns = 2
+initial_cooldown = 1
+rules = Array[ExtResource("10_rule")]([SubResource("EnemyDecisionRule_riot_stun_baton")])
+metadata/_custom_type_script = "uid://ban2jvuk6cs6k"
 
 [resource]
 script = ExtResource("7_2vyhf")
@@ -17,5 +71,5 @@ speed_rank = 2
 aim_rank = 1
 kinetic_defense_rank = 4
 energy_defense_rank = 3
-action_deck = Array[ExtResource("1_8qyty")]([ExtResource("3_kt2l0"), ExtResource("4_0ggm0")])
+abilities = Array[ExtResource("11_ability")]([SubResource("EnemyAbility_riot_potshot"), SubResource("EnemyAbility_riot_stun_baton")])
 metadata/_custom_type_script = "uid://b3t5esgv1d2ku"

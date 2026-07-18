@@ -791,6 +791,25 @@ func test_enemy_defense_generation_never_exceeds_ninety() -> void:
 	assert_eq(enemy.stats.energy_defense, 90)
 
 
+func test_all_production_enemies_have_valid_nonempty_cooldown_kits() -> void:
+	var paths: Array[String] = []
+	_collect_resource_paths("res://data/enemies/actors", paths)
+	paths.sort()
+	assert_gt(paths.size(), 0, "production enemy scan found actors")
+	for path: String in paths:
+		var resource := ResourceLoader.load(path)
+		assert_true(resource is EnemyData, "%s is EnemyData" % path)
+		if not resource is EnemyData:
+			continue
+		var enemy := resource as EnemyData
+		assert_false(enemy.abilities.is_empty(), "%s has a nonempty cooldown kit" % path)
+		assert_eq(
+			EnemyKitValidator.validate(enemy, path),
+			PackedStringArray(),
+			"%s has a valid cooldown kit" % path,
+		)
+
+
 func _collect_resource_paths(root: String, paths: Array[String]) -> void:
 	var directory := DirAccess.open(root)
 	assert_not_null(directory, root)

@@ -23,25 +23,41 @@ func _scan_for_encounters(path: String):
 					_scan_for_encounters(path + "/" + file_name)
 			elif file_name.ends_with(".tres") or file_name.ends_with(".remap"):
 				var clean_name = file_name.replace(".remap", "")
-				var res = load(path + "/" + clean_name)
+				var resource_path := path.path_join(clean_name)
+				var res = load(resource_path)
 
 				if res is Encounter:
-					if res.encounter_id != "":
-						_id_map[res.encounter_id] = res
-					else:
+					if res.encounter_id == "":
 						push_error("Encounter missing ID: " + file_name)
+					else:
+						var errors := _encounter_kit_errors(res, resource_path)
+						if errors.is_empty():
+							_register_encounter(res)
+						else:
+							for error in errors:
+								push_error(error)
 
 			file_name = dir.get_next()
 	else:
 		push_error("EncounterDatabase: Could not open path: " + path)
 
 func _register_encounter(enc: Encounter):
+	_id_map[enc.encounter_id] = enc
 	if enc.is_boss:
 		boss_encounters.append(enc)
 	elif enc.is_elite:
 		elite_encounters.append(enc)
 	else:
 		normal_encounters.append(enc)
+
+func _encounter_kit_errors(enc: Encounter, source: String) -> PackedStringArray:
+	var errors := PackedStringArray()
+	for index in enc.enemies.size():
+		errors.append_array(EnemyKitValidator.validate(
+			enc.enemies[index],
+			"%s enemy %d" % [source, index],
+		))
+	return errors
 
 func get_encounter_by_id(id: String) -> Encounter:
 	return _id_map.get(id)
