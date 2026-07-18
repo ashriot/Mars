@@ -28,8 +28,13 @@ class AdvancementHero extends HeroCard:
 
 
 class AdvancementBattleManager extends BattleManager:
+	var intent_refresh_count := 0
+
 	func _flush_all_health_animations() -> void:
 		return
+
+	func _update_all_enemy_intents() -> void:
+		intent_refresh_count += 1
 
 
 class PublishingBattleManager extends BattleManager:
@@ -225,6 +230,7 @@ func test_live_advancement_matches_projected_normalized_ticks() -> void:
 	assert_same(manager.current_actor, winner)
 	assert_eq(observer.current_ct, manager.TARGET_CT)
 	assert_eq(kinds, [BattleManager.TurnOrderUpdate.ADVANCE])
+	assert_eq(manager.intent_refresh_count, 1)
 	winner.free()
 	observer.free()
 	manager.action_bar.free()

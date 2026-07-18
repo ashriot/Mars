@@ -82,6 +82,7 @@ func spawn_encounter():
 		hero_card.actor_revived.connect(_on_actor_revived)
 		hero_card.spawn_particles.connect(_on_spawn_particles)
 		hero_card.actor_conditions_changed.connect(_on_actor_conditions_changed)
+		_connect_actor_intent_refresh_signals(hero_card)
 		hero_card.current_ct = 0
 		print(hero_card.actor_name, "'s CT: ", hero_card.current_ct)
 		hero_card.battle_priority = actor_list.size()
@@ -111,6 +112,7 @@ func spawn_encounter():
 		enemy_card.actor_defeated.connect(_on_actor_died)
 		enemy_card.spawn_particles.connect(_on_spawn_particles)
 		enemy_card.actor_conditions_changed.connect(_on_actor_conditions_changed)
+		_connect_actor_intent_refresh_signals(enemy_card)
 		enemy_card.current_ct = 0
 		print(enemy_card.actor_name, "'s CT: ", enemy_card.current_ct)
 		enemy_card.battle_priority = actor_list.size()
@@ -139,9 +141,7 @@ func spawn_encounter():
 	await _flush_all_health_animations()
 	await wait(0.5)
 	await _apply_starting_passives()
-	current_actor = null
-	_configure_battle_ct_speed_scale()
-	_apply_initial_ct_head_starts()
+	_finalize_initial_ai_timing()
 	find_and_start_next_turn()
 
 func _apply_starting_passives() -> void:
@@ -172,6 +172,13 @@ func _apply_initial_ct_head_starts(test_rolls: Array = []) -> void:
 			continue
 		var roll := float(test_rolls[index]) if index < test_rolls.size() else randf()
 		actor.current_ct += CTBSpeed.head_start_ct(actor.get_ct_speed(), roll)
+
+
+func _finalize_initial_ai_timing(head_start_rolls: Array = []) -> void:
+	current_actor = null
+	_configure_battle_ct_speed_scale()
+	_apply_initial_ct_head_starts(head_start_rolls)
+	_update_all_enemy_intents()
 
 func _run_ct_simulation(num_turns := 10, ct_adjustments: Dictionary = {}) -> Array:
 	return CTBSimulator.project(actor_list, TARGET_CT, num_turns, ct_adjustments)
@@ -210,6 +217,7 @@ func find_and_start_next_turn():
 		actor.current_ct += actor.get_ct_speed() * real_ticks_passed
 
 	winner.current_ct = 0
+	_update_all_enemy_intents()
 	current_actor = winner
 	_publish_turn_order(TurnOrderUpdate.ADVANCE)
 	if winner is HeroCard:
@@ -233,11 +241,11 @@ func find_and_start_next_turn():
 		find_and_start_next_turn()
 
 func _on_actor_breached():
-	_update_all_enemy_intents()
 	print("\n Actor was Breached -> New Queue: ")
 	update_turn_order()
 
 func update_turn_order() -> void:
+	_update_all_enemy_intents()
 	_publish_turn_order(TurnOrderUpdate.REFRESH)
 
 
@@ -274,9 +282,11 @@ func _enemy_ai_context() -> EnemyAIContext:
 
 
 func _update_all_enemy_intents() -> void:
+	if not is_instance_valid(hero_area) or not is_instance_valid(enemy_area):
+		return
 	var context := _enemy_ai_context()
 	for enemy: EnemyCard in get_living_enemies():
-		if enemy != current_actor:
+		if enemy != current_actor or current_state != State.EXECUTING_ACTION:
 			enemy.decide_intent(context)
 
 func _on_actor_died(actor: ActorCard):
@@ -292,7 +302,6 @@ func _on_actor_died(actor: ActorCard):
 	target_invalidated.emit(actor)
 	if await _check_if_battle_ended():
 		return
-	_update_all_enemy_intents()
 	update_turn_order()
 
 func _on_actor_revived(actor: ActorCard):
@@ -527,30 +536,21 @@ func _is_enemy_decision_executable(enemy: EnemyCard, context: EnemyAIContext) ->
 		return false
 	if decision.is_recovery:
 		return enemy.is_breached and decision.targets == [enemy]
-
-	var taunting_hero_exists := context.heroes.any(func(hero: HeroCard):
-		return is_instance_valid(hero) and not hero.is_defeated \
-			and not hero.is_untargetable() and hero.is_taunting()
-	)
-	var taunt_restricts_targets := decision.action.target_type in [
-		Action.TargetType.ONE_ENEMY,
-		Action.TargetType.RANDOM_ENEMY,
-	]
-	for target: ActorCard in decision.targets:
-		if not is_instance_valid(target) or target.is_defeated:
-			return false
-		if target is HeroCard:
-			if target not in context.heroes or (target as HeroCard).is_untargetable():
-				return false
-			if taunt_restricts_targets and taunting_hero_exists \
-			and not (target as HeroCard).is_taunting():
-				return false
-		elif target is EnemyCard:
-			if target not in context.enemies:
-				return false
-		else:
-			return false
-	return true
+	var ability := decision.ability
+	var rule := decision.rule
+	if ability == null or rule == null or rule.selector == null:
+		return false
+	if enemy.enemy_data == null or ability not in enemy.enemy_data.abilities:
+		return false
+	if decision.action != ability.action or not enemy.ai_state.is_ready(ability):
+		return false
+	var rule_index := ability.rules.find(rule)
+	if rule_index < 0 or not rule.conditions.all(func(condition: EnemyDecisionCondition):
+		return condition != null and condition.matches(enemy, enemy.ai_state, context)
+	):
+		return false
+	var salt := "%s:%d" % [ability.ability_id, rule_index]
+	return rule.selector.select(enemy, enemy.ai_state, context, salt) == decision.targets
 
 func get_living_heroes() -> Array[HeroCard]:
 	var living_heroes: Array[HeroCard] = []
@@ -566,8 +566,30 @@ func get_living_enemies() -> Array[EnemyCard]:
 			living_enemies.append(enemy_card)
 	return living_enemies
 
-func _on_actor_conditions_changed():
+func _connect_actor_intent_refresh_signals(actor: ActorCard) -> void:
+	if not actor.hp_changed.is_connected(_on_actor_hp_changed):
+		actor.hp_changed.connect(_on_actor_hp_changed)
+	if not actor.armor_changed.is_connected(_on_actor_armor_changed):
+		actor.armor_changed.connect(_on_actor_armor_changed)
+	if actor is HeroCard and not (actor as HeroCard).focus_updated.is_connected(
+		_on_hero_focus_updated
+	):
+		(actor as HeroCard).focus_updated.connect(_on_hero_focus_updated)
+
+
+func _on_hero_focus_updated() -> void:
 	_update_all_enemy_intents()
+
+
+func _on_actor_hp_changed(_current_hp: int, _max_hp: int) -> void:
+	_update_all_enemy_intents()
+
+
+func _on_actor_armor_changed(_current_guard: int) -> void:
+	_update_all_enemy_intents()
+
+
+func _on_actor_conditions_changed() -> void:
 	update_turn_order()
 
 func _on_action_button_pressed(button: ActionButton):

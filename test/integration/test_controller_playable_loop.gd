@@ -119,6 +119,8 @@ class LoopManager extends GameManager:
 		var first_enemy := battle_manager.enemy_area.get_child(0) as EnemyCard
 		var other_enemy := enemy_card_scene.instantiate() as EnemyCard
 		other_enemy.battle_manager = battle_manager
+		other_enemy.enemy_data = first_enemy.enemy_data.duplicate(true) as EnemyData
+		other_enemy.initialize_ai(battle_manager.encounter_seed)
 		battle_manager.enemy_area.add_child(other_enemy)
 		other_enemy.position = first_enemy.position + Vector2(first_enemy.size.x + 40.0, 0.0)
 		battle_manager.forced_enemies.assign([first_enemy, other_enemy])

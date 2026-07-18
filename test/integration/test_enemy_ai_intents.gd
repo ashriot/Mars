@@ -50,6 +50,84 @@ func test_refresh_changes_reactive_intent_without_ticking_cooldowns() -> void:
 	_free_fixture(fixture)
 
 
+func test_focus_signal_refreshes_reactive_intent_automatically() -> void:
+	var fixture := _fixture()
+	_connect_actor_refresh_signals(fixture)
+	fixture.enemy.initialize_ai(77)
+	fixture.manager._update_all_enemy_intents()
+	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"basic")
+	fixture.echo.current_focus = 6
+	fixture.echo.focus_updated.emit()
+	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"focus_attack")
+	assert_eq(fixture.enemy.intent_decision_count, 2)
+	_free_fixture(fixture)
+
+
+func test_hp_signal_refreshes_reactive_intent_automatically() -> void:
+	var fixture := _fixture()
+	fixture.enemy.enemy_data.abilities.append(_ability(
+		&"repair", 2, 200, EnemyDecisionCondition.Type.SELF_HP_AT_MOST,
+		EnemyTargetSelector.Type.SELF, 0.5,
+	))
+	_connect_actor_refresh_signals(fixture)
+	fixture.enemy.initialize_ai(77)
+	fixture.manager._update_all_enemy_intents()
+	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"basic")
+	fixture.enemy.current_hp = 40
+	fixture.enemy.hp_changed.emit(40, 100)
+	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"repair")
+	assert_eq(fixture.enemy.intent_decision_count, 2)
+	_free_fixture(fixture)
+
+
+func test_guard_signal_refreshes_reactive_intent_automatically() -> void:
+	var fixture := _fixture()
+	fixture.enemy.enemy_data.abilities.append(_ability(
+		&"guard_attack", 2, 200, EnemyDecisionCondition.Type.ANY_HERO_GUARD_AT_LEAST,
+		EnemyTargetSelector.Type.HIGHEST_GUARD_HERO, 5.0,
+	))
+	_connect_actor_refresh_signals(fixture)
+	fixture.enemy.initialize_ai(77)
+	fixture.manager._update_all_enemy_intents()
+	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"basic")
+	fixture.echo.current_guard = 8
+	fixture.echo.armor_changed.emit(8)
+	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"guard_attack")
+	assert_eq(fixture.enemy.intent_decision_count, 2)
+	_free_fixture(fixture)
+
+
+func test_turn_order_refresh_replans_ct_dependent_intent() -> void:
+	var fixture := _fixture()
+	fixture.enemy.enemy_data.abilities.append(_ability(
+		&"imminent", 2, 200, EnemyDecisionCondition.Type.HERO_TURN_WITHIN,
+		EnemyTargetSelector.Type.HERO_CLOSEST_TO_ACTING, 5.0,
+	))
+	fixture.enemy.initialize_ai(77)
+	fixture.manager._update_all_enemy_intents()
+	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"basic")
+	fixture.echo.current_ct = 3950
+	fixture.manager.update_turn_order()
+	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"imminent")
+	assert_eq(fixture.enemy.intent_decision_count, 2)
+	_free_fixture(fixture)
+
+
+func test_final_startup_timing_refreshes_intents_after_head_starts() -> void:
+	var fixture := _fixture()
+	fixture.enemy.enemy_data.abilities.append(_ability(
+		&"imminent", 2, 200, EnemyDecisionCondition.Type.HERO_TURN_WITHIN,
+		EnemyTargetSelector.Type.HERO_CLOSEST_TO_ACTING, 35.0,
+	))
+	fixture.enemy.initialize_ai(77)
+	fixture.manager._update_all_enemy_intents()
+	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"basic")
+	fixture.manager._finalize_initial_ai_timing([0.0, 1.0, 0.0])
+	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"imminent")
+	assert_eq(fixture.enemy.intent_decision_count, 2)
+	_free_fixture(fixture)
+
+
 func test_completed_turn_sets_only_used_cooldown_and_plans_next_intent() -> void:
 	var fixture := _fixture()
 	fixture.enemy.initialize_ai(77)
@@ -88,6 +166,34 @@ func test_execution_reselects_once_when_cached_target_is_invalid() -> void:
 	assert_eq(fixture.manager.executed_targets, [fixture.sands])
 	assert_eq(fixture.enemy.ai_state.completed_turns, 1)
 	assert_eq(fixture.enemy.ai_state.remaining(&"focus_attack"), 0)
+	_free_fixture(fixture)
+
+
+func test_execution_reselects_once_when_cached_rule_no_longer_matches() -> void:
+	var fixture := _fixture()
+	fixture.enemy.initialize_ai(77)
+	fixture.echo.current_focus = 6
+	fixture.manager._update_all_enemy_intents()
+	var stale_action: Action = fixture.enemy.intended_action
+	fixture.echo.current_focus = 0
+	await fixture.manager.execute_enemy_turn(fixture.enemy)
+	assert_eq(fixture.enemy.intent_decision_count, 2)
+	assert_ne(fixture.manager.executed_action, stale_action)
+	assert_eq(fixture.enemy.ai_state.remaining(&"focus_attack"), 0)
+	_free_fixture(fixture)
+
+
+func test_execution_reselects_once_when_cached_ability_is_on_cooldown() -> void:
+	var fixture := _fixture()
+	fixture.enemy.initialize_ai(77)
+	fixture.echo.current_focus = 6
+	fixture.manager._update_all_enemy_intents()
+	var stale_action: Action = fixture.enemy.intended_action
+	fixture.enemy.complete_ai_turn(&"focus_attack")
+	await fixture.manager.execute_enemy_turn(fixture.enemy)
+	assert_eq(fixture.enemy.intent_decision_count, 2)
+	assert_ne(fixture.manager.executed_action, stale_action)
+	assert_eq(fixture.enemy.ai_state.remaining(&"focus_attack"), 2)
 	_free_fixture(fixture)
 
 
@@ -159,6 +265,12 @@ func _initialize_actor(actor: ActorCard, actor_name: String, priority: int) -> v
 	actor.battle_priority = priority
 	actor.is_breached = false
 	actor.is_defeated = false
+
+
+func _connect_actor_refresh_signals(fixture: Dictionary) -> void:
+	var manager := fixture.manager as BattleManager
+	for actor: ActorCard in manager.actor_list:
+		manager._connect_actor_intent_refresh_signals(actor)
 
 
 func _ability(id: StringName, cooldown: int, priority: int,
