@@ -30,6 +30,15 @@ Observe a current multi-action enemy across at least four of its own turns. Rest
 - [ ] Observe duplicate enemies and confirm each keeps independent cooldown state.
 - [ ] For every observed intent, confirm its visible damage still matches the executed action.
 
+## Enemy combat primitives acceptance
+
+Record the combatants, resources, conditions, role transition, visible intent or tooltip values, executed values, and tested commit.
+
+- [ ] Use an enemy action whose damage scales from the target's Focus or Guard and confirm its intent, tooltip detail, and executed damage all use that exact target resource value.
+- [ ] Heal a living enemy and confirm it gains HP without hero Focus scaling; target a defeated enemy with a non-revive heal and confirm it remains defeated at zero HP.
+- [ ] Cleanse one of two active debuffs and confirm only the selected debuff is removed, its own removal reaction fires once, and the other debuff remains active.
+- [ ] Shift into a role with a Shift action and an `AFTER_SHIFT_ACTION` damage reaction; confirm the role changes first, the new role's Shift action resolves next, and the reaction damage occurs exactly once afterward.
+
 ## Responsive controller-only acceptance
 
 Record the date, OS/device, controller and connection, physical resolution, tested commit, and concise notes. Keep desktop-proxy and Steam Deck hardware results separate.
