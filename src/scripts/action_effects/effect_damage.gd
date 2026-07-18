@@ -298,6 +298,10 @@ func _get_contribution_label(source: StringName) -> String:
 			return "remaining Focus after paying the cost"
 		&"current_guard":
 			return "current Guard"
+		&"target_focus":
+			return "target Focus"
+		&"target_guard":
+			return "target Guard"
 	return str(source).replace("_", " ")
 
 

@@ -42,6 +42,35 @@ func test_flat_remaining_focus_and_guard_rules() -> void:
 	assert_eq(guard_rule.resolve(0.0, context).amount, 1.0)
 
 
+func test_flat_rule_can_read_target_focus_without_changing_attacker_default() -> void:
+	var attacker := CombatantSnapshot.new(100, 2, 3, false, false, [])
+	var target := CombatantSnapshot.new(100, 5, 7, false, false, [])
+	var context := DamageContext.new(attacker, target, 0, 0, null, null, {})
+	var attacker_rule := DamageScalingFlatPerResource.new()
+	attacker_rule.resource = DamageScalingFlatPerResource.ResourceType.FOCUS
+	attacker_rule.potency_per_point = 0.15
+	var target_rule := DamageScalingFlatPerResource.new()
+	target_rule.resource_owner = DamageScalingFlatPerResource.ResourceOwner.TARGET
+	target_rule.resource = DamageScalingFlatPerResource.ResourceType.FOCUS
+	target_rule.potency_per_point = 0.15
+	assert_almost_eq(attacker_rule.resolve(0.3, context).amount, 0.3, 0.0001)
+	assert_eq(attacker_rule.resolve(0.3, context).source, &"remaining_focus")
+	assert_almost_eq(target_rule.resolve(0.3, context).amount, 0.75, 0.0001)
+	assert_eq(target_rule.resolve(0.3, context).source, &"target_focus")
+
+
+func test_base_rule_can_read_target_guard() -> void:
+	var attacker := CombatantSnapshot.new(100, 0, 1, false, false, [])
+	var target := CombatantSnapshot.new(100, 0, 6, false, false, [])
+	var context := DamageContext.new(attacker, target, 0, 0, null, null, {})
+	var rule := DamageScalingBasePerResource.new()
+	rule.resource_owner = DamageScalingBasePerResource.ResourceOwner.TARGET
+	rule.resource = DamageScalingBasePerResource.ResourceType.GUARD
+	rule.base_scalar_per_point = 0.25
+	assert_almost_eq(rule.resolve(1.0, context).amount, 1.5, 0.0001)
+	assert_eq(rule.resolve(1.0, context).source, &"target_guard")
+
+
 func test_base_scalar_and_swarm_extension() -> void:
 	var context := _context(5, 0, 3)
 	var rule := DamageScalingBasePerResource.new()

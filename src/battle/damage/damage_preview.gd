@@ -351,7 +351,7 @@ static func _living_counts(
 
 
 static func _copy_target(target: ActorCard) -> ActorCard:
-	var preview_target := ActorCard.new()
+	var preview_target: ActorCard = HeroCard.new() if target is HeroCard else ActorCard.new()
 	preview_target.actor_name = target.actor_name
 	preview_target.current_stats = target.current_stats
 	preview_target.current_hp = target.current_hp
@@ -364,6 +364,8 @@ static func _copy_target(target: ActorCard) -> ActorCard:
 	preview_target.is_defeated = target.is_defeated
 	preview_target.active_conditions = target.active_conditions.duplicate()
 	preview_target.active_traits = target.active_traits.duplicate()
+	if preview_target is HeroCard:
+		(preview_target as HeroCard).current_focus = (target as HeroCard).current_focus
 	return preview_target
 
 
@@ -440,7 +442,7 @@ static func _target_without_condition(
 	target: ActorCard,
 	excluded_condition: Condition,
 ) -> ActorCard:
-	var preview_target := ActorCard.new()
+	var preview_target: ActorCard = HeroCard.new() if target is HeroCard else ActorCard.new()
 	preview_target.actor_name = target.actor_name
 	preview_target.current_stats = target.current_stats
 	preview_target.current_hp = target.current_hp
@@ -451,6 +453,8 @@ static func _target_without_condition(
 	preview_target.is_breached = target.is_breached
 	preview_target.is_in_danger = target.is_in_danger
 	preview_target.is_defeated = target.is_defeated
+	if preview_target is HeroCard:
+		(preview_target as HeroCard).current_focus = (target as HeroCard).current_focus
 	var retained_conditions: Array[Condition] = []
 	for condition: Condition in target.active_conditions:
 		if condition != excluded_condition:

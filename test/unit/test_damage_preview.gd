@@ -549,6 +549,37 @@ func test_damage_presentation_labels_each_contribution_stage_accurately() -> voi
 	target.free()
 
 
+func test_target_focus_scaling_matches_preview_and_presentation_detail() -> void:
+	var attacker := _attacker()
+	var target := _hero(0, 5)
+	var rule := DamageScalingFlatPerResource.new()
+	rule.resource_owner = DamageScalingFlatPerResource.ResourceOwner.TARGET
+	rule.resource = DamageScalingFlatPerResource.ResourceType.FOCUS
+	rule.potency_per_point = 0.15
+	rule.phase = DamageScalingRule.Phase.CURRENT_HIT
+	var effect := _damage_effect(0.3)
+	effect.damage_type = Action.DamageType.PIERCING
+	effect.scaling_rules = [rule]
+	var action := Action.new()
+	action.effects = [effect]
+
+	var result := DamagePreview.for_effect(
+		effect, attacker, target, action, 1, false,
+	)
+	var presentation := effect.get_presentation(
+		EffectPresentationContext.new(
+			attacker, target, action, -1, 1, false, null, [target], null, true,
+		),
+	)
+
+	assert_almost_eq(result.request.potency, 1.05, 0.0001)
+	assert_eq(result.final_damage, 105)
+	assert_has(presentation.details, "Resolved potency: 105%")
+	assert_has(presentation.details, "target Focus: 75% potency")
+	attacker.free()
+	target.free()
+
+
 func test_all_target_split_without_target_context_describes_authored_budget() -> void:
 	var action := Action.new()
 	action.target_type = Action.TargetType.ALL_ENEMIES
