@@ -27,6 +27,72 @@ enum Subject { SELF, ANY_ALLY, ANY_HERO }
 @export var condition_name: String = ""
 
 
+func matches(enemy: EnemyCard, state: EnemyAIRuntimeState, context: EnemyAIContext) -> bool:
+	match type:
+		Type.ALWAYS:
+			return true
+		Type.FIRST_TURN:
+			return state.completed_turns == 0
+		Type.SELF_HP_AT_MOST:
+			return _hp_percent(enemy) <= threshold
+		Type.ANY_ALLY_HP_AT_MOST:
+			return context.enemies.any(func(ally: EnemyCard):
+				return _hp_percent(ally) <= threshold)
+		Type.ANY_HERO_FOCUS_AT_LEAST:
+			return context.heroes.any(func(hero: HeroCard):
+				return hero.current_focus >= threshold)
+		Type.ANY_HERO_GUARD_AT_LEAST:
+			return context.heroes.any(func(hero: HeroCard):
+				return hero.current_guard >= threshold)
+		Type.ANY_HERO_GUARD_AT_MOST:
+			return context.heroes.any(func(hero: HeroCard):
+				return hero.current_guard <= threshold)
+		Type.ANY_HERO_BREACHED:
+			return context.heroes.any(func(hero: HeroCard): return hero.is_breached)
+		Type.SELF_MISSING_GUARD:
+			return enemy.current_guard <= 0
+		Type.ANY_ALLY_MISSING_GUARD:
+			return context.enemies.any(func(ally: EnemyCard):
+				return ally.current_guard <= 0)
+		Type.HAS_NAMED_CONDITION:
+			return _subjects(enemy, context).any(func(actor: ActorCard):
+				return actor.has_condition(condition_name))
+		Type.LACKS_NAMED_CONDITION:
+			return _subjects(enemy, context).any(func(actor: ActorCard):
+				return not actor.has_condition(condition_name))
+		Type.LIVING_HERO_COUNT_AT_LEAST:
+			return context.heroes.size() >= count
+		Type.LIVING_ALLY_COUNT_AT_LEAST:
+			return context.enemies.size() >= count
+		Type.HERO_TURN_WITHIN:
+			return context.heroes.any(func(hero: HeroCard):
+				return context.ticks_until(hero) <= int(threshold))
+	return false
+
+
+func _subjects(enemy: EnemyCard, context: EnemyAIContext) -> Array[ActorCard]:
+	match subject:
+		Subject.SELF:
+			return _as_actor_cards([enemy])
+		Subject.ANY_ALLY:
+			return _as_actor_cards(context.enemies)
+		Subject.ANY_HERO:
+			return _as_actor_cards(context.heroes)
+	return []
+
+
+func _hp_percent(actor: ActorCard) -> float:
+	return float(actor.current_hp) / maxf(actor.current_stats.max_hp, 1.0)
+
+
+func _as_actor_cards(values: Array) -> Array[ActorCard]:
+	var actors: Array[ActorCard] = []
+	for value in values:
+		if value is ActorCard:
+			actors.append(value)
+	return actors
+
+
 func validate(source: String) -> PackedStringArray:
 	var errors := PackedStringArray()
 	if type in [Type.SELF_HP_AT_MOST, Type.ANY_ALLY_HP_AT_MOST] \

@@ -9,23 +9,7 @@ class QuietHero extends HeroCard:
 
 
 class QuietEnemy extends EnemyCard:
-	var intent_refresh_count := 0
-
 	func _update_intent_ui() -> void:
-		intent_refresh_count += 1
-
-
-class TargetingManager extends BattleManager:
-	var heroes: Array[HeroCard] = []
-	var enemies: Array[EnemyCard] = []
-
-	func get_living_heroes() -> Array[HeroCard]:
-		return heroes
-
-	func get_living_enemies() -> Array[EnemyCard]:
-		return enemies
-
-	func update_turn_order() -> void:
 		return
 
 
@@ -37,73 +21,78 @@ func test_draw_fire_is_taunt_not_untargetable_and_expires_on_shift_or_breach() -
 	assert_does_not_have(DRAW_FIRE.remove_on_triggers, Trigger.TriggerType.ON_HEALED)
 
 
-func test_applying_draw_fire_immediately_retargets_existing_single_target_intent() -> void:
-	var fixture := _fixture(Action.TargetType.ONE_ENEMY)
-	var manager := fixture.manager as TargetingManager
+func test_draw_fire_restricts_direct_single_target_to_sands() -> void:
+	var fixture := _fixture()
 	var sands := fixture.sands as QuietHero
-	var other := fixture.other as QuietHero
-	var enemy := fixture.enemy as QuietEnemy
-	var existing_targets: Array[ActorCard] = [other]
-	enemy.intended_targets = existing_targets
-	sands.actor_conditions_changed.connect(manager._on_actor_conditions_changed)
+	var conditions: Array[Condition] = [DRAW_FIRE.duplicate(true) as Condition]
+	sands.active_conditions = conditions
+	var selector := EnemyTargetSelector.new()
+	selector.type = EnemyTargetSelector.Type.SEEDED_HERO
 
-	await sands.add_condition(DRAW_FIRE)
-
-	assert_eq(enemy.intended_targets, [sands])
-	assert_eq(enemy.intent_refresh_count, 1)
+	assert_eq(selector.select(fixture.enemy, fixture.state, fixture.context, "direct"), [sands])
 	_free_fixture(fixture)
 
 
 func test_draw_fire_restricts_random_enemy_candidates_to_sands() -> void:
-	var fixture := _fixture(Action.TargetType.RANDOM_ENEMY)
-	var manager := fixture.manager as TargetingManager
+	var fixture := _fixture()
 	var sands := fixture.sands as QuietHero
-	var enemy := fixture.enemy as QuietEnemy
 	var conditions: Array[Condition] = [DRAW_FIRE.duplicate(true) as Condition]
 	sands.active_conditions = conditions
+	var selector := EnemyTargetSelector.new()
+	selector.type = EnemyTargetSelector.Type.VALID_HERO_CANDIDATES
 
-	enemy.get_a_target(manager.heroes)
-
-	assert_eq(enemy.intended_targets, [sands])
+	assert_eq(selector.select(fixture.enemy, fixture.state, fixture.context, "random"), [sands])
 	_free_fixture(fixture)
 
 
 func test_draw_fire_does_not_change_all_enemy_targets() -> void:
-	var fixture := _fixture(Action.TargetType.ALL_ENEMIES)
-	var manager := fixture.manager as TargetingManager
+	var fixture := _fixture()
 	var sands := fixture.sands as QuietHero
 	var other := fixture.other as QuietHero
-	var enemy := fixture.enemy as QuietEnemy
 	var conditions: Array[Condition] = [DRAW_FIRE.duplicate(true) as Condition]
 	sands.active_conditions = conditions
+	var selector := EnemyTargetSelector.new()
+	selector.type = EnemyTargetSelector.Type.ALL_HEROES
 
-	enemy.get_a_target(manager.heroes)
-
-	assert_eq(enemy.intended_targets, [sands, other])
+	assert_eq(selector.select(fixture.enemy, fixture.state, fixture.context, "group"), [sands, other])
 	_free_fixture(fixture)
 
 
-func _fixture(target_type: Action.TargetType) -> Dictionary:
-	var manager := TargetingManager.new()
+func test_untargetable_hero_is_excluded_from_single_and_group_selectors() -> void:
+	var fixture := _fixture()
+	var other := fixture.other as QuietHero
+	var hidden := Condition.new()
+	hidden.condition_name = "Hidden"
+	hidden.is_untargetable = true
+	var conditions: Array[Condition] = [hidden]
+	other.active_conditions = conditions
+	var single := EnemyTargetSelector.new()
+	single.type = EnemyTargetSelector.Type.SEEDED_HERO
+	var group := EnemyTargetSelector.new()
+	group.type = EnemyTargetSelector.Type.ALL_HEROES
+
+	assert_eq(single.select(fixture.enemy, fixture.state, fixture.context, "single"), [fixture.sands])
+	assert_eq(group.select(fixture.enemy, fixture.state, fixture.context, "group"), [fixture.sands])
+	_free_fixture(fixture)
+
+
+func _fixture() -> Dictionary:
 	var sands := QuietHero.new()
 	var other := QuietHero.new()
 	var enemy := QuietEnemy.new()
-	var action := Action.new()
-	action.target_type = target_type
 	sands.actor_name = "Sands"
 	other.actor_name = "Asher"
-	manager.heroes = [sands, other]
-	manager.enemies = [enemy]
-	enemy.battle_manager = manager
-	enemy.enemy_data = EnemyData.new()
-	enemy.base_turn_action = action
-	enemy.intended_action = action
+	sands.battle_priority = 0
+	other.battle_priority = 1
+	enemy.battle_priority = 2
+	var heroes: Array[HeroCard] = [sands, other]
+	var enemies: Array[EnemyCard] = [enemy]
 	return {
-		"manager": manager,
 		"sands": sands,
 		"other": other,
 		"enemy": enemy,
-		"action": action,
+		"state": EnemyAIRuntimeState.new(),
+		"context": EnemyAIContext.new(heroes, enemies, {}, 1234),
 	}
 
 
@@ -111,4 +100,3 @@ func _free_fixture(fixture: Dictionary) -> void:
 	(fixture.enemy as EnemyCard).free()
 	(fixture.sands as HeroCard).free()
 	(fixture.other as HeroCard).free()
-	(fixture.manager as BattleManager).free()
