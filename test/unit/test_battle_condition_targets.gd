@@ -1,6 +1,25 @@
 extends GutTest
 
 
+class RecordingEffect extends ActionEffect:
+	var event_label: String
+	var event_log: Array[String]
+
+	func _init(label: String, log: Array[String]) -> void:
+		event_label = label
+		event_log = log
+		target_type = Action.TargetType.SELF
+
+	func execute(
+		_attacker: ActorCard,
+		_parent_targets: Array,
+		_battle_manager: BattleManager,
+		_action: Action = null,
+		_context: Dictionary = {},
+	) -> void:
+		event_log.append(event_label)
+
+
 class CapturingBattleManager extends BattleManager:
 	var captured_targets: Array = []
 
@@ -15,6 +34,12 @@ class CapturingBattleManager extends BattleManager:
 		_context: Dictionary = {},
 	) -> void:
 		captured_targets = targets
+		await _effect.execute(_actor, targets, self, _action, _context)
+
+
+class ConditionActor extends ActorCard:
+	func _update_conditions_ui() -> void:
+		return
 
 
 func test_off_turn_condition_self_target_resolves_to_condition_owner() -> void:
@@ -74,3 +99,109 @@ func test_healing_effect_heals_living_enemy_without_hero_focus_scaling() -> void
 	attacker.free()
 	target.hp_bar_ghost.free()
 	target.free()
+
+
+func test_removing_one_condition_fires_only_its_on_removed_effect_once() -> void:
+	var fixture := _condition_fixture()
+	var removed_log: Array[String] = []
+	var conditions: Array[Condition] = [
+		_condition_with_removed_effect("First", removed_log),
+		_condition_with_removed_effect("Second", removed_log),
+	]
+	fixture.actor.active_conditions = conditions
+
+	var removed: Variant = await fixture.actor.remove_condition("First")
+
+	assert_true(removed)
+	assert_eq(removed_log, ["First"])
+	assert_false(fixture.actor.has_condition("First"))
+	assert_true(fixture.actor.has_condition("Second"))
+	_free_condition_fixture(fixture)
+
+
+func test_remove_on_event_runs_event_effect_then_own_removal_once() -> void:
+	var fixture := _condition_fixture()
+	var event_log: Array[String] = []
+	var condition := _condition_with_event_and_removed_effect("Bomb", event_log)
+	condition.remove_on_triggers = [Trigger.TriggerType.ON_SHIFT]
+	var conditions: Array[Condition] = [condition]
+	fixture.actor.active_conditions = conditions
+
+	await fixture.actor._fire_condition_event(Trigger.TriggerType.ON_SHIFT)
+
+	assert_eq(event_log, ["shift:Bomb", "removed:Bomb"])
+	assert_false(fixture.actor.has_condition("Bomb"))
+	_free_condition_fixture(fixture)
+
+
+func test_remove_debuffs_returns_exact_removed_count() -> void:
+	var fixture := _condition_fixture()
+	var conditions: Array[Condition] = [_debuff("A"), _debuff("B"), _buff("C")]
+	fixture.actor.active_conditions = conditions
+
+	var removed_count: Variant = await fixture.actor.remove_debuffs(1)
+
+	assert_eq(removed_count, 1)
+	assert_eq(fixture.actor.count_debuffs(), 1)
+	assert_true(fixture.actor.has_condition("C"))
+	_free_condition_fixture(fixture)
+
+
+func _condition_fixture() -> Dictionary:
+	var manager := CapturingBattleManager.new()
+	var actor := ConditionActor.new()
+	actor.battle_manager = manager
+	manager.current_actor = actor
+	return {"actor": actor, "manager": manager}
+
+
+func _free_condition_fixture(fixture: Dictionary) -> void:
+	(fixture.actor as ActorCard).free()
+	(fixture.manager as BattleManager).free()
+
+
+func _condition_with_removed_effect(
+	condition_name: String,
+	event_log: Array[String],
+	event_label: String = "",
+) -> Condition:
+	var condition := Condition.new()
+	condition.condition_name = condition_name
+	var trigger := Trigger.new()
+	trigger.trigger_type = Trigger.TriggerType.ON_REMOVED
+	trigger.effects_to_run = [RecordingEffect.new(
+		condition_name if event_label.is_empty() else event_label,
+		event_log,
+	)]
+	condition.triggers = [trigger]
+	return condition
+
+
+func _condition_with_event_and_removed_effect(
+	condition_name: String,
+	event_log: Array[String],
+) -> Condition:
+	var condition := _condition_with_removed_effect(
+		condition_name, event_log, "removed:%s" % condition_name,
+	)
+	var trigger := Trigger.new()
+	trigger.trigger_type = Trigger.TriggerType.ON_SHIFT
+	trigger.effects_to_run = [
+		RecordingEffect.new("shift:%s" % condition_name, event_log),
+	]
+	condition.triggers.push_front(trigger)
+	return condition
+
+
+func _debuff(condition_name: String) -> Condition:
+	var condition := Condition.new()
+	condition.condition_name = condition_name
+	condition.condition_type = Condition.ConditionType.DEBUFF
+	return condition
+
+
+func _buff(condition_name: String) -> Condition:
+	var condition := Condition.new()
+	condition.condition_name = condition_name
+	condition.condition_type = Condition.ConditionType.BUFF
+	return condition

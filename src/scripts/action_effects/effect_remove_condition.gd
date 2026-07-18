@@ -9,4 +9,4 @@ func execute(_attacker: ActorCard, targets: Array, _battle_manager: BattleManage
 		if not target.has_condition(condition_name):
 			continue
 		print(target.actor_name, " lost condition: ", condition_name)
-		target.remove_condition(condition_name)
+		await target.remove_condition(condition_name)

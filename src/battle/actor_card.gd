@@ -61,6 +61,8 @@ var is_in_danger: bool
 var is_defeated: bool
 var active_conditions: Array[Condition] = []
 var active_traits: Array[Trait] = []
+var _condition_removal_batch_depth := 0
+var _condition_removal_batch_dirty := false
 
 # --- Animation Tweens ---
 var shake_tween: Tween
@@ -240,32 +242,37 @@ func has_condition(condition_name: String) -> bool:
 
 	return false
 
-func remove_condition(condition_name: String):
-	for condition in active_conditions:
+func remove_condition(condition_name: String, report_missing: bool = true) -> bool:
+	for condition: Condition in active_conditions.duplicate():
 		if condition.condition_name == condition_name:
-			active_conditions.erase(condition)
-			print(actor_name, " is removing condition: ", condition.condition_name)
-			_update_conditions_ui()
-			actor_conditions_changed.emit()
-			return
+			return await _remove_condition_instance(condition)
+	if report_missing:
+		push_error(
+			"[ERROR] Trying to remove an invalid condition: %s -> %s" % [
+				actor_name, condition_name,
+			],
+		)
+	return false
 
-	push_error("[ERROR] Trying to remove an invalid condition: ", actor_name, " -> ", condition_name)
-	return
 
-func remove_debuffs(quantity: int):
-	var amount_removed = 0
-	if active_conditions.is_empty(): return
-	for i in range(active_conditions.size() - 1, -1, -1):
-		var condition = active_conditions[i]
-		if condition.condition_type == Condition.ConditionType.DEBUFF:
-			amount_removed += 1
-			active_conditions.erase(condition)
-			print(actor_name, " is removing condition: ", condition.condition_name)
-			if amount_removed == quantity:
-				break
-	if amount_removed > 0:
-		_update_conditions_ui()
-		actor_conditions_changed.emit()
+func remove_debuffs(quantity: int) -> int:
+	if quantity <= 0:
+		return 0
+	var removed_count := 0
+	var snapshot := active_conditions.duplicate()
+	snapshot.reverse()
+	_condition_removal_batch_depth += 1
+	for condition: Condition in snapshot:
+		if condition == null \
+			or condition.condition_type != Condition.ConditionType.DEBUFF:
+			continue
+		if await _remove_condition_instance(condition):
+			removed_count += 1
+		if removed_count >= quantity:
+			break
+	_condition_removal_batch_depth -= 1
+	_flush_condition_removal_notification()
+	return removed_count
 
 func count_debuffs() -> int:
 	var count = 0
@@ -311,40 +318,76 @@ func _update_health_display(value_from_tween: float):
 
 # need to add traits here
 func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary = {}) -> void:
-	for i in range(active_conditions.size() - 1, -1, -1):
-		var condition = active_conditions[i] as Condition
-		var is_attack = false
-		if condition.remove_on_triggers.has(event_type):
+	var snapshot := active_conditions.duplicate()
+	for condition: Condition in snapshot:
+		if condition == null or not active_conditions.has(condition):
+			continue
+		await _execute_condition_triggers(condition, event_type, context)
+		if condition.remove_on_triggers.has(event_type) \
+			and active_conditions.has(condition):
 			print(actor_name, "'s ", condition.condition_name, " needs to be removed.")
-			await _fire_condition_event(Trigger.TriggerType.ON_REMOVED)
-			remove_condition(condition.condition_name)
-		for trigger in condition.triggers:
-			trigger = trigger as Trigger
-			if trigger.trigger_type != event_type: continue
-			if trigger.is_attack:
-				is_attack = true
-				await battle_manager.wait(0.25)
-			print("Condition '", condition.condition_name, "' is firing effects for '", event_type, "'")
-			var targets = []
-			var attacker = null
-			var source = condition.attacker
-			var action = context.get("action")
-			if context.has("targets"):
-				targets = context.targets
-			if context.has("attacker"):
-				attacker = context.attacker
-			for effect in trigger.effects_to_run:
-				var is_hero = self is HeroCard
-				effect = effect as ActionEffect
-				if effect.target_type == Action.TargetType.SELF:
-					targets = [self]
-				else:
-					targets = battle_manager.get_targets(effect.target_type, is_hero, targets, attacker)
-				if battle_manager.current_actor is HeroCard and condition.is_passive and trigger.trigger_type == Trigger.TriggerType.ON_TURN_START:
-					self.passive_fired.emit()
-				await battle_manager.execute_triggered_effect(source, effect, targets, action, context)
-				if condition.update_turn_order:
-					battle_manager.update_turn_order()
+			await _remove_condition_instance(condition)
+
+
+func _execute_condition_triggers(
+	condition: Condition,
+	event_type: Trigger.TriggerType,
+	context: Dictionary,
+) -> void:
+	for trigger: Trigger in condition.triggers:
+		if trigger == null or trigger.trigger_type != event_type:
+			continue
+		if trigger.is_attack:
+			await battle_manager.wait(0.25)
+		print(
+			"Condition '", condition.condition_name,
+			"' is firing effects for '", event_type, "'",
+		)
+		var targets: Array = []
+		if context.has("targets"):
+			targets.assign(context.targets)
+		var contextual_attacker: ActorCard = context.get("attacker") as ActorCard
+		var action: Action = context.get("action") as Action
+		for effect: ActionEffect in trigger.effects_to_run:
+			if effect == null:
+				continue
+			if effect.target_type == Action.TargetType.SELF:
+				targets = [self]
+			else:
+				targets = battle_manager.get_targets(
+					effect.target_type,
+					self is HeroCard,
+					targets,
+					contextual_attacker,
+				)
+			if battle_manager.current_actor is HeroCard \
+				and condition.is_passive \
+				and event_type == Trigger.TriggerType.ON_TURN_START:
+				self.passive_fired.emit()
+			await battle_manager.execute_triggered_effect(
+				condition.attacker, effect, targets, action, context,
+			)
+			if condition.update_turn_order:
+				battle_manager.update_turn_order()
+
+
+func _remove_condition_instance(condition: Condition) -> bool:
+	if condition == null or not active_conditions.has(condition):
+		return false
+	active_conditions.erase(condition)
+	print(actor_name, " is removing condition: ", condition.condition_name)
+	await _execute_condition_triggers(condition, Trigger.TriggerType.ON_REMOVED, {})
+	_condition_removal_batch_dirty = true
+	_flush_condition_removal_notification()
+	return true
+
+
+func _flush_condition_removal_notification() -> void:
+	if _condition_removal_batch_depth > 0 or not _condition_removal_batch_dirty:
+		return
+	_condition_removal_batch_dirty = false
+	_update_conditions_ui()
+	actor_conditions_changed.emit()
 
 func update_health_bar():
 	hp_bar_actual.value = current_hp

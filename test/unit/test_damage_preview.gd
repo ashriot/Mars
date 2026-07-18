@@ -254,7 +254,7 @@ func test_runtime_conversion_still_consumes_triggered_condition() -> void:
 	var forced_piercing := _forced_type_condition(Action.DamageType.PIERCING)
 	target.active_conditions = [forced_piercing]
 
-	var resolved_type := _damage_effect(1.0)._resolve_forced_damage_type(
+	var resolved_type := await _damage_effect(1.0)._resolve_forced_damage_type(
 		attacker, target, {},
 	)
 

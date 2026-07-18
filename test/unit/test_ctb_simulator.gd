@@ -323,11 +323,11 @@ func test_condition_mutations_publish_one_current_queue_through_manager() -> voi
 	assert_signal_emit_count(manager, "turn_order_updated", 1)
 	assert_eq(manager.intent_refresh_count, 1, "condition changes still recalculate intents")
 
-	actor.remove_condition("Buff")
+	await actor.remove_condition("Buff")
 	assert_signal_emit_count(manager, "turn_order_updated", 2)
 	assert_eq(manager.intent_refresh_count, 2)
 
-	actor.remove_condition("Missing")
+	await actor.remove_condition("Missing")
 	assert_push_error("Trying to remove an invalid condition")
 	assert_signal_emit_count(manager, "turn_order_updated", 2, "unsuccessful removal is silent")
 	assert_eq(manager.intent_refresh_count, 2)
@@ -339,11 +339,11 @@ func test_condition_mutations_publish_one_current_queue_through_manager() -> voi
 	second_debuff.condition_name = "Second debuff"
 	second_debuff.condition_type = Condition.ConditionType.DEBUFF
 	actor.active_conditions = [first_debuff, second_debuff]
-	actor.remove_debuffs(2)
+	await actor.remove_debuffs(2)
 	assert_signal_emit_count(manager, "turn_order_updated", 3, "batch removal publishes once")
 	assert_eq(manager.intent_refresh_count, 3)
 
-	actor.remove_debuffs(2)
+	await actor.remove_debuffs(2)
 	assert_signal_emit_count(manager, "turn_order_updated", 3, "empty batch removal is silent")
 	assert_eq(manager.intent_refresh_count, 3)
 	actor.free()

@@ -450,7 +450,7 @@ func _execute_one_hit(
 	resolved_potency: DamageResolver.ResolvedPotency,
 ) -> void:
 	var pre_hit_context := _get_pre_hit_triggers(attacker, target)
-	var forced_damage_type := _resolve_forced_damage_type(
+	var forced_damage_type := await _resolve_forced_damage_type(
 		attacker, target, pre_hit_context,
 	)
 	var resolved_damage_type := damage_type \
@@ -687,7 +687,7 @@ func _resolve_forced_damage_type(
 ) -> Action.DamageType:
 	var decision := _resolve_damage_type_decision(attacker, target, pre_hit_context)
 	if decision.condition_to_consume != null:
-		target.remove_condition(decision.condition_to_consume.condition_name)
+		await target.remove_condition(decision.condition_to_consume.condition_name)
 	return decision.forced_damage_type
 
 
