@@ -137,27 +137,15 @@ func get_a_target(hero_targets: Array[HeroCard]):
 	match intended_action.target_type:
 		# --- OFFENSIVE TARGETING (Against Heroes) ---
 		Action.TargetType.ONE_ENEMY:
-			# 1. Filter Untargetable (Decoy)
-			var valid_heroes = []
-			for hero in hero_targets:
-				if not hero.is_untargetable():
-					valid_heroes.append(hero)
+			var valid_heroes := _get_valid_offensive_targets(hero_targets)
+			new_targets = [valid_heroes.pick_random()]
 
-			# Safety: If everyone is hidden, target anyone
-			if valid_heroes.is_empty(): valid_heroes = hero_targets
+		Action.TargetType.RANDOM_ENEMY:
+			# Random attacks keep their authored hit selection, but Taunt narrows
+			# the candidate pool just like a direct single-target attack.
+			new_targets.assign(_get_valid_offensive_targets(hero_targets))
 
-			# 2. Filter Taunts (Draw Fire)
-			var taunting_heroes = []
-			for hero in valid_heroes:
-				if hero.is_taunting():
-					taunting_heroes.append(hero)
-
-			if not taunting_heroes.is_empty():
-				new_targets = [taunting_heroes.pick_random()]
-			else:
-				new_targets = [valid_heroes.pick_random()]
-
-		Action.TargetType.ALL_ENEMIES, Action.TargetType.RANDOM_ENEMY:
+		Action.TargetType.ALL_ENEMIES:
 			# For an Enemy, "All Enemies" means "All Heroes"
 			for h in hero_targets:
 				new_targets.append(h)
@@ -196,6 +184,23 @@ func get_a_target(hero_targets: Array[HeroCard]):
 	if new_targets != intended_targets:
 		intended_targets = new_targets
 		_update_intent_ui()
+
+
+func _get_valid_offensive_targets(hero_targets: Array[HeroCard]) -> Array[HeroCard]:
+	var valid_heroes: Array[HeroCard] = []
+	for hero in hero_targets:
+		if not hero.is_untargetable():
+			valid_heroes.append(hero)
+
+	# Safety: if everyone is hidden, retain the established fallback.
+	if valid_heroes.is_empty():
+		valid_heroes.assign(hero_targets)
+
+	var taunting_heroes: Array[HeroCard] = []
+	for hero in valid_heroes:
+		if hero.is_taunting():
+			taunting_heroes.append(hero)
+	return taunting_heroes if not taunting_heroes.is_empty() else valid_heroes
 
 func _check_ai_overrides() -> Action:
 	if enemy_data.ai_overrides.is_empty(): return null

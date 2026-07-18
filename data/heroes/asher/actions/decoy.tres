@@ -19,7 +19,6 @@ condition_name = "Decoy"
 icon = ExtResource("2_qvlgb")
 description = "Cannot be targeted until the start of this hero's next turn."
 is_untargetable = true
-retarget = true
 remove_on_triggers = Array[int]([1])
 metadata/_custom_type_script = "uid://df30dm288ne1d"
 
