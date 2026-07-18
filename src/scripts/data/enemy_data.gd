@@ -23,6 +23,7 @@ enum AIPattern { SEQUENCE, RANDOM }
 @export var ai_pattern: AIPattern = AIPattern.SEQUENCE
 @export var action_deck: Array[Action]
 @export var ai_overrides: Array[AIOverride]
+@export var abilities: Array[EnemyAbility] = []
 
 var stats: ActorStats
 
