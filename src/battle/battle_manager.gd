@@ -48,6 +48,7 @@ var TARGET_CT: int = 4000
 var battle_ct_speed_scale := 1.0
 var force_enemy_level: int = -1
 var current_encounter: Encounter
+var encounter_seed := 0
 
 func change_state(new_state):
 	if current_state == State.BATTLE_OVER:
@@ -113,8 +114,8 @@ func spawn_encounter():
 		enemy_card.current_ct = 0
 		print(enemy_card.actor_name, "'s CT: ", enemy_card.current_ct)
 		enemy_card.battle_priority = actor_list.size()
+		enemy_card.initialize_ai(encounter_seed)
 		actor_list.append(enemy_card)
-		enemy_card.prepare_turn_base_action()
 
 	var current_indices = {}
 	var suffixes = [" A", " B", " C", " D"]
@@ -258,12 +259,25 @@ func _clear_executing_action_recovery() -> void:
 	executing_action_ct_percent = 100
 	executing_action_ends_turn = false
 
-func _update_all_enemy_intents():
-	var living_heroes = get_living_heroes()
-	var living_enemies = get_living_enemies()
-	for enemy in living_enemies:
-		if enemy == current_actor: continue
-		enemy.decide_intent(living_heroes)
+func _enemy_ai_context() -> EnemyAIContext:
+	var ticks := {}
+	for actor: ActorCard in actor_list:
+		if not is_instance_valid(actor) or actor.is_defeated:
+			continue
+		ticks[actor] = maxi(
+			ceili(float(TARGET_CT - actor.current_ct) / maxi(actor.get_ct_speed(), 1)),
+			0,
+		)
+	return EnemyAIContext.new(
+		get_living_heroes(), get_living_enemies(), ticks, encounter_seed,
+	)
+
+
+func _update_all_enemy_intents() -> void:
+	var context := _enemy_ai_context()
+	for enemy: EnemyCard in get_living_enemies():
+		if enemy != current_actor:
+			enemy.decide_intent(context)
 
 func _on_actor_died(actor: ActorCard):
 	print(actor.actor_name, " has died. Removing from actor_list.")
@@ -471,26 +485,72 @@ func execute_action(actor: ActorCard, action: Action, targets: Array, display_na
 func execute_triggered_effect(actor: ActorCard, effect: ActionEffect, targets: Array, action: Action, context: Dictionary = {}):
 	await effect.execute(actor, targets, self, action, context)
 
-func execute_enemy_turn(enemy: EnemyCard):
+func execute_enemy_turn(enemy: EnemyCard) -> void:
 	change_state(State.EXECUTING_ACTION)
 	print("\n", enemy.actor_name, " is executing its turn!")
-	var action = enemy.intended_action
-	var targets = enemy.intended_targets
-	enemy.show_action(action.action_name)
-	await wait(0.5)
-
-	if not action:
-		push_error(enemy.actor_name, " is missing an action!")
+	var context := _enemy_ai_context()
+	if not _is_enemy_decision_executable(enemy, context):
+		enemy.decide_intent(context)
+	if not _is_enemy_decision_executable(enemy, context):
+		push_error("Enemy '%s' has no executable intent on AI turn %d after re-evaluation." % [
+			enemy.actor_name, enemy.ai_state.completed_turns,
+		])
+		enemy.complete_ai_turn()
 		_clear_executing_action_recovery()
 		return
 
+	var action := enemy.intended_action
+	var targets := enemy.intended_targets
+
+	if not action:
+		push_error(enemy.actor_name, " is missing an action!")
+		enemy.complete_ai_turn()
+		_clear_executing_action_recovery()
+		return
+
+	var used_ability_id := enemy.intended_decision.ability.ability_id \
+		if enemy.intended_decision.ability != null else &""
+	enemy.show_action(action.action_name)
+	await wait(0.5)
 	await execute_action(enemy, action, targets, true, true)
 	if current_state == State.BATTLE_OVER:
 		return
 	await wait(0.15)
 	enemy.clear_intent()
-	enemy.prepare_turn_base_action()
+	enemy.complete_ai_turn(used_ability_id)
 	return
+
+
+func _is_enemy_decision_executable(enemy: EnemyCard, context: EnemyAIContext) -> bool:
+	var decision := enemy.intended_decision
+	if not decision.is_valid():
+		return false
+	if decision.is_recovery:
+		return enemy.is_breached and decision.targets == [enemy]
+
+	var taunting_hero_exists := context.heroes.any(func(hero: HeroCard):
+		return is_instance_valid(hero) and not hero.is_defeated \
+			and not hero.is_untargetable() and hero.is_taunting()
+	)
+	var taunt_restricts_targets := decision.action.target_type in [
+		Action.TargetType.ONE_ENEMY,
+		Action.TargetType.RANDOM_ENEMY,
+	]
+	for target: ActorCard in decision.targets:
+		if not is_instance_valid(target) or target.is_defeated:
+			return false
+		if target is HeroCard:
+			if target not in context.heroes or (target as HeroCard).is_untargetable():
+				return false
+			if taunt_restricts_targets and taunting_hero_exists \
+			and not (target as HeroCard).is_taunting():
+				return false
+		elif target is EnemyCard:
+			if target not in context.enemies:
+				return false
+		else:
+			return false
+	return true
 
 func get_living_heroes() -> Array[HeroCard]:
 	var living_heroes: Array[HeroCard] = []

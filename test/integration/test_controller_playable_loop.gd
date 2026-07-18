@@ -64,6 +64,7 @@ class LoopManager extends GameManager:
 	var terminal_completed := false
 	var battle_manager: LoopBattleManager
 	var battle_confirmed := 0
+	var fixture_enemy_kit_errors := PackedStringArray()
 
 	func _ready() -> void:
 		pass
@@ -74,6 +75,17 @@ class LoopManager extends GameManager:
 		dungeon_map.unlock_input()
 
 	func _start_encounter(encounter: Encounter) -> void:
+		var fixture_encounter := encounter.duplicate(true) as Encounter
+		var fixture_enemies: Array[EnemyData] = []
+		for authored_enemy: EnemyData in encounter.enemies:
+			var fixture_enemy := authored_enemy.duplicate(true) as EnemyData
+			fixture_enemy.abilities = [_fixture_enemy_ability()]
+			fixture_enemies.append(fixture_enemy)
+			fixture_enemy_kit_errors.append_array(EnemyKitValidator.validate(
+				fixture_enemy, "controller playable-loop fixture",
+			))
+		fixture_encounter.enemies = fixture_enemies
+
 		var scene := BATTLE.instantiate() as BattleScene
 		var packed_manager := scene.manager
 		var hero_card_scene := packed_manager.hero_card_scene
@@ -101,7 +113,7 @@ class LoopManager extends GameManager:
 		battle_scene = scene
 		scene.battle_ended.connect(end_encounter)
 		await (Engine.get_main_loop() as SceneTree).process_frame
-		battle_manager.current_encounter = encounter
+		battle_manager.current_encounter = fixture_encounter
 		await battle_manager.spawn_encounter()
 		var hero := battle_manager.hero_area.get_child(0) as HeroCard
 		var first_enemy := battle_manager.enemy_area.get_child(0) as EnemyCard
@@ -113,6 +125,21 @@ class LoopManager extends GameManager:
 		battle_manager.current_actor = hero
 		battle_manager.current_state = BattleManager.State.PLAYER_ACTION
 		await battle_manager.action_bar.load_actions(hero)
+
+	func _fixture_enemy_ability() -> EnemyAbility:
+		var action := Action.new()
+		action.action_name = "Fixture Attack"
+		action.target_type = Action.TargetType.ONE_ENEMY
+		var selector := EnemyTargetSelector.new()
+		selector.type = EnemyTargetSelector.Type.SEEDED_HERO
+		var rule := EnemyDecisionRule.new()
+		rule.selector = selector
+		rule.reason = "controller playable-loop fixture"
+		var ability := EnemyAbility.new()
+		ability.ability_id = &"fixture_attack"
+		ability.action = action
+		ability.rules = [rule]
+		return ability
 
 
 class LoopRouter extends Main:
@@ -299,6 +326,8 @@ func test_controller_events_route_the_complete_playable_loop() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	assert_not_null(router.manager.battle_scene)
+	assert_true(router.manager.fixture_enemy_kit_errors.is_empty())
+	assert_false(router.manager.battle_manager.current_encounter.enemies[0].abilities.is_empty())
 	var navigation_ux := router.get_node("NavigationUXLayer") as NavigationUXLayer
 	assert_null(router.manager.battle_scene._current_target)
 	assert_false(navigation_ux.cursor.visible)
