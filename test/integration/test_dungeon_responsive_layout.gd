@@ -21,10 +21,10 @@ func test_dungeon_hud_groups_use_owned_anchors_and_fit_acceptance_outputs() -> v
 				"%s must fit %s" % [path, window_size],
 			)
 
-		_assert_anchor(hud.get_node("TeamStatus"), Vector2.ZERO, "TeamStatus")
+		_assert_anchor(hud.get_node("TeamStatus"), Vector2(0.5, 1.0), "TeamStatus")
 		_assert_anchor(hud.get_node("BitsFound"), Vector2.ZERO, "BitsFound")
 		_assert_anchor(hud.get_node("AlertGauge"), Vector2(1.0, 0.0), "AlertGauge")
-		_assert_anchor(hud.get_node("NodeGauge"), Vector2(0.0, 1.0), "NodeGauge")
+		_assert_anchor(hud.get_node("NodeGauge"), Vector2.ZERO, "NodeGauge")
 		_assert_anchor(hud.get_node("Warning"), Vector2(0.5, 0.0), "Warning")
 		if window_size == Vector2i(1920, 1080):
 			_assert_authored_desktop_rects(hud)
@@ -97,5 +97,5 @@ func _assert_anchor(control: Control, expected: Vector2, label: String) -> void:
 func _assert_authored_desktop_rects(hud: Control) -> void:
 	assert_eq(hud.get_node("AlertGauge").get_global_rect(), Rect2(144, 10, 425, 40))
 	assert_eq(hud.get_node("BitsFound").get_global_rect(), Rect2(1239, 10, 224, 40))
-	assert_eq(hud.get_node("NodeGauge").get_global_rect(), Rect2(1476, 10, 189, 40))
+	assert_eq(hud.get_node("NodeGauge").get_global_rect(), Rect2(1480, 10, 189, 40))
 	assert_eq(hud.get_node("TeamStatus").get_global_rect(), Rect2(18, 1029, 1884, 40))

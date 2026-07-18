@@ -1,7 +1,7 @@
 extends GutTest
 
 const FAMILIES := ["keyboard_mouse", "nintendo_switch", "nintendo_switch_2", "playstation", "steam_controller", "steam_deck", "xbox"]
-const CURSORS := ["pointer_c", "hand_point", "hand_point_e", "hand_open", "hand_closed", "tool_hammer", "cursor_disabled", "busy_circle", "cross_small", "cursor_cogs"]
+const CURSORS := ["pointer_c", "hand_point", "hand_point_e", "hand_point_n", "hand_open", "hand_closed", "tool_hammer", "cursor_disabled", "busy_circle", "cross_small", "cursor_cogs"]
 const BATTLE_KEYBOARD_GLYPHS := [
 	"keyboard_1.svg", "keyboard_2.svg", "keyboard_3.svg", "keyboard_4.svg",
 	"keyboard_q.svg", "keyboard_e.svg",
@@ -66,6 +66,6 @@ func test_approved_cursor_set_is_complete() -> void:
 	for cursor_name in CURSORS:
 		expected_sources.append(cursor_name + ".svg")
 	expected_sources.sort()
-	assert_eq(actual_sources, expected_sources, "exact ten cursor SVG sources; .import sidecars ignored")
+	assert_eq(actual_sources, expected_sources, "exact eleven cursor SVG sources; .import sidecars ignored")
 	for cursor_name in CURSORS:
 		assert_true(ResourceLoader.exists("res://assets/graphics/glyphs/cursors/outline/%s.svg" % cursor_name), cursor_name)

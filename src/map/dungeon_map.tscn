@@ -397,14 +397,10 @@ vertical_alignment = 1
 [node name="NodeGauge" type="Panel" parent="CanvasLayer/HUD"]
 modulate = Color(0.88, 0.42856, 0.1672, 1)
 layout_mode = 1
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 1476.0
-offset_top = -1070.0
-offset_right = 1665.0
-offset_bottom = -1030.0
-grow_vertical = 0
+offset_left = 1480.0
+offset_top = 10.0
+offset_right = 1669.0
+offset_bottom = 50.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_ajvg2")
 
 [node name="Gauge" type="ProgressBar" parent="CanvasLayer/HUD/NodeGauge"]
@@ -496,10 +492,17 @@ vertical_alignment = 1
 [node name="TeamStatus" type="Control" parent="CanvasLayer/HUD"]
 custom_minimum_size = Vector2(450, 40)
 layout_mode = 1
-offset_left = 18.0
-offset_top = 1029.0
-offset_right = 1902.0
-offset_bottom = 1069.0
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -942.0
+offset_top = -51.0
+offset_right = 942.0
+offset_bottom = -11.0
+grow_horizontal = 2
+grow_vertical = 0
 
 [node name="VBox" type="HBoxContainer" parent="CanvasLayer/HUD/TeamStatus"]
 layout_mode = 1
