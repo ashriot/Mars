@@ -330,12 +330,15 @@ func test_node_memory_never_leaks_between_heroes_at_role_selection() -> void:
 	await get_tree().process_frame
 
 
-func test_role_selection_disables_tree_focus_and_rejects_node_activation_until_entry() -> void:
+func test_role_selection_disables_tree_focus_but_allows_pointer_activation_on_expanded_role() -> void:
 	var panel := await _skill_panel_with_multi_page_role()
 	assert_true(panel.enter_role_select())
 	var node := panel._current_role_panel().generated_nodes["gun.atk_1"] as SkillTreeNode
+	var collapsed_node := (panel.role_list_container.get_child(1) as RolePanel).generated_nodes["snp.aaa"] as SkillTreeNode
 	assert_eq(node.focus_mode, Control.FOCUS_NONE)
-	assert_eq(node.mouse_filter, Control.MOUSE_FILTER_IGNORE)
+	assert_eq(node.mouse_filter, Control.MOUSE_FILTER_STOP)
+	assert_eq(collapsed_node.focus_mode, Control.FOCUS_NONE)
+	assert_eq(collapsed_node.mouse_filter, Control.MOUSE_FILTER_IGNORE)
 	var tab := InputEventKey.new()
 	tab.keycode = KEY_TAB
 	tab.pressed = true
@@ -344,17 +347,17 @@ func test_role_selection_disables_tree_focus_and_rejects_node_activation_until_e
 	assert_true(get_viewport().gui_get_focus_owner() is RolePanel, "Tab remains isolated to role selection targets")
 	watch_signals(panel)
 	node._pressed()
-	assert_signal_not_emitted(panel, "purchase_requested")
+	assert_signal_emitted_with_parameters(panel, "purchase_requested", [panel.current_hero, "gun", "gun.atk_1"])
+	assert_signal_emit_count(panel, "purchase_requested", 1)
 
 	assert_true(panel.enter_tree())
 	assert_eq(node.focus_mode, Control.FOCUS_ALL)
 	assert_eq(node.mouse_filter, Control.MOUSE_FILTER_STOP)
-	var collapsed_node := (panel.role_list_container.get_child(1) as RolePanel).generated_nodes["snp.aaa"] as SkillTreeNode
 	assert_eq(collapsed_node.focus_mode, Control.FOCUS_NONE)
 	assert_eq(collapsed_node.mouse_filter, Control.MOUSE_FILTER_IGNORE)
 	node._pressed()
 	assert_signal_emitted_with_parameters(panel, "purchase_requested", [panel.current_hero, "gun", "gun.atk_1"])
-	assert_signal_emit_count(panel, "purchase_requested", 1)
+	assert_signal_emit_count(panel, "purchase_requested", 2)
 	panel.free()
 	await get_tree().process_frame
 
@@ -371,7 +374,8 @@ func test_role_selection_profile_changes_keep_every_tree_node_isolated() -> void
 			assert_eq(role_panel.focus_mode, Control.FOCUS_ALL)
 			for node: Control in role_panel.generated_nodes.values():
 				assert_eq(node.focus_mode, Control.FOCUS_NONE)
-				assert_eq(node.mouse_filter, Control.MOUSE_FILTER_IGNORE)
+				var expected_mouse := Control.MOUSE_FILTER_STOP if role_panel == panel._current_role_panel() else Control.MOUSE_FILTER_IGNORE
+				assert_eq(node.mouse_filter, expected_mouse)
 		var tab := InputEventKey.new()
 		tab.keycode = KEY_TAB
 		tab.pressed = true

@@ -135,7 +135,7 @@ func refresh_progression_state(hero: HeroData) -> void:
 
 func _on_purchase_requested(hero: HeroData, role_id: String, node_id: String) -> void:
 	var panel := _current_role_panel()
-	if navigation_depth != NavigationDepth.TREE or hero != current_hero or panel == null or role_id != panel.role_id:
+	if hero != current_hero or panel == null or role_id != panel.role_id:
 		return
 	purchase_requested.emit(hero, role_id, node_id)
 
@@ -477,13 +477,15 @@ func _set_role_panel_focus_enabled(enabled: bool) -> void:
 
 
 func _set_tree_nodes_interactive(enabled: bool) -> void:
+	var current_panel := _current_role_panel()
 	for child in role_list_container.get_children():
 		if not child is RolePanel:
 			continue
-		var interactive := enabled and child == _current_role_panel()
+		var is_current := child == current_panel
+		var focus_enabled := enabled and is_current
 		for node: Control in (child as RolePanel).generated_nodes.values():
-			node.focus_mode = Control.FOCUS_ALL if interactive else Control.FOCUS_NONE
-			node.mouse_filter = Control.MOUSE_FILTER_STOP if interactive else Control.MOUSE_FILTER_IGNORE
+			node.focus_mode = Control.FOCUS_ALL if focus_enabled else Control.FOCUS_NONE
+			node.mouse_filter = Control.MOUSE_FILTER_STOP if is_current else Control.MOUSE_FILTER_IGNORE
 
 
 func _focused_position() -> Vector2:
