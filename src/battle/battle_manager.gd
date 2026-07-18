@@ -40,6 +40,7 @@ signal target_invalidated(actor: ActorCard)
 var current_actor: ActorCard = null
 var current_action: Action = null
 var executing_action: Action = null
+var _pending_after_shift_action: HeroCard
 var executing_action_ct_percent := 100
 var executing_action_ends_turn := false
 var focused_button: ActionButton = null
@@ -428,15 +429,26 @@ func _reset_action_button_presentation(button: ActionButton) -> void:
 func _finish_hero_turn():
 	if current_state == State.BATTLE_OVER:
 		return
-	var is_shift_action = executing_action.is_shift_action
+	var finished_action := executing_action
+	var is_shift_action := finished_action != null and finished_action.is_shift_action
 	if focused_button:
 		release_focused_button()
 	executing_action = null
 	change_state(BattleManager.State.PLAYER_ACTION)
-	if not is_shift_action:
+	if is_shift_action:
+		await _finish_shift_reactions(current_actor as HeroCard)
+	else:
 		await current_actor.on_turn_ended()
 		find_and_start_next_turn()
 	await wait()
+
+
+func _finish_shift_reactions(hero: HeroCard) -> void:
+	if _pending_after_shift_action != hero:
+		return
+	_pending_after_shift_action = null
+	await hero._fire_condition_event(Trigger.TriggerType.AFTER_SHIFT_ACTION)
+	update_turn_order()
 
 func _apply_role_passive(hero: HeroCard):
 	current_actor = hero
@@ -661,6 +673,7 @@ func _on_shift_button_pressed(direction: String):
 	AudioManager.play_sfx("radiate")
 	await action_bar.slide_out()
 	await current_actor.shift_role(direction)
+	_pending_after_shift_action = current_hero
 	update_turn_order()
 	action_bar.update_action_bar(current_hero, true)
 	await action_bar.slide_in()
@@ -675,6 +688,8 @@ func _on_shift_button_pressed(direction: String):
 			)
 
 			await execute_action(current_actor, action, target_list)
+			await _finish_shift_reactions(current_hero)
+			executing_action = null
 			change_state(State.PLAYER_ACTION)
 			return
 
@@ -682,6 +697,7 @@ func _on_shift_button_pressed(direction: String):
 		print("Action requires a target. Waiting for click...")
 		set_current_action(action)
 	else:
+		await _finish_shift_reactions(current_hero)
 		change_state(State.PLAYER_ACTION)
 
 func get_targets(

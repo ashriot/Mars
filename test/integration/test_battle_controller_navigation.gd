@@ -36,6 +36,82 @@ class ImmediateShiftHero extends HeroCard:
 		return
 
 
+class ShiftEventEffect extends ActionEffect:
+	var event_name: String
+	var events: Array[String]
+
+	func _init(recorded_event: String, event_log: Array[String]) -> void:
+		event_name = recorded_event
+		events = event_log
+
+	func execute(
+		_attacker: ActorCard,
+		_parent_targets: Array,
+		_battle_manager: BattleManager,
+		_action: Action = null,
+		_context: Dictionary = {},
+	) -> void:
+		events.append(event_name)
+
+
+class ShiftReactionHero extends HeroCard:
+	var events: Array[String]
+
+	func shift_role(_direction: String):
+		current_role_index = 1
+		events.append("role_changed")
+		await _fire_condition_event(Trigger.TriggerType.ON_SHIFT)
+
+	func set_target_presentation(_state: TargetPresentation) -> void:
+		return
+
+
+class ShiftReactionBattleManager extends BattleManager:
+	func wait(_duration: float = 0.01) -> void:
+		return
+
+	func _apply_role_passive(_hero: HeroCard):
+		return
+
+	func _flush_all_health_animations() -> void:
+		return
+
+	func _update_all_enemy_intents() -> void:
+		return
+
+	func update_turn_order() -> void:
+		return
+
+	func set_current_action(action: Action):
+		current_action = action
+		for target: ActorCard in get_targets(
+			action.target_type, true, [], null, action.can_revive_targets,
+		):
+			target.is_valid_target = true
+
+	func execute_action(
+		actor: ActorCard,
+		action: Action,
+		targets: Array,
+		_display_name: bool = true,
+		_ends_turn: bool = false,
+	):
+		executing_action = action
+		current_action = null
+		for effect: ActionEffect in action.effects:
+			await effect.execute(actor, targets, self, action, {})
+
+
+class ShiftReactionFixture extends RefCounted:
+	var manager: ShiftReactionBattleManager
+	var hero: ShiftReactionHero
+	var target: HeroCard
+	var events: Array[String]
+
+	func free_all() -> void:
+		manager.free()
+
+
 class RemoveConditionsEffect extends ActionEffect:
 	func execute(
 		attacker: ActorCard,
@@ -250,12 +326,48 @@ func test_role_shift_publishes_queue_only_after_new_role_is_current() -> void:
 
 	await manager._on_shift_button_pressed("right")
 
-	assert_eq(publication.count, 1, "role shift publishes one immediate queue refresh")
+	assert_eq(
+		publication.count,
+		2,
+		"role shift publishes after the role changes and after Shift reactions finish",
+	)
 	for icon in publication.icons:
 		assert_same(icon, hero.loaded_roles[1].icon, "no publication exposes the old role icon")
 	bar.free()
 	hero.free()
 	manager.free()
+
+
+func test_after_shift_reaction_fires_after_automatic_shift_action() -> void:
+	var fixture := _shift_reaction_fixture(true, false)
+
+	await fixture.manager._on_shift_button_pressed("right")
+
+	assert_eq(fixture.events, ["role_changed", "shift_action", "after_shift_action"])
+	assert_null(fixture.manager.executing_action)
+	fixture.free_all()
+
+
+func test_after_shift_reaction_waits_for_targeted_shift_action_target() -> void:
+	var fixture := _shift_reaction_fixture(false, true)
+
+	await fixture.manager._on_shift_button_pressed("right")
+
+	assert_eq(fixture.events, ["role_changed"])
+	await fixture.manager._on_hero_clicked(fixture.target)
+	assert_eq(fixture.events, ["role_changed", "shift_action", "after_shift_action"])
+	assert_null(fixture.manager.executing_action)
+	fixture.free_all()
+
+
+func test_shift_without_shift_action_still_finishes_reactions() -> void:
+	var fixture := _shift_reaction_fixture(false, false)
+
+	await fixture.manager._on_shift_button_pressed("right")
+
+	assert_eq(fixture.events, ["role_changed", "after_shift_action"])
+	assert_null(fixture.manager.executing_action)
+	fixture.free_all()
 
 
 func test_target_navigation_filters_invalid_cards_and_uses_geometry() -> void:
@@ -1104,6 +1216,69 @@ func test_battle_adapter_teardown_clears_target_presentation_cursor_hints_and_re
 	assert_false(ux.cursor.visible)
 	assert_eq(ux.hint_bar.get_hint_count(), 0)
 	scene.free()
+
+
+func _shift_reaction_fixture(
+	automatic_action: bool,
+	targeted_action: bool,
+) -> ShiftReactionFixture:
+	var fixture := ShiftReactionFixture.new()
+	fixture.events = []
+	fixture.manager = ShiftReactionBattleManager.new()
+	var hero_area := Control.new()
+	var enemy_area := Control.new()
+	var action_bar := ImmediateShiftActionBar.new()
+	fixture.manager.add_child(hero_area)
+	fixture.manager.add_child(enemy_area)
+	fixture.manager.add_child(action_bar)
+	fixture.manager.hero_area = hero_area
+	fixture.manager.enemy_area = enemy_area
+	fixture.manager.action_bar = action_bar
+	fixture.hero = ShiftReactionHero.new()
+	fixture.hero.events = fixture.events
+	fixture.hero.current_stats = ActorStats.new()
+	fixture.hero.current_stats.speed = 100
+	fixture.hero.is_defeated = false
+	fixture.hero.battle_manager = fixture.manager
+	fixture.target = ShiftReactionHero.new()
+	(fixture.target as ShiftReactionHero).events = fixture.events
+	fixture.target.current_stats = ActorStats.new()
+	fixture.target.is_defeated = false
+	fixture.target.is_valid_target = true
+	hero_area.add_child(fixture.hero)
+	hero_area.add_child(fixture.target)
+
+	for _role_index in 2:
+		var definition := RoleDefinition.new()
+		definition.color = Color.WHITE
+		var role := RoleData.new()
+		role.source_definition = definition
+		fixture.hero.loaded_roles.append(role)
+	fixture.hero.current_role_index = 0
+
+	if automatic_action or targeted_action:
+		var action := Action.new()
+		action.action_name = "Shift test"
+		action.is_shift_action = true
+		action.auto_target = automatic_action
+		action.target_type = Action.TargetType.SELF \
+			if automatic_action else Action.TargetType.ONE_ALLY
+		action.effects = [ShiftEventEffect.new("shift_action", fixture.events)]
+		fixture.hero.loaded_roles[1].shift_action = action
+
+	var after_shift_trigger := Trigger.new()
+	after_shift_trigger.trigger_type = Trigger.TriggerType.AFTER_SHIFT_ACTION
+	after_shift_trigger.effects_to_run = [
+		ShiftEventEffect.new("after_shift_action", fixture.events),
+	]
+	var condition := Condition.new()
+	condition.condition_name = "After Shift reaction"
+	condition.attacker = fixture.hero
+	condition.triggers = [after_shift_trigger]
+	fixture.hero.active_conditions = [condition]
+	fixture.manager.current_actor = fixture.hero
+	fixture.manager.current_state = BattleManager.State.PLAYER_ACTION
+	return fixture
 
 
 func _ct_actor(current_ct: int, speed: int) -> EnemyCard:

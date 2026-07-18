@@ -20,7 +20,8 @@ enum TriggerType {
 	BEFORE_BUFF_RECEIVED,
 	BEFORE_DEBUFF_RECEIVED,
 	ON_TRIGGERED,
-	ON_HIT
+	ON_HIT,
+	AFTER_SHIFT_ACTION,
 }
 @export var trigger_type: TriggerType
 @export var effects_to_run: Array[ActionEffect]

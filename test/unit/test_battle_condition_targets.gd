@@ -147,6 +147,14 @@ func test_remove_debuffs_returns_exact_removed_count() -> void:
 	_free_condition_fixture(fixture)
 
 
+func test_after_shift_action_is_appended_after_existing_trigger_values() -> void:
+	assert_gt(Trigger.TriggerType.AFTER_SHIFT_ACTION, Trigger.TriggerType.ON_HIT)
+	assert_eq(
+		Trigger.TriggerType.AFTER_SHIFT_ACTION,
+		Trigger.TriggerType.values().max(),
+	)
+
+
 func _condition_fixture() -> Dictionary:
 	var manager := CapturingBattleManager.new()
 	var actor := ConditionActor.new()
