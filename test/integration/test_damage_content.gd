@@ -190,7 +190,7 @@ const NESTED_COMPATIBILITY_CASES: Array[Dictionary] = [
 			"hit_count": 1,
 			"split_damage": false,
 			"is_indirect": false,
-			"remove_guard_gained": true,
+			"requires_inversion": true,
 		},
 	},
 	{
@@ -1206,12 +1206,9 @@ func _append_effect_spec_errors(
 				errors.append("%s unexpectedly has lifedrain" % label)
 			if not damage.pre_hit_triggers.is_empty():
 				errors.append("%s unexpectedly has pre-hit triggers" % label)
-			if expected.has("remove_guard_gained"):
-				if not damage is Effect_Damage_Inversion:
-					errors.append("%s lost its specialized Inversion shape" % label)
-				elif (damage as Effect_Damage_Inversion).remove_guard_gained \
-					!= expected.remove_guard_gained:
-					errors.append("%s Guard-removal shape drifted" % label)
+			if expected.get("requires_inversion", false) \
+				and not damage is Effect_Damage_Inversion:
+				errors.append("%s lost its specialized Inversion shape" % label)
 			_append_on_hit_spec_errors(errors, damage, expected.get("on_hit", null), label)
 		"healing":
 			if not effect is Effect_Healing:

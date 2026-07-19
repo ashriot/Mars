@@ -670,7 +670,9 @@ func get_crit_damage_bonus() -> int:
 	return current_stats.precision
 
 func get_damage_dealt_modifier(target: ActorCard) -> float:
-	return _damage_contribution_total(get_damage_dealt_contributions(target))
+	return _damage_contribution_total(
+		get_damage_dealt_contributions(target), DamageContribution.Stage.OUTGOING,
+	)
 
 
 func get_damage_dealt_contributions(
@@ -678,16 +680,24 @@ func get_damage_dealt_contributions(
 ) -> Array[DamageContribution]:
 	var contributions: Array[DamageContribution] = []
 	for condition: Condition in active_conditions:
+		var power_bonus := condition.get_damage_dealt_power_bonus(self, target)
+		if not is_zero_approx(power_bonus):
+			contributions.append(DamageContribution.new(
+				_damage_modifier_source(
+					"condition", condition.condition_name, condition.resource_path,
+				),
+				DamageContribution.Stage.POWER,
+				power_bonus,
+			))
 		var amount := condition.get_damage_dealt_modifier(self, target)
-		if is_zero_approx(amount):
-			continue
-		contributions.append(DamageContribution.new(
-			_damage_modifier_source(
-				"condition", condition.condition_name, condition.resource_path,
-			),
-			DamageContribution.Stage.OUTGOING,
-			amount,
-		))
+		if not is_zero_approx(amount):
+			contributions.append(DamageContribution.new(
+				_damage_modifier_source(
+					"condition", condition.condition_name, condition.resource_path,
+				),
+				DamageContribution.Stage.OUTGOING,
+				amount,
+			))
 	for trait_item: Trait in active_traits:
 		var amount := trait_item.get_damage_dealt_modifier(target)
 		if is_zero_approx(amount):
@@ -703,7 +713,9 @@ func get_damage_dealt_contributions(
 
 
 func get_damage_taken_modifier(attacker: ActorCard) -> float:
-	return _damage_contribution_total(get_damage_taken_contributions(attacker))
+	return _damage_contribution_total(
+		get_damage_taken_contributions(attacker), DamageContribution.Stage.INCOMING,
+	)
 
 
 func get_damage_taken_contributions(
@@ -737,10 +749,12 @@ func get_damage_taken_contributions(
 
 func _damage_contribution_total(
 	contributions: Array[DamageContribution],
+	stage: DamageContribution.Stage,
 ) -> float:
 	var total := 0.0
 	for contribution: DamageContribution in contributions:
-		total += contribution.amount
+		if contribution.stage == stage:
+			total += contribution.amount
 	return total
 
 

@@ -199,6 +199,100 @@ func test_request_retains_authored_potency_and_labeled_actor_modifiers() -> void
 	target.free()
 
 
+func test_source_power_bonus_reads_condition_creator_psy() -> void:
+	var condition := ConditionSourcePowerBonus.new()
+	condition.power_type = Action.PowerType.PSYCHE
+	condition.power_scalar = 1.0
+	condition.attacker = _actor_with_power(Action.PowerType.PSYCHE, 40)
+	var attacking_recipient := _actor_with_power(Action.PowerType.PSYCHE, 5)
+
+	assert_eq(condition.get_damage_dealt_power_bonus(attacking_recipient, null), 40.0)
+
+	condition.attacker.free()
+	attacking_recipient.free()
+
+
+func test_source_power_bonus_returns_zero_without_a_valid_creator() -> void:
+	var condition := ConditionSourcePowerBonus.new()
+	condition.power_type = Action.PowerType.PSYCHE
+	condition.power_scalar = 1.0
+
+	assert_eq(condition.get_damage_dealt_power_bonus(null, null), 0.0)
+
+
+func test_source_power_contribution_preserves_outgoing_contribution() -> void:
+	var attacker := _actor_with_power(Action.PowerType.ATTACK, 100)
+	var source := _actor_with_power(Action.PowerType.PSYCHE, 40)
+	var condition := ConditionSourcePowerBonus.new()
+	condition.condition_name = "Source Psy"
+	condition.power_type = Action.PowerType.PSYCHE
+	condition.power_scalar = 1.0
+	condition.damage_dealt_scalar = 0.25
+	condition.attacker = source
+	attacker.active_conditions = [condition]
+	var target := _actor_with_power(Action.PowerType.ATTACK, 0)
+	var context := _context(0, 0, 0)
+	var resolved := DamageResolver.resolve_potency(1.0, [], context)
+
+	var result := DamageResolver.resolve_hit(
+		attacker,
+		target,
+		Action.PowerType.ATTACK,
+		resolved,
+		1,
+		Action.DamageType.PIERCING,
+		false,
+		context,
+	)
+
+	_assert_contribution_once(
+		result.request.contributions,
+		&"condition_source_psy",
+		DamageContribution.Stage.POWER,
+		40.0,
+	)
+	_assert_contribution_once(
+		result.request.contributions,
+		&"condition_source_psy",
+		DamageContribution.Stage.OUTGOING,
+		0.25,
+	)
+	assert_almost_eq(attacker.get_damage_dealt_modifier(target), 0.25, 0.0001)
+	attacker.free()
+	source.free()
+	target.free()
+
+
+func test_distribution_divides_entire_source_power_bonus() -> void:
+	var attacker := _actor_with_power(Action.PowerType.ATTACK, 100)
+	var source := _actor_with_power(Action.PowerType.PSYCHE, 40)
+	var condition := ConditionSourcePowerBonus.new()
+	condition.power_type = Action.PowerType.PSYCHE
+	condition.power_scalar = 1.0
+	condition.attacker = source
+	attacker.active_conditions = [condition]
+	var target := _actor_with_power(Action.PowerType.ATTACK, 0)
+	var context := _context(0, 0, 0)
+	var resolved := DamageResolver.resolve_potency(1.0, [], context)
+
+	var result := DamageResolver.resolve_hit(
+		attacker,
+		target,
+		Action.PowerType.ATTACK,
+		resolved,
+		2,
+		Action.DamageType.PIERCING,
+		false,
+		context,
+	)
+
+	assert_almost_eq(result.effective_power, 140.0, 0.0001)
+	assert_almost_eq(result.raw_damage, 70.0, 0.0001)
+	attacker.free()
+	source.free()
+	target.free()
+
+
 func test_unsupported_contribution_stage_is_reported_and_excluded() -> void:
 	var invalid_rule := _fixed_rule(&"invalid", 99, 10.0)
 	var resolved := DamageResolver.resolve_potency(
@@ -249,3 +343,13 @@ func _context(focus: int, guard: int, other_living_allies: int) -> DamageContext
 	var attacker := CombatantSnapshot.new(100, focus, guard, false, false, [])
 	var target := CombatantSnapshot.new(100, 0, 0, false, false, [])
 	return DamageContext.new(attacker, target, other_living_allies, 0, null, null, {})
+
+
+func _actor_with_power(power_type: Action.PowerType, value: int) -> ActorCard:
+	var actor := ActorCard.new()
+	actor.current_stats = ActorStats.new()
+	if power_type == Action.PowerType.ATTACK:
+		actor.current_stats.attack = value
+	elif power_type == Action.PowerType.PSYCHE:
+		actor.current_stats.psyche = value
+	return actor

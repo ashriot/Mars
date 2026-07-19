@@ -594,6 +594,38 @@ func test_each_planned_hit_builds_one_request_and_result() -> void:
 	_free_recorded_nodes(manager, [attacker, target])
 
 
+func test_percent_guard_removal_rounds_up_and_caps() -> void:
+	var effect := Effect_ModifyGuard.new()
+	effect.percent_change = -0.5
+	effect.max_abs_change = 5
+
+	assert_eq(effect.resolve_guard_delta(3), -2)
+	assert_eq(effect.resolve_guard_delta(20), -5)
+
+
+func test_zero_max_abs_guard_change_is_uncapped() -> void:
+	var effect := Effect_ModifyGuard.new()
+	effect.percent_change = -0.5
+	effect.max_abs_change = 0
+
+	assert_eq(effect.resolve_guard_delta(20), -10)
+
+
+func test_inversion_caps_guard_points() -> void:
+	var effect := Effect_Damage_Inversion.new()
+	effect.max_guard_points = 10
+
+	assert_eq(effect._resolve_hit_count(null, {"guard_gained": 4}), 4)
+	assert_eq(effect._resolve_hit_count(null, {"guard_gained": 14}), 10)
+
+
+func test_zero_max_inversion_guard_points_is_uncapped() -> void:
+	var effect := Effect_Damage_Inversion.new()
+	effect.max_guard_points = 0
+
+	assert_eq(effect._resolve_hit_count(null, {"guard_gained": 14}), 14)
+
+
 func test_production_inversion_context_builds_three_canonical_results() -> void:
 	var attacker := _recording_actor(10, 0, 0)
 	attacker.current_stats.psyche = 80
