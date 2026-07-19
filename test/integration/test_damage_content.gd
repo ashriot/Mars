@@ -150,7 +150,7 @@ const ASHER_GDD := {
 const ECHO_GDD := {
 	"shatter": {"per_guard": 0.5, "split": true, "clears_guard": true},
 	"psionic_pulse": {"potency": 0.35, "power": Action.PowerType.PSYCHE},
-	"focused_bolt": {"per_focus": 0.25},
+	"focused_bolt": {"base": 0.0, "per_focus": 0.25},
 	"energy_barrier": {"cost": 2, "guard": 2, "retaliation": 1.5},
 	"reverberate": {"cost": 3, "initial": 2.0, "triggered": 2.0},
 	"mind_storm": {"cost": 5, "base": 5.0, "remaining_focus": 0.2},
@@ -850,7 +850,7 @@ func test_return_fire_prose_matches_both_nested_damage_effects() -> void:
 func test_focused_bolt_uses_approved_remaining_focus_curve() -> void:
 	var action := load("res://data/heroes/echo/actions/focused_bolt.tres") as Action
 	var effect := action.effects[0] as Effect_Damage
-	assert_almost_eq(effect.potency, 0.2, 0.0001)
+	assert_almost_eq(effect.potency, ECHO_GDD.focused_bolt.base, 0.0001)
 	assert_eq(effect.power_type, Action.PowerType.ATTACK)
 	assert_eq(effect.damage_type, Action.DamageType.ENERGY)
 	assert_eq(effect.scaling_rules.size(), 1)
@@ -859,7 +859,8 @@ func test_focused_bolt_uses_approved_remaining_focus_curve() -> void:
 	assert_eq(rule.resource, DamageScalingFlatPerResource.ResourceType.FOCUS)
 	assert_almost_eq(rule.potency_per_point, ECHO_GDD.focused_bolt.per_focus, 0.0001)
 	assert_string_contains(action.description, "{effect:1}")
-	assert_string_contains(action.description, "20% ATK plus 25% per remaining Focus after paying the cost")
+	assert_string_contains(action.description, "25% ATK per remaining Focus after paying the cost")
+	assert_false("plus" in action.description.to_lower())
 
 
 func test_charged_shot_remains_one_hundred_fifty_percent_attack() -> void:
@@ -1051,6 +1052,7 @@ func test_echo_psion_actions_match_gdd() -> void:
 	var shatter_damage := shatter.effects[0] as Effect_Damage
 	var shatter_rule := shatter_damage.scaling_rules[0] as DamageScalingFlatPerResource
 	var shatter_clear := shatter.effects[1] as Effect_ModifyGuard
+	assert_true(shatter.is_shift_action)
 	assert_almost_eq(
 		shatter_rule.potency_per_point, ECHO_GDD.shatter.per_guard, 0.0001,
 	)
@@ -1074,9 +1076,11 @@ func test_echo_psion_actions_match_gdd() -> void:
 	var focused_damage := focused.effects[0] as Effect_Damage
 	var focused_rule := focused_damage.scaling_rules[0] as DamageScalingFlatPerResource
 	assert_almost_eq(
+		focused_damage.potency, ECHO_GDD.focused_bolt.base, 0.0001,
+	)
+	assert_almost_eq(
 		focused_rule.potency_per_point, ECHO_GDD.focused_bolt.per_focus, 0.0001,
 	)
-
 	var barrier := load("res://data/heroes/echo/actions/energy_barrier.tres") as Action
 	var barrier_guard := barrier.effects[0] as Effect_ModifyGuard
 	var retaliation := _first_condition_damage(load(
@@ -1109,6 +1113,31 @@ func test_echo_psion_actions_match_gdd() -> void:
 	)
 	assert_eq(storm_rule.resource, DamageScalingBasePerResource.ResourceType.FOCUS)
 	assert_string_contains(storm.description, "remaining Focus after paying the cost")
+
+
+func test_focused_bolt_runtime_matches_no_base_remaining_focus_curve() -> void:
+	var fixture := _sands_runtime_fixture()
+	var echo := fixture.sands as SandsRuntimeHero
+	var enemy := fixture.enemy as SandsRuntimeEnemy
+	var manager := fixture.manager as SandsRuntimeBattleManager
+	echo.actor_name = "Echo"
+	echo.current_stats.attack = 100
+	echo.current_focus = 5
+	enemy.current_guard = 10
+	var action := load(
+		"res://data/heroes/echo/actions/focused_bolt.tres"
+	) as Action
+
+	await manager.execute_action(echo, action, [enemy], false)
+
+	assert_eq(enemy.damage_results.size(), 1)
+	var result := enemy.damage_results[0] as DamageResult
+	assert_almost_eq(result.request.base_potency, 0.0, 0.0001)
+	assert_almost_eq(result.request.potency, 1.25, 0.0001)
+	assert_almost_eq(result.raw_damage, 125.0, 0.0001)
+	assert_eq(result.final_damage, 125)
+	assert_eq(echo.current_focus, 5)
+	_free_sands_runtime_fixture(fixture)
 
 
 func test_echo_kineticist_actions_match_gdd() -> void:
@@ -1694,6 +1723,7 @@ func test_advantage_executes_direct_ct_and_source_power_through_next_attack() ->
 	var fixture := _sands_runtime_fixture()
 	var sands := fixture.sands as SandsRuntimeHero
 	var ally := fixture.first_ally as SandsRuntimeHero
+	var second_ally := fixture.second_ally as SandsRuntimeHero
 	var enemy := fixture.enemy as SandsRuntimeEnemy
 	var manager := fixture.manager as SandsRuntimeBattleManager
 	sands.current_stats.psyche = 50
@@ -1703,10 +1733,18 @@ func test_advantage_executes_direct_ct_and_source_power_through_next_attack() ->
 	enemy.current_hp = 2000
 	enemy.current_guard = 10
 	var advantage := load("res://data/heroes/sands/actions/advantage.tres") as Action
+	assert_eq(advantage.target_type, Action.TargetType.ALLY_ONLY)
 	var ally_targets := manager.get_targets(
 		advantage.target_type, true, [], sands, advantage.can_revive_targets,
 	)
-	assert_has(ally_targets, ally)
+	assert_eq(ally_targets, [ally, second_ally])
+	assert_false(ally_targets.has(sands))
+	second_ally.is_defeated = true
+	second_ally.current_hp = 0
+	ally_targets = manager.get_targets(
+		advantage.target_type, true, [], sands, advantage.can_revive_targets,
+	)
+	assert_eq(ally_targets, [ally])
 
 	await manager.execute_action(sands, advantage, [ally], false)
 

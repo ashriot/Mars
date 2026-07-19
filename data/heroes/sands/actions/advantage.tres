@@ -34,6 +34,6 @@ action_name = "Advantage"
 icon = ExtResource("3_0hp4v")
 description = "Boosts a teammate's next turn by 50% and adds 100% of Sands's PSY to that hero's next attack, distributed across its hits and targets."
 focus_cost = 3
-target_type = 5
+target_type = 6
 effects = Array[ExtResource("1_p4ktw")]([SubResource("Resource_nwuby"), SubResource("Resource_dofah")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

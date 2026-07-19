@@ -52,6 +52,8 @@ func test_build_overlays_complete_authored_role_kits_and_preserves_json_only_fie
 		func(hero: HeroData) -> bool: return hero.hero_id == "echo"
 	)[0]
 	var psion := echo.battle_roles["psi"] as RoleData
+	assert_eq(psion.shift_action.action_name, "Shatter")
+	assert_true(psion.shift_action.is_shift_action)
 	var has_mind_storm := false
 	for action: Action in psion.actions:
 		if action != null and action.action_name == "Mind Storm":

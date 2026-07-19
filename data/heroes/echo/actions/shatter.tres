@@ -34,6 +34,7 @@ action_name = "Shatter"
 icon = ExtResource("2_obhb8")
 description = "Shift.[p]{effect:1}[p]Potency is 50% ATK per point of Echo's current Guard.[p]Then, her {grd} is reduced to 0."
 auto_target = true
+is_shift_action = true
 target_type = 1
 effects = Array[ExtResource("1_xlbqy")]([SubResource("Resource_pan4o"), SubResource("Resource_0b4d0")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

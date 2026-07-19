@@ -152,6 +152,8 @@ func test_spawned_heroes_retain_complete_benchmark_kits() -> void:
 
 	var echo := _spawned_hero_by_id(lab, "echo")
 	var psion := _loaded_role(echo, "psi")
+	assert_eq(psion.shift_action.action_name, "Shatter")
+	assert_true(psion.shift_action.is_shift_action)
 	var has_mind_storm := false
 	for action: Action in psion.actions:
 		if action != null and action.action_name == "Mind Storm":
