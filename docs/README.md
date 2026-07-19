@@ -8,6 +8,7 @@ Use this page as the index for project knowledge that is more detailed or more l
 - [CTB combat checklist](testing/ctb-combat-checklist.md) — Manual acceptance for the combat timeline rail, previews, and action recovery.
 - [Controller checklist](testing/controller-manual-checklist.md) — Manual controller and keyboard/mouse verification across the playable loop.
 - [Dungeon checklist](testing/dungeon-manual-checklist.md) — Manual dungeon traversal, interaction, save, and restoration checks.
+- [Endgame battle lab checklist](testing/endgame-battle-lab-checklist.md) — Direct-launch workflow, deterministic presets, combat observations, and the benchmark-content gate.
 - [Starting role kit checklist](testing/starting-role-kit-checklist.md) — Manual validation for role anchors, starting skills, and progression trees.
 
 ## Design and Engineering
