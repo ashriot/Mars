@@ -1,0 +1,18 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://src/dev/endgame_battle_lab.gd" id="1_lab"]
+[ext_resource type="Resource" path="res://data/enemies/encounters/attack_defense_drone.tres" id="2_encounter"]
+[ext_resource type="PackedScene" path="res://src/battle/battle_scene.tscn" id="3_battle"]
+
+[node name="EndgameBattleLab" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_lab")
+encounter = ExtResource("2_encounter")
+
+[node name="BattleScene" parent="." instance=ExtResource("3_battle")]
+layout_mode = 1
