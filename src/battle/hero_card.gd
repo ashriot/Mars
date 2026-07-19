@@ -138,13 +138,21 @@ func update_current_role():
 	role_icon.texture = get_current_role().icon
 	recolor()
 
-func modify_focus(amount: int):
-	current_focus += amount
-	current_focus = clamp(current_focus, 0, 10)
+func modify_focus(amount: int, context: Dictionary = {}) -> void:
+	var paid_focus_cost := maxi(0, int(context.get("paid_focus_cost", -amount)))
+	var should_refund := amount < 0 and active_conditions.any(
+		func(condition: Condition) -> bool:
+			return condition != null and condition.refund_focus_cost_on_spend
+	)
+	current_focus = clampi(current_focus + amount, 0, 10)
 	update_focus_bar()
 	focus_updated.emit()
 	if amount < 0:
-		await _fire_condition_event(Trigger.TriggerType.ON_SPENDING_FOCUS)
+		var spend_context := context.duplicate(true)
+		spend_context["paid_focus_cost"] = paid_focus_cost
+		await _fire_condition_event(Trigger.TriggerType.ON_SPENDING_FOCUS, spend_context)
+	if should_refund and paid_focus_cost > 0:
+		await modify_focus(paid_focus_cost)
 
 func update_focus_bar(animate: bool = true):
 	var pips = focus_bar.get_children()

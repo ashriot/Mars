@@ -53,6 +53,49 @@ class PublishingActor extends ActorCard:
 		return
 
 
+class BreachSignalActor extends ActorCard:
+	func _start_breach_pulse() -> void:
+		return
+
+	func shake_panel(_intensity: float = 0.5) -> void:
+		return
+
+	func _fire_condition_event(
+		_event_type: Trigger.TriggerType,
+		_context: Dictionary = {},
+	) -> void:
+		return
+
+
+class BreachObserverHero extends HeroCard:
+	var recorded_events: Array[Trigger.TriggerType] = []
+	var recorded_contexts: Array[Dictionary] = []
+
+	func _fire_condition_event(
+		event_type: Trigger.TriggerType,
+		context: Dictionary = {},
+	) -> void:
+		recorded_events.append(event_type)
+		recorded_contexts.append(context.duplicate())
+
+
+class BreachObserverEnemy extends EnemyCard:
+	var recorded_events: Array[Trigger.TriggerType] = []
+
+	func _fire_condition_event(
+		event_type: Trigger.TriggerType,
+		_context: Dictionary = {},
+	) -> void:
+		recorded_events.append(event_type)
+
+
+class BreachBattleManager extends BattleManager:
+	var update_count := 0
+
+	func update_turn_order() -> void:
+		update_count += 1
+
+
 func _actor(hero: bool, speed: int, ct: int, priority: int) -> ActorCard:
 	var actor: ActorCard = HeroCard.new() if hero else EnemyCard.new()
 	var stats := ActorStats.new()
@@ -68,6 +111,56 @@ func test_negative_ct_requires_extra_ticks() -> void:
 	var queue := CTBSimulator.project([actor], 4000, 1)
 	assert_eq(queue[0].ticks_needed, 50)
 	actor.free()
+
+
+func test_breach_signal_supplies_actor() -> void:
+	var actor := BreachSignalActor.new()
+	actor.actor_name = "Signal target"
+	actor.breached_label = Label.new()
+	actor.guard_bar = HBoxContainer.new()
+	var received: Array[ActorCard] = []
+	actor.actor_breached.connect(
+		func(value: ActorCard) -> void: received.append(value)
+	)
+
+	await actor.breach()
+
+	assert_eq(received, [actor])
+	actor.breached_label.free()
+	actor.guard_bar.free()
+	actor.free()
+
+
+func test_enemy_breach_notifies_only_living_opposing_observers() -> void:
+	var manager := BreachBattleManager.new()
+	var breached_enemy := BreachObserverEnemy.new()
+	var enemy_ally := BreachObserverEnemy.new()
+	var living_hero := BreachObserverHero.new()
+	var defeated_hero := BreachObserverHero.new()
+	breached_enemy.is_defeated = false
+	enemy_ally.is_defeated = false
+	living_hero.is_defeated = false
+	defeated_hero.is_defeated = true
+	manager.actor_list = [breached_enemy, enemy_ally, living_hero, defeated_hero]
+
+	await manager._on_actor_breached(breached_enemy)
+
+	assert_eq(manager.update_count, 1)
+	assert_eq(
+		living_hero.recorded_events,
+		[Trigger.TriggerType.ON_ENEMY_BREACHED],
+	)
+	assert_eq(living_hero.recorded_contexts.size(), 1)
+	assert_same(living_hero.recorded_contexts[0].target, breached_enemy)
+	assert_eq(living_hero.recorded_contexts[0].targets, [breached_enemy])
+	assert_eq(defeated_hero.recorded_events, [])
+	assert_eq(enemy_ally.recorded_events, [])
+	assert_eq(breached_enemy.recorded_events, [])
+	manager.free()
+	breached_enemy.free()
+	enemy_ally.free()
+	living_hero.free()
+	defeated_hero.free()
 
 
 func test_zero_or_negative_speed_uses_one_consistently() -> void:

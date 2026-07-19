@@ -22,6 +22,9 @@ enum ConditionType { BUFF, DEBUFF }
 @export var focus_cost_reduction: float = 0.0
 @export_range(0.01, 4.0, 0.01) var action_ct_multiplier: float = 1.0
 
+@export_group("Resource Modifiers")
+@export var refund_focus_cost_on_spend: bool = false
+
 @export_group("Triggers & Effects")
 @export var update_turn_order: bool
 @export var triggers: Array[Trigger]

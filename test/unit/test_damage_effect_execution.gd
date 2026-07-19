@@ -117,9 +117,11 @@ class RecordingActor extends ActorCard:
 
 class RecordingHero extends HeroCard:
 	var focus_changes: Array[int] = []
+	var focus_contexts: Array[Dictionary] = []
 
-	func modify_focus(amount: int) -> void:
+	func modify_focus(amount: int, context: Dictionary = {}) -> void:
 		focus_changes.append(amount)
+		focus_contexts.append(context.duplicate(true))
 		current_focus = clampi(current_focus + amount, 0, 10)
 
 
@@ -620,6 +622,33 @@ func test_empty_context_attacker_buff_trigger_counts_buffs_not_debuffs() -> void
 	assert_eq(await _empty_context_buff_trigger_count(Condition.ConditionType.DEBUFF), 0)
 
 
+func test_vulnerable_or_breached_hit_trigger_skips_normal_targets() -> void:
+	var attacker := _recording_actor(100, 0, 0)
+	var vulnerable := _recording_actor(0, 0, 0)
+	var breached := _recording_actor(0, 0, 0)
+	var normal := _recording_actor(0, 0, 0)
+	vulnerable.is_in_danger = true
+	breached.is_breached = true
+	var manager := RecordingBattleManager.new()
+	manager.hero_area = Control.new()
+	manager.enemy_area = Control.new()
+	manager.add_child(manager.hero_area)
+	manager.add_child(manager.enemy_area)
+	manager.actor_list = [attacker, vulnerable, breached, normal]
+	var recording_effect := RecordingActionEffect.new()
+	var trigger := HitTrigger.new()
+	trigger.condition = HitTrigger.HitCondition.IF_TARGET_IS_VULNERABLE_OR_BREACHED
+	trigger.effects_to_run = [recording_effect]
+	var damage_effect := Effect_Damage.new()
+	damage_effect.on_hit_triggers = [trigger]
+
+	for target: ActorCard in [vulnerable, breached, normal]:
+		await damage_effect._process_on_hit_triggers(attacker, target, manager, {})
+
+	assert_eq(recording_effect.received_target_sets, [[vulnerable], [breached]])
+	_free_recorded_nodes(manager, [attacker, vulnerable, breached, normal])
+
+
 func test_effect_start_potency_is_stable_across_hits() -> void:
 	var attacker := _recording_actor(100, 0, 2)
 	var target := _recording_actor(0, 0, 0)
@@ -811,6 +840,9 @@ func test_execute_action_pays_scaled_focus_once_and_passes_cost_context() -> voi
 	await manager.execute_action(hero, action, [hero], false)
 
 	assert_eq(hero.focus_changes, [-2])
+	assert_eq(hero.focus_contexts.size(), 1)
+	assert_eq(hero.focus_contexts[0].paid_focus_cost, 2)
+	assert_same(hero.focus_contexts[0].action, action)
 	assert_eq(hero.current_focus, 8)
 	assert_eq(capture_effect.received_contexts.size(), 1)
 	assert_eq(capture_effect.received_contexts[0].paid_focus_cost, 2)

@@ -776,6 +776,8 @@ func _process_on_hit_triggers(
 					)
 				else:
 					condition_met = attacker.has_condition(hit_trigger.context)
+			HitTrigger.HitCondition.IF_TARGET_IS_VULNERABLE_OR_BREACHED:
+				condition_met = target.is_in_danger or target.is_breached
 
 		if condition_met:
 			print("On-hit trigger fired!")

@@ -46,6 +46,9 @@ class ConditionHeroCard extends HeroCard:
 	func _update_conditions_ui() -> void:
 		return
 
+	func update_focus_bar(_animate: bool = true) -> void:
+		return
+
 
 func test_off_turn_condition_self_target_resolves_to_condition_owner() -> void:
 	var manager := CapturingBattleManager.new()
@@ -76,6 +79,59 @@ func test_off_turn_condition_self_target_resolves_to_condition_owner() -> void:
 	await hero._fire_condition_event(Trigger.TriggerType.ON_REMOVED)
 
 	assert_eq(manager.captured_targets, [hero])
+	manager.free()
+	hero_area.free()
+	enemy_area.free()
+
+
+func test_focus_refund_restores_paid_cost_and_consumes_condition() -> void:
+	var hero := ConditionHeroCard.new()
+	hero.current_focus = 5
+	var refund := Condition.new()
+	refund.condition_name = "Coordinate"
+	refund.refund_focus_cost_on_spend = true
+	refund.remove_on_triggers = [Trigger.TriggerType.ON_SPENDING_FOCUS]
+	hero.active_conditions = [refund]
+
+	await hero.modify_focus(-3, {"paid_focus_cost": 3})
+
+	assert_eq(hero.current_focus, 5)
+	assert_false(hero.active_conditions.has(refund))
+	hero.free()
+
+
+func test_enemy_held_condition_targets_living_allies_of_hero_caster() -> void:
+	var manager := CapturingBattleManager.new()
+	var hero_area := Control.new()
+	var enemy_area := Control.new()
+	var echo := HeroCard.new()
+	var living_hero := HeroCard.new()
+	var defeated_hero := HeroCard.new()
+	var enemy_holder := EnemyCard.new()
+	manager.hero_area = hero_area
+	manager.enemy_area = enemy_area
+	manager.current_actor = enemy_holder
+	enemy_holder.battle_manager = manager
+	for hero: HeroCard in [echo, living_hero, defeated_hero]:
+		hero.is_defeated = hero == defeated_hero
+		hero_area.add_child(hero)
+	enemy_holder.is_defeated = false
+	enemy_area.add_child(enemy_holder)
+
+	var effect := ActionEffect.new()
+	effect.target_type = Action.TargetType.ALL_ALLIES
+	var trigger := Trigger.new()
+	trigger.trigger_type = Trigger.TriggerType.ON_TRIGGERED
+	trigger.effects_to_run = [effect]
+	var condition := Condition.new()
+	condition.condition_name = "Echo-authored ally effect"
+	condition.attacker = echo
+	condition.triggers = [trigger]
+	enemy_holder.active_conditions = [condition]
+
+	await enemy_holder._fire_condition_event(Trigger.TriggerType.ON_TRIGGERED)
+
+	assert_eq(manager.captured_targets, [echo, living_hero])
 	manager.free()
 	hero_area.free()
 	enemy_area.free()
@@ -227,10 +283,14 @@ func test_remove_debuffs_returns_exact_removed_count() -> void:
 	_free_condition_fixture(fixture)
 
 
-func test_after_shift_action_is_appended_after_existing_trigger_values() -> void:
+func test_new_trigger_values_are_appended_after_existing_values() -> void:
 	assert_gt(Trigger.TriggerType.AFTER_SHIFT_ACTION, Trigger.TriggerType.ON_HIT)
-	assert_eq(
+	assert_gt(
+		Trigger.TriggerType.ON_ENEMY_BREACHED,
 		Trigger.TriggerType.AFTER_SHIFT_ACTION,
+	)
+	assert_eq(
+		Trigger.TriggerType.ON_ENEMY_BREACHED,
 		Trigger.TriggerType.values().max(),
 	)
 

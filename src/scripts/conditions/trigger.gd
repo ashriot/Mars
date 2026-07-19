@@ -22,6 +22,7 @@ enum TriggerType {
 	ON_TRIGGERED,
 	ON_HIT,
 	AFTER_SHIFT_ACTION,
+	ON_ENEMY_BREACHED,
 }
 @export var trigger_type: TriggerType
 @export var effects_to_run: Array[ActionEffect]

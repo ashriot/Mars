@@ -295,9 +295,18 @@ func find_and_start_next_turn():
 		await wait(0.5)
 		find_and_start_next_turn()
 
-func _on_actor_breached():
+func _on_actor_breached(breached_actor: ActorCard) -> void:
 	print("\n Actor was Breached -> New Queue: ")
 	update_turn_order()
+	for observer: ActorCard in actor_list:
+		if not is_instance_valid(observer) or observer.is_defeated:
+			continue
+		if (observer is HeroCard) == (breached_actor is HeroCard):
+			continue
+		await observer._fire_condition_event(
+			Trigger.TriggerType.ON_ENEMY_BREACHED,
+			{"target": breached_actor, "targets": [breached_actor]},
+		)
 
 func update_turn_order() -> void:
 	_update_all_enemy_intents()
@@ -520,7 +529,10 @@ func execute_action(actor: ActorCard, action: Action, targets: Array, display_na
 		paid_focus_cost = (actor as HeroCard).get_scaled_focus_cost(action.focus_cost)
 		if (actor as HeroCard).current_focus < paid_focus_cost:
 			return
-		await (actor as HeroCard).modify_focus(-paid_focus_cost)
+		await (actor as HeroCard).modify_focus(
+			-paid_focus_cost,
+			{"paid_focus_cost": paid_focus_cost, "action": action},
+		)
 	var action_context := {"paid_focus_cost": paid_focus_cost}
 	var parent_targets = targets
 	executing_action = action

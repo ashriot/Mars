@@ -193,7 +193,7 @@ func breach():
 	guard_bar.modulate.a = 0.25
 	current_ct = 0
 	print("Breached: ", actor_name, " -> CT: ", current_ct)
-	actor_breached.emit()
+	actor_breached.emit(self)
 	_start_breach_pulse()
 	shake_panel(1.0)
 	await _fire_condition_event(Trigger.TriggerType.ON_BREACHED)
@@ -354,9 +354,11 @@ func _execute_condition_triggers(
 			if effect.target_type == Action.TargetType.SELF:
 				targets = [self]
 			else:
+				var effect_source := condition.attacker \
+					if is_instance_valid(condition.attacker) else self
 				targets = battle_manager.get_targets(
 					effect.target_type,
-					self is HeroCard,
+					effect_source is HeroCard,
 					targets,
 					contextual_attacker,
 				)

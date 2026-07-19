@@ -5,7 +5,8 @@ enum HitCondition {
 	ALWAYS,
 	IF_TARGET_IS_BREACHED,
 	IF_TARGET_HAS_DEBUFF,
-	IF_ATTACKER_HAS_BUFF
+	IF_ATTACKER_HAS_BUFF,
+	IF_TARGET_IS_VULNERABLE_OR_BREACHED,
 	# (You can add more here later, like IF_HIT_IS_CRIT)
 }
 @export var condition: HitCondition = HitCondition.ALWAYS
