@@ -42,6 +42,11 @@ class ConditionActor extends ActorCard:
 		return
 
 
+class ConditionHeroCard extends HeroCard:
+	func _update_conditions_ui() -> void:
+		return
+
+
 func test_off_turn_condition_self_target_resolves_to_condition_owner() -> void:
 	var manager := CapturingBattleManager.new()
 	var hero_area := Control.new()
@@ -150,26 +155,30 @@ func test_explicit_revive_includes_defeated_hero_in_targets() -> void:
 	_free_healing_target_fixture(fixture)
 
 
-func test_triggered_ordinary_healing_does_not_revive_defeated_target() -> void:
-	var fixture := _defeated_healing_fixture()
-	var effect := Effect_Healing.new()
+func test_triggered_ordinary_healing_does_not_revive_defeated_holder() -> void:
+	var fixture := _defeated_condition_healing_fixture()
+	var condition := _healing_condition(Trigger.TriggerType.ON_TRIGGERED)
+	condition.attacker = fixture.attacker
 
-	await effect.execute(fixture.attacker, [fixture.target], fixture.manager)
+	await fixture.holder.add_condition(condition)
+	await fixture.holder._fire_condition_event(Trigger.TriggerType.ON_TRIGGERED)
 
-	assert_eq(fixture.target.current_hp, 0)
-	assert_true(fixture.target.is_defeated)
-	_free_defeated_healing_fixture(fixture)
+	assert_eq(fixture.holder.current_hp, 0)
+	assert_true(fixture.holder.is_defeated)
+	_free_defeated_condition_healing_fixture(fixture)
 
 
-func test_recurring_ordinary_healing_does_not_revive_defeated_target() -> void:
-	var fixture := _defeated_healing_fixture()
-	var effect := Effect_Healing.new()
+func test_recurring_ordinary_healing_does_not_revive_defeated_holder() -> void:
+	var fixture := _defeated_condition_healing_fixture()
+	var condition := _healing_condition(Trigger.TriggerType.ON_TURN_START, true)
+	condition.attacker = fixture.attacker
 
-	await effect.execute(fixture.attacker, [fixture.target], fixture.manager)
+	await fixture.holder.add_condition(condition)
+	await fixture.holder._fire_condition_event(Trigger.TriggerType.ON_TURN_START)
 
-	assert_eq(fixture.target.current_hp, 0)
-	assert_true(fixture.target.is_defeated)
-	_free_defeated_healing_fixture(fixture)
+	assert_eq(fixture.holder.current_hp, 0)
+	assert_true(fixture.holder.is_defeated)
+	_free_defeated_condition_healing_fixture(fixture)
 
 
 func test_removing_one_condition_fires_only_its_on_removed_effect_once() -> void:
@@ -267,25 +276,43 @@ func _free_healing_target_fixture(fixture: Dictionary) -> void:
 	(fixture.enemy_area as Control).free()
 
 
-func _defeated_healing_fixture() -> Dictionary:
+func _defeated_condition_healing_fixture() -> Dictionary:
 	var manager := CapturingBattleManager.new()
 	var attacker := EnemyCard.new()
-	var target := EnemyCard.new()
+	var holder := ConditionHeroCard.new()
 	attacker.current_stats = ActorStats.new()
 	attacker.current_stats.psyche = 20
-	target.current_stats = ActorStats.new()
-	target.current_stats.max_hp = 100
-	target.hp_bar_ghost = ProgressBar.new()
-	target.current_hp = 0
-	target.is_defeated = true
-	return {manager = manager, attacker = attacker, target = target}
+	holder.current_stats = ActorStats.new()
+	holder.current_stats.max_hp = 100
+	holder.hp_bar_ghost = ProgressBar.new()
+	holder.current_hp = 0
+	holder.is_defeated = true
+	holder.battle_manager = manager
+	manager.current_actor = holder
+	return {manager = manager, attacker = attacker, holder = holder}
 
 
-func _free_defeated_healing_fixture(fixture: Dictionary) -> void:
+func _free_defeated_condition_healing_fixture(fixture: Dictionary) -> void:
 	(fixture.manager as BattleManager).free()
 	(fixture.attacker as EnemyCard).free()
-	(fixture.target as EnemyCard).hp_bar_ghost.free()
-	(fixture.target as EnemyCard).free()
+	(fixture.holder as HeroCard).hp_bar_ghost.free()
+	(fixture.holder as HeroCard).free()
+
+
+func _healing_condition(
+	event_type: Trigger.TriggerType,
+	is_passive: bool = false,
+) -> Condition:
+	var effect := Effect_Healing.new()
+	effect.target_type = Action.TargetType.SELF
+	var trigger := Trigger.new()
+	trigger.trigger_type = event_type
+	trigger.effects_to_run = [effect]
+	var condition := Condition.new()
+	condition.condition_name = "Recurring Heal"
+	condition.is_passive = is_passive
+	condition.triggers = [trigger]
+	return condition
 
 
 func _condition_with_removed_effect(
