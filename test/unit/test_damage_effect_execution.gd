@@ -61,6 +61,19 @@ class ApplicationBattleManager extends BattleManager:
 		return
 
 
+class RecordingCombatRandomBattleManager extends RecordingBattleManager:
+	var rolled_chances: Array[int] = []
+	var random_actor_calls := 0
+
+	func combat_roll_percent(chance: int) -> bool:
+		rolled_chances.append(chance)
+		return false
+
+	func combat_random_actor(candidates: Array) -> ActorCard:
+		random_actor_calls += 1
+		return candidates[-1] as ActorCard if not candidates.is_empty() else null
+
+
 class RecordingActor extends ActorCard:
 	var breach_calls := 0
 	var guard_changes: Array[int] = []
@@ -138,7 +151,7 @@ class TargetHpPotencyRule extends DamageScalingRule:
 class ApplyingDamageEffect extends Effect_Damage:
 	var roll_value := 100
 
-	func _roll_percent(chance: int) -> bool:
+	func _roll_percent(chance: int, _battle_manager: BattleManager) -> bool:
 		return roll_value <= chance
 
 	func _play_hit_audio() -> void:
@@ -168,11 +181,14 @@ class RecordingDamageEffect extends Effect_Damage:
 			)
 		return super._resolve_potency(context)
 
-	func _roll_percent(chance: int) -> bool:
+	func _roll_percent(chance: int, _battle_manager: BattleManager) -> bool:
 		rolled_chances.append(chance)
 		return roll_value <= chance
 
-	func _pick_random_target(candidates: Array) -> ActorCard:
+	func _pick_random_target(
+		candidates: Array,
+		_battle_manager: BattleManager,
+	) -> ActorCard:
 		return candidates[0] as ActorCard if not candidates.is_empty() else null
 
 	func _resolve_forced_damage_type(
@@ -495,6 +511,30 @@ func test_aim_is_clamped_at_roll_boundary() -> void:
 	assert_eq(above.rolled_chances, [100])
 	assert_eq(below.result.request.precision_power, 0)
 	assert_gt(above.result.request.precision_power, 0)
+
+
+func test_critical_and_random_target_rolls_use_battle_manager_rng() -> void:
+	var attacker := _recording_actor(100, 0, 0)
+	attacker.current_stats.aim = 37
+	var first_target := _recording_actor(0, 0, 0)
+	var second_target := _recording_actor(0, 0, 0)
+	var manager := RecordingCombatRandomBattleManager.new()
+	manager.actor_list = [attacker, first_target, second_target]
+	var action := Action.new()
+	action.target_type = Action.TargetType.RANDOM_ENEMY
+	var effect := Effect_Damage.new()
+	effect.damage_type = Action.DamageType.PIERCING
+
+	await effect.execute(
+		attacker,
+		[first_target, second_target],
+		manager,
+		action,
+	)
+
+	assert_eq(manager.random_actor_calls, 1)
+	assert_eq(manager.rolled_chances, [37])
+	_free_recorded_nodes(manager, [attacker, first_target, second_target])
 
 
 func test_asymmetric_psyche_power_matches_runtime_and_preview() -> void:

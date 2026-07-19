@@ -33,9 +33,6 @@ signal target_invalidated(actor: ActorCard)
 @export var hero_card_scene: PackedScene
 @export var enemy_card_scene: PackedScene
 
-# --- Encounter Data Links ---
-@export var hero_data_files: Array[HeroData] = []
-
 # --- Actor Tracking ---
 var current_actor: ActorCard = null
 var current_action: Action = null
@@ -47,9 +44,10 @@ var focused_button: ActionButton = null
 var actor_list: Array = []
 var TARGET_CT: int = 4000
 var battle_ct_speed_scale := 1.0
-var force_enemy_level: int = -1
 var current_encounter: Encounter
 var encounter_seed := 0
+var rewards_enabled := true
+var _combat_rng: RandomNumberGenerator
 
 func change_state(new_state):
 	if current_state == State.BATTLE_OVER:
@@ -66,12 +64,25 @@ func _ready():
 	action_bar.shift_button_pressed.connect(_on_shift_button_pressed)
 	current_action_panel.hide()
 
-func spawn_encounter():
+func spawn_encounter(
+	roster_override: Array[HeroData] = [],
+	enemy_level_override: int = -1,
+	seed_override: int = -1,
+	allow_rewards: bool = true,
+) -> void:
 	print("Spawning encounter...")
-	var fight_level = RunManager.current_dungeon_tier
-	if force_enemy_level != -1: fight_level = force_enemy_level
+	var roster: Array[HeroData] = []
+	roster.assign(
+		roster_override if not roster_override.is_empty() else RunManager.party_roster
+	)
+	var fight_level := enemy_level_override \
+		if enemy_level_override >= 0 else RunManager.current_dungeon_tier
+	encounter_seed = seed_override \
+		if seed_override >= 0 else RunManager.current_run_seed
+	rewards_enabled = allow_rewards
+	_configure_combat_rng(seed_override)
 
-	for hero_data in RunManager.party_roster:
+	for hero_data: HeroData in roster:
 		var hero_card: HeroCard = hero_card_scene.instantiate()
 		hero_area.add_child(hero_card)
 		hero_card.setup(hero_data)
@@ -171,8 +182,44 @@ func _apply_initial_ct_head_starts(test_rolls: Array = []) -> void:
 		var actor := actor_list[index] as ActorCard
 		if not is_instance_valid(actor) or actor.is_defeated:
 			continue
-		var roll := float(test_rolls[index]) if index < test_rolls.size() else randf()
+		var roll := float(test_rolls[index]) \
+			if index < test_rolls.size() else combat_random_float()
 		actor.current_ct += CTBSpeed.head_start_ct(actor.get_ct_speed(), roll)
+
+
+func _configure_combat_rng(seed_override: int) -> void:
+	if seed_override < 0:
+		_combat_rng = null
+		return
+	_combat_rng = RandomNumberGenerator.new()
+	_combat_rng.seed = seed_override
+
+
+func has_local_combat_rng() -> bool:
+	return _combat_rng != null
+
+
+func combat_random_float() -> float:
+	return _combat_rng.randf() if _combat_rng != null else randf()
+
+
+func combat_roll_percent(chance: int) -> bool:
+	var roll := _combat_rng.randi_range(1, 100) \
+		if _combat_rng != null else randi_range(1, 100)
+	return roll <= chance
+
+
+func combat_random_actor(candidates: Array) -> ActorCard:
+	if candidates.is_empty():
+		return null
+	var index := _combat_rng.randi_range(0, candidates.size() - 1) \
+		if _combat_rng != null else randi_range(0, candidates.size() - 1)
+	return candidates[index] as ActorCard
+
+
+func _award_victory_xp(amount: int) -> void:
+	if rewards_enabled:
+		RunManager.add_run_xp(amount)
 
 
 func _finalize_initial_ai_timing(head_start_rolls: Array = []) -> void:
@@ -916,7 +963,7 @@ func _check_if_battle_ended() -> bool:
 		AudioManager.stop_music(1.0)
 		action_bar.slide_out()
 		var xp_reward = 150
-		RunManager.add_run_xp(xp_reward)
+		_award_victory_xp(xp_reward)
 		await wait(0.5)
 		await _fade_out()
 		battle_ended.emit(true)

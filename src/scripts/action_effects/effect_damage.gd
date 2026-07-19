@@ -359,7 +359,7 @@ func execute(
 			return
 		if attacker.is_defeated:
 			return
-		var target := _resolve_planned_target(plan, hit_index)
+		var target := _resolve_planned_target(plan, hit_index, battle_manager)
 		if target == null:
 			if plan.target_mode == DamageHitPlan.TargetMode.RANDOM:
 				break
@@ -416,10 +416,16 @@ func _resolve_hit_count(_attacker: ActorCard, _context: Dictionary = {}) -> int:
 	return hit_count
 
 
-func _resolve_planned_target(plan: DamageHitPlan, hit_index: int) -> ActorCard:
+func _resolve_planned_target(
+	plan: DamageHitPlan,
+	hit_index: int,
+	battle_manager: BattleManager,
+) -> ActorCard:
 	var plan_candidates := plan.candidates
 	if plan.target_mode == DamageHitPlan.TargetMode.RANDOM:
-		return _pick_random_target(_filter_valid_targets(plan_candidates))
+		return _pick_random_target(
+			_filter_valid_targets(plan_candidates), battle_manager,
+		)
 	if plan_candidates.is_empty():
 		return null
 	if plan.target_mode == DamageHitPlan.TargetMode.SINGLE:
@@ -464,7 +470,9 @@ func _execute_one_hit(
 	var hit_potency := _resolve_current_hit_potency(resolved_potency, hit_context)
 	var crit_chance := attacker.get_aim() + target.get_incoming_aim_mods()
 	crit_chance += int(pre_hit_context.get("aim_bonus", 0))
-	var is_critical := _roll_percent(clampi(crit_chance, 0, 100))
+	var is_critical := _roll_percent(
+		clampi(crit_chance, 0, 100), battle_manager,
+	)
 	var result := DamageResolver.resolve_hit(
 		attacker,
 		target,
@@ -631,12 +639,15 @@ func _resolve_source_action(action: Action, context: Dictionary) -> Action:
 	return inherited_action as Action if inherited_action is Action else null
 
 
-func _roll_percent(chance: int) -> bool:
-	return randi_range(1, 100) <= chance
+func _roll_percent(chance: int, battle_manager: BattleManager) -> bool:
+	return battle_manager.combat_roll_percent(chance)
 
 
-func _pick_random_target(candidates: Array) -> ActorCard:
-	return candidates.pick_random() as ActorCard if not candidates.is_empty() else null
+func _pick_random_target(
+	candidates: Array,
+	battle_manager: BattleManager,
+) -> ActorCard:
+	return battle_manager.combat_random_actor(candidates)
 
 
 func _modify_damage_request(

@@ -378,10 +378,20 @@ func _navigation_ux_layer() -> NavigationUXLayer:
 		return null
 	return get_tree().root.find_child("NavigationUXLayer", true, false) as NavigationUXLayer
 
-# Update signature to take the full resource
-func setup_battle(encounter: Encounter):
+func setup_battle(
+	encounter: Encounter,
+	roster_override: Array[HeroData] = [],
+	enemy_level_override: int = -1,
+	seed_override: int = -1,
+	rewards_enabled: bool = true,
+) -> void:
 	manager.current_encounter = encounter
-	manager.spawn_encounter()
+	manager.spawn_encounter(
+		roster_override,
+		enemy_level_override,
+		seed_override,
+		rewards_enabled,
+	)
 
 func _on_battle_ended(won: bool):
 	battle_ended.emit(won)

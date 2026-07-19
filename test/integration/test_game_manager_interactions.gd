@@ -110,6 +110,24 @@ class AsyncEncounterManager extends GameManager:
 		presented_results.append(result)
 
 
+class RecordingSetupBattleManager extends BattleManager:
+	var received_roster: Array[HeroData] = []
+	var received_level := -999
+	var received_seed := -999
+	var received_rewards_enabled := false
+
+	func spawn_encounter(
+		roster_override: Array[HeroData] = [],
+		enemy_level_override: int = -1,
+		seed_override: int = -1,
+		allow_rewards: bool = true,
+	) -> void:
+		received_roster.assign(roster_override)
+		received_level = enemy_level_override
+		received_seed = seed_override
+		received_rewards_enabled = allow_rewards
+
+
 func _manager() -> InteractionManagerDouble:
 	var manager := InteractionManagerDouble.new()
 	manager.dungeon_map = FakeDungeonMap.new()
@@ -133,6 +151,101 @@ func _node(type: MapNode.NodeType, coords := Vector2i(3, 4)) -> MapNode:
 	node.type = type
 	node.grid_coords = coords
 	return node
+
+
+func test_battle_setup_forwards_explicit_roster_level_seed_and_reward_policy() -> void:
+	var scene := BattleScene.new()
+	var manager := RecordingSetupBattleManager.new()
+	scene.manager = manager
+	var roster: Array[HeroData] = [HeroData.new()]
+	var encounter := Encounter.new()
+
+	scene.setup_battle(encounter, roster, 10, 4242, false)
+
+	assert_same(manager.current_encounter, encounter)
+	assert_eq(manager.received_roster, roster)
+	assert_eq(manager.received_level, 10)
+	assert_eq(manager.received_seed, 4242)
+	assert_false(manager.received_rewards_enabled)
+	scene.free()
+	manager.free()
+
+
+func test_ordinary_battle_setup_forwards_default_sentinels_and_enables_rewards() -> void:
+	var scene := BattleScene.new()
+	var manager := RecordingSetupBattleManager.new()
+	scene.manager = manager
+	var encounter := Encounter.new()
+
+	scene.setup_battle(encounter)
+
+	assert_true(manager.received_roster.is_empty())
+	assert_eq(manager.received_level, -1)
+	assert_eq(manager.received_seed, -1)
+	assert_true(manager.received_rewards_enabled)
+	scene.free()
+	manager.free()
+
+
+func test_explicit_combat_rng_replays_and_can_return_to_default_mode() -> void:
+	var manager := BattleManager.new()
+	var candidates: Array = [ActorCard.new(), ActorCard.new(), ActorCard.new()]
+	manager._configure_combat_rng(4242)
+	var first := [
+		manager.combat_random_float(),
+		manager.combat_roll_percent(37),
+		candidates.find(manager.combat_random_actor(candidates)),
+	]
+	manager._configure_combat_rng(4242)
+	var second := [
+		manager.combat_random_float(),
+		manager.combat_roll_percent(37),
+		candidates.find(manager.combat_random_actor(candidates)),
+	]
+
+	assert_eq(first, second)
+	manager._configure_combat_rng(-1)
+	assert_false(manager.has_local_combat_rng())
+	manager.free()
+	for candidate: ActorCard in candidates:
+		candidate.free()
+
+
+func test_initial_ct_head_starts_use_the_explicit_combat_rng() -> void:
+	var manager := BattleManager.new()
+	var actors: Array[ActorCard] = [ActorCard.new(), ActorCard.new()]
+	for actor: ActorCard in actors:
+		actor.current_stats = ActorStats.new()
+		actor.current_stats.speed = 100
+	manager.actor_list = actors
+	manager._configure_combat_rng(4242)
+	manager._apply_initial_ct_head_starts()
+	var first_cts := actors.map(func(actor: ActorCard) -> int: return actor.current_ct)
+	for actor: ActorCard in actors:
+		actor.current_ct = 0
+	manager._configure_combat_rng(4242)
+
+	manager._apply_initial_ct_head_starts()
+	var second_cts := actors.map(func(actor: ActorCard) -> int: return actor.current_ct)
+
+	assert_eq(first_cts, second_cts)
+	assert_ne(first_cts, [0, 0])
+	manager.free()
+	for actor: ActorCard in actors:
+		actor.free()
+
+
+func test_disabled_victory_rewards_do_not_change_run_xp() -> void:
+	var before := RunManager.run_xp
+	var manager := BattleManager.new()
+	manager.rewards_enabled = false
+
+	manager._award_victory_xp(150)
+	var observed := RunManager.run_xp
+
+	RunManager.run_xp = before
+	assert_eq(observed, before)
+	manager.free()
 
 
 func test_completed_and_canceled_dispatch_to_one_focused_seam_each() -> void:
