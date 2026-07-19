@@ -25,6 +25,7 @@ var role_progress: Dictionary[String, HeroRoleProgress] = {}
 # --- Runtime Data (Not Saved) ---
 var stats: ActorStats
 var battle_roles: Dictionary = {}
+var derived_state_is_prebuilt: bool = false
 var unlocked_roles:
 	get: return role_definitions.filter(func(role):
 		return role.role_id in unlocked_role_ids)
@@ -33,6 +34,8 @@ var current_role: RoleDefinition :
 
 
 func calculate_stats():
+	if derived_state_is_prebuilt:
+		return
 	if ProgressionSystem.catalog:
 		var result := ProgressionRebuilder.new(ProgressionSystem.catalog).rebuild(self)
 		if result.success:

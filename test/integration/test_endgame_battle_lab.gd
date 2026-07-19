@@ -43,8 +43,10 @@ func test_lab_builds_max_party_and_forwards_rank_ten_fixed_seed() -> void:
 	for hero: HeroCard in heroes:
 		assert_eq(hero.hero_data.weapon.tier, 5, hero.actor_name)
 		assert_eq(hero.hero_data.weapon.rank, 30, hero.actor_name)
+		assert_eq(hero.hero_data.weapon.current_xp, 0, hero.actor_name)
 		assert_eq(hero.hero_data.armor.tier, 5, hero.actor_name)
 		assert_eq(hero.hero_data.armor.rank, 30, hero.actor_name)
+		assert_eq(hero.hero_data.armor.current_xp, 0, hero.actor_name)
 	assert_eq(lab.enemy_level, 10)
 	assert_false(enemies.is_empty())
 	for enemy_index in enemies.size():
@@ -60,6 +62,40 @@ func test_lab_builds_max_party_and_forwards_rank_ten_fixed_seed() -> void:
 	assert_true(lab.battle_scene.manager.has_local_combat_rng())
 	assert_false(lab.battle_scene.manager.rewards_enabled)
 	assert_null(lab.find_child("GameManager", true, false))
+
+
+func test_spawned_heroes_retain_complete_benchmark_kits() -> void:
+	var lab := LabScene.instantiate() as EndgameBattleLab
+	add_child_autofree(lab)
+	await get_tree().process_frame
+
+	assert_true(lab.last_build_succeeded)
+	for hero: HeroCard in _spawned_heroes(lab):
+		for definition: RoleDefinition in hero.hero_data.role_definitions:
+			var role := _loaded_role(hero, definition.role_id)
+			assert_not_null(role, "%s/%s" % [hero.hero_data.hero_id, definition.role_id])
+			if not definition.actions.is_empty():
+				assert_eq(role.actions.size(), definition.actions.size(), definition.role_id)
+				for action_index in definition.actions.size():
+					assert_same(role.actions[action_index], definition.actions[action_index])
+			if definition.passive != null:
+				assert_same(role.passive, definition.passive, definition.role_id)
+			if definition.shift_action != null:
+				assert_same(role.shift_action, definition.shift_action, definition.role_id)
+
+	var echo := _spawned_hero_by_id(lab, "echo")
+	var psion := _loaded_role(echo, "psi")
+	var has_mind_storm := false
+	for action: Action in psion.actions:
+		if action != null and action.action_name == "Mind Storm":
+			has_mind_storm = true
+	assert_true(has_mind_storm)
+
+	var asher := _spawned_hero_by_id(lab, "asher")
+	var operative := _loaded_role(asher, "opr")
+	assert_eq(operative.actions.size(), 2)
+	assert_eq(operative.actions[0].action_name, "Coordinate")
+	assert_eq(operative.actions[1].action_name, "Decoy")
 
 
 func test_lab_start_and_result_do_not_mutate_save_or_run_singletons() -> void:
@@ -157,3 +193,25 @@ func _restore_current_slot_file(state: Dictionary) -> void:
 			file.store_buffer(state.bytes)
 	elif FileAccess.file_exists(path):
 		DirAccess.remove_absolute(path)
+
+
+func _spawned_heroes(lab: EndgameBattleLab) -> Array[HeroCard]:
+	var heroes: Array[HeroCard] = []
+	for actor: ActorCard in lab.battle_scene.manager.actor_list:
+		if actor is HeroCard:
+			heroes.append(actor as HeroCard)
+	return heroes
+
+
+func _spawned_hero_by_id(lab: EndgameBattleLab, hero_id: String) -> HeroCard:
+	for hero: HeroCard in _spawned_heroes(lab):
+		if hero.hero_data.hero_id == hero_id:
+			return hero
+	return null
+
+
+func _loaded_role(hero: HeroCard, role_id: String) -> RoleData:
+	for role: RoleData in hero.loaded_roles:
+		if role.source_definition.role_id == role_id:
+			return role
+	return null

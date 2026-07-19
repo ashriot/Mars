@@ -22,8 +22,8 @@ func test_build_unlocks_every_role_and_owns_every_nonstructural_node() -> void:
 			)
 			var progress: HeroRoleProgress = hero.role_progress[role_id]
 			assert_eq(
-				progress.owned_node_ids.size(),
-				expected.size(),
+				progress.owned_node_ids,
+				expected.map(func(node: ProgressionNodeDefinition) -> String: return node.id),
 				"%s/%s" % [hero.hero_id, role_id],
 			)
 
@@ -74,8 +74,10 @@ func test_max_equipment_uses_deep_duplicates_at_tier_five_rank_thirty() -> void:
 		authored_before[hero_id] = {
 			"weapon_rank": source.weapon.rank,
 			"weapon_tier": source.weapon.tier,
+			"weapon_xp": source.weapon.current_xp,
 			"armor_rank": source.armor.rank,
 			"armor_tier": source.armor.tier,
+			"armor_xp": source.armor.current_xp,
 		}
 
 	var result := EndgamePartyFactory.build(
@@ -87,15 +89,19 @@ func test_max_equipment_uses_deep_duplicates_at_tier_five_rank_thirty() -> void:
 	for hero: HeroData in result.roster:
 		assert_eq(hero.weapon.tier, 5, hero.hero_id)
 		assert_eq(hero.weapon.rank, 30, hero.hero_id)
+		assert_eq(hero.weapon.current_xp, 0, hero.hero_id)
 		assert_eq(hero.armor.tier, 5, hero.hero_id)
 		assert_eq(hero.armor.rank, 30, hero.hero_id)
+		assert_eq(hero.armor.current_xp, 0, hero.hero_id)
 		var authored := _load_authored_hero(hero.hero_id)
 		assert_not_same(hero.weapon, authored.weapon)
 		assert_not_same(hero.armor, authored.armor)
 		assert_eq(authored.weapon.rank, authored_before[hero.hero_id].weapon_rank)
 		assert_eq(authored.weapon.tier, authored_before[hero.hero_id].weapon_tier)
+		assert_eq(authored.weapon.current_xp, authored_before[hero.hero_id].weapon_xp)
 		assert_eq(authored.armor.rank, authored_before[hero.hero_id].armor_rank)
 		assert_eq(authored.armor.tier, authored_before[hero.hero_id].armor_tier)
+		assert_eq(authored.armor.current_xp, authored_before[hero.hero_id].armor_xp)
 
 
 func test_skills_only_preserves_authored_equipment_progression_on_duplicates() -> void:

@@ -94,6 +94,7 @@ static func build(catalog: ProgressionCatalog, preset: int) -> BuildResult:
 				role.passive = definition.passive
 			if definition.shift_action != null:
 				role.shift_action = definition.shift_action
+		hero.derived_state_is_prebuilt = true
 		roster.append(hero)
 
 	return BuildResult.new(true, "", roster)
