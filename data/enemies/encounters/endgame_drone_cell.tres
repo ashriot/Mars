@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="Encounter" load_steps=7 format=3 uid="uid://ho7kdnsdnuid"]
+
+[ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://src/scripts/data/enemy_data.gd" id="1_enemy"]
+[ext_resource type="Resource" uid="uid://xwe3skgcbr7x" path="res://data/enemies/actors/attack_drone.tres" id="2_attack"]
+[ext_resource type="Resource" uid="uid://d0c5qshgc3e8" path="res://data/enemies/actors/defense_drone.tres" id="3_defense"]
+[ext_resource type="Resource" uid="uid://dgxpex6ql7scx" path="res://data/enemies/actors/riot_drone.tres" id="4_riot"]
+[ext_resource type="Resource" uid="uid://s6fcg8egbavh" path="res://data/enemies/actors/scout_drone.tres" id="5_scout"]
+[ext_resource type="Script" uid="uid://7uqa1cmdmegp" path="res://src/scripts/enemies/encounter.gd" id="6_encounter"]
+
+[resource]
+script = ExtResource("6_encounter")
+encounter_id = "endgame_drone_cell"
+enemies = Array[ExtResource("1_enemy")]([ExtResource("2_attack"), ExtResource("3_defense"), ExtResource("4_riot"), ExtResource("5_scout")])
+max_tier = 5
+metadata/_custom_type_script = "uid://7uqa1cmdmegp"

@@ -33,7 +33,7 @@ func test_enemy_level_is_editable_from_one_through_thirty_in_inspector() -> void
 	assert_eq(enemy_level_properties[0].hint_string, "1.0,30.0,1.0")
 
 
-func test_enemy_hp_multiplier_is_editable_from_one_through_three_in_inspector() -> void:
+func test_enemy_hp_multiplier_is_editable_from_one_through_twenty_in_inspector() -> void:
 	var lab := LabScene.instantiate() as EndgameBattleLab
 	lab.auto_start = false
 	add_child_autofree(lab)
@@ -45,8 +45,8 @@ func test_enemy_hp_multiplier_is_editable_from_one_through_three_in_inspector() 
 	if hp_multiplier_properties.is_empty():
 		return
 	assert_eq(hp_multiplier_properties[0].hint, PROPERTY_HINT_RANGE)
-	assert_eq(hp_multiplier_properties[0].hint_string, "1.0,3.0,0.25")
-	assert_eq(lab.get("enemy_hp_multiplier"), 2.5)
+	assert_eq(hp_multiplier_properties[0].hint_string, "1.0,20.0,0.25")
+	assert_eq(lab.get("enemy_hp_multiplier"), 10.0)
 
 
 func test_lab_builds_max_party_and_forwards_rank_twenty_fixed_seed() -> void:
@@ -67,7 +67,15 @@ func test_lab_builds_max_party_and_forwards_rank_twenty_fixed_seed() -> void:
 	var enemies := lab.battle_scene.manager.actor_list.filter(
 		func(actor: ActorCard) -> bool: return actor is EnemyCard
 	)
+	var expected_enemy_ids: Array[String] = [
+		"attack_drone",
+		"defense_drone",
+		"riot_drone",
+		"scout_drone",
+	]
 	assert_eq(heroes.size(), 3)
+	assert_eq(_authored_enemy_ids(authored_enemies), expected_enemy_ids)
+	assert_eq(_spawned_enemy_ids(enemies), expected_enemy_ids)
 	assert_eq(lab.equipment_preset, EndgamePartyFactory.EquipmentPreset.MAX_EQUIPMENT)
 	for hero: HeroCard in heroes:
 		assert_eq(hero.hero_data.weapon.tier, 5, hero.actor_name)
@@ -267,6 +275,20 @@ func _enemy_stats_at_level(authored_enemy: EnemyData, level: int) -> ActorStats:
 	runtime_enemy.level = level
 	runtime_enemy.calculate_stats()
 	return runtime_enemy.stats
+
+
+func _authored_enemy_ids(enemies: Array) -> Array[String]:
+	var ids: Array[String] = []
+	for enemy: EnemyData in enemies:
+		ids.append(enemy.enemy_id)
+	return ids
+
+
+func _spawned_enemy_ids(enemies: Array) -> Array[String]:
+	var ids: Array[String] = []
+	for enemy: EnemyCard in enemies:
+		ids.append(enemy.enemy_data.enemy_id)
+	return ids
 
 
 func _spawned_hero_by_id(lab: EndgameBattleLab, hero_id: String) -> HeroCard:

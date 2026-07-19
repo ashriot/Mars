@@ -1,10 +1,10 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene format=3 uid="uid://bm5i40xxn8vg2"]
 
-[ext_resource type="Script" path="res://src/dev/endgame_battle_lab.gd" id="1_lab"]
-[ext_resource type="Resource" path="res://data/enemies/encounters/attack_defense_drone.tres" id="2_encounter"]
-[ext_resource type="PackedScene" path="res://src/battle/battle_scene.tscn" id="3_battle"]
+[ext_resource type="Script" uid="uid://clvahexs28m88" path="res://src/dev/endgame_battle_lab.gd" id="1_lab"]
+[ext_resource type="Resource" uid="uid://ho7kdnsdnuid" path="res://data/enemies/encounters/endgame_drone_cell.tres" id="2_encounter"]
+[ext_resource type="PackedScene" uid="uid://dc5du0o5phhma" path="res://src/battle/battle_scene.tscn" id="3_battle"]
 
-[node name="EndgameBattleLab" type="Control"]
+[node name="EndgameBattleLab" type="Control" unique_id=386426720]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -14,5 +14,5 @@ grow_vertical = 2
 script = ExtResource("1_lab")
 encounter = ExtResource("2_encounter")
 
-[node name="BattleScene" parent="." instance=ExtResource("3_battle")]
+[node name="BattleScene" parent="." unique_id=188001462 instance=ExtResource("3_battle")]
 layout_mode = 1

@@ -2,8 +2,8 @@
 
 The endgame battle lab runs the production battle scene with a fully developed
 three-hero party while remaining outside the campaign and reward flow. The current
-`Attack Drone + Defense Drone` encounter is a temporary systems smoke test. It is
-not the final endgame benchmark party.
+`Attack Drone + Defense Drone + Riot Drone + Scout Drone` encounter is a temporary
+systems and action-economy test. It is not the final endgame benchmark party.
 
 ## Launch and presets
 
@@ -14,8 +14,8 @@ not the final endgame benchmark party.
 3. Leave `Auto Start` enabled and run the current scene directly (`F6`). Do not
    launch it through `GameManager` or a campaign slot.
 4. Confirm every enemy card is labeled `Rk. 20`, `Enemy HP Multiplier` defaults
-   to `2.5`, the default encounter seed is `4242`, and the fight begins with
-   Asher, Echo, and Sands.
+   to `10`, the default encounter seed is `4242`, and the fight begins with
+   Asher, Echo, and Sands against one Attack, Defense, Riot, and Scout Drone.
 
 The `Equipment Preset` export supports:
 
@@ -35,7 +35,7 @@ Use the exported `Encounter Seed` property to replay or vary a fight:
 - [ ] Run seed `4242` twice with `MAX_EQUIPMENT`; confirm the opening CT head starts,
   critical rolls, random-hit targets, and enemy opening choices replay exactly.
 - [ ] Change to a different non-negative seed; confirm at least one seeded outcome
-  can differ while the party, Rank 20 override, 2.5-times enemy HP multiplier,
+  can differ while the party, Rank 20 override, 10-times enemy HP multiplier,
   and encounter composition stay fixed.
 - [ ] Return to seed `4242`; confirm the original sequence returns.
 - [ ] Repeat one seed with `SKILLS_ONLY` to isolate the effect of equipment scaling.
