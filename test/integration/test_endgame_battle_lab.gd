@@ -61,12 +61,25 @@ func test_lab_start_and_result_do_not_mutate_save_or_run_singletons() -> void:
 	assert_eq(_snapshot_global_state(), before)
 
 
+func test_isolation_snapshot_tracks_and_restores_run_manager_roster_alias() -> void:
+	var snapshot := _snapshot_global_state()
+
+	assert_has(snapshot, "run_roster")
+	RunManager.party_roster.clear()
+	RunManager.party_roster.append(HeroData.new())
+	_restore_global_state(snapshot)
+
+	assert_eq(RunManager.party_roster, snapshot.run_roster)
+	assert_eq(SaveSystem.party_roster, snapshot.roster)
+
+
 func _snapshot_global_state() -> Dictionary:
 	return {
 		"slot": SaveSystem.current_slot_index,
 		"bits": SaveSystem.bits,
 		"data": SaveSystem.data.duplicate(true),
 		"roster": SaveSystem.party_roster.duplicate(),
+		"run_roster": RunManager.party_roster.duplicate(),
 		"inventory": SaveSystem.inventory.duplicate(true),
 		"equipment": SaveSystem.inventory_equipment.duplicate(),
 		"mods": SaveSystem.inventory_mods.duplicate(),
@@ -91,7 +104,7 @@ func _restore_global_state(state: Dictionary) -> void:
 	SaveSystem.current_slot_index = state.slot
 	SaveSystem.bits = state.bits
 	SaveSystem.data = state.data
-	SaveSystem.party_roster.assign(state.roster)
+	SaveSystem.party_roster.assign(state.run_roster)
 	SaveSystem.inventory = state.inventory
 	SaveSystem.inventory_equipment.assign(state.equipment)
 	SaveSystem.inventory_mods.assign(state.mods)
