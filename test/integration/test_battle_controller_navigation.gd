@@ -54,6 +54,25 @@ class ShiftEventEffect extends ActionEffect:
 		events.append(event_name)
 
 
+class LethalShiftEffect extends ActionEffect:
+	var events: Array[String]
+
+	func _init(event_log: Array[String]) -> void:
+		events = event_log
+
+	func execute(
+		_attacker: ActorCard,
+		parent_targets: Array,
+		battle_manager: BattleManager,
+		_action: Action = null,
+		_context: Dictionary = {},
+	) -> void:
+		events.append("shift_action")
+		for target: ActorCard in parent_targets:
+			target.is_defeated = true
+		await battle_manager._check_if_battle_ended()
+
+
 class ShiftReactionHero extends HeroCard:
 	var events: Array[String]
 
@@ -66,11 +85,19 @@ class ShiftReactionHero extends HeroCard:
 		return
 
 
+class ShiftReactionEnemy extends EnemyCard:
+	func set_target_presentation(_state: TargetPresentation) -> void:
+		return
+
+
 class ShiftReactionBattleManager extends BattleManager:
 	func wait(_duration: float = 0.01) -> void:
 		return
 
 	func _flush_all_health_animations() -> void:
+		return
+
+	func _fade_out(_duration: float = 0.5):
 		return
 
 	func _update_all_enemy_intents() -> void:
@@ -341,6 +368,18 @@ func test_after_shift_reaction_fires_after_automatic_shift_action() -> void:
 	await fixture.manager._on_shift_button_pressed("right")
 
 	assert_eq(fixture.events, ["role_changed", "shift_action", "after_shift_action"])
+	assert_null(fixture.manager.executing_action)
+	fixture.free_all()
+
+
+func test_lethal_automatic_shift_action_skips_post_victory_reaction() -> void:
+	var fixture := _shift_reaction_fixture(true, false, true)
+
+	await fixture.manager._on_shift_button_pressed("right")
+
+	assert_eq(fixture.events, ["role_changed", "shift_action"])
+	assert_eq(fixture.manager.current_state, BattleManager.State.BATTLE_OVER)
+	assert_null(fixture.manager._pending_after_shift_action)
 	assert_null(fixture.manager.executing_action)
 	fixture.free_all()
 
@@ -1227,6 +1266,7 @@ func test_battle_adapter_teardown_clears_target_presentation_cursor_hints_and_re
 func _shift_reaction_fixture(
 	automatic_action: bool,
 	targeted_action: bool,
+	lethal_action: bool = false,
 ) -> ShiftReactionFixture:
 	var fixture := ShiftReactionFixture.new()
 	fixture.events = []
@@ -1240,6 +1280,7 @@ func _shift_reaction_fixture(
 	fixture.manager.hero_area = hero_area
 	fixture.manager.enemy_area = enemy_area
 	fixture.manager.action_bar = action_bar
+	fixture.manager.rewards_enabled = false
 	fixture.hero = ShiftReactionHero.new()
 	fixture.hero.events = fixture.events
 	fixture.hero.current_stats = ActorStats.new()
@@ -1253,6 +1294,11 @@ func _shift_reaction_fixture(
 	fixture.target.is_valid_target = true
 	hero_area.add_child(fixture.hero)
 	hero_area.add_child(fixture.target)
+	if lethal_action:
+		var enemy := ShiftReactionEnemy.new()
+		enemy.current_stats = ActorStats.new()
+		enemy.is_defeated = false
+		enemy_area.add_child(enemy)
 
 	for _role_index in 2:
 		var definition := RoleDefinition.new()
@@ -1270,9 +1316,14 @@ func _shift_reaction_fixture(
 		action.action_name = "Shift test"
 		action.is_shift_action = true
 		action.auto_target = automatic_action
-		action.target_type = Action.TargetType.SELF \
-			if automatic_action else Action.TargetType.ONE_ALLY
-		action.effects = [ShiftEventEffect.new("shift_action", fixture.events)]
+		action.target_type = Action.TargetType.ALL_ENEMIES \
+			if lethal_action else (
+				Action.TargetType.SELF if automatic_action else Action.TargetType.ONE_ALLY
+			)
+		action.effects = [
+			LethalShiftEffect.new(fixture.events) if lethal_action \
+			else ShiftEventEffect.new("shift_action", fixture.events),
+		]
 		fixture.hero.loaded_roles[1].shift_action = action
 
 	var after_shift_trigger := Trigger.new()

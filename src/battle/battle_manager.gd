@@ -737,6 +737,10 @@ func _on_shift_button_pressed(direction: String):
 			)
 
 			await execute_action(current_actor, action, target_list)
+			if current_state == State.BATTLE_OVER:
+				_pending_after_shift_action = null
+				executing_action = null
+				return
 			await _finish_shift_reactions(current_hero)
 			executing_action = null
 			change_state(State.PLAYER_ACTION)
