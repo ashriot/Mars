@@ -75,6 +75,25 @@ static func build(catalog: ProgressionCatalog, preset: int) -> BuildResult:
 		var rebuild := ProgressionRebuilder.new(catalog).rebuild(hero)
 		if not rebuild.success:
 			return BuildResult.new(false, "%s: %s" % [hero.hero_id, rebuild.error])
+		for definition: RoleDefinition in hero.role_definitions:
+			var role := hero.battle_roles.get(definition.role_id) as RoleData
+			if role == null:
+				return BuildResult.new(
+					false,
+					"%s: rebuilt role '%s' is missing." % [hero.hero_id, definition.role_id],
+				)
+			if not definition.actions.is_empty():
+				role.actions.assign(definition.actions)
+			else:
+				var progression_actions: Array[Action] = []
+				for action: Action in role.actions:
+					if action != null:
+						progression_actions.append(action)
+				role.actions = progression_actions
+			if definition.passive != null:
+				role.passive = definition.passive
+			if definition.shift_action != null:
+				role.shift_action = definition.shift_action
 		roster.append(hero)
 
 	return BuildResult.new(true, "", roster)

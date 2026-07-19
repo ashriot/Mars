@@ -28,6 +28,45 @@ func test_build_unlocks_every_role_and_owns_every_nonstructural_node() -> void:
 			)
 
 
+func test_build_overlays_complete_authored_role_kits_and_preserves_json_only_fields() -> void:
+	var result := EndgamePartyFactory.build(
+		ProgressionSystem.catalog,
+		EndgamePartyFactory.EquipmentPreset.SKILLS_ONLY,
+	)
+	assert_true(result.success, result.error)
+
+	for hero: HeroData in result.roster:
+		for definition: RoleDefinition in hero.role_definitions:
+			var role := hero.battle_roles.get(definition.role_id) as RoleData
+			assert_not_null(role, "%s/%s" % [hero.hero_id, definition.role_id])
+			if not definition.actions.is_empty():
+				assert_eq(role.actions.size(), definition.actions.size(), definition.role_id)
+				for action_index in definition.actions.size():
+					assert_same(role.actions[action_index], definition.actions[action_index])
+			if definition.passive != null:
+				assert_same(role.passive, definition.passive, definition.role_id)
+			if definition.shift_action != null:
+				assert_same(role.shift_action, definition.shift_action, definition.role_id)
+
+	var echo: HeroData = result.roster.filter(
+		func(hero: HeroData) -> bool: return hero.hero_id == "echo"
+	)[0]
+	var psion := echo.battle_roles["psi"] as RoleData
+	var has_mind_storm := false
+	for action: Action in psion.actions:
+		if action != null and action.action_name == "Mind Storm":
+			has_mind_storm = true
+	assert_true(has_mind_storm)
+
+	var asher: HeroData = result.roster.filter(
+		func(hero: HeroData) -> bool: return hero.hero_id == "asher"
+	)[0]
+	var operative := asher.battle_roles["opr"] as RoleData
+	assert_eq(operative.actions.size(), 2)
+	assert_eq(operative.actions[0].action_name, "Coordinate")
+	assert_eq(operative.actions[1].action_name, "Decoy")
+
+
 func test_max_equipment_uses_deep_duplicates_at_tier_five_rank_thirty() -> void:
 	var authored_before := {}
 	for hero_id: String in ["asher", "echo", "sands"]:
