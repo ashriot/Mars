@@ -37,6 +37,14 @@ func _cards() -> Array[ActorCard]:
 	return cards
 
 
+func _visible_focus_pips(hero: HeroCard) -> int:
+	var visible_count := 0
+	for pip: Control in hero.focus_bar.get_children():
+		if pip.visible:
+			visible_count += 1
+	return visible_count
+
+
 func _condition_for(event_type: Trigger.TriggerType, owner: ActorCard) -> Condition:
 	var effect := ActionEffect.new()
 	effect.target_type = Action.TargetType.SELF
@@ -85,6 +93,33 @@ func test_repeated_target_state_assignment_keeps_one_tween_and_exact_normal_clea
 	assert_null(card._target_pulse_tween)
 	assert_true(card.target_outline.visible)
 	assert_false(card.target_pulse.visible)
+
+
+func test_focus_bar_nonanimated_sync_matches_current_focus() -> void:
+	var hero := _cards()[0] as HeroCard
+	hero.current_focus = 7
+
+	hero.update_focus_bar(false)
+
+	assert_eq(_visible_focus_pips(hero), 7)
+
+
+func test_focus_refund_cancels_in_flight_pip_loss_animation() -> void:
+	var hero := _cards()[0] as HeroCard
+	hero.current_focus = 7
+	hero.update_focus_bar(false)
+	var coordinate := load(
+		"res://data/heroes/asher/conditions/coordinate.tres"
+	) as Condition
+	hero.active_conditions = [coordinate.duplicate(true)]
+
+	await hero.modify_focus(-5, {"paid_focus_cost": 5})
+
+	await get_tree().create_timer(0.25).timeout
+
+	assert_eq(hero.current_focus, 7)
+	assert_eq(_visible_focus_pips(hero), 7)
+	assert_false(hero.has_condition("Coordinate"))
 
 
 func test_acting_outline_matches_queue_gold_and_stays_independent_of_targeting() -> void:

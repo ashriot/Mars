@@ -165,13 +165,10 @@ func update_focus_bar(animate: bool = true):
 		var pip_node = pips[i]
 
 		if i < current_focus:
-			if not pip_node.visible:
-				_animate_pip_gain(pip_node)
-		elif pip_node.visible:
-			if animate:
-				_animate_pip_loss(pip_node)
-			else:
-				pip_node.hide()
+			if not pip_node.visible or pip_tweens.has(pip_node):
+				_animate_pip_gain(pip_node, animate)
+		elif pip_node.visible or pip_tweens.has(pip_node):
+			_animate_pip_loss(pip_node, animate)
 
 func get_scaled_focus_cost(cost: int) -> int:
 	var scalar: float = 1.0
