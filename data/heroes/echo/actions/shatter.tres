@@ -12,7 +12,7 @@
 [sub_resource type="Resource" id="DamageScalingFlatPerResource_shatter"]
 script = ExtResource("8_scaling")
 resource = 1
-potency_per_point = 0.25
+potency_per_point = 0.5
 
 [sub_resource type="Resource" id="Resource_pan4o"]
 script = ExtResource("4_0b4d0")
@@ -32,7 +32,7 @@ metadata/_custom_type_script = "uid://cu12q7dfj3hfe"
 script = ExtResource("7_q320a")
 action_name = "Shatter"
 icon = ExtResource("2_obhb8")
-description = "Shift.[p]{effect:1}[p]Potency is 25% ATK per point of Echo's current Guard.[p]Then, her {grd} is reduced to 0."
+description = "Shift.[p]{effect:1}[p]Potency is 50% ATK per point of Echo's current Guard.[p]Then, her {grd} is reduced to 0."
 auto_target = true
 target_type = 1
 effects = Array[ExtResource("1_xlbqy")]([SubResource("Resource_pan4o"), SubResource("Resource_0b4d0")])

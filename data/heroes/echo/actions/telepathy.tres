@@ -13,9 +13,9 @@ metadata/_custom_type_script = "uid://dggojfw8tmpnk"
 
 [resource]
 script = ExtResource("5_x4x4l")
-action_name = "Telepathy"
+action_name = "Acuity"
 icon = ExtResource("4_4iyy1")
-description = "Echo gains {foc}{foc} per turn."
+description = "At the start of Echo's turn, she gains {foc}{foc}.[p]Lasts until Echo Shifts."
 target_type = 4
 effects = Array[ExtResource("1_x4x4l")]([SubResource("Resource_6yt7l")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

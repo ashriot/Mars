@@ -6,7 +6,7 @@ Use a fresh prototype campaign. Prototype saves from before starting-role-kit pr
 
 - [ ] Start a new campaign from the title screen and enter the hub.
 - [ ] Record each hero's XP before opening the skill tree.
-- [ ] For the complete nine-role pass, use the normal prototype/debug unlock path to expose Operative and Dominator in addition to the seven roles unlocked by a fresh campaign. Do not reuse an old save to unlock them.
+- [ ] For the complete nine-role pass, use the normal prototype/debug unlock path to expose Operative and Telepath in addition to the seven roles unlocked by a fresh campaign. Do not reuse an old save to unlock them.
 - [ ] Repeat navigation checks once with mouse/keyboard input and once with a controller.
 
 ## Header and starting-kit matrix
@@ -19,8 +19,8 @@ For every row, confirm the centered role header, the left and right starting-ski
 | Asher | `snp` | Sniper | Mark Target | Aimed Shot |
 | Asher | `opr` | Operative | Coordinate | Decoy |
 | Echo | `psi` | Psion | Focused Bolt | Energy Barrier |
-| Echo | `kin` | Kineticist | Telekinesis | Rejuvenate |
-| Echo | `dom` | Dominator | Displace | Feedback |
+| Echo | `kin` | Kineticist | Telekinesis | Reconstruct |
+| Echo | `dom` | Telepath | Displace | Feedback |
 | Sands | `van` | Vanguard | Draw Fire | Overwatch |
 | Sands | `med` | Medic | First Aid | Booster Shots |
 | Sands | `stg` | Strategist | Tempo | Gambit |
@@ -47,7 +47,7 @@ For every row, confirm the centered role header, the left and right starting-ski
 - [ ] Enter combat with each role active and verify the matrix's left skill appears in action slot 1 and right skill appears in action slot 2.
 - [ ] Activate slots 1 and 2 with controller action bindings and with mouse clicks; verify the displayed action and targeting behavior match the selected skill.
 - [ ] Operative specifically exposes Coordinate in slot 1 and Decoy in slot 2, and both can be selected in combat.
-- [ ] Dominator specifically exposes Displace in slot 1 and Feedback in slot 2, and both can be selected in combat.
+- [ ] Telepath specifically exposes Displace in slot 1 and Feedback in slot 2, and both can be selected in combat.
 - [ ] Returning to the hub preserves owned starting styling and does not charge XP for either starting action.
 
 ## Save boundary

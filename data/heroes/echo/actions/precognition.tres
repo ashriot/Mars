@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="Action" format=3 uid="uid://byyt4melj2rdo"]
+
+[ext_resource type="Script" path="res://src/scripts/action_effects/action_effect.gd" id="1_effect"]
+[ext_resource type="Script" path="res://src/scripts/data/action.gd" id="2_action"]
+[ext_resource type="Texture2D" path="res://assets/graphics/icons/skills/eye-shield.png" id="3_icon"]
+[ext_resource type="Script" path="res://src/scripts/action_effects/effect_modify_guard.gd" id="4_guard"]
+[ext_resource type="Script" path="res://src/scripts/conditions/condition.gd" id="5_condition"]
+[ext_resource type="Script" path="res://src/scripts/conditions/trigger.gd" id="6_trigger"]
+[ext_resource type="Script" path="res://src/scripts/action_effects/effect_apply_condition.gd" id="7_apply"]
+
+[sub_resource type="Resource" id="Resource_precognition_guard"]
+script = ExtResource("4_guard")
+target_type = 7
+metadata/_custom_type_script = "uid://cu12q7dfj3hfe"
+
+[sub_resource type="Resource" id="Resource_precognition_trigger"]
+script = ExtResource("6_trigger")
+trigger_type = 1
+effects_to_run = Array[ExtResource("1_effect")]([SubResource("Resource_precognition_guard")])
+metadata/_custom_type_script = "uid://cdugd6pnm6py"
+
+[sub_resource type="Resource" id="Resource_precognition_condition"]
+script = ExtResource("5_condition")
+condition_name = "Precognition"
+icon = ExtResource("3_icon")
+description = "At the start of Echo's turn, the team gains {grd}.[p]Lasts until Echo Shifts."
+is_passive = true
+triggers = Array[ExtResource("6_trigger")]([SubResource("Resource_precognition_trigger")])
+remove_on_triggers = Array[int]([12])
+metadata/_custom_type_script = "uid://df30dm288ne1d"
+
+[sub_resource type="Resource" id="Resource_apply_precognition"]
+script = ExtResource("7_apply")
+condition = SubResource("Resource_precognition_condition")
+target_type = 4
+metadata/_custom_type_script = "uid://dggojfw8tmpnk"
+
+[resource]
+script = ExtResource("2_action")
+action_name = "Precognition"
+icon = ExtResource("3_icon")
+description = "At the start of Echo's turn, the team gains {grd}.[p]Lasts until Echo Shifts."
+target_type = 4
+effects = Array[ExtResource("1_effect")]([SubResource("Resource_apply_precognition")])
+metadata/_custom_type_script = "uid://dm08rhkg3bai3"

@@ -12,9 +12,9 @@ metadata/_custom_type_script = "uid://cu12q7dfj3hfe"
 
 [resource]
 script = ExtResource("4_b3y3o")
-action_name = "Kinetic Wall"
+action_name = "Force Field"
 icon = ExtResource("3_eytqw")
-description = "The team gains {grd}."
+description = "Shift.[p]The team gains {grd}."
 auto_target = true
 is_shift_action = true
 target_type = 7

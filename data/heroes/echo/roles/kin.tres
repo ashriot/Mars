@@ -14,7 +14,7 @@
 script = ExtResource("3_r4q1p")
 role_id = "kin"
 role_name = "Kineticist"
-description = "A multi-target Energy nuker."
+description = "A healer and Focus-support specialist who protects the team."
 icon = ExtResource("1_e0p5n")
 color = Color(0.29148233, 0.8260551, 1.4369954, 1)
 shift_action = ExtResource("10_ap5ot")

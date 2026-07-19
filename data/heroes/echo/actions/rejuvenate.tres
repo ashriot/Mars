@@ -7,15 +7,15 @@
 
 [sub_resource type="Resource" id="Resource_bkx48"]
 script = ExtResource("2_j2ax5")
-potency = 0.75
+potency = 0.5
 focus_scalar = 0.5
 metadata/_custom_type_script = "uid://nqyc4vuadjr5"
 
 [resource]
 script = ExtResource("4_65a03")
-action_name = "Rejuvenate"
+action_name = "Reconstruct"
 icon = ExtResource("3_65a03")
-description = "Heals a teammate for {psy*1.5} HP, increased by 25% per point of {foc} they have."
+description = "Heals a teammate for {psy*0.5} HP, increased by 50% per point of {foc} they have."
 focus_cost = 2
 target_type = 5
 effects = Array[ExtResource("1_65a03")]([SubResource("Resource_bkx48")])

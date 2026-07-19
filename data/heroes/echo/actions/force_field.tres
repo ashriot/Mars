@@ -1,43 +1,59 @@
 [gd_resource type="Resource" script_class="Action" format=3 uid="uid://bm4jlai25snkq"]
 
-[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_mt3hu"]
-[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="2_a2tm3"]
-[ext_resource type="Texture2D" uid="uid://cbmlvl7d52lei" path="res://assets/graphics/icons/skills/lightning-shadow.png" id="2_ukyyv"]
-[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://src/scripts/conditions/condition.gd" id="3_13tjn"]
-[ext_resource type="Script" uid="uid://cu12q7dfj3hfe" path="res://src/scripts/action_effects/effect_modify_guard.gd" id="4_21bcf"]
-[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://src/scripts/conditions/trigger.gd" id="4_242dt"]
-[ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://src/scripts/action_effects/effect_apply_condition.gd" id="5_21bcf"]
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_effect"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="2_action"]
+[ext_resource type="Texture2D" uid="uid://cbmlvl7d52lei" path="res://assets/graphics/icons/skills/lightning-shadow.png" id="3_icon"]
+[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://src/scripts/conditions/condition.gd" id="4_condition"]
+[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://src/scripts/conditions/trigger.gd" id="5_trigger"]
+[ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://src/scripts/action_effects/effect_apply_condition.gd" id="6_apply"]
+[ext_resource type="Script" uid="uid://ddjg3oka0dtvg" path="res://src/scripts/action_effects/effect_remove_condition.gd" id="7_remove"]
 
-[sub_resource type="Resource" id="Resource_05jmf"]
-script = ExtResource("4_21bcf")
-target_type = 8
-metadata/_custom_type_script = "uid://cu12q7dfj3hfe"
+[sub_resource type="Resource" id="Resource_suppress_debuff"]
+script = ExtResource("4_condition")
+condition_name = "Suppress"
+icon = ExtResource("3_icon")
+description = "This enemy deals 25% less damage until Echo Shifts."
+condition_type = 1
+damage_dealt_scalar = -0.25
+metadata/_custom_type_script = "uid://df30dm288ne1d"
 
-[sub_resource type="Resource" id="Resource_k27df"]
-script = ExtResource("4_242dt")
-trigger_type = 1
-effects_to_run = Array[ExtResource("1_mt3hu")]([SubResource("Resource_05jmf")])
+[sub_resource type="Resource" id="Resource_apply_suppress"]
+script = ExtResource("6_apply")
+condition = SubResource("Resource_suppress_debuff")
+metadata/_custom_type_script = "uid://dggojfw8tmpnk"
+
+[sub_resource type="Resource" id="Resource_remove_suppress"]
+script = ExtResource("7_remove")
+condition_name = "Suppress"
+target_type = 1
+metadata/_custom_type_script = "uid://ddjg3oka0dtvg"
+
+[sub_resource type="Resource" id="Resource_cleanup_trigger"]
+script = ExtResource("5_trigger")
+trigger_type = 12
+effects_to_run = Array[ExtResource("1_effect")]([SubResource("Resource_remove_suppress")])
 metadata/_custom_type_script = "uid://cdugd6pnm6py"
 
-[sub_resource type="Resource" id="Resource_bx1vt"]
-script = ExtResource("3_13tjn")
-condition_name = "Force Field"
+[sub_resource type="Resource" id="Resource_suppress_cleanup"]
+script = ExtResource("4_condition")
+condition_name = "Suppress Cleanup"
+description = "Removes Suppress from all enemies when Echo next Shifts."
 is_passive = true
-triggers = Array[ExtResource("4_242dt")]([SubResource("Resource_k27df")])
+triggers = Array[ExtResource("5_trigger")]([SubResource("Resource_cleanup_trigger")])
 remove_on_triggers = Array[int]([12])
 metadata/_custom_type_script = "uid://df30dm288ne1d"
 
-[sub_resource type="Resource" id="Resource_emjpa"]
-script = ExtResource("5_21bcf")
-condition = SubResource("Resource_bx1vt")
+[sub_resource type="Resource" id="Resource_apply_cleanup"]
+script = ExtResource("6_apply")
+condition = SubResource("Resource_suppress_cleanup")
+target_type = 4
 metadata/_custom_type_script = "uid://dggojfw8tmpnk"
 
 [resource]
-script = ExtResource("2_a2tm3")
-action_name = "Force Field"
-icon = ExtResource("2_ukyyv")
-description = "At the start of each turn, Echo grants her allies {grd}."
-auto_target = true
-target_type = 4
-effects = Array[ExtResource("1_mt3hu")]([SubResource("Resource_emjpa")])
+script = ExtResource("2_action")
+action_name = "Suppress"
+icon = ExtResource("3_icon")
+description = "Shift.[p]Reduce one enemy's damage dealt by 25% until Echo Shifts again."
+is_shift_action = true
+effects = Array[ExtResource("1_effect")]([SubResource("Resource_apply_suppress"), SubResource("Resource_apply_cleanup")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

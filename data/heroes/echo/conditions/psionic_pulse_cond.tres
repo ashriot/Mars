@@ -10,7 +10,7 @@
 
 [sub_resource type="Resource" id="Resource_gn6po"]
 script = ExtResource("7_jmp48")
-potency = 0.5
+potency = 0.35
 power_type = 1
 damage_type = 1
 target_type = 1
@@ -26,7 +26,7 @@ metadata/_custom_type_script = "uid://cdugd6pnm6py"
 script = ExtResource("2_r4ipv")
 condition_name = "Psionic Pulse"
 icon = ExtResource("1_b1cra")
-description = "At the start of Echo's next turn, all enemies take {psy*0.5} {nrg} damage that shreds {grd}."
+description = "At the start of Echo's next turn, all enemies take {psy*0.35} {nrg} damage that shreds {grd}."
 condition_type = 2
 is_passive = true
 triggers = Array[ExtResource("3_63p5h")]([SubResource("Resource_1deto")])

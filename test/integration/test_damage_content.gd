@@ -44,30 +44,46 @@ const ASHER_GDD := {
 	"debilitate": {"cost": 2, "outgoing": -0.35},
 	"ensnare": {"cost": 2, "potency": 1.5, "speed": -0.25},
 }
+const ECHO_GDD := {
+	"shatter": {"per_guard": 0.5, "split": true, "clears_guard": true},
+	"psionic_pulse": {"potency": 0.35, "power": Action.PowerType.PSYCHE},
+	"focused_bolt": {"per_focus": 0.25},
+	"energy_barrier": {"cost": 2, "guard": 2, "retaliation": 1.5},
+	"reverberate": {"cost": 3, "initial": 2.0, "triggered": 2.0},
+	"mind_storm": {"cost": 5, "base": 5.0, "remaining_focus": 0.2},
+	"telekinesis": {"potency": 0.75, "party_focus": 1},
+	"reconstruct": {"cost": 2, "heal": 0.5, "per_target_focus": 0.5},
+	"pain_transfer": {"cost": 2, "damage": 2.0, "team_heal": 0.5},
+	"energize": {"cost": 4, "ct": 50, "focus": 4},
+	"feedback": {"guard_per_hit": -1, "piercing": 0.5},
+	"static_charge": {"delay": -0.25, "speed": -0.25, "piercing": 1.0},
+	"inversion": {"cost": 3, "piercing_per_guard": 0.5, "cap": 10},
+}
 const APPROVED_DESCRIPTION_FORMULAS: Dictionary = {
 	"res://data/enemies/actions/shrapnel.tres": ["{atk*1.0}"],
 	"res://data/enemies/conditions/bleed.tres": ["{atk*1.0}"],
 	"res://data/heroes/asher/actions/fusion_ammo.tres": ["{psy*0.5}"],
 	"res://data/heroes/asher/conditions/fusion_ammo.tres": ["{psy*0.5}"],
-	"res://data/heroes/echo/actions/energy_barrier.tres": ["{psy*2.0}"],
+	"res://data/heroes/echo/actions/energy_barrier.tres": ["{psy*1.5}"],
 	"res://data/heroes/echo/actions/feedback.tres": ["{psy*0.5}"],
-	"res://data/heroes/echo/actions/inversion.tres": ["{psy*0.75}"],
-	"res://data/heroes/echo/actions/pain_transfer.tres": ["{psy*0.75}"],
-	"res://data/heroes/echo/actions/psionic_pulse.tres": ["{psy*0.5}"],
-	"res://data/heroes/echo/actions/rejuvenate.tres": ["{psy*1.5}"],
-	"res://data/heroes/echo/actions/reverberate.tres": ["{psy*1.5}"],
-	"res://data/heroes/echo/actions/static_charge.tres": ["{psy*2.0}"],
-	"res://data/heroes/echo/conditions/energy_barrier.tres": ["{psy*2.0}"],
+	"res://data/heroes/echo/actions/inversion.tres": ["{psy*0.5}"],
+	"res://data/heroes/echo/actions/pain_transfer.tres": ["{psy*0.5}"],
+	"res://data/heroes/echo/actions/psionic_pulse.tres": ["{psy*0.35}"],
+	"res://data/heroes/echo/actions/rejuvenate.tres": ["{psy*0.5}"],
+	"res://data/heroes/echo/actions/reverberate.tres": ["{psy*2.0}"],
+	"res://data/heroes/echo/actions/static_charge.tres": ["{psy*1.0}"],
+	"res://data/heroes/echo/conditions/energy_barrier.tres": ["{psy*1.5}"],
 	"res://data/heroes/echo/conditions/feedback.tres": ["{psy*0.5}"],
-	"res://data/heroes/echo/conditions/inversion.tres": ["{psy*0.75}"],
-	"res://data/heroes/echo/conditions/psionic_pulse_cond.tres": ["{psy*0.5}"],
-	"res://data/heroes/echo/conditions/reverberate.tres": ["{psy*1.5}"],
-	"res://data/heroes/echo/conditions/static_charge.tres": ["{psy*2.0}"],
+	"res://data/heroes/echo/conditions/inversion.tres": ["{psy*0.5}"],
+	"res://data/heroes/echo/conditions/pain_transfer.tres": ["{psy*0.5}"],
+	"res://data/heroes/echo/conditions/psionic_pulse_cond.tres": ["{psy*0.35}"],
+	"res://data/heroes/echo/conditions/reverberate.tres": ["{psy*2.0}"],
+	"res://data/heroes/echo/conditions/static_charge.tres": ["{psy*1.0}"],
 	"res://data/heroes/sands/actions/first_aid.tres": ["{psy*0.75}"],
 	"res://data/heroes/sands/conditions/return_fire.tres": ["{atk*0.5}", "{atk*0.5}"],
 }
 const DEFERRED_DIRECT_HEALING_FORMULAS: Dictionary = {
-	"res://data/heroes/echo/actions/rejuvenate.tres": ["{psy*1.5}"],
+	"res://data/heroes/echo/actions/rejuvenate.tres": ["{psy*0.5}"],
 	"res://data/heroes/sands/actions/first_aid.tres": ["{psy*0.75}"],
 }
 const NESTED_COMPATIBILITY_CASES: Array[Dictionary] = [
@@ -136,7 +152,7 @@ const NESTED_COMPATIBILITY_CASES: Array[Dictionary] = [
 		"remove_on_triggers": [Trigger.TriggerType.ON_BEING_HIT],
 		"required_action_prose": ["grants any hero", "buff", "next enemy to hit this hero"],
 		"required_condition_prose": ["next enemy to hit this hero"],
-		"formula": "{psy*2.0}",
+		"formula": "{psy*1.5}",
 		"icon": "{nrg}",
 		"shreds_guard": true,
 		"effect": {
@@ -144,7 +160,7 @@ const NESTED_COMPATIBILITY_CASES: Array[Dictionary] = [
 			"target_type": Action.TargetType.ATTACKER,
 			"kind": "damage",
 			"power": Action.PowerType.PSYCHE,
-			"potency": 2.0,
+			"potency": 1.5,
 			"damage_type": Action.DamageType.ENERGY,
 			"hit_count": 1,
 			"split_damage": false,
@@ -159,23 +175,34 @@ const NESTED_COMPATIBILITY_CASES: Array[Dictionary] = [
 		"trigger_type": Trigger.TriggerType.ON_HIT,
 		"remove_on_triggers": [Trigger.TriggerType.AFTER_ATTACKING],
 		"required_action_prose": [
-			"applies debuff", "next time this enemy attacks", "for each hit",
+			"applies debuff", "each hit of this enemy's next attack", "lose",
 		],
-		"required_condition_prose": ["next time this enemy attacks", "for each hit"],
+		"required_condition_prose": [
+			"each hit of this enemy's next attack", "loses",
+		],
 		"formula": "{psy*0.5}",
 		"icon": "{prc}",
 		"shreds_guard": false,
-		"effect": {
-			"script": "res://src/scripts/action_effects/effect_damage.gd",
-			"target_type": Action.TargetType.SELF,
-			"kind": "damage",
-			"power": Action.PowerType.PSYCHE,
-			"potency": 0.5,
-			"damage_type": Action.DamageType.PIERCING,
-			"hit_count": 1,
-			"split_damage": false,
-			"is_indirect": false,
-		},
+		"allows_guard_loss_prose": true,
+		"effects": [
+			{
+				"script": "res://src/scripts/action_effects/effect_modify_guard.gd",
+				"target_type": Action.TargetType.SELF,
+				"kind": "guard",
+				"guard_amount": -1,
+			},
+			{
+				"script": "res://src/scripts/action_effects/effect_damage.gd",
+				"target_type": Action.TargetType.SELF,
+				"kind": "damage",
+				"power": Action.PowerType.PSYCHE,
+				"potency": 0.5,
+				"damage_type": Action.DamageType.PIERCING,
+				"hit_count": 1,
+				"split_damage": false,
+				"is_indirect": false,
+			},
+		],
 	},
 	{
 		"id": "inversion",
@@ -185,12 +212,12 @@ const NESTED_COMPATIBILITY_CASES: Array[Dictionary] = [
 		"trigger_type": Trigger.TriggerType.ON_GAINING_GUARD,
 		"remove_on_triggers": [Trigger.TriggerType.ON_GAINING_GUARD],
 		"required_action_prose": [
-			"applies debuff", "next time this enemy gains", "for each point of",
+			"applies debuff", "next time this enemy attempts to gain", "capped at 10",
 		],
 		"required_condition_prose": [
-			"next time this enemy gains guard", "for each point of guard",
+			"next time this enemy attempts to gain guard", "capped at 10",
 		],
-		"formula": "{psy*0.75}",
+		"formula": "{psy*0.5}",
 		"icon": "{prc}",
 		"shreds_guard": false,
 		"effect": {
@@ -198,12 +225,13 @@ const NESTED_COMPATIBILITY_CASES: Array[Dictionary] = [
 			"target_type": Action.TargetType.PARENT,
 			"kind": "damage",
 			"power": Action.PowerType.PSYCHE,
-			"potency": 0.75,
+			"potency": 0.5,
 			"damage_type": Action.DamageType.PIERCING,
 			"hit_count": 1,
 			"split_damage": false,
 			"is_indirect": false,
 			"requires_inversion": true,
+			"max_guard_points": 10,
 		},
 	},
 	{
@@ -214,16 +242,19 @@ const NESTED_COMPATIBILITY_CASES: Array[Dictionary] = [
 		"trigger_type": Trigger.TriggerType.ON_BEING_HIT,
 		"remove_on_triggers": [],
 		"required_action_prose": [
-			"applies debuff", "heal themselves on each hit", "lasts until echo's next turn",
+			"applies debuff", "each hit on this enemy", "living party",
+			"lasts until echo's next turn",
 		],
-		"required_condition_prose": ["heal hp", "for each hit", "on this enemy"],
-		"formula": "{psy*0.75}",
+		"required_condition_prose": [
+			"each hit on this enemy", "living party", "until echo's next turn",
+		],
+		"formula": "{psy*0.5}",
 		"effect": {
 			"script": "res://src/scripts/action_effects/effect_healing.gd",
-			"target_type": Action.TargetType.ATTACKER,
+			"target_type": Action.TargetType.ALL_ALLIES,
 			"kind": "healing",
 			"power": Action.PowerType.PSYCHE,
-			"potency": 0.75,
+			"potency": 0.5,
 			"focus_scalar": 0.0,
 			"scales_with_missing_hp": false,
 			"is_revive": false,
@@ -252,7 +283,7 @@ const NESTED_COMPATIBILITY_CASES: Array[Dictionary] = [
 		"is_passive": true,
 		"required_action_prose": ["at the start of echo's next turn", "all enemies take"],
 		"required_condition_prose": ["at the start of echo's next turn", "all enemies take"],
-		"formula": "{psy*0.5}",
+		"formula": "{psy*0.35}",
 		"icon": "{nrg}",
 		"shreds_guard": true,
 		"effect": {
@@ -260,7 +291,7 @@ const NESTED_COMPATIBILITY_CASES: Array[Dictionary] = [
 			"target_type": Action.TargetType.ALL_ENEMIES,
 			"kind": "damage",
 			"power": Action.PowerType.PSYCHE,
-			"potency": 0.5,
+			"potency": 0.35,
 			"damage_type": Action.DamageType.ENERGY,
 			"hit_count": 1,
 			"split_damage": false,
@@ -280,7 +311,7 @@ const NESTED_COMPATIBILITY_CASES: Array[Dictionary] = [
 		"required_condition_prose": [
 			"next time this enemy takes {kin} damage", "damage hit",
 		],
-		"formula": "{psy*1.5}",
+		"formula": "{psy*2.0}",
 		"icon": "{nrg}",
 		"shreds_guard": true,
 		"effect": {
@@ -288,7 +319,7 @@ const NESTED_COMPATIBILITY_CASES: Array[Dictionary] = [
 			"target_type": Action.TargetType.PARENT,
 			"kind": "damage",
 			"power": Action.PowerType.PSYCHE,
-			"potency": 1.5,
+			"potency": 2.0,
 			"damage_type": Action.DamageType.ENERGY,
 			"hit_count": 1,
 			"split_damage": false,
@@ -306,17 +337,17 @@ const NESTED_COMPATIBILITY_CASES: Array[Dictionary] = [
 			"delays an enemy by 25%", "applies debuff", "at the start of their next turn",
 		],
 		"required_condition_prose": ["slowed", "at the start of their next turn"],
-		"formula": "{psy*2.0}",
-		"icon": "{nrg}",
-		"shreds_guard": true,
+		"formula": "{psy*1.0}",
+		"icon": "{prc}",
+		"shreds_guard": false,
 		"condition_fields": {"speed_scalar": -0.25},
 		"effect": {
 			"script": "res://src/scripts/action_effects/effect_damage.gd",
 			"target_type": Action.TargetType.SELF,
 			"kind": "damage",
 			"power": Action.PowerType.PSYCHE,
-			"potency": 2.0,
-			"damage_type": Action.DamageType.ENERGY,
+			"potency": 1.0,
+			"damage_type": Action.DamageType.PIERCING,
 			"hit_count": 1,
 			"split_damage": false,
 			"is_indirect": false,
@@ -522,7 +553,7 @@ func test_nested_case_validator_detects_topology_shape_and_healing_drift() -> vo
 	errors = _nested_case_errors(pain_expected, pain_action, pain)
 	assert_eq(errors, [], "the authored Pain Transfer healing topology is valid")
 	var healing_drift := pain.duplicate(true) as Condition
-	(healing_drift.triggers[0].effects_to_run[0] as Effect_Healing).potency = 0.5
+	(healing_drift.triggers[0].effects_to_run[0] as Effect_Healing).potency = 0.75
 	errors = _nested_case_errors(pain_expected, pain_action, healing_drift)
 	assert_string_contains("\n".join(errors), "healing potency drifted")
 
@@ -651,10 +682,11 @@ func test_nested_condition_content_matches_referenced_topology_and_mechanics() -
 			elif expected.has("shreds_guard"):
 				assert_false("shred" in prose.to_lower(), "%s Piercing does not claim to shred Guard" % expected.condition)
 				var normalized_guard_prose := prose.replace("{grd}", "Guard").to_lower()
-				assert_false(
-					"lose" in normalized_guard_prose and "guard" in normalized_guard_prose,
-					"%s Piercing does not claim intrinsic Guard loss" % expected.condition,
-				)
+				if not expected.get("allows_guard_loss_prose", false):
+					assert_false(
+						"lose" in normalized_guard_prose and "guard" in normalized_guard_prose,
+						"%s Piercing does not claim intrinsic Guard loss" % expected.condition,
+					)
 
 
 func test_direct_healing_formulas_are_allowlisted_but_mechanic_parity_is_deferred() -> void:
@@ -700,9 +732,9 @@ func test_focused_bolt_uses_approved_remaining_focus_curve() -> void:
 	assert_true(effect.scaling_rules[0] is DamageScalingFlatPerResource)
 	var rule := effect.scaling_rules[0] as DamageScalingFlatPerResource
 	assert_eq(rule.resource, DamageScalingFlatPerResource.ResourceType.FOCUS)
-	assert_almost_eq(rule.potency_per_point, 0.2, 0.0001)
+	assert_almost_eq(rule.potency_per_point, ECHO_GDD.focused_bolt.per_focus, 0.0001)
 	assert_string_contains(action.description, "{effect:1}")
-	assert_string_contains(action.description, "20% ATK plus 20% per remaining Focus after paying the cost")
+	assert_string_contains(action.description, "20% ATK plus 25% per remaining Focus after paying the cost")
 
 
 func test_charged_shot_remains_one_hundred_fifty_percent_attack() -> void:
@@ -840,6 +872,251 @@ func test_asher_operative_actions_match_gdd() -> void:
 	)
 
 
+func test_echo_psion_actions_match_gdd() -> void:
+	var shatter := load("res://data/heroes/echo/actions/shatter.tres") as Action
+	var shatter_damage := shatter.effects[0] as Effect_Damage
+	var shatter_rule := shatter_damage.scaling_rules[0] as DamageScalingFlatPerResource
+	var shatter_clear := shatter.effects[1] as Effect_ModifyGuard
+	assert_almost_eq(
+		shatter_rule.potency_per_point, ECHO_GDD.shatter.per_guard, 0.0001,
+	)
+	assert_eq(shatter_rule.resource, DamageScalingFlatPerResource.ResourceType.GUARD)
+	assert_eq(shatter_damage.split_damage, ECHO_GDD.shatter.split)
+	assert_eq(
+		shatter_clear.guard_amount <= -ActorCard.MAX_GUARD,
+		ECHO_GDD.shatter.clears_guard,
+	)
+	assert_eq(shatter_clear.target_type, Action.TargetType.SELF)
+
+	var pulse := load(
+		"res://data/heroes/echo/conditions/psionic_pulse_cond.tres"
+	) as Condition
+	var pulse_damage := pulse.triggers[0].effects_to_run[0] as Effect_Damage
+	assert_almost_eq(pulse_damage.potency, ECHO_GDD.psionic_pulse.potency, 0.0001)
+	assert_eq(pulse_damage.power_type, ECHO_GDD.psionic_pulse.power)
+	assert_eq(pulse_damage.damage_type, Action.DamageType.ENERGY)
+
+	var focused := load("res://data/heroes/echo/actions/focused_bolt.tres") as Action
+	var focused_damage := focused.effects[0] as Effect_Damage
+	var focused_rule := focused_damage.scaling_rules[0] as DamageScalingFlatPerResource
+	assert_almost_eq(
+		focused_rule.potency_per_point, ECHO_GDD.focused_bolt.per_focus, 0.0001,
+	)
+
+	var barrier := load("res://data/heroes/echo/actions/energy_barrier.tres") as Action
+	var barrier_guard := barrier.effects[0] as Effect_ModifyGuard
+	var retaliation := _first_condition_damage(load(
+		"res://data/heroes/echo/conditions/energy_barrier.tres"
+	) as Condition)
+	assert_eq(barrier.focus_cost, ECHO_GDD.energy_barrier.cost)
+	assert_eq(barrier_guard.guard_amount, ECHO_GDD.energy_barrier.guard)
+	assert_almost_eq(retaliation.potency, ECHO_GDD.energy_barrier.retaliation, 0.0001)
+
+	var reverberate := load("res://data/heroes/echo/actions/reverberate.tres") as Action
+	var initial := reverberate.effects[0] as Effect_Damage
+	var triggered := _first_condition_damage(load(
+		"res://data/heroes/echo/conditions/reverberate.tres"
+	) as Condition)
+	assert_eq(reverberate.focus_cost, ECHO_GDD.reverberate.cost)
+	assert_almost_eq(initial.potency, ECHO_GDD.reverberate.initial, 0.0001)
+	assert_eq(initial.power_type, Action.PowerType.ATTACK)
+	assert_eq(initial.damage_type, Action.DamageType.ENERGY)
+	assert_almost_eq(triggered.potency, ECHO_GDD.reverberate.triggered, 0.0001)
+	assert_eq(triggered.power_type, Action.PowerType.PSYCHE)
+	assert_eq(triggered.damage_type, Action.DamageType.ENERGY)
+
+	var storm := load("res://data/heroes/echo/actions/mind_storm.tres") as Action
+	var storm_damage := storm.effects[0] as Effect_Damage
+	var storm_rule := storm_damage.scaling_rules[0] as DamageScalingBasePerResource
+	assert_eq(storm.focus_cost, ECHO_GDD.mind_storm.cost)
+	assert_almost_eq(storm_damage.potency, ECHO_GDD.mind_storm.base, 0.0001)
+	assert_almost_eq(
+		storm_rule.base_scalar_per_point, ECHO_GDD.mind_storm.remaining_focus, 0.0001,
+	)
+	assert_eq(storm_rule.resource, DamageScalingBasePerResource.ResourceType.FOCUS)
+	assert_string_contains(storm.description, "remaining Focus after paying the cost")
+
+
+func test_echo_kineticist_actions_match_gdd() -> void:
+	var role := load("res://data/heroes/echo/roles/kin.tres") as RoleDefinition
+	assert_string_contains(role.description.to_lower(), "heal")
+	assert_string_contains(role.description.to_lower(), "support")
+
+	var force_field := load(
+		"res://data/heroes/echo/actions/kinetic_wall.tres"
+	) as Action
+	assert_eq(force_field.action_name, "Force Field")
+	assert_true(force_field.is_shift_action)
+	assert_eq((force_field.effects[0] as Effect_ModifyGuard).guard_amount, 1)
+
+	var acuity := load("res://data/heroes/echo/actions/telepathy.tres") as Action
+	var acuity_condition := (acuity.effects[0] as Effect_ApplyCondition).condition
+	var acuity_focus := acuity_condition.triggers[0].effects_to_run[0] as Effect_ModifyFocus
+	assert_eq(acuity.action_name, "Acuity")
+	assert_eq(acuity_condition.condition_name, "Acuity")
+	assert_eq(acuity_focus.focus_amount, 2)
+	assert_eq(acuity_condition.remove_on_triggers, [Trigger.TriggerType.ON_SHIFT])
+
+	var telekinesis := load("res://data/heroes/echo/actions/telekinesis.tres") as Action
+	var telekinesis_damage := telekinesis.effects[0] as Effect_Damage
+	var party_focus := telekinesis.effects[1] as Effect_ModifyFocus
+	assert_almost_eq(
+		telekinesis_damage.potency, ECHO_GDD.telekinesis.potency, 0.0001,
+	)
+	assert_eq(telekinesis_damage.power_type, Action.PowerType.ATTACK)
+	assert_eq(telekinesis_damage.damage_type, Action.DamageType.KINETIC)
+	assert_eq(party_focus.focus_amount, ECHO_GDD.telekinesis.party_focus)
+	assert_eq(party_focus.target_type, Action.TargetType.ALLIES_ONLY)
+
+	var reconstruct := load("res://data/heroes/echo/actions/rejuvenate.tres") as Action
+	var healing := reconstruct.effects[0] as Effect_Healing
+	assert_eq(reconstruct.action_name, "Reconstruct")
+	assert_eq(reconstruct.focus_cost, ECHO_GDD.reconstruct.cost)
+	assert_almost_eq(healing.potency, ECHO_GDD.reconstruct.heal, 0.0001)
+	assert_almost_eq(
+		healing.focus_scalar, ECHO_GDD.reconstruct.per_target_focus, 0.0001,
+	)
+	assert_false(healing.is_revive)
+
+	var pain := load("res://data/heroes/echo/actions/pain_transfer.tres") as Action
+	var pain_damage := pain.effects[0] as Effect_Damage
+	var pain_condition := load(
+		"res://data/heroes/echo/conditions/pain_transfer.tres"
+	) as Condition
+	var team_heal := pain_condition.triggers[0].effects_to_run[0] as Effect_Healing
+	assert_eq(pain.focus_cost, ECHO_GDD.pain_transfer.cost)
+	assert_almost_eq(pain_damage.potency, ECHO_GDD.pain_transfer.damage, 0.0001)
+	assert_eq(pain_damage.power_type, Action.PowerType.PSYCHE)
+	assert_eq(pain_damage.damage_type, Action.DamageType.KINETIC)
+	assert_almost_eq(team_heal.potency, ECHO_GDD.pain_transfer.team_heal, 0.0001)
+	assert_eq(team_heal.target_type, Action.TargetType.ALL_ALLIES)
+	assert_false(team_heal.is_revive)
+
+	var energize := load("res://data/heroes/echo/actions/energize.tres") as Action
+	var energize_focus := energize.effects[0] as Effect_ModifyFocus
+	assert_eq(energize.focus_cost, ECHO_GDD.energize.cost)
+	assert_eq(energize.ct_cost_percent, ECHO_GDD.energize.ct)
+	assert_eq(energize_focus.focus_amount, ECHO_GDD.energize.focus)
+
+
+func test_echo_telepath_actions_match_gdd() -> void:
+	var role := load("res://data/heroes/echo/roles/dom.tres") as RoleDefinition
+	assert_eq(role.role_id, "dom")
+	assert_eq(role.role_name, "Telepath")
+	assert_eq(
+		role.actions.map(func(action: Action) -> String: return action.action_name),
+		["Displace", "Feedback", "Static Charge", "Inversion"],
+	)
+	if not assert_not_null(role.shift_action, "Telepath has a Shift action"):
+		return
+	if not assert_not_null(role.passive, "Telepath has a passive"):
+		return
+	assert_eq(role.shift_action.action_name, "Suppress")
+	assert_eq(role.passive.action_name, "Precognition")
+
+	var suppress := role.shift_action
+	assert_true(suppress.is_shift_action)
+	assert_eq(suppress.effects.size(), 2)
+	var suppress_apply := suppress.effects[0] as Effect_ApplyCondition
+	var cleanup_apply := suppress.effects[1] as Effect_ApplyCondition
+	assert_eq(suppress_apply.condition.condition_name, "Suppress")
+	assert_eq(suppress_apply.condition.condition_type, Condition.ConditionType.DEBUFF)
+	assert_almost_eq(suppress_apply.condition.damage_dealt_scalar, -0.25, 0.0001)
+	assert_eq(suppress_apply.condition.remove_on_triggers, [])
+	assert_eq(cleanup_apply.target_type, Action.TargetType.SELF)
+	assert_eq(cleanup_apply.condition.condition_name, "Suppress Cleanup")
+	assert_true(cleanup_apply.condition.is_passive)
+	assert_eq(cleanup_apply.condition.remove_on_triggers, [Trigger.TriggerType.ON_SHIFT])
+	assert_eq(cleanup_apply.condition.triggers.size(), 1)
+	var cleanup_trigger := cleanup_apply.condition.triggers[0]
+	assert_eq(cleanup_trigger.trigger_type, Trigger.TriggerType.ON_SHIFT)
+	assert_eq(cleanup_trigger.effects_to_run.size(), 1)
+	var cleanup_effect := cleanup_trigger.effects_to_run[0] as Effect_RemoveCondition
+	assert_eq(cleanup_effect.condition_name, "Suppress")
+	assert_eq(cleanup_effect.target_type, Action.TargetType.ALL_ENEMIES)
+
+	var precognition := role.passive
+	var precognition_condition := (
+		precognition.effects[0] as Effect_ApplyCondition
+	).condition
+	var precognition_guard := (
+		precognition_condition.triggers[0].effects_to_run[0] as Effect_ModifyGuard
+	)
+	assert_eq(precognition_guard.guard_amount, 1)
+	assert_eq(precognition_guard.target_type, Action.TargetType.ALL_ALLIES)
+	assert_eq(precognition_condition.remove_on_triggers, [Trigger.TriggerType.ON_SHIFT])
+
+	var displace := load("res://data/heroes/echo/actions/displace.tres") as Action
+	assert_eq((displace.effects[0] as Effect_ModifyGuard).guard_amount, 1)
+	assert_eq((displace.effects[1] as Effect_RemoveDebuffs).quantity, 1)
+
+	var feedback := load("res://data/heroes/echo/conditions/feedback.tres") as Condition
+	assert_eq(feedback.triggers[0].trigger_type, Trigger.TriggerType.ON_HIT)
+	assert_eq(feedback.remove_on_triggers, [Trigger.TriggerType.AFTER_ATTACKING])
+	assert_eq(feedback.triggers[0].effects_to_run.size(), 2)
+	assert_eq(
+		(feedback.triggers[0].effects_to_run[0] as Effect_ModifyGuard).guard_amount,
+		ECHO_GDD.feedback.guard_per_hit,
+	)
+	var feedback_damage := feedback.triggers[0].effects_to_run[1] as Effect_Damage
+	assert_almost_eq(feedback_damage.potency, ECHO_GDD.feedback.piercing, 0.0001)
+	assert_eq(feedback_damage.power_type, Action.PowerType.PSYCHE)
+	assert_eq(feedback_damage.damage_type, Action.DamageType.PIERCING)
+
+	var static_action := load(
+		"res://data/heroes/echo/actions/static_charge.tres"
+	) as Action
+	var delay := static_action.effects[0] as Effect_ModifyCT
+	var static_condition := load(
+		"res://data/heroes/echo/conditions/static_charge.tres"
+	) as Condition
+	var static_damage := _first_condition_damage(static_condition)
+	assert_almost_eq(delay.ct_change_percent, ECHO_GDD.static_charge.delay, 0.0001)
+	assert_almost_eq(static_condition.speed_scalar, ECHO_GDD.static_charge.speed, 0.0001)
+	assert_almost_eq(static_damage.potency, ECHO_GDD.static_charge.piercing, 0.0001)
+	assert_eq(static_damage.power_type, Action.PowerType.PSYCHE)
+	assert_eq(static_damage.damage_type, Action.DamageType.PIERCING)
+	assert_eq(static_condition.remove_on_triggers, [Trigger.TriggerType.ON_TURN_START])
+
+	var inversion := load("res://data/heroes/echo/actions/inversion.tres") as Action
+	var inversion_condition := load(
+		"res://data/heroes/echo/conditions/inversion.tres"
+	) as Condition
+	var inversion_damage := (
+		inversion_condition.triggers[0].effects_to_run[0] as Effect_Damage_Inversion
+	)
+	assert_eq(inversion.focus_cost, ECHO_GDD.inversion.cost)
+	assert_almost_eq(
+		inversion_damage.potency, ECHO_GDD.inversion.piercing_per_guard, 0.0001,
+	)
+	assert_eq(inversion_damage.damage_type, Action.DamageType.PIERCING)
+	assert_eq(inversion_damage.max_guard_points, ECHO_GDD.inversion.cap)
+	assert_false(FileAccess.get_file_as_string(
+		"res://data/heroes/echo/conditions/inversion.tres"
+	).contains("remove_guard_gained"))
+
+
+func test_echo_player_names_reject_obsolete_identity() -> void:
+	var psion := load("res://data/heroes/echo/roles/psi.tres") as RoleDefinition
+	var kineticist := load("res://data/heroes/echo/roles/kin.tres") as RoleDefinition
+	var telepath := load("res://data/heroes/echo/roles/dom.tres") as RoleDefinition
+	var player_names: Array[String] = [psion.role_name, kineticist.role_name, telepath.role_name]
+	for role: RoleDefinition in [psion, kineticist, telepath]:
+		if role.shift_action != null:
+			player_names.append(role.shift_action.action_name)
+		if role.passive != null:
+			player_names.append(role.passive.action_name)
+		player_names.append_array(role.actions.map(
+			func(action: Action) -> String: return action.action_name
+		))
+	for required_name: String in [
+		"Force Field", "Acuity", "Reconstruct", "Telepath", "Suppress", "Precognition",
+	]:
+		assert_has(player_names, required_name)
+	for obsolete_name: String in ["Kinetic Wall", "Telepathy", "Rejuvenate", "Dominator"]:
+		assert_does_not_have(player_names, obsolete_name)
+
+
 func test_booster_shots_executes_and_presents_three_fifty_percent_hits() -> void:
 	var action := load("res://data/heroes/sands/actions/booster_shots.tres") as Action
 	var effect := action.effects[0] as Effect_Damage
@@ -859,20 +1136,20 @@ func test_shatter_splits_its_guard_scaled_damage() -> void:
 	assert_string_contains(action.description, "current Guard")
 
 
-func test_telekinesis_deals_energy_damage() -> void:
+func test_telekinesis_deals_kinetic_damage() -> void:
 	var action := load("res://data/heroes/echo/actions/telekinesis.tres") as Action
 	var effect := action.effects[0] as Effect_Damage
-	assert_eq(effect.damage_type, Action.DamageType.ENERGY)
+	assert_eq(effect.damage_type, Action.DamageType.KINETIC)
 	assert_string_contains(action.description, "{effect:1}")
 
 
-func test_reverberate_uses_psyche_for_direct_and_triggered_damage() -> void:
+func test_reverberate_uses_attack_directly_and_psyche_when_triggered() -> void:
 	var action := load("res://data/heroes/echo/actions/reverberate.tres") as Action
 	var direct := action.effects[0] as Effect_Damage
 	var nested := _first_condition_damage(load(
 		"res://data/heroes/echo/conditions/reverberate.tres"
 	) as Condition)
-	assert_eq(direct.power_type, Action.PowerType.PSYCHE)
+	assert_eq(direct.power_type, Action.PowerType.ATTACK)
 	assert_eq(nested.power_type, Action.PowerType.PSYCHE)
 	assert_string_contains(action.description, "{effect:1}")
 
@@ -900,17 +1177,22 @@ func test_rapid_fire_uses_fixed_three_hit_split() -> void:
 	assert_string_contains(action.description, "{effect:1}")
 
 
-func test_psionic_pulse_and_static_charge_are_guard_shredding_energy() -> void:
-	for path: String in [
-		"res://data/heroes/echo/conditions/psionic_pulse_cond.tres",
-		"res://data/heroes/echo/conditions/static_charge.tres",
-	]:
-		var effect := _first_condition_damage(load(path) as Condition)
-		assert_eq(effect.damage_type, Action.DamageType.ENERGY, path)
-		assert_true(effect._resolved_type_shreds_guard(effect.damage_type), path)
+func test_psionic_pulse_shreds_guard_but_static_charge_is_piercing() -> void:
+	var pulse_path := "res://data/heroes/echo/conditions/psionic_pulse_cond.tres"
+	var pulse := _first_condition_damage(load(pulse_path) as Condition)
+	assert_eq(pulse.damage_type, Action.DamageType.ENERGY, pulse_path)
+	assert_true(pulse._resolved_type_shreds_guard(pulse.damage_type), pulse_path)
+
+	var static_path := "res://data/heroes/echo/conditions/static_charge.tres"
+	var static_damage := _first_condition_damage(load(static_path) as Condition)
+	assert_eq(static_damage.damage_type, Action.DamageType.PIERCING, static_path)
+	assert_false(
+		static_damage._resolved_type_shreds_guard(static_damage.damage_type), static_path,
+	)
+	for effect: Effect_Damage in [pulse, static_damage]:
 		assert_false(effect.get_property_list().any(func(property):
 			return property.name == "shreds_guard"
-		), "%s has no obsolete Guard override" % path)
+		), "damage resources have no obsolete Guard override")
 
 
 func test_weapon_aim_uses_aim_rating() -> void:
@@ -1292,15 +1574,28 @@ func _nested_case_errors(
 	for property_name: String in expected.get("condition_fields", {}).keys():
 		if not _values_equal(condition.get(property_name), expected.condition_fields[property_name]):
 			errors.append("%s condition field %s drifted" % [condition_path, property_name])
-	if trigger.effects_to_run.size() != 1:
-		errors.append("%s expected exactly one primary triggered effect" % condition_path)
-		return errors
-	_append_effect_spec_errors(
-		errors,
-		trigger.effects_to_run[0] as ActionEffect,
-		expected.effect,
-		"%s primary effect" % condition_path,
-	)
+	if expected.has("effects"):
+		var expected_effects := expected.effects as Array
+		if trigger.effects_to_run.size() != expected_effects.size():
+			errors.append("%s triggered effect count drifted" % condition_path)
+		else:
+			for effect_index in expected_effects.size():
+				_append_effect_spec_errors(
+					errors,
+					trigger.effects_to_run[effect_index] as ActionEffect,
+					expected_effects[effect_index],
+					"%s effect %d" % [condition_path, effect_index + 1],
+				)
+	else:
+		if trigger.effects_to_run.size() != 1:
+			errors.append("%s expected exactly one primary triggered effect" % condition_path)
+			return errors
+		_append_effect_spec_errors(
+			errors,
+			trigger.effects_to_run[0] as ActionEffect,
+			expected.effect,
+			"%s primary effect" % condition_path,
+		)
 	if expected.has("auxiliary_removal"):
 		_append_auxiliary_removal_errors(errors, action, expected.auxiliary_removal, action_path)
 	return errors
@@ -1348,7 +1643,18 @@ func _append_effect_spec_errors(
 			if expected.get("requires_inversion", false) \
 				and not damage is Effect_Damage_Inversion:
 				errors.append("%s lost its specialized Inversion shape" % label)
+			if expected.has("max_guard_points"):
+				if not damage is Effect_Damage_Inversion \
+				or (damage as Effect_Damage_Inversion).max_guard_points \
+				!= int(expected.max_guard_points):
+					errors.append("%s Inversion cap drifted" % label)
 			_append_on_hit_spec_errors(errors, damage, expected.get("on_hit", null), label)
+		"guard":
+			if not effect is Effect_ModifyGuard:
+				errors.append("%s is not Guard modification" % label)
+				return
+			if (effect as Effect_ModifyGuard).guard_amount != int(expected.guard_amount):
+				errors.append("%s Guard amount drifted" % label)
 		"healing":
 			if not effect is Effect_Healing:
 				errors.append("%s is not healing" % label)

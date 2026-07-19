@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="RoleDefinition" load_steps=9 format=3 uid="uid://b1qxtq3pnpo1m"]
+[gd_resource type="Resource" script_class="RoleDefinition" load_steps=10 format=3 uid="uid://b1qxtq3pnpo1m"]
 
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="1_8px85"]
 [ext_resource type="Resource" uid="uid://811d3h1n464x" path="res://data/heroes/echo/actions/displace.tres" id="2_o8nhr"]
@@ -8,14 +8,16 @@
 [ext_resource type="Texture2D" uid="uid://r6a5eh2mlkyk" path="res://assets/graphics/icons/roles/bolt-eye.png" id="6_8px85"]
 [ext_resource type="Resource" uid="uid://bm4jlai25snkq" path="res://data/heroes/echo/actions/force_field.tres" id="7_bu8it"]
 [ext_resource type="Script" uid="uid://sy50n7nerbow" path="res://src/scripts/data/role_definition.gd" id="9_32bgm"]
+[ext_resource type="Resource" uid="uid://byyt4melj2rdo" path="res://data/heroes/echo/actions/precognition.tres" id="10_precognition"]
 
 [resource]
 script = ExtResource("9_32bgm")
 role_id = "dom"
-role_name = "Dominator"
+role_name = "Telepath"
 description = "A debuffer/controller."
 icon = ExtResource("6_8px85")
 color = Color(0.57573926, 0.5460407, 1.4369954, 1)
-passive = ExtResource("7_bu8it")
-actions = Array[ExtResource("1_8px85")]([ExtResource("2_o8nhr"), ExtResource("3_8px85"), ExtResource("4_bd8j7"), ExtResource("5_ies5g")])
+shift_action = ExtResource("7_bu8it")
+passive = ExtResource("10_precognition")
+actions = Array[ExtResource("1_8px85")]([ExtResource("2_o8nhr"), ExtResource("4_bd8j7"), ExtResource("3_8px85"), ExtResource("5_ies5g")])
 metadata/_custom_type_script = "uid://sy50n7nerbow"

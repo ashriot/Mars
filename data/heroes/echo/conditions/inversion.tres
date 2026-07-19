@@ -10,8 +10,8 @@
 
 [sub_resource type="Resource" id="Resource_yw8cw"]
 script = ExtResource("7_w0lcd")
-remove_guard_gained = true
-potency = 0.75
+max_guard_points = 10
+potency = 0.5
 power_type = 1
 damage_type = 2
 metadata/_custom_type_script = "uid://k1ufhpx1h6tg"
@@ -26,7 +26,7 @@ metadata/_custom_type_script = "uid://cdugd6pnm6py"
 script = ExtResource("2_yw8cw")
 condition_name = "Inversion"
 icon = ExtResource("1_w0lcd")
-description = "The next time this enemy gains Guard, they take {psy*0.75} {prc} damage for each point of Guard."
+description = "The next time this enemy attempts to gain Guard, they take {psy*0.5} {prc} damage for each point, capped at 10. The Guard gain is not prevented."
 condition_type = 1
 triggers = Array[ExtResource("3_krggw")]([SubResource("Resource_xj1fw")])
 remove_on_triggers = Array[int]([10])

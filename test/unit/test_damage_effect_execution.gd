@@ -133,6 +133,63 @@ class FocusRefundHero extends HeroCard:
 		return
 
 
+class EchoRuntimeHero extends HeroCard:
+	var healing_events: Array[int] = []
+	var guard_changes: Array[int] = []
+
+	func _update_conditions_ui() -> void:
+		return
+
+	func update_focus_bar(_animate: bool = true) -> void:
+		return
+
+	func take_healing(amount: int, is_revive: bool = false) -> void:
+		if (is_defeated and not is_revive) or amount <= 0:
+			return
+		healing_events.append(amount)
+		current_hp = mini(current_hp + amount, current_stats.max_hp)
+
+	func modify_guard(amount: int, is_recovering: bool = false) -> void:
+		guard_changes.append(amount)
+		current_guard = clampi(current_guard + amount, 0, MAX_GUARD)
+		if amount > 0 and not is_recovering:
+			await _fire_condition_event(
+				Trigger.TriggerType.ON_GAINING_GUARD,
+				{"targets": [self], "guard_gained": amount},
+			)
+
+
+class EchoRuntimeEnemy extends EnemyCard:
+	var damage_results: Array[DamageResult] = []
+	var guard_changes: Array[int] = []
+
+	func _update_conditions_ui() -> void:
+		return
+
+	func shake_panel(_intensity: float = 0.5) -> void:
+		return
+
+	func take_one_hit(
+		result: DamageResult,
+		_damage_effect: Effect_Damage,
+		_attacker: ActorCard,
+		_resolved_damage_type: Action.DamageType,
+	) -> int:
+		damage_results.append(result)
+		var removed := mini(current_hp, result.final_damage)
+		current_hp -= removed
+		return removed
+
+	func modify_guard(amount: int, is_recovering: bool = false) -> void:
+		guard_changes.append(amount)
+		current_guard = clampi(current_guard + amount, 0, MAX_GUARD)
+		if amount > 0 and not is_recovering:
+			await _fire_condition_event(
+				Trigger.TriggerType.ON_GAINING_GUARD,
+				{"targets": [self], "guard_gained": amount},
+			)
+
+
 class RecordingActionEffect extends ActionEffect:
 	var received_contexts: Array[Dictionary] = []
 	var received_target_sets: Array = []
@@ -453,7 +510,7 @@ func test_production_reverberate_routes_parent_target_and_removes_after_energy_h
 		Action.DamageType.KINETIC,
 	)
 
-	assert_eq(fixture.target.current_hp, 130)
+	assert_eq(fixture.target.current_hp, 110)
 	assert_false(fixture.target.has_condition("Reverberate"))
 	assert_has(
 		fixture.target.recorded_events,
@@ -655,6 +712,133 @@ func test_production_inversion_context_builds_three_canonical_results() -> void:
 	assert_eq(result_ids.size(), 3)
 	assert_eq(request_ids.size(), 3)
 	_free_recorded_nodes(manager, [attacker, target])
+
+
+func test_production_feedback_reacts_per_hit_then_expires_after_attack() -> void:
+	var fixture := _echo_runtime_fixture()
+	var echo := fixture.echo as EchoRuntimeHero
+	var enemy := fixture.enemy as EchoRuntimeEnemy
+	enemy.current_guard = 3
+	var feedback := (load(
+		"res://data/heroes/echo/conditions/feedback.tres"
+	) as Condition).duplicate(true) as Condition
+	feedback.attacker = echo
+	enemy.active_conditions = [feedback]
+
+	await enemy._fire_condition_event(Trigger.TriggerType.ON_HIT)
+	await enemy._fire_condition_event(Trigger.TriggerType.ON_HIT)
+
+	assert_eq(enemy.current_guard, 1)
+	assert_eq(enemy.guard_changes, [-1, -1])
+	assert_eq(enemy.damage_results.size(), 2)
+	for result: DamageResult in enemy.damage_results:
+		assert_eq(result.final_damage, 20)
+		assert_eq(result.request.damage_type, Action.DamageType.PIERCING)
+	assert_true(enemy.has_condition("Feedback"))
+
+	await enemy._fire_condition_event(Trigger.TriggerType.AFTER_ATTACKING)
+
+	assert_false(enemy.has_condition("Feedback"))
+	_free_echo_runtime_fixture(fixture)
+
+
+func test_production_pain_transfer_heals_living_party_per_hit_until_echo_turn() -> void:
+	var fixture := _echo_runtime_fixture(true)
+	var manager := fixture.manager as RecordingBattleManager
+	var echo := fixture.echo as EchoRuntimeHero
+	var ally := fixture.ally as EchoRuntimeHero
+	var defeated := fixture.defeated as EchoRuntimeHero
+	var enemy := fixture.enemy as EchoRuntimeEnemy
+	var action := load("res://data/heroes/echo/actions/pain_transfer.tres") as Action
+
+	await action.effects[1].execute(echo, [enemy], manager, action)
+	await action.effects[2].execute(echo, [echo], manager, action)
+	await enemy._fire_condition_event(
+		Trigger.TriggerType.ON_BEING_HIT, {"attacker": ally},
+	)
+	await enemy._fire_condition_event(
+		Trigger.TriggerType.ON_BEING_HIT, {"attacker": ally},
+	)
+
+	assert_eq(echo.healing_events, [20, 20])
+	assert_eq(ally.healing_events, [20, 20])
+	assert_eq(defeated.healing_events, [])
+	assert_eq(defeated.current_hp, 0)
+	assert_true(defeated.is_defeated)
+	assert_true(enemy.has_condition("Pain Transfer"))
+	assert_true(echo.has_condition("Pain Transfer Removal"))
+
+	await echo._fire_condition_event(Trigger.TriggerType.ON_TURN_START)
+
+	assert_false(enemy.has_condition("Pain Transfer"))
+	assert_false(echo.has_condition("Pain Transfer Removal"))
+	_free_echo_runtime_fixture(fixture)
+
+
+func test_production_suppress_cleanup_is_unique_and_runs_on_echo_shift() -> void:
+	var fixture := _echo_runtime_fixture(false, true)
+	var manager := fixture.manager as RecordingBattleManager
+	var echo := fixture.echo as EchoRuntimeHero
+	var enemy := fixture.enemy as EchoRuntimeEnemy
+	var other_enemy := fixture.other_enemy as EchoRuntimeEnemy
+	var suppress := load("res://data/heroes/echo/actions/force_field.tres") as Action
+	if not assert_eq(suppress.effects.size(), 2, "Suppress has debuff and cleanup effects"):
+		_free_echo_runtime_fixture(fixture)
+		return
+
+	for target: EchoRuntimeEnemy in [enemy, other_enemy]:
+		await suppress.effects[0].execute(echo, [target], manager, suppress)
+		await suppress.effects[1].execute(echo, [echo], manager, suppress)
+
+	assert_true(enemy.has_condition("Suppress"))
+	assert_true(other_enemy.has_condition("Suppress"))
+	assert_eq(echo.active_conditions.filter(
+		func(condition: Condition) -> bool:
+			return condition.condition_name == "Suppress Cleanup"
+	).size(), 1)
+
+	await echo._fire_condition_event(Trigger.TriggerType.ON_SHIFT)
+
+	assert_false(enemy.has_condition("Suppress"))
+	assert_false(other_enemy.has_condition("Suppress"))
+	assert_false(echo.has_condition("Suppress Cleanup"))
+	_free_echo_runtime_fixture(fixture)
+
+
+func test_production_inversion_caps_damage_without_preventing_guard_gain() -> void:
+	var fixture := _echo_runtime_fixture()
+	var echo := fixture.echo as EchoRuntimeHero
+	var enemy := fixture.enemy as EchoRuntimeEnemy
+	var inversion := (load(
+		"res://data/heroes/echo/conditions/inversion.tres"
+	) as Condition).duplicate(true) as Condition
+	inversion.attacker = echo
+	enemy.active_conditions = [inversion]
+
+	await enemy.modify_guard(12)
+
+	assert_eq(enemy.current_guard, ActorCard.MAX_GUARD)
+	assert_eq(enemy.guard_changes, [12])
+	assert_eq(enemy.damage_results.size(), 10)
+	assert_false(enemy.has_condition("Inversion"))
+	_free_echo_runtime_fixture(fixture)
+
+
+func test_mind_storm_uses_focus_remaining_after_payment() -> void:
+	var fixture := _echo_runtime_fixture()
+	var echo := fixture.echo as EchoRuntimeHero
+	var enemy := fixture.enemy as EchoRuntimeEnemy
+	echo.current_focus = 10
+	var action := load("res://data/heroes/echo/actions/mind_storm.tres") as Action
+	var effect := action.effects[0] as Effect_Damage
+
+	var result := DamagePreview.for_effect(effect, echo, enemy, action, 1, false)
+
+	assert_almost_eq(result.request.base_potency, 5.0, 0.0001)
+	assert_almost_eq(result.request.potency, 10.0, 0.0001)
+	assert_eq(result.final_damage, 1000)
+	assert_eq(echo.current_focus, 10)
+	_free_echo_runtime_fixture(fixture)
 
 
 func test_empty_context_attacker_buff_trigger_counts_buffs_not_debuffs() -> void:
@@ -1103,6 +1287,77 @@ func _recording_action_manager() -> RecordingBattleManager:
 	manager.add_child(manager.enemy_area)
 	manager.add_child(manager.current_action_panel)
 	return manager
+
+
+func _echo_runtime_fixture(
+	include_party: bool = false,
+	include_second_enemy: bool = false,
+) -> Dictionary:
+	var manager := RecordingBattleManager.new()
+	var hero_area := Control.new()
+	var enemy_area := Control.new()
+	manager.hero_area = hero_area
+	manager.enemy_area = enemy_area
+	manager.add_child(hero_area)
+	manager.add_child(enemy_area)
+
+	var echo := _echo_runtime_hero("Echo", 40, 1000)
+	var enemy := _echo_runtime_enemy("Target", 1000)
+	hero_area.add_child(echo)
+	enemy_area.add_child(enemy)
+	manager.actor_list = [echo, enemy]
+	manager.current_actor = enemy
+	echo.battle_manager = manager
+	enemy.battle_manager = manager
+	var fixture := {"manager": manager, "echo": echo, "enemy": enemy}
+	if include_party:
+		var ally := _echo_runtime_hero("Ally", 5, 100)
+		var defeated := _echo_runtime_hero("Defeated", 5, 100)
+		defeated.current_hp = 0
+		defeated.is_defeated = true
+		hero_area.add_child(ally)
+		hero_area.add_child(defeated)
+		ally.battle_manager = manager
+		defeated.battle_manager = manager
+		manager.actor_list.append_array([ally, defeated])
+		fixture["ally"] = ally
+		fixture["defeated"] = defeated
+	if include_second_enemy:
+		var other_enemy := _echo_runtime_enemy("Other Target", 1000)
+		enemy_area.add_child(other_enemy)
+		other_enemy.battle_manager = manager
+		manager.actor_list.append(other_enemy)
+		fixture["other_enemy"] = other_enemy
+	return fixture
+
+
+func _echo_runtime_hero(
+	actor_name: String,
+	psyche: int,
+	max_hp: int,
+) -> EchoRuntimeHero:
+	var hero := EchoRuntimeHero.new()
+	hero.actor_name = actor_name
+	hero.current_stats = ActorStats.new()
+	hero.current_stats.attack = 100
+	hero.current_stats.psyche = psyche
+	hero.current_stats.aim = 0
+	hero.current_stats.max_hp = max_hp
+	hero.current_hp = max_hp - 40
+	return hero
+
+
+func _echo_runtime_enemy(actor_name: String, max_hp: int) -> EchoRuntimeEnemy:
+	var enemy := EchoRuntimeEnemy.new()
+	enemy.actor_name = actor_name
+	enemy.current_stats = ActorStats.new()
+	enemy.current_stats.max_hp = max_hp
+	enemy.current_hp = max_hp
+	return enemy
+
+
+func _free_echo_runtime_fixture(fixture: Dictionary) -> void:
+	(fixture.manager as BattleManager).free()
 
 
 func _empty_context_buff_trigger_count(condition_type: Condition.ConditionType) -> int:

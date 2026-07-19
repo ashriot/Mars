@@ -8,9 +8,9 @@
 
 [sub_resource type="Resource" id="Resource_lmar3"]
 script = ExtResource("5_sh3il")
-potency = 0.75
+potency = 0.5
 is_revive = false
-target_type = 11
+target_type = 7
 metadata/_custom_type_script = "uid://nqyc4vuadjr5"
 
 [sub_resource type="Resource" id="Resource_0fi4g"]
@@ -23,7 +23,7 @@ metadata/_custom_type_script = "uid://cdugd6pnm6py"
 script = ExtResource("2_chiau")
 condition_name = "Pain Transfer"
 icon = ExtResource("1_ynmux")
-description = "Heal HP for each hit on this enemy."
+description = "Each hit on this enemy heals Echo's living party for {psy*0.5} HP until Echo's next turn."
 condition_type = 1
 triggers = Array[ExtResource("1_cy2gg")]([SubResource("Resource_0fi4g")])
 metadata/_custom_type_script = "uid://df30dm288ne1d"
