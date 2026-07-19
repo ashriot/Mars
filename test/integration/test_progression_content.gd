@@ -24,8 +24,9 @@ const EXPECTED := {
 	"van": {"hero":"sands", "nodes":7, "xp":1400, "effects":{"stat":0,"action":4,"passive":1,"shift_action":1}},
 }
 
-# Stable IDs are authored semantic names: role.root, then reward/resource names;
-# repeated stat rewards receive a deterministic numeric suffix.
+# Stable IDs are authored semantic names under each role namespace; legacy trees
+# may retain role.root while newer temporary trees name starting action rewards.
+# Repeated stat rewards receive a deterministic numeric suffix.
 # Independently authored compact node rows:
 # [id, parent, rank, column, xp_cost, node_kind, starting_owned, exact_effect]
 const AUTHORED_NODES := {
