@@ -2,6 +2,7 @@ extends GutTest
 
 
 const HERO_SCENE := preload("res://src/battle/hero_card.tscn")
+const ENEMY_SCENE := preload("res://src/battle/enemy_card.tscn")
 
 
 class RevivalBattleManager extends BattleManager:
@@ -15,6 +16,46 @@ class RevivalBattleManager extends BattleManager:
 		return false
 
 	func _update_all_enemy_intents() -> void:
+		return
+
+
+class ImmediateActionBar extends ActionBar:
+	var slide_out_count := 0
+
+	func _ready() -> void:
+		return
+
+	func slide_out(_duration: float = 0.2):
+		slide_out_count += 1
+		return
+
+
+class CompletionBattleManager extends BattleManager:
+	var xp_awards: Array[int] = []
+	var fade_out_count := 0
+
+	func _ready() -> void:
+		return
+
+	func wait(_duration: float = 0.01) -> void:
+		return
+
+	func _award_victory_xp(amount: int) -> void:
+		xp_awards.append(amount)
+
+	func _fade_out(_duration: float = 0.5):
+		fade_out_count += 1
+		return
+
+	func _update_all_enemy_intents() -> void:
+		return
+
+
+class ApplyingDamageEffect extends Effect_Damage:
+	func _roll_percent(_chance: int, _battle_manager: BattleManager) -> bool:
+		return false
+
+	func _play_hit_audio() -> void:
 		return
 
 
@@ -155,6 +196,73 @@ func test_defeated_hero_rejoins_projection_through_reviving_heal_once() -> void:
 	enemy.free()
 
 
+func test_nested_simultaneous_lethal_barrier_finalizes_victory_once() -> void:
+	var manager := CompletionBattleManager.new()
+	manager.hero_area = Control.new()
+	manager.enemy_area = Control.new()
+	manager.action_bar = ImmediateActionBar.new()
+	autofree(manager.action_bar)
+	manager.add_child(manager.hero_area)
+	manager.add_child(manager.enemy_area)
+	add_child_autofree(manager)
+	var hero := HERO_SCENE.instantiate() as HeroCard
+	var enemy := ENEMY_SCENE.instantiate() as EnemyCard
+	manager.hero_area.add_child(hero)
+	manager.enemy_area.add_child(enemy)
+	await get_tree().process_frame
+
+	hero.battle_manager = manager
+	hero.hero_data = HeroData.new()
+	hero.actor_name = "Barrier Hero"
+	hero.current_stats = _combat_stats("Barrier Hero", 100, 100)
+	hero.current_hp = 100
+	hero.current_guard = 0
+	hero.is_breached = true
+	hero.update_health_bar()
+	enemy.battle_manager = manager
+	enemy.actor_name = "Lethal Attacker"
+	enemy.current_stats = _combat_stats("Lethal Attacker", 100, 5)
+	enemy.current_hp = 100
+	enemy.current_guard = 0
+	enemy.is_breached = true
+	enemy.update_health_bar()
+	manager.actor_list = [hero, enemy]
+	manager.current_actor = enemy
+	manager.current_state = BattleManager.State.EXECUTING_ACTION
+	hero.actor_defeated.connect(manager._on_actor_died)
+	enemy.actor_defeated.connect(manager._on_actor_died)
+	var outcomes: Array[bool] = []
+	manager.battle_ended.connect(func(won: bool) -> void:
+		outcomes.append(won)
+	)
+
+	var barrier := (load(
+		"res://data/heroes/echo/conditions/energy_barrier.tres"
+	) as Condition).duplicate(true) as Condition
+	barrier.attacker = hero
+	hero.active_conditions = [barrier]
+	var lethal_hit := ApplyingDamageEffect.new()
+	lethal_hit.potency = 1.0
+	lethal_hit.power_type = Action.PowerType.ATTACK
+	lethal_hit.damage_type = Action.DamageType.PIERCING
+
+	await lethal_hit.execute(enemy, [hero], manager)
+	await get_tree().process_frame
+
+	assert_true(enemy.is_defeated, "Barrier retaliation defeats the last enemy")
+	assert_true(hero.is_defeated, "the original lethal victim still finalizes defeat")
+	assert_eq(manager.current_state, BattleManager.State.BATTLE_OVER)
+	assert_eq(manager.xp_awards, [150], "victory XP is awarded once")
+	assert_eq(outcomes, [true], "the first established victory outcome emits once")
+	assert_eq(manager.fade_out_count, 1, "battle presentation fades once")
+	assert_eq(
+		(manager.action_bar as ImmediateActionBar).slide_out_count,
+		1,
+		"battle action UI completes once",
+	)
+	assert_true(manager.actor_list.is_empty())
+
+
 func _targeting_fixture() -> Dictionary:
 	var scene := BattleScene.new()
 	var manager := RevivalBattleManager.new()
@@ -221,4 +329,11 @@ func _hero_stats(actor_name: String) -> ActorStats:
 	stats.max_hp = 100
 	stats.psyche = 20
 	stats.speed = 100
+	return stats
+
+
+func _combat_stats(actor_name: String, attack: int, psyche: int) -> ActorStats:
+	var stats := _hero_stats(actor_name)
+	stats.attack = attack
+	stats.psyche = psyche
 	return stats

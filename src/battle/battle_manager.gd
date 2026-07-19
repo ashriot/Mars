@@ -974,6 +974,8 @@ func _get_rich_description(action: Action, target: ActorCard = null) -> String:
 	)
 
 func _check_if_battle_ended() -> bool:
+	if current_state == State.BATTLE_OVER:
+		return true
 	var heroes_alive = not get_living_heroes().is_empty()
 	var enemies_alive = not get_living_enemies().is_empty()
 
