@@ -23,16 +23,16 @@ metadata/_custom_type_script = "uid://cu12q7dfj3hfe"
 [sub_resource type="Resource" id="Resource_xmngx"]
 script = ExtResource("4_epwt4")
 trigger_type = 1
-effects_to_run = Array[ExtResource("1_8nxcm")]([SubResource("Resource_wnvyd"), SubResource("Resource_pyvpy")])
+effects_to_run = Array[ExtResource("1_8nxcm")]([SubResource("Resource_pyvpy"), SubResource("Resource_wnvyd")])
 metadata/_custom_type_script = "uid://cdugd6pnm6py"
 
 [sub_resource type="Resource" id="Resource_uwup1"]
 script = ExtResource("3_rfxfv")
-condition_name = "Auto Shields"
+condition_name = "Auto-Shield"
 icon = ExtResource("2_5peya")
-description = "Hero gains 1 Guard and heals HP at the start of each turn until they attack."
+description = "Gain 1 Guard and heal for 50% of Sands's PSY at the start of each turn until this hero Shifts."
 triggers = Array[ExtResource("4_epwt4")]([SubResource("Resource_xmngx")])
-remove_on_triggers = Array[int]([9])
+remove_on_triggers = Array[int]([12])
 metadata/_custom_type_script = "uid://df30dm288ne1d"
 
 [sub_resource type="Resource" id="Resource_3hob0"]
@@ -40,12 +40,21 @@ script = ExtResource("5_wnvyd")
 condition = SubResource("Resource_uwup1")
 metadata/_custom_type_script = "uid://dggojfw8tmpnk"
 
+[sub_resource type="Resource" id="Resource_immediate_guard"]
+script = ExtResource("6_wnvyd")
+metadata/_custom_type_script = "uid://cu12q7dfj3hfe"
+
+[sub_resource type="Resource" id="Resource_immediate_heal"]
+script = ExtResource("5_epwt4")
+potency = 0.5
+metadata/_custom_type_script = "uid://nqyc4vuadjr5"
+
 [resource]
 script = ExtResource("2_jdtbr")
-action_name = "Auto Shields"
+action_name = "Auto-Shield"
 icon = ExtResource("2_5peya")
-description = "Asher or Echo gains Buff: Hero gains 1 Guard and heals HP at the start of each turn until they attack."
-focus_cost = 3
+description = "A teammate gains 1 Guard and heals for 50% of Sands's PSY immediately, then repeats both at the start of their turns until they Shift."
+focus_cost = 2
 target_type = 6
-effects = Array[ExtResource("1_8nxcm")]([SubResource("Resource_3hob0")])
+effects = Array[ExtResource("1_8nxcm")]([SubResource("Resource_immediate_guard"), SubResource("Resource_immediate_heal"), SubResource("Resource_3hob0")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

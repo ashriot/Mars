@@ -23,6 +23,44 @@ class MisleadingDamagePresentation extends Effect_Damage:
 		)
 
 
+class SandsRuntimeBattleManager extends BattleManager:
+	func _ready() -> void:
+		return
+
+	func wait(_duration: float = 0.01) -> void:
+		return
+
+
+class SandsRuntimeHero extends HeroCard:
+	var guard_events: Array[int] = []
+	var healing_events: Array[int] = []
+	var focus_events: Array[int] = []
+
+	func _update_conditions_ui() -> void:
+		return
+
+	func modify_guard(amount: int, _is_recovering: bool = false) -> void:
+		if is_defeated:
+			return
+		guard_events.append(amount)
+		current_guard = clampi(current_guard + amount, 0, MAX_GUARD)
+
+	func take_healing(amount: int, is_revive: bool = false) -> void:
+		if (is_defeated and not is_revive) or amount <= 0:
+			return
+		healing_events.append(amount)
+		current_hp = mini(current_hp + amount, current_stats.max_hp)
+
+	func modify_focus(amount: int, _context: Dictionary = {}) -> void:
+		focus_events.append(amount)
+		current_focus = clampi(current_focus + amount, 0, 10)
+
+
+class SandsRuntimeEnemy extends EnemyCard:
+	func _update_conditions_ui() -> void:
+		return
+
+
 const CONTENT_ROOTS: Array[String] = [
 	"res://data/heroes",
 	"res://data/enemies",
@@ -58,6 +96,28 @@ const ECHO_GDD := {
 	"feedback": {"guard_per_hit": -1, "piercing": 0.5},
 	"static_charge": {"delay": -0.25, "speed": -0.25, "piercing": 1.0},
 	"inversion": {"cost": 3, "piercing_per_guard": 0.5, "cap": 10},
+}
+const SANDS_GDD := {
+	"draw_fire": {"focus": 1},
+	"crossfire": {
+		"cost": 2,
+		"potency": 2.5,
+		"split": true,
+		"focus_per_breached": 1,
+	},
+	"phalanx": {
+		"cost": 4,
+		"potency": 0.35,
+		"hits": 4,
+		"guard_per_breached": 1,
+	},
+	"triage": {"heal": 0.5, "missing_hp": true},
+	"painkillers": {"reduction": -0.10},
+	"first_aid": {"heal": 0.75, "missing_hp": false},
+	"covering_fire": {"cost": 1, "potency": 0.5, "hits": 2},
+	"auto_shield": {"cost": 2, "guard": 1, "heal": 0.5},
+	"advantage": {"cost": 3, "ct_boost": 0.5, "source_psy": 1.0},
+	"checkmate": {"potency": 3.0, "ct_change": -0.5},
 }
 const APPROVED_DESCRIPTION_FORMULAS: Dictionary = {
 	"res://data/enemies/actions/shrapnel.tres": ["{atk*1.0}"],
@@ -1117,15 +1177,247 @@ func test_echo_player_names_reject_obsolete_identity() -> void:
 		assert_does_not_have(player_names, obsolete_name)
 
 
-func test_booster_shots_executes_and_presents_three_fifty_percent_hits() -> void:
-	var action := load("res://data/heroes/sands/actions/booster_shots.tres") as Action
-	var effect := action.effects[0] as Effect_Damage
-	assert_almost_eq(effect.potency, 0.5, 0.0001)
-	assert_eq(effect.power_type, Action.PowerType.ATTACK)
-	assert_eq(effect.hit_count, 3)
-	assert_string_contains(action.description, "{effect:1}")
-	assert_string_contains(action.get_rich_description(_presentation_actor), "50% ATKx3")
-	assert_false("twice" in action.description.to_lower())
+func test_sands_vanguard_actions_match_gdd() -> void:
+	var role := load("res://data/heroes/sands/roles/van.tres") as RoleDefinition
+	assert_string_contains(role.description.to_lower(), "protect")
+	assert_string_contains(role.description.to_lower(), "counterattack")
+
+	var draw_fire := load("res://data/heroes/sands/actions/draw_fire.tres") as Action
+	assert_eq(draw_fire.effects.size(), 2)
+	if draw_fire.effects.size() != 2:
+		return
+	var draw_focus := draw_fire.effects[1] as Effect_ModifyFocus
+	assert_not_null(draw_focus)
+	if draw_focus != null:
+		assert_eq(draw_focus.focus_amount, SANDS_GDD.draw_fire.focus)
+		assert_eq(draw_focus.target_type, Action.TargetType.SELF)
+
+	var crossfire := load("res://data/heroes/sands/actions/focus_fire.tres") as Action
+	var crossfire_damage := crossfire.effects[0] as Effect_Damage
+	assert_eq(crossfire.action_name, "Crossfire")
+	assert_eq(crossfire.focus_cost, SANDS_GDD.crossfire.cost)
+	assert_almost_eq(crossfire_damage.potency, SANDS_GDD.crossfire.potency, 0.0001)
+	assert_eq(crossfire_damage.power_type, Action.PowerType.ATTACK)
+	assert_eq(crossfire_damage.damage_type, Action.DamageType.KINETIC)
+	assert_eq(crossfire_damage.split_damage, SANDS_GDD.crossfire.split)
+	assert_eq(crossfire_damage.on_hit_triggers.size(), 1)
+	var crossfire_trigger := crossfire_damage.on_hit_triggers[0]
+	assert_eq(crossfire_trigger.condition, HitTrigger.HitCondition.IF_TARGET_IS_BREACHED)
+	var crossfire_focus := crossfire_trigger.effects_to_run[0] as Effect_ModifyFocus
+	assert_eq(crossfire_focus.focus_amount, SANDS_GDD.crossfire.focus_per_breached)
+	assert_eq(crossfire_focus.target_type, Action.TargetType.SELF)
+
+	var phalanx := load("res://data/heroes/sands/actions/phalanx.tres") as Action
+	var phalanx_damage := phalanx.effects[0] as Effect_Damage
+	assert_eq(phalanx.focus_cost, SANDS_GDD.phalanx.cost)
+	assert_almost_eq(phalanx_damage.potency, SANDS_GDD.phalanx.potency, 0.0001)
+	assert_eq(phalanx_damage.hit_count, SANDS_GDD.phalanx.hits)
+	assert_eq(phalanx_damage.power_type, Action.PowerType.ATTACK)
+	assert_eq(phalanx_damage.damage_type, Action.DamageType.KINETIC)
+	assert_eq(phalanx_damage.on_hit_triggers.size(), 1)
+	var phalanx_trigger := phalanx_damage.on_hit_triggers[0]
+	assert_eq(phalanx_trigger.condition, HitTrigger.HitCondition.IF_TARGET_IS_BREACHED)
+	var phalanx_guard := phalanx_trigger.effects_to_run[0] as Effect_ModifyGuard
+	assert_eq(phalanx_guard.guard_amount, SANDS_GDD.phalanx.guard_per_breached)
+	assert_eq(phalanx_guard.target_type, Action.TargetType.LEAST_GUARD_ALLY)
+
+
+func test_phalanx_retargets_the_current_least_guard_teammate_per_breached_hit() -> void:
+	var fixture := _sands_runtime_fixture()
+	var sands := fixture.sands as SandsRuntimeHero
+	var first_ally := fixture.first_ally as SandsRuntimeHero
+	var second_ally := fixture.second_ally as SandsRuntimeHero
+	var enemy := fixture.enemy as SandsRuntimeEnemy
+	sands.current_guard = 5
+	first_ally.current_guard = 0
+	second_ally.current_guard = 0
+	enemy.is_breached = true
+	var phalanx := load("res://data/heroes/sands/actions/phalanx.tres") as Action
+	var damage := phalanx.effects[0] as Effect_Damage
+
+	await damage._process_on_hit_triggers(sands, enemy, fixture.manager, {})
+	await damage._process_on_hit_triggers(sands, enemy, fixture.manager, {})
+
+	assert_eq(first_ally.guard_events, [1])
+	assert_eq(second_ally.guard_events, [1])
+	_free_sands_runtime_fixture(fixture)
+
+
+func test_sands_medic_actions_match_gdd() -> void:
+	var role := load("res://data/heroes/sands/roles/med.tres") as RoleDefinition
+	assert_string_contains(role.description.to_lower(), "heal")
+	assert_string_contains(role.description.to_lower(), "guard")
+
+	var triage := load("res://data/heroes/sands/actions/triage.tres") as Action
+	var triage_heal := triage.effects[0] as Effect_Healing
+	assert_almost_eq(triage_heal.potency, SANDS_GDD.triage.heal, 0.0001)
+	assert_eq(triage_heal.scales_with_missing_hp, SANDS_GDD.triage.missing_hp)
+	assert_eq(triage_heal.target_type, Action.TargetType.ALL_ALLIES)
+	assert_false(triage_heal.is_revive)
+
+	var painkillers := load("res://data/heroes/sands/conditions/painkillers.tres") as Condition
+	assert_almost_eq(
+		painkillers.damage_taken_scalar, SANDS_GDD.painkillers.reduction, 0.0001,
+	)
+	assert_string_contains(painkillers.description, "10%")
+
+	var first_aid := load("res://data/heroes/sands/actions/first_aid.tres") as Action
+	var first_aid_heal := first_aid.effects[0] as Effect_Healing
+	assert_almost_eq(first_aid_heal.potency, SANDS_GDD.first_aid.heal, 0.0001)
+	assert_eq(first_aid_heal.scales_with_missing_hp, SANDS_GDD.first_aid.missing_hp)
+	assert_false(first_aid_heal.is_revive)
+	assert_false("missing" in first_aid.description.to_lower())
+
+	var covering_fire := load(
+		"res://data/heroes/sands/actions/booster_shots.tres"
+	) as Action
+	var covering_damage := covering_fire.effects[0] as Effect_Damage
+	assert_eq(covering_fire.action_name, "Covering Fire")
+	assert_eq(covering_fire.focus_cost, SANDS_GDD.covering_fire.cost)
+	assert_almost_eq(
+		covering_damage.potency, SANDS_GDD.covering_fire.potency, 0.0001,
+	)
+	assert_eq(covering_damage.hit_count, SANDS_GDD.covering_fire.hits)
+	assert_eq(covering_damage.power_type, Action.PowerType.ATTACK)
+	assert_eq(covering_damage.damage_type, Action.DamageType.KINETIC)
+	var covering_passive := (
+		covering_fire.effects[1] as Effect_ApplyCondition
+	).condition
+	assert_eq(covering_passive.remove_on_triggers, [Trigger.TriggerType.ON_SHIFT])
+	assert_eq(covering_passive.triggers[0].trigger_type, Trigger.TriggerType.ON_SHIFT)
+	var covering_remove := (
+		covering_passive.triggers[0].effects_to_run[0] as Effect_RemoveCondition
+	)
+	var covering_boost := (covering_fire.effects[2] as Effect_ApplyCondition).condition
+	assert_eq(covering_remove.condition_name, covering_boost.condition_name)
+	assert_almost_eq(
+		covering_boost.damage_taken_scalar, SANDS_GDD.painkillers.reduction, 0.0001,
+	)
+
+	var auto_shield := load("res://data/heroes/sands/actions/auto_shields.tres") as Action
+	assert_eq(auto_shield.action_name, "Auto-Shield")
+	assert_eq(auto_shield.focus_cost, SANDS_GDD.auto_shield.cost)
+	assert_eq(auto_shield.effects.size(), 3)
+	if auto_shield.effects.size() != 3:
+		return
+	var immediate_guard := auto_shield.effects[0] as Effect_ModifyGuard
+	var immediate_heal := auto_shield.effects[1] as Effect_Healing
+	var auto_condition := (auto_shield.effects[2] as Effect_ApplyCondition).condition
+	assert_eq(immediate_guard.guard_amount, SANDS_GDD.auto_shield.guard)
+	assert_eq(immediate_guard.target_type, Action.TargetType.PARENT)
+	assert_almost_eq(immediate_heal.potency, SANDS_GDD.auto_shield.heal, 0.0001)
+	assert_eq(immediate_heal.target_type, Action.TargetType.PARENT)
+	assert_false(immediate_heal.is_revive)
+	assert_eq(auto_condition.condition_name, "Auto-Shield")
+	assert_eq(auto_condition.remove_on_triggers, [Trigger.TriggerType.ON_SHIFT])
+	assert_eq(auto_condition.triggers.size(), 1)
+	assert_eq(auto_condition.triggers[0].trigger_type, Trigger.TriggerType.ON_TURN_START)
+	var recurring_guard := auto_condition.triggers[0].effects_to_run[0] as Effect_ModifyGuard
+	var recurring_heal := auto_condition.triggers[0].effects_to_run[1] as Effect_Healing
+	assert_eq(recurring_guard.guard_amount, SANDS_GDD.auto_shield.guard)
+	assert_eq(recurring_guard.target_type, Action.TargetType.SELF)
+	assert_almost_eq(recurring_heal.potency, SANDS_GDD.auto_shield.heal, 0.0001)
+	assert_eq(recurring_heal.target_type, Action.TargetType.SELF)
+	assert_false(recurring_heal.is_revive)
+
+	var bastion := load("res://data/heroes/sands/actions/bastion.tres") as Action
+	assert_eq(bastion.focus_cost, 4)
+	assert_eq((bastion.effects[0] as Effect_ModifyGuard).guard_amount, 3)
+	assert_eq(bastion.effects[0].target_type, Action.TargetType.ALL_ALLIES)
+
+
+func test_auto_shield_applies_immediately_and_recurs_on_target_until_target_shifts() -> void:
+	var fixture := _sands_runtime_fixture()
+	var sands := fixture.sands as SandsRuntimeHero
+	var target := fixture.first_ally as SandsRuntimeHero
+	target.current_stats.max_hp = 200
+	target.current_hp = 20
+	var action := load("res://data/heroes/sands/actions/auto_shields.tres") as Action
+
+	for effect: ActionEffect in action.effects:
+		await effect.execute(sands, [target], fixture.manager, action)
+
+	assert_eq(target.guard_events, [1])
+	assert_eq(target.healing_events, [50])
+	assert_eq(target.current_hp, 70)
+	assert_true(target.has_condition("Auto-Shield"))
+	var matching_conditions := target.active_conditions.filter(
+		func(condition: Condition) -> bool: return condition.condition_name == "Auto-Shield"
+	)
+	if matching_conditions.is_empty():
+		_free_sands_runtime_fixture(fixture)
+		return
+	var applied := matching_conditions[0] as Condition
+	assert_same(applied.attacker, sands)
+
+	await target._fire_condition_event(Trigger.TriggerType.ON_TURN_START)
+	assert_eq(target.guard_events, [1, 1])
+	assert_eq(target.healing_events, [50, 50])
+	assert_eq(target.current_hp, 120)
+
+	await sands._fire_condition_event(Trigger.TriggerType.ON_SHIFT)
+	assert_true(target.has_condition("Auto-Shield"))
+	await target._fire_condition_event(Trigger.TriggerType.ON_SHIFT)
+	assert_false(target.has_condition("Auto-Shield"))
+	await target._fire_condition_event(Trigger.TriggerType.ON_TURN_START)
+	assert_eq(target.guard_events, [1, 1])
+	assert_eq(target.healing_events, [50, 50])
+	_free_sands_runtime_fixture(fixture)
+
+
+func test_sands_strategist_actions_match_gdd() -> void:
+	var role := load("res://data/heroes/sands/roles/stg.tres") as RoleDefinition
+	assert_string_contains(role.description.to_lower(), "turn")
+	assert_string_contains(role.description.to_lower(), "attack")
+
+	var advantage := load("res://data/heroes/sands/actions/advantage.tres") as Action
+	var advantage_ct := advantage.effects[0] as Effect_ModifyCT
+	var advantage_apply := advantage.effects[1] as Effect_ApplyCondition
+	var advantage_condition := advantage_apply.condition
+	assert_eq(advantage.focus_cost, SANDS_GDD.advantage.cost)
+	assert_almost_eq(advantage_ct.ct_change_percent, SANDS_GDD.advantage.ct_boost, 0.0001)
+	assert_true(advantage_condition is ConditionSourcePowerBonus)
+	if advantage_condition is ConditionSourcePowerBonus:
+		var source_bonus := advantage_condition as ConditionSourcePowerBonus
+		assert_eq(source_bonus.power_type, Action.PowerType.PSYCHE)
+		assert_almost_eq(source_bonus.power_scalar, SANDS_GDD.advantage.source_psy, 0.0001)
+	assert_almost_eq(advantage_condition.damage_dealt_scalar, 0.0, 0.0001)
+	assert_eq(
+		advantage_condition.remove_on_triggers,
+		[Trigger.TriggerType.AFTER_ATTACKING],
+	)
+
+	var checkmate := load("res://data/heroes/sands/actions/checkmate.tres") as Action
+	var checkmate_damage := checkmate.effects[0] as Effect_Damage
+	var checkmate_ct := checkmate.effects[1] as Effect_ModifyCT
+	assert_almost_eq(checkmate_damage.potency, SANDS_GDD.checkmate.potency, 0.0001)
+	assert_eq(checkmate_damage.power_type, Action.PowerType.PSYCHE)
+	assert_eq(checkmate_damage.damage_type, Action.DamageType.ENERGY)
+	assert_almost_eq(checkmate_ct.ct_change_percent, SANDS_GDD.checkmate.ct_change, 0.0001)
+
+
+func test_fianchetto_grants_ten_percent_speed_and_cleans_party_on_sands_shift() -> void:
+	var fixture := _sands_runtime_fixture()
+	var sands := fixture.sands as SandsRuntimeHero
+	var first_ally := fixture.first_ally as SandsRuntimeHero
+	var second_ally := fixture.second_ally as SandsRuntimeHero
+	var action := load("res://data/heroes/sands/actions/fianchetto.tres") as Action
+	var source_text := FileAccess.get_file_as_string(action.resource_path)
+	source_text += FileAccess.get_file_as_string(
+		"res://data/heroes/sands/conditions/fianchetto.tres"
+	)
+	assert_false("Tactician" in source_text)
+
+	await action.effects[0].execute(sands, [sands], fixture.manager, action)
+
+	for hero: SandsRuntimeHero in [sands, first_ally, second_ally]:
+		assert_true(hero.has_condition("Fianchetto"))
+		assert_eq(hero.get_speed(), 110)
+	await sands._fire_condition_event(Trigger.TriggerType.ON_SHIFT)
+	for hero: SandsRuntimeHero in [sands, first_ally, second_ally]:
+		assert_false(hero.has_condition("Fianchetto"))
+		assert_eq(hero.get_speed(), 100)
+	_free_sands_runtime_fixture(fixture)
 
 
 func test_shatter_splits_its_guard_scaled_damage() -> void:
@@ -1241,6 +1533,52 @@ func _collect_resource_paths(root: String, paths: Array[String]) -> void:
 			paths.append(root.path_join(filename))
 	for child: String in directory.get_directories():
 		_collect_resource_paths(root.path_join(child), paths)
+
+
+func _sands_runtime_fixture() -> Dictionary:
+	var manager := SandsRuntimeBattleManager.new()
+	manager.hero_area = Control.new()
+	manager.enemy_area = Control.new()
+	manager.add_child(manager.hero_area)
+	manager.add_child(manager.enemy_area)
+	var sands := _sands_runtime_hero("Sands")
+	var first_ally := _sands_runtime_hero("Asher")
+	var second_ally := _sands_runtime_hero("Echo")
+	var enemy := SandsRuntimeEnemy.new()
+	enemy.actor_name = "Target"
+	enemy.current_stats = ActorStats.new()
+	enemy.current_stats.max_hp = 100
+	enemy.current_hp = 100
+	for hero: SandsRuntimeHero in [sands, first_ally, second_ally]:
+		hero.battle_manager = manager
+		manager.hero_area.add_child(hero)
+	enemy.battle_manager = manager
+	manager.enemy_area.add_child(enemy)
+	manager.current_actor = sands
+	manager.actor_list = [sands, first_ally, second_ally, enemy]
+	return {
+		"manager": manager,
+		"sands": sands,
+		"first_ally": first_ally,
+		"second_ally": second_ally,
+		"enemy": enemy,
+	}
+
+
+func _sands_runtime_hero(actor_name: String) -> SandsRuntimeHero:
+	var hero := SandsRuntimeHero.new()
+	hero.actor_name = actor_name
+	hero.current_stats = ActorStats.new()
+	hero.current_stats.attack = 100
+	hero.current_stats.psyche = 100
+	hero.current_stats.speed = 100
+	hero.current_stats.max_hp = 100
+	hero.current_hp = 100
+	return hero
+
+
+func _free_sands_runtime_fixture(fixture: Dictionary) -> void:
+	(fixture.manager as BattleManager).free()
 
 
 func _validate_action(action: Action, path: String) -> void:

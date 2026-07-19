@@ -28,7 +28,7 @@ metadata/_custom_type_script = "uid://d0eibi4b735ay"
 
 [resource]
 script = ExtResource("6_p46ui")
-action_name = "Focus Fire"
+action_name = "Crossfire"
 icon = ExtResource("5_ykd3v")
 description = "{effect:1}[p]Each BREACHED enemy hit grants Sands {foc}."
 focus_cost = 2

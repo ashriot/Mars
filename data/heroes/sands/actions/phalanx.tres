@@ -21,7 +21,7 @@ metadata/_custom_type_script = "uid://bhpiwhufv87v7"
 
 [sub_resource type="Resource" id="Resource_04o0x"]
 script = ExtResource("5_shujg")
-potency = 0.5
+potency = 0.35
 hit_count = 4
 on_hit_triggers = Array[ExtResource("2_8105k")]([SubResource("Resource_b4uay")])
 metadata/_custom_type_script = "uid://d0eibi4b735ay"
@@ -31,6 +31,6 @@ script = ExtResource("2_574df")
 action_name = "Phalanx"
 icon = ExtResource("6_n5pr0")
 description = "{effect:1}[p]Each BREACHED hit grants 1 Guard to the teammate with the least Guard."
-focus_cost = 3
+focus_cost = 4
 effects = Array[ExtResource("1_8wvin")]([SubResource("Resource_04o0x")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

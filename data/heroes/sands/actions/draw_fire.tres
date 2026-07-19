@@ -5,20 +5,26 @@
 [ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://src/scripts/action_effects/effect_apply_condition.gd" id="3_ye401"]
 [ext_resource type="Texture2D" uid="uid://b6ap6mcvctu84" path="res://assets/graphics/icons/skills/sonic-shout.png" id="4_qpqjr"]
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="5_jdg8v"]
+[ext_resource type="Script" uid="uid://bhblyd70hrd4m" path="res://src/scripts/action_effects/effect_modify_focus.gd" id="6_focus"]
 
 [sub_resource type="Resource" id="Resource_7kmks"]
 script = ExtResource("3_ye401")
 condition = ExtResource("2_y7tn4")
 metadata/_custom_type_script = "uid://dggojfw8tmpnk"
 
+[sub_resource type="Resource" id="Resource_focus"]
+script = ExtResource("6_focus")
+target_type = 4
+metadata/_custom_type_script = "uid://bhblyd70hrd4m"
+
 [resource]
 script = ExtResource("5_jdg8v")
 action_name = "Draw Fire"
 icon = ExtResource("4_qpqjr")
-description = "Forces all enemies to target Sands. Lasts until he Shifts or is Breached."
+description = "Gain {foc} and force all enemies to target Sands until he Shifts or is Breached."
 focus_cost = null
 auto_target = null
 is_shift_action = null
 target_type = 4
-effects = Array[ExtResource("1_trdq1")]([SubResource("Resource_7kmks")])
+effects = Array[ExtResource("1_trdq1")]([SubResource("Resource_7kmks"), SubResource("Resource_focus")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

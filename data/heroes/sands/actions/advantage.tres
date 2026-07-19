@@ -3,23 +3,25 @@
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_p4ktw"]
 [ext_resource type="Script" uid="uid://dgkss5d1axeag" path="res://src/scripts/action_effects/effect_modify_ct.gd" id="2_kas3u"]
 [ext_resource type="Texture2D" uid="uid://dvojajdqawqhb" path="res://assets/graphics/icons/skills/chess-rook.png" id="3_0hp4v"]
-[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://src/scripts/conditions/condition.gd" id="4_7bh6w"]
+[ext_resource type="Script" uid="uid://b1tcey3axjqps" path="res://src/scripts/conditions/condition_source_power_bonus.gd" id="4_7bh6w"]
 [ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://src/scripts/conditions/trigger.gd" id="5_gn5vm"]
 [ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://src/scripts/action_effects/effect_apply_condition.gd" id="6_vxfe1"]
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="7_kbdqm"]
 
 [sub_resource type="Resource" id="Resource_nwuby"]
 script = ExtResource("2_kas3u")
+ct_change_percent = 0.5
 metadata/_custom_type_script = "uid://dgkss5d1axeag"
 
 [sub_resource type="Resource" id="Resource_yhxiy"]
 script = ExtResource("4_7bh6w")
 condition_name = "Advantage"
 icon = ExtResource("3_0hp4v")
-description = "This hero's next attack deals +50% damage."
-damage_dealt_scalar = 0.5
+description = "Adds 100% of Sands's PSY to this hero's next attack, distributed across its hits and targets."
+power_type = 1
+power_scalar = 1.0
 remove_on_triggers = Array[int]([9])
-metadata/_custom_type_script = "uid://df30dm288ne1d"
+metadata/_custom_type_script = "uid://b1tcey3axjqps"
 
 [sub_resource type="Resource" id="Resource_dofah"]
 script = ExtResource("6_vxfe1")
@@ -30,8 +32,8 @@ metadata/_custom_type_script = "uid://dggojfw8tmpnk"
 script = ExtResource("7_kbdqm")
 action_name = "Advantage"
 icon = ExtResource("3_0hp4v")
-description = "Boosts an ally's next turn by 50% and grants Buff: This hero's next attack deals +50% damage."
-focus_cost = 2
+description = "Boosts a teammate's next turn by 50% and adds 100% of Sands's PSY to that hero's next attack, distributed across its hits and targets."
+focus_cost = 3
 target_type = 5
 effects = Array[ExtResource("1_p4ktw")]([SubResource("Resource_nwuby"), SubResource("Resource_dofah")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

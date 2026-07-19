@@ -14,7 +14,7 @@
 script = ExtResource("4_euyrb")
 role_id = "van"
 role_name = "Vanguard"
-description = "A counterattacking bruiser."
+description = "Protects the team by drawing enemy fire and counterattacking."
 icon = ExtResource("6_db3vp")
 color = Color(1, 0.29000002, 0.37283343, 1)
 shift_action = ExtResource("9_rqijg")

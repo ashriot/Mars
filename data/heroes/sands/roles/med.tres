@@ -14,7 +14,7 @@
 script = ExtResource("9_w7vm7")
 role_id = "med"
 role_name = "Medic"
-description = "A party healer."
+description = "Heals the team, reduces incoming damage, and restores Guard."
 icon = ExtResource("2_1cpdq")
 color = Color(1, 0.29000002, 0.6094999, 1)
 shift_action = ExtResource("5_vg3au")

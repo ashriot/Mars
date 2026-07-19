@@ -293,6 +293,40 @@ func test_distribution_divides_entire_source_power_bonus() -> void:
 	target.free()
 
 
+func test_advantage_resource_distributes_source_sands_psy_as_power_not_outgoing() -> void:
+	var advantage := load("res://data/heroes/sands/actions/advantage.tres") as Action
+	var condition := (
+		(advantage.effects[1] as Effect_ApplyCondition).condition.duplicate(true)
+	) as Condition
+	var sands := _actor_with_power(Action.PowerType.PSYCHE, 40)
+	var recipient := _actor_with_power(Action.PowerType.ATTACK, 100)
+	var target := _actor_with_power(Action.PowerType.ATTACK, 0)
+	condition.attacker = sands
+	recipient.active_conditions = [condition]
+	var context := _context(0, 0, 0)
+	var resolved := DamageResolver.resolve_potency(1.0, [], context)
+
+	var result := DamageResolver.resolve_hit(
+		recipient,
+		target,
+		Action.PowerType.ATTACK,
+		resolved,
+		4,
+		Action.DamageType.PIERCING,
+		false,
+		context,
+	)
+
+	assert_true(condition is ConditionSourcePowerBonus)
+	assert_almost_eq(result.request.power_bonus, 40.0, 0.0001)
+	assert_almost_eq(result.request.outgoing_modifier, 0.0, 0.0001)
+	assert_almost_eq(result.effective_power, 140.0, 0.0001)
+	assert_almost_eq(result.raw_damage, 35.0, 0.0001)
+	sands.free()
+	recipient.free()
+	target.free()
+
+
 func test_unsupported_contribution_stage_is_reported_and_excluded() -> void:
 	var invalid_rule := _fixed_rule(&"invalid", 99, 10.0)
 	var resolved := DamageResolver.resolve_potency(

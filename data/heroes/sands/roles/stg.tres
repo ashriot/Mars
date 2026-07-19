@@ -14,7 +14,7 @@
 script = ExtResource("8_dj674")
 role_id = "stg"
 role_name = "Strategist"
-description = "A master commander who can greatly assist his allies."
+description = "Controls turn order and strengthens teammates' attacks."
 icon = ExtResource("6_1nfpt")
 color = Color(1, 0.5266667, 0.29000002, 1)
 shift_action = ExtResource("9_1lqk5")

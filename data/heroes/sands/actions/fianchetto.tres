@@ -22,7 +22,7 @@ metadata/_custom_type_script = "uid://cdugd6pnm6py"
 
 [sub_resource type="Resource" id="Resource_mkyrc"]
 script = ExtResource("6_to11e")
-condition_name = "Tactician"
+condition_name = "Fianchetto"
 target_type = 7
 metadata/_custom_type_script = "uid://ddjg3oka0dtvg"
 
@@ -49,6 +49,6 @@ metadata/_custom_type_script = "uid://dggojfw8tmpnk"
 script = ExtResource("8_811w3")
 action_name = "Fianchetto"
 icon = ExtResource("7_31cfa")
-description = "Grants the party Buff: Speed increased by 15%."
+description = "Grants the party Buff: Speed increased by 10% until Sands Shifts."
 effects = Array[ExtResource("1_fs82n")]([SubResource("Resource_ciepr")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

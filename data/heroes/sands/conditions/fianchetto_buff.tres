@@ -8,6 +8,6 @@
 script = ExtResource("2_bugkn")
 condition_name = "Fianchetto"
 icon = ExtResource("1_o5mei")
-description = "Speed increased by 15%."
-speed_scalar = 0.15
+description = "Speed increased by 10%."
+speed_scalar = 0.1
 metadata/_custom_type_script = "uid://df30dm288ne1d"

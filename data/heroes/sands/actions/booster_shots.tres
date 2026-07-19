@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="2_7c2yf"]
 [ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://src/scripts/conditions/hit_trigger.gd" id="2_p26gk"]
 [ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://src/scripts/action_effects/pre_hit_trigger.gd" id="3_ywsrt"]
+[ext_resource type="Script" uid="uid://3thmtafynus7" path="res://src/battle/damage/damage_scaling_rule.gd" id="4_g1mn7"]
 [ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://src/scripts/action_effects/effect_damage.gd" id="4_hnok7"]
 [ext_resource type="Texture2D" uid="uid://butpmsk5hwx28" path="res://assets/graphics/icons/skills/miracle-medecine.png" id="5_g1mn7"]
 [ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://src/scripts/conditions/condition.gd" id="6_lhcl4"]
@@ -14,12 +15,12 @@
 [sub_resource type="Resource" id="Resource_ku2wx"]
 script = ExtResource("4_hnok7")
 potency = 0.5
-hit_count = 3
+hit_count = 2
 metadata/_custom_type_script = "uid://d0eibi4b735ay"
 
 [sub_resource type="Resource" id="Resource_hnok7"]
 script = ExtResource("8_ywsrt")
-condition_name = "Booster Shot"
+condition_name = "Covering Fire"
 target_type = 7
 metadata/_custom_type_script = "uid://ddjg3oka0dtvg"
 
@@ -31,7 +32,7 @@ metadata/_custom_type_script = "uid://cdugd6pnm6py"
 
 [sub_resource type="Resource" id="Resource_m24su"]
 script = ExtResource("6_lhcl4")
-condition_name = "Booster Shot Passive"
+condition_name = "Covering Fire Passive"
 icon = ExtResource("5_g1mn7")
 description = "Double the effect of Painkillers until Sands Shifts."
 is_passive = true
@@ -47,10 +48,10 @@ metadata/_custom_type_script = "uid://dggojfw8tmpnk"
 
 [sub_resource type="Resource" id="Resource_r4oiu"]
 script = ExtResource("6_lhcl4")
-condition_name = "Booster Shot"
+condition_name = "Covering Fire"
 icon = ExtResource("5_g1mn7")
-description = "Reduces damage taken by 15%."
-damage_taken_scalar = -0.15
+description = "Reduces damage taken by an additional 10%."
+damage_taken_scalar = -0.1
 metadata/_custom_type_script = "uid://df30dm288ne1d"
 
 [sub_resource type="Resource" id="Resource_8ss52"]
@@ -61,7 +62,7 @@ metadata/_custom_type_script = "uid://dggojfw8tmpnk"
 
 [resource]
 script = ExtResource("2_7c2yf")
-action_name = "Booster Shots"
+action_name = "Covering Fire"
 icon = ExtResource("5_g1mn7")
 description = "{effect:1}[p]Gain Buff: Painkillers' effect is doubled until Sands Shifts."
 focus_cost = 1

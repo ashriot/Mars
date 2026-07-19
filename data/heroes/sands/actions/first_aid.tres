@@ -8,14 +8,13 @@
 [sub_resource type="Resource" id="Resource_swq55"]
 script = ExtResource("2_g2sqe")
 potency = 0.75
-scales_with_missing_hp = true
 metadata/_custom_type_script = "uid://nqyc4vuadjr5"
 
 [resource]
 script = ExtResource("7_5y0jn")
 action_name = "First Aid"
 icon = ExtResource("3_dj5c4")
-description = "Heals a team member for {psy*0.75} HP, increased by their missing HP percentage."
+description = "Heals a team member for {psy*0.75} HP."
 focus_cost = null
 auto_target = null
 is_shift_action = null

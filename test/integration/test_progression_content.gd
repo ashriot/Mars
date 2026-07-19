@@ -180,10 +180,10 @@ func test_medic_first_aid_matches_authored_healing() -> void:
 	var healing := action.effects[0] as Effect_Healing
 	assert_not_null(healing)
 	assert_almost_eq(healing.potency, 0.75, 0.001)
-	assert_true(healing.scales_with_missing_hp)
+	assert_false(healing.scales_with_missing_hp)
 	assert_eq(
 		action.description,
-		"Heals a team member for {psy*0.75} HP, increased by their missing HP percentage.",
+		"Heals a team member for {psy*0.75} HP.",
 	)
 
 func test_every_production_role_fulfills_the_starting_kit_contract() -> void:

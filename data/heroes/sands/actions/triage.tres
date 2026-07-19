@@ -7,7 +7,7 @@
 
 [sub_resource type="Resource" id="Resource_a4hdi"]
 script = ExtResource("2_derss")
-potency = 0.75
+potency = 0.5
 scales_with_missing_hp = true
 target_type = 7
 metadata/_custom_type_script = "uid://nqyc4vuadjr5"
@@ -16,7 +16,7 @@ metadata/_custom_type_script = "uid://nqyc4vuadjr5"
 script = ExtResource("2_jl74c")
 action_name = "Triage"
 icon = ExtResource("3_derss")
-description = "Heal the team, increased by their missing HP percent."
+description = "Heal each living teammate for 50% of Sands's PSY, increased separately by that teammate's missing HP percentage."
 auto_target = true
 is_shift_action = true
 target_type = 7
