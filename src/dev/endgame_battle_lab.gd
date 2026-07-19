@@ -3,7 +3,8 @@ class_name EndgameBattleLab
 
 @export var encounter: Encounter
 @export var equipment_preset := EndgamePartyFactory.EquipmentPreset.MAX_EQUIPMENT
-@export_range(1, 30, 1) var enemy_level := 30
+@export_range(1, 30, 1) var enemy_level := 20
+@export_range(1.0, 3.0, 0.25) var enemy_hp_multiplier := 2.5
 @export var encounter_seed := 4242
 @export var auto_start := true
 
@@ -39,6 +40,7 @@ func start_benchmark() -> bool:
 		enemy_level,
 		encounter_seed,
 		false,
+		enemy_hp_multiplier,
 	)
 	return true
 

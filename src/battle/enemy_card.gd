@@ -24,7 +24,13 @@ var intended_targets: Array[ActorCard]
 var intent_flash_tween: Tween
 
 
-func setup(data: EnemyData, fight_level: int, is_elite: bool, is_boss: bool):
+func setup(
+	data: EnemyData,
+	fight_level: int,
+	is_elite: bool,
+	is_boss: bool,
+	hp_multiplier: float = 1.0,
+):
 	enemy_data = data.duplicate(true) as EnemyData
 	enemy_data.level = fight_level
 	enemy_data.calculate_stats()
@@ -37,6 +43,10 @@ func setup(data: EnemyData, fight_level: int, is_elite: bool, is_boss: bool):
 		$Panel/Info/Text.text += " BOSS"
 		#_apply_boss_scaling(enemy_data.stats)
 		name_label.modulate = Color.MAGENTA
+	enemy_data.stats.max_hp = maxi(
+		1,
+		roundi(enemy_data.stats.max_hp * maxf(hp_multiplier, 1.0)),
+	)
 	setup_base(enemy_data.stats)
 	update_defenses()
 

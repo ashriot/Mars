@@ -69,6 +69,7 @@ func spawn_encounter(
 	enemy_level_override: int = -1,
 	seed_override: int = -1,
 	allow_rewards: bool = true,
+	enemy_hp_multiplier: float = 1.0,
 ) -> void:
 	print("Spawning encounter...")
 	var roster: Array[HeroData] = []
@@ -110,7 +111,13 @@ func spawn_encounter(
 	for enemy_data in enemies_to_spawn:
 		var enemy_card: EnemyCard = enemy_card_scene.instantiate()
 		enemy_area.add_child(enemy_card)
-		enemy_card.setup(enemy_data, fight_level, is_elite, is_boss)
+		enemy_card.setup(
+			enemy_data,
+			fight_level,
+			is_elite,
+			is_boss,
+			enemy_hp_multiplier,
+		)
 		var base_name = enemy_card.actor_name
 		if not name_counts.has(base_name):
 			name_counts[base_name] = 0

@@ -33,7 +33,23 @@ func test_enemy_level_is_editable_from_one_through_thirty_in_inspector() -> void
 	assert_eq(enemy_level_properties[0].hint_string, "1.0,30.0,1.0")
 
 
-func test_lab_builds_max_party_and_forwards_rank_thirty_fixed_seed() -> void:
+func test_enemy_hp_multiplier_is_editable_from_one_through_three_in_inspector() -> void:
+	var lab := LabScene.instantiate() as EndgameBattleLab
+	lab.auto_start = false
+	add_child_autofree(lab)
+	var hp_multiplier_properties := lab.get_property_list().filter(
+		func(property: Dictionary) -> bool: return property.name == "enemy_hp_multiplier"
+	)
+
+	assert_eq(hp_multiplier_properties.size(), 1)
+	if hp_multiplier_properties.is_empty():
+		return
+	assert_eq(hp_multiplier_properties[0].hint, PROPERTY_HINT_RANGE)
+	assert_eq(hp_multiplier_properties[0].hint_string, "1.0,3.0,0.25")
+	assert_eq(lab.get("enemy_hp_multiplier"), 2.5)
+
+
+func test_lab_builds_max_party_and_forwards_rank_twenty_fixed_seed() -> void:
 	var lab := LabScene.instantiate() as EndgameBattleLab
 	var authored_enemies := lab.encounter.enemies.duplicate()
 	var authored_levels: Array[int] = []
@@ -60,13 +76,19 @@ func test_lab_builds_max_party_and_forwards_rank_thirty_fixed_seed() -> void:
 		assert_eq(hero.hero_data.armor.tier, 5, hero.actor_name)
 		assert_eq(hero.hero_data.armor.rank, 30, hero.actor_name)
 		assert_eq(hero.hero_data.armor.current_xp, 0, hero.actor_name)
-	assert_eq(lab.enemy_level, 30)
+	assert_eq(lab.enemy_level, 20)
 	assert_false(enemies.is_empty())
 	for enemy_index in enemies.size():
 		var enemy := enemies[enemy_index] as EnemyCard
 		var authored_enemy := authored_enemies[enemy_index] as EnemyData
-		assert_eq(enemy.enemy_data.level, 30, enemy.actor_name)
-		assert_eq(enemy.get_node("Panel/Info/Text").text, "Rk. 30", enemy.actor_name)
+		var unscaled_stats := _enemy_stats_at_level(authored_enemy, lab.enemy_level)
+		var expected_hp := roundi(unscaled_stats.max_hp * lab.enemy_hp_multiplier)
+		assert_eq(enemy.enemy_data.level, 20, enemy.actor_name)
+		assert_eq(enemy.get_node("Panel/Info/Text").text, "Rk. 20", enemy.actor_name)
+		assert_eq(enemy.current_stats.max_hp, expected_hp, enemy.actor_name)
+		assert_eq(enemy.current_hp, expected_hp, enemy.actor_name)
+		assert_eq(enemy.current_stats.attack, unscaled_stats.attack, enemy.actor_name)
+		assert_eq(enemy.current_stats.speed, unscaled_stats.speed, enemy.actor_name)
 		assert_not_same(enemy.enemy_data, authored_enemy, enemy.actor_name)
 		assert_same(lab.encounter.enemies[enemy_index], authored_enemy, enemy.actor_name)
 		assert_eq(authored_enemy.level, authored_levels[enemy_index], enemy.actor_name)
@@ -75,6 +97,30 @@ func test_lab_builds_max_party_and_forwards_rank_thirty_fixed_seed() -> void:
 	assert_true(lab.battle_scene.manager.has_local_combat_rng())
 	assert_false(lab.battle_scene.manager.rewards_enabled)
 	assert_null(lab.find_child("GameManager", true, false))
+
+
+func test_hp_multiplier_remains_active_when_enemy_rank_changes_to_thirty() -> void:
+	var lab := LabScene.instantiate() as EndgameBattleLab
+	var authored_enemies := lab.encounter.enemies.duplicate()
+	lab.auto_start = false
+	lab.enemy_level = 30
+	add_child_autofree(lab)
+
+	assert_true(lab.start_benchmark())
+	await get_tree().process_frame
+	var enemies := lab.battle_scene.manager.actor_list.filter(
+		func(actor: ActorCard) -> bool: return actor is EnemyCard
+	)
+	for enemy_index in enemies.size():
+		var enemy := enemies[enemy_index] as EnemyCard
+		var authored_enemy := authored_enemies[enemy_index] as EnemyData
+		var unscaled_stats := _enemy_stats_at_level(authored_enemy, lab.enemy_level)
+		assert_eq(
+			enemy.current_stats.max_hp,
+			roundi(unscaled_stats.max_hp * lab.enemy_hp_multiplier),
+			enemy.actor_name,
+		)
+		assert_eq(enemy.current_stats.attack, unscaled_stats.attack, enemy.actor_name)
 
 
 func test_spawned_heroes_retain_complete_benchmark_kits() -> void:
@@ -214,6 +260,13 @@ func _spawned_heroes(lab: EndgameBattleLab) -> Array[HeroCard]:
 		if actor is HeroCard:
 			heroes.append(actor as HeroCard)
 	return heroes
+
+
+func _enemy_stats_at_level(authored_enemy: EnemyData, level: int) -> ActorStats:
+	var runtime_enemy := authored_enemy.duplicate(true) as EnemyData
+	runtime_enemy.level = level
+	runtime_enemy.calculate_stats()
+	return runtime_enemy.stats
 
 
 func _spawned_hero_by_id(lab: EndgameBattleLab, hero_id: String) -> HeroCard:

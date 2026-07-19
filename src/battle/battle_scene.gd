@@ -384,6 +384,7 @@ func setup_battle(
 	enemy_level_override: int = -1,
 	seed_override: int = -1,
 	rewards_enabled: bool = true,
+	enemy_hp_multiplier: float = 1.0,
 ) -> void:
 	manager.current_encounter = encounter
 	manager.spawn_encounter(
@@ -391,6 +392,7 @@ func setup_battle(
 		enemy_level_override,
 		seed_override,
 		rewards_enabled,
+		enemy_hp_multiplier,
 	)
 
 func _on_battle_ended(won: bool):

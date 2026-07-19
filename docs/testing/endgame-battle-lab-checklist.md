@@ -13,8 +13,9 @@ not the final endgame benchmark party.
    the Inspector.
 3. Leave `Auto Start` enabled and run the current scene directly (`F6`). Do not
    launch it through `GameManager` or a campaign slot.
-4. Confirm every enemy card is labeled `Rk. 30`, the default encounter seed is
-   `4242`, and the fight begins with Asher, Echo, and Sands.
+4. Confirm every enemy card is labeled `Rk. 20`, `Enemy HP Multiplier` defaults
+   to `2.5`, the default encounter seed is `4242`, and the fight begins with
+   Asher, Echo, and Sands.
 
 The `Equipment Preset` export supports:
 
@@ -34,7 +35,8 @@ Use the exported `Encounter Seed` property to replay or vary a fight:
 - [ ] Run seed `4242` twice with `MAX_EQUIPMENT`; confirm the opening CT head starts,
   critical rolls, random-hit targets, and enemy opening choices replay exactly.
 - [ ] Change to a different non-negative seed; confirm at least one seeded outcome
-  can differ while the party, Rank 30 override, and encounter composition stay fixed.
+  can differ while the party, Rank 20 override, 2.5-times enemy HP multiplier,
+  and encounter composition stay fixed.
 - [ ] Return to seed `4242`; confirm the original sequence returns.
 - [ ] Repeat one seed with `SKILLS_ONLY` to isolate the effect of equipment scaling.
 

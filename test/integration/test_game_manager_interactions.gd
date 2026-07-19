@@ -115,17 +115,20 @@ class RecordingSetupBattleManager extends BattleManager:
 	var received_level := -999
 	var received_seed := -999
 	var received_rewards_enabled := false
+	var received_enemy_hp_multiplier := -1.0
 
 	func spawn_encounter(
 		roster_override: Array[HeroData] = [],
 		enemy_level_override: int = -1,
 		seed_override: int = -1,
 		allow_rewards: bool = true,
+		enemy_hp_multiplier: float = 1.0,
 	) -> void:
 		received_roster.assign(roster_override)
 		received_level = enemy_level_override
 		received_seed = seed_override
 		received_rewards_enabled = allow_rewards
+		received_enemy_hp_multiplier = enemy_hp_multiplier
 
 
 func _manager() -> InteractionManagerDouble:
@@ -160,13 +163,14 @@ func test_battle_setup_forwards_explicit_roster_level_seed_and_reward_policy() -
 	var roster: Array[HeroData] = [HeroData.new()]
 	var encounter := Encounter.new()
 
-	scene.setup_battle(encounter, roster, 10, 4242, false)
+	scene.setup_battle(encounter, roster, 10, 4242, false, 2.5)
 
 	assert_same(manager.current_encounter, encounter)
 	assert_eq(manager.received_roster, roster)
 	assert_eq(manager.received_level, 10)
 	assert_eq(manager.received_seed, 4242)
 	assert_false(manager.received_rewards_enabled)
+	assert_eq(manager.received_enemy_hp_multiplier, 2.5)
 	scene.free()
 	manager.free()
 
@@ -183,6 +187,7 @@ func test_ordinary_battle_setup_forwards_default_sentinels_and_enables_rewards()
 	assert_eq(manager.received_level, -1)
 	assert_eq(manager.received_seed, -1)
 	assert_true(manager.received_rewards_enabled)
+	assert_eq(manager.received_enemy_hp_multiplier, 1.0)
 	scene.free()
 	manager.free()
 
