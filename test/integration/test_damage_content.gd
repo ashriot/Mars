@@ -24,17 +24,23 @@ class MisleadingDamagePresentation extends Effect_Damage:
 
 
 class SandsRuntimeBattleManager extends BattleManager:
+	var turn_order_refreshes := 0
+
 	func _ready() -> void:
 		return
 
 	func wait(_duration: float = 0.01) -> void:
 		return
 
+	func update_turn_order() -> void:
+		turn_order_refreshes += 1
+
 
 class SandsRuntimeHero extends HeroCard:
 	var guard_events: Array[int] = []
 	var healing_events: Array[int] = []
 	var focus_events: Array[int] = []
+	var damage_results: Array[DamageResult] = []
 
 	func _update_conditions_ui() -> void:
 		return
@@ -55,10 +61,64 @@ class SandsRuntimeHero extends HeroCard:
 		focus_events.append(amount)
 		current_focus = clampi(current_focus + amount, 0, 10)
 
+	func take_one_hit(
+		result: DamageResult,
+		_damage_effect: Effect_Damage,
+		_attacker: ActorCard,
+		_resolved_damage_type: Action.DamageType,
+	) -> int:
+		damage_results.append(result)
+		var actual := mini(current_hp, result.final_damage)
+		current_hp -= actual
+		return actual
+
+	func shake_panel(_intensity: float = 0.5) -> void:
+		return
+
+	func set_target_presentation(_state: TargetPresentation) -> void:
+		return
+
+	func sync_visual_health() -> Tween:
+		return null
+
+	func update_current_role() -> void:
+		return
+
+	func on_turn_started() -> void:
+		shifted_this_turn = false
+		await _fire_condition_event(Trigger.TriggerType.ON_TURN_START)
+
 
 class SandsRuntimeEnemy extends EnemyCard:
+	var damage_results: Array[DamageResult] = []
+	var guard_events: Array[int] = []
+
 	func _update_conditions_ui() -> void:
 		return
+
+	func take_one_hit(
+		result: DamageResult,
+		_damage_effect: Effect_Damage,
+		_attacker: ActorCard,
+		_resolved_damage_type: Action.DamageType,
+	) -> int:
+		damage_results.append(result)
+		var actual := mini(current_hp, result.final_damage)
+		current_hp -= actual
+		return actual
+
+	func modify_guard(amount: int, _is_recovering: bool = false) -> void:
+		guard_events.append(amount)
+		current_guard = clampi(current_guard + amount, 0, MAX_GUARD)
+
+	func shake_panel(_intensity: float = 0.5) -> void:
+		return
+
+	func set_target_presentation(_state: TargetPresentation) -> void:
+		return
+
+	func sync_visual_health() -> Tween:
+		return null
 
 
 const CONTENT_ROOTS: Array[String] = [
@@ -1297,6 +1357,7 @@ func test_sands_medic_actions_match_gdd() -> void:
 	var auto_shield := load("res://data/heroes/sands/actions/auto_shields.tres") as Action
 	assert_eq(auto_shield.action_name, "Auto-Shield")
 	assert_eq(auto_shield.focus_cost, SANDS_GDD.auto_shield.cost)
+	assert_eq(auto_shield.target_type, Action.TargetType.ALLY_ONLY)
 	assert_eq(auto_shield.effects.size(), 3)
 	if auto_shield.effects.size() != 3:
 		return
@@ -1326,21 +1387,99 @@ func test_sands_medic_actions_match_gdd() -> void:
 	assert_eq(bastion.effects[0].target_type, Action.TargetType.ALL_ALLIES)
 
 
-func test_auto_shield_applies_immediately_and_recurs_on_target_until_target_shifts() -> void:
+func test_covering_fire_runs_full_action_scope_stack_and_sands_shift_lifecycle() -> void:
+	var fixture := _sands_runtime_fixture()
+	var sands := fixture.sands as SandsRuntimeHero
+	var first_ally := fixture.first_ally as SandsRuntimeHero
+	var second_ally := fixture.second_ally as SandsRuntimeHero
+	var enemy := fixture.enemy as SandsRuntimeEnemy
+	var manager := fixture.manager as SandsRuntimeBattleManager
+	var party: Array[SandsRuntimeHero] = [sands, first_ally, second_ally]
+	var painkillers := load(
+		"res://data/heroes/sands/actions/apply_painkillers.tres"
+	) as Action
+	var action := load("res://data/heroes/sands/actions/booster_shots.tres") as Action
+
+	await manager.execute_action(sands, painkillers, [sands], false)
+	for hero: SandsRuntimeHero in party:
+		assert_eq(_condition_count(hero, "Painkillers"), 1)
+		assert_almost_eq(hero.get_damage_taken_modifier(enemy), -0.1, 0.0001)
+
+	var selected_targets := manager.get_targets(
+		action.target_type, true, [], sands, action.can_revive_targets,
+	)
+	assert_eq(selected_targets, [enemy])
+	await manager.execute_action(sands, action, selected_targets, false)
+
+	assert_eq(enemy.damage_results.size(), 2)
+	for result: DamageResult in enemy.damage_results:
+		assert_almost_eq(result.request.base_potency, 0.5, 0.0001)
+		assert_almost_eq(result.raw_damage, 50.0, 0.0001)
+	for hero: SandsRuntimeHero in party:
+		assert_eq(_condition_count(hero, "Painkillers"), 1)
+		assert_eq(_condition_count(hero, "Covering Fire"), 1)
+		assert_almost_eq(hero.get_damage_taken_modifier(enemy), -0.2, 0.0001)
+		var boost := hero.active_conditions.filter(
+			func(condition: Condition) -> bool:
+				return condition.condition_name == "Covering Fire"
+		)[0] as Condition
+		assert_same(boost.attacker, sands)
+	assert_eq(_condition_count(sands, "Covering Fire Passive"), 1)
+	assert_eq(_condition_count(first_ally, "Covering Fire Passive"), 0)
+	assert_eq(_condition_count(second_ally, "Covering Fire Passive"), 0)
+
+	await manager.execute_action(sands, action, selected_targets, false)
+	assert_eq(enemy.damage_results.size(), 4)
+	for hero: SandsRuntimeHero in party:
+		assert_eq(_condition_count(hero, "Covering Fire"), 1)
+		assert_almost_eq(hero.get_damage_taken_modifier(enemy), -0.2, 0.0001)
+	assert_eq(_condition_count(sands, "Covering Fire Passive"), 1)
+
+	await first_ally.shift_role("right")
+	for hero: SandsRuntimeHero in party:
+		assert_true(hero.has_condition("Painkillers"))
+		assert_true(hero.has_condition("Covering Fire"))
+	assert_true(sands.has_condition("Painkillers Passive"))
+	assert_true(sands.has_condition("Covering Fire Passive"))
+
+	await sands.shift_role("right")
+	for hero: SandsRuntimeHero in party:
+		assert_false(hero.has_condition("Painkillers"))
+		assert_false(hero.has_condition("Covering Fire"))
+	assert_false(sands.has_condition("Painkillers Passive"))
+	assert_false(sands.has_condition("Covering Fire Passive"))
+	_free_sands_runtime_fixture(fixture)
+
+
+func test_auto_shield_uses_manager_eligibility_and_public_turn_start_lifecycle() -> void:
 	var fixture := _sands_runtime_fixture()
 	var sands := fixture.sands as SandsRuntimeHero
 	var target := fixture.first_ally as SandsRuntimeHero
+	var defeated := fixture.second_ally as SandsRuntimeHero
+	var manager := fixture.manager as SandsRuntimeBattleManager
 	target.current_stats.max_hp = 200
 	target.current_hp = 20
+	target.current_guard = 4
+	defeated.current_hp = 0
+	defeated.current_guard = 0
+	defeated.is_defeated = true
 	var action := load("res://data/heroes/sands/actions/auto_shields.tres") as Action
+	var eligible_targets := manager.get_targets(
+		action.target_type, true, [], sands, action.can_revive_targets,
+	)
 
-	for effect: ActionEffect in action.effects:
-		await effect.execute(sands, [target], fixture.manager, action)
+	assert_eq(eligible_targets, [target])
+	assert_false(eligible_targets.has(sands))
+	assert_false(eligible_targets.has(defeated))
+	await manager.execute_action(sands, action, eligible_targets, false)
 
 	assert_eq(target.guard_events, [1])
 	assert_eq(target.healing_events, [50])
 	assert_eq(target.current_hp, 70)
 	assert_true(target.has_condition("Auto-Shield"))
+	assert_eq(defeated.guard_events, [])
+	assert_eq(defeated.healing_events, [])
+	assert_false(defeated.has_condition("Auto-Shield"))
 	var matching_conditions := target.active_conditions.filter(
 		func(condition: Condition) -> bool: return condition.condition_name == "Auto-Shield"
 	)
@@ -1350,18 +1489,21 @@ func test_auto_shield_applies_immediately_and_recurs_on_target_until_target_shif
 	var applied := matching_conditions[0] as Condition
 	assert_same(applied.attacker, sands)
 
-	await target._fire_condition_event(Trigger.TriggerType.ON_TURN_START)
+	await target.on_turn_started()
 	assert_eq(target.guard_events, [1, 1])
 	assert_eq(target.healing_events, [50, 50])
 	assert_eq(target.current_hp, 120)
 
-	await sands._fire_condition_event(Trigger.TriggerType.ON_SHIFT)
-	assert_true(target.has_condition("Auto-Shield"))
-	await target._fire_condition_event(Trigger.TriggerType.ON_SHIFT)
-	assert_false(target.has_condition("Auto-Shield"))
-	await target._fire_condition_event(Trigger.TriggerType.ON_TURN_START)
+	target.is_defeated = true
+	target.current_hp = 0
+	await target.on_turn_started()
+	assert_true(target.is_defeated)
+	assert_eq(target.current_hp, 0)
 	assert_eq(target.guard_events, [1, 1])
 	assert_eq(target.healing_events, [50, 50])
+
+	await target.shift_role("right")
+	assert_false(target.has_condition("Auto-Shield"))
 	_free_sands_runtime_fixture(fixture)
 
 
@@ -1394,6 +1536,58 @@ func test_sands_strategist_actions_match_gdd() -> void:
 	assert_eq(checkmate_damage.power_type, Action.PowerType.PSYCHE)
 	assert_eq(checkmate_damage.damage_type, Action.DamageType.ENERGY)
 	assert_almost_eq(checkmate_ct.ct_change_percent, SANDS_GDD.checkmate.ct_change, 0.0001)
+
+
+func test_advantage_executes_direct_ct_and_source_power_through_next_attack() -> void:
+	var fixture := _sands_runtime_fixture()
+	var sands := fixture.sands as SandsRuntimeHero
+	var ally := fixture.first_ally as SandsRuntimeHero
+	var enemy := fixture.enemy as SandsRuntimeEnemy
+	var manager := fixture.manager as SandsRuntimeBattleManager
+	sands.current_stats.psyche = 50
+	sands.current_ct = 100
+	ally.current_stats.attack = 100
+	ally.current_ct = 250
+	enemy.current_hp = 2000
+	enemy.current_guard = 10
+	var advantage := load("res://data/heroes/sands/actions/advantage.tres") as Action
+	var ally_targets := manager.get_targets(
+		advantage.target_type, true, [], sands, advantage.can_revive_targets,
+	)
+	assert_has(ally_targets, ally)
+
+	await manager.execute_action(sands, advantage, [ally], false)
+
+	assert_eq(ally.current_ct, 2250)
+	assert_eq(sands.current_ct, 100)
+	assert_eq(advantage.ct_cost_percent, 100)
+	assert_eq(manager.turn_order_refreshes, 1)
+	assert_true(ally.has_condition("Advantage"))
+	var applied := ally.active_conditions.filter(
+		func(condition: Condition) -> bool: return condition.condition_name == "Advantage"
+	)[0] as Condition
+	assert_same(applied.attacker, sands)
+
+	manager.current_actor = ally
+	var double_tap := load("res://data/heroes/asher/actions/double_tap.tres") as Action
+	await manager.execute_action(ally, double_tap, [enemy], false)
+
+	assert_eq(enemy.damage_results.size(), 2)
+	for result: DamageResult in enemy.damage_results:
+		assert_almost_eq(result.request.power_bonus, 50.0, 0.0001)
+		assert_almost_eq(result.request.outgoing_modifier, 0.0, 0.0001)
+		assert_almost_eq(result.effective_power, 150.0, 0.0001)
+		assert_almost_eq(result.raw_damage, 75.0, 0.0001)
+	assert_false(ally.has_condition("Advantage"))
+
+	await manager.execute_action(ally, double_tap, [enemy], false)
+	assert_eq(enemy.damage_results.size(), 4)
+	for index in range(2, 4):
+		var result := enemy.damage_results[index]
+		assert_almost_eq(result.request.power_bonus, 0.0, 0.0001)
+		assert_almost_eq(result.effective_power, 100.0, 0.0001)
+		assert_almost_eq(result.raw_damage, 50.0, 0.0001)
+	_free_sands_runtime_fixture(fixture)
 
 
 func test_fianchetto_grants_ten_percent_speed_and_cleans_party_on_sands_shift() -> void:
@@ -1539,16 +1733,19 @@ func _sands_runtime_fixture() -> Dictionary:
 	var manager := SandsRuntimeBattleManager.new()
 	manager.hero_area = Control.new()
 	manager.enemy_area = Control.new()
+	manager.current_action_panel = PanelContainer.new()
 	manager.add_child(manager.hero_area)
 	manager.add_child(manager.enemy_area)
+	manager.add_child(manager.current_action_panel)
 	var sands := _sands_runtime_hero("Sands")
 	var first_ally := _sands_runtime_hero("Asher")
 	var second_ally := _sands_runtime_hero("Echo")
 	var enemy := SandsRuntimeEnemy.new()
 	enemy.actor_name = "Target"
 	enemy.current_stats = ActorStats.new()
-	enemy.current_stats.max_hp = 100
-	enemy.current_hp = 100
+	enemy.current_stats.max_hp = 2000
+	enemy.current_hp = 2000
+	enemy.current_guard = 10
 	for hero: SandsRuntimeHero in [sands, first_ally, second_ally]:
 		hero.battle_manager = manager
 		manager.hero_area.add_child(hero)
@@ -1574,11 +1771,21 @@ func _sands_runtime_hero(actor_name: String) -> SandsRuntimeHero:
 	hero.current_stats.speed = 100
 	hero.current_stats.max_hp = 100
 	hero.current_hp = 100
+	hero.current_focus = 10
+	hero.hero_data = HeroData.new()
+	hero.hero_data.unlocked_role_ids = ["first", "second"]
 	return hero
 
 
 func _free_sands_runtime_fixture(fixture: Dictionary) -> void:
 	(fixture.manager as BattleManager).free()
+
+
+func _condition_count(actor: ActorCard, condition_name: String) -> int:
+	return actor.active_conditions.filter(
+		func(condition: Condition) -> bool:
+			return condition.condition_name == condition_name
+	).size()
 
 
 func _validate_action(action: Action, path: String) -> void:
