@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="EnemyData" load_steps=16 format=3 uid="uid://d0c5qshgc3e8"]
+[gd_resource type="Resource" script_class="EnemyData" format=3 uid="uid://d0c5qshgc3e8"]
 
 [ext_resource type="Resource" uid="uid://d0m01fmh2ig2s" path="res://data/enemies/actions/gunshot.tres" id="2_wckpy"]
 [ext_resource type="Resource" uid="uid://m5wgycabl2ij" path="res://data/enemies/actions/fortify.tres" id="4_j7iu0"]
@@ -10,7 +10,6 @@
 
 [sub_resource type="Resource" id="EnemyDecisionCondition_defense_fortify"]
 script = ExtResource("9_condition")
-type = 0
 metadata/_custom_type_script = "uid://c8h2tm5pykaq"
 
 [sub_resource type="Resource" id="EnemyTargetSelector_defense_fortify"]
@@ -29,19 +28,15 @@ metadata/_custom_type_script = "uid://bwhnoji7ew1mg"
 script = ExtResource("12_ability")
 ability_id = &"defense.fortify"
 action = ExtResource("4_j7iu0")
-cooldown_turns = 0
-initial_cooldown = 0
 rules = Array[ExtResource("11_rule")]([SubResource("EnemyDecisionRule_defense_fortify")])
 metadata/_custom_type_script = "uid://ban2jvuk6cs6k"
 
 [sub_resource type="Resource" id="EnemyDecisionCondition_defense_gunshot"]
 script = ExtResource("9_condition")
-type = 0
 metadata/_custom_type_script = "uid://c8h2tm5pykaq"
 
 [sub_resource type="Resource" id="EnemyTargetSelector_defense_gunshot"]
 script = ExtResource("10_selector")
-type = 3
 metadata/_custom_type_script = "uid://btr3kn6uh6qgm"
 
 [sub_resource type="Resource" id="EnemyDecisionRule_defense_gunshot"]
@@ -65,8 +60,9 @@ script = ExtResource("8_rvaar")
 enemy_id = "defense_drone"
 enemy_name = "Defense Drone"
 hp_rank = 4
-attack_rank = 2
-psyche_rank = 3
+guard_rank = 5
+attack_rank = 1
+psyche_rank = 2
 overload_rank = 2
 speed_rank = 3
 aim_rank = 1

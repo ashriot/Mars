@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="EnemyData" load_steps=26 format=3 uid="uid://s6fcg8egbavh"]
+[gd_resource type="Resource" script_class="EnemyData" format=3 uid="uid://s6fcg8egbavh"]
 
 [ext_resource type="Resource" uid="uid://d0m01fmh2ig2s" path="res://data/enemies/actions/gunshot.tres" id="2_ka13y"]
 [ext_resource type="Resource" uid="uid://cbruwytkh444f" path="res://data/enemies/actions/potshot.tres" id="3_842et"]
@@ -12,17 +12,14 @@
 
 [sub_resource type="Resource" id="EnemyDecisionCondition_scout_gunshot"]
 script = ExtResource("8_condition")
-type = 0
 metadata/_custom_type_script = "uid://c8h2tm5pykaq"
 
 [sub_resource type="Resource" id="EnemyTargetSelector_scout_gunshot"]
 script = ExtResource("9_selector")
-type = 3
 metadata/_custom_type_script = "uid://btr3kn6uh6qgm"
 
 [sub_resource type="Resource" id="EnemyDecisionRule_scout_gunshot"]
 script = ExtResource("10_rule")
-priority = 0
 conditions = Array[ExtResource("8_condition")]([SubResource("EnemyDecisionCondition_scout_gunshot")])
 selector = SubResource("EnemyTargetSelector_scout_gunshot")
 metadata/_custom_type_script = "uid://bwhnoji7ew1mg"
@@ -31,19 +28,15 @@ metadata/_custom_type_script = "uid://bwhnoji7ew1mg"
 script = ExtResource("11_ability")
 ability_id = &"scout.gunshot"
 action = ExtResource("2_ka13y")
-cooldown_turns = 0
-initial_cooldown = 0
 rules = Array[ExtResource("10_rule")]([SubResource("EnemyDecisionRule_scout_gunshot")])
 metadata/_custom_type_script = "uid://ban2jvuk6cs6k"
 
 [sub_resource type="Resource" id="EnemyDecisionCondition_scout_potshot"]
 script = ExtResource("8_condition")
-type = 0
 metadata/_custom_type_script = "uid://c8h2tm5pykaq"
 
 [sub_resource type="Resource" id="EnemyTargetSelector_scout_potshot"]
 script = ExtResource("9_selector")
-type = 3
 metadata/_custom_type_script = "uid://btr3kn6uh6qgm"
 
 [sub_resource type="Resource" id="EnemyDecisionRule_scout_potshot"]
@@ -64,12 +57,10 @@ metadata/_custom_type_script = "uid://ban2jvuk6cs6k"
 
 [sub_resource type="Resource" id="EnemyDecisionCondition_scout_double_shot"]
 script = ExtResource("8_condition")
-type = 0
 metadata/_custom_type_script = "uid://c8h2tm5pykaq"
 
 [sub_resource type="Resource" id="EnemyTargetSelector_scout_double_shot"]
 script = ExtResource("9_selector")
-type = 3
 metadata/_custom_type_script = "uid://btr3kn6uh6qgm"
 
 [sub_resource type="Resource" id="EnemyDecisionRule_scout_double_shot"]
@@ -90,7 +81,6 @@ metadata/_custom_type_script = "uid://ban2jvuk6cs6k"
 
 [sub_resource type="Resource" id="EnemyDecisionCondition_scout_mow_down"]
 script = ExtResource("8_condition")
-type = 0
 metadata/_custom_type_script = "uid://c8h2tm5pykaq"
 
 [sub_resource type="Resource" id="EnemyTargetSelector_scout_mow_down"]

@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_v3cg1"]
 [ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://src/scripts/conditions/hit_trigger.gd" id="2_vgawt"]
 [ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://src/scripts/action_effects/pre_hit_trigger.gd" id="3_vb63g"]
+[ext_resource type="Script" uid="uid://3thmtafynus7" path="res://src/battle/damage/damage_scaling_rule.gd" id="4_vb63g"]
 [ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://src/scripts/action_effects/effect_damage.gd" id="4_vcjrm"]
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="5_bttx5"]
 [ext_resource type="Script" uid="uid://dgkss5d1axeag" path="res://src/scripts/action_effects/effect_modify_ct.gd" id="5_vgawt"]

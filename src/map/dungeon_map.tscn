@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://cqo38uie6gkdu"]
+[gd_scene format=3 uid="uid://cqo38uie6gkdu"]
 
 [ext_resource type="Script" uid="uid://c0tmi3fc3fega" path="res://src/map/dungeon_map.gd" id="1_5o7fj"]
 [ext_resource type="Texture2D" uid="uid://bwqcku6nvr4ff" path="res://assets/graphics/backgrounds/street.webp" id="2_1a5qu"]
@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" uid="uid://1g2fulrngrw0" path="res://src/map/hero_status.tscn" id="7_31sxc"]
 [ext_resource type="Texture2D" uid="uid://effqffihjqv1" path="res://assets/graphics/icons/map/cursor.png" id="7_ssagv"]
 [ext_resource type="Texture2D" uid="uid://bisawn8s4sru6" path="res://assets/graphics/icons/map/night.png" id="10_kyrvh"]
+
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_gftom"]
 shader = ExtResource("5_gftom")
 shader_parameter/blur_amount = 0.0
@@ -112,70 +113,73 @@ expand_margin_bottom = 1.0
 shadow_size = 1
 shadow_offset = Vector2(1, 1)
 
-[node name="DungeonMap" type="Node2D"]
+[node name="DungeonMap" type="Node2D" unique_id=1046298834]
 script = ExtResource("1_5o7fj")
 vision_range = 2
 hero_status_scene = ExtResource("7_31sxc")
 map_node_scene = ExtResource("2_vfn15")
 selection_texture = ExtResource("5_pf175")
 background_texture = ExtResource("2_1a5qu")
-camera_pan_speed = 600.0
 
-[node name="Parallax2D" type="Parallax2D" parent="."]
+[node name="Parallax2D" type="Parallax2D" parent="." unique_id=1662451646]
+metadata/_edit_lock_ = true
+metadata/_edit_group_ = true
 
-[node name="Sprite2D" type="Sprite2D" parent="Parallax2D"]
+[node name="Sprite2D" type="Sprite2D" parent="Parallax2D" unique_id=745968608]
 material = SubResource("ShaderMaterial_gftom")
 texture = ExtResource("2_1a5qu")
 
-[node name="Grid" type="Node2D" parent="."]
+[node name="Grid" type="Node2D" parent="." unique_id=1471270433]
 
-[node name="Player" type="Node2D" parent="."]
+[node name="Player" type="Node2D" parent="." unique_id=927886978]
+metadata/_edit_group_ = true
+metadata/_edit_lock_ = true
 
-[node name="Reticle" type="Node2D" parent="Player"]
+[node name="Reticle" type="Node2D" parent="Player" unique_id=901263036]
 
-[node name="Sprite2" type="Sprite2D" parent="Player/Reticle"]
+[node name="Sprite2" type="Sprite2D" parent="Player/Reticle" unique_id=659819990]
 modulate = Color(0.11764706, 0.11764706, 0.11764706, 1)
 z_index = 10
 scale = Vector2(0.52343756, 0.52343756)
 texture = ExtResource("5_pf175")
 
-[node name="Sprite3" type="Sprite2D" parent="Player/Reticle"]
+[node name="Sprite3" type="Sprite2D" parent="Player/Reticle" unique_id=2040220070]
 modulate = Color(0.11764706, 0.11764706, 0.11764706, 1)
 z_index = 10
 scale = Vector2(0.4765625, 0.4765625)
 texture = ExtResource("5_pf175")
 
-[node name="Sprite" type="Sprite2D" parent="Player/Reticle"]
+[node name="Sprite" type="Sprite2D" parent="Player/Reticle" unique_id=242720211]
 z_index = 10
 scale = Vector2(0.5, 0.5)
 texture = ExtResource("5_pf175")
 
-[node name="Cursor" type="Node2D" parent="Player"]
+[node name="Cursor" type="Node2D" parent="Player" unique_id=698849671]
 modulate = Color(0.88, 0.42856, 0.1672, 1)
 
-[node name="Sprite" type="Sprite2D" parent="Player/Cursor"]
+[node name="Sprite" type="Sprite2D" parent="Player/Cursor" unique_id=589402159]
 modulate = Color(0.11764706, 0.11764706, 0.11764706, 1)
 z_index = 10
 position = Vector2(0, -36)
 scale = Vector2(0.3984375, 0.3984375)
 texture = ExtResource("7_ssagv")
 
-[node name="Sprite3" type="Sprite2D" parent="Player/Cursor"]
+[node name="Sprite3" type="Sprite2D" parent="Player/Cursor" unique_id=163696961]
 modulate = Color(0.11764706, 0.11764706, 0.11764706, 1)
 z_index = 10
 position = Vector2(0, -38)
 scale = Vector2(0.265625, 0.2656249)
 texture = ExtResource("7_ssagv")
 
-[node name="Sprite2" type="Sprite2D" parent="Player/Cursor"]
+[node name="Sprite2" type="Sprite2D" parent="Player/Cursor" unique_id=678499887]
 z_index = 10
 position = Vector2(0, -36)
 scale = Vector2(0.359375, 0.35937506)
 texture = ExtResource("7_ssagv")
 
-[node name="CanvasLayer" type="CanvasLayer" parent="."]
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1109264944]
 
-[node name="HUD" type="Control" parent="CanvasLayer"]
+[node name="HUD" type="Control" parent="CanvasLayer" unique_id=725672760]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -183,8 +187,9 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+metadata/_edit_lock_ = true
 
-[node name="ColorRect" type="ColorRect" parent="CanvasLayer/HUD"]
+[node name="ColorRect" type="ColorRect" parent="CanvasLayer/HUD" unique_id=1601452451]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
@@ -192,7 +197,7 @@ offset_bottom = 60.0
 grow_horizontal = 2
 color = Color(0, 0, 0, 0.88235295)
 
-[node name="Shrouds" type="Panel" parent="CanvasLayer/HUD"]
+[node name="Shrouds" type="Panel" parent="CanvasLayer/HUD" unique_id=1423762598]
 visible = false
 self_modulate = Color(0.5, 0.5, 0.5, 1)
 custom_minimum_size = Vector2(0, 40)
@@ -203,7 +208,7 @@ offset_right = 1223.0
 offset_bottom = 50.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_ssagv")
 
-[node name="Cost" type="Label" parent="CanvasLayer/HUD/Shrouds"]
+[node name="Cost" type="Label" parent="CanvasLayer/HUD/Shrouds" unique_id=175159027]
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
@@ -220,7 +225,7 @@ text = "B 10.0"
 vertical_alignment = 1
 uppercase = true
 
-[node name="Icons" type="HBoxContainer" parent="CanvasLayer/HUD/Shrouds"]
+[node name="Icons" type="HBoxContainer" parent="CanvasLayer/HUD/Shrouds" unique_id=118580298]
 layout_mode = 1
 anchors_preset = 6
 anchor_left = 1.0
@@ -236,28 +241,28 @@ grow_vertical = 2
 theme_override_constants/separation = 8
 alignment = 2
 
-[node name="Moon1" type="TextureRect" parent="CanvasLayer/HUD/Shrouds/Icons"]
+[node name="Moon1" type="TextureRect" parent="CanvasLayer/HUD/Shrouds/Icons" unique_id=1139977757]
 modulate = Color(0.12156863, 0.12156863, 0.12156863, 1)
 custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
 texture = ExtResource("10_kyrvh")
 expand_mode = 1
 
-[node name="Moon2" type="TextureRect" parent="CanvasLayer/HUD/Shrouds/Icons"]
+[node name="Moon2" type="TextureRect" parent="CanvasLayer/HUD/Shrouds/Icons" unique_id=1570447948]
 modulate = Color(0.12156863, 0.12156863, 0.12156863, 1)
 custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
 texture = ExtResource("10_kyrvh")
 expand_mode = 1
 
-[node name="Moon3" type="TextureRect" parent="CanvasLayer/HUD/Shrouds/Icons"]
+[node name="Moon3" type="TextureRect" parent="CanvasLayer/HUD/Shrouds/Icons" unique_id=67431176]
 modulate = Color(0.12156863, 0.12156863, 0.12156863, 1)
 custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
 texture = ExtResource("10_kyrvh")
 expand_mode = 1
 
-[node name="AlertGauge" type="ProgressBar" parent="CanvasLayer/HUD"]
+[node name="AlertGauge" type="ProgressBar" parent="CanvasLayer/HUD" unique_id=261485847]
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -274,7 +279,7 @@ value = 25.0
 rounded = true
 show_percentage = false
 
-[node name="Title" type="Panel" parent="CanvasLayer/HUD/AlertGauge"]
+[node name="Title" type="Panel" parent="CanvasLayer/HUD/AlertGauge" unique_id=1403176298]
 layout_mode = 1
 anchors_preset = 9
 anchor_bottom = 1.0
@@ -282,7 +287,7 @@ offset_left = -125.0
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_bcccw")
 
-[node name="Alert" type="Label" parent="CanvasLayer/HUD/AlertGauge/Title"]
+[node name="Alert" type="Label" parent="CanvasLayer/HUD/AlertGauge/Title" unique_id=8737361]
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
@@ -298,7 +303,7 @@ theme_override_font_sizes/font_size = 36
 text = "ALERT"
 vertical_alignment = 1
 
-[node name="Percent" type="Panel" parent="CanvasLayer/HUD/AlertGauge"]
+[node name="Percent" type="Panel" parent="CanvasLayer/HUD/AlertGauge" unique_id=1853772644]
 layout_mode = 1
 anchors_preset = 11
 anchor_left = 1.0
@@ -309,7 +314,7 @@ grow_horizontal = 0
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_gftom")
 
-[node name="Value" type="Label" parent="CanvasLayer/HUD/AlertGauge/Percent"]
+[node name="Value" type="Label" parent="CanvasLayer/HUD/AlertGauge/Percent" unique_id=1880684700]
 layout_mode = 1
 anchors_preset = 6
 anchor_left = 1.0
@@ -329,7 +334,7 @@ text = "100%"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="Warning" type="Label" parent="CanvasLayer/HUD"]
+[node name="Warning" type="Label" parent="CanvasLayer/HUD" unique_id=610371043]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -348,7 +353,7 @@ theme_override_font_sizes/font_size = 36
 text = "CAUTION"
 vertical_alignment = 1
 
-[node name="BitsFound" type="Panel" parent="CanvasLayer/HUD"]
+[node name="BitsFound" type="Panel" parent="CanvasLayer/HUD" unique_id=750978057]
 modulate = Color(0.19, 0.6759999, 1, 1)
 layout_mode = 1
 offset_left = 1239.0
@@ -357,7 +362,7 @@ offset_right = 1463.0
 offset_bottom = 50.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_pxp8l")
 
-[node name="Label" type="Label" parent="CanvasLayer/HUD/BitsFound"]
+[node name="Label" type="Label" parent="CanvasLayer/HUD/BitsFound" unique_id=502432303]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -371,10 +376,10 @@ grow_vertical = 2
 theme_override_colors/font_color = Color(0.12041845, 0.12041845, 0.12041845, 1)
 theme_override_fonts/font = ExtResource("4_pf175")
 theme_override_font_sizes/font_size = 36
-text = "Bts."
+text = "BITS"
 vertical_alignment = 1
 
-[node name="Value" type="Label" parent="CanvasLayer/HUD/BitsFound"]
+[node name="Value" type="Label" parent="CanvasLayer/HUD/BitsFound" unique_id=917599022]
 layout_mode = 1
 anchors_preset = 6
 anchor_left = 1.0
@@ -394,7 +399,7 @@ text = "9999"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="NodeGauge" type="Panel" parent="CanvasLayer/HUD"]
+[node name="NodeGauge" type="Panel" parent="CanvasLayer/HUD" unique_id=16241675]
 modulate = Color(0.88, 0.42856, 0.1672, 1)
 layout_mode = 1
 offset_left = 1480.0
@@ -403,7 +408,7 @@ offset_right = 1669.0
 offset_bottom = 50.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_ajvg2")
 
-[node name="Gauge" type="ProgressBar" parent="CanvasLayer/HUD/NodeGauge"]
+[node name="Gauge" type="ProgressBar" parent="CanvasLayer/HUD/NodeGauge" unique_id=459098521]
 show_behind_parent = true
 layout_mode = 1
 anchors_preset = 4
@@ -422,7 +427,7 @@ value = 100.0
 rounded = true
 show_percentage = false
 
-[node name="Nodes" type="Label" parent="CanvasLayer/HUD/NodeGauge"]
+[node name="Nodes" type="Label" parent="CanvasLayer/HUD/NodeGauge" unique_id=812425033]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -440,7 +445,7 @@ text = "99"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="Label" type="Label" parent="CanvasLayer/HUD/NodeGauge"]
+[node name="Label" type="Label" parent="CanvasLayer/HUD/NodeGauge" unique_id=879008904]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -457,7 +462,7 @@ theme_override_font_sizes/font_size = 36
 text = "NODES"
 vertical_alignment = 1
 
-[node name="Panel" type="Panel" parent="CanvasLayer/HUD/NodeGauge"]
+[node name="Panel" type="Panel" parent="CanvasLayer/HUD/NodeGauge" unique_id=1922911420]
 layout_mode = 1
 anchors_preset = 6
 anchor_left = 1.0
@@ -473,7 +478,7 @@ grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_c4oki")
 metadata/_edit_group_ = true
 
-[node name="Total" type="Label" parent="CanvasLayer/HUD/NodeGauge/Panel"]
+[node name="Total" type="Label" parent="CanvasLayer/HUD/NodeGauge/Panel" unique_id=759124405]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -489,7 +494,7 @@ text = "99"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="TeamStatus" type="Control" parent="CanvasLayer/HUD"]
+[node name="TeamStatus" type="Control" parent="CanvasLayer/HUD" unique_id=333254704]
 custom_minimum_size = Vector2(450, 40)
 layout_mode = 1
 anchors_preset = 7
@@ -504,7 +509,7 @@ offset_bottom = -11.0
 grow_horizontal = 2
 grow_vertical = 0
 
-[node name="VBox" type="HBoxContainer" parent="CanvasLayer/HUD/TeamStatus"]
+[node name="VBox" type="HBoxContainer" parent="CanvasLayer/HUD/TeamStatus" unique_id=486948783]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -514,4 +519,4 @@ grow_vertical = 2
 theme_override_constants/separation = 20
 alignment = 1
 
-[node name="Camera2D" type="Camera2D" parent="."]
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1205745958]

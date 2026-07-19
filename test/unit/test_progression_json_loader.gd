@@ -1,6 +1,7 @@
 extends GutTest
 
 const FIXTURES := "res://test/fixtures/progression/"
+const GENERATED_FIXTURE_ROOT := "user://test_saves/progression_json_loader"
 
 class FailingNestedCatalog extends ProgressionCatalog:
 	var blocked_suffix := ""
@@ -8,6 +9,10 @@ class FailingNestedCatalog extends ProgressionCatalog:
 		if not blocked_suffix.is_empty() and path.ends_with(blocked_suffix):
 			return null
 		return DirAccess.open(path)
+
+
+func after_all() -> void:
+	_remove_directory_tree(GENERATED_FIXTURE_ROOT)
 
 
 func test_valid_file_builds_complete_immutable_tree() -> void:
@@ -20,6 +25,11 @@ func test_valid_file_builds_complete_immutable_tree() -> void:
 	assert_eq(result.tree.root_id, "gun.anchor")
 	assert_eq(result.tree.starting_node_ids, ["gun.root", "gun.fusion_ammo"])
 	assert_true(result.tree.get_node("gun.anchor").is_structural)
+
+
+func test_generated_documents_are_scoped_to_loader_test_root() -> void:
+	var path := _write_document(_valid_document(), "scope_probe.json")
+	assert_true(path.begins_with("user://test_saves/progression_json_loader/"))
 
 
 func test_fixture_validation_errors_are_contextual() -> void:
@@ -159,7 +169,7 @@ func test_content_errors_are_immutable_and_defensive_arrays_cannot_replace_them(
 
 
 func test_failed_catalog_reload_preserves_previously_committed_roles() -> void:
-	var valid_directory := "user://progression_reload_valid"
+	var valid_directory := GENERATED_FIXTURE_ROOT.path_join("progression_reload_valid")
 	_write_document(_valid_document(), "progression_reload_valid/gun.json")
 	var catalog := ProgressionCatalog.new()
 	assert_eq(catalog.load_directory(valid_directory), OK)
@@ -170,7 +180,7 @@ func test_failed_catalog_reload_preserves_previously_committed_roles() -> void:
 
 
 func test_catalog_rejects_duplicate_roles_and_orders_cross_file_errors_by_filename() -> void:
-	var duplicate_directory := "user://progression_duplicate_roles"
+	var duplicate_directory := GENERATED_FIXTURE_ROOT.path_join("progression_duplicate_roles")
 	_write_document(_valid_document(), "progression_duplicate_roles/zeta.json")
 	_write_document(_valid_document(), "progression_duplicate_roles/alpha.json")
 	var catalog := ProgressionCatalog.new()
@@ -178,7 +188,7 @@ func test_catalog_rejects_duplicate_roles_and_orders_cross_file_errors_by_filena
 	assert_string_contains(_combined_errors(catalog.errors), "Duplicate role ID 'gun'")
 	assert_null(catalog.get_role("gun"))
 
-	var ordered_directory := "user://progression_ordered_errors"
+	var ordered_directory := GENERATED_FIXTURE_ROOT.path_join("progression_ordered_errors")
 	var alpha := _valid_document()
 	alpha.nodes[3].xp_cost = 0
 	var zeta := _valid_document()
@@ -207,7 +217,7 @@ func test_catalog_load_is_transactional_across_nested_files() -> void:
 	assert_eq(catalog.load_directory(FIXTURES), ERR_INVALID_DATA)
 	assert_null(catalog.get_role("gun"))
 
-	var directory := "user://progression_catalog_valid"
+	var directory := GENERATED_FIXTURE_ROOT.path_join("progression_catalog_valid")
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(directory))
 	_write_document(_valid_document(), "progression_catalog_valid/zeta.json")
 	var other := _valid_document()
@@ -228,13 +238,13 @@ func test_catalog_load_is_transactional_across_nested_files() -> void:
 	})
 
 func test_nested_directory_open_failure_is_reported_and_preserves_committed_roles() -> void:
-	var valid_directory := "user://progression_nested_open_valid"
+	var valid_directory := GENERATED_FIXTURE_ROOT.path_join("progression_nested_open_valid")
 	_write_document(_valid_document(), "progression_nested_open_valid/gun.json")
 	var catalog := FailingNestedCatalog.new()
 	assert_eq(catalog.load_directory(valid_directory), OK)
 	var committed_tree := catalog.get_role("gun")
 
-	var nested_directory := "user://progression_nested_open_failure"
+	var nested_directory := GENERATED_FIXTURE_ROOT.path_join("progression_nested_open_failure")
 	_write_document(_valid_document(), "progression_nested_open_failure/visible/gun.json")
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(nested_directory.path_join("blocked")))
 	catalog.blocked_suffix = "/blocked"
@@ -268,12 +278,32 @@ func _valid_document() -> Dictionary:
 
 
 func _write_document(document: Dictionary, filename: String) -> String:
-	var path := "user://" + filename
+	var path := GENERATED_FIXTURE_ROOT.path_join(filename)
 	var absolute := ProjectSettings.globalize_path(path)
 	DirAccess.make_dir_recursive_absolute(absolute.get_base_dir())
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	file.store_string(JSON.stringify(document))
 	return path
+
+
+func _remove_directory_tree(path: String) -> void:
+	if not DirAccess.dir_exists_absolute(path):
+		return
+	var directory := DirAccess.open(path)
+	if directory == null:
+		return
+	directory.list_dir_begin()
+	var child_name := directory.get_next()
+	while not child_name.is_empty():
+		var child_path := path.path_join(child_name)
+		if directory.current_is_dir():
+			_remove_directory_tree(child_path)
+		else:
+			DirAccess.remove_absolute(child_path)
+		child_name = directory.get_next()
+	directory.list_dir_end()
+	directory = null
+	DirAccess.remove_absolute(path)
 
 
 func _set_path(document: Dictionary, path: String, value: Variant) -> void:

@@ -36,6 +36,7 @@ ProgressionSystem="*res://src/progression/progression_system.gd"
 
 [debug]
 
+file_logging/max_log_files=1
 gdscript/warnings/integer_division=0
 
 [display]
