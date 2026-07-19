@@ -25,6 +25,7 @@ class MisleadingDamagePresentation extends Effect_Damage:
 
 class SandsRuntimeBattleManager extends BattleManager:
 	var turn_order_refreshes := 0
+	var rolled_chances: Array[int] = []
 
 	func _ready() -> void:
 		return
@@ -34,6 +35,10 @@ class SandsRuntimeBattleManager extends BattleManager:
 
 	func update_turn_order() -> void:
 		turn_order_refreshes += 1
+
+	func combat_roll_percent(chance: int) -> bool:
+		rolled_chances.append(chance)
+		return false
 
 
 class SandsRuntimeHero extends HeroCard:
@@ -931,6 +936,55 @@ func test_asher_sniper_actions_match_gdd() -> void:
 	)
 
 
+func test_aimed_shot_receives_exactly_twenty_five_aim_from_production_marked() -> void:
+	var fixture := _sands_runtime_fixture()
+	var asher := fixture.sands as SandsRuntimeHero
+	var enemy := fixture.enemy as SandsRuntimeEnemy
+	var manager := fixture.manager as SandsRuntimeBattleManager
+	asher.actor_name = "Asher"
+	asher.current_stats.aim = 10
+	var mark_target := load(
+		"res://data/heroes/asher/actions/mark_target.tres"
+	) as Action
+	var aimed_shot := load(
+		"res://data/heroes/asher/actions/aimed_shot.tres"
+	) as Action
+
+	await manager.execute_action(asher, mark_target, [enemy], false)
+	assert_true(enemy.has_condition("Marked"))
+	assert_eq(enemy.get_incoming_aim_mods(), 25)
+
+	await manager.execute_action(asher, aimed_shot, [enemy], false)
+
+	assert_eq(manager.rolled_chances, [35])
+	assert_true(enemy.has_condition("Marked"))
+	_free_sands_runtime_fixture(fixture)
+
+
+func test_concussive_shot_consumes_production_marked_and_delays_target() -> void:
+	var fixture := _sands_runtime_fixture()
+	var asher := fixture.sands as SandsRuntimeHero
+	var enemy := fixture.enemy as SandsRuntimeEnemy
+	var manager := fixture.manager as SandsRuntimeBattleManager
+	asher.actor_name = "Asher"
+	enemy.current_ct = 3000
+	var mark_target := load(
+		"res://data/heroes/asher/actions/mark_target.tres"
+	) as Action
+	var concussive_shot := load(
+		"res://data/heroes/asher/actions/concussive_shot.tres"
+	) as Action
+
+	await manager.execute_action(asher, mark_target, [enemy], false)
+	assert_true(enemy.has_condition("Marked"))
+	await manager.execute_action(asher, concussive_shot, [enemy], false)
+
+	assert_false(enemy.has_condition("Marked"))
+	assert_eq(enemy.current_ct, 1000)
+	assert_eq(manager.turn_order_refreshes, 1)
+	_free_sands_runtime_fixture(fixture)
+
+
 func test_asher_operative_actions_match_gdd() -> void:
 	var dismantle := load("res://data/heroes/asher/actions/dismantle.tres") as Action
 	var guard_effect := dismantle.effects[0] as Effect_ModifyGuard
@@ -1119,6 +1173,62 @@ func test_echo_kineticist_actions_match_gdd() -> void:
 	assert_eq(energize_focus.focus_amount, ECHO_GDD.energize.focus)
 
 
+func test_force_field_uses_exact_all_allies_scope_through_real_execution() -> void:
+	var fixture := _sands_runtime_fixture()
+	var echo := fixture.sands as SandsRuntimeHero
+	var first_ally := fixture.first_ally as SandsRuntimeHero
+	var second_ally := fixture.second_ally as SandsRuntimeHero
+	var manager := fixture.manager as SandsRuntimeBattleManager
+	echo.actor_name = "Echo"
+	var force_field := load(
+		"res://data/heroes/echo/actions/kinetic_wall.tres"
+	) as Action
+	var guard_effect := force_field.effects[0] as Effect_ModifyGuard
+
+	assert_eq(force_field.target_type, Action.TargetType.ALL_ALLIES)
+	assert_eq(guard_effect.target_type, Action.TargetType.ALL_ALLIES)
+	var targets := manager.get_targets(
+		force_field.target_type, true, [], echo, force_field.can_revive_targets,
+	)
+	assert_eq(targets, [echo, first_ally, second_ally])
+	await guard_effect.execute(echo, targets, manager, force_field)
+
+	for hero: SandsRuntimeHero in [echo, first_ally, second_ally]:
+		assert_eq(hero.guard_events, [1])
+	_free_sands_runtime_fixture(fixture)
+
+
+func test_acuity_fires_on_echo_turn_start_and_expires_on_echo_shift() -> void:
+	var fixture := _sands_runtime_fixture()
+	var echo := fixture.sands as SandsRuntimeHero
+	var ally := fixture.first_ally as SandsRuntimeHero
+	var manager := fixture.manager as SandsRuntimeBattleManager
+	echo.actor_name = "Echo"
+	echo.current_focus = 3
+	var acuity := load("res://data/heroes/echo/actions/telepathy.tres") as Action
+
+	await manager.execute_action(echo, acuity, [echo], false)
+	assert_true(echo.has_condition("Acuity"))
+	assert_false(ally.has_condition("Acuity"))
+	var applied := echo.active_conditions.filter(
+		func(condition: Condition) -> bool: return condition.condition_name == "Acuity"
+	)[0] as Condition
+	assert_same(applied.attacker, echo)
+	assert_true(applied.is_passive)
+	assert_eq(applied.triggers[0].trigger_type, Trigger.TriggerType.ON_TURN_START)
+	assert_eq(applied.remove_on_triggers, [Trigger.TriggerType.ON_SHIFT])
+	assert_eq(echo.current_focus, 3)
+
+	await ally.on_turn_started()
+	assert_eq(echo.current_focus, 3)
+	await echo.on_turn_started()
+	assert_eq(echo.current_focus, 5)
+	assert_true(echo.has_condition("Acuity"))
+	await echo.shift_role("right")
+	assert_false(echo.has_condition("Acuity"))
+	_free_sands_runtime_fixture(fixture)
+
+
 func test_echo_telepath_actions_match_gdd() -> void:
 	var role := load("res://data/heroes/echo/roles/dom.tres") as RoleDefinition
 	assert_eq(role.role_id, "dom")
@@ -1214,6 +1324,48 @@ func test_echo_telepath_actions_match_gdd() -> void:
 	assert_false(FileAccess.get_file_as_string(
 		"res://data/heroes/echo/conditions/inversion.tres"
 	).contains("remove_guard_gained"))
+
+
+func test_precognition_fires_for_party_on_echo_turn_start_until_echo_shifts() -> void:
+	var fixture := _sands_runtime_fixture()
+	var echo := fixture.sands as SandsRuntimeHero
+	var first_ally := fixture.first_ally as SandsRuntimeHero
+	var second_ally := fixture.second_ally as SandsRuntimeHero
+	var manager := fixture.manager as SandsRuntimeBattleManager
+	echo.actor_name = "Echo"
+	var precognition := load(
+		"res://data/heroes/echo/actions/precognition.tres"
+	) as Action
+
+	await manager.execute_action(echo, precognition, [echo], false)
+	assert_true(echo.has_condition("Precognition"))
+	assert_false(first_ally.has_condition("Precognition"))
+	assert_false(second_ally.has_condition("Precognition"))
+	var applied := echo.active_conditions.filter(
+		func(condition: Condition) -> bool:
+			return condition.condition_name == "Precognition"
+	)[0] as Condition
+	assert_same(applied.attacker, echo)
+	assert_true(applied.is_passive)
+	assert_eq(applied.triggers[0].trigger_type, Trigger.TriggerType.ON_TURN_START)
+	assert_eq(applied.remove_on_triggers, [Trigger.TriggerType.ON_SHIFT])
+	for hero: SandsRuntimeHero in [echo, first_ally, second_ally]:
+		assert_eq(hero.guard_events, [])
+
+	await first_ally.on_turn_started()
+	for hero: SandsRuntimeHero in [echo, first_ally, second_ally]:
+		assert_eq(hero.guard_events, [])
+	await echo.on_turn_started()
+	for hero: SandsRuntimeHero in [echo, first_ally, second_ally]:
+		assert_eq(hero.guard_events, [1])
+	assert_true(echo.has_condition("Precognition"))
+
+	await echo.shift_role("right")
+	assert_false(echo.has_condition("Precognition"))
+	await echo.on_turn_started()
+	for hero: SandsRuntimeHero in [echo, first_ally, second_ally]:
+		assert_eq(hero.guard_events, [1])
+	_free_sands_runtime_fixture(fixture)
 
 
 func test_echo_player_names_reject_obsolete_identity() -> void:

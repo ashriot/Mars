@@ -229,6 +229,17 @@ class ApplyingDamageEffect extends Effect_Damage:
 		return
 
 
+class DefeatingOnHitLifedrainEffect extends ApplyingDamageEffect:
+	func _process_on_hit_triggers(
+		attacker: ActorCard,
+		_target: ActorCard,
+		_battle_manager: BattleManager,
+		_context: Dictionary,
+	) -> void:
+		attacker.current_hp = 0
+		attacker.is_defeated = true
+
+
 class RecordingDamageEffect extends Effect_Damage:
 	var forced_damage_type := Action.DamageType.NONE
 	var roll_value := 100
@@ -346,6 +357,34 @@ func test_take_one_hit_returns_actual_hp_removed_and_lifedrain_excludes_overkill
 	assert_eq(result.final_damage, 100)
 	assert_eq(actual, 30)
 	assert_eq(healing, 15)
+
+
+func test_lifedrain_cannot_revive_an_attacker_defeated_by_hit_reaction() -> void:
+	var manager := ApplicationBattleManager.new()
+	manager.battle_speed = 1.0
+	add_child_autofree(manager)
+	var attacker := FocusRefundHero.new()
+	attacker.current_stats = ActorStats.new()
+	attacker.current_stats.attack = 100
+	attacker.current_stats.max_hp = 100
+	attacker.current_hp = 50
+	attacker.battle_manager = manager
+	var target := EchoRuntimeEnemy.new()
+	target.current_stats = ActorStats.new()
+	target.current_stats.max_hp = 100
+	target.current_hp = 100
+	target.battle_manager = manager
+	manager.actor_list = [attacker, target]
+	var effect := DefeatingOnHitLifedrainEffect.new()
+	effect.damage_type = Action.DamageType.PIERCING
+	effect.lifedrain_scalar = 1.0
+
+	await effect.execute(attacker, [target], manager)
+
+	assert_true(attacker.is_defeated)
+	assert_eq(attacker.current_hp, 0)
+	attacker.free()
+	target.free()
 
 
 func test_converted_damage_dispatches_only_resolved_type_event() -> void:
