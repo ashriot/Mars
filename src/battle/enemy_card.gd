@@ -25,10 +25,10 @@ var intent_flash_tween: Tween
 
 
 func setup(data: EnemyData, fight_level: int, is_elite: bool, is_boss: bool):
-	enemy_data = data
+	enemy_data = data.duplicate(true) as EnemyData
 	enemy_data.level = fight_level
 	enemy_data.calculate_stats()
-	$Panel/Info/Text.text = "Rk. " + str(data.level)
+	$Panel/Info/Text.text = "Rk. " + str(enemy_data.level)
 	if is_elite:
 		$Panel/Info/Text.text += " ELITE"
 		_apply_elite_scaling(enemy_data.stats)

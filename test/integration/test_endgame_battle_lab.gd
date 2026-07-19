@@ -22,6 +22,12 @@ func after_each() -> void:
 
 func test_lab_builds_max_party_and_forwards_rank_ten_fixed_seed() -> void:
 	var lab := LabScene.instantiate() as EndgameBattleLab
+	var authored_enemies := lab.encounter.enemies.duplicate()
+	var authored_levels: Array[int] = []
+	var authored_stats: Array[ActorStats] = []
+	for authored_enemy: EnemyData in authored_enemies:
+		authored_levels.append(authored_enemy.level)
+		authored_stats.append(authored_enemy.stats)
 	add_child_autofree(lab)
 	await get_tree().process_frame
 
@@ -41,9 +47,15 @@ func test_lab_builds_max_party_and_forwards_rank_ten_fixed_seed() -> void:
 		assert_eq(hero.hero_data.armor.rank, 30, hero.actor_name)
 	assert_eq(lab.enemy_level, 10)
 	assert_false(enemies.is_empty())
-	for enemy: EnemyCard in enemies:
+	for enemy_index in enemies.size():
+		var enemy := enemies[enemy_index] as EnemyCard
+		var authored_enemy := authored_enemies[enemy_index] as EnemyData
 		assert_eq(enemy.enemy_data.level, 10, enemy.actor_name)
 		assert_eq(enemy.get_node("Panel/Info/Text").text, "Rk. 10", enemy.actor_name)
+		assert_not_same(enemy.enemy_data, authored_enemy, enemy.actor_name)
+		assert_same(lab.encounter.enemies[enemy_index], authored_enemy, enemy.actor_name)
+		assert_eq(authored_enemy.level, authored_levels[enemy_index], enemy.actor_name)
+		assert_same(authored_enemy.stats, authored_stats[enemy_index], enemy.actor_name)
 	assert_eq(lab.battle_scene.manager.encounter_seed, lab.encounter_seed)
 	assert_true(lab.battle_scene.manager.has_local_combat_rng())
 	assert_false(lab.battle_scene.manager.rewards_enabled)
