@@ -457,6 +457,8 @@ func _apply_role_passive(hero: HeroCard):
 		var action: Action = current_role.passive
 		print("Applying passive: ", action.action_name, " to ", hero.actor_name)
 		await execute_action(hero, action, [hero], false)
+		if executing_action == action:
+			executing_action = null
 
 func execute_action(actor: ActorCard, action: Action, targets: Array, display_name: bool = true, ends_turn: bool = false):
 	var paid_focus_cost := action.focus_cost

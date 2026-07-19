@@ -70,9 +70,6 @@ class ShiftReactionBattleManager extends BattleManager:
 	func wait(_duration: float = 0.01) -> void:
 		return
 
-	func _apply_role_passive(_hero: HeroCard):
-		return
-
 	func _flush_all_health_animations() -> void:
 		return
 
@@ -353,6 +350,11 @@ func test_after_shift_reaction_waits_for_targeted_shift_action_target() -> void:
 
 	await fixture.manager._on_shift_button_pressed("right")
 
+	assert_not_null(fixture.hero.get_current_role().passive)
+	assert_null(
+		fixture.manager.executing_action,
+		"the completed role passive cannot block the Shift action target click",
+	)
 	assert_eq(fixture.events, ["role_changed"])
 	await fixture.manager._on_hero_clicked(fixture.target)
 	assert_eq(fixture.events, ["role_changed", "shift_action", "after_shift_action"])
@@ -365,8 +367,12 @@ func test_shift_without_shift_action_still_finishes_reactions() -> void:
 
 	await fixture.manager._on_shift_button_pressed("right")
 
+	assert_not_null(fixture.hero.get_current_role().passive)
 	assert_eq(fixture.events, ["role_changed", "after_shift_action"])
-	assert_null(fixture.manager.executing_action)
+	assert_null(
+		fixture.manager.executing_action,
+		"the completed role passive cannot block the hero's next action",
+	)
 	fixture.free_all()
 
 
@@ -1255,6 +1261,9 @@ func _shift_reaction_fixture(
 		role.source_definition = definition
 		fixture.hero.loaded_roles.append(role)
 	fixture.hero.current_role_index = 0
+	var passive := Action.new()
+	passive.action_name = "Shift passive"
+	fixture.hero.loaded_roles[1].passive = passive
 
 	if automatic_action or targeted_action:
 		var action := Action.new()
