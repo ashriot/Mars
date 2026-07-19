@@ -10,6 +10,10 @@ class ApplicationFixture extends RefCounted:
 	var battle_manager: BattleManager
 
 
+class IntCounter extends RefCounted:
+	var value := 0
+
+
 class RecordingApplicationTarget extends ActorCard:
 	var recorded_events: Array[Trigger.TriggerType] = []
 	var last_damage_context: Dictionary = {}
@@ -358,13 +362,36 @@ func test_converted_damage_dispatches_only_resolved_type_event() -> void:
 	)
 
 
-func test_existing_lethal_hit_reaction_order_is_preserved() -> void:
+func test_lethal_hit_fires_reactions_then_enforces_one_defeat() -> void:
 	var fixture := _application_fixture(10, 200)
-	var result := DamageCalculator.calculate(_request_for_final_damage(20))
-	await fixture.target.take_one_hit(
-		result, fixture.effect, fixture.attacker, Action.DamageType.KINETIC,
+	var defeat_count := _track_defeats(fixture.target)
+	fixture.attacker.current_stats.attack = 20
+	fixture.attacker.current_stats.aim = 0
+	fixture.target.current_stats.psyche = 20
+	fixture.target.is_breached = true
+	var self_heal := Effect_Healing.new()
+	self_heal.potency = 1.0
+	self_heal.target_type = Action.TargetType.SELF
+	var heal_trigger := Trigger.new()
+	heal_trigger.trigger_type = Trigger.TriggerType.ON_BEING_HIT
+	heal_trigger.effects_to_run = [self_heal]
+	var heal_condition := Condition.new()
+	heal_condition.attacker = fixture.target
+	heal_condition.triggers = [heal_trigger]
+	fixture.target.active_conditions.append(heal_condition)
+	var effect := _applying_damage(Action.DamageType.KINETIC)
+
+	await effect.execute(
+		fixture.attacker, [fixture.target], fixture.battle_manager,
 	)
-	assert_eq(fixture.target.recorded_events, [])
+
+	assert_eq(fixture.target.recorded_events, [
+		Trigger.TriggerType.ON_TAKING_KINETIC_DAMAGE,
+		Trigger.TriggerType.ON_BEING_HIT,
+	])
+	assert_eq(fixture.target.current_hp, 0)
+	assert_true(fixture.target.is_defeated)
+	assert_eq(defeat_count.value, 1)
 
 
 func test_zero_pre_critical_remains_explicit_in_result_and_popup() -> void:
@@ -528,6 +555,107 @@ func test_production_reverberate_routes_parent_target_and_removes_after_energy_h
 		fixture.target.last_damage_context.damage_result.source_effect,
 		nested_damage,
 	)
+
+
+func test_lethal_kinetic_hit_triggers_production_reverberate_once() -> void:
+	var fixture := _application_fixture(10, 200)
+	var defeat_count := _track_defeats(fixture.target)
+	fixture.attacker.current_stats.attack = 20
+	fixture.attacker.current_stats.aim = 0
+	fixture.target.is_breached = true
+	var echo := _application_party_hero(
+		fixture.battle_manager, "Echo", 100, 40, 200, 200,
+	)
+	var reverberate := _production_condition(
+		"res://data/heroes/echo/conditions/reverberate.tres", echo,
+	)
+	fixture.target.active_conditions.append(reverberate)
+	var effect := _applying_damage(Action.DamageType.KINETIC)
+
+	await effect.execute(
+		fixture.attacker, [fixture.target], fixture.battle_manager,
+	)
+
+	assert_false(fixture.target.has_condition("Reverberate"))
+	assert_eq(fixture.target.recorded_events.count(
+		Trigger.TriggerType.ON_TAKING_KINETIC_DAMAGE
+	), 1)
+	assert_eq(fixture.target.recorded_events.count(
+		Trigger.TriggerType.ON_TAKING_ENERGY_DAMAGE
+	), 1)
+	assert_eq(fixture.target.recorded_events.count(
+		Trigger.TriggerType.ON_BEING_HIT
+	), 2)
+	assert_eq(fixture.target.popup_critical_states.size(), 2)
+	assert_true(fixture.target.is_defeated)
+	assert_eq(fixture.target.current_hp, 0)
+	assert_eq(defeat_count.value, 1)
+
+
+func test_lethal_incoming_hit_triggers_energy_barrier_retaliation_once() -> void:
+	var fixture := _application_fixture(10, 200)
+	var defeat_count := _track_defeats(fixture.target)
+	var incoming_attacker := _application_target(
+		fixture.battle_manager, 1000, 1000,
+	)
+	_configure_application_actor(
+		incoming_attacker, "Incoming Attacker", 20, 5, 1000, 1000,
+	)
+	incoming_attacker.is_breached = true
+	var echo := _application_party_hero(
+		fixture.battle_manager, "Echo", 100, 40, 200, 200,
+	)
+	var barrier := _production_condition(
+		"res://data/heroes/echo/conditions/energy_barrier.tres", echo,
+	)
+	fixture.target.active_conditions.append(barrier)
+	var effect := _applying_damage(Action.DamageType.PIERCING)
+
+	await effect.execute(
+		incoming_attacker, [fixture.target], fixture.battle_manager,
+	)
+
+	assert_eq(incoming_attacker.current_hp, 940)
+	assert_false(fixture.target.has_condition("Energy Barrier"))
+	assert_eq(fixture.target.recorded_events.count(
+		Trigger.TriggerType.ON_BEING_HIT
+	), 1)
+	assert_true(fixture.target.is_defeated)
+	assert_eq(fixture.target.current_hp, 0)
+	assert_eq(defeat_count.value, 1)
+
+
+func test_lethal_incoming_hit_triggers_pain_transfer_for_living_party_once() -> void:
+	var fixture := _application_fixture(10, 200)
+	var defeat_count := _track_defeats(fixture.target)
+	fixture.attacker.reparent(fixture.battle_manager.hero_area)
+	_configure_application_actor(fixture.attacker, "Ally", 20, 5, 100, 50)
+	var echo := _application_party_hero(
+		fixture.battle_manager, "Echo", 100, 40, 100, 50,
+	)
+	var defeated_ally := _application_party_hero(
+		fixture.battle_manager, "Defeated Ally", 20, 5, 100, 0, true,
+	)
+	var pain_transfer := _production_condition(
+		"res://data/heroes/echo/conditions/pain_transfer.tres", echo,
+	)
+	fixture.target.active_conditions.append(pain_transfer)
+	var effect := _applying_damage(Action.DamageType.PIERCING)
+
+	await effect.execute(
+		fixture.attacker, [fixture.target], fixture.battle_manager,
+	)
+
+	assert_eq(echo.current_hp, 70)
+	assert_eq(fixture.attacker.current_hp, 70)
+	assert_eq(defeated_ally.current_hp, 0)
+	assert_true(defeated_ally.is_defeated)
+	assert_eq(fixture.target.recorded_events.count(
+		Trigger.TriggerType.ON_BEING_HIT
+	), 1)
+	assert_true(fixture.target.is_defeated)
+	assert_eq(fixture.target.current_hp, 0)
+	assert_eq(defeat_count.value, 1)
 
 
 func test_nested_damage_inherits_source_action_for_its_own_damage_contexts() -> void:
@@ -1171,28 +1299,14 @@ func _recording_actor(base_power: int, overload: int, guard: int) -> RecordingAc
 
 
 func _application_fixture(hp: int, max_hp: int) -> ApplicationFixture:
-	var scene_card := HeroCardScene.instantiate() as ActorCard
-	_clear_scene_owners(scene_card)
-	var target := RecordingApplicationTarget.new()
-	target.damage_popup_scene = scene_card.damage_popup_scene
-	target.buff_scene = scene_card.buff_scene
-	target.debuff_scene = scene_card.debuff_scene
-	while scene_card.get_child_count() > 0:
-		var child := scene_card.get_child(0)
-		scene_card.remove_child(child)
-		target.add_child(child)
-	scene_card.free()
-	add_child_autofree(target)
-
 	var battle_manager := ApplicationBattleManager.new()
 	battle_manager.battle_speed = 1.0
 	add_child_autofree(battle_manager)
-	target.battle_manager = battle_manager
-	target.current_stats = ActorStats.new()
-	target.current_stats.max_hp = max_hp
-	target.current_hp = hp
-	target.current_guard = 0
-	target.update_health_bar()
+	battle_manager.hero_area = Control.new()
+	battle_manager.enemy_area = Control.new()
+	battle_manager.add_child(battle_manager.hero_area)
+	battle_manager.add_child(battle_manager.enemy_area)
+	var target := _application_target(battle_manager, hp, max_hp)
 
 	var attacker := HeroCardScene.instantiate() as ActorCard
 	add_child_autofree(attacker)
@@ -1212,6 +1326,92 @@ func _application_fixture(hp: int, max_hp: int) -> ApplicationFixture:
 	fixture.effect = effect
 	fixture.battle_manager = battle_manager
 	return fixture
+
+
+func _application_target(
+	manager: BattleManager,
+	hp: int,
+	max_hp: int,
+) -> RecordingApplicationTarget:
+	var scene_card := HeroCardScene.instantiate() as ActorCard
+	_clear_scene_owners(scene_card)
+	var target := RecordingApplicationTarget.new()
+	target.damage_popup_scene = scene_card.damage_popup_scene
+	target.buff_scene = scene_card.buff_scene
+	target.debuff_scene = scene_card.debuff_scene
+	while scene_card.get_child_count() > 0:
+		var child := scene_card.get_child(0)
+		scene_card.remove_child(child)
+		target.add_child(child)
+	scene_card.free()
+	add_child_autofree(target)
+	target.battle_manager = manager
+	target.current_stats = ActorStats.new()
+	target.current_stats.max_hp = max_hp
+	target.current_hp = hp
+	target.current_guard = 0
+	target.update_health_bar()
+	return target
+
+
+func _applying_damage(damage_type: Action.DamageType) -> ApplyingDamageEffect:
+	var effect := ApplyingDamageEffect.new()
+	effect.damage_type = damage_type
+	effect.potency = 1.0
+	return effect
+
+
+func _track_defeats(actor: ActorCard) -> IntCounter:
+	var counter := IntCounter.new()
+	actor.actor_defeated.connect(func(_defeated_actor: ActorCard) -> void:
+		counter.value += 1
+	)
+	return counter
+
+
+func _production_condition(path: String, attacker: ActorCard) -> Condition:
+	var condition := (load(path) as Condition).duplicate(true) as Condition
+	condition.attacker = attacker
+	return condition
+
+
+func _application_party_hero(
+	manager: BattleManager,
+	actor_name: String,
+	attack: int,
+	psyche: int,
+	max_hp: int,
+	hp: int,
+	defeated: bool = false,
+) -> HeroCard:
+	var hero := HeroCardScene.instantiate() as HeroCard
+	manager.hero_area.add_child(hero)
+	hero.battle_manager = manager
+	_configure_application_actor(
+		hero, actor_name, attack, psyche, max_hp, hp, defeated,
+	)
+	return hero
+
+
+func _configure_application_actor(
+	actor: ActorCard,
+	actor_name: String,
+	attack: int,
+	psyche: int,
+	max_hp: int,
+	hp: int,
+	defeated: bool = false,
+) -> void:
+	actor.actor_name = actor_name
+	actor.current_stats = ActorStats.new()
+	actor.current_stats.attack = attack
+	actor.current_stats.psyche = psyche
+	actor.current_stats.aim = 0
+	actor.current_stats.max_hp = max_hp
+	actor.current_hp = hp
+	actor.current_guard = 0
+	actor.is_defeated = defeated
+	actor.update_health_bar()
 
 
 func _clear_scene_owners(node: Node) -> void:

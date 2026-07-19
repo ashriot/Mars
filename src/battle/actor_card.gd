@@ -59,6 +59,7 @@ var battle_priority: int = 0
 var is_breached: bool
 var is_in_danger: bool
 var is_defeated: bool
+var _lethal_hit_reaction_depth := 0
 var active_conditions: Array[Condition] = []
 var active_traits: Array[Trait] = []
 var _condition_removal_batch_depth := 0
@@ -151,9 +152,9 @@ func take_one_hit(
 	print("Hit for ", result.final_damage, " damage!")
 	update_guard_bar()
 
-	if current_hp == 0:
-		await defeated()
-		return actual_damage
+	var hit_was_lethal := current_hp == 0
+	if hit_was_lethal:
+		_lethal_hit_reaction_depth += 1
 	var event_context := {
 		"attacker": attacker,
 		"target": self,
@@ -174,7 +175,9 @@ func take_one_hit(
 	if not damage_effect.is_indirect:
 		await _fire_condition_event(Trigger.TriggerType.ON_BEING_HIT, event_context)
 
-	if current_hp == 0:
+	if hit_was_lethal:
+		_lethal_hit_reaction_depth -= 1
+	if current_hp == 0 and not is_defeated:
 		await defeated()
 	return actual_damage
 
@@ -201,7 +204,9 @@ func breach():
 	await _fire_condition_event(Trigger.TriggerType.ON_BREACHED)
 
 func take_healing(heal_amount: int, is_revive: bool = false):
-	if (is_defeated and not is_revive) or heal_amount <= 0:
+	if _lethal_hit_reaction_depth > 0 \
+		or (is_defeated and not is_revive) \
+		or heal_amount <= 0:
 		return
 
 	var new_hp = min(current_stats.max_hp, current_hp + heal_amount)
