@@ -125,3 +125,25 @@ func validate(source: String) -> PackedStringArray:
 	if type == Type.PREFERRED_CONDITION_HERO and condition_name.is_empty():
 		errors.append("%s preferred-condition selector requires condition_name." % source)
 	return errors
+
+
+func guarantees_legal_target(target_type: Action.TargetType) -> bool:
+	match target_type:
+		Action.TargetType.ONE_ENEMY:
+			return type in [Type.SEEDED_HERO, Type.PREFERRED_CONDITION_HERO,
+				Type.HIGHEST_FOCUS_HERO, Type.HIGHEST_GUARD_HERO, Type.LOWEST_GUARD_HERO,
+				Type.HERO_CLOSEST_TO_ACTING]
+		Action.TargetType.ALL_ENEMIES:
+			return type == Type.ALL_HEROES
+		Action.TargetType.RANDOM_ENEMY:
+			return type == Type.VALID_HERO_CANDIDATES
+		Action.TargetType.SELF:
+			return type == Type.SELF
+		Action.TargetType.ONE_ALLY:
+			return type == Type.SELF or (type in [Type.LOWEST_HP_PERCENT_ALLY,
+				Type.LEAST_GUARD_ALLY, Type.ALLY_FURTHEST_FROM_ACTING] and not exclude_self)
+		Action.TargetType.ALL_ALLIES:
+			return type == Type.ALL_ALLIES and not exclude_self
+		Action.TargetType.LEAST_GUARD_ALLY:
+			return type == Type.LEAST_GUARD_ALLY and not exclude_self
+	return false

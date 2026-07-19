@@ -19,8 +19,11 @@ static func validate(enemy: EnemyData, source: String = "") -> PackedStringArray
 			errors.append("%s has Duplicate ability ID '%s'." % [label, ability.ability_id])
 		ids[ability.ability_id] = true
 		if ability.cooldown_turns == 0 and not ability.one_time_use \
-		and ability.rules.any(func(rule: EnemyDecisionRule): return rule != null and rule.is_unconditional()):
+		and ability.action != null and ability.rules.any(func(rule: EnemyDecisionRule):
+			return rule != null and rule.is_unconditional() and rule.selector != null \
+				and rule.selector.guarantees_legal_target(ability.action.target_type)
+		):
 			has_fallback = true
 	if not has_fallback:
-		errors.append("%s requires an unconditional free action." % label)
+		errors.append("%s requires an unconditional free action with a guaranteed legal target." % label)
 	return errors

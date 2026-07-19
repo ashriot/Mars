@@ -65,6 +65,17 @@ func test_one_time_free_action_is_not_a_valid_fallback() -> void:
 	assert_true(_has_error(errors, "unconditional free action"))
 
 
+func test_lone_enemy_ally_only_rule_is_not_a_valid_fallback() -> void:
+	var ability := _free_ability()
+	ability.action.target_type = Action.TargetType.ONE_ALLY
+	ability.rules[0].selector.type = EnemyTargetSelector.Type.LEAST_GUARD_ALLY
+	ability.rules[0].selector.exclude_self = true
+	var enemy := EnemyData.new()
+	enemy.abilities = [ability]
+	var errors := EnemyKitValidator.validate(enemy)
+	assert_true(_has_error(errors, "guaranteed legal target"))
+
+
 func test_random_hit_action_requires_the_complete_valid_candidate_pool() -> void:
 	var ability := _free_ability()
 	ability.action.target_type = Action.TargetType.RANDOM_ENEMY
