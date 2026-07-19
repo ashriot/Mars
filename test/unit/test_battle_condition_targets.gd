@@ -101,6 +101,77 @@ func test_healing_effect_heals_living_enemy_without_hero_focus_scaling() -> void
 	target.free()
 
 
+func test_healing_defaults_to_non_reviving() -> void:
+	var effect := Effect_Healing.new()
+	assert_false(effect.is_revive)
+	var action := Action.new()
+	action.effects = [effect]
+	assert_false(action.can_revive_targets)
+
+
+func test_explicit_revive_remains_opt_in() -> void:
+	var effect := Effect_Healing.new()
+	effect.is_revive = true
+	var action := Action.new()
+	action.effects = [effect]
+	assert_true(action.can_revive_targets)
+
+
+func test_ordinary_healing_skips_defeated_heroes_for_single_and_group_targets() -> void:
+	var fixture := _healing_target_fixture()
+	var effect := Effect_Healing.new()
+	var action := Action.new()
+	action.effects = [effect]
+
+	var single_targets: Array = fixture.manager.get_targets(
+		Action.TargetType.ONE_ALLY, true, [], fixture.healer, action.can_revive_targets,
+	)
+	var group_targets: Array = fixture.manager.get_targets(
+		Action.TargetType.ALL_ALLIES, true, [], fixture.healer, action.can_revive_targets,
+	)
+
+	assert_does_not_have(single_targets, fixture.defeated)
+	assert_does_not_have(group_targets, fixture.defeated)
+	_free_healing_target_fixture(fixture)
+
+
+func test_explicit_revive_includes_defeated_hero_in_targets() -> void:
+	var fixture := _healing_target_fixture()
+	var effect := Effect_Healing.new()
+	effect.is_revive = true
+	var action := Action.new()
+	action.effects = [effect]
+
+	var targets: Array = fixture.manager.get_targets(
+		Action.TargetType.ONE_ALLY, true, [], fixture.healer, action.can_revive_targets,
+	)
+
+	assert_has(targets, fixture.defeated)
+	_free_healing_target_fixture(fixture)
+
+
+func test_triggered_ordinary_healing_does_not_revive_defeated_target() -> void:
+	var fixture := _defeated_healing_fixture()
+	var effect := Effect_Healing.new()
+
+	await effect.execute(fixture.attacker, [fixture.target], fixture.manager)
+
+	assert_eq(fixture.target.current_hp, 0)
+	assert_true(fixture.target.is_defeated)
+	_free_defeated_healing_fixture(fixture)
+
+
+func test_recurring_ordinary_healing_does_not_revive_defeated_target() -> void:
+	var fixture := _defeated_healing_fixture()
+	var effect := Effect_Healing.new()
+
+	await effect.execute(fixture.attacker, [fixture.target], fixture.manager)
+
+	assert_eq(fixture.target.current_hp, 0)
+	assert_true(fixture.target.is_defeated)
+	_free_defeated_healing_fixture(fixture)
+
+
 func test_removing_one_condition_fires_only_its_on_removed_effect_once() -> void:
 	var fixture := _condition_fixture()
 	var removed_log: Array[String] = []
@@ -166,6 +237,55 @@ func _condition_fixture() -> Dictionary:
 func _free_condition_fixture(fixture: Dictionary) -> void:
 	(fixture.actor as ActorCard).free()
 	(fixture.manager as BattleManager).free()
+
+
+func _healing_target_fixture() -> Dictionary:
+	var manager := CapturingBattleManager.new()
+	var hero_area := Control.new()
+	var enemy_area := Control.new()
+	var healer := HeroCard.new()
+	var defeated := HeroCard.new()
+	manager.hero_area = hero_area
+	manager.enemy_area = enemy_area
+	manager.current_actor = healer
+	healer.is_defeated = false
+	defeated.is_defeated = true
+	hero_area.add_child(healer)
+	hero_area.add_child(defeated)
+	return {
+		manager = manager,
+		hero_area = hero_area,
+		enemy_area = enemy_area,
+		healer = healer,
+		defeated = defeated,
+	}
+
+
+func _free_healing_target_fixture(fixture: Dictionary) -> void:
+	(fixture.manager as BattleManager).free()
+	(fixture.hero_area as Control).free()
+	(fixture.enemy_area as Control).free()
+
+
+func _defeated_healing_fixture() -> Dictionary:
+	var manager := CapturingBattleManager.new()
+	var attacker := EnemyCard.new()
+	var target := EnemyCard.new()
+	attacker.current_stats = ActorStats.new()
+	attacker.current_stats.psyche = 20
+	target.current_stats = ActorStats.new()
+	target.current_stats.max_hp = 100
+	target.hp_bar_ghost = ProgressBar.new()
+	target.current_hp = 0
+	target.is_defeated = true
+	return {manager = manager, attacker = attacker, target = target}
+
+
+func _free_defeated_healing_fixture(fixture: Dictionary) -> void:
+	(fixture.manager as BattleManager).free()
+	(fixture.attacker as EnemyCard).free()
+	(fixture.target as EnemyCard).hp_bar_ghost.free()
+	(fixture.target as EnemyCard).free()
 
 
 func _condition_with_removed_effect(

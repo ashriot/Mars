@@ -5,7 +5,7 @@ class_name Effect_Healing
 @export var power_type: Action.PowerType = Action.PowerType.PSYCHE
 @export var focus_scalar: float = 0.0
 @export var scales_with_missing_hp: bool = false
-@export var is_revive: bool = true
+@export var is_revive: bool = false
 
 
 func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleManager, _action: Action = null, _context: Dictionary = {}) -> void:
