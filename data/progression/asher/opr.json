@@ -1,5 +1,5 @@
 {
-  "content_revision": 2,
+  "content_revision": 3,
   "nodes": [
     {
       "id": "opr.anchor",
@@ -9,43 +9,81 @@
       "column": 0
     },
     {
-      "column": -1,
-      "effect": {
-        "resource": "res://data/heroes/asher/actions/coordinate.tres",
-        "slot": 1,
-        "type": "action"
-      },
-      "id": "opr.root",
+      "id": "opr.coordinate",
+      "node_kind": "progression",
       "parent": "opr.anchor",
       "rank": 1,
+      "column": -1,
       "xp_cost": 0,
-      "node_kind": "progression",
-      "starting_owned": true
+      "starting_owned": true,
+      "effect": {
+        "type": "action",
+        "resource": "res://data/heroes/asher/actions/coordinate.tres",
+        "slot": 1
+      }
     },
     {
       "id": "opr.decoy",
       "node_kind": "progression",
-      "starting_owned": true,
       "parent": "opr.anchor",
       "rank": 1,
       "column": 1,
       "xp_cost": 0,
+      "starting_owned": true,
       "effect": {
+        "type": "action",
         "resource": "res://data/heroes/asher/actions/decoy.tres",
-        "slot": 2,
-        "type": "action"
+        "slot": 2
       }
     },
     {
-      "id": "opr.hp_5",
-      "parent": "opr.anchor",
+      "id": "opr.debilitate",
+      "node_kind": "progression",
+      "parent": "opr.coordinate",
       "rank": 2,
-      "column": 0,
+      "column": -1,
       "xp_cost": 200,
       "effect": {
-        "amount": 5,
-        "stat": "HP",
-        "type": "stat"
+        "type": "action",
+        "resource": "res://data/heroes/asher/actions/debilitate.tres",
+        "slot": 3
+      }
+    },
+    {
+      "id": "opr.ensnare",
+      "node_kind": "progression",
+      "parent": "opr.decoy",
+      "rank": 3,
+      "column": 1,
+      "xp_cost": 300,
+      "effect": {
+        "type": "action",
+        "resource": "res://data/heroes/asher/actions/ensnare.tres",
+        "slot": 4
+      }
+    },
+    {
+      "id": "opr.dismantle",
+      "node_kind": "progression",
+      "parent": "opr.ensnare",
+      "rank": 4,
+      "column": 0,
+      "xp_cost": 400,
+      "effect": {
+        "type": "shift_action",
+        "resource": "res://data/heroes/asher/actions/dismantle.tres"
+      }
+    },
+    {
+      "id": "opr.teamwork",
+      "node_kind": "progression",
+      "parent": "opr.dismantle",
+      "rank": 5,
+      "column": 0,
+      "xp_cost": 500,
+      "effect": {
+        "type": "passive",
+        "resource": "res://data/heroes/asher/actions/teamwork.tres"
       }
     }
   ],

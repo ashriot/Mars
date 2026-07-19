@@ -15,10 +15,10 @@ const STARTING_KITS := {
 const EXPECTED := {
 	"gun": {"hero":"asher", "nodes":19, "xp":11900, "effects":{"stat":15,"action":2,"passive":1,"shift_action":0}},
 	"snp": {"hero":"asher", "nodes":9, "xp":2700, "effects":{"stat":6,"action":2,"passive":0,"shift_action":0}},
-	"opr": {"hero":"asher", "nodes":4, "xp":200, "effects":{"stat":1,"action":2,"passive":0,"shift_action":0}},
+	"opr": {"hero":"asher", "nodes":7, "xp":1400, "effects":{"stat":0,"action":4,"passive":1,"shift_action":1}},
 	"kin": {"hero":"echo", "nodes":18, "xp":10700, "effects":{"stat":14,"action":3,"passive":0,"shift_action":0}},
 	"psi": {"hero":"echo", "nodes":19, "xp":11300, "effects":{"stat":15,"action":3,"passive":0,"shift_action":0}},
-	"dom": {"hero":"echo", "nodes":4, "xp":200, "effects":{"stat":1,"action":2,"passive":0,"shift_action":0}},
+	"dom": {"hero":"echo", "nodes":7, "xp":1400, "effects":{"stat":0,"action":4,"passive":1,"shift_action":1}},
 	"med": {"hero":"sands", "nodes":7, "xp":1400, "effects":{"stat":0,"action":4,"passive":1,"shift_action":1}},
 	"stg": {"hero":"sands", "nodes":7, "xp":1400, "effects":{"stat":0,"action":4,"passive":1,"shift_action":1}},
 	"van": {"hero":"sands", "nodes":7, "xp":1400, "effects":{"stat":0,"action":4,"passive":1,"shift_action":1}},
@@ -52,9 +52,12 @@ const AUTHORED_NODES := {
 ],
 "opr": [
 	["opr.anchor", null, 1, 0, null, "role_anchor", false, null],
-	["opr.root", "opr.anchor", 1, -1, 0, "progression", true, {"resource":"res://data/heroes/asher/actions/coordinate.tres","slot":1,"type":"action"}],
+	["opr.coordinate", "opr.anchor", 1, -1, 0, "progression", true, {"resource":"res://data/heroes/asher/actions/coordinate.tres","slot":1,"type":"action"}],
 	["opr.decoy", "opr.anchor", 1, 1, 0, "progression", true, {"resource":"res://data/heroes/asher/actions/decoy.tres","slot":2,"type":"action"}],
-	["opr.hp_5", "opr.anchor", 2, 0, 200, "progression", false, {"amount":5,"stat":"HP","type":"stat"}],
+	["opr.debilitate", "opr.coordinate", 2, -1, 200, "progression", false, {"resource":"res://data/heroes/asher/actions/debilitate.tres","slot":3,"type":"action"}],
+	["opr.ensnare", "opr.decoy", 3, 1, 300, "progression", false, {"resource":"res://data/heroes/asher/actions/ensnare.tres","slot":4,"type":"action"}],
+	["opr.dismantle", "opr.ensnare", 4, 0, 400, "progression", false, {"resource":"res://data/heroes/asher/actions/dismantle.tres","type":"shift_action"}],
+	["opr.teamwork", "opr.dismantle", 5, 0, 500, "progression", false, {"resource":"res://data/heroes/asher/actions/teamwork.tres","type":"passive"}],
 ],
 "snp": [
 	["snp.anchor", null, 1, 0, null, "role_anchor", false, null],
@@ -69,9 +72,12 @@ const AUTHORED_NODES := {
 ],
 "dom": [
 	["dom.anchor", null, 1, 0, null, "role_anchor", false, null],
-	["dom.root", "dom.anchor", 1, -1, 0, "progression", true, {"resource":"res://data/heroes/echo/actions/displace.tres","slot":1,"type":"action"}],
+	["dom.displace", "dom.anchor", 1, -1, 0, "progression", true, {"resource":"res://data/heroes/echo/actions/displace.tres","slot":1,"type":"action"}],
 	["dom.feedback", "dom.anchor", 1, 1, 0, "progression", true, {"resource":"res://data/heroes/echo/actions/feedback.tres","slot":2,"type":"action"}],
-	["dom.psy_1", "dom.anchor", 2, 0, 200, "progression", false, {"amount":1,"stat":"PSY","type":"stat"}],
+	["dom.static_charge", "dom.displace", 2, -1, 200, "progression", false, {"resource":"res://data/heroes/echo/actions/static_charge.tres","slot":3,"type":"action"}],
+	["dom.inversion", "dom.feedback", 3, 1, 300, "progression", false, {"resource":"res://data/heroes/echo/actions/inversion.tres","slot":4,"type":"action"}],
+	["dom.suppress", "dom.inversion", 4, 0, 400, "progression", false, {"resource":"res://data/heroes/echo/actions/force_field.tres","type":"shift_action"}],
+	["dom.precognition", "dom.suppress", 5, 0, 500, "progression", false, {"resource":"res://data/heroes/echo/actions/precognition.tres","type":"passive"}],
 ],
 "kin": [
 	["kin.anchor", null, 1, 0, null, "role_anchor", false, null],
@@ -144,9 +150,9 @@ const AUTHORED_NODES := {
 }
 const FIRST_PAID := {
 	"gun": ["gun.atk_1", {"amount":1, "stat":"ATK", "type":"stat"}],
-	"opr": ["opr.hp_5", {"amount":5, "stat":"HP", "type":"stat"}],
+	"opr": ["opr.debilitate", {"resource":"res://data/heroes/asher/actions/debilitate.tres", "slot":3, "type":"action"}],
 	"snp": ["snp.hp_5", {"amount":5, "stat":"HP", "type":"stat"}],
-	"dom": ["dom.psy_1", {"amount":1, "stat":"PSY", "type":"stat"}],
+	"dom": ["dom.static_charge", {"resource":"res://data/heroes/echo/actions/static_charge.tres", "slot":3, "type":"action"}],
 	"kin": ["kin.hp_5", {"amount":5, "stat":"HP", "type":"stat"}],
 	"psi": ["psi.hp_5", {"amount":5, "stat":"HP", "type":"stat"}],
 	"med": ["med.auto_shields", {"resource":"res://data/heroes/sands/actions/auto_shields.tres", "slot":3, "type":"action"}],
@@ -192,7 +198,7 @@ func test_every_production_role_fulfills_the_starting_kit_contract() -> void:
 		var path := CONTENT_ROOT.path_join(hero_id).path_join(role_id + ".json")
 		var document: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(path))
 		assert_eq(int(document.schema_version), 2, role_id)
-		assert_eq(int(document.content_revision), 2, role_id)
+		assert_eq(int(document.content_revision), 3 if role_id in ["opr", "dom"] else 2, role_id)
 		var nodes: Array = document.nodes
 		_assert_authored_node_contract(nodes, AUTHORED_NODES[role_id], role_id)
 		var anchors := nodes.filter(func(node): return node.get("node_kind", "progression") == "role_anchor")
@@ -221,13 +227,14 @@ func test_every_production_role_fulfills_the_starting_kit_contract() -> void:
 		assert_false(paid.is_empty(), role_id)
 		if paid.is_empty(): continue
 		assert_eq(int(paid[0].rank), 2, role_id)
-		assert_eq(paid[0].parent, anchor.id, role_id)
+		if role_id not in ["opr", "dom"]:
+			assert_eq(paid[0].parent, anchor.id, role_id)
 		assert_eq(str(paid[0].id), str(FIRST_PAID[role_id][0]), role_id)
 		_assert_exact_effect(paid[0].effect, FIRST_PAID[role_id][1], "%s first paid" % role_id)
 		var paid_ranks := {}
 		for node: Dictionary in paid:
 			paid_ranks[int(node.rank)] = true
-			var multiplier := 150 if int(node.column) != 0 else 100
+			var multiplier := 100 if role_id in ["opr", "dom"] else (150 if int(node.column) != 0 else 100)
 			assert_eq(int(node.xp_cost), int(node.rank) * multiplier, node.id)
 		for rank in range(2, int(paid[-1].rank) + 1):
 			assert_true(paid_ranks.has(rank), "%s paid rank %d" % [role_id, rank])

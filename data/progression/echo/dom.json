@@ -1,5 +1,5 @@
 {
-  "content_revision": 2,
+  "content_revision": 3,
   "nodes": [
     {
       "id": "dom.anchor",
@@ -9,43 +9,81 @@
       "column": 0
     },
     {
-      "column": -1,
-      "effect": {
-        "resource": "res://data/heroes/echo/actions/displace.tres",
-        "slot": 1,
-        "type": "action"
-      },
-      "id": "dom.root",
+      "id": "dom.displace",
+      "node_kind": "progression",
       "parent": "dom.anchor",
       "rank": 1,
+      "column": -1,
       "xp_cost": 0,
-      "node_kind": "progression",
-      "starting_owned": true
+      "starting_owned": true,
+      "effect": {
+        "type": "action",
+        "resource": "res://data/heroes/echo/actions/displace.tres",
+        "slot": 1
+      }
     },
     {
       "id": "dom.feedback",
       "node_kind": "progression",
-      "starting_owned": true,
       "parent": "dom.anchor",
       "rank": 1,
       "column": 1,
       "xp_cost": 0,
+      "starting_owned": true,
       "effect": {
+        "type": "action",
         "resource": "res://data/heroes/echo/actions/feedback.tres",
-        "slot": 2,
-        "type": "action"
+        "slot": 2
       }
     },
     {
-      "id": "dom.psy_1",
-      "parent": "dom.anchor",
+      "id": "dom.static_charge",
+      "node_kind": "progression",
+      "parent": "dom.displace",
       "rank": 2,
-      "column": 0,
+      "column": -1,
       "xp_cost": 200,
       "effect": {
-        "amount": 1,
-        "stat": "PSY",
-        "type": "stat"
+        "type": "action",
+        "resource": "res://data/heroes/echo/actions/static_charge.tres",
+        "slot": 3
+      }
+    },
+    {
+      "id": "dom.inversion",
+      "node_kind": "progression",
+      "parent": "dom.feedback",
+      "rank": 3,
+      "column": 1,
+      "xp_cost": 300,
+      "effect": {
+        "type": "action",
+        "resource": "res://data/heroes/echo/actions/inversion.tres",
+        "slot": 4
+      }
+    },
+    {
+      "id": "dom.suppress",
+      "node_kind": "progression",
+      "parent": "dom.inversion",
+      "rank": 4,
+      "column": 0,
+      "xp_cost": 400,
+      "effect": {
+        "type": "shift_action",
+        "resource": "res://data/heroes/echo/actions/force_field.tres"
+      }
+    },
+    {
+      "id": "dom.precognition",
+      "node_kind": "progression",
+      "parent": "dom.suppress",
+      "rank": 5,
+      "column": 0,
+      "xp_cost": 500,
+      "effect": {
+        "type": "passive",
+        "resource": "res://data/heroes/echo/actions/precognition.tres"
       }
     }
   ],

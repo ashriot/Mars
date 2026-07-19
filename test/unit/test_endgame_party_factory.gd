@@ -66,6 +66,17 @@ func test_build_overlays_complete_authored_role_kits_and_preserves_json_only_fie
 		operative.actions.map(func(action: Action) -> String: return action.action_name),
 		["Coordinate", "Decoy", "Debilitate", "Ensnare"],
 	)
+	assert_eq(operative.shift_action.action_name, "Dismantle")
+	assert_eq(operative.passive.action_name, "Teamwork")
+
+	var telepath := echo.battle_roles["dom"] as RoleData
+	assert_eq(telepath.role_name, "Telepath")
+	assert_eq(
+		telepath.actions.map(func(action: Action) -> String: return action.action_name),
+		["Displace", "Feedback", "Static Charge", "Inversion"],
+	)
+	assert_eq(telepath.shift_action.action_name, "Suppress")
+	assert_eq(telepath.passive.action_name, "Precognition")
 
 
 func test_max_equipment_uses_deep_duplicates_at_tier_five_rank_thirty() -> void:

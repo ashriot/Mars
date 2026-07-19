@@ -12,10 +12,10 @@ const TEST_SAVE_ROOT := "user://test_saves/controller_playable_loop/"
 const STARTING_NODE_IDS := {
 	"gun": ["gun.root", "gun.fusion_ammo"],
 	"snp": ["snp.root", "snp.aimed_shot"],
-	"opr": ["opr.root", "opr.decoy"],
+	"opr": ["opr.coordinate", "opr.decoy"],
 	"psi": ["psi.root", "psi.energy_barrier"],
 	"kin": ["kin.root", "kin.rejuvenate"],
-	"dom": ["dom.root", "dom.feedback"],
+	"dom": ["dom.displace", "dom.feedback"],
 	"van": ["van.root", "van.overwatch"],
 	"med": ["med.root", "med.booster_shots"],
 	"stg": ["stg.root", "stg.gambit"],

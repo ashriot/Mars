@@ -164,6 +164,17 @@ func test_spawned_heroes_retain_complete_benchmark_kits() -> void:
 		operative.actions.map(func(action: Action) -> String: return action.action_name),
 		["Coordinate", "Decoy", "Debilitate", "Ensnare"],
 	)
+	assert_eq(operative.shift_action.action_name, "Dismantle")
+	assert_eq(operative.passive.action_name, "Teamwork")
+
+	var telepath := _loaded_role(echo, "dom")
+	assert_eq(telepath.role_name, "Telepath")
+	assert_eq(
+		telepath.actions.map(func(action: Action) -> String: return action.action_name),
+		["Displace", "Feedback", "Static Charge", "Inversion"],
+	)
+	assert_eq(telepath.shift_action.action_name, "Suppress")
+	assert_eq(telepath.passive.action_name, "Precognition")
 
 
 func test_lab_start_and_result_do_not_mutate_save_or_run_singletons() -> void:
