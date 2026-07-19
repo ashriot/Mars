@@ -125,6 +125,14 @@ class RecordingHero extends HeroCard:
 		current_focus = clampi(current_focus + amount, 0, 10)
 
 
+class FocusRefundHero extends HeroCard:
+	func update_focus_bar(_animate: bool = true) -> void:
+		return
+
+	func _update_conditions_ui() -> void:
+		return
+
+
 class RecordingActionEffect extends ActionEffect:
 	var received_contexts: Array[Dictionary] = []
 	var received_target_sets: Array = []
@@ -846,6 +854,33 @@ func test_execute_action_pays_scaled_focus_once_and_passes_cost_context() -> voi
 	assert_eq(hero.current_focus, 8)
 	assert_eq(capture_effect.received_contexts.size(), 1)
 	assert_eq(capture_effect.received_contexts[0].paid_focus_cost, 2)
+	manager.free()
+	hero.free()
+
+
+func test_free_action_consumes_refund_before_later_paid_action() -> void:
+	var manager := _recording_action_manager()
+	var hero := FocusRefundHero.new()
+	hero.current_stats = ActorStats.new()
+	hero.current_focus = 5
+	var refund := Condition.new()
+	refund.condition_name = "Coordinate"
+	refund.refund_focus_cost_on_spend = true
+	refund.remove_on_triggers = [Trigger.TriggerType.ON_SPENDING_FOCUS]
+	hero.active_conditions = [refund]
+	var free_action := Action.new()
+	free_action.action_name = "Free setup"
+	free_action.focus_cost = 0
+	var paid_action := Action.new()
+	paid_action.action_name = "Later paid action"
+	paid_action.focus_cost = 3
+
+	await manager.execute_action(hero, free_action, [hero], false)
+
+	assert_eq(hero.current_focus, 5)
+	assert_false(hero.active_conditions.has(refund))
+	await manager.execute_action(hero, paid_action, [hero], false)
+	assert_eq(hero.current_focus, 2)
 	manager.free()
 	hero.free()
 

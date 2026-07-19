@@ -72,7 +72,7 @@ func test_off_turn_condition_self_target_resolves_to_condition_owner() -> void:
 	trigger.effects_to_run = [effect]
 	var condition := Condition.new()
 	condition.condition_name = "Off-turn self heal"
-	condition.attacker = hero
+	condition.attacker = enemy
 	condition.triggers = [trigger]
 	hero.active_conditions = [condition]
 
@@ -97,6 +97,20 @@ func test_focus_refund_restores_paid_cost_and_consumes_condition() -> void:
 
 	assert_eq(hero.current_focus, 5)
 	assert_false(hero.active_conditions.has(refund))
+	hero.free()
+
+
+func test_zero_focus_modification_without_action_context_preserves_refund() -> void:
+	var hero := ConditionHeroCard.new()
+	var refund := Condition.new()
+	refund.condition_name = "Coordinate"
+	refund.refund_focus_cost_on_spend = true
+	refund.remove_on_triggers = [Trigger.TriggerType.ON_SPENDING_FOCUS]
+	hero.active_conditions = [refund]
+
+	await hero.modify_focus(0)
+
+	assert_true(hero.active_conditions.has(refund))
 	hero.free()
 
 
@@ -132,6 +146,43 @@ func test_enemy_held_condition_targets_living_allies_of_hero_caster() -> void:
 	await enemy_holder._fire_condition_event(Trigger.TriggerType.ON_TRIGGERED)
 
 	assert_eq(manager.captured_targets, [echo, living_hero])
+	manager.free()
+	hero_area.free()
+	enemy_area.free()
+
+
+func test_non_self_condition_uses_holder_allegiance_when_caster_is_invalid() -> void:
+	var manager := CapturingBattleManager.new()
+	var hero_area := Control.new()
+	var enemy_area := Control.new()
+	var holder := HeroCard.new()
+	var living_hero := HeroCard.new()
+	var enemy := EnemyCard.new()
+	manager.hero_area = hero_area
+	manager.enemy_area = enemy_area
+	manager.current_actor = enemy
+	holder.battle_manager = manager
+	holder.is_defeated = false
+	living_hero.is_defeated = false
+	enemy.is_defeated = false
+	hero_area.add_child(holder)
+	hero_area.add_child(living_hero)
+	enemy_area.add_child(enemy)
+
+	var effect := ActionEffect.new()
+	effect.target_type = Action.TargetType.ALL_ALLIES
+	var trigger := Trigger.new()
+	trigger.trigger_type = Trigger.TriggerType.ON_TRIGGERED
+	trigger.effects_to_run = [effect]
+	var condition := Condition.new()
+	condition.condition_name = "Holder-aligned ally effect"
+	condition.attacker = null
+	condition.triggers = [trigger]
+	holder.active_conditions = [condition]
+
+	await holder._fire_condition_event(Trigger.TriggerType.ON_TRIGGERED)
+
+	assert_eq(manager.captured_targets, [holder, living_hero])
 	manager.free()
 	hero_area.free()
 	enemy_area.free()

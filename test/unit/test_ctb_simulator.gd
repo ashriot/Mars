@@ -67,6 +67,52 @@ class BreachSignalActor extends ActorCard:
 		return
 
 
+class BreachLifecycleActor extends ActorCard:
+	func _start_breach_pulse() -> void:
+		return
+
+	func shake_panel(_intensity: float = 0.5) -> void:
+		return
+
+
+class SuspendingBreachEffect extends ActionEffect:
+	signal released
+
+	var event_log: Array[String]
+
+	func _init(log: Array[String]) -> void:
+		event_log = log
+		target_type = Action.TargetType.SELF
+
+	func execute(
+		_attacker: ActorCard,
+		_parent_targets: Array,
+		_battle_manager: BattleManager,
+		_action: Action = null,
+		_context: Dictionary = {},
+	) -> void:
+		event_log.append("enemy_observer_started")
+		await released
+		event_log.append("enemy_observer_finished")
+
+
+class BreachLogEffect extends ActionEffect:
+	var event_log: Array[String]
+
+	func _init(log: Array[String]) -> void:
+		event_log = log
+		target_type = Action.TargetType.SELF
+
+	func execute(
+		_attacker: ActorCard,
+		_parent_targets: Array,
+		_battle_manager: BattleManager,
+		_action: Action = null,
+		_context: Dictionary = {},
+	) -> void:
+		event_log.append("breached_actor_on_breached")
+
+
 class BreachObserverHero extends HeroCard:
 	var recorded_events: Array[Trigger.TriggerType] = []
 	var recorded_contexts: Array[Dictionary] = []
@@ -161,6 +207,55 @@ func test_enemy_breach_notifies_only_living_opposing_observers() -> void:
 	enemy_ally.free()
 	living_hero.free()
 	defeated_hero.free()
+
+
+func test_breach_awaits_enemy_observer_before_own_breached_event() -> void:
+	var manager := BreachBattleManager.new()
+	var breached_actor := BreachLifecycleActor.new()
+	var observer := HeroCard.new()
+	breached_actor.actor_name = "Awaited breach target"
+	breached_actor.breached_label = Label.new()
+	breached_actor.guard_bar = HBoxContainer.new()
+	breached_actor.battle_manager = manager
+	observer.battle_manager = manager
+	breached_actor.is_defeated = false
+	observer.is_defeated = false
+	manager.actor_list = [breached_actor, observer]
+	var event_log: Array[String] = []
+	var suspending_effect := SuspendingBreachEffect.new(event_log)
+	var observer_trigger := Trigger.new()
+	observer_trigger.trigger_type = Trigger.TriggerType.ON_ENEMY_BREACHED
+	observer_trigger.effects_to_run = [suspending_effect]
+	var observer_condition := Condition.new()
+	observer_condition.condition_name = "Teamwork observer"
+	observer_condition.attacker = observer
+	observer_condition.triggers = [observer_trigger]
+	observer.active_conditions = [observer_condition]
+	var breached_trigger := Trigger.new()
+	breached_trigger.trigger_type = Trigger.TriggerType.ON_BREACHED
+	breached_trigger.effects_to_run = [BreachLogEffect.new(event_log)]
+	var breached_condition := Condition.new()
+	breached_condition.condition_name = "Breach reaction"
+	breached_condition.attacker = breached_actor
+	breached_condition.triggers = [breached_trigger]
+	breached_actor.active_conditions = [breached_condition]
+
+	breached_actor.breach()
+
+	assert_eq(event_log, ["enemy_observer_started"])
+	assert_eq(manager.update_count, 1)
+	suspending_effect.released.emit()
+	await get_tree().process_frame
+	assert_eq(event_log, [
+		"enemy_observer_started",
+		"enemy_observer_finished",
+		"breached_actor_on_breached",
+	])
+	breached_actor.breached_label.free()
+	breached_actor.guard_bar.free()
+	breached_actor.free()
+	observer.free()
+	manager.free()
 
 
 func test_zero_or_negative_speed_uses_one_consistently() -> void:

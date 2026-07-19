@@ -140,14 +140,18 @@ func update_current_role():
 
 func modify_focus(amount: int, context: Dictionary = {}) -> void:
 	var paid_focus_cost := maxi(0, int(context.get("paid_focus_cost", -amount)))
-	var should_refund := amount < 0 and active_conditions.any(
+	var is_zero_cost_action_payment := amount == 0 \
+		and context.has("paid_focus_cost") \
+		and context.has("action")
+	var is_focus_spend := amount < 0 or is_zero_cost_action_payment
+	var should_refund := is_focus_spend and active_conditions.any(
 		func(condition: Condition) -> bool:
 			return condition != null and condition.refund_focus_cost_on_spend
 	)
 	current_focus = clampi(current_focus + amount, 0, 10)
 	update_focus_bar()
 	focus_updated.emit()
-	if amount < 0:
+	if is_focus_spend:
 		var spend_context := context.duplicate(true)
 		spend_context["paid_focus_cost"] = paid_focus_cost
 		await _fire_condition_event(Trigger.TriggerType.ON_SPENDING_FOCUS, spend_context)

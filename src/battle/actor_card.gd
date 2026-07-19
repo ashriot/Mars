@@ -194,6 +194,8 @@ func breach():
 	current_ct = 0
 	print("Breached: ", actor_name, " -> CT: ", current_ct)
 	actor_breached.emit(self)
+	if is_instance_valid(battle_manager):
+		await battle_manager._on_actor_breached(self)
 	_start_breach_pulse()
 	shake_panel(1.0)
 	await _fire_condition_event(Trigger.TriggerType.ON_BREACHED)
