@@ -3,7 +3,7 @@ class_name EndgameBattleLab
 
 @export var encounter: Encounter
 @export var equipment_preset := EndgamePartyFactory.EquipmentPreset.MAX_EQUIPMENT
-@export_range(1, 10, 1) var enemy_level := 10
+@export_range(1, 30, 1) var enemy_level := 30
 @export var encounter_seed := 4242
 @export var auto_start := true
 

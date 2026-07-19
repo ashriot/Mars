@@ -20,7 +20,20 @@ func after_each() -> void:
 	SaveSystem.storage_root_override = _saved_storage_root
 
 
-func test_lab_builds_max_party_and_forwards_rank_ten_fixed_seed() -> void:
+func test_enemy_level_is_editable_from_one_through_thirty_in_inspector() -> void:
+	var lab := LabScene.instantiate() as EndgameBattleLab
+	lab.auto_start = false
+	add_child_autofree(lab)
+	var enemy_level_properties := lab.get_property_list().filter(
+		func(property: Dictionary) -> bool: return property.name == "enemy_level"
+	)
+
+	assert_eq(enemy_level_properties.size(), 1)
+	assert_eq(enemy_level_properties[0].hint, PROPERTY_HINT_RANGE)
+	assert_eq(enemy_level_properties[0].hint_string, "1.0,30.0,1.0")
+
+
+func test_lab_builds_max_party_and_forwards_rank_thirty_fixed_seed() -> void:
 	var lab := LabScene.instantiate() as EndgameBattleLab
 	var authored_enemies := lab.encounter.enemies.duplicate()
 	var authored_levels: Array[int] = []
@@ -47,13 +60,13 @@ func test_lab_builds_max_party_and_forwards_rank_ten_fixed_seed() -> void:
 		assert_eq(hero.hero_data.armor.tier, 5, hero.actor_name)
 		assert_eq(hero.hero_data.armor.rank, 30, hero.actor_name)
 		assert_eq(hero.hero_data.armor.current_xp, 0, hero.actor_name)
-	assert_eq(lab.enemy_level, 10)
+	assert_eq(lab.enemy_level, 30)
 	assert_false(enemies.is_empty())
 	for enemy_index in enemies.size():
 		var enemy := enemies[enemy_index] as EnemyCard
 		var authored_enemy := authored_enemies[enemy_index] as EnemyData
-		assert_eq(enemy.enemy_data.level, 10, enemy.actor_name)
-		assert_eq(enemy.get_node("Panel/Info/Text").text, "Rk. 10", enemy.actor_name)
+		assert_eq(enemy.enemy_data.level, 30, enemy.actor_name)
+		assert_eq(enemy.get_node("Panel/Info/Text").text, "Rk. 30", enemy.actor_name)
 		assert_not_same(enemy.enemy_data, authored_enemy, enemy.actor_name)
 		assert_same(lab.encounter.enemies[enemy_index], authored_enemy, enemy.actor_name)
 		assert_eq(authored_enemy.level, authored_levels[enemy_index], enemy.actor_name)
