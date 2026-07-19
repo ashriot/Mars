@@ -9,6 +9,7 @@
 script = ExtResource("2_80lfp")
 guard_amount = 0
 percent_change = -0.5
+max_abs_change = 5
 metadata/_custom_type_script = "uid://cu12q7dfj3hfe"
 
 [resource]

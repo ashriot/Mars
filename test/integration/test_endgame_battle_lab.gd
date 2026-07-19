@@ -160,9 +160,10 @@ func test_spawned_heroes_retain_complete_benchmark_kits() -> void:
 
 	var asher := _spawned_hero_by_id(lab, "asher")
 	var operative := _loaded_role(asher, "opr")
-	assert_eq(operative.actions.size(), 2)
-	assert_eq(operative.actions[0].action_name, "Coordinate")
-	assert_eq(operative.actions[1].action_name, "Decoy")
+	assert_eq(
+		operative.actions.map(func(action: Action) -> String: return action.action_name),
+		["Coordinate", "Decoy", "Debilitate", "Ensnare"],
+	)
 
 
 func test_lab_start_and_result_do_not_mutate_save_or_run_singletons() -> void:

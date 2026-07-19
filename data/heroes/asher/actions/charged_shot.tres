@@ -16,7 +16,7 @@ metadata/_custom_type_script = "uid://bhblyd70hrd4m"
 
 [sub_resource type="Resource" id="Resource_ol13h"]
 script = ExtResource("2_fkay3")
-condition = 1
+condition = 4
 effects_to_run = Array[ExtResource("1_onicn")]([SubResource("Resource_mu8rt")])
 metadata/_custom_type_script = "uid://bhpiwhufv87v7"
 
@@ -31,7 +31,7 @@ metadata/_custom_type_script = "uid://d0eibi4b735ay"
 script = ExtResource("7_fgaxn")
 action_name = "Charged Shot"
 icon = ExtResource("6_fgaxn")
-description = "{effect:1}[p]If target is BREACHED, gain {foc}{foc}."
+description = "{effect:1}[p]If target is VULNERABLE or BREACHED, gain {foc}{foc}."
 is_shift_action = true
 effects = Array[ExtResource("1_onicn")]([SubResource("Resource_dq0ry")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

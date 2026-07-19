@@ -1,14 +1,23 @@
-[gd_resource type="Resource" script_class="RoleDefinition" load_steps=5 format=3 uid="uid://cq1s08aos0ely"]
+[gd_resource type="Resource" script_class="RoleDefinition" load_steps=11 format=3 uid="uid://cq1s08aos0ely"]
 
 [ext_resource type="Texture2D" uid="uid://m3oty7ssw1by" path="res://assets/graphics/icons/roles/walkie-talkie.png" id="1_67ry2"]
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="1_bhdnr"]
+[ext_resource type="Resource" uid="uid://dwd1ggnmfyj7t" path="res://data/heroes/asher/actions/coordinate.tres" id="2_euh7b"]
+[ext_resource type="Resource" uid="uid://chv4kku7wt1ba" path="res://data/heroes/asher/actions/decoy.tres" id="3_h1bwk"]
 [ext_resource type="Script" uid="uid://sy50n7nerbow" path="res://src/scripts/data/role_definition.gd" id="3_wvcdv"]
+[ext_resource type="Resource" uid="uid://dfq5qhpcwwj84" path="res://data/heroes/asher/actions/debilitate.tres" id="4_o7so5"]
+[ext_resource type="Resource" uid="uid://b5e6n4qa3toew" path="res://data/heroes/asher/actions/ensnare.tres" id="5_1jqxg"]
+[ext_resource type="Resource" uid="uid://batgnqwvq58f5" path="res://data/heroes/asher/actions/dismantle.tres" id="6_st72u"]
+[ext_resource type="Resource" uid="uid://di707l5wx65bn" path="res://data/heroes/asher/actions/teamwork.tres" id="7_ai5cb"]
 
 [resource]
 script = ExtResource("3_wvcdv")
 role_id = "opr"
 role_name = "Operative"
-description = "A team-supporting specialist."
+description = "OPERATIVE[p][i]A tactical support specialist who controls enemy momentum and enables the team."
 icon = ExtResource("1_67ry2")
 color = Color(1.4369954, 0.8005993, 0, 1)
+shift_action = ExtResource("6_st72u")
+passive = ExtResource("7_ai5cb")
+actions = Array[ExtResource("1_bhdnr")]([ExtResource("2_euh7b"), ExtResource("3_h1bwk"), ExtResource("4_o7so5"), ExtResource("5_1jqxg")])
 metadata/_custom_type_script = "uid://sy50n7nerbow"

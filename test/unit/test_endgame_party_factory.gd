@@ -62,9 +62,10 @@ func test_build_overlays_complete_authored_role_kits_and_preserves_json_only_fie
 		func(hero: HeroData) -> bool: return hero.hero_id == "asher"
 	)[0]
 	var operative := asher.battle_roles["opr"] as RoleData
-	assert_eq(operative.actions.size(), 2)
-	assert_eq(operative.actions[0].action_name, "Coordinate")
-	assert_eq(operative.actions[1].action_name, "Decoy")
+	assert_eq(
+		operative.actions.map(func(action: Action) -> String: return action.action_name),
+		["Coordinate", "Decoy", "Debilitate", "Ensnare"],
+	)
 
 
 func test_max_equipment_uses_deep_duplicates_at_tier_five_rank_thirty() -> void:

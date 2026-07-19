@@ -8,7 +8,7 @@
 script = ExtResource("2_bdk2n")
 condition_name = "Coordinate"
 icon = ExtResource("1_sou8n")
-description = "This hero's next action costs half Focus."
-focus_cost_reduction = 0.5
+description = "The Focus cost of this hero's next action is refunded."
+refund_focus_cost_on_spend = true
 remove_on_triggers = Array[int]([3])
 metadata/_custom_type_script = "uid://df30dm288ne1d"

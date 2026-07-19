@@ -12,6 +12,7 @@
 
 [sub_resource type="Resource" id="Resource_jr0tf"]
 script = ExtResource("4_dqadw")
+potency = 1.5
 power_type = 1
 damage_type = 1
 metadata/_custom_type_script = "uid://d0eibi4b735ay"
@@ -36,5 +37,6 @@ script = ExtResource("2_mlk5y")
 action_name = "Ensnare"
 icon = ExtResource("5_vhf85")
 description = "{effect:1}[p]Applies[p][i]Debuff: This enemy is Slowed by 25% until it gains {grd}."
+focus_cost = 2
 effects = Array[ExtResource("1_2wo0n")]([SubResource("Resource_jr0tf"), SubResource("Resource_wubkr")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

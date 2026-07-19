@@ -267,6 +267,55 @@ func test_role_definition_references_authoritative_json_role_id() -> void:
 	role.role_id = "gun"
 	assert_eq(role.role_id, "gun")
 
+
+func test_asher_operative_role_exposes_complete_gdd_kit() -> void:
+	var role := load("res://data/heroes/asher/roles/opr.tres") as RoleDefinition
+	assert_not_null(role)
+	assert_eq(role.role_id, "opr")
+	assert_eq(
+		role.description,
+		"OPERATIVE[p][i]A tactical support specialist who controls enemy momentum and enables the team.",
+	)
+	var action_paths: Array[String] = []
+	for action: Action in role.actions:
+		action_paths.append(action.resource_path)
+	assert_eq(action_paths, [
+		"res://data/heroes/asher/actions/coordinate.tres",
+		"res://data/heroes/asher/actions/decoy.tres",
+		"res://data/heroes/asher/actions/debilitate.tres",
+		"res://data/heroes/asher/actions/ensnare.tres",
+	])
+	assert_not_null(role.shift_action)
+	if role.shift_action != null:
+		assert_eq(
+			role.shift_action.resource_path,
+			"res://data/heroes/asher/actions/dismantle.tres",
+		)
+	assert_not_null(role.passive)
+	if role.passive != null:
+		assert_eq(
+			role.passive.resource_path,
+			"res://data/heroes/asher/actions/teamwork.tres",
+		)
+
+
+func test_asher_teamwork_rewards_living_team_on_enemy_breach_until_shift() -> void:
+	var teamwork := load("res://data/heroes/asher/actions/teamwork.tres") as Action
+	assert_eq(teamwork.effects.size(), 1)
+	var apply_effect := teamwork.effects[0] as Effect_ApplyCondition
+	assert_eq(apply_effect.target_type, Action.TargetType.SELF)
+	var passive := apply_effect.condition
+	assert_true(passive.is_passive)
+	assert_eq(passive.remove_on_triggers, [Trigger.TriggerType.ON_SHIFT])
+	assert_eq(passive.triggers.size(), 1)
+	var breach_trigger := passive.triggers[0]
+	assert_eq(breach_trigger.trigger_type, Trigger.TriggerType.ON_ENEMY_BREACHED)
+	assert_eq(breach_trigger.effects_to_run.size(), 1)
+	var focus_effect := breach_trigger.effects_to_run[0] as Effect_ModifyFocus
+	assert_eq(focus_effect.focus_amount, 1)
+	assert_eq(focus_effect.target_type, Action.TargetType.ALL_ALLIES)
+	assert_string_contains(teamwork.description.to_lower(), "enemy is breached")
+
 func test_progression_system_publishes_complete_catalog_and_service() -> void:
 	var system := get_node_or_null("/root/ProgressionSystem")
 	assert_not_null(system)

@@ -9,7 +9,7 @@
 
 [sub_resource type="Resource" id="Resource_f8mlp"]
 script = ExtResource("4_k0ur6")
-potency = 0.5
+potency = 0.75
 hit_count = 3
 damage_type = 1
 lifedrain_scalar = 0.5

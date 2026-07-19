@@ -31,6 +31,19 @@ const SUPPORTED_DAMAGE_SCALING_RULE_SCRIPTS: Array[String] = [
 	"res://src/battle/damage/damage_scaling_flat_per_resource.gd",
 	"res://src/battle/damage/damage_scaling_base_per_resource.gd",
 ]
+const ASHER_GDD := {
+	"fusion_ammo": {"cost": 1, "ct": 75, "extra_potency": 0.5, "outgoing": 0.0},
+	"siphon_shots": {"cost": 3, "potency": 0.75, "hits": 3, "lifedrain": 0.5},
+	"charged_shot": {"focus_if_vulnerable_or_breached": 2},
+	"mark_target": {"ct": 50},
+	"aimed_shot": {"potency": 2.0},
+	"concussive_shot": {"potency": 5.5},
+	"dismantle": {"percent_guard": -0.5, "cap": 5},
+	"coordinate": {"refund_focus_cost_on_spend": true},
+	"decoy": {"cost": 1, "guard": 1, "untargetable": true},
+	"debilitate": {"cost": 2, "outgoing": -0.35},
+	"ensnare": {"cost": 2, "potency": 1.5, "speed": -0.25},
+}
 const APPROVED_DESCRIPTION_FORMULAS: Dictionary = {
 	"res://data/enemies/actions/shrapnel.tres": ["{atk*1.0}"],
 	"res://data/enemies/conditions/bleed.tres": ["{atk*1.0}"],
@@ -90,7 +103,7 @@ const NESTED_COMPATIBILITY_CASES: Array[Dictionary] = [
 		"trigger_type": Trigger.TriggerType.AFTER_ATTACKING,
 		"remove_on_triggers": [Trigger.TriggerType.ON_BREACHED, Trigger.TriggerType.ON_SHIFT],
 		"required_action_prose": [
-			"boosts asher's next turn by 15%",
+			"boosts asher's next turn by 25%",
 			"gains buff",
 			"attacks land an extra",
 			"lasts until asher shifts or is breached",
@@ -699,6 +712,132 @@ func test_charged_shot_remains_one_hundred_fifty_percent_attack() -> void:
 	assert_eq(effect.power_type, Action.PowerType.ATTACK)
 	assert_string_contains(action.description, "{effect:1}")
 	assert_false("{atk*1.25}" in action.description)
+
+
+func test_asher_gunner_actions_match_gdd() -> void:
+	var fusion := load("res://data/heroes/asher/actions/fusion_ammo.tres") as Action
+	var fusion_condition := load(
+		"res://data/heroes/asher/conditions/fusion_ammo.tres"
+	) as Condition
+	var extra_hit := fusion_condition.triggers[0].effects_to_run[0] as Effect_Damage
+	assert_eq(fusion.focus_cost, ASHER_GDD.fusion_ammo.cost)
+	assert_eq(fusion.ct_cost_percent, ASHER_GDD.fusion_ammo.ct)
+	assert_almost_eq(
+		extra_hit.potency, ASHER_GDD.fusion_ammo.extra_potency, 0.0001,
+	)
+	assert_eq(extra_hit.power_type, Action.PowerType.PSYCHE)
+	assert_eq(extra_hit.damage_type, Action.DamageType.ENERGY)
+	assert_eq(fusion_condition.damage_dealt_scalar, ASHER_GDD.fusion_ammo.outgoing)
+	assert_eq(
+		fusion_condition.remove_on_triggers,
+		[Trigger.TriggerType.ON_BREACHED, Trigger.TriggerType.ON_SHIFT],
+	)
+	assert_string_contains(fusion.description, "Boosts Asher's next turn by 25%")
+
+	var siphon := load("res://data/heroes/asher/actions/siphon_shots.tres") as Action
+	var siphon_damage := siphon.effects[0] as Effect_Damage
+	assert_eq(siphon.focus_cost, ASHER_GDD.siphon_shots.cost)
+	assert_almost_eq(siphon_damage.potency, ASHER_GDD.siphon_shots.potency, 0.0001)
+	assert_eq(siphon_damage.hit_count, ASHER_GDD.siphon_shots.hits)
+	assert_almost_eq(
+		siphon_damage.lifedrain_scalar, ASHER_GDD.siphon_shots.lifedrain, 0.0001,
+	)
+
+
+func test_asher_sniper_actions_match_gdd() -> void:
+	var charged := load("res://data/heroes/asher/actions/charged_shot.tres") as Action
+	var charged_damage := charged.effects[0] as Effect_Damage
+	assert_eq(charged_damage.on_hit_triggers.size(), 1)
+	var focus_trigger := charged_damage.on_hit_triggers[0]
+	assert_eq(
+		focus_trigger.condition,
+		HitTrigger.HitCondition.IF_TARGET_IS_VULNERABLE_OR_BREACHED,
+	)
+	assert_eq(focus_trigger.effects_to_run.size(), 1)
+	var focus_effect := focus_trigger.effects_to_run[0] as Effect_ModifyFocus
+	assert_eq(
+		focus_effect.focus_amount,
+		ASHER_GDD.charged_shot.focus_if_vulnerable_or_breached,
+	)
+	assert_eq(focus_effect.target_type, Action.TargetType.SELF)
+	assert_string_contains(charged.description, "VULNERABLE or BREACHED")
+
+	var mark := load("res://data/heroes/asher/actions/mark_target.tres") as Action
+	assert_eq(mark.ct_cost_percent, ASHER_GDD.mark_target.ct)
+	assert_string_contains(mark.description, "Boosts Asher's next turn by 50%")
+
+	var aimed := load("res://data/heroes/asher/actions/aimed_shot.tres") as Action
+	var aimed_damage := aimed.effects[0] as Effect_Damage
+	assert_almost_eq(aimed_damage.potency, ASHER_GDD.aimed_shot.potency, 0.0001)
+
+	var concussive := load(
+		"res://data/heroes/asher/actions/concussive_shot.tres"
+	) as Action
+	var concussive_damage := concussive.effects[0] as Effect_Damage
+	assert_almost_eq(
+		concussive_damage.potency, ASHER_GDD.concussive_shot.potency, 0.0001,
+	)
+
+
+func test_asher_operative_actions_match_gdd() -> void:
+	var dismantle := load("res://data/heroes/asher/actions/dismantle.tres") as Action
+	var guard_effect := dismantle.effects[0] as Effect_ModifyGuard
+	assert_almost_eq(
+		guard_effect.percent_change, ASHER_GDD.dismantle.percent_guard, 0.0001,
+	)
+	assert_eq(guard_effect.max_abs_change, ASHER_GDD.dismantle.cap)
+
+	var coordinate := load("res://data/heroes/asher/actions/coordinate.tres") as Action
+	var coordinate_apply := coordinate.effects[0] as Effect_ApplyCondition
+	assert_eq(
+		coordinate_apply.condition.refund_focus_cost_on_spend,
+		ASHER_GDD.coordinate.refund_focus_cost_on_spend,
+	)
+	assert_eq(coordinate_apply.condition.focus_cost_reduction, 0.0)
+	assert_eq(
+		coordinate_apply.condition.remove_on_triggers,
+		[Trigger.TriggerType.ON_SPENDING_FOCUS],
+	)
+	assert_string_contains(coordinate.description.to_lower(), "cost is refunded")
+
+	var decoy := load("res://data/heroes/asher/actions/decoy.tres") as Action
+	assert_eq(decoy.focus_cost, ASHER_GDD.decoy.cost)
+	assert_eq(decoy.effects.size(), 2)
+	var decoy_guard := decoy.effects[0] as Effect_ModifyGuard
+	var decoy_apply := decoy.effects[1] as Effect_ApplyCondition
+	assert_eq(decoy_guard.guard_amount, ASHER_GDD.decoy.guard)
+	assert_eq(decoy_apply.condition.is_untargetable, ASHER_GDD.decoy.untargetable)
+	assert_eq(
+		decoy_apply.condition.remove_on_triggers,
+		[Trigger.TriggerType.ON_TURN_START],
+	)
+	assert_false(decoy.effects.any(func(effect): return effect is Effect_RemoveCondition))
+
+	var debilitate := load("res://data/heroes/asher/actions/debilitate.tres") as Action
+	var debilitate_apply := debilitate.effects[0] as Effect_ApplyCondition
+	assert_eq(debilitate.focus_cost, ASHER_GDD.debilitate.cost)
+	assert_almost_eq(
+		debilitate_apply.condition.damage_dealt_scalar,
+		ASHER_GDD.debilitate.outgoing,
+		0.0001,
+	)
+	assert_eq(
+		debilitate_apply.condition.remove_on_triggers,
+		[Trigger.TriggerType.AFTER_ATTACKING],
+	)
+
+	var ensnare := load("res://data/heroes/asher/actions/ensnare.tres") as Action
+	var ensnare_damage := ensnare.effects[0] as Effect_Damage
+	var ensnare_apply := ensnare.effects[1] as Effect_ApplyCondition
+	assert_eq(ensnare.focus_cost, ASHER_GDD.ensnare.cost)
+	assert_almost_eq(ensnare_damage.potency, ASHER_GDD.ensnare.potency, 0.0001)
+	assert_almost_eq(
+		ensnare_apply.condition.speed_scalar, ASHER_GDD.ensnare.speed, 0.0001,
+	)
+	assert_eq(
+		ensnare_apply.condition.remove_on_triggers,
+		[Trigger.TriggerType.ON_GAINING_GUARD],
+	)
 
 
 func test_booster_shots_executes_and_presents_three_fifty_percent_hits() -> void:

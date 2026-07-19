@@ -3,8 +3,8 @@ extends GutTest
 const BATTLE_SCENE := preload("res://src/battle/battle_scene.tscn")
 const MIGRATED := {
 	"res://data/enemies/actions/brace.tres": 75,
-	"res://data/heroes/asher/actions/fusion_ammo.tres": 85,
-	"res://data/heroes/asher/actions/mark_target.tres": 25,
+	"res://data/heroes/asher/actions/fusion_ammo.tres": 75,
+	"res://data/heroes/asher/actions/mark_target.tres": 50,
 	"res://data/heroes/asher/actions/targeting_laser.tres": 75,
 	"res://data/heroes/echo/actions/energize.tres": 50,
 }
