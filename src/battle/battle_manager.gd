@@ -688,6 +688,7 @@ func _on_actor_armor_changed(_current_guard: int) -> void:
 
 func _on_actor_conditions_changed() -> void:
 	_revalidate_all_enemy_intent_targets()
+	_refresh_all_enemy_intent_presentations()
 	_publish_turn_order(TurnOrderUpdate.REFRESH)
 
 func _on_action_button_pressed(button: ActionButton):

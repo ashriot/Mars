@@ -9,6 +9,7 @@ class QuietHero extends HeroCard:
 class QuietEnemy extends EnemyCard:
 	var intent_decision_count := 0
 	var intent_flash_count := 0
+	var intent_presentation_refresh_count := 0
 
 	func decide_intent(context: EnemyAIContext) -> void:
 		intent_decision_count += 1
@@ -16,6 +17,10 @@ class QuietEnemy extends EnemyCard:
 
 	func _update_intent_ui() -> void:
 		return
+
+	func refresh_intent_presentation() -> void:
+		intent_presentation_refresh_count += 1
+		super.refresh_intent_presentation()
 
 	func flash_intent(_duration: float = 0.3) -> void:
 		intent_flash_count += 1
@@ -180,6 +185,25 @@ func test_ordinary_condition_does_not_change_locked_targets() -> void:
 	assert_eq(fixture.enemy.intended_action, locked_action)
 	assert_eq(fixture.enemy.intended_targets, locked_targets)
 	assert_eq(fixture.enemy.intent_decision_count, 1)
+	assert_eq(fixture.enemy.intent_flash_count, 1)
+	_free_fixture(fixture)
+
+
+func test_debilitate_refreshes_locked_intent_presentation_without_replanning() -> void:
+	var fixture := _fixture()
+	_connect_actor_refresh_signals(fixture)
+	fixture.enemy.initialize_ai(77)
+	fixture.manager._update_all_enemy_intents()
+	var locked_action: Action = fixture.enemy.intended_action
+	var debilitate_action := load(
+		"res://data/heroes/asher/actions/debilitate.tres"
+	) as Action
+	var apply_effect := debilitate_action.effects[0] as Effect_ApplyCondition
+	fixture.enemy.active_conditions.append(apply_effect.condition.duplicate(true))
+	fixture.enemy.actor_conditions_changed.emit()
+	assert_eq(fixture.enemy.intended_action, locked_action)
+	assert_eq(fixture.enemy.intent_decision_count, 1)
+	assert_eq(fixture.enemy.intent_presentation_refresh_count, 1)
 	assert_eq(fixture.enemy.intent_flash_count, 1)
 	_free_fixture(fixture)
 

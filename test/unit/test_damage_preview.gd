@@ -850,6 +850,26 @@ func test_enemy_intent_without_valid_target_uses_authored_relationship() -> void
 	_free_intent_enemy(enemy, [])
 
 
+func test_debilitate_reduces_enemy_intent_damage_by_thirty_five_percent() -> void:
+	var enemy := _intent_enemy(100)
+	var target := _intent_hero_target(0)
+	enemy.intended_action = _intent_action()
+	enemy.intended_targets = [target]
+	enemy._update_intent_ui()
+	assert_string_contains(enemy.intent_text.text, "100")
+
+	var debilitate_action := load(
+		"res://data/heroes/asher/actions/debilitate.tres"
+	) as Action
+	var apply_effect := debilitate_action.effects[0] as Effect_ApplyCondition
+	enemy.active_conditions = [apply_effect.condition.duplicate(true)]
+	enemy.refresh_intent_presentation()
+
+	assert_string_contains(enemy.intent_text.text, "65")
+	assert_false(enemy.intent_text.text.contains("100"))
+	_free_intent_enemy(enemy, [target])
+
+
 func _intent_enemy(attack: int) -> IntentEnemy:
 	var enemy := IntentEnemy.new()
 	enemy.current_stats = _stats(attack, 0, 0, 0, 0)
