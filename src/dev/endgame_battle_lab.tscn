@@ -13,6 +13,8 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_lab")
 encounter = ExtResource("2_encounter")
+enemy_level = 25
+enemy_hp_multiplier = 5.0
 
 [node name="BattleScene" parent="." unique_id=188001462 instance=ExtResource("3_battle")]
 layout_mode = 1

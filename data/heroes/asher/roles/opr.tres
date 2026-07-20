@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="RoleDefinition" load_steps=11 format=3 uid="uid://cq1s08aos0ely"]
+[gd_resource type="Resource" script_class="RoleDefinition" format=3 uid="uid://cq1s08aos0ely"]
 
 [ext_resource type="Texture2D" uid="uid://m3oty7ssw1by" path="res://assets/graphics/icons/roles/walkie-talkie.png" id="1_67ry2"]
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="1_bhdnr"]

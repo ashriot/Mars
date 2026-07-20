@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://src/scripts/conditions/hit_trigger.gd" id="2_wbfou"]
 [ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://src/scripts/action_effects/pre_hit_trigger.gd" id="3_u3noq"]
 [ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://src/scripts/action_effects/effect_damage.gd" id="4_pd2qv"]
+[ext_resource type="Script" uid="uid://3thmtafynus7" path="res://src/battle/damage/damage_scaling_rule.gd" id="4_u3noq"]
 [ext_resource type="Texture2D" uid="uid://qnhf4vf5lstd" path="res://assets/graphics/icons/skills/brainstorm.png" id="5_6lf2u"]
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="6_6lf2u"]
 [ext_resource type="Script" uid="uid://6fjml6je413t" path="res://src/battle/damage/damage_scaling_base_per_resource.gd" id="7_scaling"]
@@ -16,7 +17,7 @@ base_scalar_per_point = 0.2
 script = ExtResource("4_pd2qv")
 potency = 5.0
 damage_type = 1
-scaling_rules = Array[ExtResource("7_scaling")]([SubResource("DamageScalingBasePerResource_mind_storm")])
+scaling_rules = Array[ExtResource("4_u3noq")]([SubResource("DamageScalingBasePerResource_mind_storm")])
 metadata/_custom_type_script = "uid://d0eibi4b735ay"
 
 [resource]

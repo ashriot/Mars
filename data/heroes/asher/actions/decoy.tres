@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Action" load_steps=11 format=3 uid="uid://chv4kku7wt1ba"]
+[gd_resource type="Resource" script_class="Action" format=3 uid="uid://chv4kku7wt1ba"]
 
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_uexaj"]
 [ext_resource type="Script" uid="uid://cu12q7dfj3hfe" path="res://src/scripts/action_effects/effect_modify_guard.gd" id="2_e1b4x"]
@@ -10,7 +10,6 @@
 
 [sub_resource type="Resource" id="Resource_xpijy"]
 script = ExtResource("2_e1b4x")
-guard_amount = 1
 metadata/_custom_type_script = "uid://cu12q7dfj3hfe"
 
 [sub_resource type="Resource" id="Resource_mmmdw"]

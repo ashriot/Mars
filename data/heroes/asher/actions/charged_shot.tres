@@ -5,6 +5,7 @@
 [ext_resource type="Script" uid="uid://bhblyd70hrd4m" path="res://src/scripts/action_effects/effect_modify_focus.gd" id="3_fgaxn"]
 [ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://src/scripts/action_effects/pre_hit_trigger.gd" id="4_fkay3"]
 [ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://src/scripts/action_effects/effect_damage.gd" id="4_rvc4x"]
+[ext_resource type="Script" uid="uid://3thmtafynus7" path="res://src/battle/damage/damage_scaling_rule.gd" id="5_rvc4x"]
 [ext_resource type="Texture2D" uid="uid://crqjk4tu5bvlv" path="res://assets/graphics/icons/skills/charged_bullet.png" id="6_fgaxn"]
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="7_fgaxn"]
 

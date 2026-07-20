@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Action" load_steps=9 format=3 uid="uid://dfq5qhpcwwj84"]
+[gd_resource type="Resource" script_class="Action" format=3 uid="uid://dfq5qhpcwwj84"]
 
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_8fe1i"]
 [ext_resource type="Texture2D" uid="uid://qrcub5ebfirt" path="res://assets/graphics/icons/skills/shattered-sword.png" id="2_q3ibm"]

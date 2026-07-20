@@ -1,12 +1,12 @@
 [gd_resource type="Resource" script_class="Action" format=3 uid="uid://byyt4melj2rdo"]
 
-[ext_resource type="Script" path="res://src/scripts/action_effects/action_effect.gd" id="1_effect"]
-[ext_resource type="Script" path="res://src/scripts/data/action.gd" id="2_action"]
-[ext_resource type="Texture2D" path="res://assets/graphics/icons/skills/eye-shield.png" id="3_icon"]
-[ext_resource type="Script" path="res://src/scripts/action_effects/effect_modify_guard.gd" id="4_guard"]
-[ext_resource type="Script" path="res://src/scripts/conditions/condition.gd" id="5_condition"]
-[ext_resource type="Script" path="res://src/scripts/conditions/trigger.gd" id="6_trigger"]
-[ext_resource type="Script" path="res://src/scripts/action_effects/effect_apply_condition.gd" id="7_apply"]
+[ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_effect"]
+[ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="2_action"]
+[ext_resource type="Texture2D" uid="uid://dvqx1d2rn34mk" path="res://assets/graphics/icons/skills/eye-shield.png" id="3_icon"]
+[ext_resource type="Script" uid="uid://cu12q7dfj3hfe" path="res://src/scripts/action_effects/effect_modify_guard.gd" id="4_guard"]
+[ext_resource type="Script" uid="uid://df30dm288ne1d" path="res://src/scripts/conditions/condition.gd" id="5_condition"]
+[ext_resource type="Script" uid="uid://cdugd6pnm6py" path="res://src/scripts/conditions/trigger.gd" id="6_trigger"]
+[ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://src/scripts/action_effects/effect_apply_condition.gd" id="7_apply"]
 
 [sub_resource type="Resource" id="Resource_precognition_guard"]
 script = ExtResource("4_guard")

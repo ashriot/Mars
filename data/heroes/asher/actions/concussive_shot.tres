@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://dgkss5d1axeag" path="res://src/scripts/action_effects/effect_modify_ct.gd" id="3_de6ka"]
 [ext_resource type="Script" uid="uid://ddjg3oka0dtvg" path="res://src/scripts/action_effects/effect_remove_condition.gd" id="4_fikqr"]
 [ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://src/scripts/action_effects/effect_damage.gd" id="6_8mldl"]
+[ext_resource type="Script" uid="uid://3thmtafynus7" path="res://src/battle/damage/damage_scaling_rule.gd" id="6_fx74d"]
 [ext_resource type="Texture2D" uid="uid://bjk3g1bg46bfp" path="res://assets/graphics/icons/skills/falling-ovoid.png" id="7_fikqr"]
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="8_fikqr"]
 

@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://bhpiwhufv87v7" path="res://src/scripts/conditions/hit_trigger.gd" id="2_yn1td"]
 [ext_resource type="Script" uid="uid://d0eibi4b735ay" path="res://src/scripts/action_effects/effect_damage.gd" id="3_284pn"]
 [ext_resource type="Script" uid="uid://b6li2ehks8bfj" path="res://src/scripts/action_effects/pre_hit_trigger.gd" id="3_yn1td"]
+[ext_resource type="Script" uid="uid://3thmtafynus7" path="res://src/battle/damage/damage_scaling_rule.gd" id="4_d62fs"]
 [ext_resource type="Texture2D" uid="uid://cfhv6q8svang4" path="res://assets/graphics/icons/skills/hypersonic-bolt.png" id="4_vj4n2"]
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="6_yn1td"]
 [ext_resource type="Script" uid="uid://uws7ovlmxsj1" path="res://src/battle/damage/damage_scaling_flat_per_resource.gd" id="7_scaling"]
@@ -16,7 +17,7 @@ potency_per_point = 0.25
 script = ExtResource("3_284pn")
 potency = 0.0
 damage_type = 1
-scaling_rules = Array[ExtResource("7_scaling")]([SubResource("DamageScalingFlatPerResource_focused_bolt")])
+scaling_rules = Array[ExtResource("4_d62fs")]([SubResource("DamageScalingFlatPerResource_focused_bolt")])
 metadata/_custom_type_script = "uid://d0eibi4b735ay"
 
 [resource]
