@@ -46,10 +46,10 @@ func test_enemy_hp_multiplier_is_editable_from_one_through_twenty_in_inspector()
 		return
 	assert_eq(hp_multiplier_properties[0].hint, PROPERTY_HINT_RANGE)
 	assert_eq(hp_multiplier_properties[0].hint_string, "1.0,20.0,0.25")
-	assert_eq(lab.get("enemy_hp_multiplier"), 10.0)
+	assert_eq(lab.get("enemy_hp_multiplier"), 5.0)
 
 
-func test_lab_builds_max_party_and_forwards_rank_twenty_fixed_seed() -> void:
+func test_lab_builds_max_party_and_forwards_rank_twenty_five_fixed_seed() -> void:
 	var lab := LabScene.instantiate() as EndgameBattleLab
 	var authored_enemies := lab.encounter.enemies.duplicate()
 	var authored_levels: Array[int] = []
@@ -84,15 +84,15 @@ func test_lab_builds_max_party_and_forwards_rank_twenty_fixed_seed() -> void:
 		assert_eq(hero.hero_data.armor.tier, 5, hero.actor_name)
 		assert_eq(hero.hero_data.armor.rank, 30, hero.actor_name)
 		assert_eq(hero.hero_data.armor.current_xp, 0, hero.actor_name)
-	assert_eq(lab.enemy_level, 20)
+	assert_eq(lab.enemy_level, 25)
 	assert_false(enemies.is_empty())
 	for enemy_index in enemies.size():
 		var enemy := enemies[enemy_index] as EnemyCard
 		var authored_enemy := authored_enemies[enemy_index] as EnemyData
 		var unscaled_stats := _enemy_stats_at_level(authored_enemy, lab.enemy_level)
 		var expected_hp := roundi(unscaled_stats.max_hp * lab.enemy_hp_multiplier)
-		assert_eq(enemy.enemy_data.level, 20, enemy.actor_name)
-		assert_eq(enemy.get_node("Panel/Info/Text").text, "Rk. 20", enemy.actor_name)
+		assert_eq(enemy.enemy_data.level, 25, enemy.actor_name)
+		assert_eq(enemy.get_node("Panel/Info/Text").text, "Rk. 25", enemy.actor_name)
 		assert_eq(enemy.current_stats.max_hp, expected_hp, enemy.actor_name)
 		assert_eq(enemy.current_hp, expected_hp, enemy.actor_name)
 		assert_eq(enemy.current_stats.attack, unscaled_stats.attack, enemy.actor_name)
