@@ -112,6 +112,10 @@ func revalidate_intent_targets(context: EnemyAIContext) -> bool:
 	_update_intent_ui()
 	return true
 
+
+func refresh_intent_presentation() -> void:
+	_update_intent_ui()
+
 func _update_intent_ui():
 	if not intended_action:
 		intent_text.text = ""
@@ -174,7 +178,7 @@ func _update_intent_ui():
 		var final_text = intended_action.action_name
 		if intended_targets.size() > 1:
 			final_text += " EVERYONE"
-		else:
+		elif intended_targets.size() == 1:
 			if intended_targets[0].actor_name != actor_name:
 				final_text += " " + intended_targets[0].actor_name
 

@@ -50,7 +50,7 @@ func test_refresh_changes_reactive_intent_without_ticking_cooldowns() -> void:
 	_free_fixture(fixture)
 
 
-func test_focus_signal_refreshes_reactive_intent_automatically() -> void:
+func test_focus_signal_preserves_locked_intent() -> void:
 	var fixture := _fixture()
 	_connect_actor_refresh_signals(fixture)
 	fixture.enemy.initialize_ai(77)
@@ -58,12 +58,12 @@ func test_focus_signal_refreshes_reactive_intent_automatically() -> void:
 	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"basic")
 	fixture.echo.current_focus = 6
 	fixture.echo.focus_updated.emit()
-	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"focus_attack")
-	assert_eq(fixture.enemy.intent_decision_count, 2)
+	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"basic")
+	assert_eq(fixture.enemy.intent_decision_count, 1)
 	_free_fixture(fixture)
 
 
-func test_hp_signal_refreshes_reactive_intent_automatically() -> void:
+func test_hp_signal_preserves_locked_intent() -> void:
 	var fixture := _fixture()
 	fixture.enemy.enemy_data.abilities.append(_ability(
 		&"repair", 2, 200, EnemyDecisionCondition.Type.SELF_HP_AT_MOST,
@@ -75,12 +75,12 @@ func test_hp_signal_refreshes_reactive_intent_automatically() -> void:
 	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"basic")
 	fixture.enemy.current_hp = 40
 	fixture.enemy.hp_changed.emit(40, 100)
-	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"repair")
-	assert_eq(fixture.enemy.intent_decision_count, 2)
+	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"basic")
+	assert_eq(fixture.enemy.intent_decision_count, 1)
 	_free_fixture(fixture)
 
 
-func test_guard_signal_refreshes_reactive_intent_automatically() -> void:
+func test_guard_signal_preserves_locked_intent() -> void:
 	var fixture := _fixture()
 	fixture.enemy.enemy_data.abilities.append(_ability(
 		&"guard_attack", 2, 200, EnemyDecisionCondition.Type.ANY_HERO_GUARD_AT_LEAST,
@@ -92,12 +92,12 @@ func test_guard_signal_refreshes_reactive_intent_automatically() -> void:
 	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"basic")
 	fixture.echo.current_guard = 8
 	fixture.echo.armor_changed.emit(8)
-	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"guard_attack")
-	assert_eq(fixture.enemy.intent_decision_count, 2)
+	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"basic")
+	assert_eq(fixture.enemy.intent_decision_count, 1)
 	_free_fixture(fixture)
 
 
-func test_turn_order_refresh_replans_ct_dependent_intent() -> void:
+func test_turn_order_refresh_preserves_locked_intent() -> void:
 	var fixture := _fixture()
 	fixture.enemy.enemy_data.abilities.append(_ability(
 		&"imminent", 2, 200, EnemyDecisionCondition.Type.HERO_TURN_WITHIN,
@@ -108,8 +108,8 @@ func test_turn_order_refresh_replans_ct_dependent_intent() -> void:
 	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"basic")
 	fixture.echo.current_ct = 3950
 	fixture.manager.update_turn_order()
-	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"imminent")
-	assert_eq(fixture.enemy.intent_decision_count, 2)
+	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"basic")
+	assert_eq(fixture.enemy.intent_decision_count, 1)
 	_free_fixture(fixture)
 
 
@@ -198,15 +198,17 @@ func test_completed_turn_sets_only_used_cooldown_and_plans_next_intent() -> void
 func test_breached_enemy_intends_recovery_and_ticks_a_recovery_turn() -> void:
 	var fixture := _fixture()
 	fixture.enemy.initialize_ai(77)
-	fixture.enemy.is_breached = true
 	fixture.manager._update_all_enemy_intents()
+	fixture.enemy.is_breached = true
+	await fixture.manager._on_actor_breached(fixture.enemy)
 	assert_true(fixture.enemy.intended_decision.is_recovery)
+	assert_eq(fixture.enemy.intent_decision_count, 2)
 	fixture.enemy.complete_ai_turn()
 	assert_eq(fixture.enemy.ai_state.completed_turns, 1)
 	_free_fixture(fixture)
 
 
-func test_execution_reselects_once_when_cached_target_is_invalid() -> void:
+func test_execution_retargets_cached_action_when_target_is_invalid() -> void:
 	var fixture := _fixture()
 	fixture.enemy.initialize_ai(77)
 	fixture.echo.current_focus = 6
@@ -214,15 +216,15 @@ func test_execution_reselects_once_when_cached_target_is_invalid() -> void:
 	var stale_action: Action = fixture.enemy.intended_action
 	fixture.echo.is_defeated = true
 	await fixture.manager.execute_enemy_turn(fixture.enemy)
-	assert_eq(fixture.enemy.intent_decision_count, 2)
-	assert_ne(fixture.manager.executed_action, stale_action)
+	assert_eq(fixture.enemy.intent_decision_count, 1)
+	assert_eq(fixture.manager.executed_action, stale_action)
 	assert_eq(fixture.manager.executed_targets, [fixture.sands])
 	assert_eq(fixture.enemy.ai_state.completed_turns, 1)
-	assert_eq(fixture.enemy.ai_state.remaining(&"focus_attack"), 0)
+	assert_eq(fixture.enemy.ai_state.remaining(&"focus_attack"), 3)
 	_free_fixture(fixture)
 
 
-func test_execution_reselects_once_when_cached_rule_no_longer_matches() -> void:
+func test_execution_keeps_cached_action_when_trigger_no_longer_matches() -> void:
 	var fixture := _fixture()
 	fixture.enemy.initialize_ai(77)
 	fixture.echo.current_focus = 6
@@ -230,27 +232,28 @@ func test_execution_reselects_once_when_cached_rule_no_longer_matches() -> void:
 	var stale_action: Action = fixture.enemy.intended_action
 	fixture.echo.current_focus = 0
 	await fixture.manager.execute_enemy_turn(fixture.enemy)
-	assert_eq(fixture.enemy.intent_decision_count, 2)
-	assert_ne(fixture.manager.executed_action, stale_action)
-	assert_eq(fixture.enemy.ai_state.remaining(&"focus_attack"), 0)
+	assert_eq(fixture.enemy.intent_decision_count, 1)
+	assert_eq(fixture.manager.executed_action, stale_action)
+	assert_eq(fixture.enemy.ai_state.remaining(&"focus_attack"), 3)
 	_free_fixture(fixture)
 
 
-func test_execution_reselects_once_when_cached_ability_is_on_cooldown() -> void:
+func test_execution_skips_locked_ability_that_became_unavailable() -> void:
 	var fixture := _fixture()
 	fixture.enemy.initialize_ai(77)
 	fixture.echo.current_focus = 6
 	fixture.manager._update_all_enemy_intents()
-	var stale_action: Action = fixture.enemy.intended_action
 	fixture.enemy.complete_ai_turn(&"focus_attack")
 	await fixture.manager.execute_enemy_turn(fixture.enemy)
-	assert_eq(fixture.enemy.intent_decision_count, 2)
-	assert_ne(fixture.manager.executed_action, stale_action)
+	assert_eq(fixture.enemy.intent_decision_count, 1)
+	assert_null(fixture.manager.executed_action)
+	assert_null(fixture.enemy.intended_action)
 	assert_eq(fixture.enemy.ai_state.remaining(&"focus_attack"), 2)
+	assert_push_error("no executable locked intent")
 	_free_fixture(fixture)
 
 
-func test_execution_fails_safely_when_reselection_is_still_invalid() -> void:
+func test_execution_fails_safely_when_locked_action_has_no_legal_target() -> void:
 	var fixture := _fixture()
 	fixture.enemy.initialize_ai(77)
 	fixture.echo.current_focus = 6
@@ -258,12 +261,11 @@ func test_execution_fails_safely_when_reselection_is_still_invalid() -> void:
 	fixture.sands.is_defeated = true
 	fixture.echo.is_defeated = true
 	await fixture.manager.execute_enemy_turn(fixture.enemy)
-	assert_eq(fixture.enemy.intent_decision_count, 2)
+	assert_eq(fixture.enemy.intent_decision_count, 1)
 	assert_null(fixture.manager.executed_action)
 	assert_eq(fixture.enemy.ai_state.completed_turns, 1)
 	assert_eq(fixture.enemy.ai_state.remaining(&"focus_attack"), 0)
-	assert_push_error("could not produce a valid intent")
-	assert_push_error("no executable intent")
+	assert_push_error("no executable locked intent")
 	_free_fixture(fixture)
 
 

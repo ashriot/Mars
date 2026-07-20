@@ -149,8 +149,6 @@ func spawn_encounter(
 				enemy_card.name_label.text = new_name
 				current_indices[base_name] = idx + 1
 
-	_update_all_enemy_intents()
-
 	print("Spawning complete.")
 	change_state(State.LOADING)
 	await _fade_in()
@@ -270,7 +268,6 @@ func find_and_start_next_turn():
 		actor.current_ct += actor.get_ct_speed() * real_ticks_passed
 
 	winner.current_ct = 0
-	_update_all_enemy_intents()
 	current_actor = winner
 	_publish_turn_order(TurnOrderUpdate.ADVANCE)
 	if winner is HeroCard:
@@ -289,13 +286,17 @@ func find_and_start_next_turn():
 		if await _check_if_battle_ended():
 			return
 		change_state(State.LOADING)
-		_update_all_enemy_intents()
+		if is_instance_valid(winner) and not winner.is_defeated:
+			(winner as EnemyCard).decide_intent(_enemy_ai_context())
 		await wait(0.5)
 		find_and_start_next_turn()
 
 func _on_actor_breached(breached_actor: ActorCard) -> void:
 	print("\n Actor was Breached -> New Queue: ")
 	update_turn_order()
+	if breached_actor is EnemyCard \
+		and (breached_actor != current_actor or current_state != State.EXECUTING_ACTION):
+		(breached_actor as EnemyCard).decide_intent(_enemy_ai_context())
 	for observer: ActorCard in actor_list:
 		if not is_instance_valid(observer) or observer.is_defeated:
 			continue
@@ -307,7 +308,6 @@ func _on_actor_breached(breached_actor: ActorCard) -> void:
 		)
 
 func update_turn_order() -> void:
-	_update_all_enemy_intents()
 	_publish_turn_order(TurnOrderUpdate.REFRESH)
 
 
@@ -359,6 +359,13 @@ func _revalidate_all_enemy_intent_targets() -> void:
 	for enemy: EnemyCard in get_living_enemies():
 		enemy.revalidate_intent_targets(context)
 
+
+func _refresh_all_enemy_intent_presentations() -> void:
+	if not is_instance_valid(enemy_area):
+		return
+	for enemy: EnemyCard in get_living_enemies():
+		enemy.refresh_intent_presentation()
+
 func _on_actor_died(actor: ActorCard):
 	print(actor.actor_name, " has died. Removing from actor_list.")
 	actor.is_valid_target = false
@@ -372,6 +379,7 @@ func _on_actor_died(actor: ActorCard):
 	target_invalidated.emit(actor)
 	if await _check_if_battle_ended():
 		return
+	_revalidate_all_enemy_intent_targets()
 	update_turn_order()
 
 func _on_actor_revived(actor: ActorCard):
@@ -383,6 +391,7 @@ func _on_actor_revived(actor: ActorCard):
 	actor.ct_speed_scale = battle_ct_speed_scale
 	actor_list.append(actor)
 
+	_revalidate_all_enemy_intent_targets()
 	update_turn_order()
 
 func set_current_action(action: Action):
@@ -584,12 +593,12 @@ func execute_enemy_turn(enemy: EnemyCard) -> void:
 	change_state(State.EXECUTING_ACTION)
 	print("\n", enemy.actor_name, " is executing its turn!")
 	var context := _enemy_ai_context()
+	enemy.revalidate_intent_targets(context)
 	if not _is_enemy_decision_executable(enemy, context):
-		enemy.decide_intent(context)
-	if not _is_enemy_decision_executable(enemy, context):
-		push_error("Enemy '%s' has no executable intent on AI turn %d after re-evaluation." % [
+		push_error("Enemy '%s' has no executable locked intent on AI turn %d." % [
 			enemy.actor_name, enemy.ai_state.completed_turns,
 		])
+		enemy.clear_intent()
 		enemy.complete_ai_turn()
 		_clear_executing_action_recovery()
 		return
@@ -630,13 +639,9 @@ func _is_enemy_decision_executable(enemy: EnemyCard, context: EnemyAIContext) ->
 		return false
 	if decision.action != ability.action or not enemy.ai_state.is_ready(ability):
 		return false
-	var rule_index := ability.rules.find(rule)
-	if rule_index < 0 or not rule.conditions.all(func(condition: EnemyDecisionCondition):
-		return condition != null and condition.matches(enemy, enemy.ai_state, context)
-	):
+	if ability.rules.find(rule) < 0:
 		return false
-	var salt := "%s:%d" % [ability.ability_id, rule_index]
-	return rule.selector.select(enemy, enemy.ai_state, context, salt) == decision.targets
+	return rule.selector.targets_are_legal(enemy, decision.targets, context)
 
 func get_living_heroes() -> Array[HeroCard]:
 	var living_heroes: Array[HeroCard] = []
@@ -664,15 +669,15 @@ func _connect_actor_intent_refresh_signals(actor: ActorCard) -> void:
 
 
 func _on_hero_focus_updated() -> void:
-	_update_all_enemy_intents()
+	_refresh_all_enemy_intent_presentations()
 
 
 func _on_actor_hp_changed(_current_hp: int, _max_hp: int) -> void:
-	_update_all_enemy_intents()
+	_refresh_all_enemy_intent_presentations()
 
 
 func _on_actor_armor_changed(_current_guard: int) -> void:
-	_update_all_enemy_intents()
+	_refresh_all_enemy_intent_presentations()
 
 
 func _on_actor_conditions_changed() -> void:
