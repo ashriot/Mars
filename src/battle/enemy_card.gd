@@ -81,10 +81,14 @@ func decide_intent(context: EnemyAIContext) -> void:
 		])
 		clear_intent()
 		return
+	var intent_changed := intended_action != next.action \
+		or not _targets_match(next.targets)
 	intended_decision = next
 	intended_action = next.action
 	intended_targets.assign(next.targets)
 	_update_intent_ui()
+	if intent_changed:
+		flash_intent()
 
 
 func complete_ai_turn(used_ability_id: StringName = &"") -> void:
@@ -110,11 +114,21 @@ func revalidate_intent_targets(context: EnemyAIContext) -> bool:
 	intended_decision.targets.assign(next_targets)
 	intended_targets.assign(next_targets)
 	_update_intent_ui()
+	flash_intent()
 	return true
 
 
 func refresh_intent_presentation() -> void:
 	_update_intent_ui()
+
+
+func _targets_match(other_targets: Array) -> bool:
+	if intended_targets.size() != other_targets.size():
+		return false
+	for index in intended_targets.size():
+		if intended_targets[index] != other_targets[index]:
+			return false
+	return true
 
 func _update_intent_ui():
 	if not intended_action:
@@ -188,7 +202,6 @@ func _update_intent_ui():
 	intent_tooltip.bbcode_text = intended_action.get_rich_description(
 		self, tooltip_target, intended_targets, battle_manager,
 	)
-	flash_intent()
 
 func clear_intent() -> void:
 	intended_decision = EnemyDecision.new()

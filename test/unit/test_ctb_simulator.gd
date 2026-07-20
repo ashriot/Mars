@@ -418,7 +418,7 @@ func test_live_advancement_matches_projected_normalized_ticks() -> void:
 	assert_same(manager.current_actor, winner)
 	assert_eq(observer.current_ct, manager.TARGET_CT)
 	assert_eq(kinds, [BattleManager.TurnOrderUpdate.ADVANCE])
-	assert_eq(manager.intent_refresh_count, 1)
+	assert_eq(manager.intent_refresh_count, 0)
 	winner.free()
 	observer.free()
 	manager.action_bar.free()
@@ -509,16 +509,16 @@ func test_condition_mutations_publish_one_current_queue_through_manager() -> voi
 	buff.condition_name = "Buff"
 	await actor.add_condition(buff)
 	assert_signal_emit_count(manager, "turn_order_updated", 1)
-	assert_eq(manager.intent_refresh_count, 1, "condition changes still recalculate intents")
+	assert_eq(manager.intent_refresh_count, 0, "conditions do not replan locked intents")
 
 	await actor.remove_condition("Buff")
 	assert_signal_emit_count(manager, "turn_order_updated", 2)
-	assert_eq(manager.intent_refresh_count, 2)
+	assert_eq(manager.intent_refresh_count, 0)
 
 	await actor.remove_condition("Missing")
 	assert_push_error("Trying to remove an invalid condition")
 	assert_signal_emit_count(manager, "turn_order_updated", 2, "unsuccessful removal is silent")
-	assert_eq(manager.intent_refresh_count, 2)
+	assert_eq(manager.intent_refresh_count, 0)
 
 	var first_debuff := Condition.new()
 	first_debuff.condition_name = "First debuff"
@@ -529,10 +529,10 @@ func test_condition_mutations_publish_one_current_queue_through_manager() -> voi
 	actor.active_conditions = [first_debuff, second_debuff]
 	await actor.remove_debuffs(2)
 	assert_signal_emit_count(manager, "turn_order_updated", 3, "batch removal publishes once")
-	assert_eq(manager.intent_refresh_count, 3)
+	assert_eq(manager.intent_refresh_count, 0)
 
 	await actor.remove_debuffs(2)
 	assert_signal_emit_count(manager, "turn_order_updated", 3, "empty batch removal is silent")
-	assert_eq(manager.intent_refresh_count, 3)
+	assert_eq(manager.intent_refresh_count, 0)
 	actor.free()
 	manager.free()

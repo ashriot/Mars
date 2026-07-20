@@ -295,6 +295,7 @@ func _on_actor_breached(breached_actor: ActorCard) -> void:
 	print("\n Actor was Breached -> New Queue: ")
 	update_turn_order()
 	if breached_actor is EnemyCard \
+		and (breached_actor as EnemyCard).recover_action != null \
 		and (breached_actor != current_actor or current_state != State.EXECUTING_ACTION):
 		(breached_actor as EnemyCard).decide_intent(_enemy_ai_context())
 	for observer: ActorCard in actor_list:
@@ -355,8 +356,13 @@ func _update_all_enemy_intents() -> void:
 func _revalidate_all_enemy_intent_targets() -> void:
 	if not is_instance_valid(hero_area) or not is_instance_valid(enemy_area):
 		return
+	var planned_enemies: Array[EnemyCard] = get_living_enemies().filter(
+		func(enemy: EnemyCard): return enemy.intended_action != null
+	)
+	if planned_enemies.is_empty():
+		return
 	var context := _enemy_ai_context()
-	for enemy: EnemyCard in get_living_enemies():
+	for enemy: EnemyCard in planned_enemies:
 		enemy.revalidate_intent_targets(context)
 
 

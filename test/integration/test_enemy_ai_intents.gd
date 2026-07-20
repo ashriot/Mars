@@ -8,6 +8,7 @@ class QuietHero extends HeroCard:
 
 class QuietEnemy extends EnemyCard:
 	var intent_decision_count := 0
+	var intent_flash_count := 0
 
 	func decide_intent(context: EnemyAIContext) -> void:
 		intent_decision_count += 1
@@ -15,6 +16,9 @@ class QuietEnemy extends EnemyCard:
 
 	func _update_intent_ui() -> void:
 		return
+
+	func flash_intent(_duration: float = 0.3) -> void:
+		intent_flash_count += 1
 
 	func show_action(_action_name: String) -> void:
 		return
@@ -47,6 +51,17 @@ func test_refresh_changes_reactive_intent_without_ticking_cooldowns() -> void:
 	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"focus_attack")
 	assert_eq(fixture.enemy.ai_state.completed_turns, 0)
 	assert_eq(fixture.enemy.ai_state.remaining(&"focus_attack"), 0)
+	_free_fixture(fixture)
+
+
+func test_identical_planning_and_presentation_refresh_do_not_flash_again() -> void:
+	var fixture := _fixture()
+	fixture.enemy.initialize_ai(77)
+	fixture.manager._update_all_enemy_intents()
+	assert_eq(fixture.enemy.intent_flash_count, 1)
+	fixture.manager._update_all_enemy_intents()
+	fixture.enemy.refresh_intent_presentation()
+	assert_eq(fixture.enemy.intent_flash_count, 1)
 	_free_fixture(fixture)
 
 
@@ -127,6 +142,7 @@ func test_decoy_retargets_locked_action_without_replanning() -> void:
 	assert_eq(fixture.enemy.intended_action, locked_action)
 	assert_ne(fixture.enemy.intended_targets, [original_target])
 	assert_eq(fixture.enemy.intent_decision_count, 1)
+	assert_eq(fixture.enemy.intent_flash_count, 2)
 	_free_fixture(fixture)
 
 
@@ -146,6 +162,7 @@ func test_taunt_redirects_locked_action_without_replanning() -> void:
 	assert_eq(fixture.enemy.intended_action, locked_action)
 	assert_eq(fixture.enemy.intended_targets, [taunter])
 	assert_eq(fixture.enemy.intent_decision_count, 1)
+	assert_eq(fixture.enemy.intent_flash_count, 2)
 	_free_fixture(fixture)
 
 
@@ -163,6 +180,7 @@ func test_ordinary_condition_does_not_change_locked_targets() -> void:
 	assert_eq(fixture.enemy.intended_action, locked_action)
 	assert_eq(fixture.enemy.intended_targets, locked_targets)
 	assert_eq(fixture.enemy.intent_decision_count, 1)
+	assert_eq(fixture.enemy.intent_flash_count, 1)
 	_free_fixture(fixture)
 
 
