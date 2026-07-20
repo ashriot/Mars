@@ -351,6 +351,14 @@ func _update_all_enemy_intents() -> void:
 		if enemy != current_actor or current_state != State.EXECUTING_ACTION:
 			enemy.decide_intent(context)
 
+
+func _revalidate_all_enemy_intent_targets() -> void:
+	if not is_instance_valid(hero_area) or not is_instance_valid(enemy_area):
+		return
+	var context := _enemy_ai_context()
+	for enemy: EnemyCard in get_living_enemies():
+		enemy.revalidate_intent_targets(context)
+
 func _on_actor_died(actor: ActorCard):
 	print(actor.actor_name, " has died. Removing from actor_list.")
 	actor.is_valid_target = false
@@ -668,7 +676,8 @@ func _on_actor_armor_changed(_current_guard: int) -> void:
 
 
 func _on_actor_conditions_changed() -> void:
-	update_turn_order()
+	_revalidate_all_enemy_intent_targets()
+	_publish_turn_order(TurnOrderUpdate.REFRESH)
 
 func _on_action_button_pressed(button: ActionButton):
 	if current_state in [State.LOADING, State.FORCED_TARGET]: return

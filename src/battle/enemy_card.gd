@@ -90,6 +90,28 @@ func decide_intent(context: EnemyAIContext) -> void:
 func complete_ai_turn(used_ability_id: StringName = &"") -> void:
 	ai_state.complete_turn(used_ability_id)
 
+
+func revalidate_intent_targets(context: EnemyAIContext) -> bool:
+	if intended_action == null or intended_decision.is_recovery:
+		return false
+	var ability := intended_decision.ability
+	var rule := intended_decision.rule
+	if ability == null or rule == null or rule.selector == null:
+		return false
+	if rule.selector.targets_are_legal(self, intended_targets, context):
+		return false
+	var rule_index := ability.rules.find(rule)
+	if rule_index < 0:
+		return false
+	var salt := "%s:%d" % [ability.ability_id, rule_index]
+	var next_targets := rule.selector.select(self, ai_state, context, salt)
+	if next_targets == intended_targets:
+		return false
+	intended_decision.targets.assign(next_targets)
+	intended_targets.assign(next_targets)
+	_update_intent_ui()
+	return true
+
 func _update_intent_ui():
 	if not intended_action:
 		intent_text.text = ""

@@ -24,19 +24,8 @@ enum Type {
 
 func select(enemy: EnemyCard, state: EnemyAIRuntimeState, context: EnemyAIContext,
 	salt: String) -> Array[ActorCard]:
-	var heroes: Array[HeroCard] = context.heroes.filter(func(hero: HeroCard):
-		return is_instance_valid(hero) and not hero.is_defeated and not hero.is_untargetable()
-	)
-	var taunts: Array[HeroCard] = heroes.filter(func(hero: HeroCard): return hero.is_taunting())
-	var hostile := type in [Type.SEEDED_HERO, Type.VALID_HERO_CANDIDATES,
-		Type.PREFERRED_CONDITION_HERO,
-		Type.HIGHEST_FOCUS_HERO, Type.HIGHEST_GUARD_HERO, Type.LOWEST_GUARD_HERO,
-		Type.HERO_CLOSEST_TO_ACTING]
-	if hostile and not taunts.is_empty():
-		heroes = taunts
-	var allies: Array[EnemyCard] = context.enemies.filter(func(ally: EnemyCard):
-		return is_instance_valid(ally) and not ally.is_defeated and (not exclude_self or ally != enemy)
-	)
+	var heroes := _eligible_heroes(context)
+	var allies := _eligible_allies(enemy, context)
 	match type:
 		Type.SELF:
 			return [enemy]
@@ -75,6 +64,67 @@ func select(enemy: EnemyCard, state: EnemyAIRuntimeState, context: EnemyAIContex
 				true, enemy, state, context, salt)
 		_:
 			return _seeded_one(heroes, enemy, state, context, salt)
+
+
+func targets_are_legal(enemy: EnemyCard, targets: Array[ActorCard],
+	context: EnemyAIContext) -> bool:
+	var heroes := _eligible_heroes(context)
+	var allies := _eligible_allies(enemy, context)
+	match type:
+		Type.SELF:
+			return targets == [enemy]
+		Type.ALL_HEROES, Type.VALID_HERO_CANDIDATES:
+			return _same_actor_set(targets, heroes)
+		Type.ALL_ALLIES:
+			return _same_actor_set(targets, allies)
+		Type.SEEDED_HERO, Type.PREFERRED_CONDITION_HERO, \
+			Type.HIGHEST_FOCUS_HERO, Type.HIGHEST_GUARD_HERO, \
+			Type.LOWEST_GUARD_HERO, Type.HERO_CLOSEST_TO_ACTING:
+			return targets.size() == 1 and targets[0] in heroes
+		Type.LOWEST_HP_PERCENT_ALLY, Type.LEAST_GUARD_ALLY, \
+			Type.ALLY_FURTHEST_FROM_ACTING:
+			return targets.size() == 1 and targets[0] in allies
+	return false
+
+
+func _eligible_heroes(context: EnemyAIContext) -> Array[HeroCard]:
+	var heroes: Array[HeroCard] = context.heroes.filter(func(hero: HeroCard):
+		return is_instance_valid(hero) and not hero.is_defeated \
+			and not hero.is_untargetable()
+	)
+	if not _is_hostile_selector():
+		return heroes
+	var taunts: Array[HeroCard] = heroes.filter(func(hero: HeroCard):
+		return hero.is_taunting()
+	)
+	return taunts if not taunts.is_empty() else heroes
+
+
+func _eligible_allies(enemy: EnemyCard,
+	context: EnemyAIContext) -> Array[EnemyCard]:
+	var allies: Array[EnemyCard] = context.enemies.filter(func(ally: EnemyCard):
+		return is_instance_valid(ally) and not ally.is_defeated \
+			and (not exclude_self or ally != enemy)
+	)
+	return allies
+
+
+func _is_hostile_selector() -> bool:
+	return type in [
+		Type.SEEDED_HERO,
+		Type.VALID_HERO_CANDIDATES,
+		Type.PREFERRED_CONDITION_HERO,
+		Type.HIGHEST_FOCUS_HERO,
+		Type.HIGHEST_GUARD_HERO,
+		Type.LOWEST_GUARD_HERO,
+		Type.HERO_CLOSEST_TO_ACTING,
+	]
+
+
+func _same_actor_set(left: Array, right: Array) -> bool:
+	return left.size() == right.size() and left.all(func(actor):
+		return actor in right
+	)
 
 
 func _as_actor_cards(values: Array) -> Array[ActorCard]:

@@ -113,6 +113,59 @@ func test_turn_order_refresh_replans_ct_dependent_intent() -> void:
 	_free_fixture(fixture)
 
 
+func test_decoy_retargets_locked_action_without_replanning() -> void:
+	var fixture := _fixture()
+	_connect_actor_refresh_signals(fixture)
+	fixture.enemy.initialize_ai(77)
+	fixture.manager._update_all_enemy_intents()
+	var locked_action: Action = fixture.enemy.intended_action
+	var original_target := fixture.enemy.intended_targets[0] as HeroCard
+	var decoy := Condition.new()
+	decoy.condition_name = "Decoy"
+	decoy.is_untargetable = true
+	await original_target.add_condition(decoy)
+	assert_eq(fixture.enemy.intended_action, locked_action)
+	assert_ne(fixture.enemy.intended_targets, [original_target])
+	assert_eq(fixture.enemy.intent_decision_count, 1)
+	_free_fixture(fixture)
+
+
+func test_taunt_redirects_locked_action_without_replanning() -> void:
+	var fixture := _fixture()
+	_connect_actor_refresh_signals(fixture)
+	fixture.enemy.initialize_ai(77)
+	fixture.manager._update_all_enemy_intents()
+	var locked_action: Action = fixture.enemy.intended_action
+	var original_target := fixture.enemy.intended_targets[0] as HeroCard
+	var taunter: HeroCard = fixture.sands \
+		if original_target == fixture.echo else fixture.echo
+	var draw_fire := Condition.new()
+	draw_fire.condition_name = "Draw Fire"
+	draw_fire.is_taunting = true
+	await taunter.add_condition(draw_fire)
+	assert_eq(fixture.enemy.intended_action, locked_action)
+	assert_eq(fixture.enemy.intended_targets, [taunter])
+	assert_eq(fixture.enemy.intent_decision_count, 1)
+	_free_fixture(fixture)
+
+
+func test_ordinary_condition_does_not_change_locked_targets() -> void:
+	var fixture := _fixture()
+	_connect_actor_refresh_signals(fixture)
+	fixture.enemy.initialize_ai(77)
+	fixture.manager._update_all_enemy_intents()
+	var locked_action: Action = fixture.enemy.intended_action
+	var locked_targets: Array[ActorCard] = []
+	locked_targets.assign(fixture.enemy.intended_targets)
+	var buff := Condition.new()
+	buff.condition_name = "Ordinary Buff"
+	await fixture.echo.add_condition(buff)
+	assert_eq(fixture.enemy.intended_action, locked_action)
+	assert_eq(fixture.enemy.intended_targets, locked_targets)
+	assert_eq(fixture.enemy.intent_decision_count, 1)
+	_free_fixture(fixture)
+
+
 func test_final_startup_timing_refreshes_intents_after_head_starts() -> void:
 	var fixture := _fixture()
 	fixture.enemy.enemy_data.abilities.append(_ability(
@@ -271,6 +324,7 @@ func _connect_actor_refresh_signals(fixture: Dictionary) -> void:
 	var manager := fixture.manager as BattleManager
 	for actor: ActorCard in manager.actor_list:
 		manager._connect_actor_intent_refresh_signals(actor)
+		actor.actor_conditions_changed.connect(manager._on_actor_conditions_changed)
 
 
 func _ability(id: StringName, cooldown: int, priority: int,
