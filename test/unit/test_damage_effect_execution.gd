@@ -835,36 +835,35 @@ func test_zero_max_abs_guard_change_is_uncapped() -> void:
 	assert_eq(effect.resolve_guard_delta(20), -10)
 
 
-func test_inversion_caps_guard_points() -> void:
+func test_inversion_caps_guard_points_available_to_destroy() -> void:
 	var effect := Effect_Damage_Inversion.new()
-	effect.max_guard_points = 10
+	effect.max_guard_points = 4
 
-	assert_eq(effect._resolve_hit_count(null, {"guard_gained": 4}), 4)
-	assert_eq(effect._resolve_hit_count(null, {"guard_gained": 14}), 10)
+	assert_eq(effect.resolve_guard_points(2), 2)
+	assert_eq(effect.resolve_guard_points(6), 4)
 
 
 func test_zero_max_inversion_guard_points_is_uncapped() -> void:
 	var effect := Effect_Damage_Inversion.new()
 	effect.max_guard_points = 0
 
-	assert_eq(effect._resolve_hit_count(null, {"guard_gained": 14}), 14)
+	assert_eq(effect.resolve_guard_points(14), 14)
 
 
-func test_production_inversion_context_builds_three_canonical_results() -> void:
+func test_production_inversion_builds_one_canonical_result_per_guard_destroyed() -> void:
 	var attacker := _recording_actor(10, 0, 0)
 	attacker.current_stats.psyche = 80
 	var target := _recording_actor(0, 0, 0)
+	target.current_guard = 3
 	var manager := RecordingBattleManager.new()
 	manager.actor_list = [attacker, target]
-	var inversion := (load(
-		"res://data/heroes/echo/conditions/inversion.tres"
-	) as Condition).duplicate(true) as Condition
-	var effect := inversion.triggers[0].effects_to_run[0] as Effect_Damage_Inversion
+	var inversion := load("res://data/heroes/echo/actions/inversion.tres") as Action
+	var effect := inversion.effects[0] as Effect_Damage_Inversion
 
-	await effect.execute(
-		attacker, [target], manager, null, {"guard_gained": 3},
-	)
+	await effect.execute(attacker, [target], manager, inversion)
 
+	assert_eq(target.guard_changes, [-3])
+	assert_eq(target.current_guard, 0)
 	assert_eq(attacker.on_hit_contexts.size(), 3)
 	var result_ids: Dictionary = {}
 	var request_ids: Dictionary = {}
@@ -876,6 +875,7 @@ func test_production_inversion_context_builds_three_canonical_results() -> void:
 		assert_same(result.source_effect, effect)
 		assert_eq(result.request.distribution_count, 1)
 		assert_eq(result.request.damage_type, Action.DamageType.PIERCING)
+		assert_almost_eq(result.request.base_potency, 0.75, 0.0001)
 	assert_eq(result_ids.size(), 3)
 	assert_eq(request_ids.size(), 3)
 	_free_recorded_nodes(manager, [attacker, target])
@@ -972,22 +972,55 @@ func test_production_suppress_cleanup_is_unique_and_runs_on_echo_shift() -> void
 	_free_echo_runtime_fixture(fixture)
 
 
-func test_production_inversion_caps_damage_without_preventing_guard_gain() -> void:
+func test_production_inversion_destroys_four_guard_and_hits_four_times() -> void:
 	var fixture := _echo_runtime_fixture()
 	var echo := fixture.echo as EchoRuntimeHero
 	var enemy := fixture.enemy as EchoRuntimeEnemy
-	var inversion := (load(
-		"res://data/heroes/echo/conditions/inversion.tres"
-	) as Condition).duplicate(true) as Condition
-	inversion.attacker = echo
-	enemy.active_conditions = [inversion]
+	var inversion := load("res://data/heroes/echo/actions/inversion.tres") as Action
+	assert_eq(inversion.effects.size(), 1)
+	if inversion.effects.size() != 1:
+		_free_echo_runtime_fixture(fixture)
+		return
+	var effect := inversion.effects[0] as Effect_Damage_Inversion
+	assert_not_null(effect)
+	if effect == null:
+		_free_echo_runtime_fixture(fixture)
+		return
+	enemy.current_guard = 6
 
-	await enemy.modify_guard(12)
+	await effect.execute(echo, [enemy], fixture.manager, inversion)
 
-	assert_eq(enemy.current_guard, ActorCard.MAX_GUARD)
-	assert_eq(enemy.guard_changes, [12])
-	assert_eq(enemy.damage_results.size(), 10)
-	assert_false(enemy.has_condition("Inversion"))
+	assert_eq(enemy.guard_changes, [-4])
+	assert_eq(enemy.current_guard, 2)
+	assert_eq(enemy.damage_results.size(), 4)
+	for result: DamageResult in enemy.damage_results:
+		assert_almost_eq(result.request.base_potency, 0.75, 0.0001)
+		assert_eq(result.request.base_power, echo.current_stats.psyche)
+		assert_eq(result.request.damage_type, Action.DamageType.PIERCING)
+	_free_echo_runtime_fixture(fixture)
+
+
+func test_production_inversion_hits_only_for_guard_actually_destroyed() -> void:
+	var fixture := _echo_runtime_fixture()
+	var echo := fixture.echo as EchoRuntimeHero
+	var enemy := fixture.enemy as EchoRuntimeEnemy
+	var inversion := load("res://data/heroes/echo/actions/inversion.tres") as Action
+	if inversion.effects.size() != 1:
+		assert_eq(inversion.effects.size(), 1)
+		_free_echo_runtime_fixture(fixture)
+		return
+	var effect := inversion.effects[0] as Effect_Damage_Inversion
+	if effect == null:
+		assert_not_null(effect)
+		_free_echo_runtime_fixture(fixture)
+		return
+	enemy.current_guard = 2
+
+	await effect.execute(echo, [enemy], fixture.manager, inversion)
+
+	assert_eq(enemy.guard_changes, [-2])
+	assert_eq(enemy.current_guard, 0)
+	assert_eq(enemy.damage_results.size(), 2)
 	_free_echo_runtime_fixture(fixture)
 
 

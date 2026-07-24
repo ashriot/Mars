@@ -2,20 +2,22 @@
 
 [ext_resource type="Script" uid="uid://ctjat8xfpajqc" path="res://src/scripts/action_effects/action_effect.gd" id="1_0t56p"]
 [ext_resource type="Texture2D" uid="uid://cry2q1t6tv8rt" path="res://assets/graphics/icons/skills/spiked-armor.png" id="2_47v30"]
-[ext_resource type="Resource" uid="uid://dxuxgbixi4snu" path="res://data/heroes/echo/conditions/inversion.tres" id="2_nmjd6"]
 [ext_resource type="Script" uid="uid://dm08rhkg3bai3" path="res://src/scripts/data/action.gd" id="2_xcmq2"]
-[ext_resource type="Script" uid="uid://dggojfw8tmpnk" path="res://src/scripts/action_effects/effect_apply_condition.gd" id="5_ppueh"]
+[ext_resource type="Script" uid="uid://k1ufhpx1h6tg" path="res://src/scripts/action_effects/effect_damage_inversion.gd" id="3_inversion"]
 
-[sub_resource type="Resource" id="Resource_37i53"]
-script = ExtResource("5_ppueh")
-condition = ExtResource("2_nmjd6")
-metadata/_custom_type_script = "uid://dggojfw8tmpnk"
+[sub_resource type="Resource" id="Resource_inversion"]
+script = ExtResource("3_inversion")
+max_guard_points = 4
+potency = 0.75
+power_type = 1
+damage_type = 2
+metadata/_custom_type_script = "uid://k1ufhpx1h6tg"
 
 [resource]
 script = ExtResource("2_xcmq2")
 action_name = "Inversion"
 icon = ExtResource("2_47v30")
-description = "Applies Debuff: The next time this enemy attempts to gain {grd}, they take {psy*0.5} {prc} damage for each point, capped at 10. The {grd} gain is not prevented."
-focus_cost = 3
-effects = Array[ExtResource("1_0t56p")]([SubResource("Resource_37i53")])
+description = "Destroy up to 4 {grd} on an enemy.[p]{effect:1}[p]This damage is dealt once for each point of {grd} destroyed."
+focus_cost = 4
+effects = Array[ExtResource("1_0t56p")]([SubResource("Resource_inversion")])
 metadata/_custom_type_script = "uid://dm08rhkg3bai3"

@@ -160,7 +160,7 @@ const ECHO_GDD := {
 	"energize": {"cost": 4, "ct": 50, "focus": 4},
 	"feedback": {"guard_per_hit": -1, "piercing": 0.5},
 	"static_charge": {"delay": -0.25, "speed": -0.25, "piercing": 1.0},
-	"inversion": {"cost": 3, "piercing_per_guard": 0.5, "cap": 10},
+	"inversion": {"cost": 4, "piercing_per_guard": 0.75, "cap": 4},
 }
 const SANDS_GDD := {
 	"draw_fire": {"focus": 1},
@@ -191,7 +191,6 @@ const APPROVED_DESCRIPTION_FORMULAS: Dictionary = {
 	"res://data/heroes/asher/conditions/fusion_ammo.tres": ["{psy*0.5}"],
 	"res://data/heroes/echo/actions/energy_barrier.tres": ["{psy*1.5}"],
 	"res://data/heroes/echo/actions/feedback.tres": ["{psy*0.5}"],
-	"res://data/heroes/echo/actions/inversion.tres": ["{psy*0.5}"],
 	"res://data/heroes/echo/actions/pain_transfer.tres": ["{psy*0.5}"],
 	"res://data/heroes/echo/actions/psionic_pulse.tres": ["{psy*0.35}"],
 	"res://data/heroes/echo/actions/rejuvenate.tres": ["{psy*0.5}"],
@@ -199,7 +198,6 @@ const APPROVED_DESCRIPTION_FORMULAS: Dictionary = {
 	"res://data/heroes/echo/actions/static_charge.tres": ["{psy*1.0}"],
 	"res://data/heroes/echo/conditions/energy_barrier.tres": ["{psy*1.5}"],
 	"res://data/heroes/echo/conditions/feedback.tres": ["{psy*0.5}"],
-	"res://data/heroes/echo/conditions/inversion.tres": ["{psy*0.5}"],
 	"res://data/heroes/echo/conditions/pain_transfer.tres": ["{psy*0.5}"],
 	"res://data/heroes/echo/conditions/psionic_pulse_cond.tres": ["{psy*0.35}"],
 	"res://data/heroes/echo/conditions/reverberate.tres": ["{psy*2.0}"],
@@ -328,36 +326,6 @@ const NESTED_COMPATIBILITY_CASES: Array[Dictionary] = [
 				"is_indirect": false,
 			},
 		],
-	},
-	{
-		"id": "inversion",
-		"action": "res://data/heroes/echo/actions/inversion.tres",
-		"condition": "res://data/heroes/echo/conditions/inversion.tres",
-		"condition_type": Condition.ConditionType.DEBUFF,
-		"trigger_type": Trigger.TriggerType.ON_GAINING_GUARD,
-		"remove_on_triggers": [Trigger.TriggerType.ON_GAINING_GUARD],
-		"required_action_prose": [
-			"applies debuff", "next time this enemy attempts to gain", "capped at 10",
-		],
-		"required_condition_prose": [
-			"next time this enemy attempts to gain guard", "capped at 10",
-		],
-		"formula": "{psy*0.5}",
-		"icon": "{prc}",
-		"shreds_guard": false,
-		"effect": {
-			"script": "res://src/scripts/action_effects/effect_damage_inversion.gd",
-			"target_type": Action.TargetType.PARENT,
-			"kind": "damage",
-			"power": Action.PowerType.PSYCHE,
-			"potency": 0.5,
-			"damage_type": Action.DamageType.PIERCING,
-			"hit_count": 1,
-			"split_damage": false,
-			"is_indirect": false,
-			"requires_inversion": true,
-			"max_guard_points": 10,
-		},
 	},
 	{
 		"id": "pain_transfer",
@@ -638,44 +606,12 @@ func test_nested_cases_cover_every_authorized_formula_except_direct_healing_acti
 	)
 
 
-func test_nested_case_validator_detects_topology_shape_and_healing_drift() -> void:
-	var inversion_expected := _nested_case_by_id("inversion")
-	assert_false(inversion_expected.is_empty())
-	var inversion := load(inversion_expected.condition) as Condition
-	var inversion_action := load(inversion_expected.action) as Action
-	var errors := _nested_case_errors(inversion_expected, inversion_action, inversion)
-	assert_eq(errors, [], "the authored Inversion topology is valid")
-
-	var trigger_drift := inversion.duplicate(true) as Condition
-	trigger_drift.triggers[0].trigger_type = Trigger.TriggerType.ON_TURN_END
-	errors = _nested_case_errors(inversion_expected, inversion_action, trigger_drift)
-	assert_string_contains("\n".join(errors), "owning trigger type drifted")
-
-	var target_drift := inversion.duplicate(true) as Condition
-	target_drift.triggers[0].effects_to_run[0].target_type = Action.TargetType.SELF
-	errors = _nested_case_errors(inversion_expected, inversion_action, target_drift)
-	assert_string_contains("\n".join(errors), "target type drifted")
-
-	var class_drift := inversion.duplicate(true) as Condition
-	var base_damage := Effect_Damage.new()
-	base_damage.potency = 0.75
-	base_damage.power_type = Action.PowerType.PSYCHE
-	base_damage.damage_type = Action.DamageType.PIERCING
-	class_drift.triggers[0].effects_to_run[0] = base_damage
-	errors = _nested_case_errors(inversion_expected, inversion_action, class_drift)
-	assert_string_contains("\n".join(errors), "script drifted")
-	assert_string_contains("\n".join(errors), "specialized Inversion shape")
-
-	var removal_drift := inversion.duplicate(true) as Condition
-	removal_drift.remove_on_triggers.clear()
-	errors = _nested_case_errors(inversion_expected, inversion_action, removal_drift)
-	assert_string_contains("\n".join(errors), "removal timing drifted")
-
+func test_nested_case_validator_detects_healing_drift() -> void:
 	var pain_expected := _nested_case_by_id("pain_transfer")
 	assert_false(pain_expected.is_empty())
 	var pain := load(pain_expected.condition) as Condition
 	var pain_action := load(pain_expected.action) as Action
-	errors = _nested_case_errors(pain_expected, pain_action, pain)
+	var errors := _nested_case_errors(pain_expected, pain_action, pain)
 	assert_eq(errors, [], "the authored Pain Transfer healing topology is valid")
 	var healing_drift := pain.duplicate(true) as Condition
 	(healing_drift.triggers[0].effects_to_run[0] as Effect_Healing).potency = 0.75
@@ -1338,21 +1274,14 @@ func test_echo_telepath_actions_match_gdd() -> void:
 	assert_eq(static_condition.remove_on_triggers, [Trigger.TriggerType.ON_TURN_START])
 
 	var inversion := load("res://data/heroes/echo/actions/inversion.tres") as Action
-	var inversion_condition := load(
-		"res://data/heroes/echo/conditions/inversion.tres"
-	) as Condition
-	var inversion_damage := (
-		inversion_condition.triggers[0].effects_to_run[0] as Effect_Damage_Inversion
-	)
+	var inversion_damage := inversion.effects[0] as Effect_Damage_Inversion
 	assert_eq(inversion.focus_cost, ECHO_GDD.inversion.cost)
 	assert_almost_eq(
 		inversion_damage.potency, ECHO_GDD.inversion.piercing_per_guard, 0.0001,
 	)
+	assert_eq(inversion_damage.power_type, Action.PowerType.PSYCHE)
 	assert_eq(inversion_damage.damage_type, Action.DamageType.PIERCING)
 	assert_eq(inversion_damage.max_guard_points, ECHO_GDD.inversion.cap)
-	assert_false(FileAccess.get_file_as_string(
-		"res://data/heroes/echo/conditions/inversion.tres"
-	).contains("remove_guard_gained"))
 
 
 func test_precognition_fires_for_party_on_echo_turn_start_until_echo_shifts() -> void:
