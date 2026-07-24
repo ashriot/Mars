@@ -850,7 +850,7 @@ func test_zero_max_inversion_guard_points_is_uncapped() -> void:
 	assert_eq(effect.resolve_guard_points(14), 14)
 
 
-func test_production_inversion_builds_one_canonical_result_per_guard_destroyed() -> void:
+func test_production_inversion_builds_one_scaled_result_from_guard_destroyed() -> void:
 	var attacker := _recording_actor(10, 0, 0)
 	attacker.current_stats.psyche = 80
 	var target := _recording_actor(0, 0, 0)
@@ -864,7 +864,7 @@ func test_production_inversion_builds_one_canonical_result_per_guard_destroyed()
 
 	assert_eq(target.guard_changes, [-3])
 	assert_eq(target.current_guard, 0)
-	assert_eq(attacker.on_hit_contexts.size(), 3)
+	assert_eq(attacker.on_hit_contexts.size(), 1)
 	var result_ids: Dictionary = {}
 	var request_ids: Dictionary = {}
 	for hit_context: Dictionary in attacker.on_hit_contexts:
@@ -876,8 +876,9 @@ func test_production_inversion_builds_one_canonical_result_per_guard_destroyed()
 		assert_eq(result.request.distribution_count, 1)
 		assert_eq(result.request.damage_type, Action.DamageType.PIERCING)
 		assert_almost_eq(result.request.base_potency, 0.75, 0.0001)
-	assert_eq(result_ids.size(), 3)
-	assert_eq(request_ids.size(), 3)
+		assert_almost_eq(result.request.potency, 2.25, 0.0001)
+	assert_eq(result_ids.size(), 1)
+	assert_eq(request_ids.size(), 1)
 	_free_recorded_nodes(manager, [attacker, target])
 
 
@@ -972,7 +973,7 @@ func test_production_suppress_cleanup_is_unique_and_runs_on_echo_shift() -> void
 	_free_echo_runtime_fixture(fixture)
 
 
-func test_production_inversion_destroys_four_guard_and_hits_four_times() -> void:
+func test_production_inversion_destroys_four_guard_for_one_three_hundred_percent_hit() -> void:
 	var fixture := _echo_runtime_fixture()
 	var echo := fixture.echo as EchoRuntimeHero
 	var enemy := fixture.enemy as EchoRuntimeEnemy
@@ -992,15 +993,16 @@ func test_production_inversion_destroys_four_guard_and_hits_four_times() -> void
 
 	assert_eq(enemy.guard_changes, [-4])
 	assert_eq(enemy.current_guard, 2)
-	assert_eq(enemy.damage_results.size(), 4)
-	for result: DamageResult in enemy.damage_results:
-		assert_almost_eq(result.request.base_potency, 0.75, 0.0001)
-		assert_eq(result.request.base_power, echo.current_stats.psyche)
-		assert_eq(result.request.damage_type, Action.DamageType.PIERCING)
+	assert_eq(enemy.damage_results.size(), 1)
+	var result := enemy.damage_results[0]
+	assert_almost_eq(result.request.base_potency, 0.75, 0.0001)
+	assert_almost_eq(result.request.potency, 3.0, 0.0001)
+	assert_eq(result.request.base_power, echo.current_stats.psyche)
+	assert_eq(result.request.damage_type, Action.DamageType.PIERCING)
 	_free_echo_runtime_fixture(fixture)
 
 
-func test_production_inversion_hits_only_for_guard_actually_destroyed() -> void:
+func test_production_inversion_scales_single_hit_by_guard_actually_destroyed() -> void:
 	var fixture := _echo_runtime_fixture()
 	var echo := fixture.echo as EchoRuntimeHero
 	var enemy := fixture.enemy as EchoRuntimeEnemy
@@ -1020,7 +1022,42 @@ func test_production_inversion_hits_only_for_guard_actually_destroyed() -> void:
 
 	assert_eq(enemy.guard_changes, [-2])
 	assert_eq(enemy.current_guard, 0)
-	assert_eq(enemy.damage_results.size(), 2)
+	assert_eq(enemy.damage_results.size(), 1)
+	assert_almost_eq(enemy.damage_results[0].request.potency, 1.5, 0.0001)
+	_free_echo_runtime_fixture(fixture)
+
+
+func test_production_inversion_preview_scales_one_hit_by_target_guard() -> void:
+	var fixture := _echo_runtime_fixture()
+	var echo := fixture.echo as EchoRuntimeHero
+	var enemy := fixture.enemy as EchoRuntimeEnemy
+	var inversion := load("res://data/heroes/echo/actions/inversion.tres") as Action
+	var effect := inversion.effects[0] as Effect_Damage_Inversion
+	enemy.current_guard = 4
+
+	var preview := DamagePreview.for_effect(
+		effect,
+		echo,
+		enemy,
+		inversion,
+		1,
+		false,
+	)
+
+	assert_almost_eq(preview.request.base_potency, 0.75, 0.0001)
+	assert_almost_eq(preview.request.potency, 3.0, 0.0001)
+	assert_eq(preview.request.damage_type, Action.DamageType.PIERCING)
+
+	enemy.current_guard = 0
+	var zero_guard_preview := DamagePreview.for_effect(
+		effect,
+		echo,
+		enemy,
+		inversion,
+		1,
+		false,
+	)
+	assert_almost_eq(zero_guard_preview.request.potency, 0.0, 0.0001)
 	_free_echo_runtime_fixture(fixture)
 
 

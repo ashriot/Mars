@@ -10,11 +10,37 @@ func resolve_guard_points(current_guard: int) -> int:
 		if max_guard_points > 0 else available_guard
 
 
-func _resolve_hit_count(_attacker: ActorCard, context: Dictionary = {}) -> int:
-	if not context.has("guard_destroyed"):
-		return hit_count
-
-	return maxi(0, int(context["guard_destroyed"]))
+func _resolve_current_hit_potency(
+	effect_start_potency: DamageResolver.ResolvedPotency,
+	context: DamageContext,
+) -> DamageResolver.ResolvedPotency:
+	var resolved := super._resolve_current_hit_potency(
+		effect_start_potency,
+		context,
+	)
+	var trigger_context := context.trigger_context
+	var guard_destroyed := 1
+	if trigger_context.has("guard_destroyed"):
+		guard_destroyed = int(trigger_context["guard_destroyed"])
+	elif context.target != null:
+		guard_destroyed = resolve_guard_points(context.target.current_guard)
+	guard_destroyed = maxi(0, guard_destroyed)
+	if guard_destroyed == 1:
+		return resolved
+	var scaled_unclamped := resolved.unclamped_potency * float(guard_destroyed)
+	var guard_bonus := scaled_unclamped - resolved.unclamped_potency
+	var contributions := resolved.contributions
+	contributions.append(DamageContribution.new(
+		&"guard_destroyed",
+		DamageContribution.Stage.POTENCY,
+		guard_bonus,
+	))
+	return DamageResolver.ResolvedPotency.new(
+		resolved.base_potency,
+		maxf(0.0, scaled_unclamped),
+		contributions,
+		scaled_unclamped,
+	)
 
 
 func execute(
