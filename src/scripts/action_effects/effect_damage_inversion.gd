@@ -51,9 +51,7 @@ func execute(
 	context: Dictionary = {},
 ) -> void:
 	var attacker := BattleCombatant.resolve_model(attacker_node)
-	var targets: Array[BattleCombatant] = []
-	for target_node: Node in parent_targets:
-		targets.append(BattleCombatant.resolve_model(target_node))
+	var targets := BattleCombatant.resolve_models(parent_targets)
 	for target: BattleCombatant in targets:
 		if not is_instance_valid(target) or target.is_defeated:
 			continue

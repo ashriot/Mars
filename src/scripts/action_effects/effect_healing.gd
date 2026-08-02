@@ -10,17 +10,18 @@ class_name Effect_Healing
 
 func execute(attacker_node: Node, parent_targets: Array, battle_manager: BattleManager, _action: Action = null, _context: Dictionary = {}) -> void:
 	var attacker := BattleCombatant.resolve_model(attacker_node)
+	var targets: Array[BattleCombatant] = []
+	for target_node: Node in parent_targets:
+		if is_instance_valid(target_node):
+			targets.append(BattleCombatant.resolve_model(target_node))
 
 	print("--- Executing Healing Effect ---")
 
-	if parent_targets.is_empty():
+	if targets.is_empty():
 		print("Healing effect had no targets.")
 		return
 
-	for target_node: Node in parent_targets:
-		if not is_instance_valid(target_node):
-			continue
-		var actor_target := BattleCombatant.resolve_model(target_node)
+	for actor_target: BattleCombatant in targets:
 		if actor_target.is_defeated and not is_revive:
 			continue
 

@@ -344,9 +344,7 @@ func execute(
 	context: Dictionary = {},
 ) -> void:
 	var attacker := BattleCombatant.resolve_model(attacker_node)
-	var targets: Array[BattleCombatant] = []
-	for target_node: Node in parent_targets:
-		targets.append(BattleCombatant.resolve_model(target_node))
+	var targets := BattleCombatant.resolve_models(parent_targets)
 	var resolved_hit_count := _resolve_hit_count(attacker, context)
 	var plan := _build_hit_plan(targets, action, resolved_hit_count)
 	var source_action := _resolve_source_action(action, context)
@@ -791,9 +789,9 @@ func _process_on_hit_triggers(
 		if condition_met:
 			print("On-hit trigger fired!")
 			for effect in hit_trigger.effects_to_run:
-				var targets := battle_manager.get_targets(
+				var targets := BattleCombatant.resolve_models(battle_manager.get_targets(
 					effect.target_type, attacker.is_hero(), [target], target,
-				)
+				))
 				if effect is Effect_Damage:
 					await battle_manager.wait(0.25)
 				await battle_manager.execute_triggered_effect(

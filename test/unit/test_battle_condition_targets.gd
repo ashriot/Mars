@@ -22,6 +22,21 @@ class RecordingEffect extends ActionEffect:
 		event_log.append(event_label)
 
 
+class IdentityRecordingEffect extends ActionEffect:
+	var received_attacker: Node
+	var received_targets: Array = []
+
+	func execute(
+		attacker_node: Node,
+		parent_targets: Array,
+		_battle_manager: BattleManager,
+		_action: Action = null,
+		_context: Dictionary = {},
+	) -> void:
+		received_attacker = attacker_node
+		received_targets = parent_targets.duplicate()
+
+
 class CapturingBattleManager extends BattleManager:
 	var captured_targets: Array = []
 
@@ -39,6 +54,39 @@ class CapturingBattleManager extends BattleManager:
 		await _effect.execute(_actor, targets, self, _action, _context)
 
 
+class IdentityTargetingBattleManager extends BattleManager:
+	var returned_targets: Array = []
+	var received_parent_targets: Array = []
+	var received_attacker: Node
+	var executed_actor: Node
+	var executed_targets: Array = []
+
+	func wait(_duration: float = 0.01) -> void:
+		return
+
+	func get_targets(
+		_target_type: Action.TargetType,
+		_friendly: bool,
+		parent_targets: Array = [],
+		attacker: Node = null,
+		_include_defeated_heroes: bool = false,
+	) -> Array:
+		received_parent_targets = parent_targets.duplicate()
+		received_attacker = attacker
+		return returned_targets.duplicate()
+
+	func execute_triggered_effect(
+		actor: Node,
+		effect: ActionEffect,
+		targets: Array,
+		action: Action,
+		context: Dictionary = {},
+	) -> void:
+		executed_actor = actor
+		executed_targets = targets.duplicate()
+		await effect.execute(actor, targets, self, action, context)
+
+
 class ConditionActor extends ActorCard:
 	func _update_conditions_ui() -> void:
 		return
@@ -50,6 +98,84 @@ class ConditionHeroCard extends HeroCard:
 
 	func update_focus_bar(_animate: bool = true) -> void:
 		return
+
+
+func test_modify_focus_normalizes_card_targets_around_manager_targeting() -> void:
+	var manager := IdentityTargetingBattleManager.new()
+	var attacker := CardSceneTestFixture.hero(self, null, manager)
+	var target := CardSceneTestFixture.hero(self, null, manager)
+	var target_model := target.combatant as HeroCombatant
+	manager.returned_targets = [target]
+	var effect := Effect_ModifyFocus.new()
+	effect.focus_amount = 2
+
+	await effect.execute(attacker, [target], manager)
+
+	assert_eq(manager.received_parent_targets, [target_model])
+	assert_same(manager.received_attacker, attacker.combatant)
+	assert_eq(target_model.current_focus, 2)
+	manager.free()
+	attacker.free()
+	target.free()
+
+
+func test_recover_breach_normalizes_card_identities_around_manager_targeting() -> void:
+	var manager := IdentityTargetingBattleManager.new()
+	var attacker := CardSceneTestFixture.hero(self, null, manager)
+	var target_stats := ActorStats.new()
+	target_stats.starting_guard = 6
+	var target := CardSceneTestFixture.hero(self, target_stats, manager)
+	var target_model := target.combatant as HeroCombatant
+	target_model.current_guard = 0
+	target_model.is_breached = true
+	manager.returned_targets = [target]
+	var effect := Effect_RecoverBreach.new()
+	effect.effect_target_type = Action.TargetType.PARENT
+
+	await effect.execute(attacker, [target], manager)
+
+	assert_eq(manager.received_parent_targets, [target_model])
+	assert_same(manager.received_attacker, attacker.combatant)
+	assert_false(target_model.is_breached)
+	assert_eq(target_model.current_guard, 3)
+	manager.free()
+	attacker.free()
+	target.free()
+
+
+func test_condition_retargeting_normalizes_card_ingress_and_manager_results() -> void:
+	var manager := IdentityTargetingBattleManager.new()
+	var holder := CardSceneTestFixture.hero(self, null, manager)
+	var source := CardSceneTestFixture.hero(self, null, manager)
+	var target := CardSceneTestFixture.enemy(self, null, manager)
+	manager.current_actor = holder
+	manager.returned_targets = [target]
+	var effect := IdentityRecordingEffect.new()
+	effect.target_type = Action.TargetType.PARENT
+	var trigger := Trigger.new()
+	trigger.trigger_type = Trigger.TriggerType.ON_TRIGGERED
+	trigger.effects_to_run = [effect]
+	var condition := Condition.new()
+	condition.condition_name = "Identity bridge"
+	condition.attacker = source
+	condition.triggers = [trigger]
+	holder.active_conditions = [condition]
+
+	await holder._fire_condition_event(
+		Trigger.TriggerType.ON_TRIGGERED,
+		{"attacker": source, "targets": [target]},
+	)
+
+	assert_eq(manager.received_parent_targets, [target.combatant])
+	assert_same(manager.received_attacker, source.combatant)
+	assert_same(manager.executed_actor, source.combatant)
+	assert_eq(manager.executed_targets, [target.combatant])
+	assert_same(effect.received_attacker, source.combatant)
+	assert_eq(effect.received_targets, [target.combatant])
+	manager.free()
+	holder.free()
+	source.free()
+	target.free()
 
 
 func test_off_turn_condition_self_target_resolves_to_condition_owner() -> void:
@@ -151,7 +277,7 @@ func test_enemy_held_condition_targets_living_allies_of_hero_caster() -> void:
 
 	await enemy_holder._fire_condition_event(Trigger.TriggerType.ON_TRIGGERED)
 
-	assert_eq(manager.captured_targets, [echo, living_hero])
+	assert_eq(manager.captured_targets, [echo.combatant, living_hero.combatant])
 	manager.free()
 	hero_area.free()
 	enemy_area.free()
@@ -188,7 +314,7 @@ func test_non_self_condition_uses_holder_allegiance_when_caster_is_invalid() -> 
 
 	await holder._fire_condition_event(Trigger.TriggerType.ON_TRIGGERED)
 
-	assert_eq(manager.captured_targets, [holder, living_hero])
+	assert_eq(manager.captured_targets, [holder.combatant, living_hero.combatant])
 	manager.free()
 	hero_area.free()
 	enemy_area.free()

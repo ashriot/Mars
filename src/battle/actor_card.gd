@@ -50,8 +50,6 @@ var combatant: BattleCombatant:
 	get: return _combatant
 
 # --- Data (Shared by both) ---
-var stat_mods: Dictionary
-var stat_scalars: Dictionary
 var actor_name: String:
 	get: return _require_combatant().actor_name
 	set(value): _require_combatant().actor_name = value

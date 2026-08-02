@@ -19,9 +19,10 @@ func execute(attacker_node: Node, primary_targets: Array, battle_manager: Battle
 
 	print("--- Executing Resource Swap Effect ---")
 	BattleCombatant.resolve_model(attacker_node)
+	var targets := BattleCombatant.resolve_models(primary_targets)
 
-	for target_node: Node in primary_targets:
-		var hero_target := BattleCombatant.resolve_model(target_node) as HeroCombatant
+	for target: BattleCombatant in targets:
+		var hero_target := target as HeroCombatant
 		if hero_target == null:
 			continue
 

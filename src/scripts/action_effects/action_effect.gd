@@ -10,9 +10,8 @@ func execute(
 	_action: Action = null,
 	_context: Dictionary = {}
 ) -> void:
-	BattleCombatant.resolve_model(attacker_node)
-	for target_node: Node in parent_targets:
-		BattleCombatant.resolve_model(target_node)
+	var _attacker := BattleCombatant.resolve_model(attacker_node)
+	var _targets := BattleCombatant.resolve_models(parent_targets)
 	await battle_manager.wait()
 
 

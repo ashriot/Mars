@@ -7,8 +7,9 @@ class_name Effect_ModifyStat
 
 func execute(attacker_node: Node, parent_targets: Array, battle_manager: BattleManager, _action: Action = null, _context: Dictionary = {}) -> void:
 	BattleCombatant.resolve_model(attacker_node)
-	for target_node: Node in parent_targets:
-		var target := BattleCombatant.resolve_model(target_node) as HeroCombatant
+	var targets := BattleCombatant.resolve_models(parent_targets)
+	for target_combatant: BattleCombatant in targets:
+		var target := target_combatant as HeroCombatant
 		if target == null:
 			continue
 		if mod > 0:

@@ -97,6 +97,23 @@ func test_card_mirrors_combatant_without_owning_duplicate_hp() -> void:
 	assert_eq(combatant.current_hp, 55)
 
 
+func test_stat_modifier_dictionaries_belong_only_to_hero_combatant() -> void:
+	var card := HeroCardScene.instantiate() as HeroCard
+	add_child_autofree(card)
+	var model := _combatant() as HeroCombatant
+	var card_properties := card.get_property_list().map(
+		func(property: Dictionary): return property.name,
+	)
+	var model_properties := model.get_property_list().map(
+		func(property: Dictionary): return property.name,
+	)
+
+	assert_does_not_have(card_properties, &"stat_mods")
+	assert_does_not_have(card_properties, &"stat_scalars")
+	assert_has(model_properties, &"stat_mods")
+	assert_has(model_properties, &"stat_scalars")
+
+
 func test_bound_hero_forwards_one_model_focus_change_once() -> void:
 	var card := HeroCardScene.instantiate() as HeroCard
 	add_child_autofree(card)

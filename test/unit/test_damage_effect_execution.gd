@@ -62,6 +62,23 @@ class RecordingBattleManager extends BattleManager:
 		event_log.append("wait")
 
 
+class CardReturningTargetManager extends RecordingBattleManager:
+	var returned_targets: Array = []
+	var received_parent_targets: Array = []
+	var received_attacker: Node
+
+	func get_targets(
+		_target_type: Action.TargetType,
+		_friendly: bool,
+		parent_targets: Array = [],
+		attacker: Node = null,
+		_include_defeated_heroes: bool = false,
+	) -> Array:
+		received_parent_targets = parent_targets.duplicate()
+		received_attacker = attacker
+		return returned_targets.duplicate()
+
+
 class ApplicationBattleManager extends BattleManager:
 	func _ready() -> void:
 		return
@@ -525,6 +542,33 @@ func test_attacker_on_hit_parent_effect_receives_the_hit_target() -> void:
 	assert_eq(parent_effect.received_target_sets.size(), 1)
 	assert_eq(parent_effect.received_target_sets[0], [target])
 	_free_recorded_nodes(manager, [attacker, target])
+
+
+func test_on_hit_targeting_normalizes_manager_card_results_before_nested_effect() -> void:
+	var attacker_card := CardSceneTestFixture.actor(self)
+	var target_card := CardSceneTestFixture.actor(
+		self, BattleCombatant.Faction.ENEMY,
+	)
+	var attacker := attacker_card.combatant
+	var target := target_card.combatant
+	var manager := CardReturningTargetManager.new()
+	manager.returned_targets = [target_card]
+	var nested_effect := RecordingActionEffect.new()
+	nested_effect.target_type = Action.TargetType.PARENT
+	var trigger := HitTrigger.new()
+	trigger.condition = HitTrigger.HitCondition.ALWAYS
+	trigger.effects_to_run = [nested_effect]
+	var damage_effect := Effect_Damage.new()
+	damage_effect.on_hit_triggers = [trigger]
+
+	await damage_effect._process_on_hit_triggers(attacker, target, manager, {})
+
+	assert_eq(manager.received_parent_targets, [target])
+	assert_same(manager.received_attacker, target)
+	assert_eq(nested_effect.received_target_sets, [[target]])
+	manager.free()
+	attacker_card.free()
+	target_card.free()
 
 
 func test_production_reverberate_routes_parent_target_and_removes_after_energy_hit() -> void:

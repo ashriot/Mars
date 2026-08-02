@@ -6,6 +6,6 @@ class_name Effect_RemoveDebuffs
 
 func execute(attacker_node: Node, targets: Array, _battle_manager: BattleManager, _action: Action = null, _context: Dictionary = {}) -> void:
 	BattleCombatant.resolve_model(attacker_node)
-	for target_node: Node in targets:
-		var target := BattleCombatant.resolve_model(target_node)
+	var target_models := BattleCombatant.resolve_models(targets)
+	for target: BattleCombatant in target_models:
 		await target.remove_debuffs(quantity)

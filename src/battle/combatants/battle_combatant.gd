@@ -46,6 +46,13 @@ static func resolve_model(value: Node) -> BattleCombatant:
 	return candidate as BattleCombatant
 
 
+static func resolve_models(values: Array) -> Array[BattleCombatant]:
+	var combatants: Array[BattleCombatant] = []
+	for value: Node in values:
+		combatants.append(resolve_model(value))
+	return combatants
+
+
 func setup_base(
 	stats: ActorStats,
 	combatant_faction: Faction,
@@ -371,9 +378,9 @@ func _execute_condition_triggers(
 			"Condition '", condition.condition_name,
 			"' is firing effects for '", event_type, "'",
 		)
-		var targets: Array = []
+		var targets: Array[BattleCombatant] = []
 		if context.has("targets"):
-			targets.assign(context.targets)
+			targets = BattleCombatant.resolve_models(context.targets)
 		var contextual_attacker_node := context.get("attacker") as Node
 		var contextual_attacker := BattleCombatant.resolve_model(
 			contextual_attacker_node,
@@ -388,12 +395,12 @@ func _execute_condition_triggers(
 			if effect.target_type == Action.TargetType.SELF:
 				targets = [self]
 			else:
-				targets = battle_manager.get_targets(
+				targets = BattleCombatant.resolve_models(battle_manager.get_targets(
 					effect.target_type,
 					effect_source.is_hero(),
 					targets,
 					contextual_attacker,
-				)
+				))
 			if battle_manager.current_actor is BattleCombatant \
 				and condition.is_passive \
 				and event_type == Trigger.TriggerType.ON_TURN_START:
@@ -437,7 +444,8 @@ func is_untargetable() -> bool:
 	return false
 
 
-func get_damage_dealt_modifier(target: Node) -> float:
+func get_damage_dealt_modifier(target_node: Node) -> float:
+	var target := BattleCombatant.resolve_model(target_node)
 	return _damage_contribution_total(
 		get_damage_dealt_contributions(target), DamageContribution.Stage.OUTGOING,
 	)
@@ -481,7 +489,8 @@ func get_damage_dealt_contributions(target: Node) -> Array[DamageContribution]:
 	return contributions
 
 
-func get_damage_taken_modifier(attacker: Node) -> float:
+func get_damage_taken_modifier(attacker_node: Node) -> float:
+	var attacker := BattleCombatant.resolve_model(attacker_node)
 	return _damage_contribution_total(
 		get_damage_taken_contributions(attacker), DamageContribution.Stage.INCOMING,
 	)
