@@ -17,6 +17,9 @@ func setup_view(value: BattleCombatant) -> bool:
 	if not is_instance_valid(value):
 		push_error("CombatantPresentation requires a valid BattleCombatant.")
 		return false
+	if combatant != null:
+		push_error("CombatantPresentation cannot be rebound to another combatant.")
+		return false
 	bind(value)
 	return combatant == value
 

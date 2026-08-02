@@ -215,6 +215,25 @@ func test_registry_rejects_one_presentation_for_two_combatants() -> void:
 	assert_eq(manager._presentation_exit_callbacks.size(), 1)
 
 
+func test_setup_rejects_rebinding_a_registered_presentation() -> void:
+	var manager := TestBattleManager.new()
+	var presentation := CombatantPresentation.new()
+	manager.add_child(presentation)
+	add_child_autofree(manager)
+	var first := _combatant(100, BattleCombatant.Faction.HERO, manager)
+	var second := _combatant(100, BattleCombatant.Faction.ENEMY, manager)
+
+	assert_true(presentation.setup_view(first))
+	assert_true(manager.register_presentation(first, presentation))
+	assert_false(presentation.setup_view(second))
+
+	assert_push_error("cannot be rebound")
+	assert_same(presentation.combatant, first)
+	assert_same(manager.presentation_for(first), presentation)
+	assert_null(manager.presentation_for(second))
+	assert_eq(manager._presentations.size(), 1)
+
+
 func test_spawn_encounter_aborts_and_discards_model_when_view_is_invalid() -> void:
 	var manager := SpawnFailureBattleManager.new()
 	manager.combatant_root = Node.new()
