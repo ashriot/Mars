@@ -10,6 +10,7 @@ const LOCAL_MODEL_PATH := (
 const MISSING_MODEL_PATH := (
 	"res://assets/graphics/models/quaternius_local/enemies/eye_drone/missing.gltf"
 )
+const TRACKED_MODEL_PATH := "res://test/fixtures/presentation/optional_model_fixture.tscn"
 
 
 class RegistryTrackingBattleManager extends BattleManager:
@@ -52,8 +53,8 @@ func test_drone_view_binds_enemy_and_adds_one_hud_to_world_layer() -> void:
 
 
 func test_two_drones_do_not_share_material_or_animation_state() -> void:
-	var first := _bound_drone(_world(), _enemy())
-	var second := _bound_drone(_world(), _enemy())
+	var first := _bound_animated_drone(_world(), _enemy())
+	var second := _bound_animated_drone(_world(), _enemy())
 
 	assert_not_null(first.presentation.instance_material)
 	assert_not_null(second.presentation.instance_material)
@@ -135,6 +136,31 @@ func test_target_state_acting_and_hud_input_are_forwarded() -> void:
 	)
 
 
+func test_acting_detail_visibility_is_independent_of_update_order() -> void:
+	var fixture := _bound_drone(_world(), _enemy())
+	for state: CombatantPresentation.TargetState in [
+		CombatantPresentation.TargetState.NORMAL,
+		CombatantPresentation.TargetState.AVAILABLE,
+	]:
+		fixture.presentation.set_acting(false)
+		fixture.presentation.set_target_presentation(state)
+		assert_false(fixture.presentation.hud.details.visible)
+
+		fixture.presentation.set_acting(true)
+		assert_true(
+			fixture.presentation.hud.details.visible,
+			"target state followed by acting shows details",
+		)
+
+		fixture.presentation.set_acting(false)
+		fixture.presentation.set_acting(true)
+		fixture.presentation.set_target_presentation(state)
+		assert_true(
+			fixture.presentation.hud.details.visible,
+			"acting followed by target state keeps details visible",
+		)
+
+
 func test_projection_uses_active_transformed_camera_and_hides_behind_it() -> void:
 	var world_fixture := _world()
 	var fixture := _bound_drone(world_fixture, _enemy())
@@ -199,8 +225,8 @@ func test_freeing_view_removes_its_externally_owned_hud() -> void:
 	assert_eq(world_fixture.world.hud_layer.get_child_count(), 0)
 
 
-func test_real_model_routes_idle_attack_hit_charging_and_defeat_fade() -> void:
-	var fixture := _bound_drone(_world(), _enemy())
+func test_tracked_model_routes_animations_and_visible_defeat_fade() -> void:
+	var fixture := _bound_animated_drone(_world(), _enemy())
 	var player: AnimationPlayer = fixture.presentation.animation_player
 	assert_not_null(player)
 	for animation_name: StringName in [&"Idle", &"Attack", &"Hit", &"Charging"]:
@@ -224,23 +250,48 @@ func test_real_model_routes_idle_attack_hit_charging_and_defeat_fade() -> void:
 	assert_true(hit_operation.is_completed)
 	assert_eq(player.current_animation, "Idle")
 
+	fixture.presentation._process(0.0)
+	assert_true(fixture.presentation.hud.visible)
 	fixture.presentation.combatant.defeat()
 	var shutdown_operation: PresentationOperation = fixture.presentation.sync_visual_health()
 	assert_false(shutdown_operation.is_completed)
-	assert_false(fixture.presentation.hud.visible)
+	assert_true(
+		fixture.presentation.hud.visible,
+		"defeat keeps the non-interactive HUD renderable during its fade",
+	)
 	assert_eq(
 		fixture.presentation.hud.target_region.mouse_filter,
 		Control.MOUSE_FILTER_IGNORE,
 	)
 	assert_not_null(fixture.presentation._fade_tween)
 	fixture.presentation._fade_tween.custom_step(
-		fixture.presentation.DEFEAT_FADE_DURATION + 0.01,
+		fixture.presentation.DEFEAT_FADE_DURATION * 0.5,
+	)
+	assert_true(fixture.presentation.hud.visible)
+	assert_between(fixture.presentation.hud.modulate.a, 0.01, 0.99)
+	assert_between(fixture.presentation.instance_material.albedo_color.a, 0.01, 0.99)
+	fixture.presentation._fade_tween.custom_step(
+		fixture.presentation.DEFEAT_FADE_DURATION,
 	)
 	assert_true(shutdown_operation.is_completed)
 	assert_true(is_instance_valid(fixture.root), "fade leaves teardown ownership to encounter")
 	assert_false(fixture.root.visible)
+	assert_false(fixture.presentation.hud.visible)
 	assert_eq(fixture.presentation.hud.modulate.a, 0.0)
 	assert_eq(fixture.presentation.instance_material.albedo_color.a, 0.0)
+
+
+func test_local_eye_drone_smoke_when_installed() -> void:
+	if not ResourceLoader.exists(LOCAL_MODEL_PATH):
+		pass_test("optional local EyeDrone is not installed")
+		return
+	var fixture := _bound_drone(_world(), _enemy())
+
+	assert_false(fixture.presentation.model_loader.using_placeholder)
+	assert_not_null(fixture.presentation.instance_material)
+	assert_not_null(fixture.presentation.animation_player)
+	for animation_name: StringName in [&"Idle", &"Attack", &"Hit", &"Charging"]:
+		assert_true(fixture.presentation.animation_player.has_animation(animation_name))
 
 
 func test_forced_missing_model_keeps_placeholder_and_never_blocks_clips() -> void:
@@ -273,7 +324,7 @@ func test_registry_teardown_completes_pending_operation_after_unregistration() -
 	var manager := RegistryTrackingBattleManager.new()
 	add_child_autofree(manager)
 	var enemy := _enemy()
-	var fixture := _bound_drone(_world(), enemy)
+	var fixture := _bound_animated_drone(_world(), enemy)
 	assert_true(manager.register_presentation(enemy, fixture.presentation))
 	fixture.presentation.show_action("Burst")
 	var operation: PresentationOperation = fixture.presentation.hide_action()
@@ -319,6 +370,38 @@ func _bound_drone(world_fixture: Dictionary, enemy: EnemyCombatant) -> Dictionar
 	var fixture := _drone_view(world_fixture)
 	assert_true(fixture.presentation.setup_view(enemy))
 	return fixture
+
+
+func _bound_animated_drone(
+	world_fixture: Dictionary,
+	enemy: EnemyCombatant,
+) -> Dictionary:
+	var fixture := _drone_view(world_fixture)
+	fixture.presentation.model_loader.local_resource_path = TRACKED_MODEL_PATH
+	fixture.presentation.model_loader.model_loaded.connect(
+		_populate_animated_model, CONNECT_ONE_SHOT,
+	)
+	assert_true(fixture.presentation.setup_view(enemy))
+	return fixture
+
+
+func _populate_animated_model(model_root: Node3D) -> void:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color(0.8, 0.25, 0.35)
+	var mesh := SphereMesh.new()
+	mesh.material = material
+	var mesh_instance := MeshInstance3D.new()
+	mesh_instance.mesh = mesh
+	model_root.add_child(mesh_instance)
+
+	var library := AnimationLibrary.new()
+	for animation_name: StringName in [&"Idle", &"Attack", &"Hit", &"Charging"]:
+		var animation := Animation.new()
+		animation.length = 60.0
+		library.add_animation(animation_name, animation)
+	var player := AnimationPlayer.new()
+	player.add_animation_library(&"", library)
+	model_root.add_child(player)
 
 
 func _enemy() -> EnemyCombatant:

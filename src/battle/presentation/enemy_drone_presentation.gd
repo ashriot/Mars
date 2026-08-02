@@ -57,6 +57,7 @@ func setup_view(value: BattleCombatant) -> bool:
 		push_error("EnemyDronePresentation could not instantiate its enemy HUD.")
 		return false
 	hud_layer.add_child(hud)
+	hud.enable_presentation_owned_defeat_fade()
 	hud.set_projection_visible(false)
 	if not hud.bind_combatant(value as EnemyCombatant):
 		_remove_hud()
@@ -87,14 +88,14 @@ func set_target_presentation(state: TargetState) -> void:
 	super.set_target_presentation(state)
 	if is_instance_valid(hud):
 		hud.set_target_state(state)
+	_refresh_details_visibility()
 
 
 func set_acting(active: bool):
 	acting = active
 	if not _combatant_is_defeated():
 		_play_if_present(&"Charging" if active else &"Idle")
-	if is_instance_valid(hud):
-		hud.set_details_visible(active or target_state == TargetState.SELECTED)
+	_refresh_details_visibility()
 	return PresentationOperation.already_completed()
 
 
@@ -158,6 +159,11 @@ func _update_projection() -> void:
 		camera.unproject_position(foot_anchor.global_position),
 	)
 	hud.set_projection_visible(true)
+
+
+func _refresh_details_visibility() -> void:
+	if is_instance_valid(hud):
+		hud.set_details_visible(acting or target_state == TargetState.SELECTED)
 
 
 func _hud_layer_for_viewport() -> Control:
@@ -377,7 +383,7 @@ func _begin_shutdown_fade() -> void:
 	if is_instance_valid(hud):
 		hud.set_target_state(TargetState.NORMAL)
 		hud.set_details_visible(false)
-		hud.set_projection_visible(false)
+		hud.begin_presentation_owned_defeat_fade()
 	if _action_operation != null:
 		_action_operation.complete()
 	if _hit_operation != null:
@@ -401,6 +407,8 @@ func _on_shutdown_completed(operation: PresentationOperation) -> void:
 		return
 	_shutdown_operation = null
 	_fade_tween = null
+	if is_instance_valid(hud):
+		hud.complete_presentation_owned_defeat_fade()
 	if is_instance_valid(view_root):
 		view_root.visible = false
 

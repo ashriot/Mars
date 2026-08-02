@@ -31,6 +31,7 @@ var _has_projected_foot := false
 var _projected_head := Vector2.ZERO
 var _projected_foot := Vector2.ZERO
 var _details_tween: Tween
+var _presentation_owns_defeat_fade := false
 
 
 func _ready() -> void:
@@ -61,6 +62,22 @@ func bind_combatant(enemy: EnemyCombatant) -> bool:
 	_connect_combatant()
 	_render_full_state()
 	return true
+
+
+func enable_presentation_owned_defeat_fade() -> void:
+	_presentation_owns_defeat_fade = true
+
+
+func begin_presentation_owned_defeat_fade() -> void:
+	if _presentation_owns_defeat_fade:
+		_invalidate_projection(true)
+
+
+func complete_presentation_owned_defeat_fade() -> void:
+	if not _presentation_owns_defeat_fade:
+		return
+	visible = false
+	target_region.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
 func set_target_state(state: CombatantPresentation.TargetState) -> void:
@@ -241,7 +258,10 @@ func _on_presentation_event(
 
 func _on_combatant_defeated(enemy: BattleCombatant) -> void:
 	if enemy == combatant:
-		_invalidate_projection()
+		if _presentation_owns_defeat_fade:
+			begin_presentation_owned_defeat_fade()
+		else:
+			_invalidate_projection()
 
 
 func _on_combatant_tree_exiting() -> void:
@@ -296,12 +316,13 @@ func _sync_target_region() -> void:
 	target_region.size = target_rect.size
 
 
-func _invalidate_projection() -> void:
+func _invalidate_projection(keep_render_surface := false) -> void:
 	_has_projected_head = false
 	_has_projected_foot = false
 	_hovered = false
 	set_details_visible(false)
-	visible = false
+	if not keep_render_surface:
+		visible = false
 	target_region.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 

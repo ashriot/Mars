@@ -215,6 +215,31 @@ func test_defeat_immediately_hides_disables_and_excludes_hud_from_layout() -> vo
 	assert_eq(survivor.compact_stack.global_position, Vector2(390, 210))
 
 
+func test_presentation_owned_defeat_preserves_only_the_render_surface() -> void:
+	var hud := _hud()
+	var enemy := _enemy_with_state(60, 1)
+	hud.enable_presentation_owned_defeat_fade()
+	hud.bind_combatant(enemy)
+	hud.set_projected_head_position(Vector2(500, 300))
+	hud.set_projected_foot_position(Vector2(500, 500))
+	watch_signals(hud)
+
+	enemy.defeat()
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	hud.target_region.mouse_entered.emit()
+	hud.target_region.gui_input.emit(click)
+
+	assert_true(hud.visible, "the owning presentation retains the fade surface")
+	assert_false(hud.has_valid_projection())
+	assert_eq(hud.target_region.mouse_filter, Control.MOUSE_FILTER_IGNORE)
+	assert_signal_not_emitted(hud, &"hovered")
+	assert_signal_not_emitted(hud, &"pressed")
+	hud.complete_presentation_owned_defeat_fade()
+	assert_false(hud.visible)
+
+
 func test_model_tree_exit_invalidates_and_unbinds_surviving_hud() -> void:
 	var hud := _hud()
 	var enemy := _enemy_with_state(80, 3)
