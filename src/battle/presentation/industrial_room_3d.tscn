@@ -1,0 +1,169 @@
+[gd_scene load_steps=13 format=3 uid="uid://bxnblkrkqiufw"]
+
+[ext_resource type="Script" uid="uid://daidhafirumhc" path="res://src/battle/presentation/optional_local_model_3d.gd" id="1_optional"]
+
+[sub_resource type="StandardMaterial3D" id="Material_dark"]
+albedo_color = Color(0.075, 0.09, 0.115, 1)
+metallic = 0.75
+roughness = 0.48
+
+[sub_resource type="StandardMaterial3D" id="Material_trim"]
+albedo_color = Color(0.18, 0.205, 0.24, 1)
+metallic = 0.85
+roughness = 0.32
+
+[sub_resource type="StandardMaterial3D" id="Material_light"]
+albedo_color = Color(0.25, 0.65, 0.95, 1)
+emission_enabled = true
+emission = Color(0.2, 0.7, 1, 1)
+emission_energy_multiplier = 4.0
+
+[sub_resource type="BoxMesh" id="Mesh_wall"]
+material = SubResource("Material_dark")
+size = Vector3(12, 5.2, 0.35)
+
+[sub_resource type="BoxMesh" id="Mesh_top"]
+material = SubResource("Material_trim")
+size = Vector3(12, 0.4, 0.65)
+
+[sub_resource type="BoxMesh" id="Mesh_bottom"]
+material = SubResource("Material_trim")
+size = Vector3(12, 0.45, 0.55)
+
+[sub_resource type="BoxMesh" id="Mesh_floor"]
+material = SubResource("Material_dark")
+size = Vector3(12, 0.3, 14)
+
+[sub_resource type="BoxMesh" id="Mesh_column"]
+material = SubResource("Material_trim")
+size = Vector3(0.75, 5.0, 0.75)
+
+[sub_resource type="BoxMesh" id="Mesh_light"]
+material = SubResource("Material_light")
+size = Vector3(4.0, 0.18, 0.2)
+
+[sub_resource type="BoxMesh" id="Mesh_vent"]
+material = SubResource("Material_trim")
+size = Vector3(2.8, 1.35, 0.22)
+
+[sub_resource type="CylinderMesh" id="Mesh_cable"]
+material = SubResource("Material_dark")
+top_radius = 0.09
+bottom_radius = 0.09
+height = 3.0
+
+[node name="IndustrialRoom3D" type="Node3D"]
+
+[node name="WallAstra" type="Node3D" parent="." node_paths=PackedStringArray("model_parent", "placeholder")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, -6)
+script = ExtResource("1_optional")
+local_resource_path = "res://assets/graphics/models/quaternius_local/environment/industrial/WallAstra_Straight_Flat.gltf"
+model_parent = NodePath("ModelPivot")
+placeholder = NodePath("Placeholder")
+
+[node name="ModelPivot" type="Node3D" parent="WallAstra"]
+transform = Transform3D(3, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="Placeholder" type="MeshInstance3D" parent="WallAstra"]
+mesh = SubResource("Mesh_wall")
+
+[node name="TopAstra" type="Node3D" parent="." node_paths=PackedStringArray("model_parent", "placeholder")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.85, -5.7)
+script = ExtResource("1_optional")
+local_resource_path = "res://assets/graphics/models/quaternius_local/environment/industrial/TopAstra_Straight.gltf"
+model_parent = NodePath("ModelPivot")
+placeholder = NodePath("Placeholder")
+
+[node name="ModelPivot" type="Node3D" parent="TopAstra"]
+transform = Transform3D(3, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="Placeholder" type="MeshInstance3D" parent="TopAstra"]
+mesh = SubResource("Mesh_top")
+
+[node name="BottomMetal" type="Node3D" parent="." node_paths=PackedStringArray("model_parent", "placeholder")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, -5.7)
+script = ExtResource("1_optional")
+local_resource_path = "res://assets/graphics/models/quaternius_local/environment/industrial/BottomMetal_Straight.gltf"
+model_parent = NodePath("ModelPivot")
+placeholder = NodePath("Placeholder")
+
+[node name="ModelPivot" type="Node3D" parent="BottomMetal"]
+transform = Transform3D(3, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="Placeholder" type="MeshInstance3D" parent="BottomMetal"]
+mesh = SubResource("Mesh_bottom")
+
+[node name="PlatformMetal" type="Node3D" parent="." node_paths=PackedStringArray("model_parent", "placeholder")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, 0)
+script = ExtResource("1_optional")
+local_resource_path = "res://assets/graphics/models/quaternius_local/environment/industrial/Platform_Metal.gltf"
+model_parent = NodePath("ModelPivot")
+placeholder = NodePath("Placeholder")
+
+[node name="ModelPivot" type="Node3D" parent="PlatformMetal"]
+transform = Transform3D(3, 0, 0, 0, 1, 0, 0, 0, 3, 0, 0, 0)
+
+[node name="Placeholder" type="MeshInstance3D" parent="PlatformMetal"]
+mesh = SubResource("Mesh_floor")
+
+[node name="ColumnAstra" type="Node3D" parent="." node_paths=PackedStringArray("model_parent", "placeholder")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.45, 2.45, -5.55)
+script = ExtResource("1_optional")
+local_resource_path = "res://assets/graphics/models/quaternius_local/environment/industrial/Column_Astra.gltf"
+model_parent = NodePath("ModelPivot")
+placeholder = NodePath("Placeholder")
+
+[node name="ModelPivot" type="Node3D" parent="ColumnAstra"]
+transform = Transform3D(1, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="Placeholder" type="MeshInstance3D" parent="ColumnAstra"]
+mesh = SubResource("Mesh_column")
+
+[node name="WideLight" type="Node3D" parent="." node_paths=PackedStringArray("model_parent", "placeholder")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.75, -5.48)
+script = ExtResource("1_optional")
+local_resource_path = "res://assets/graphics/models/quaternius_local/environment/industrial/Prop_Light_Wide.gltf"
+model_parent = NodePath("ModelPivot")
+placeholder = NodePath("Placeholder")
+
+[node name="ModelPivot" type="Node3D" parent="WideLight"]
+
+[node name="Placeholder" type="MeshInstance3D" parent="WideLight"]
+mesh = SubResource("Mesh_light")
+
+[node name="WideVent" type="Node3D" parent="." node_paths=PackedStringArray("model_parent", "placeholder")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.9, 2.15, -5.48)
+script = ExtResource("1_optional")
+local_resource_path = "res://assets/graphics/models/quaternius_local/environment/industrial/Prop_Vent_Wide.gltf"
+model_parent = NodePath("ModelPivot")
+placeholder = NodePath("Placeholder")
+
+[node name="ModelPivot" type="Node3D" parent="WideVent"]
+
+[node name="Placeholder" type="MeshInstance3D" parent="WideVent"]
+mesh = SubResource("Mesh_vent")
+
+[node name="Cable" type="Node3D" parent="." node_paths=PackedStringArray("model_parent", "placeholder")]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 3.0, 2.4, -5.42)
+script = ExtResource("1_optional")
+local_resource_path = "res://assets/graphics/models/quaternius_local/environment/industrial/Prop_Cable_1.gltf"
+model_parent = NodePath("ModelPivot")
+placeholder = NodePath("Placeholder")
+
+[node name="ModelPivot" type="Node3D" parent="Cable"]
+
+[node name="Placeholder" type="MeshInstance3D" parent="Cable"]
+mesh = SubResource("Mesh_cable")
+
+[node name="RoomKeyLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-42, -28, 0)
+light_color = Color(0.72, 0.82, 1, 1)
+light_energy = 1.15
+shadow_enabled = true
+
+[node name="RoomFillLight" type="OmniLight3D" parent="."]
+position = Vector3(0, 3.4, 1.5)
+light_color = Color(0.28, 0.68, 1, 1)
+light_energy = 3.2
+omni_range = 13.0
+shadow_enabled = true

@@ -1,0 +1,87 @@
+extends GutTest
+
+const BattleWorldScene := preload("res://src/battle/presentation/battle_world_3d.tscn")
+
+
+func _world() -> BattleWorld3D:
+	var world := BattleWorldScene.instantiate() as BattleWorld3D
+	add_child_autofree(world)
+	return world
+
+
+func test_world_exposes_stable_camera_enemy_and_hud_nodes() -> void:
+	var world := _world()
+	assert_not_null(world.camera)
+	assert_true(world.camera.current)
+	assert_not_null(world.enemy_views)
+	assert_not_null(world.hud_layer)
+	assert_eq(world.hud_layer.mouse_filter, Control.MOUSE_FILTER_IGNORE)
+
+
+func test_room_uses_eight_optional_local_modules_with_tracked_placeholders() -> void:
+	var world := _world()
+	var room := world.get_node("IndustrialRoom3D")
+	var expected_paths := [
+		"res://assets/graphics/models/quaternius_local/environment/industrial/WallAstra_Straight_Flat.gltf",
+		"res://assets/graphics/models/quaternius_local/environment/industrial/TopAstra_Straight.gltf",
+		"res://assets/graphics/models/quaternius_local/environment/industrial/BottomMetal_Straight.gltf",
+		"res://assets/graphics/models/quaternius_local/environment/industrial/Platform_Metal.gltf",
+		"res://assets/graphics/models/quaternius_local/environment/industrial/Column_Astra.gltf",
+		"res://assets/graphics/models/quaternius_local/environment/industrial/Prop_Light_Wide.gltf",
+		"res://assets/graphics/models/quaternius_local/environment/industrial/Prop_Vent_Wide.gltf",
+		"res://assets/graphics/models/quaternius_local/environment/industrial/Prop_Cable_1.gltf",
+	]
+	var loaders: Array[OptionalLocalModel3D] = []
+	for child: Node in room.get_children():
+		if child is OptionalLocalModel3D:
+			loaders.append(child)
+	assert_eq(loaders.size(), 8)
+	var actual_paths: Array[String] = []
+	for loader: OptionalLocalModel3D in loaders:
+		actual_paths.append(loader.local_resource_path)
+		assert_not_null(loader.model_parent)
+		assert_not_null(loader.placeholder)
+		assert_true(loader.placeholder is MeshInstance3D)
+	assert_eq(actual_paths, expected_paths)
+
+
+func test_five_ordinary_views_are_adopted_and_placed_in_authored_order() -> void:
+	var world := _world()
+	var expected := BattleFormationLayout.ordinary_transforms(5, BattleFormationLayout.Layout.W)
+	for index: int in 5:
+		var view := Node3D.new()
+		assert_true(world.place_ordinary_view(view, index, 5, BattleFormationLayout.Layout.W))
+		assert_eq(view.get_parent(), world.enemy_views)
+		assert_eq(view.transform, expected[index])
+
+
+func test_sixth_ordinary_view_is_rejected_without_adoption_or_motion() -> void:
+	var world := _world()
+	var sixth := Node3D.new()
+	var initial_transform := Transform3D(Basis.from_euler(Vector3(0.1, 0.2, 0.3)), Vector3(9.0, 8.0, 7.0))
+	sixth.transform = initial_transform
+	assert_false(world.place_ordinary_view(sixth, 5, 6, BattleFormationLayout.Layout.M))
+	assert_null(sixth.get_parent())
+	assert_eq(sixth.transform, initial_transform)
+	sixth.free()
+
+
+func test_boss_and_allies_use_reserved_center_and_outer_volumes() -> void:
+	var world := _world()
+	var boss := Node3D.new()
+	var left_ally := Node3D.new()
+	var right_ally := Node3D.new()
+	assert_true(world.place_boss_view(boss))
+	assert_true(world.place_boss_view(left_ally, 0))
+	assert_true(world.place_boss_view(right_ally, 1))
+	assert_eq(boss.position, Vector3.ZERO)
+	assert_eq(left_ally.position, Vector3(-4.4, 0.0, 0.0))
+	assert_eq(right_ally.position, Vector3(4.4, 0.0, 0.0))
+	assert_eq(boss.get_parent(), world.enemy_views)
+	assert_eq(left_ally.get_parent(), world.enemy_views)
+	assert_eq(right_ally.get_parent(), world.enemy_views)
+
+
+func test_encounter_defaults_to_w_formation() -> void:
+	var encounter := Encounter.new()
+	assert_eq(encounter.enemy_formation, BattleFormationLayout.Layout.W)

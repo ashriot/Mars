@@ -15,3 +15,6 @@ class_name Encounter
 @export var is_elite: bool = false
 # Is this a Boss fight?
 @export var is_boss: bool = false
+
+@export_group("Presentation")
+@export var enemy_formation: BattleFormationLayout.Layout = BattleFormationLayout.Layout.W
