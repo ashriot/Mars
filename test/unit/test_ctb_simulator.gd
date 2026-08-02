@@ -87,7 +87,7 @@ class SuspendingBreachEffect extends ActionEffect:
 		target_type = Action.TargetType.SELF
 
 	func execute(
-		_attacker: ActorCard,
+		_attacker: Node,
 		_parent_targets: Array,
 		_battle_manager: BattleManager,
 		_action: Action = null,
@@ -106,7 +106,7 @@ class BreachLogEffect extends ActionEffect:
 		target_type = Action.TargetType.SELF
 
 	func execute(
-		_attacker: ActorCard,
+		_attacker: Node,
 		_parent_targets: Array,
 		_battle_manager: BattleManager,
 		_action: Action = null,
@@ -115,7 +115,7 @@ class BreachLogEffect extends ActionEffect:
 		event_log.append("breached_actor_on_breached")
 
 
-class BreachObserverHero extends HeroCard:
+class BreachObserverHeroModel extends HeroCombatant:
 	var recorded_events: Array[Trigger.TriggerType] = []
 	var recorded_contexts: Array[Dictionary] = []
 
@@ -127,7 +127,7 @@ class BreachObserverHero extends HeroCard:
 		recorded_contexts.append(context.duplicate())
 
 
-class BreachObserverEnemy extends EnemyCard:
+class BreachObserverEnemyModel extends EnemyCombatant:
 	var recorded_events: Array[Trigger.TriggerType] = []
 
 	func _fire_condition_event(
@@ -148,9 +148,10 @@ func _scene_backed_actor(
 	actor: ActorCard,
 	faction: BattleCombatant.Faction,
 	manager: BattleManager = null,
+	combatant_override: BattleCombatant = null,
 ) -> ActorCard:
 	return CardSceneTestFixture.bind(
-		self, actor, faction, ActorStats.new(), manager,
+		self, actor, faction, ActorStats.new(), manager, combatant_override,
 	)
 
 
@@ -197,37 +198,45 @@ func test_breach_signal_supplies_actor() -> void:
 
 func test_enemy_breach_notifies_only_living_opposing_observers() -> void:
 	var manager := BreachBattleManager.new()
+	var breached_enemy_model := BreachObserverEnemyModel.new()
 	var breached_enemy := _scene_backed_actor(
-		BreachObserverEnemy.new(), BattleCombatant.Faction.ENEMY, manager,
-	) as BreachObserverEnemy
+		ActorCard.new(), BattleCombatant.Faction.ENEMY, manager,
+		breached_enemy_model,
+	)
+	var enemy_ally_model := BreachObserverEnemyModel.new()
 	var enemy_ally := _scene_backed_actor(
-		BreachObserverEnemy.new(), BattleCombatant.Faction.ENEMY, manager,
-	) as BreachObserverEnemy
+		ActorCard.new(), BattleCombatant.Faction.ENEMY, manager,
+		enemy_ally_model,
+	)
+	var living_hero_model := BreachObserverHeroModel.new()
 	var living_hero := _scene_backed_actor(
-		BreachObserverHero.new(), BattleCombatant.Faction.HERO, manager,
-	) as BreachObserverHero
+		ActorCard.new(), BattleCombatant.Faction.HERO, manager,
+		living_hero_model,
+	)
+	var defeated_hero_model := BreachObserverHeroModel.new()
 	var defeated_hero := _scene_backed_actor(
-		BreachObserverHero.new(), BattleCombatant.Faction.HERO, manager,
-	) as BreachObserverHero
+		ActorCard.new(), BattleCombatant.Faction.HERO, manager,
+		defeated_hero_model,
+	)
 	breached_enemy.is_defeated = false
 	enemy_ally.is_defeated = false
 	living_hero.is_defeated = false
 	defeated_hero.is_defeated = true
 	manager.actor_list = [breached_enemy, enemy_ally, living_hero, defeated_hero]
 
-	await manager._on_actor_breached(breached_enemy)
+	await manager._on_combatant_breached(breached_enemy_model)
 
 	assert_eq(manager.update_count, 1)
 	assert_eq(
-		living_hero.recorded_events,
+		living_hero_model.recorded_events,
 		[Trigger.TriggerType.ON_ENEMY_BREACHED],
 	)
-	assert_eq(living_hero.recorded_contexts.size(), 1)
-	assert_same(living_hero.recorded_contexts[0].target, breached_enemy)
-	assert_eq(living_hero.recorded_contexts[0].targets, [breached_enemy])
-	assert_eq(defeated_hero.recorded_events, [])
-	assert_eq(enemy_ally.recorded_events, [])
-	assert_eq(breached_enemy.recorded_events, [])
+	assert_eq(living_hero_model.recorded_contexts.size(), 1)
+	assert_same(living_hero_model.recorded_contexts[0].target, breached_enemy_model)
+	assert_eq(living_hero_model.recorded_contexts[0].targets, [breached_enemy_model])
+	assert_eq(defeated_hero_model.recorded_events, [])
+	assert_eq(enemy_ally_model.recorded_events, [])
+	assert_eq(breached_enemy_model.recorded_events, [])
 	manager.free()
 	breached_enemy.free()
 	enemy_ally.free()

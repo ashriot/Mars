@@ -112,16 +112,10 @@ func _on_target_mouse_exited() -> void:
 	target_unhovered.emit(self)
 
 
-func bind_combatant(
-	value: BattleCombatant,
-	legacy_preview: bool = false,
-) -> void:
+func bind_combatant(value: BattleCombatant) -> void:
 	assert(value != null, "ActorCard requires a BattleCombatant.")
 	assert(_combatant == null, "ActorCard cannot be rebound to another BattleCombatant.")
 	_combatant = value
-	value.bind_legacy_effect_actor(self)
-	if legacy_preview:
-		return
 	_ensure_battle_manager()
 	presentation.card = self
 	presentation.bind(value)
@@ -260,6 +254,8 @@ func _on_combatant_presentation_event(
 			spawn_particles.emit(get_global_rect().get_center(), "gunshot")
 		&"healing_received":
 			hp_bar_ghost.value = current_hp
+		&"impact":
+			shake_panel(float(payload.get("intensity", 0.5)))
 		&"passive_fired":
 			if self is HeroCard:
 				(self as HeroCard).passive_fired.emit()
@@ -307,12 +303,7 @@ func in_danger(value: bool):
 	await _require_combatant().in_danger(value)
 
 func breach():
-	await _require_combatant().breach(_await_breach_observers)
-
-
-func _await_breach_observers() -> void:
-	if is_instance_valid(battle_manager):
-		await battle_manager._on_actor_breached(self)
+	await _require_combatant().breach()
 
 func take_healing(heal_amount: int, is_revive: bool = false):
 	await _require_combatant().take_healing(heal_amount, is_revive)

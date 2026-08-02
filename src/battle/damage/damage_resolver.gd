@@ -93,8 +93,8 @@ static func combine_potency(
 
 
 static func resolve_hit(
-	attacker: ActorCard,
-	target: ActorCard,
+	attacker: BattleCombatant,
+	target: BattleCombatant,
 	power_type: Action.PowerType,
 	resolved_potency: ResolvedPotency,
 	distribution_count: int,

@@ -44,20 +44,26 @@ func _init(
 
 
 static func capture(
-	attacker: ActorCard,
-	target: ActorCard,
+	attacker_node: Node,
+	target_node: Node,
 	battle_manager: BattleManager = null,
 	source_action: Action = null,
 	source_effect: ActionEffect = null,
 	trigger_context: Dictionary = {},
 ) -> DamageContext:
+	var attacker := BattleCombatant.resolve_model(attacker_node)
+	var target := BattleCombatant.resolve_model(target_node) \
+		if is_instance_valid(target_node) else null
 	var other_living_allies := 0
 	var other_living_enemies := 0
 	if battle_manager != null:
-		for combatant in battle_manager.actor_list:
-			if not is_instance_valid(combatant) or combatant.is_defeated:
+		for value: Node in battle_manager.actor_list:
+			if not is_instance_valid(value):
 				continue
-			if combatant is HeroCard == attacker is HeroCard:
+			var combatant := BattleCombatant.resolve_model(value)
+			if combatant.is_defeated:
+				continue
+			if combatant.faction == attacker.faction:
 				if combatant != attacker:
 					other_living_allies += 1
 			elif combatant != target:

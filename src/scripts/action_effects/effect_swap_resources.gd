@@ -15,12 +15,15 @@ enum SwappableResource {
 @export var resource_b: SwappableResource = SwappableResource.FOCUS
 # (effect_target_type is inherited and defaults to PRIMARY)
 
-func execute(_attacker: ActorCard, primary_targets: Array, battle_manager: BattleManager, _action: Action = null, _context: Dictionary = {}) -> void:
+func execute(attacker_node: Node, primary_targets: Array, battle_manager: BattleManager, _action: Action = null, _context: Dictionary = {}) -> void:
 
 	print("--- Executing Resource Swap Effect ---")
+	BattleCombatant.resolve_model(attacker_node)
 
-	for target in primary_targets:
-		var hero_target: HeroCard = target
+	for target_node: Node in primary_targets:
+		var hero_target := BattleCombatant.resolve_model(target_node) as HeroCombatant
+		if hero_target == null:
+			continue
 
 		# A. Get the current values
 		var guard_val = hero_target.current_guard

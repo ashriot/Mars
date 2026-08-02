@@ -4,6 +4,8 @@ class_name Effect_RemoveDebuffs
 @export var quantity: int = 1
 
 
-func execute(_attacker: ActorCard, targets: Array, _battle_manager: BattleManager, _action: Action = null, _context: Dictionary = {}) -> void:
-	for target in targets:
+func execute(attacker_node: Node, targets: Array, _battle_manager: BattleManager, _action: Action = null, _context: Dictionary = {}) -> void:
+	BattleCombatant.resolve_model(attacker_node)
+	for target_node: Node in targets:
+		var target := BattleCombatant.resolve_model(target_node)
 		await target.remove_debuffs(quantity)

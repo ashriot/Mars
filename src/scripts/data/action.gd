@@ -50,11 +50,17 @@ var can_revive_targets: bool:
 		return false
 
 func get_rich_description(
-	user: ActorCard,
-	target: ActorCard = null,
-	presentation_targets: Array[ActorCard] = [],
+	user_node: Node,
+	target_node: Node = null,
+	presentation_target_nodes: Array = [],
 	battle_manager: BattleManager = null,
 ) -> String:
+	var user := BattleCombatant.resolve_model(user_node)
+	var target := BattleCombatant.resolve_model(target_node) \
+		if is_instance_valid(target_node) else null
+	var presentation_targets: Array[BattleCombatant] = []
+	for value: Node in presentation_target_nodes:
+		presentation_targets.append(BattleCombatant.resolve_model(value))
 	_init_regex()
 	var final_desc := _compose_effect_presentations(
 		description, user, target, presentation_targets, battle_manager,
@@ -63,8 +69,8 @@ func get_rich_description(
 	var input_names = PackedStringArray(["atk", "psy", "hp", "spd", "focus", "grd"])
 
 	var current_foc = 0.0
-	if user is HeroCard:
-		current_foc = float(user.current_focus)
+	if user is HeroCombatant:
+		current_foc = float((user as HeroCombatant).current_focus)
 
 	var input_values = Array([
 		float(user.get_power(PowerType.ATTACK)),
@@ -110,9 +116,9 @@ func get_rich_description(
 
 func _compose_effect_presentations(
 	template: String,
-	user: ActorCard,
-	target: ActorCard,
-	presentation_targets: Array[ActorCard],
+	user: BattleCombatant,
+	target: BattleCombatant,
+	presentation_targets: Array[BattleCombatant],
 	battle_manager: BattleManager,
 ) -> String:
 	if template.is_empty():
@@ -144,9 +150,9 @@ func _compose_effect_presentations(
 
 func _get_effect_presentation(
 	effect_index: int,
-	user: ActorCard,
-	target: ActorCard,
-	presentation_targets: Array[ActorCard],
+	user: BattleCombatant,
+	target: BattleCombatant,
+	presentation_targets: Array[BattleCombatant],
 	battle_manager: BattleManager,
 ) -> EffectPresentation:
 	if effect_index < 0 or effect_index >= effects.size():
@@ -154,7 +160,7 @@ func _get_effect_presentation(
 	var effect := effects[effect_index]
 	if effect == null:
 		return null
-	var resolved_targets: Array[ActorCard] = []
+	var resolved_targets: Array[BattleCombatant] = []
 	resolved_targets.assign(presentation_targets)
 	if target != null and resolved_targets.is_empty():
 		resolved_targets.append(target)

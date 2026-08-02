@@ -33,7 +33,6 @@ var is_in_danger := false
 var is_defeated := false
 var active_conditions: Array[Condition] = []
 var active_traits: Array[Trait] = []
-var legacy_effect_actor: ActorCard
 var _lethal_hit_reaction_depth := 0
 var _condition_removal_batch_depth := 0
 var _condition_removal_batch_dirty := false
@@ -63,19 +62,6 @@ func setup_base(
 	is_breached = false
 	is_in_danger = false
 	is_defeated = false
-
-
-func bind_legacy_effect_actor(actor: ActorCard) -> void:
-	assert(actor != null, "BattleCombatant requires a legacy effect actor.")
-	assert(
-		legacy_effect_actor == null or legacy_effect_actor == actor,
-		"BattleCombatant cannot be rebound to another legacy effect actor.",
-	)
-	legacy_effect_actor = actor
-
-
-func _effect_actor() -> Node:
-	return legacy_effect_actor if is_instance_valid(legacy_effect_actor) else self
 
 
 func is_hero() -> bool:
@@ -145,9 +131,10 @@ func get_crit_damage_bonus() -> int:
 func take_one_hit(
 	result: DamageResult,
 	damage_effect: Effect_Damage,
-	attacker: Node,
+	attacker_node: Node,
 	resolved_damage_type: Action.DamageType,
 ) -> int:
+	var attacker := BattleCombatant.resolve_model(attacker_node)
 	if is_defeated:
 		return 0
 
@@ -166,8 +153,8 @@ func take_one_hit(
 		_lethal_hit_reaction_depth += 1
 	var event_context := {
 		"attacker": attacker,
-		"target": _effect_actor(),
-		"targets": [_effect_actor()],
+		"target": self,
+		"targets": [self],
 		"damage_result": result,
 		"attempted_damage": result.final_damage,
 		"actual_damage": actual_damage,
@@ -218,7 +205,7 @@ func modify_guard(amount: int, is_recovering: bool = false) -> void:
 		"is_recovering": is_recovering,
 	})
 	print(actor_name, " gained ", amount, " guard. Total: ", current_guard)
-	var context := {"targets": [_effect_actor()], "guard_gained": amount}
+	var context := {"targets": [self], "guard_gained": amount}
 	if amount > 0 and not is_recovering:
 		await _fire_condition_event(Trigger.TriggerType.ON_GAINING_GUARD, context)
 	if current_guard == 0 and not is_breached:
@@ -239,15 +226,15 @@ func in_danger(value: bool) -> void:
 	)
 
 
-func breach(before_own_reactions: Callable = Callable()) -> void:
+func breach() -> void:
 	is_breached = true
 	in_danger(false)
 	current_ct = 0
 	breached.emit(self)
 	presentation_event.emit(self, &"breach_started", {})
 	print("Breached: ", actor_name, " -> CT: ", current_ct)
-	if before_own_reactions.is_valid():
-		await before_own_reactions.call()
+	if is_instance_valid(battle_manager):
+		await battle_manager._on_combatant_breached(self)
 	await _fire_condition_event(Trigger.TriggerType.ON_BREACHED)
 
 
@@ -291,14 +278,15 @@ func add_condition(condition_resource: Condition) -> void:
 				)
 				for effect: ActionEffect in trigger.effects_to_run:
 					await battle_manager.execute_triggered_effect(
-						_effect_actor(), effect, [_effect_actor()], null, {},
+						self, effect, [self], null, {},
 					)
 				return
 
 	if has_condition(condition_resource.condition_name):
 		return
 	var new_condition := condition_resource.duplicate(true) as Condition
-	new_condition.attacker = condition_resource.attacker
+	new_condition.attacker = BattleCombatant.resolve_model(condition_resource.attacker) \
+		if is_instance_valid(condition_resource.attacker) else null
 	active_conditions.append(new_condition)
 	print(actor_name, " gained condition: ", new_condition.condition_name)
 
@@ -386,21 +374,23 @@ func _execute_condition_triggers(
 		var targets: Array = []
 		if context.has("targets"):
 			targets.assign(context.targets)
-		var contextual_attacker := context.get("attacker") as Node
+		var contextual_attacker_node := context.get("attacker") as Node
+		var contextual_attacker := BattleCombatant.resolve_model(
+			contextual_attacker_node,
+		) if is_instance_valid(contextual_attacker_node) else null
 		var action := context.get("action") as Action
 		for effect: ActionEffect in trigger.effects_to_run:
 			if effect == null:
 				continue
+			var effect_source_node := condition.attacker \
+				if is_instance_valid(condition.attacker) else self
+			var effect_source := BattleCombatant.resolve_model(effect_source_node)
 			if effect.target_type == Action.TargetType.SELF:
-				targets = [_effect_actor()]
+				targets = [self]
 			else:
-				var effect_source := condition.attacker \
-					if is_instance_valid(condition.attacker) else _effect_actor()
-				var source_is_hero: bool = effect_source.is_hero() \
-					if effect_source is BattleCombatant else effect_source is HeroCard
 				targets = battle_manager.get_targets(
 					effect.target_type,
-					source_is_hero,
+					effect_source.is_hero(),
 					targets,
 					contextual_attacker,
 				)
@@ -409,7 +399,7 @@ func _execute_condition_triggers(
 				and event_type == Trigger.TriggerType.ON_TURN_START:
 				presentation_event.emit(self, &"passive_fired", {})
 			await battle_manager.execute_triggered_effect(
-				condition.attacker, effect, targets, action, context,
+				effect_source, effect, targets, action, context,
 			)
 			if condition.update_turn_order:
 				battle_manager.update_turn_order()
@@ -454,9 +444,12 @@ func get_damage_dealt_modifier(target: Node) -> float:
 
 
 func get_damage_dealt_contributions(target: Node) -> Array[DamageContribution]:
+	var target_combatant := BattleCombatant.resolve_model(target)
 	var contributions: Array[DamageContribution] = []
 	for condition: Condition in active_conditions:
-		var power_bonus := condition.get_damage_dealt_power_bonus(self, target)
+		var power_bonus := condition.get_damage_dealt_power_bonus(
+			self, target_combatant,
+		)
 		if not is_zero_approx(power_bonus):
 			contributions.append(DamageContribution.new(
 				_damage_modifier_source(
@@ -465,7 +458,7 @@ func get_damage_dealt_contributions(target: Node) -> Array[DamageContribution]:
 				DamageContribution.Stage.POWER,
 				power_bonus,
 			))
-		var amount := condition.get_damage_dealt_modifier(self, target)
+		var amount := condition.get_damage_dealt_modifier(self, target_combatant)
 		if not is_zero_approx(amount):
 			contributions.append(DamageContribution.new(
 				_damage_modifier_source(
@@ -475,7 +468,7 @@ func get_damage_dealt_contributions(target: Node) -> Array[DamageContribution]:
 				amount,
 			))
 	for trait_item: Trait in active_traits:
-		var amount := trait_item.get_damage_dealt_modifier(target)
+		var amount := trait_item.get_damage_dealt_modifier(target_combatant)
 		if is_zero_approx(amount):
 			continue
 		contributions.append(DamageContribution.new(
@@ -495,9 +488,10 @@ func get_damage_taken_modifier(attacker: Node) -> float:
 
 
 func get_damage_taken_contributions(attacker: Node) -> Array[DamageContribution]:
+	var attacker_combatant := BattleCombatant.resolve_model(attacker)
 	var contributions: Array[DamageContribution] = []
 	for condition: Condition in active_conditions:
-		var amount := condition.get_damage_taken_modifier(attacker, self)
+		var amount := condition.get_damage_taken_modifier(attacker_combatant, self)
 		if is_zero_approx(amount):
 			continue
 		contributions.append(DamageContribution.new(
@@ -508,7 +502,7 @@ func get_damage_taken_contributions(attacker: Node) -> Array[DamageContribution]
 			amount,
 		))
 	for trait_item: Trait in active_traits:
-		var amount := trait_item.get_damage_taken_modifier(attacker)
+		var amount := trait_item.get_damage_taken_modifier(attacker_combatant)
 		if is_zero_approx(amount):
 			continue
 		contributions.append(DamageContribution.new(

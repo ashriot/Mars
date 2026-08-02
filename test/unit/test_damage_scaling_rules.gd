@@ -1,8 +1,5 @@
 extends GutTest
 
-const CardSceneTestFixture := preload("res://test/helpers/card_scene_test_fixture.gd")
-
-
 class SwarmRule extends DamageScalingRule:
 	func resolve(_base_potency: float, context: DamageContext) -> DamageContribution:
 		return DamageContribution.new(&"swarm", DamageContribution.Stage.POTENCY, context.other_living_allies * 0.1)
@@ -100,11 +97,8 @@ func test_typed_contribution_stages_route_only_to_their_formula_categories() -> 
 	]
 	var context := _context(0, 0, 0)
 	var resolved := DamageResolver.resolve_potency(1.0, rules, context)
-	var attacker := CardSceneTestFixture.actor(self)
-	attacker.current_stats = ActorStats.new()
-	attacker.current_stats.attack = 100
-	var target := CardSceneTestFixture.actor(self, BattleCombatant.Faction.ENEMY)
-	target.current_stats = ActorStats.new()
+	var attacker := _combatant_with_power(Action.PowerType.ATTACK, 100)
+	var target := _combatant_with_power(Action.PowerType.ATTACK, 0)
 	var result := DamageResolver.resolve_hit(
 		attacker,
 		target,
@@ -137,9 +131,7 @@ func test_request_retains_authored_potency_and_labeled_actor_modifiers() -> void
 	var resolved := DamageResolver.resolve_potency(
 		0.8, [scaling_rule], _context(0, 0, 0),
 	)
-	var attacker := CardSceneTestFixture.actor(self)
-	attacker.current_stats = ActorStats.new()
-	attacker.current_stats.attack = 100
+	var attacker := _combatant_with_power(Action.PowerType.ATTACK, 100)
 	var focus_condition := Condition.new()
 	focus_condition.condition_name = "Battle Focus"
 	focus_condition.damage_dealt_scalar = 0.1
@@ -148,8 +140,7 @@ func test_request_retains_authored_potency_and_labeled_actor_modifiers() -> void
 	sharpshooter.outgoing_modifier = 0.2
 	attacker.active_conditions = [focus_condition]
 	attacker.active_traits = [sharpshooter]
-	var target := CardSceneTestFixture.actor(self, BattleCombatant.Faction.ENEMY)
-	target.current_stats = ActorStats.new()
+	var target := _combatant_with_power(Action.PowerType.ATTACK, 0)
 	var exposed_condition := Condition.new()
 	exposed_condition.condition_name = "Exposed Armor"
 	exposed_condition.damage_taken_scalar = 0.3
@@ -378,14 +369,11 @@ func _context(focus: int, guard: int, other_living_allies: int) -> DamageContext
 	return DamageContext.new(attacker, target, other_living_allies, 0, null, null, {})
 
 
-func _actor_with_power(power_type: Action.PowerType, value: int) -> ActorCard:
-	var actor := CardSceneTestFixture.actor(self)
-	actor.current_stats = ActorStats.new()
-	if power_type == Action.PowerType.ATTACK:
-		actor.current_stats.attack = value
-	elif power_type == Action.PowerType.PSYCHE:
-		actor.current_stats.psyche = value
-	return actor
+func _actor_with_power(
+	power_type: Action.PowerType,
+	value: int,
+) -> BattleCombatant:
+	return _combatant_with_power(power_type, value)
 
 
 func _combatant_with_power(

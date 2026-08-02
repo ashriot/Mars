@@ -8,7 +8,8 @@ class_name Effect_Healing
 @export var is_revive: bool = false
 
 
-func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleManager, _action: Action = null, _context: Dictionary = {}) -> void:
+func execute(attacker_node: Node, parent_targets: Array, battle_manager: BattleManager, _action: Action = null, _context: Dictionary = {}) -> void:
+	var attacker := BattleCombatant.resolve_model(attacker_node)
 
 	print("--- Executing Healing Effect ---")
 
@@ -16,11 +17,11 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 		print("Healing effect had no targets.")
 		return
 
-	for target in parent_targets:
-		if not target or not is_instance_valid(target):
+	for target_node: Node in parent_targets:
+		if not is_instance_valid(target_node):
 			continue
-		var actor_target := target as ActorCard
-		if actor_target == null or (actor_target.is_defeated and not is_revive):
+		var actor_target := BattleCombatant.resolve_model(target_node)
+		if actor_target.is_defeated and not is_revive:
 			continue
 
 		var base_power = attacker.get_power(power_type)
@@ -33,14 +34,14 @@ func execute(attacker: ActorCard, parent_targets: Array, battle_manager: BattleM
 			)
 			scalar += (1.0 - hp_percent)
 
-		if focus_scalar != 0.0 and actor_target is HeroCard:
-			scalar += focus_scalar * (actor_target as HeroCard).current_focus
+		if focus_scalar != 0.0 and actor_target is HeroCombatant:
+			scalar += focus_scalar * (actor_target as HeroCombatant).current_focus
 
 		var final_heal_float = base_heal_float * scalar
 		var final_heal_int = roundi(final_heal_float)
 
 		print(actor_target.actor_name, " is healed for ", final_heal_int)
-		actor_target.take_healing(final_heal_int, is_revive)
+		await actor_target.take_healing(final_heal_int, is_revive)
 
 	await battle_manager.wait()
 	return

@@ -337,14 +337,18 @@ func _format_number(value: float) -> String:
 
 
 func execute(
-	attacker: ActorCard,
+	attacker_node: Node,
 	parent_targets: Array,
 	battle_manager: BattleManager,
 	action: Action = null,
 	context: Dictionary = {},
 ) -> void:
+	var attacker := BattleCombatant.resolve_model(attacker_node)
+	var targets: Array[BattleCombatant] = []
+	for target_node: Node in parent_targets:
+		targets.append(BattleCombatant.resolve_model(target_node))
 	var resolved_hit_count := _resolve_hit_count(attacker, context)
-	var plan := _build_hit_plan(parent_targets, action, resolved_hit_count)
+	var plan := _build_hit_plan(targets, action, resolved_hit_count)
 	var source_action := _resolve_source_action(action, context)
 	var effect_context := DamageContext.capture(
 		attacker, null, battle_manager, source_action, self, context,
@@ -412,7 +416,7 @@ func _build_hit_plan(
 	return DamageHitPlan.all_targets(expanded_targets, split_damage)
 
 
-func _resolve_hit_count(_attacker: ActorCard, _context: Dictionary = {}) -> int:
+func _resolve_hit_count(_attacker: BattleCombatant, _context: Dictionary = {}) -> int:
 	return hit_count
 
 
@@ -420,7 +424,7 @@ func _resolve_planned_target(
 	plan: DamageHitPlan,
 	hit_index: int,
 	battle_manager: BattleManager,
-) -> ActorCard:
+) -> BattleCombatant:
 	var plan_candidates := plan.candidates
 	if plan.target_mode == DamageHitPlan.TargetMode.RANDOM:
 		return _pick_random_target(
@@ -429,15 +433,15 @@ func _resolve_planned_target(
 	if plan_candidates.is_empty():
 		return null
 	if plan.target_mode == DamageHitPlan.TargetMode.SINGLE:
-		return plan_candidates[0] as ActorCard
+		return plan_candidates[0] as BattleCombatant
 	if hit_index >= plan_candidates.size():
 		return null
-	return plan_candidates[hit_index] as ActorCard
+	return plan_candidates[hit_index] as BattleCombatant
 
 
 func _can_continue_hit(
-	attacker: ActorCard,
-	target: ActorCard,
+	attacker: BattleCombatant,
+	target: BattleCombatant,
 	battle_manager: BattleManager,
 ) -> bool:
 	return battle_manager.current_state != BattleManager.State.BATTLE_OVER \
@@ -447,8 +451,8 @@ func _can_continue_hit(
 
 
 func _execute_one_hit(
-	attacker: ActorCard,
-	target: ActorCard,
+	attacker: BattleCombatant,
+	target: BattleCombatant,
 	battle_manager: BattleManager,
 	source_action: Action,
 	context: Dictionary,
@@ -514,17 +518,17 @@ static func lifedrain_amount(actual_damage: int, scalar: float) -> int:
 
 
 func _apply_guard_behavior(
-	target: ActorCard,
+	target: BattleCombatant,
 	resolved_damage_type: Action.DamageType,
 ) -> void:
 	if not _resolved_type_shreds_guard(resolved_damage_type):
-		target.shake_panel()
+		target.presentation_event.emit(target, &"impact", {"intensity": 0.5})
 		return
 	if not target.is_breached and target.current_guard == 0:
 		await target.breach()
 		return
 	await target.modify_guard(-1)
-	target.shake_panel()
+	target.presentation_event.emit(target, &"impact", {"intensity": 0.5})
 
 
 func _resolved_type_shreds_guard(resolved_damage_type: Action.DamageType) -> bool:
@@ -537,7 +541,7 @@ func _resolved_type_shreds_guard(resolved_damage_type: Action.DamageType) -> boo
 func _is_target_sequence_complete(
 	plan: DamageHitPlan,
 	hit_index: int,
-	target: ActorCard,
+	target: BattleCombatant,
 ) -> bool:
 	if target.is_defeated or hit_index >= plan.planned_hit_count - 1:
 		return true
@@ -551,7 +555,7 @@ func _is_target_sequence_complete(
 func _should_wait_between_hits(
 	plan: DamageHitPlan,
 	hit_index: int,
-	target: ActorCard,
+	target: BattleCombatant,
 ) -> bool:
 	if hit_index >= plan.planned_hit_count - 1:
 		return false
@@ -610,8 +614,8 @@ func _resolve_current_hit_potency(
 
 
 func _get_dynamic_potency(
-	attacker: ActorCard,
-	target: ActorCard,
+	attacker: BattleCombatant,
+	target: BattleCombatant,
 	context: Dictionary = {},
 	battle_manager: BattleManager = null,
 	action: Action = null,
@@ -646,8 +650,10 @@ func _roll_percent(chance: int, battle_manager: BattleManager) -> bool:
 func _pick_random_target(
 	candidates: Array,
 	battle_manager: BattleManager,
-) -> ActorCard:
-	return battle_manager.combat_random_actor(candidates)
+) -> BattleCombatant:
+	var selected := battle_manager.combat_random_actor(candidates)
+	return BattleCombatant.resolve_model(selected) \
+		if is_instance_valid(selected) else null
 
 
 func _modify_damage_request(
@@ -662,16 +668,19 @@ func _play_hit_audio() -> void:
 
 
 func _apply_calculated_hit(
-	target: ActorCard,
+	target: BattleCombatant,
 	result: DamageResult,
-	attacker: ActorCard,
+	attacker: BattleCombatant,
 	resolved_damage_type: Action.DamageType,
 	is_critical: bool,
 ) -> int:
 	return await target.take_one_hit(result, self, attacker, resolved_damage_type)
 
 
-func _get_pre_hit_triggers(attacker: ActorCard, target: ActorCard) -> Dictionary:
+func _get_pre_hit_triggers(
+	attacker: BattleCombatant,
+	target: BattleCombatant,
+) -> Dictionary:
 	var context := {}
 	for trigger in pre_hit_triggers:
 		var condition_met := false
@@ -692,8 +701,8 @@ func _get_pre_hit_triggers(attacker: ActorCard, target: ActorCard) -> Dictionary
 
 
 func _resolve_forced_damage_type(
-	attacker: ActorCard,
-	target: ActorCard,
+	attacker: BattleCombatant,
+	target: BattleCombatant,
 	pre_hit_context: Dictionary,
 ) -> Action.DamageType:
 	var decision := _resolve_damage_type_decision(attacker, target, pre_hit_context)
@@ -703,8 +712,8 @@ func _resolve_forced_damage_type(
 
 
 func _resolve_damage_type_decision(
-	attacker: ActorCard,
-	target: ActorCard,
+	attacker: BattleCombatant,
+	target: BattleCombatant,
 	pre_hit_context: Dictionary,
 ) -> DamageTypeDecision:
 	if pre_hit_context.has("final_damage_type"):
@@ -728,13 +737,13 @@ func _resolve_damage_type_decision(
 
 
 func _find_forced_damage_condition(
-	attacker: ActorCard,
-	target: ActorCard,
+	attacker: BattleCombatant,
+	target: BattleCombatant,
 ) -> Condition:
 	if target == null:
 		return null
 	var attacker_hero_type := Action.HeroType.ALL
-	if attacker is HeroCard:
+	if attacker.is_hero():
 		var hero_name_key := attacker.actor_name.to_upper()
 		if Action.HeroType.has(hero_name_key):
 			attacker_hero_type = Action.HeroType[hero_name_key]
@@ -750,8 +759,8 @@ func _find_forced_damage_condition(
 
 
 func _process_on_hit_triggers(
-	attacker: ActorCard,
-	target: ActorCard,
+	attacker: BattleCombatant,
+	target: BattleCombatant,
 	battle_manager: BattleManager,
 	context: Dictionary,
 ) -> void:
@@ -783,7 +792,7 @@ func _process_on_hit_triggers(
 			print("On-hit trigger fired!")
 			for effect in hit_trigger.effects_to_run:
 				var targets := battle_manager.get_targets(
-					effect.target_type, attacker is HeroCard, [target], target,
+					effect.target_type, attacker.is_hero(), [target], target,
 				)
 				if effect is Effect_Damage:
 					await battle_manager.wait(0.25)

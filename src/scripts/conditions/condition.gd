@@ -33,13 +33,19 @@ enum ConditionType { BUFF, DEBUFF }
 var id: String = resource_path.get_file().get_basename()
 var attacker: Node
 
-func get_damage_dealt_power_bonus(_attacker: Node, _target: Node) -> float:
+func get_damage_dealt_power_bonus(attacker_node: Node, target_node: Node) -> float:
+	BattleCombatant.resolve_model(attacker_node)
+	BattleCombatant.resolve_model(target_node)
 	return 0.0
 
 
-func get_damage_dealt_modifier(_attacker: Node, _target: Node) -> float:
+func get_damage_dealt_modifier(attacker_node: Node, target_node: Node) -> float:
+	BattleCombatant.resolve_model(attacker_node)
+	BattleCombatant.resolve_model(target_node)
 	return damage_dealt_scalar
 
 
-func get_damage_taken_modifier(_attacker: Node, _target: Node) -> float:
+func get_damage_taken_modifier(attacker_node: Node, target_node: Node) -> float:
+	BattleCombatant.resolve_model(attacker_node)
+	BattleCombatant.resolve_model(target_node)
 	return damage_taken_scalar

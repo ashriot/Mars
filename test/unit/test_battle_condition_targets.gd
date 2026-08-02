@@ -13,7 +13,7 @@ class RecordingEffect extends ActionEffect:
 		target_type = Action.TargetType.SELF
 
 	func execute(
-		_attacker: ActorCard,
+		_attacker: Node,
 		_parent_targets: Array,
 		_battle_manager: BattleManager,
 		_action: Action = null,
@@ -36,7 +36,7 @@ class CapturingBattleManager extends BattleManager:
 		_context: Dictionary = {},
 	) -> void:
 		captured_targets = targets
-		await _effect.execute(_actor as ActorCard, targets, self, _action, _context)
+		await _effect.execute(_actor, targets, self, _action, _context)
 
 
 class ConditionActor extends ActorCard:
@@ -80,7 +80,7 @@ func test_off_turn_condition_self_target_resolves_to_condition_owner() -> void:
 
 	await hero._fire_condition_event(Trigger.TriggerType.ON_REMOVED)
 
-	assert_eq(manager.captured_targets, [hero])
+	assert_eq(manager.captured_targets, [hero.combatant])
 	manager.free()
 	hero_area.free()
 	enemy_area.free()

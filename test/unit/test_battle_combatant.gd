@@ -1,5 +1,7 @@
 extends GutTest
 
+const CardSceneTestFixture := preload("res://test/helpers/card_scene_test_fixture.gd")
+
 
 class ActionCtTrait extends Trait:
 	func get_action_ct_multiplier(_action: Action) -> float:
@@ -26,6 +28,27 @@ class LifecycleRecordingCombatant extends BattleCombatant:
 		super.defeat()
 
 
+class BreachRecordingManager extends BattleManager:
+	var update_count := 0
+
+	func update_turn_order() -> void:
+		update_count += 1
+
+
+class BreachRecordingCombatant extends BattleCombatant:
+	var event_log: Array[String]
+	var event_prefix := ""
+
+	func _fire_condition_event(
+		event_type: Trigger.TriggerType,
+		_context: Dictionary = {},
+	) -> void:
+		if event_type == Trigger.TriggerType.ON_ENEMY_BREACHED:
+			event_log.append(event_prefix + "enemy")
+		elif event_type == Trigger.TriggerType.ON_BREACHED:
+			event_log.append(event_prefix + "self")
+
+
 func test_setup_owns_state_without_control_or_scene_nodes() -> void:
 	var stats := ActorStats.new()
 	stats.actor_name = "Test Unit"
@@ -42,6 +65,41 @@ func test_setup_owns_state_without_control_or_scene_nodes() -> void:
 	assert_eq(combatant.current_guard, 4)
 	assert_true(combatant.is_enemy())
 	assert_false((combatant as Node) is CanvasItem)
+
+
+func test_resolve_model_returns_combatant_identity_and_bound_card_model() -> void:
+	var combatant := _combatant_with_stats(20, 3)
+	var card := CardSceneTestFixture.hero(self)
+
+	assert_same(BattleCombatant.resolve_model(combatant), combatant)
+	assert_same(BattleCombatant.resolve_model(card), card.combatant)
+	card.free()
+
+
+func test_breach_awaits_opposing_reactions_before_own_reaction() -> void:
+	var manager := BreachRecordingManager.new()
+	var event_log: Array[String] = []
+	var breached := BreachRecordingCombatant.new()
+	breached.event_log = event_log
+	breached.event_prefix = "breached_"
+	breached.setup_base(
+		ActorStats.new(), BattleCombatant.Faction.ENEMY, manager,
+	)
+	var observer := BreachRecordingCombatant.new()
+	observer.event_log = event_log
+	observer.event_prefix = "observer_"
+	observer.setup_base(
+		ActorStats.new(), BattleCombatant.Faction.HERO, manager,
+	)
+	manager.actor_list = [breached, observer]
+
+	await breached.breach()
+
+	assert_eq(manager.update_count, 1)
+	assert_eq(event_log, ["observer_enemy", "breached_self"])
+	manager.free()
+	breached.free()
+	observer.free()
 
 
 func test_speed_and_action_recovery_include_conditions_and_traits() -> void:

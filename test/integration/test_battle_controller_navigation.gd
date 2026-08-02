@@ -47,7 +47,7 @@ class ShiftEventEffect extends ActionEffect:
 		events = event_log
 
 	func execute(
-		_attacker: ActorCard,
+		_attacker: Node,
 		_parent_targets: Array,
 		_battle_manager: BattleManager,
 		_action: Action = null,
@@ -63,15 +63,15 @@ class LethalShiftEffect extends ActionEffect:
 		events = event_log
 
 	func execute(
-		_attacker: ActorCard,
+		_attacker: Node,
 		parent_targets: Array,
 		battle_manager: BattleManager,
 		_action: Action = null,
 		_context: Dictionary = {},
 	) -> void:
 		events.append("shift_action")
-		for target: ActorCard in parent_targets:
-			target.is_defeated = true
+		for target_node: Node in parent_targets:
+			BattleCombatant.resolve_model(target_node).is_defeated = true
 		await battle_manager._check_if_battle_ended()
 
 
@@ -140,13 +140,13 @@ class ShiftReactionFixture extends RefCounted:
 
 class RemoveConditionsEffect extends ActionEffect:
 	func execute(
-		attacker: ActorCard,
+		attacker_node: Node,
 		_parent_targets: Array,
 		_battle_manager: BattleManager,
 		_action: Action = null,
 		_context: Dictionary = {}
 	) -> void:
-		attacker.active_conditions.clear()
+		BattleCombatant.resolve_model(attacker_node).active_conditions.clear()
 
 
 class RecoveryBattleManager extends BattleManager:

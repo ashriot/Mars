@@ -9,14 +9,19 @@ class QuietHero extends HeroCard:
 		return
 
 
-class QuietEnemy extends EnemyCard:
+class QuietEnemyModel extends EnemyCombatant:
 	var intent_decision_count := 0
-	var intent_flash_count := 0
-	var intent_presentation_refresh_count := 0
 
 	func decide_intent(context: EnemyAIContext) -> void:
 		intent_decision_count += 1
 		super.decide_intent(context)
+
+
+class QuietEnemy extends EnemyCard:
+	var intent_decision_count: int:
+		get: return (combatant as QuietEnemyModel).intent_decision_count
+	var intent_flash_count := 0
+	var intent_presentation_refresh_count := 0
 
 	func _update_intent_ui() -> void:
 		return
@@ -270,7 +275,7 @@ func test_breached_enemy_intends_recovery_and_ticks_a_recovery_turn() -> void:
 	fixture.enemy.initialize_ai(77)
 	fixture.manager._update_all_enemy_intents()
 	fixture.enemy.is_breached = true
-	await fixture.manager._on_actor_breached(fixture.enemy)
+	await fixture.manager._on_combatant_breached(fixture.enemy.combatant)
 	assert_true(fixture.enemy.intended_decision.is_recovery)
 	assert_eq(fixture.enemy.intent_decision_count, 2)
 	fixture.enemy.complete_ai_turn()
@@ -288,7 +293,7 @@ func test_execution_retargets_cached_action_when_target_is_invalid() -> void:
 	await fixture.manager.execute_enemy_turn(fixture.enemy)
 	assert_eq(fixture.enemy.intent_decision_count, 1)
 	assert_eq(fixture.manager.executed_action, stale_action)
-	assert_eq(fixture.manager.executed_targets, [fixture.sands])
+	assert_eq(fixture.manager.executed_targets, [fixture.sands.combatant])
 	assert_eq(fixture.enemy.ai_state.completed_turns, 1)
 	assert_eq(fixture.enemy.ai_state.remaining(&"focus_attack"), 3)
 	_free_fixture(fixture)
@@ -397,6 +402,7 @@ func _fixture() -> Dictionary:
 	) as HeroCombatant
 	var enemy_model := _bind_actor(
 		enemy, BattleCombatant.Faction.ENEMY, "Drone", 3, manager,
+		QuietEnemyModel.new(),
 	) as EnemyCombatant
 	manager.actor_list = [sands, echo, enemy]
 
@@ -517,13 +523,16 @@ func _bind_actor(
 	actor_name: String,
 	priority: int,
 	manager: BattleManager,
+	combatant_override: BattleCombatant = null,
 ) -> BattleCombatant:
 	var stats := ActorStats.new()
 	stats.actor_name = actor_name
 	stats.max_hp = 100
 	stats.speed = 10
-	var model: BattleCombatant = HeroCombatant.new() \
-		if faction == BattleCombatant.Faction.HERO else EnemyCombatant.new()
+	var model := combatant_override
+	if model == null:
+		model = HeroCombatant.new() \
+			if faction == BattleCombatant.Faction.HERO else EnemyCombatant.new()
 	card.add_child(model)
 	model.setup_base(stats, faction, manager)
 	model.current_guard = 2

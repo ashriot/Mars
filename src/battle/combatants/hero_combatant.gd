@@ -10,6 +10,8 @@ var loaded_roles: Array[RoleData] = []
 var current_role_index := 0
 var current_focus := 0
 var shifted_this_turn := false
+var stat_mods: Dictionary
+var stat_scalars: Dictionary
 
 
 func setup(data: HeroData, manager: BattleManager = null) -> void:

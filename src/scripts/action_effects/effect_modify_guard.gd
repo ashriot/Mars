@@ -14,10 +14,14 @@ func resolve_guard_delta(current_guard: int) -> int:
 	return delta
 
 
-func execute(_attacker: ActorCard, parent_targets: Array, battle_manager: BattleManager, _action: Action = null, _context: Dictionary = {}) -> void:
+func execute(attacker_node: Node, parent_targets: Array, battle_manager: BattleManager, _action: Action = null, _context: Dictionary = {}) -> void:
 	print("--- Executing Change Guard Effect ---")
-	for target_actor in parent_targets:
-		if target_actor and not target_actor.is_defeated:
+	BattleCombatant.resolve_model(attacker_node)
+	for target_node: Node in parent_targets:
+		if is_instance_valid(target_node):
+			var target_actor := BattleCombatant.resolve_model(target_node)
+			if target_actor.is_defeated:
+				continue
 			await target_actor.modify_guard(resolve_guard_delta(target_actor.current_guard))
 
 	await battle_manager.wait(0.1)

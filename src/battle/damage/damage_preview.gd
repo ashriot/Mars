@@ -45,25 +45,31 @@ class Sequence extends RefCounted:
 
 static func for_plan(
 	effect: Effect_Damage,
-	attacker: ActorCard,
-	targets: Array[ActorCard],
+	attacker_node: Node,
+	target_nodes: Array,
 	action: Action,
 	critical: bool,
 	battle_manager: BattleManager = null,
 	pre_hit_context: Dictionary = {},
 ) -> Sequence:
+	if not is_instance_valid(attacker_node):
+		return Sequence.new([], false, false, effect.hit_count, 1, target_nodes.size())
+	var attacker := BattleCombatant.resolve_model(attacker_node)
 	var resolved_hit_count := effect._resolve_hit_count(attacker)
-	if attacker == null or attacker.current_stats == null or targets.is_empty():
-		return Sequence.new([], false, false, resolved_hit_count, 1, targets.size())
+	if attacker.current_stats == null or target_nodes.is_empty():
+		return Sequence.new([], false, false, resolved_hit_count, 1, target_nodes.size())
 	if effect._requires_battlefield_context() and battle_manager == null:
-		return Sequence.new([], false, false, resolved_hit_count, 1, targets.size())
-	var valid_targets: Array[ActorCard] = []
-	for target: ActorCard in targets:
-		if not is_instance_valid(target) \
-			or target.current_stats == null \
-			or target.is_defeated:
+		return Sequence.new([], false, false, resolved_hit_count, 1, target_nodes.size())
+	var valid_targets: Array[BattleCombatant] = []
+	for target_node: Node in target_nodes:
+		if not is_instance_valid(target_node):
 			return Sequence.new(
-				[], false, false, resolved_hit_count, 1, targets.size(),
+				[], false, false, resolved_hit_count, 1, target_nodes.size(),
+			)
+		var target := BattleCombatant.resolve_model(target_node)
+		if target.current_stats == null or target.is_defeated:
+			return Sequence.new(
+				[], false, false, resolved_hit_count, 1, target_nodes.size(),
 			)
 		valid_targets.append(target)
 	var plan := effect._build_hit_plan(valid_targets, action, resolved_hit_count)
@@ -84,7 +90,7 @@ static func for_plan(
 	var effect_start_potency := effect._resolve_potency(effect_context)
 	var results: Array[DamageResult] = []
 	if plan.target_mode == DamageHitPlan.TargetMode.RANDOM:
-		for live_target: ActorCard in valid_targets:
+		for live_target: BattleCombatant in valid_targets:
 			var preview_target := _copy_target(live_target)
 			var preview_targets := {live_target: preview_target}
 			for hit_index in plan.planned_hit_count:
@@ -131,17 +137,17 @@ static func for_plan(
 	var preview_targets: Dictionary = {}
 	var plan_candidates := plan.candidates
 	for hit_index in plan.planned_hit_count:
-		var live_target: ActorCard = null
+		var live_target: BattleCombatant = null
 		if plan.target_mode == DamageHitPlan.TargetMode.SINGLE:
-			live_target = plan_candidates[0] as ActorCard \
+			live_target = plan_candidates[0] as BattleCombatant \
 				if not plan_candidates.is_empty() else null
 		elif hit_index < plan_candidates.size():
-			live_target = plan_candidates[hit_index] as ActorCard
+			live_target = plan_candidates[hit_index] as BattleCombatant
 		if live_target == null:
 			continue
 		if not preview_targets.has(live_target):
 			preview_targets[live_target] = _copy_target(live_target)
-		var preview_target := preview_targets[live_target] as ActorCard
+		var preview_target := preview_targets[live_target] as BattleCombatant
 		if preview_target.is_defeated:
 			continue
 		results.append(_resolve_preview_hit(
@@ -159,7 +165,7 @@ static func for_plan(
 			effect_start_potency,
 			plan.distribution_count,
 		))
-	for preview_target: ActorCard in preview_targets.values():
+	for preview_target: BattleCombatant in preview_targets.values():
 		preview_target.free()
 	return Sequence.new(
 		results,
@@ -173,15 +179,17 @@ static func for_plan(
 
 static func for_effect(
 	effect: Effect_Damage,
-	attacker: ActorCard,
-	target: ActorCard,
+	attacker_node: Node,
+	target_node: Node,
 	action: Action,
 	distribution_count: int,
 	critical: bool,
 	pre_hit_context: Dictionary = {},
 ) -> DamageResult:
-	if target == null:
+	if not is_instance_valid(attacker_node) or not is_instance_valid(target_node):
 		return null
+	var attacker := BattleCombatant.resolve_model(attacker_node)
+	var target := BattleCombatant.resolve_model(target_node)
 	var resolver_target := target
 	var owns_resolver_target := false
 	var decision := effect._resolve_damage_type_decision(
@@ -233,10 +241,10 @@ static func for_effect(
 
 static func _resolve_preview_hit(
 	effect: Effect_Damage,
-	attacker: ActorCard,
+	attacker: BattleCombatant,
 	preview_attacker: CombatantSnapshot,
-	live_target: ActorCard,
-	preview_target: ActorCard,
+	live_target: BattleCombatant,
+	preview_target: BattleCombatant,
 	action: Action,
 	battle_manager: BattleManager,
 	preview_targets: Dictionary,
@@ -288,7 +296,7 @@ static func _resolve_preview_hit(
 
 static func _apply_preview_guard(
 	effect: Effect_Damage,
-	target: ActorCard,
+	target: BattleCombatant,
 	resolved_damage_type: Action.DamageType,
 ) -> void:
 	if not effect._resolved_type_shreds_guard(resolved_damage_type):
@@ -300,7 +308,7 @@ static func _apply_preview_guard(
 
 
 static func _preview_attacker_snapshot(
-	attacker: ActorCard,
+	attacker: BattleCombatant,
 	action: Action,
 ) -> CombatantSnapshot:
 	var attacker_state := CombatantSnapshot.capture(attacker)
@@ -314,15 +322,15 @@ static func _preview_attacker_snapshot(
 	)
 
 
-static func _paid_focus_cost(attacker: ActorCard, action: Action) -> int:
-	if attacker is HeroCard and action != null:
-		return (attacker as HeroCard).get_scaled_focus_cost(action.focus_cost)
+static func _paid_focus_cost(attacker: BattleCombatant, action: Action) -> int:
+	if attacker is HeroCombatant and action != null:
+		return (attacker as HeroCombatant).get_scaled_focus_cost(action.focus_cost)
 	return 0
 
 
 static func _living_counts(
-	attacker: ActorCard,
-	target: ActorCard,
+	attacker: BattleCombatant,
+	target: BattleCombatant,
 	battle_manager: BattleManager,
 	preview_targets: Dictionary = {},
 ) -> Dictionary:
@@ -330,15 +338,16 @@ static func _living_counts(
 		return {"allies": 0, "enemies": 0}
 	var other_living_allies := 0
 	var other_living_enemies := 0
-	for combatant: ActorCard in battle_manager.actor_list:
-		if not is_instance_valid(combatant):
+	for value: Node in battle_manager.actor_list:
+		if not is_instance_valid(value):
 			continue
+		var combatant := BattleCombatant.resolve_model(value)
 		var defeated := combatant.is_defeated
 		if preview_targets.has(combatant):
-			defeated = (preview_targets[combatant] as ActorCard).is_defeated
+			defeated = (preview_targets[combatant] as BattleCombatant).is_defeated
 		if defeated:
 			continue
-		var is_attacker_ally := (combatant is HeroCard) == (attacker is HeroCard)
+		var is_attacker_ally := combatant.faction == attacker.faction
 		if is_attacker_ally:
 			if combatant != attacker:
 				other_living_allies += 1
@@ -350,10 +359,12 @@ static func _living_counts(
 	}
 
 
-static func _copy_target(target: ActorCard) -> ActorCard:
-	var preview_target: ActorCard = HeroCard.new() if target is HeroCard else ActorCard.new()
-	_bind_preview_card(preview_target, target)
-	preview_target.actor_name = target.actor_name
+static func _copy_target(target: BattleCombatant) -> BattleCombatant:
+	var preview_target: BattleCombatant = HeroCombatant.new() \
+		if target.is_hero() else EnemyCombatant.new()
+	preview_target.setup_base(
+		_copy_stats(target.current_stats), target.faction,
+	)
 	preview_target.current_hp = target.current_hp
 	preview_target.current_guard = target.current_guard
 	preview_target.current_ct = target.current_ct
@@ -362,19 +373,23 @@ static func _copy_target(target: ActorCard) -> ActorCard:
 	preview_target.is_breached = target.is_breached
 	preview_target.is_in_danger = target.is_in_danger
 	preview_target.is_defeated = target.is_defeated
-	preview_target.active_conditions = target.active_conditions.duplicate()
-	preview_target.active_traits = target.active_traits.duplicate()
-	if preview_target is HeroCard:
-		(preview_target.combatant as HeroCombatant).current_focus = (
-			target.combatant as HeroCombatant
+	preview_target.active_conditions.assign(target.active_conditions.map(
+		func(condition: Condition): return condition.duplicate(true)
+	))
+	preview_target.active_traits.assign(target.active_traits.map(
+		func(trait_item: Trait): return trait_item.duplicate(true)
+	))
+	if preview_target is HeroCombatant and target is HeroCombatant:
+		(preview_target as HeroCombatant).current_focus = (
+			target as HeroCombatant
 		).current_focus
 	return preview_target
 
 
 static func _capture_preview_context(
 	effect: Effect_Damage,
-	attacker: ActorCard,
-	target: ActorCard,
+	attacker: BattleCombatant,
+	target: BattleCombatant,
 	action: Action,
 	resolved_damage_type: Action.DamageType,
 	neutral_target: bool,
@@ -382,8 +397,8 @@ static func _capture_preview_context(
 	var attacker_state := CombatantSnapshot.capture(attacker)
 	var paid_focus_cost := 0
 	var remaining_focus := attacker_state.current_focus
-	if attacker is HeroCard and action != null:
-		paid_focus_cost = (attacker as HeroCard).get_scaled_focus_cost(action.focus_cost)
+	if attacker is HeroCombatant and action != null:
+		paid_focus_cost = (attacker as HeroCombatant).get_scaled_focus_cost(action.focus_cost)
 		remaining_focus = maxi(0, remaining_focus - paid_focus_cost)
 	var preview_attacker := CombatantSnapshot.new(
 		attacker_state.current_hp,
@@ -409,7 +424,7 @@ static func _capture_preview_context(
 
 static func _capture_preview_target(
 	effect: Effect_Damage,
-	target: ActorCard,
+	target: BattleCombatant,
 	resolved_damage_type: Action.DamageType,
 	neutral_target: bool,
 ) -> CombatantSnapshot:
@@ -430,9 +445,9 @@ static func _capture_preview_target(
 	)
 
 
-static func _neutral_target() -> ActorCard:
-	var target := ActorCard.new()
-	_bind_preview_card(target)
+static func _neutral_target() -> BattleCombatant:
+	var target := BattleCombatant.new()
+	target.setup_base(ActorStats.new(), BattleCombatant.Faction.ENEMY)
 	target.current_hp = 0
 	target.current_guard = 0
 	target.is_breached = false
@@ -441,53 +456,16 @@ static func _neutral_target() -> ActorCard:
 
 
 static func _target_without_condition(
-	target: ActorCard,
+	target: BattleCombatant,
 	excluded_condition: Condition,
-) -> ActorCard:
-	var preview_target: ActorCard = HeroCard.new() if target is HeroCard else ActorCard.new()
-	_bind_preview_card(preview_target, target)
-	preview_target.actor_name = target.actor_name
-	preview_target.current_hp = target.current_hp
-	preview_target.current_guard = target.current_guard
-	preview_target.current_ct = target.current_ct
-	preview_target.ct_speed_scale = target.ct_speed_scale
-	preview_target.battle_priority = target.battle_priority
-	preview_target.is_breached = target.is_breached
-	preview_target.is_in_danger = target.is_in_danger
-	preview_target.is_defeated = target.is_defeated
-	if preview_target is HeroCard:
-		(preview_target.combatant as HeroCombatant).current_focus = (
-			target.combatant as HeroCombatant
-		).current_focus
+) -> BattleCombatant:
+	var preview_target := _copy_target(target)
 	var retained_conditions: Array[Condition] = []
 	for condition: Condition in target.active_conditions:
 		if condition != excluded_condition:
-			retained_conditions.append(condition)
+			retained_conditions.append(condition.duplicate(true))
 	preview_target.active_conditions = retained_conditions
-	preview_target.active_traits = target.active_traits.duplicate()
 	return preview_target
-
-
-static func _bind_preview_card(
-	preview_card: ActorCard,
-	source: ActorCard = null,
-) -> void:
-	# Transitional until Task 6 replaces legacy card-typed damage previews.
-	var stats := ActorStats.new()
-	var faction := BattleCombatant.Faction.HERO
-	if source != null:
-		stats = _copy_stats(source.current_stats)
-		faction = source.combatant.faction
-	var model: BattleCombatant
-	if preview_card is HeroCard:
-		model = HeroCombatant.new()
-	elif preview_card is EnemyCard:
-		model = EnemyCombatant.new()
-	else:
-		model = BattleCombatant.new()
-	preview_card.add_child(model)
-	model.setup_base(stats, faction)
-	preview_card.bind_combatant(model, true)
 
 
 static func _copy_stats(source: ActorStats) -> ActorStats:

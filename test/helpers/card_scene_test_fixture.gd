@@ -10,13 +10,21 @@ static func bind(
 	faction: BattleCombatant.Faction = BattleCombatant.Faction.HERO,
 	stats: ActorStats = null,
 	manager: BattleManager = null,
+	combatant_override: BattleCombatant = null,
 ) -> ActorCard:
 	_ensure_scene_backing(card, faction)
 	if card.get_parent() == null:
 		parent.add_child(card)
 	assert(card.is_node_ready(), "card fixture must enter the scene tree before binding")
-	var combatant: BattleCombatant
-	if card is HeroCard:
+	var combatant := combatant_override
+	if combatant != null:
+		assert(
+			(card is HeroCard and combatant is HeroCombatant) \
+				or (card is EnemyCard and combatant is EnemyCombatant) \
+				or not card is HeroCard and not card is EnemyCard,
+			"specialized cards require matching specialized combatants",
+		)
+	elif card is HeroCard:
 		combatant = HeroCombatant.new()
 	elif card is EnemyCard:
 		combatant = EnemyCombatant.new()

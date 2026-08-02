@@ -212,12 +212,12 @@ func combat_roll_percent(chance: int) -> bool:
 	return roll <= chance
 
 
-func combat_random_actor(candidates: Array) -> ActorCard:
+func combat_random_actor(candidates: Array) -> Node:
 	if candidates.is_empty():
 		return null
 	var index := _combat_rng.randi_range(0, candidates.size() - 1) \
 		if _combat_rng != null else randi_range(0, candidates.size() - 1)
-	return candidates[index] as ActorCard
+	return candidates[index] as Node
 
 
 func _award_victory_xp(amount: int) -> void:
@@ -291,21 +291,24 @@ func find_and_start_next_turn():
 		await wait(0.5)
 		find_and_start_next_turn()
 
-func _on_actor_breached(breached_actor: ActorCard) -> void:
+func _on_combatant_breached(breached: BattleCombatant) -> void:
 	print("\n Actor was Breached -> New Queue: ")
 	update_turn_order()
-	if breached_actor is EnemyCard \
-		and (breached_actor.combatant as EnemyCombatant).recover_action != null \
-		and (breached_actor != current_actor or current_state != State.EXECUTING_ACTION):
-		(breached_actor as EnemyCard).decide_intent(_enemy_ai_context())
-	for observer: ActorCard in actor_list:
-		if not is_instance_valid(observer) or observer.is_defeated:
+	var current_model := BattleCombatant.resolve_model(current_actor) \
+		if is_instance_valid(current_actor) else null
+	if breached is EnemyCombatant \
+		and (breached as EnemyCombatant).recover_action != null \
+		and (breached != current_model or current_state != State.EXECUTING_ACTION):
+		(breached as EnemyCombatant).decide_intent(_enemy_ai_context())
+	for value: Node in actor_list:
+		if not is_instance_valid(value):
 			continue
-		if (observer is HeroCard) == (breached_actor is HeroCard):
+		var observer := BattleCombatant.resolve_model(value)
+		if observer.is_defeated or observer.faction == breached.faction:
 			continue
 		await observer._fire_condition_event(
 			Trigger.TriggerType.ON_ENEMY_BREACHED,
-			{"target": breached_actor, "targets": [breached_actor]},
+			{"target": breached, "targets": [breached]},
 		)
 
 func update_turn_order() -> void:
@@ -315,7 +318,8 @@ func update_turn_order() -> void:
 func _publish_turn_order(update_kind: TurnOrderUpdate) -> void:
 	turn_order_updated.emit(_display_projection(), update_kind)
 
-func get_action_recovery_adjustment(actor: ActorCard, action: Action) -> int:
+func get_action_recovery_adjustment(actor_node: Node, action: Action) -> int:
+	var actor := BattleCombatant.resolve_model(actor_node)
 	var percent := actor.get_action_ct_percent(action)
 	return int(TARGET_CT * (100 - percent) / 100.0)
 
@@ -356,9 +360,10 @@ func _update_all_enemy_intents() -> void:
 func _revalidate_all_enemy_intent_targets() -> void:
 	if not is_instance_valid(hero_area) or not is_instance_valid(enemy_area):
 		return
-	var planned_enemies: Array[EnemyCard] = get_living_enemies().filter(
-		func(enemy: EnemyCard): return enemy.intended_action != null
-	)
+	var planned_enemies: Array[EnemyCard] = []
+	for value: Node in get_living_enemies():
+		if value is EnemyCard and (value as EnemyCard).intended_action != null:
+			planned_enemies.append(value as EnemyCard)
 	if planned_enemies.is_empty():
 		return
 	var context := _enemy_ai_context()
@@ -593,7 +598,7 @@ func execute_action(actor: ActorCard, action: Action, targets: Array, display_na
 	return
 
 func execute_triggered_effect(actor: Node, effect: ActionEffect, targets: Array, action: Action, context: Dictionary = {}):
-	await effect.execute(actor as ActorCard, targets, self, action, context)
+	await effect.execute(actor, targets, self, action, context)
 
 func execute_enemy_turn(enemy: EnemyCard) -> void:
 	change_state(State.EXECUTING_ACTION)
@@ -610,13 +615,8 @@ func execute_enemy_turn(enemy: EnemyCard) -> void:
 		return
 
 	var action := enemy.intended_action
-	var targets: Array[ActorCard] = []
-	for target: BattleCombatant in enemy.intended_targets:
-		assert(
-			target.legacy_effect_actor is ActorCard,
-			"Enemy action execution requires bound card targets until Task 6.",
-		)
-		targets.append(target.legacy_effect_actor as ActorCard)
+	var targets: Array[BattleCombatant] = []
+	targets.assign(enemy.intended_targets)
 
 	if not action:
 		push_error(enemy.actor_name, " is missing an action!")
@@ -657,18 +657,22 @@ func _is_enemy_decision_executable(enemy: EnemyCard, context: EnemyAIContext) ->
 		enemy.combatant as EnemyCombatant, decision.targets, context,
 	)
 
-func get_living_heroes() -> Array[HeroCard]:
-	var living_heroes: Array[HeroCard] = []
-	for hero_card in hero_area.get_children():
-		if not hero_card.is_defeated:
-			living_heroes.append(hero_card)
+func get_living_heroes() -> Array:
+	var living_heroes: Array = []
+	for value: Node in hero_area.get_children():
+		if value is ActorCard or value is BattleCombatant:
+			var hero := BattleCombatant.resolve_model(value)
+			if not hero.is_defeated:
+				living_heroes.append(value)
 	return living_heroes
 
-func get_living_enemies() -> Array[EnemyCard]:
-	var living_enemies: Array[EnemyCard] = []
-	for enemy_card in enemy_area.get_children():
-		if not enemy_card.is_defeated:
-			living_enemies.append(enemy_card)
+func get_living_enemies() -> Array:
+	var living_enemies: Array = []
+	for value: Node in enemy_area.get_children():
+		if value is ActorCard or value is BattleCombatant:
+			var enemy := BattleCombatant.resolve_model(value)
+			if not enemy.is_defeated:
+				living_enemies.append(value)
 	return living_enemies
 
 func _connect_actor_intent_refresh_signals(actor: ActorCard) -> void:

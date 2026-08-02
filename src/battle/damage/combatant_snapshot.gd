@@ -38,11 +38,12 @@ func _init(
 	_condition_names = combatant_condition_names.duplicate()
 
 
-static func capture(actor: ActorCard) -> CombatantSnapshot:
+static func capture(actor: BattleCombatant) -> CombatantSnapshot:
 	var condition_names: Array[StringName] = []
 	for condition in actor.active_conditions:
 		condition_names.append(StringName(condition.condition_name))
-	var current_focus: int = actor.current_focus if actor is HeroCard else 0
+	var current_focus: int = (actor as HeroCombatant).current_focus \
+		if actor is HeroCombatant else 0
 	return CombatantSnapshot.new(
 		actor.current_hp,
 		current_focus,

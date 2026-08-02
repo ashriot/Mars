@@ -34,7 +34,7 @@ class RecordingConditionEffect extends ActionEffect:
 	var recorded_event: Trigger.TriggerType
 
 	func execute(
-		_attacker: ActorCard,
+		_attacker: Node,
 		_parent_targets: Array,
 		_battle_manager: BattleManager,
 		_action: Action = null,
@@ -75,12 +75,12 @@ class RecordingCombatRandomBattleManager extends RecordingBattleManager:
 		rolled_chances.append(chance)
 		return false
 
-	func combat_random_actor(candidates: Array) -> ActorCard:
+	func combat_random_actor(candidates: Array) -> Node:
 		random_actor_calls += 1
-		return candidates[-1] as ActorCard if not candidates.is_empty() else null
+		return candidates[-1] as Node if not candidates.is_empty() else null
 
 
-class RecordingActor extends ActorCard:
+class RecordingActor extends BattleCombatant:
 	var breach_calls := 0
 	var guard_changes: Array[int] = []
 	var focus_changes: Array[int] = []
@@ -97,13 +97,10 @@ class RecordingActor extends ActorCard:
 		is_breached = true
 		is_in_danger = false
 
-	func shake_panel(_intensity: float = 0.5) -> void:
-		return
-
 	func take_one_hit(
 		_result: DamageResult,
 		_damage_effect: Effect_Damage,
-		_attacker: ActorCard,
+		_attacker: Node,
 		_resolved_damage_type: Action.DamageType,
 	) -> int:
 		return 0
@@ -140,15 +137,9 @@ class FocusRefundHero extends HeroCard:
 		return
 
 
-class EchoRuntimeHero extends HeroCard:
+class EchoRuntimeHero extends HeroCombatant:
 	var healing_events: Array[int] = []
 	var guard_changes: Array[int] = []
-
-	func _update_conditions_ui() -> void:
-		return
-
-	func update_focus_bar(_animate: bool = true) -> void:
-		return
 
 	func take_healing(amount: int, is_revive: bool = false) -> void:
 		if (is_defeated and not is_revive) or amount <= 0:
@@ -166,20 +157,14 @@ class EchoRuntimeHero extends HeroCard:
 			)
 
 
-class EchoRuntimeEnemy extends EnemyCard:
+class EchoRuntimeEnemy extends EnemyCombatant:
 	var damage_results: Array[DamageResult] = []
 	var guard_changes: Array[int] = []
-
-	func _update_conditions_ui() -> void:
-		return
-
-	func shake_panel(_intensity: float = 0.5) -> void:
-		return
 
 	func take_one_hit(
 		result: DamageResult,
 		_damage_effect: Effect_Damage,
-		_attacker: ActorCard,
+		_attacker: Node,
 		_resolved_damage_type: Action.DamageType,
 	) -> int:
 		damage_results.append(result)
@@ -202,7 +187,7 @@ class RecordingActionEffect extends ActionEffect:
 	var received_target_sets: Array = []
 
 	func execute(
-		_attacker: ActorCard,
+		_attacker: Node,
 		parent_targets: Array,
 		_battle_manager: BattleManager,
 		_action: Action = null,
@@ -234,8 +219,8 @@ class ApplyingDamageEffect extends Effect_Damage:
 
 class DefeatingOnHitLifedrainEffect extends ApplyingDamageEffect:
 	func _process_on_hit_triggers(
-		attacker: ActorCard,
-		_target: ActorCard,
+		attacker: BattleCombatant,
+		_target: BattleCombatant,
 		_battle_manager: BattleManager,
 		_context: Dictionary,
 	) -> void:
@@ -251,7 +236,7 @@ class RecordingDamageEffect extends Effect_Damage:
 	var breached_when_request_built := false
 	var rolled_chances: Array[int] = []
 	var defeat_first_target_after_hit := false
-	var first_target: ActorCard
+	var first_target: BattleCombatant
 	var clear_attacker_guard_after_first_hit := false
 	var battle_manager_to_end_after_hit: BattleManager
 	var defeat_attacker_after_hit := false
@@ -273,12 +258,12 @@ class RecordingDamageEffect extends Effect_Damage:
 	func _pick_random_target(
 		candidates: Array,
 		_battle_manager: BattleManager,
-	) -> ActorCard:
-		return candidates[0] as ActorCard if not candidates.is_empty() else null
+	) -> BattleCombatant:
+		return candidates[0] as BattleCombatant if not candidates.is_empty() else null
 
 	func _resolve_forced_damage_type(
-		_attacker: ActorCard,
-		_target: ActorCard,
+		_attacker: BattleCombatant,
+		_target: BattleCombatant,
 		_pre_hit_context: Dictionary,
 	) -> Action.DamageType:
 		return forced_damage_type
@@ -296,9 +281,9 @@ class RecordingDamageEffect extends Effect_Damage:
 		return
 
 	func _apply_calculated_hit(
-		target: ActorCard,
+		target: BattleCombatant,
 		result: DamageResult,
-		attacker: ActorCard,
+		attacker: BattleCombatant,
 		_resolved_damage_type: Action.DamageType,
 		_is_crit: bool,
 	) -> int:
@@ -374,13 +359,10 @@ func test_lifedrain_cannot_revive_an_attacker_defeated_by_hit_reaction() -> void
 	attacker.current_stats.max_hp = 100
 	attacker.current_hp = 50
 	attacker.battle_manager = manager
-	var target := CardSceneTestFixture.bind(
-		self, EchoRuntimeEnemy.new(), BattleCombatant.Faction.ENEMY, null, manager,
-	) as EchoRuntimeEnemy
-	target.current_stats = ActorStats.new()
-	target.current_stats.max_hp = 100
-	target.current_hp = 100
-	target.battle_manager = manager
+	var target := EchoRuntimeEnemy.new()
+	var target_stats := ActorStats.new()
+	target_stats.max_hp = 100
+	target.setup_base(target_stats, BattleCombatant.Faction.ENEMY, manager)
 	manager.actor_list = [attacker, target]
 	var effect := DefeatingOnHitLifedrainEffect.new()
 	effect.damage_type = Action.DamageType.PIERCING
@@ -1073,7 +1055,7 @@ func test_mind_storm_uses_focus_remaining_after_payment() -> void:
 	var fixture := _echo_runtime_fixture()
 	var echo := fixture.echo as EchoRuntimeHero
 	var enemy := fixture.enemy as EchoRuntimeEnemy
-	(echo.combatant as HeroCombatant).current_focus = 10
+	echo.current_focus = 10
 	var action := load("res://data/heroes/echo/actions/mind_storm.tres") as Action
 	var effect := action.effects[0] as Effect_Damage
 
@@ -1111,7 +1093,7 @@ func test_vulnerable_or_breached_hit_trigger_skips_normal_targets() -> void:
 	var damage_effect := Effect_Damage.new()
 	damage_effect.on_hit_triggers = [trigger]
 
-	for target: ActorCard in [vulnerable, breached, normal]:
+	for target: BattleCombatant in [vulnerable, breached, normal]:
 		await damage_effect._process_on_hit_triggers(attacker, target, manager, {})
 
 	assert_eq(recording_effect.received_target_sets, [[vulnerable], [breached]])
@@ -1410,14 +1392,13 @@ func _execute_recorded_hit(
 
 
 func _recording_actor(base_power: int, overload: int, guard: int) -> RecordingActor:
-	var actor := CardSceneTestFixture.bind(
-		self, RecordingActor.new(), BattleCombatant.Faction.HERO,
-	) as RecordingActor
-	actor.current_stats = ActorStats.new()
-	actor.current_stats.attack = base_power
-	actor.current_stats.psyche = base_power
-	actor.current_stats.overload = overload
-	actor.current_stats.max_hp = 1000
+	var actor := RecordingActor.new()
+	var stats := ActorStats.new()
+	stats.attack = base_power
+	stats.psyche = base_power
+	stats.overload = overload
+	stats.max_hp = 1000
+	actor.setup_base(stats, BattleCombatant.Faction.HERO)
 	actor.current_hp = 1000
 	actor.current_guard = guard
 	return actor
@@ -1600,8 +1581,8 @@ func _resolved_application_result(
 		fixture.effect,
 	)
 	return DamageResolver.resolve_hit(
-		fixture.attacker,
-		fixture.target,
+		fixture.attacker.combatant,
+		fixture.target.combatant,
 		Action.PowerType.ATTACK,
 		DamageResolver.resolve_potency(1.0, [], hit_context),
 		1,
@@ -1636,8 +1617,8 @@ func _echo_runtime_fixture(
 
 	var echo := _echo_runtime_hero("Echo", 40, 1000, manager)
 	var enemy := _echo_runtime_enemy("Target", 1000, manager)
-	echo.reparent(hero_area)
-	enemy.reparent(enemy_area)
+	hero_area.add_child(echo)
+	enemy_area.add_child(enemy)
 	manager.actor_list = [echo, enemy]
 	manager.current_actor = enemy
 	echo.battle_manager = manager
@@ -1648,8 +1629,8 @@ func _echo_runtime_fixture(
 		var defeated := _echo_runtime_hero("Defeated", 5, 100, manager)
 		defeated.current_hp = 0
 		defeated.is_defeated = true
-		ally.reparent(hero_area)
-		defeated.reparent(hero_area)
+		hero_area.add_child(ally)
+		hero_area.add_child(defeated)
 		ally.battle_manager = manager
 		defeated.battle_manager = manager
 		manager.actor_list.append_array([ally, defeated])
@@ -1657,7 +1638,7 @@ func _echo_runtime_fixture(
 		fixture["defeated"] = defeated
 	if include_second_enemy:
 		var other_enemy := _echo_runtime_enemy("Other Target", 1000, manager)
-		other_enemy.reparent(enemy_area)
+		enemy_area.add_child(other_enemy)
 		other_enemy.battle_manager = manager
 		manager.actor_list.append(other_enemy)
 		fixture["other_enemy"] = other_enemy
@@ -1670,15 +1651,14 @@ func _echo_runtime_hero(
 	max_hp: int,
 	manager: BattleManager,
 ) -> EchoRuntimeHero:
-	var hero := CardSceneTestFixture.bind(
-		self, EchoRuntimeHero.new(), BattleCombatant.Faction.HERO, null, manager,
-	) as EchoRuntimeHero
-	hero.actor_name = actor_name
-	hero.current_stats = ActorStats.new()
-	hero.current_stats.attack = 100
-	hero.current_stats.psyche = psyche
-	hero.current_stats.aim = 0
-	hero.current_stats.max_hp = max_hp
+	var hero := EchoRuntimeHero.new()
+	var stats := ActorStats.new()
+	stats.actor_name = actor_name
+	stats.attack = 100
+	stats.psyche = psyche
+	stats.aim = 0
+	stats.max_hp = max_hp
+	hero.setup_base(stats, BattleCombatant.Faction.HERO, manager)
 	hero.current_hp = max_hp - 40
 	return hero
 
@@ -1688,13 +1668,11 @@ func _echo_runtime_enemy(
 	max_hp: int,
 	manager: BattleManager,
 ) -> EchoRuntimeEnemy:
-	var enemy := CardSceneTestFixture.bind(
-		self, EchoRuntimeEnemy.new(), BattleCombatant.Faction.ENEMY, null, manager,
-	) as EchoRuntimeEnemy
-	enemy.actor_name = actor_name
-	enemy.current_stats = ActorStats.new()
-	enemy.current_stats.max_hp = max_hp
-	enemy.current_hp = max_hp
+	var enemy := EchoRuntimeEnemy.new()
+	var stats := ActorStats.new()
+	stats.actor_name = actor_name
+	stats.max_hp = max_hp
+	enemy.setup_base(stats, BattleCombatant.Faction.ENEMY, manager)
 	return enemy
 
 

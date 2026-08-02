@@ -107,14 +107,16 @@ func _update_intent_ui():
 		return
 
 	var first_effect = intended_action.effects[0]
+	var enemy_model := combatant as EnemyCombatant
+	var presentation_targets: Array[BattleCombatant] = []
+	presentation_targets.assign(intended_targets)
 
 	if first_effect is Effect_Damage:
 		var damage_effect: Effect_Damage = first_effect
-		var resolved_hit_count := damage_effect._resolve_hit_count(self)
-		var presentation_targets := _presentation_targets()
+		var resolved_hit_count := damage_effect._resolve_hit_count(enemy_model)
 		var sequence := DamagePreview.for_plan(
 			damage_effect,
-			self,
+			enemy_model,
 			presentation_targets,
 			intended_action,
 			false,
@@ -125,7 +127,7 @@ func _update_intent_ui():
 			damage_bindings = damage_effect._get_sequence_bindings(sequence, 28)
 		else:
 			var context := EffectPresentationContext.new(
-				self, null, intended_action,
+				enemy_model, null, intended_action,
 			)
 			damage_bindings = damage_effect.get_presentation(context).bindings
 			damage_bindings.damage_type = damage_effect._get_damage_type_icon(
@@ -166,23 +168,11 @@ func _update_intent_ui():
 				final_text += " " + intended_targets[0].actor_name
 
 		intent_text.text = final_text
-	var presentation_targets := _presentation_targets()
-	var tooltip_target: ActorCard = presentation_targets[0] \
+	var tooltip_target: BattleCombatant = presentation_targets[0] \
 		if intended_targets.size() == 1 else null
 	intent_tooltip.bbcode_text = intended_action.get_rich_description(
-		self, tooltip_target, presentation_targets, battle_manager,
+		combatant, tooltip_target, presentation_targets, battle_manager,
 	)
-
-
-func _presentation_targets() -> Array[ActorCard]:
-	var targets: Array[ActorCard] = []
-	for target: BattleCombatant in intended_targets:
-		assert(
-			is_instance_valid(target.legacy_effect_actor),
-			"Enemy intent presentation requires bound target cards until Task 6.",
-		)
-		targets.append(target.legacy_effect_actor)
-	return targets
 
 func clear_intent() -> void:
 	(combatant as EnemyCombatant).clear_intent()

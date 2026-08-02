@@ -1,8 +1,5 @@
 extends GutTest
 
-const CardSceneTestFixture := preload("res://test/helpers/card_scene_test_fixture.gd")
-
-
 class RecoveryTrait extends Trait:
 	var multiplier := 1.0
 
@@ -14,11 +11,15 @@ class ImmediateBattleManager extends BattleManager:
 	func wait(_duration: float = 0.01) -> void:
 		return
 
+	func update_turn_order() -> void:
+		return
 
-func _actor() -> HeroCard:
-	var actor := CardSceneTestFixture.hero(self)
-	actor.current_stats = ActorStats.new()
-	actor.current_stats.speed = 100
+
+func _actor() -> HeroCombatant:
+	var actor := HeroCombatant.new()
+	var stats := ActorStats.new()
+	stats.speed = 100
+	actor.setup_base(stats, BattleCombatant.Faction.HERO)
 	return actor
 
 

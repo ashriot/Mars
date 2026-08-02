@@ -1,18 +1,13 @@
 extends GutTest
 
-
-class IntentEnemy extends EnemyCard:
-	func flash_intent(_duration: float = 0.3) -> void:
-		return
-
+const EnemyCardScene := preload("res://src/battle/enemy_card.tscn")
 
 class NonPresentableEffect extends ActionEffect:
 	pass
 
 
-class ConditionTarget extends ActorCard:
-	func _update_conditions_ui() -> void:
-		return
+class ConditionTarget extends EnemyCombatant:
+	pass
 
 
 class TargetHpPotencyRule extends DamageScalingRule:
@@ -50,10 +45,10 @@ class FixedContributionRule extends DamageScalingRule:
 		)
 
 
-func test_plan_binds_detached_preview_copy_before_proxy_state_is_written() -> void:
-	var attacker := _headless_bound_actor(BattleCombatant.Faction.HERO)
+func test_plan_uses_nonvisual_combatants_without_mutating_live_state() -> void:
+	var attacker := _combatant(BattleCombatant.Faction.HERO)
 	attacker.current_stats.attack = 100
-	var target := _headless_bound_actor(BattleCombatant.Faction.ENEMY)
+	var target := _combatant(BattleCombatant.Faction.ENEMY)
 	target.current_guard = 1
 	var effect := _damage_effect(1.0)
 
@@ -72,11 +67,25 @@ func test_plan_binds_detached_preview_copy_before_proxy_state_is_written() -> vo
 	target.free()
 
 
-func _headless_bound_actor(faction: BattleCombatant.Faction) -> ActorCard:
-	var actor := ActorCard.new()
+func test_preview_copy_is_a_nonvisual_combatant() -> void:
+	var target := _combatant(BattleCombatant.Faction.ENEMY)
+	target.current_hp = 40
+
+	var copy := DamagePreview._copy_target(target)
+
+	assert_true(copy is BattleCombatant)
+	assert_false((copy as Node) is CanvasItem)
+	assert_eq(copy.current_hp, 40)
+	copy.free()
+	target.free()
+
+
+func _combatant(faction: BattleCombatant.Faction) -> BattleCombatant:
+	var actor: BattleCombatant = HeroCombatant.new() \
+		if faction == BattleCombatant.Faction.HERO else EnemyCombatant.new()
 	var stats := ActorStats.new()
 	stats.max_hp = 100
-	_bind_headless_card(actor, stats, faction)
+	actor.setup_base(stats, faction)
 	return actor
 
 
@@ -280,10 +289,8 @@ func test_consumed_conversion_condition_is_excluded_from_preview_modifiers() -> 
 func test_runtime_conversion_still_consumes_triggered_condition() -> void:
 	var attacker := _hero(100, 0)
 	var target := ConditionTarget.new()
-	_bind_headless_card(
-		target,
-		_stats(0, 0, 0, 0, 0),
-		BattleCombatant.Faction.ENEMY,
+	target.setup_base(
+		_stats(0, 0, 0, 0, 0), BattleCombatant.Faction.ENEMY,
 	)
 	var forced_piercing := _forced_type_condition(Action.DamageType.PIERCING)
 	target.active_conditions = [forced_piercing]
@@ -634,17 +641,9 @@ func test_all_target_split_without_target_context_describes_authored_budget() ->
 
 func test_complete_group_context_uses_fixed_divisor_and_per_target_range() -> void:
 	var manager := BattleManager.new()
-	manager.hero_area = Control.new()
-	manager.enemy_area = Control.new()
-	manager.add_child(manager.hero_area)
-	manager.add_child(manager.enemy_area)
 	var attacker := _hero(100, 0)
 	var unarmored := _enemy_target(0)
 	var armored := _enemy_target(50)
-	manager.hero_area.add_child(attacker)
-	manager.enemy_area.add_child(unarmored)
-	manager.enemy_area.add_child(armored)
-	manager.current_actor = attacker
 	manager.actor_list = [attacker, unarmored, armored]
 	var effect := _damage_effect(1.0)
 	effect.split_damage = true
@@ -653,13 +652,18 @@ func test_complete_group_context_uses_fixed_divisor_and_per_target_range() -> vo
 	action.description = "{effect:1}"
 	action.effects = [effect]
 
-	var text := manager._get_rich_description(action)
+	var text := action.get_rich_description(
+		attacker, null, [unarmored, armored], manager,
+	)
 
 	assert_string_contains(text, "25-50")
 	assert_string_contains(text, "per target")
 	assert_false(text.contains("37"), "heterogeneous targets are never averaged")
 	assert_false(text.contains("100 total"))
 	manager.free()
+	attacker.free()
+	unarmored.free()
+	armored.free()
 
 
 func test_incomplete_target_and_battlefield_scaling_render_authored_relationships() -> void:
@@ -743,19 +747,12 @@ func test_enemy_intent_uses_fixed_split_and_same_resolver() -> void:
 
 
 func test_enemy_intent_displays_per_target_preview_range_without_averaging() -> void:
-	var enemy := IntentEnemy.new()
-	_bind_headless_card(
-		enemy,
-		_stats(120, 0, 0, 0, 0),
-		BattleCombatant.Faction.ENEMY,
-	)
-	enemy.intent_text = RichTextLabel.new()
-	enemy.intent_tooltip = RichTooltip.new()
+	var enemy := _intent_enemy(120)
 	var enemy_model := enemy.combatant as EnemyCombatant
 	enemy_model.intended_action = load("res://data/enemies/actions/rapid_fire.tres") as Action
 	var unarmored := _target(false, 0, 0)
 	var armored := _target(false, 50, 0)
-	enemy_model.intended_targets = [unarmored.combatant, armored.combatant]
+	enemy_model.intended_targets = [unarmored, armored]
 
 	enemy._update_intent_ui()
 
@@ -763,11 +760,7 @@ func test_enemy_intent_displays_per_target_preview_range_without_averaging() -> 
 	assert_string_contains(enemy.intent_text.text, "3 hits")
 	assert_false(enemy.intent_text.text.contains("x3"))
 	assert_string_contains(enemy.intent_text.text, "RANDOM")
-	enemy.intent_text.free()
-	enemy.intent_tooltip.free()
-	enemy.free()
-	unarmored.free()
-	armored.free()
+	_free_intent_enemy(enemy, [unarmored, armored])
 
 
 func test_enemy_intent_incomplete_random_split_uses_authored_total_budget() -> void:
@@ -787,7 +780,7 @@ func test_enemy_intent_incomplete_random_split_uses_authored_total_budget() -> v
 	effect.scaling_rules = [rule]
 	var enemy_model := enemy.combatant as EnemyCombatant
 	enemy_model.intended_action = action
-	enemy_model.intended_targets = [low_hp_target.combatant, healthy_target.combatant]
+	enemy_model.intended_targets = [low_hp_target, healthy_target]
 	var sequence := DamagePreview.for_plan(
 		effect,
 		enemy,
@@ -828,7 +821,7 @@ func test_enemy_intent_uses_sequential_guard_to_breach_preview() -> void:
 	var original_hp := target.current_hp
 	var enemy_model := enemy.combatant as EnemyCombatant
 	enemy_model.intended_action = action
-	enemy_model.intended_targets = [target.combatant]
+	enemy_model.intended_targets = [target]
 
 	enemy._update_intent_ui()
 
@@ -850,7 +843,7 @@ func test_enemy_intent_uses_resolved_damage_type_icon() -> void:
 	second.active_conditions = [_forced_type_condition(Action.DamageType.PIERCING)]
 	var enemy_model := enemy.combatant as EnemyCombatant
 	enemy_model.intended_action = action
-	enemy_model.intended_targets = [first.combatant, second.combatant]
+	enemy_model.intended_targets = [first, second]
 
 	enemy._update_intent_ui()
 
@@ -868,7 +861,7 @@ func test_enemy_intent_keeps_heterogeneous_resolved_types_separate() -> void:
 	piercing.active_conditions = [_forced_type_condition(Action.DamageType.PIERCING)]
 	var enemy_model := enemy.combatant as EnemyCombatant
 	enemy_model.intended_action = action
-	enemy_model.intended_targets = [kinetic.combatant, piercing.combatant]
+	enemy_model.intended_targets = [kinetic, piercing]
 
 	enemy._update_intent_ui()
 
@@ -899,7 +892,7 @@ func test_debilitate_reduces_enemy_intent_damage_by_thirty_five_percent() -> voi
 	var target := _intent_hero_target(0)
 	var enemy_model := enemy.combatant as EnemyCombatant
 	enemy_model.intended_action = _intent_action()
-	enemy_model.intended_targets = [target.combatant]
+	enemy_model.intended_targets = [target]
 	enemy._update_intent_ui()
 	assert_string_contains(enemy.intent_text.text, "100")
 
@@ -915,15 +908,15 @@ func test_debilitate_reduces_enemy_intent_damage_by_thirty_five_percent() -> voi
 	_free_intent_enemy(enemy, [target])
 
 
-func _intent_enemy(attack: int) -> IntentEnemy:
-	var enemy := IntentEnemy.new()
-	_bind_headless_card(
-		enemy,
-		_stats(attack, 0, 0, 0, 0),
-		BattleCombatant.Faction.ENEMY,
+func _intent_enemy(attack: int) -> EnemyCard:
+	var enemy := EnemyCardScene.instantiate() as EnemyCard
+	add_child(enemy)
+	var model := EnemyCombatant.new()
+	enemy.add_child(model)
+	model.setup_base(
+		_stats(attack, 0, 0, 0, 0), BattleCombatant.Faction.ENEMY,
 	)
-	enemy.intent_text = RichTextLabel.new()
-	enemy.intent_tooltip = RichTooltip.new()
+	enemy.bind_combatant(model)
 	return enemy
 
 
@@ -935,7 +928,7 @@ func _intent_action() -> Action:
 	return action
 
 
-func _intent_hero_target(defense: int) -> HeroCard:
+func _intent_hero_target(defense: int) -> HeroCombatant:
 	var target := _hero(0, 0)
 	target.current_stats.kinetic_defense = defense
 	target.current_stats.energy_defense = defense
@@ -943,15 +936,13 @@ func _intent_hero_target(defense: int) -> HeroCard:
 	definition.color = Color.WHITE
 	var role := RoleData.new()
 	role.source_definition = definition
-	(target.combatant as HeroCombatant).loaded_roles = [role]
+	target.loaded_roles = [role]
 	return target
 
 
-func _free_intent_enemy(enemy: IntentEnemy, targets: Array[ActorCard]) -> void:
-	enemy.intent_text.free()
-	enemy.intent_tooltip.free()
+func _free_intent_enemy(enemy: EnemyCard, targets: Array[BattleCombatant]) -> void:
 	enemy.free()
-	for target: ActorCard in targets:
+	for target: BattleCombatant in targets:
 		target.free()
 
 
@@ -972,14 +963,13 @@ func _hero(
 	focus: int,
 	overload: int = 0,
 	precision: int = 0,
-) -> HeroCard:
-	var hero := HeroCard.new()
-	_bind_headless_card(
-		hero,
+) -> HeroCombatant:
+	var hero := HeroCombatant.new()
+	hero.setup_base(
 		_stats(attack, 0, overload, precision, 0),
 		BattleCombatant.Faction.HERO,
 	)
-	(hero.combatant as HeroCombatant).current_focus = focus
+	hero.current_focus = focus
 	hero.current_hp = hero.current_stats.max_hp
 	return hero
 
@@ -988,12 +978,10 @@ func _target(
 	is_breached: bool,
 	defense: int,
 	incoming_modifier: float,
-) -> ActorCard:
-	var target := ActorCard.new()
-	_bind_headless_card(
-		target,
-		_stats(0, 0, 0, 0, defense),
-		BattleCombatant.Faction.ENEMY,
+) -> EnemyCombatant:
+	var target := EnemyCombatant.new()
+	target.setup_base(
+		_stats(0, 0, 0, 0, defense), BattleCombatant.Faction.ENEMY,
 	)
 	target.current_hp = target.current_stats.max_hp
 	target.is_breached = is_breached
@@ -1004,44 +992,23 @@ func _target(
 	return target
 
 
-func _enemy_target(defense: int) -> EnemyCard:
-	var target := EnemyCard.new()
-	_bind_headless_card(
-		target,
-		_stats(0, 0, 0, 0, defense),
-		BattleCombatant.Faction.ENEMY,
+func _enemy_target(defense: int) -> EnemyCombatant:
+	var target := EnemyCombatant.new()
+	target.setup_base(
+		_stats(0, 0, 0, 0, defense), BattleCombatant.Faction.ENEMY,
 	)
 	target.current_hp = target.current_stats.max_hp
 	target.is_defeated = false
 	return target
 
 
-func _attacker() -> ActorCard:
-	var attacker := ActorCard.new()
-	_bind_headless_card(
-		attacker,
-		_stats(100, 0, 0, 0, 0),
-		BattleCombatant.Faction.HERO,
+func _attacker() -> HeroCombatant:
+	var attacker := HeroCombatant.new()
+	attacker.setup_base(
+		_stats(100, 0, 0, 0, 0), BattleCombatant.Faction.HERO,
 	)
 	attacker.current_hp = attacker.current_stats.max_hp
 	return attacker
-
-
-func _bind_headless_card(
-	card: ActorCard,
-	stats: ActorStats,
-	faction: BattleCombatant.Faction,
-) -> void:
-	var model: BattleCombatant
-	if card is HeroCard:
-		model = HeroCombatant.new()
-	elif card is EnemyCard:
-		model = EnemyCombatant.new()
-	else:
-		model = BattleCombatant.new()
-	card.add_child(model)
-	model.setup_base(stats, faction)
-	card.bind_combatant(model, true)
 
 
 func _damage_effect(effect_potency: float) -> Effect_Damage:
