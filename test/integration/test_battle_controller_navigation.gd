@@ -5,6 +5,7 @@ const CardSceneTestFixture := preload("res://test/helpers/card_scene_test_fixtur
 const ActionButtonScene := preload("res://src/battle/action_button.tscn")
 const ActionBarScene := preload("res://src/battle/action_bar.tscn")
 const UXScene := preload("res://src/ui/navigation/navigation_ux_layer.tscn")
+const BattleSceneResource := preload("res://src/battle/battle_scene.tscn")
 const BattleWorldScene := preload("res://src/battle/presentation/battle_world_3d.tscn")
 const EnemyDroneScene := preload(
 	"res://src/battle/presentation/enemy_drone_presentation.tscn",
@@ -818,6 +819,50 @@ func test_runtime_hidden_world_removes_projected_enemies_from_targeting_until_sh
 
 	assert_eq(scene._valid_targets().size(), 2)
 	assert_true(manager.battle_world.hud_layer.visible)
+
+
+func test_real_pointer_reaches_drone_through_layout_but_action_button_wins_overlap() -> void:
+	var previous_input_mode := InputManager.get_active_mode()
+	var previous_presentation_mode := InputManager.get_presentation_mode()
+	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
+	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)
+	var fixture := await _packed_drone_pointer_fixture()
+	var viewport := fixture.viewport as SubViewport
+	var battle := fixture.battle as BattleScene
+	var manager := fixture.manager as TrackingBattleManager
+	var enemy := fixture.enemy as EnemyCombatant
+	var presentation := fixture.presentation as EnemyDronePresentation
+	var target_center := presentation.hud.get_target_rect().get_center()
+
+	viewport.push_input(_mouse_motion_at(Vector2(12, 740)), true)
+	await get_tree().process_frame
+	viewport.push_input(_mouse_motion_at(target_center), true)
+	await get_tree().process_frame
+	viewport.push_input(_mouse_button_at(target_center, true), true)
+	viewport.push_input(_mouse_button_at(target_center, false), true)
+	await get_tree().process_frame
+
+	assert_same(battle._current_target, enemy)
+	assert_same(manager.selected_enemy, enemy)
+
+	manager.selected_enemy = null
+	var action_button := ActionButtonScene.instantiate() as ActionButton
+	battle.get_node("UI").add_child(action_button)
+	await get_tree().process_frame
+	action_button.global_position = target_center - action_button.size * 0.5
+	action_button.disabled = false
+	watch_signals(action_button.button)
+	viewport.push_input(_mouse_motion_at(Vector2(12, 740)), true)
+	await get_tree().process_frame
+	viewport.push_input(_mouse_motion_at(target_center), true)
+	viewport.push_input(_mouse_button_at(target_center, true), true)
+	viewport.push_input(_mouse_button_at(target_center, false), true)
+	await get_tree().process_frame
+
+	assert_signal_emitted(action_button.button, &"pressed")
+	assert_null(manager.selected_enemy)
+	InputManager._set_active_mode(previous_input_mode)
+	InputManager._set_presentation_mode(previous_presentation_mode)
 
 
 func test_presentation_replacement_routes_input_only_from_current_registration() -> void:
@@ -2651,6 +2696,83 @@ func _drone_navigation_fixture() -> Dictionary:
 		enemies = enemies,
 		presentations = presentations,
 	}
+
+
+func _packed_drone_pointer_fixture() -> Dictionary:
+	var viewport := SubViewport.new()
+	viewport.size = Vector2i(1280, 800)
+	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	add_child_autofree(viewport)
+	var battle := BattleSceneResource.instantiate() as BattleScene
+	var packed_manager := battle.manager
+	var manager := TrackingBattleManager.new()
+	manager.name = "BattleManager"
+	manager.UI = packed_manager.UI
+	manager.fx_manager = packed_manager.fx_manager
+	manager.hero_area = packed_manager.hero_area
+	manager.enemy_area = packed_manager.enemy_area
+	manager.action_bar = packed_manager.action_bar
+	manager.current_action_panel = packed_manager.current_action_panel
+	manager.combatant_root = packed_manager.combatant_root
+	manager.battle_world = packed_manager.battle_world
+	manager.hero_view_scene = packed_manager.hero_view_scene
+	manager.enemy_view_scene = packed_manager.enemy_view_scene
+	battle.remove_child(packed_manager)
+	packed_manager.free()
+	battle.add_child(manager)
+	battle.manager = manager
+	manager.action_bar.battle_manager = manager
+	(battle.get_node("UI/TurnQueue") as TurnQueue).battle_manager = manager
+	viewport.add_child(battle)
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var enemy := EnemyCombatant.new()
+	var stats := ActorStats.new()
+	stats.actor_name = "Pointer Drone"
+	stats.max_hp = 100
+	enemy.setup_base(stats, BattleCombatant.Faction.ENEMY, manager)
+	enemy.is_valid_target = true
+	manager.combatant_root.add_child(enemy)
+	manager.actor_list.append(enemy)
+	var presentation := manager._spawn_presentation_view(
+		manager.enemy_view_scene,
+		manager.battle_world.enemy_views,
+		enemy,
+	) as EnemyDronePresentation
+	assert_not_null(presentation)
+	presentation.set_process(false)
+	var enemy_lane := battle.get_node("UI/Enemies") as Control
+	var lane_center := enemy_lane.get_global_rect().get_center()
+	presentation.hud.set_projected_head_position(lane_center - Vector2(0, 42))
+	presentation.hud.set_projected_foot_position(lane_center + Vector2(0, 42))
+	manager.current_action = Action.new()
+	manager.current_action.target_type = Action.TargetType.ONE_ENEMY
+	manager.change_state(BattleManager.State.FORCED_TARGET)
+	await get_tree().process_frame
+	return {
+		viewport = viewport,
+		battle = battle,
+		manager = manager,
+		enemy = enemy,
+		presentation = presentation,
+	}
+
+
+func _mouse_motion_at(position: Vector2) -> InputEventMouseMotion:
+	var event := InputEventMouseMotion.new()
+	event.position = position
+	event.global_position = position
+	return event
+
+
+func _mouse_button_at(position: Vector2, pressed: bool) -> InputEventMouseButton:
+	var event := InputEventMouseButton.new()
+	event.position = position
+	event.global_position = position
+	event.button_index = MOUSE_BUTTON_LEFT
+	event.pressed = pressed
+	return event
 
 
 func _navigation_fixture() -> Dictionary:
