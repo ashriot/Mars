@@ -19,6 +19,7 @@ const TURN_QUEUE_TOP_MARGIN_COMPACT := 16.0
 const TURN_QUEUE_BOTTOM_MARGIN_COMPACT := 300.0
 
 func _ready():
+	_configure_presentation_layers()
 	DisplayProfile.bind(apply_display_profile)
 	manager.battle_ended.connect(_on_battle_ended)
 	manager.battle_state_changed.connect(_on_battle_state_changed)
@@ -36,6 +37,19 @@ func _ready():
 		navigation.set_adapter(self)
 	_refresh_targeting()
 	_publish_controller_hints()
+
+
+func _configure_presentation_layers() -> void:
+	var world_is_active := manager != null \
+		and is_instance_valid(manager.battle_world) \
+		and manager.battle_world.is_inside_tree() \
+		and manager.battle_world.visible
+	var backdrop := get_node_or_null("UI/Backdrop") as Control
+	if backdrop:
+		backdrop.visible = not world_is_active
+	var legacy_enemy_lane := get_node_or_null("UI/Enemies/HBox") as Control
+	if legacy_enemy_lane:
+		legacy_enemy_lane.visible = not world_is_active
 
 
 func apply_display_profile(profile: int, window_size: Vector2i, logical_size: Vector2) -> void:

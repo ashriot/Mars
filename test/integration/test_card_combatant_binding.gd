@@ -2,6 +2,7 @@ extends GutTest
 
 const HeroCardScene := preload("res://src/battle/hero_card.tscn")
 const EnemyCardScene := preload("res://src/battle/enemy_card.tscn")
+const BattleWorldScene := preload("res://src/battle/presentation/battle_world_3d.tscn")
 
 
 class TestBattleManager extends BattleManager:
@@ -31,6 +32,9 @@ class SpawnFailureBattleManager extends TestBattleManager:
 	func _apply_starting_passives() -> void:
 		passive_calls += 1
 
+	func _finalize_initial_ai_timing(_head_start_rolls: Array = []) -> void:
+		pass
+
 	func find_and_start_next_turn() -> void:
 		turn_calls += 1
 
@@ -44,6 +48,26 @@ class TrackingCombatantPresentation extends CombatantPresentation:
 class NoOpSetupPresentation extends CombatantPresentation:
 	func setup_view(_value: BattleCombatant) -> bool:
 		return true
+
+
+class ProjectedNode3DPresentation extends CombatantPresentation:
+	func get_target_screen_position() -> Vector2:
+		var root := get_parent() as Node3D
+		return Vector2(root.position.x, root.position.z) \
+			if is_instance_valid(root) else Vector2.ZERO
+
+	func is_target_visible() -> bool:
+		return true
+
+
+class FailAfterFirstNode3DPresentation extends ProjectedNode3DPresentation:
+	static var setup_calls := 0
+
+	func setup_view(value: BattleCombatant) -> bool:
+		setup_calls += 1
+		if setup_calls > 1:
+			return false
+		return super.setup_view(value)
 
 
 func _combatant(
@@ -106,6 +130,81 @@ func _no_op_view_scene() -> PackedScene:
 	assert_eq(scene.pack(presentation), OK)
 	presentation.free()
 	return scene
+
+
+func _projected_node_3d_view_scene(fail_after_first := false) -> PackedScene:
+	var scene := PackedScene.new()
+	var view_root := Node3D.new()
+	view_root.name = "ProjectedEnemyView"
+	var presentation: CombatantPresentation = FailAfterFirstNode3DPresentation.new() \
+		if fail_after_first else ProjectedNode3DPresentation.new()
+	presentation.name = "CombatantPresentation"
+	view_root.add_child(presentation)
+	presentation.owner = view_root
+	assert_eq(scene.pack(view_root), OK)
+	view_root.free()
+	return scene
+
+
+func _spawn_manager_with_world(
+	enemy_view_scene: PackedScene,
+	layout := BattleFormationLayout.Layout.W,
+) -> Dictionary:
+	var manager := SpawnFailureBattleManager.new()
+	manager.combatant_root = Node.new()
+	manager.hero_area = Control.new()
+	var world := BattleWorldScene.instantiate() as BattleWorld3D
+	manager.add_child(manager.combatant_root)
+	manager.add_child(manager.hero_area)
+	manager.add_child(world)
+	manager.battle_world = world
+	manager.hero_view_scene = _non_card_view_scene(false)
+	manager.enemy_view_scene = enemy_view_scene
+	manager.current_encounter = Encounter.new()
+	manager.current_encounter.enemy_formation = layout
+	add_child_autofree(manager)
+	return {manager = manager, world = world}
+
+
+func _five_unique_enemies() -> Array[EnemyData]:
+	var enemies: Array[EnemyData] = []
+	for index in 5:
+		var enemy := EnemyData.new()
+		enemy.enemy_id = "projected_enemy_%d" % index
+		enemy.enemy_name = "Projected Enemy %d" % index
+		enemies.append(enemy)
+	return enemies
+
+
+func _assert_world_spawn(
+	layout: BattleFormationLayout.Layout,
+	expected_positions: Array[Vector3],
+	encounter_is_boss := false,
+) -> void:
+	var fixture := _spawn_manager_with_world(_projected_node_3d_view_scene(), layout)
+	var manager := fixture.manager as SpawnFailureBattleManager
+	var world := fixture.world as BattleWorld3D
+	manager.current_encounter.enemies = _five_unique_enemies()
+	manager.current_encounter.is_boss = encounter_is_boss
+
+	await manager.spawn_encounter([], 3, 41, false)
+
+	assert_eq(manager.actor_list.size(), 5)
+	assert_eq(world.enemy_views.get_child_count(), 5)
+	for index in 5:
+		var enemy := manager.actor_list[index] as EnemyCombatant
+		var presentation := manager.presentation_for(enemy) \
+			as ProjectedNode3DPresentation
+		var view_root := manager.presentation_view_root_for(enemy)
+		assert_not_null(presentation)
+		assert_not_null(view_root)
+		assert_same(view_root.get_parent(), world.enemy_views)
+		assert_eq((view_root as Node3D).position, expected_positions[index])
+		assert_same(presentation.combatant, enemy)
+		assert_eq(
+			presentation.get_target_screen_position(),
+			Vector2(expected_positions[index].x, expected_positions[index].z),
+		)
 
 
 func _assert_invalid_view_is_rejected(presentation_count: int) -> void:
@@ -193,6 +292,107 @@ func test_manager_rejects_hero_card_for_enemy_and_removes_partial_view() -> void
 	assert_null(manager.presentation_for(enemy))
 	assert_true(manager._presentations.is_empty())
 	assert_true(manager._presentation_exit_callbacks.is_empty())
+
+
+func test_nested_presentation_registry_preserves_exact_view_root() -> void:
+	var manager := TestBattleManager.new()
+	var world := BattleWorldScene.instantiate() as BattleWorld3D
+	manager.add_child(world)
+	add_child_autofree(manager)
+	var enemy := _combatant(100, BattleCombatant.Faction.ENEMY, manager)
+
+	var presentation := manager._spawn_presentation_view(
+		_projected_node_3d_view_scene(),
+		world.enemy_views,
+		enemy,
+	)
+	var view_root := manager.presentation_view_root_for(enemy)
+
+	assert_not_null(presentation)
+	assert_not_null(view_root)
+	assert_same(view_root.get_parent(), world.enemy_views)
+	assert_same(presentation.get_parent(), view_root)
+	manager.unregister_presentation(enemy)
+	assert_null(manager.presentation_view_root_for(enemy))
+	assert_true(
+		is_instance_valid(view_root),
+		"unregister detaches registry but caller owns free",
+	)
+	assert_same(world.enemy_views.get_parent(), world)
+	view_root.free()
+
+
+func test_spawned_presentation_replacement_tracks_only_the_new_exact_root() -> void:
+	var manager := TestBattleManager.new()
+	var world := BattleWorldScene.instantiate() as BattleWorld3D
+	manager.add_child(world)
+	add_child_autofree(manager)
+	var enemy := _combatant(100, BattleCombatant.Faction.ENEMY, manager)
+	var scene := _projected_node_3d_view_scene()
+
+	var first := manager._spawn_presentation_view(scene, world.enemy_views, enemy)
+	var first_root := manager.presentation_view_root_for(enemy)
+	var replacement := manager._spawn_presentation_view(scene, world.enemy_views, enemy)
+	var replacement_root := manager.presentation_view_root_for(enemy)
+
+	assert_not_null(first)
+	assert_not_null(replacement)
+	assert_ne(first, replacement)
+	assert_ne(first_root, replacement_root)
+	assert_same(replacement_root.get_parent(), world.enemy_views)
+	assert_true(is_instance_valid(first_root), "replaced roots remain caller-owned")
+	manager.unregister_presentation(enemy)
+	assert_null(manager.presentation_view_root_for(enemy))
+	assert_true(is_instance_valid(first_root))
+	assert_true(is_instance_valid(replacement_root))
+	first_root.free()
+	replacement_root.free()
+
+
+func test_failed_later_enemy_view_rolls_back_only_exact_spawn_roots() -> void:
+	FailAfterFirstNode3DPresentation.setup_calls = 0
+	var fixture := _spawn_manager_with_world(
+		_projected_node_3d_view_scene(true),
+	)
+	var manager := fixture.manager as SpawnFailureBattleManager
+	var world := fixture.world as BattleWorld3D
+	var formation_anchor := Marker3D.new()
+	formation_anchor.name = "FormationAnchor"
+	world.enemy_views.add_child(formation_anchor)
+	manager.current_encounter.enemies = _five_unique_enemies().slice(0, 2)
+
+	await manager.spawn_encounter([], 2, 19, false)
+
+	assert_true(manager.actor_list.is_empty())
+	assert_eq(manager.combatant_root.get_child_count(), 0)
+	assert_true(is_instance_valid(world))
+	assert_same(world.enemy_views.get_parent(), world)
+	assert_true(is_instance_valid(formation_anchor))
+	assert_same(formation_anchor.get_parent(), world.enemy_views)
+	assert_eq(world.enemy_views.get_children(), [formation_anchor])
+	assert_true(manager._presentations.is_empty())
+	assert_true(manager._presentation_view_roots.is_empty())
+	assert_eq(manager.fade_calls, 0)
+
+
+func test_spawn_encounter_places_five_enemy_view_roots_in_w_layout() -> void:
+	await _assert_world_spawn(BattleFormationLayout.Layout.W, [
+		Vector3(-3.6, 0.0, -1.0),
+		Vector3(0.0, 0.0, -1.4),
+		Vector3(3.6, 0.0, -1.0),
+		Vector3(-1.8, 0.0, 1.0),
+		Vector3(1.8, 0.0, 1.0),
+	])
+
+
+func test_boss_flagged_encounter_still_places_five_enemy_roots_in_ordinary_m_layout() -> void:
+	await _assert_world_spawn(BattleFormationLayout.Layout.M, [
+		Vector3(-1.8, 0.0, -1.0),
+		Vector3(1.8, 0.0, -1.0),
+		Vector3(-3.6, 0.0, 1.0),
+		Vector3(0.0, 0.0, 1.4),
+		Vector3(3.6, 0.0, 1.0),
+	], true)
 
 
 func test_registry_rejects_one_presentation_for_two_combatants() -> void:
@@ -322,11 +522,13 @@ func test_spawn_encounter_aborts_and_discards_model_when_view_is_invalid() -> vo
 	manager.combatant_root = Node.new()
 	manager.hero_area = Node3D.new()
 	manager.enemy_area = Node3D.new()
+	manager.battle_world = BattleWorldScene.instantiate() as BattleWorld3D
 	manager.add_child(manager.combatant_root)
 	manager.add_child(manager.hero_area)
 	manager.add_child(manager.enemy_area)
-	manager.hero_card_scene = _non_card_view_scene(false)
-	manager.enemy_card_scene = _view_scene_with_presentation_count(0)
+	manager.add_child(manager.battle_world)
+	manager.hero_view_scene = _non_card_view_scene(false)
+	manager.enemy_view_scene = _view_scene_with_presentation_count(0)
 	manager.current_encounter = Encounter.new()
 	manager.current_encounter.enemies = [EnemyData.new()]
 	add_child_autofree(manager)
@@ -345,8 +547,10 @@ func test_spawn_encounter_aborts_and_discards_model_when_view_is_invalid() -> vo
 	assert_eq(manager.combatant_root.get_child_count(), 0)
 	assert_eq(manager.hero_area.get_child_count(), 0)
 	assert_eq(manager.enemy_area.get_child_count(), 0)
+	assert_eq(manager.battle_world.enemy_views.get_child_count(), 0)
 	assert_true(manager._combatant_exit_callbacks.is_empty())
 	assert_true(manager._presentations.is_empty())
+	assert_true(manager._presentation_view_roots.is_empty())
 	assert_eq(manager.fade_calls, 0)
 	assert_eq(manager.passive_calls, 0)
 	assert_eq(manager.turn_calls, 0)

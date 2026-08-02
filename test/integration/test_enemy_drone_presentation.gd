@@ -320,7 +320,7 @@ func test_forced_missing_model_keeps_placeholder_and_never_blocks_clips() -> voi
 	fixture.root.free()
 
 
-func test_registry_teardown_completes_pending_operation_after_unregistration() -> void:
+func test_manager_free_completes_pending_attack_after_unregistration_once() -> void:
 	var manager := RegistryTrackingBattleManager.new()
 	add_child_autofree(manager)
 	var enemy := _enemy()
@@ -345,6 +345,66 @@ func test_registry_teardown_completes_pending_operation_after_unregistration() -
 	assert_eq(completion_count[0], 1)
 	assert_true(registry_was_clear_on_completion[0])
 	assert_null(manager.presentation_for(enemy))
+
+
+func test_manager_replacement_completes_pending_hit_after_registry_switch_once() -> void:
+	var manager := RegistryTrackingBattleManager.new()
+	add_child_autofree(manager)
+	var enemy := _enemy()
+	var fixture := _bound_animated_drone(_world(), enemy)
+	assert_true(manager.register_presentation(enemy, fixture.presentation))
+	fixture.presentation.combatant.presentation_event.emit(
+		fixture.presentation.combatant, &"damage_received", {},
+	)
+	var operation: PresentationOperation = fixture.presentation.sync_visual_health()
+	assert_false(operation.is_completed)
+	var replacement := CombatantPresentation.new()
+	replacement.bind(enemy)
+	manager.add_child(replacement)
+	var registry_was_replaced_on_completion := [false]
+	var completion_count := [0]
+	operation.completed.connect(
+		func() -> void:
+			completion_count[0] += 1
+			registry_was_replaced_on_completion[0] = (
+				manager.presentation_for(enemy) == replacement
+			)
+	)
+
+	assert_true(manager.register_presentation(enemy, replacement))
+
+	assert_true(operation.is_completed)
+	assert_eq(completion_count[0], 1)
+	assert_true(registry_was_replaced_on_completion[0])
+	assert_same(manager.presentation_for(enemy), replacement)
+	assert_true(is_instance_valid(fixture.root))
+
+
+func test_manager_unregister_completes_pending_shutdown_after_registry_clear_once() -> void:
+	var manager := RegistryTrackingBattleManager.new()
+	add_child_autofree(manager)
+	var enemy := _enemy()
+	var fixture := _bound_animated_drone(_world(), enemy)
+	assert_true(manager.register_presentation(enemy, fixture.presentation))
+	fixture.presentation._process(0.0)
+	enemy.defeat()
+	var operation: PresentationOperation = fixture.presentation.sync_visual_health()
+	assert_false(operation.is_completed)
+	var registry_was_clear_on_completion := [false]
+	var completion_count := [0]
+	operation.completed.connect(
+		func() -> void:
+			completion_count[0] += 1
+			registry_was_clear_on_completion[0] = manager.presentation_for(enemy) == null
+	)
+
+	manager.unregister_presentation(enemy)
+
+	assert_true(operation.is_completed)
+	assert_eq(completion_count[0], 1)
+	assert_true(registry_was_clear_on_completion[0])
+	assert_null(manager.presentation_for(enemy))
+	assert_true(is_instance_valid(fixture.root))
 
 
 func _world() -> Dictionary:

@@ -87,18 +87,16 @@ func test_lab_builds_max_party_and_forwards_rank_twenty_five_fixed_seed() -> voi
 	assert_false(enemies.is_empty())
 	for enemy_index in enemies.size():
 		var enemy := enemies[enemy_index] as EnemyCombatant
-		var enemy_card := _card_for(lab, enemy) as EnemyCard
+		var presentation := lab.battle_scene.manager.presentation_for(enemy) \
+			as EnemyDronePresentation
 		var authored_enemy := authored_enemies[enemy_index] as EnemyData
 		var unscaled_stats := _enemy_stats_at_level(authored_enemy, lab.enemy_level)
 		var expected_hp := roundi(unscaled_stats.max_hp * lab.enemy_hp_multiplier)
 		assert_eq(enemy.enemy_data.level, 25, enemy.actor_name)
-		assert_not_null(enemy_card, enemy.actor_name)
-		if enemy_card != null:
-			assert_eq(
-				enemy_card.get_node("Panel/Info/Text").text,
-				"Rk. 25",
-				enemy.actor_name,
-			)
+		assert_not_null(presentation, enemy.actor_name)
+		if presentation != null:
+			assert_same(presentation.combatant, enemy, enemy.actor_name)
+			assert_same(presentation.hud.combatant, enemy, enemy.actor_name)
 		assert_eq(enemy.current_stats.max_hp, expected_hp, enemy.actor_name)
 		assert_eq(enemy.current_hp, expected_hp, enemy.actor_name)
 		assert_eq(enemy.current_stats.attack, unscaled_stats.attack, enemy.actor_name)
@@ -317,9 +315,3 @@ func _loaded_role(hero: HeroCombatant, role_id: String) -> RoleData:
 		if role.source_definition.role_id == role_id:
 			return role
 	return null
-
-
-func _card_for(lab: EndgameBattleLab, actor: BattleCombatant) -> ActorCard:
-	var presentation := lab.battle_scene.manager.presentation_for(actor)
-	return (presentation as CardCombatantPresentation).card \
-		if presentation is CardCombatantPresentation else null

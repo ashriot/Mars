@@ -29,10 +29,11 @@ signal target_invalidated(combatant: BattleCombatant)
 @export var action_bar: ActionBar
 @export var current_action_panel: PanelContainer
 @export var combatant_root: Node
+@export var battle_world: BattleWorld3D
 
 @export_group("Packed Scenes")
-@export var hero_card_scene: PackedScene
-@export var enemy_card_scene: PackedScene
+@export var hero_view_scene: PackedScene
+@export var enemy_view_scene: PackedScene
 
 # --- Actor Tracking ---
 var _current_actor_was_assigned := false
@@ -54,6 +55,7 @@ var encounter_seed := 0
 var rewards_enabled := true
 var _combat_rng: RandomNumberGenerator
 var _presentations: Dictionary = {}
+var _presentation_view_roots: Dictionary = {}
 var _presentation_exit_callbacks: Dictionary = {}
 var _combatant_exit_callbacks: Dictionary = {}
 var _canceling_active_actor_state := false
@@ -134,6 +136,8 @@ func register_presentation(
 		previous.set_acting(false)
 		_disconnect_presentation(previous)
 	_presentations[combatant] = presentation
+	if previous != null and previous != presentation:
+		_presentation_view_roots.erase(combatant)
 	if not presentation.target_hovered.is_connected(_on_target_hovered):
 		presentation.target_hovered.connect(_on_target_hovered)
 	if not presentation.target_unhovered.is_connected(_on_target_unhovered):
@@ -161,6 +165,17 @@ func presentation_for(combatant: BattleCombatant) -> CombatantPresentation:
 	return candidate as CombatantPresentation
 
 
+func presentation_view_root_for(combatant: BattleCombatant) -> Node:
+	if not is_instance_valid(combatant):
+		_prune_stale_presentations()
+		return null
+	var candidate: Variant = _presentation_view_roots.get(combatant)
+	if not is_instance_valid(candidate):
+		_presentation_view_roots.erase(combatant)
+		return null
+	return candidate as Node
+
+
 func _prune_stale_presentations() -> void:
 	for combatant_value: Variant in _presentations.keys():
 		var presentation_value: Variant = _presentations.get(combatant_value)
@@ -180,6 +195,7 @@ func _prune_stale_presentations() -> void:
 		if not combatant_is_valid:
 			_combatant_exit_callbacks.erase(combatant_value)
 		_presentations.erase(combatant_value)
+		_presentation_view_roots.erase(combatant_value)
 		if combatant_is_valid:
 			target_invalidated.emit(combatant_value as BattleCombatant)
 		if presentation_is_valid and is_instance_valid(presentation_value):
@@ -229,6 +245,7 @@ func unregister_presentation(combatant: BattleCombatant) -> void:
 		presentation.set_acting(false)
 		_disconnect_presentation(presentation)
 	_presentations.erase(combatant)
+	_presentation_view_roots.erase(combatant)
 	target_invalidated.emit(combatant)
 	if is_instance_valid(presentation):
 		presentation.cancel_pending_operations()
@@ -441,6 +458,7 @@ func _spawn_presentation_view(
 	if not register_presentation(combatant, presentation):
 		view_root.free()
 		return null
+	_presentation_view_roots[combatant] = view_root
 	return presentation
 
 
@@ -459,16 +477,7 @@ func _discard_encounter_spawn(combatants: Array[BattleCombatant]) -> void:
 		var combatant := combatants[index]
 		if not is_instance_valid(combatant):
 			continue
-		var view_parent: Node = hero_area \
-			if combatant is HeroCombatant else enemy_area
-		var presentation := presentation_for(combatant)
-		var view_root: Node = presentation
-		while is_instance_valid(view_root) \
-			and view_root.get_parent() != null \
-			and view_root.get_parent() != view_parent:
-			view_root = view_root.get_parent()
-		if not is_instance_valid(view_root) or view_root.get_parent() != view_parent:
-			view_root = null
+		var view_root := presentation_view_root_for(combatant)
 		unregister_presentation(combatant)
 		_disconnect_combatant_signals(combatant)
 		actor_list.erase(combatant)
@@ -508,7 +517,7 @@ func spawn_encounter(
 		actor_list.append(hero)
 		encounter_combatants.append(hero)
 		_connect_combatant_signals(hero)
-		var presentation := _spawn_presentation_view(hero_card_scene, hero_area, hero)
+		var presentation := _spawn_presentation_view(hero_view_scene, hero_area, hero)
 		if presentation == null:
 			_discard_encounter_spawn(encounter_combatants)
 			return
@@ -545,7 +554,8 @@ func spawn_encounter(
 
 	var current_indices = {}
 	var suffixes = [" A", " B", " C", " D"]
-	for enemy: EnemyCombatant in spawned_enemies:
+	for enemy_index in spawned_enemies.size():
+		var enemy := spawned_enemies[enemy_index]
 		var base_name := enemy.actor_name
 		if name_counts[base_name] > 1:
 			var idx = current_indices.get(base_name, 0)
@@ -554,8 +564,27 @@ func spawn_encounter(
 				enemy.actor_name = new_name
 				enemy.current_stats.actor_name = new_name
 				current_indices[base_name] = idx + 1
-		var presentation := _spawn_presentation_view(enemy_card_scene, enemy_area, enemy)
+		var enemy_view_parent: Node = battle_world.enemy_views \
+			if is_instance_valid(battle_world) else null
+		var presentation := _spawn_presentation_view(
+			enemy_view_scene, enemy_view_parent, enemy,
+		)
 		if presentation == null:
+			_discard_encounter_spawn(encounter_combatants)
+			return
+		var view_root := presentation_view_root_for(enemy) as Node3D
+		if not is_instance_valid(view_root) \
+			or not battle_world.place_ordinary_view(
+				view_root,
+				enemy_index,
+				spawned_enemies.size(),
+				current_encounter.enemy_formation,
+			):
+			push_error(
+				"BattleManager could not place enemy view %d of %d in the battle world." % [
+					enemy_index + 1, spawned_enemies.size(),
+				],
+			)
 			_discard_encounter_spawn(encounter_combatants)
 			return
 		enemy.initialize_ai(encounter_seed)

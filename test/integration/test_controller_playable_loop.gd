@@ -88,8 +88,9 @@ class LoopManager extends GameManager:
 
 		var scene := BATTLE.instantiate() as BattleScene
 		var packed_manager := scene.manager
-		var hero_card_scene := packed_manager.hero_card_scene
-		var enemy_card_scene := packed_manager.enemy_card_scene
+		var hero_view_scene := packed_manager.hero_view_scene
+		var enemy_view_scene := packed_manager.enemy_view_scene
+		var battle_world := packed_manager.battle_world
 		scene.remove_child(packed_manager)
 		packed_manager.free()
 		battle_manager = LoopBattleManager.new()
@@ -102,8 +103,9 @@ class LoopManager extends GameManager:
 		battle_manager.action_bar = scene.get_node("UI/ActionBar")
 		battle_manager.current_action_panel = scene.get_node("UI/CurrentAction")
 		battle_manager.combatant_root = scene.get_node("Combatants")
-		battle_manager.hero_card_scene = hero_card_scene
-		battle_manager.enemy_card_scene = enemy_card_scene
+		battle_manager.battle_world = battle_world
+		battle_manager.hero_view_scene = hero_view_scene
+		battle_manager.enemy_view_scene = enemy_view_scene
 		battle_manager.action_bar.battle_manager = battle_manager
 		(scene.get_node("UI/TurnQueue") as TurnQueue).battle_manager = battle_manager
 		battle_manager.target_confirmed.connect(func(): battle_confirmed += 1)
@@ -117,13 +119,11 @@ class LoopManager extends GameManager:
 		battle_manager.current_encounter = fixture_encounter
 		await battle_manager.spawn_encounter()
 		var hero := battle_manager.hero_area.get_child(0) as HeroCard
-		var first_enemy := battle_manager.enemy_area.get_child(0) as EnemyCard
-		var other_enemy := enemy_card_scene.instantiate() as EnemyCard
-		other_enemy.battle_manager = battle_manager
-		battle_manager.enemy_area.add_child(other_enemy)
+		var first_enemy_model := battle_manager.get_living_enemies()[0]
+		var first_enemy := battle_manager.presentation_for(first_enemy_model) \
+			as EnemyDronePresentation
 		var other_model := EnemyCombatant.new()
 		battle_manager.combatant_root.add_child(other_model)
-		var first_enemy_model := first_enemy.combatant as EnemyCombatant
 		other_model.setup(
 			first_enemy_model.enemy_data,
 			first_enemy_model.enemy_data.level,
@@ -132,13 +132,32 @@ class LoopManager extends GameManager:
 			1.0,
 			battle_manager,
 		)
-		await other_enemy.setup_from_combatant(other_model)
-		other_model.initialize_ai(battle_manager.encounter_seed)
+		other_model.battle_priority = battle_manager.actor_list.size()
 		battle_manager.actor_list.append(other_model)
-		battle_manager.register_presentation(other_model, other_enemy.presentation)
-		other_enemy.position = first_enemy.position + Vector2(first_enemy.size.x + 40.0, 0.0)
+		battle_manager._connect_combatant_signals(other_model)
+		var other_enemy := battle_manager._spawn_presentation_view(
+			enemy_view_scene,
+			battle_world.enemy_views,
+			other_model,
+		) as EnemyDronePresentation
+		assert(is_instance_valid(other_enemy))
+		other_model.initialize_ai(battle_manager.encounter_seed)
+		assert(battle_world.place_ordinary_view(
+			battle_manager.presentation_view_root_for(first_enemy_model) as Node3D,
+			0,
+			2,
+			fixture_encounter.enemy_formation,
+		))
+		assert(battle_world.place_ordinary_view(
+			battle_manager.presentation_view_root_for(other_model) as Node3D,
+			1,
+			2,
+			fixture_encounter.enemy_formation,
+		))
+		first_enemy._process(0.0)
+		other_enemy._process(0.0)
 		battle_manager.forced_enemies.assign([
-			first_enemy.combatant,
+			first_enemy_model,
 			other_model,
 		])
 		battle_manager.current_actor = hero.combatant
@@ -371,20 +390,20 @@ func test_controller_events_route_the_complete_playable_loop() -> void:
 		return
 	var first_valid := (
 		router.manager.battle_manager.presentation_for(valid_enemies[0]) \
-			as CardCombatantPresentation
-	).card as EnemyCard
+			as EnemyDronePresentation
+	)
 	var other_valid := (
 		router.manager.battle_manager.presentation_for(valid_enemies[1]) \
-			as CardCombatantPresentation
-	).card as EnemyCard
-	assert_eq(first_valid.get_target_presentation(), ActorCard.TargetPresentation.SELECTED)
-	assert_eq(other_valid.get_target_presentation(), ActorCard.TargetPresentation.AVAILABLE)
+			as EnemyDronePresentation
+	)
+	assert_eq(first_valid.target_state, CombatantPresentation.TargetState.SELECTED)
+	assert_eq(other_valid.target_state, CombatantPresentation.TargetState.AVAILABLE)
 	Input.parse_input_event(_joy_direction(JOY_BUTTON_DPAD_RIGHT, true))
 	await get_tree().process_frame
 	Input.parse_input_event(_joy_direction(JOY_BUTTON_DPAD_RIGHT, false))
 	await get_tree().process_frame
-	assert_eq(first_valid.get_target_presentation(), ActorCard.TargetPresentation.AVAILABLE)
-	assert_eq(other_valid.get_target_presentation(), ActorCard.TargetPresentation.SELECTED)
+	assert_eq(first_valid.target_state, CombatantPresentation.TargetState.AVAILABLE)
+	assert_eq(other_valid.target_state, CombatantPresentation.TargetState.SELECTED)
 	assert_false(navigation_ux.cursor.visible)
 	Input.parse_input_event(_joy_confirm(true))
 	await get_tree().process_frame

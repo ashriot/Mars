@@ -5,6 +5,10 @@ const CardSceneTestFixture := preload("res://test/helpers/card_scene_test_fixtur
 const ActionButtonScene := preload("res://src/battle/action_button.tscn")
 const ActionBarScene := preload("res://src/battle/action_bar.tscn")
 const UXScene := preload("res://src/ui/navigation/navigation_ux_layer.tscn")
+const BattleWorldScene := preload("res://src/battle/presentation/battle_world_3d.tscn")
+const EnemyDroneScene := preload(
+	"res://src/battle/presentation/enemy_drone_presentation.tscn",
+)
 const SYNTHETIC_UNCONNECTED_JOY_DEVICE := 127
 
 
@@ -745,6 +749,49 @@ func test_target_selection_owns_combatant_and_reads_geometry_from_presentation()
 		fixture.enemy.get_target_presentation(),
 		ActorCard.TargetPresentation.SELECTED,
 	)
+
+
+func test_drone_targeting_uses_projected_heads_wraps_and_forwards_exact_enemy() -> void:
+	var fixture := await _drone_navigation_fixture()
+	var scene := fixture.scene as BattleScene
+	var manager := fixture.manager as TrackingBattleManager
+	var enemies: Array = fixture.enemies
+	var presentations: Array = fixture.presentations
+	var first := enemies[0] as EnemyCombatant
+	var second := enemies[1] as EnemyCombatant
+	var first_presentation := presentations[0] as EnemyDronePresentation
+	var second_presentation := presentations[1] as EnemyDronePresentation
+
+	assert_eq(
+		first_presentation.get_target_screen_position(),
+		manager.battle_world.camera.unproject_position(
+			first_presentation.head_anchor.global_position,
+		),
+	)
+	assert_eq(
+		second_presentation.get_target_screen_position(),
+		manager.battle_world.camera.unproject_position(
+			second_presentation.head_anchor.global_position,
+		),
+	)
+	assert_lt(
+		first_presentation.get_target_screen_position().x,
+		second_presentation.get_target_screen_position().x,
+	)
+
+	scene._set_current_target(first)
+	scene.select_direction(Vector2.RIGHT)
+	assert_same(scene._current_target, second)
+	scene.select_direction(Vector2.RIGHT)
+	assert_same(scene._current_target, first, "projected edge navigation wraps")
+
+	manager.selected_enemy = null
+	second_presentation.hud.pressed.emit()
+	assert_same(manager.selected_enemy, second, "HUD pointer input forwards its exact model")
+	manager.selected_enemy = null
+	scene._set_current_target(first)
+	scene.confirm_target()
+	assert_same(manager.selected_enemy, first, "controller confirmation forwards its exact model")
 
 
 func test_presentation_replacement_routes_input_only_from_current_registration() -> void:
@@ -2525,6 +2572,59 @@ func _pressed_joy_button() -> InputEventJoypadButton:
 	event.device = SYNTHETIC_UNCONNECTED_JOY_DEVICE
 	event.pressed = true
 	return event
+
+
+func _drone_navigation_fixture() -> Dictionary:
+	var viewport := SubViewport.new()
+	viewport.size = Vector2i(1280, 800)
+	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	add_child_autofree(viewport)
+	var scene := BattleScene.new()
+	var manager := TrackingBattleManager.new()
+	var world := BattleWorldScene.instantiate() as BattleWorld3D
+	var combatant_root := Node.new()
+	combatant_root.name = "Combatants"
+	scene.manager = manager
+	manager.battle_world = world
+	manager.combatant_root = combatant_root
+	scene.add_child(world)
+	scene.add_child(combatant_root)
+	scene.add_child(manager)
+	viewport.add_child(scene)
+	await get_tree().process_frame
+
+	var enemies: Array[EnemyCombatant] = []
+	var presentations: Array[EnemyDronePresentation] = []
+	for index in 2:
+		var enemy := EnemyCombatant.new()
+		var stats := ActorStats.new()
+		stats.actor_name = "Projected Drone %d" % index
+		stats.max_hp = 100
+		enemy.setup_base(stats, BattleCombatant.Faction.ENEMY, manager)
+		enemy.is_valid_target = true
+		combatant_root.add_child(enemy)
+		manager.actor_list.append(enemy)
+		var presentation := manager._spawn_presentation_view(
+			EnemyDroneScene, world.enemy_views, enemy,
+		) as EnemyDronePresentation
+		assert_not_null(presentation)
+		var view_root := manager.presentation_view_root_for(enemy) as Node3D
+		assert_true(world.place_ordinary_view(
+			view_root, index, 2, BattleFormationLayout.Layout.W,
+		))
+		presentation._process(0.0)
+		enemies.append(enemy)
+		presentations.append(presentation)
+	manager.current_action = Action.new()
+	manager.current_action.target_type = Action.TargetType.ONE_ENEMY
+	manager.current_state = BattleManager.State.FORCED_TARGET
+	await get_tree().process_frame
+	return {
+		scene = scene,
+		manager = manager,
+		enemies = enemies,
+		presentations = presentations,
+	}
 
 
 func _navigation_fixture() -> Dictionary:
