@@ -588,7 +588,7 @@ func spawn_encounter(
 		return
 
 	var current_indices = {}
-	var suffixes = [" A", " B", " C", " D"]
+	var suffixes = [" A", " B", " C", " D", " E"]
 	for enemy_index in spawned_enemies.size():
 		var enemy := spawned_enemies[enemy_index]
 		var base_name := enemy.actor_name
