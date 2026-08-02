@@ -12,8 +12,6 @@ const HEAD_GAP := 12.0
 const TARGET_PADDING := Vector2(18.0, 18.0)
 const MIN_TARGET_WIDTH := 96.0
 
-enum DetailsPlacement { ABOVE, BELOW }
-
 @onready var target_region: Control = %TargetRegion
 @onready var details: MarginContainer = %Details
 @onready var name_label: Label = %Name
@@ -37,7 +35,6 @@ var _projected_foot := Vector2.ZERO
 var _projected_model_bounds := Rect2()
 var _safe_rect := Rect2()
 var _has_projected_model_bounds := false
-var _details_placement := DetailsPlacement.ABOVE
 var _details_tween: Tween
 var _presentation_owns_defeat_fade := false
 
@@ -167,37 +164,13 @@ func get_desired_compact_rect() -> Rect2:
 	)
 
 
-func get_desired_layout_rect(safe_rect: Rect2) -> Rect2:
-	var compact_rect := get_desired_compact_rect()
-	if not details.visible:
-		return compact_rect
-	var expanded_size := Vector2(
-		COMPACT_SIZE.x,
-		DETAILS_SIZE.y + DETAILS_GAP + COMPACT_SIZE.y,
-	)
-	var above := Rect2(
-		compact_rect.position - Vector2(0.0, DETAILS_SIZE.y + DETAILS_GAP),
-		expanded_size,
-	)
-	var below := Rect2(compact_rect.position, expanded_size)
-	var above_overflow := _vertical_overflow(above, safe_rect)
-	var below_overflow := _vertical_overflow(below, safe_rect)
-	_details_placement = DetailsPlacement.ABOVE \
-		if above_overflow <= below_overflow else DetailsPlacement.BELOW
-	_apply_details_placement()
-	return above if _details_placement == DetailsPlacement.ABOVE else below
-
-
 func apply_resolved_compact_rect(rect: Rect2) -> void:
 	global_position = rect.position
 	_sync_target_region()
 
 
-func apply_resolved_layout_rect(rect: Rect2) -> void:
-	var compact_position := rect.position
-	if details.visible and _details_placement == DetailsPlacement.ABOVE:
-		compact_position.y += DETAILS_SIZE.y + DETAILS_GAP
-	apply_resolved_compact_rect(Rect2(compact_position, COMPACT_SIZE))
+func apply_details_rect(rect: Rect2) -> void:
+	details.global_position = rect.position
 
 
 func get_visible_layout_rect() -> Rect2:
@@ -396,17 +369,3 @@ func _is_interactive() -> bool:
 	return _has_live_combatant() \
 		and visible \
 		and target_region.mouse_filter == Control.MOUSE_FILTER_STOP
-
-
-func _apply_details_placement() -> void:
-	details.position = Vector2(
-		0.0,
-		-DETAILS_SIZE.y - DETAILS_GAP \
-			if _details_placement == DetailsPlacement.ABOVE \
-			else COMPACT_SIZE.y + DETAILS_GAP,
-	)
-
-
-func _vertical_overflow(rect: Rect2, safe_rect: Rect2) -> float:
-	return maxf(safe_rect.position.y - rect.position.y, 0.0) \
-		+ maxf(rect.end.y - safe_rect.end.y, 0.0)
