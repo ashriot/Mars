@@ -31,15 +31,42 @@ func test_compact_hub_shell_and_inventory_scroll_fit_deck_output() -> void:
 	assert_eq(menu.inventory_view.grid, scroll.get_node("InventoryGrid"))
 
 
-func test_compact_hub_top_tabs_and_stub_content_fit_deck_output() -> void:
+func test_compact_hub_top_tabs_options_and_journal_fit_deck_output() -> void:
 	var menu := await _compact_party_menu()
 	var tab_strip := menu.get_node("Header/TabStrip") as Control
+	var content := menu.get_node("Content") as Control
 	assert_true(ResponsiveFixture.fits_output(tab_strip, DECK_SIZE))
 	for button: Button in menu.tab_buttons:
 		assert_true(ResponsiveFixture.fits_output(button, DECK_SIZE))
 		assert_gte(ResponsiveFixture.physical_rect(button, DECK_SIZE).size.y, 48.0)
-	menu.change_tab(2)
-	assert_true(ResponsiveFixture.fits_output(menu.get_node("Content/OptionsComingSoon"), DECK_SIZE))
+
+	menu.change_tab(1)
+	assert_eq(menu.current_tab, PartyMenu.Tab.OPTIONS)
+	assert_true(menu.enter_content())
+	await get_tree().process_frame
+	var options := menu.options_view
+	var shake_row := options.get_node("CenterContainer/VBoxContainer/ShakeRow") as Control
+	var slider := options.shake_slider
+	assert_true(options.is_visible_in_tree())
+	assert_true(shake_row.is_visible_in_tree())
+	assert_true(ResponsiveFixture.fits_output(options, DECK_SIZE))
+	assert_true(ResponsiveFixture.fits_output(shake_row, DECK_SIZE))
+	assert_true(_contains_control(content, options))
+	assert_true(_contains_control(options, shake_row))
+	assert_gte(ResponsiveFixture.physical_rect(slider, DECK_SIZE).size.x, 160.0)
+	assert_eq(slider.focus_mode, Control.FOCUS_ALL)
+	assert_eq(slider.min_value, 0.0)
+	assert_eq(slider.max_value, 1.0)
+	assert_eq(slider.step, 0.05)
+	assert_same(menu.get_viewport().gui_get_focus_owner(), slider)
+
+	menu.change_tab(1)
+	await get_tree().process_frame
+	var journal := menu.get_node("Content/JournalComingSoon") as Control
+	assert_eq(menu.current_tab, PartyMenu.Tab.JOURNAL)
+	assert_true(journal.is_visible_in_tree())
+	assert_true(ResponsiveFixture.fits_output(journal, DECK_SIZE))
+	assert_true(_contains_control(content, journal))
 	assert_same(menu.get_viewport().gui_get_focus_owner(), menu.hero_list_container.get_child(menu.current_hero_idx))
 
 
