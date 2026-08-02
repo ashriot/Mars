@@ -48,6 +48,7 @@ func set_target_presentation(state: TargetState) -> void:
 
 
 func set_acting(active: bool) -> void:
+	super.set_acting(active)
 	if not is_instance_valid(card):
 		return
 	if card is HeroCard:

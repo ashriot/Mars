@@ -24,6 +24,14 @@ class AdvancementActionBar extends ActionBar:
 		return
 
 
+class ActingCallPresentation extends CombatantPresentation:
+	var calls: Array[bool] = []
+
+	func set_acting(active: bool) -> void:
+		calls.append(active)
+		super.set_acting(active)
+
+
 class AdvancementBattleManager extends BattleManager:
 	var intent_refresh_count := 0
 
@@ -32,6 +40,12 @@ class AdvancementBattleManager extends BattleManager:
 
 	func _update_all_enemy_intents() -> void:
 		intent_refresh_count += 1
+
+	func wait(_duration: float = 0.01) -> void:
+		return
+
+	func _check_if_battle_ended() -> bool:
+		return false
 
 
 class PublishingBattleManager extends BattleManager:
@@ -402,6 +416,32 @@ func test_live_advancement_matches_projected_normalized_ticks() -> void:
 	winner.free()
 	observer.free()
 	manager.action_bar.free()
+	manager.free()
+
+
+func test_hero_turn_handoff_deactivates_presentation_exactly_once() -> void:
+	var manager := AdvancementBattleManager.new()
+	manager.action_bar = AdvancementActionBar.new()
+	manager.add_child(manager.action_bar)
+	var hero := AdvancementHero.new()
+	hero.setup_base(ActorStats.new(), BattleCombatant.Faction.HERO, manager)
+	hero.current_stats.speed = 100
+	manager.add_child(hero)
+	var presentation := ActingCallPresentation.new()
+	presentation.bind(hero)
+	manager.add_child(presentation)
+	manager.register_presentation(hero, presentation)
+	manager.actor_list = [hero]
+	manager.current_actor = hero
+	manager.current_state = BattleManager.State.PLAYER_ACTION
+
+	await manager._finish_hero_turn()
+
+	assert_eq(
+		presentation.calls,
+		[false, true],
+		"handoff deactivates once before the next acting turn activates",
+	)
 	manager.free()
 
 

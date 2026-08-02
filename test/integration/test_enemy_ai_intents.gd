@@ -88,6 +88,32 @@ func test_refresh_changes_reactive_intent_without_ticking_cooldowns() -> void:
 	_free_fixture(fixture)
 
 
+func test_model_only_manager_plans_intent_without_presentation_areas() -> void:
+	var fixture := _headless_ai_fixture()
+	var manager := fixture.manager as BattleManager
+	var enemy := fixture.enemy as EnemyCombatant
+
+	manager._update_all_enemy_intents()
+
+	assert_same(enemy.intended_action, fixture.action)
+	assert_eq(enemy.intended_targets.size(), 1)
+
+
+func test_model_only_manager_revalidates_intent_without_presentation_areas() -> void:
+	var fixture := _headless_ai_fixture()
+	var manager := fixture.manager as BattleManager
+	var enemy := fixture.enemy as EnemyCombatant
+	enemy.decide_intent(manager._enemy_ai_context())
+	var original_target := enemy.intended_targets[0] as HeroCombatant
+	var replacement := fixture.heroes[0] as HeroCombatant \
+		if fixture.heroes[1] == original_target else fixture.heroes[1] as HeroCombatant
+	original_target.is_defeated = true
+
+	manager._revalidate_all_enemy_intent_targets()
+
+	assert_eq(enemy.intended_targets, [replacement])
+
+
 func test_identical_planning_and_presentation_refresh_do_not_flash_again() -> void:
 	var fixture := await _fixture()
 	fixture.enemy.initialize_ai(77)
@@ -458,6 +484,46 @@ func _fixture() -> Dictionary:
 		"sands": sands,
 		"echo": echo,
 		"enemy": enemy,
+	}
+
+
+func _headless_ai_fixture() -> Dictionary:
+	var manager := QuietBattleManager.new()
+	add_child_autofree(manager)
+	manager.encounter_seed = 77
+	var heroes: Array[HeroCombatant] = []
+	for index in 2:
+		var hero := HeroCombatant.new()
+		manager.add_child(hero)
+		var stats := ActorStats.new()
+		stats.actor_name = "Headless Hero %d" % (index + 1)
+		stats.max_hp = 100
+		stats.speed = 10
+		hero.setup_base(stats, BattleCombatant.Faction.HERO, manager)
+		hero.battle_priority = index
+		heroes.append(hero)
+	var enemy := EnemyCombatant.new()
+	manager.add_child(enemy)
+	var enemy_stats := ActorStats.new()
+	enemy_stats.actor_name = "Headless Drone"
+	enemy_stats.max_hp = 100
+	enemy_stats.speed = 10
+	enemy.setup_base(enemy_stats, BattleCombatant.Faction.ENEMY, manager)
+	enemy.battle_priority = 2
+	var ability := _ability(
+		&"headless_attack", 0, 10, EnemyDecisionCondition.Type.ALWAYS,
+		EnemyTargetSelector.Type.SEEDED_HERO, 0.0,
+	)
+	var data := EnemyData.new()
+	data.abilities = [ability]
+	enemy.enemy_data = data
+	enemy.initialize_ai(manager.encounter_seed)
+	manager.actor_list.assign([heroes[0], heroes[1], enemy])
+	return {
+		manager = manager,
+		heroes = heroes,
+		enemy = enemy,
+		action = ability.action,
 	}
 
 

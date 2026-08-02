@@ -9,6 +9,7 @@ signal target_pressed(combatant: BattleCombatant)
 
 var combatant: BattleCombatant
 var target_state := TargetState.NORMAL
+var acting := false
 
 
 func bind(value: BattleCombatant) -> void:
@@ -27,8 +28,8 @@ func set_target_presentation(state: TargetState) -> void:
 	target_state = state
 
 
-func set_acting(_active: bool) -> void:
-	pass
+func set_acting(active: bool) -> void:
+	acting = active
 
 
 func show_action(_action_name: String) -> void:

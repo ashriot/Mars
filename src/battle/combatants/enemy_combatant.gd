@@ -110,7 +110,7 @@ func clear_intent() -> void:
 	presentation_event.emit(self, &"intent_changed", {"changed": false})
 
 
-func _targets_match(other_targets: Array) -> bool:
+func _targets_match(other_targets: Array[BattleCombatant]) -> bool:
 	if intended_targets.size() != other_targets.size():
 		return false
 	for index in intended_targets.size():

@@ -50,6 +50,8 @@ var encounter_seed := 0
 var rewards_enabled := true
 var _combat_rng: RandomNumberGenerator
 var _presentations: Dictionary = {}
+var _presentation_exit_callbacks: Dictionary = {}
+var _combatant_exit_callbacks: Dictionary = {}
 
 
 func register_presentation(
@@ -59,10 +61,13 @@ func register_presentation(
 	assert(combatant != null and presentation != null)
 	var previous := presentation_for(combatant)
 	var previous_state := CombatantPresentation.TargetState.NORMAL
+	var previous_acting := false
 	if previous != null:
 		previous_state = previous.target_state
+		previous_acting = previous.acting
 	if previous != null and previous != presentation:
 		previous.set_target_presentation(CombatantPresentation.TargetState.NORMAL)
+		previous.set_acting(false)
 		_disconnect_presentation(previous)
 	_presentations[combatant] = presentation
 	if not presentation.target_hovered.is_connected(_on_target_hovered):
@@ -71,19 +76,73 @@ func register_presentation(
 		presentation.target_unhovered.connect(_on_target_unhovered)
 	if not presentation.target_pressed.is_connected(_on_target_pressed):
 		presentation.target_pressed.connect(_on_target_pressed)
+	_connect_presentation_cleanup(combatant, presentation)
+	_connect_combatant_cleanup(combatant)
 	presentation.set_target_presentation(previous_state)
+	if previous != null and previous != presentation:
+		presentation.set_acting(previous_acting)
 
 
 func presentation_for(combatant: BattleCombatant) -> CombatantPresentation:
-	return _presentations.get(combatant) as CombatantPresentation
+	if not is_instance_valid(combatant):
+		_prune_stale_presentations()
+		return null
+	var candidate: Variant = _presentations.get(combatant)
+	if not is_instance_valid(candidate):
+		_prune_stale_presentations()
+		return null
+	return candidate as CombatantPresentation
+
+
+func _prune_stale_presentations() -> void:
+	for combatant_value: Variant in _presentations.keys():
+		var presentation_value: Variant = _presentations.get(combatant_value)
+		var combatant_is_valid := is_instance_valid(combatant_value)
+		var presentation_is_valid := is_instance_valid(presentation_value)
+		if combatant_is_valid and presentation_is_valid:
+			continue
+		if presentation_is_valid:
+			var presentation := presentation_value as CombatantPresentation
+			presentation.set_target_presentation(
+				CombatantPresentation.TargetState.NORMAL,
+			)
+			presentation.set_acting(false)
+			_disconnect_presentation(presentation)
+		else:
+			_presentation_exit_callbacks.erase(presentation_value)
+		if not combatant_is_valid:
+			_combatant_exit_callbacks.erase(combatant_value)
+		_presentations.erase(combatant_value)
+		if combatant_is_valid:
+			target_invalidated.emit(combatant_value as BattleCombatant)
+	_prune_invalid_combatants()
+
+
+func _prune_invalid_combatants() -> void:
+	for index in range(actor_list.size() - 1, -1, -1):
+		if not is_instance_valid(actor_list[index]):
+			actor_list.remove_at(index)
+	for combatant_value: Variant in _combatant_exit_callbacks.keys():
+		if not is_instance_valid(combatant_value):
+			_combatant_exit_callbacks.erase(combatant_value)
+	if not is_instance_valid(current_actor):
+		current_actor = null
+	if not is_instance_valid(_pending_after_shift_action):
+		_pending_after_shift_action = null
 
 
 func unregister_presentation(combatant: BattleCombatant) -> void:
+	if not _presentations.has(combatant):
+		return
 	var presentation := presentation_for(combatant)
+	if not _presentations.has(combatant):
+		return
 	if presentation != null:
 		presentation.set_target_presentation(CombatantPresentation.TargetState.NORMAL)
+		presentation.set_acting(false)
 		_disconnect_presentation(presentation)
 	_presentations.erase(combatant)
+	target_invalidated.emit(combatant)
 
 
 func _disconnect_presentation(presentation: CombatantPresentation) -> void:
@@ -93,6 +152,63 @@ func _disconnect_presentation(presentation: CombatantPresentation) -> void:
 		presentation.target_unhovered.disconnect(_on_target_unhovered)
 	if presentation.target_pressed.is_connected(_on_target_pressed):
 		presentation.target_pressed.disconnect(_on_target_pressed)
+	var exit_callback: Callable = _presentation_exit_callbacks.get(
+		presentation, Callable(),
+	)
+	if exit_callback.is_valid() \
+		and presentation.tree_exiting.is_connected(exit_callback):
+		presentation.tree_exiting.disconnect(exit_callback)
+	_presentation_exit_callbacks.erase(presentation)
+
+
+func _connect_presentation_cleanup(
+	combatant: BattleCombatant,
+	presentation: CombatantPresentation,
+) -> void:
+	if _presentation_exit_callbacks.has(presentation):
+		return
+	var exit_callback := _on_presentation_tree_exiting.bind(
+		combatant, presentation,
+	)
+	_presentation_exit_callbacks[presentation] = exit_callback
+	presentation.tree_exiting.connect(exit_callback)
+
+
+func _on_presentation_tree_exiting(
+	combatant: BattleCombatant,
+	presentation: CombatantPresentation,
+) -> void:
+	if _presentations.get(combatant) != presentation:
+		return
+	unregister_presentation(combatant)
+
+
+func _connect_combatant_cleanup(combatant: BattleCombatant) -> void:
+	if _combatant_exit_callbacks.has(combatant):
+		return
+	var exit_callback := _on_combatant_tree_exiting.bind(combatant)
+	_combatant_exit_callbacks[combatant] = exit_callback
+	combatant.tree_exiting.connect(exit_callback)
+
+
+func _disconnect_combatant_cleanup(combatant: BattleCombatant) -> void:
+	var exit_callback: Callable = _combatant_exit_callbacks.get(
+		combatant, Callable(),
+	)
+	if exit_callback.is_valid() \
+		and combatant.tree_exiting.is_connected(exit_callback):
+		combatant.tree_exiting.disconnect(exit_callback)
+	_combatant_exit_callbacks.erase(combatant)
+
+
+func _on_combatant_tree_exiting(combatant: BattleCombatant) -> void:
+	actor_list.erase(combatant)
+	if current_actor == combatant:
+		current_actor = null
+	if _pending_after_shift_action == combatant:
+		_pending_after_shift_action = null
+	unregister_presentation(combatant)
+	_disconnect_combatant_cleanup(combatant)
 
 
 func _set_target_state(
@@ -141,6 +257,11 @@ func _exit_tree() -> void:
 	_clear_all_targeting_ui()
 	for combatant: BattleCombatant in _presentations.keys():
 		unregister_presentation(combatant)
+	for combatant_value: Variant in _combatant_exit_callbacks.keys():
+		if is_instance_valid(combatant_value):
+			_disconnect_combatant_cleanup(combatant_value as BattleCombatant)
+		else:
+			_combatant_exit_callbacks.erase(combatant_value)
 
 func spawn_encounter(
 	roster_override: Array[HeroData] = [],
@@ -350,8 +471,8 @@ func find_and_start_next_turn():
 		if action_bar.sliding:
 			await action_bar.slide_finished
 		change_state(State.PLAYER_ACTION)
-		await action_bar.load_actions(winner as HeroCombatant, false)
 		await winner.on_turn_started()
+		await action_bar.load_actions(winner as HeroCombatant, false)
 		await _flush_all_health_animations()
 	else:
 		change_state(State.ENEMY_ACTION)
@@ -423,8 +544,6 @@ func _enemy_ai_context() -> EnemyAIContext:
 
 
 func _update_all_enemy_intents() -> void:
-	if not is_instance_valid(hero_area) or not is_instance_valid(enemy_area):
-		return
 	var context := _enemy_ai_context()
 	for enemy: EnemyCombatant in get_living_enemies():
 		if enemy != current_actor or current_state != State.EXECUTING_ACTION:
@@ -432,8 +551,6 @@ func _update_all_enemy_intents() -> void:
 
 
 func _revalidate_all_enemy_intent_targets() -> void:
-	if not is_instance_valid(hero_area) or not is_instance_valid(enemy_area):
-		return
 	var planned_enemies: Array[EnemyCombatant] = []
 	for enemy: EnemyCombatant in get_living_enemies():
 		if enemy.intended_action != null:
@@ -559,7 +676,10 @@ func action_uses_exact_selected_target(action: Action) -> bool:
 	]
 
 
-func _apply_target_presentation(action: Action, targets: Array) -> void:
+func _apply_target_presentation(
+	action: Action,
+	targets: Array[BattleCombatant],
+) -> void:
 	var presentation := CombatantPresentation.TargetState.SELECTED \
 		if is_group_target_action(action) \
 		else CombatantPresentation.TargetState.AVAILABLE
@@ -609,7 +729,6 @@ func _finish_hero_turn():
 		await _finish_shift_reactions(current_actor as HeroCombatant)
 	else:
 		await current_actor.on_turn_ended()
-		await _set_actor_acting(current_actor, false)
 		find_and_start_next_turn()
 	await wait()
 
@@ -935,41 +1054,30 @@ func get_targets(
 			else:
 				target_list = enemies
 		Action.TargetType.ALLIES_ONLY, Action.TargetType.ALLY_ONLY:
-			var allies = []
-			if friendly:
-				allies = heroes
-			else:
-				allies = enemies
-			for ally in allies:
+			var allies: Array[BattleCombatant] = heroes if friendly else enemies
+			for ally: BattleCombatant in allies:
 				if ally != current_actor:
 					target_list.append(ally)
 		Action.TargetType.LEAST_GUARD_ALLY:
-			var allies = []
-			if friendly:
-				allies = heroes
-			else:
-				allies = enemies
+			var allies: Array[BattleCombatant] = heroes if friendly else enemies
 			if allies.is_empty():
 				push_error("No allies found!")
 				return []
 			var target_ally := allies[0] as BattleCombatant
-			for ally in allies:
+			for ally: BattleCombatant in allies:
 				if ally.current_guard < target_ally.current_guard:
 					target_ally = ally
 			target_list.append(target_ally)
 		Action.TargetType.LEAST_FOCUS_ALLY:
-			var allies = []
-			if friendly:
-				allies = heroes
-			else:
-				allies = enemies
+			var allies: Array[BattleCombatant] = heroes if friendly else enemies
 			if allies.is_empty():
 				push_error("No allies found!")
 				return []
 			var target_ally := allies[0] as HeroCombatant
-			for ally in allies:
-				if ally.current_focus < target_ally.current_focus:
-					target_ally = ally
+			for ally: BattleCombatant in allies:
+				var hero_ally := ally as HeroCombatant
+				if hero_ally.current_focus < target_ally.current_focus:
+					target_ally = hero_ally
 			target_list.append(target_ally)
 		_:
 			push_error("get_target() unknown target type!")
@@ -996,6 +1104,7 @@ func _clear_all_targeting_ui():
 
 
 func _all_combatants_with_presentations() -> Array[BattleCombatant]:
+	_prune_stale_presentations()
 	var combatants: Array[BattleCombatant] = []
 	for value: Variant in _presentations.keys():
 		var actor := value as BattleCombatant
@@ -1040,7 +1149,7 @@ func preview_action_turn_order(actor: BattleCombatant, action: Action, selected_
 	var adjustments: Dictionary = {}
 	if not action.is_shift_action:
 		adjustments[actor] = get_action_recovery_adjustment(actor, action)
-	var primary_targets: Array = []
+	var primary_targets: Array[BattleCombatant] = []
 	if is_instance_valid(selected_target):
 		primary_targets.append(selected_target)
 	elif is_group_target_action(action):

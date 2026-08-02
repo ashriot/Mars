@@ -394,7 +394,7 @@ func execute(
 
 
 func _build_hit_plan(
-	parent_targets: Array,
+	parent_targets: Array[BattleCombatant],
 	action: Action = null,
 	resolved_hit_count: int = -1,
 ) -> DamageHitPlan:

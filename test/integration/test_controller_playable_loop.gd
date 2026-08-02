@@ -25,7 +25,7 @@ const STARTING_NODE_IDS := {
 class LoopBattleManager extends BattleManager:
 	signal target_confirmed
 	var confirmed_targets := 0
-	var forced_enemies: Array[EnemyCombatant] = []
+	var forced_enemies: Array[BattleCombatant] = []
 
 	func _ready() -> void:
 		action_bar.action_selected.connect(_on_action_button_pressed)
