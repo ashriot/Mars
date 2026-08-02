@@ -42,3 +42,14 @@ func test_reload_clears_the_prior_instance_exactly_once() -> void:
 	assert_true(loader.try_load())
 	assert_false(is_instance_valid(first))
 	assert_eq(loader.model_parent.get_child_count(), 1)
+
+
+func test_invalid_placeholder_after_success_restores_placeholder_state() -> void:
+	var loader := _loader(
+		"res://test/fixtures/presentation/optional_model_fixture.tscn",
+	)
+	assert_true(loader.try_load())
+	loader.placeholder.free()
+	assert_false(loader.try_load())
+	assert_null(loader.loaded_model)
+	assert_true(loader.using_placeholder)

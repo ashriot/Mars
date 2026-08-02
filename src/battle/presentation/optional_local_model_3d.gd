@@ -23,6 +23,7 @@ func try_load() -> bool:
 		return false
 	if not is_instance_valid(placeholder):
 		push_warning("OptionalLocalModel3D requires a valid placeholder.")
+		_show_placeholder()
 		model_unavailable.emit(local_resource_path)
 		return false
 	if local_resource_path.is_empty() or not ResourceLoader.exists(local_resource_path):
