@@ -27,14 +27,28 @@ class SuspendedActionPresentation extends CombatantPresentation:
 
 class OperationTrackingBattleManager extends BattleManager:
 	var acting_resumed := false
+	var acting_resume_presentation: CombatantPresentation
+	var acting_resume_presentation_was_wired := false
+	var acting_resume_target_invalidations := -1
 	var health_resumed := false
 	var hide_action_resumed := false
+	var target_invalidation_count := 0
 
 	func _ready() -> void:
-		pass
+		target_invalidated.connect(
+			func(_combatant: BattleCombatant) -> void:
+				target_invalidation_count += 1
+		)
 
 	func begin_acting(combatant: BattleCombatant) -> void:
 		await _set_actor_acting(combatant, true)
+		acting_resume_presentation = presentation_for(combatant) \
+			if is_instance_valid(combatant) else null
+		acting_resume_presentation_was_wired = \
+			acting_resume_presentation != null \
+			and acting_resume_presentation.target_pressed.is_connected(_on_target_pressed) \
+			and _presentation_exit_callbacks.has(acting_resume_presentation)
+		acting_resume_target_invalidations = target_invalidation_count
 		acting_resumed = true
 
 	func begin_health_flush() -> void:
@@ -68,6 +82,11 @@ func test_freeing_presentation_resumes_manager_acting_wait() -> void:
 		manager.acting_resumed,
 		"freeing the view completes its pending operation for manager orchestration",
 	)
+	assert_null(
+		manager.acting_resume_presentation,
+		"tree exit removes the registry entry before the continuation resumes",
+	)
+	assert_eq(manager.acting_resume_target_invalidations, 1)
 
 
 func test_replacing_presentation_resumes_manager_acting_wait() -> void:
@@ -95,6 +114,58 @@ func test_replacing_presentation_resumes_manager_acting_wait() -> void:
 		manager.acting_resumed,
 		"replacing the view completes its pending operation for manager orchestration",
 	)
+	assert_same(
+		manager.acting_resume_presentation,
+		replacement,
+		"the resumed continuation can only observe the fully registered replacement",
+	)
+	assert_true(manager.acting_resume_presentation_was_wired)
+	assert_eq(manager.acting_resume_target_invalidations, 0)
+
+
+func test_unregistering_presentation_resumes_after_registry_removal() -> void:
+	var manager := OperationTrackingBattleManager.new()
+	var hero := HeroCombatant.new()
+	var presentation := SuspendedActingPresentation.new()
+	manager.add_child(hero)
+	manager.add_child(presentation)
+	add_child_autofree(manager)
+	presentation.bind(hero)
+	manager.register_presentation(hero, presentation)
+	manager.begin_acting(hero)
+	await get_tree().process_frame
+	assert_false(manager.acting_resumed, "manager is waiting for the visual transition")
+
+	manager.unregister_presentation(hero)
+
+	assert_true(
+		manager.acting_resumed,
+		"unregistering completes the pending operation synchronously",
+	)
+	assert_null(
+		manager.acting_resume_presentation,
+		"the resumed continuation cannot observe the retired presentation",
+	)
+	assert_eq(manager.acting_resume_target_invalidations, 1)
+
+
+func test_pruning_freed_combatant_resumes_after_registry_removal() -> void:
+	var manager := OperationTrackingBattleManager.new()
+	var hero := HeroCombatant.new()
+	var presentation := SuspendedActingPresentation.new()
+	manager.add_child(presentation)
+	add_child_autofree(manager)
+	presentation.bind(hero)
+	manager.register_presentation(hero, presentation)
+	manager.begin_acting(hero)
+	await get_tree().process_frame
+	assert_false(manager.acting_resumed, "manager is waiting for the visual transition")
+
+	hero.free()
+	manager._all_combatants_with_presentations()
+
+	assert_true(manager.acting_resumed, "stale-registry pruning completes pending operations")
+	assert_null(manager.acting_resume_presentation)
 
 
 func test_freeing_presentation_resumes_manager_health_wait() -> void:
@@ -146,6 +217,50 @@ func test_replacing_presentation_resumes_manager_health_wait() -> void:
 		manager.health_resumed,
 		"replacing the view completes its health operation for manager orchestration",
 	)
+
+
+func test_repeated_card_health_sync_completes_replaced_health_operation() -> void:
+	var manager := OperationTrackingBattleManager.new()
+	manager.battle_speed = 0.1
+	var hero := HeroCombatant.new()
+	var stats := ActorStats.new()
+	stats.max_hp = 100
+	hero.setup_base(stats, BattleCombatant.Faction.HERO, manager)
+	var card := HeroCardScene.instantiate() as HeroCard
+	card.duration = 60.0
+	card.battle_manager = manager
+	manager.add_child(hero)
+	manager.add_child(card)
+	add_child_autofree(manager)
+	await get_tree().process_frame
+	assert_true(card.bind_combatant(hero))
+	hero.current_hp = 50
+	card.hp_bar_actual.value = 100.0
+	card.hp_bar_ghost.value = 100.0
+	assert_true(manager.register_presentation(hero, card.presentation))
+	var acting_operation: PresentationOperation = card.presentation.set_acting(true)
+	card.action_display.show()
+	card.action_display.modulate.a = 1.0
+	var hide_operation: PresentationOperation = card.presentation.hide_action()
+
+	manager.begin_health_flush()
+	await get_tree().process_frame
+	assert_false(manager.health_resumed, "manager is waiting for the first health tween")
+
+	var replacement_operation: PresentationOperation = \
+		card.presentation.sync_visual_health()
+
+	assert_true(
+		manager.health_resumed,
+		"replacing the health tween completes the manager's first operation",
+	)
+	assert_false(
+		replacement_operation.is_completed,
+		"the replacement health operation remains independently pending",
+	)
+	assert_false(acting_operation.is_completed, "health replacement preserves acting")
+	assert_false(hide_operation.is_completed, "health replacement preserves action hide")
+	card.presentation.cancel_pending_operations()
 
 
 func test_freeing_presentation_resumes_manager_hide_action_wait() -> void:

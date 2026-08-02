@@ -146,6 +146,7 @@ func register_presentation(
 	presentation.set_target_presentation(previous_state)
 	if previous != null and previous != presentation:
 		presentation.set_acting(previous_acting)
+		previous.cancel_pending_operations()
 	return true
 
 
@@ -181,6 +182,8 @@ func _prune_stale_presentations() -> void:
 		_presentations.erase(combatant_value)
 		if combatant_is_valid:
 			target_invalidated.emit(combatant_value as BattleCombatant)
+		if presentation_is_valid and is_instance_valid(presentation_value):
+			(presentation_value as CombatantPresentation).cancel_pending_operations()
 	_prune_invalid_combatants()
 
 
@@ -227,10 +230,11 @@ func unregister_presentation(combatant: BattleCombatant) -> void:
 		_disconnect_presentation(presentation)
 	_presentations.erase(combatant)
 	target_invalidated.emit(combatant)
+	if is_instance_valid(presentation):
+		presentation.cancel_pending_operations()
 
 
 func _disconnect_presentation(presentation: CombatantPresentation) -> void:
-	presentation.cancel_pending_operations()
 	if presentation.target_hovered.is_connected(_on_target_hovered):
 		presentation.target_hovered.disconnect(_on_target_hovered)
 	if presentation.target_unhovered.is_connected(_on_target_unhovered):

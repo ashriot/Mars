@@ -15,22 +15,23 @@ var _pending_operations: Array[PresentationOperation] = []
 
 
 func _exit_tree() -> void:
-	cancel_pending_operations()
+	for operation: PresentationOperation in _pending_operations.duplicate():
+		operation.call_deferred(&"complete")
 
 
 func setup_view(value: BattleCombatant) -> bool:
+	return bind(value)
+
+
+func bind(value: BattleCombatant) -> bool:
 	if not is_instance_valid(value):
 		push_error("CombatantPresentation requires a valid BattleCombatant.")
 		return false
 	if combatant != null:
 		push_error("CombatantPresentation cannot be rebound to another combatant.")
 		return false
-	bind(value)
-	return combatant == value
-
-
-func bind(value: BattleCombatant) -> void:
 	combatant = value
+	return true
 
 
 func get_target_screen_position() -> Vector2:

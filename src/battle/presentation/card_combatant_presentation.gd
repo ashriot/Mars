@@ -2,6 +2,7 @@ extends CombatantPresentation
 class_name CardCombatantPresentation
 
 var card: ActorCard
+var _health_operation: PresentationOperation
 
 
 func _ready() -> void:
@@ -13,6 +14,9 @@ func setup_view(value: BattleCombatant) -> bool:
 		card = get_parent() as ActorCard
 	if not is_instance_valid(card):
 		push_error("CardCombatantPresentation requires an ActorCard parent.")
+		return false
+	if combatant != null or card.combatant != null:
+		push_error("CardCombatantPresentation is already bound.")
 		return false
 	if card is HeroCard:
 		if not (value is HeroCombatant):
@@ -30,8 +34,12 @@ func setup_view(value: BattleCombatant) -> bool:
 	return card.combatant == value and combatant == value
 
 
-func bind(value: BattleCombatant) -> void:
-	super.bind(value)
+func bind(value: BattleCombatant) -> bool:
+	if not is_instance_valid(card):
+		push_error("CardCombatantPresentation requires a valid ActorCard.")
+		return false
+	if not super.bind(value):
+		return false
 	if not card.target_hovered.is_connected(_on_card_target_hovered):
 		card.target_hovered.connect(_on_card_target_hovered)
 	if not card.target_unhovered.is_connected(_on_card_target_unhovered):
@@ -46,6 +54,7 @@ func bind(value: BattleCombatant) -> void:
 		var enemy_card := card as EnemyCard
 		if not enemy_card.enemy_clicked.is_connected(_on_enemy_card_clicked):
 			enemy_card.enemy_clicked.connect(_on_enemy_card_clicked)
+	return true
 
 
 func _on_card_target_hovered(_card: ActorCard) -> void:
@@ -112,7 +121,21 @@ func hide_action():
 
 
 func sync_visual_health():
-	return _operation_for_tween(card.sync_visual_health())
+	var previous_operation := _health_operation
+	var operation := _operation_for_tween(card.sync_visual_health())
+	_health_operation = operation if not operation.is_completed else null
+	if _health_operation != null:
+		operation.completed.connect(
+			_on_health_operation_completed.bind(operation), CONNECT_ONE_SHOT,
+		)
+	if previous_operation != null:
+		previous_operation.complete()
+	return operation
+
+
+func _on_health_operation_completed(operation: PresentationOperation) -> void:
+	if _health_operation == operation:
+		_health_operation = null
 
 
 func refresh_intent() -> void:

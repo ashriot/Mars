@@ -215,6 +215,62 @@ func test_registry_rejects_one_presentation_for_two_combatants() -> void:
 	assert_eq(manager._presentation_exit_callbacks.size(), 1)
 
 
+func test_direct_presentation_rebind_preserves_first_identity_and_registry() -> void:
+	var manager := TestBattleManager.new()
+	var presentation := CombatantPresentation.new()
+	manager.add_child(presentation)
+	add_child_autofree(manager)
+	var first := _combatant(100, BattleCombatant.Faction.HERO, manager)
+	var second := _combatant(100, BattleCombatant.Faction.ENEMY, manager)
+
+	assert_true(presentation.bind(first))
+	assert_true(manager.register_presentation(first, presentation))
+	assert_false(presentation.bind(second))
+
+	assert_push_error("cannot be rebound")
+	assert_same(presentation.combatant, first)
+	assert_same(manager.presentation_for(first), presentation)
+	assert_null(manager.presentation_for(second))
+	assert_eq(manager._presentations.size(), 1)
+
+
+func test_direct_presentation_bind_rejects_invalid_identity() -> void:
+	var presentation := CombatantPresentation.new()
+	autofree(presentation)
+
+	assert_false(presentation.bind(null))
+
+	assert_push_error("requires a valid BattleCombatant")
+	assert_null(presentation.combatant)
+
+
+func test_failed_card_bind_preserves_registered_presentation_identity() -> void:
+	var manager := TestBattleManager.new()
+	var card := HeroCardScene.instantiate() as HeroCard
+	card.battle_manager = manager
+	manager.add_child(card)
+	add_child_autofree(manager)
+	await get_tree().process_frame
+	var first := _combatant(100, BattleCombatant.Faction.HERO, manager)
+	var second := _combatant(100, BattleCombatant.Faction.HERO, manager)
+
+	assert_true(card.presentation.bind(first))
+	assert_true(manager.register_presentation(first, card.presentation))
+	assert_false(card.bind_combatant(second))
+	assert_push_error("cannot be rebound")
+	assert_false(manager.register_presentation(second, card.presentation))
+	assert_push_error("already registered to another combatant")
+
+	assert_null(card.combatant, "failed presentation binding cannot partially bind the card")
+	assert_same(card.presentation.combatant, first)
+	assert_same(manager.presentation_for(first), card.presentation)
+	assert_null(manager.presentation_for(second))
+	assert_false(
+		second.hp_changed.is_connected(card._on_combatant_hp_changed),
+		"failed card binding cannot wire model signals",
+	)
+
+
 func test_setup_rejects_rebinding_a_registered_presentation() -> void:
 	var manager := TestBattleManager.new()
 	var presentation := CombatantPresentation.new()
@@ -232,6 +288,33 @@ func test_setup_rejects_rebinding_a_registered_presentation() -> void:
 	assert_same(manager.presentation_for(first), presentation)
 	assert_null(manager.presentation_for(second))
 	assert_eq(manager._presentations.size(), 1)
+
+
+func test_card_setup_rejects_second_same_model_without_duplicate_wiring() -> void:
+	var manager := TestBattleManager.new()
+	var card := HeroCardScene.instantiate() as HeroCard
+	card.battle_manager = manager
+	manager.add_child(card)
+	add_child_autofree(manager)
+	await get_tree().process_frame
+	var model := _combatant(100, BattleCombatant.Faction.HERO, manager) \
+		as HeroCombatant
+	model.hero_data = HeroData.new()
+	model.hero_data.stats = model.current_stats
+
+	assert_true(card.presentation.setup_view(model))
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var hp_connection_count := model.hp_changed.get_connections().size()
+	var focus_connection_count := model.focus_changed.get_connections().size()
+
+	assert_false(card.presentation.setup_view(model))
+
+	assert_push_error("already bound")
+	assert_same(card.combatant, model)
+	assert_same(card.presentation.combatant, model)
+	assert_eq(model.hp_changed.get_connections().size(), hp_connection_count)
+	assert_eq(model.focus_changed.get_connections().size(), focus_connection_count)
 
 
 func test_spawn_encounter_aborts_and_discards_model_when_view_is_invalid() -> void:

@@ -71,10 +71,11 @@ func bind_combatant(value: BattleCombatant) -> bool:
 	if not is_instance_valid(presentation):
 		push_error("ActorCard requires a CardCombatantPresentation child.")
 		return false
+	presentation.card = self
+	if not presentation.bind(value):
+		return false
 	_combatant = value
 	_ensure_battle_manager()
-	presentation.card = self
-	presentation.bind(value)
 	value.hp_changed.connect(_on_combatant_hp_changed)
 	value.guard_changed.connect(_on_combatant_guard_changed)
 	value.conditions_changed.connect(_on_combatant_conditions_changed)
