@@ -16,7 +16,8 @@ var intent_flash_tween: Tween
 
 func setup_from_combatant(model: EnemyCombatant) -> void:
 	_ensure_battle_manager()
-	bind_combatant(model)
+	if not bind_combatant(model):
+		return
 	model.presentation_event.connect(_on_enemy_presentation_event)
 	await _setup_card_visuals()
 	_render_enemy_state()

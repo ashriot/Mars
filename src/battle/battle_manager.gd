@@ -103,8 +103,26 @@ func _invalidate_orchestration(shutting_down := false) -> void:
 func register_presentation(
 	combatant: BattleCombatant,
 	presentation: CombatantPresentation,
-) -> void:
-	assert(combatant != null and presentation != null)
+) -> bool:
+	if not is_instance_valid(combatant):
+		push_error("BattleManager cannot register an invalid combatant.")
+		return false
+	if not is_instance_valid(presentation):
+		push_error("BattleManager cannot register an invalid presentation.")
+		return false
+	_prune_stale_presentations()
+	for registered_combatant: Variant in _presentations:
+		if registered_combatant != combatant \
+			and _presentations.get(registered_combatant) == presentation:
+			push_error(
+				"CombatantPresentation is already registered to another combatant.",
+			)
+			return false
+	if presentation.combatant != combatant:
+		push_error(
+			"CombatantPresentation is not bound to the requested combatant.",
+		)
+		return false
 	var previous := presentation_for(combatant)
 	var previous_state := CombatantPresentation.TargetState.NORMAL
 	var previous_acting := false
@@ -128,6 +146,7 @@ func register_presentation(
 	presentation.set_target_presentation(previous_state)
 	if previous != null and previous != presentation:
 		presentation.set_acting(previous_acting)
+	return true
 
 
 func presentation_for(combatant: BattleCombatant) -> CombatantPresentation:
@@ -399,8 +418,19 @@ func _spawn_presentation_view(
 		return null
 	view_parent.add_child(view_root)
 	var presentation := presentations[0]
-	presentation.setup_view(combatant)
-	register_presentation(combatant, presentation)
+	var setup_succeeded := presentation.setup_view(combatant)
+	if not setup_succeeded:
+		view_root.free()
+		return null
+	if presentation.combatant != combatant:
+		push_error(
+			"Combatant presentation setup did not bind the requested combatant.",
+		)
+		view_root.free()
+		return null
+	if not register_presentation(combatant, presentation):
+		view_root.free()
+		return null
 	return presentation
 
 

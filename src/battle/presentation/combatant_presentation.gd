@@ -13,8 +13,12 @@ var target_state := TargetState.NORMAL
 var acting := false
 
 
-func setup_view(value: BattleCombatant) -> void:
+func setup_view(value: BattleCombatant) -> bool:
+	if not is_instance_valid(value):
+		push_error("CombatantPresentation requires a valid BattleCombatant.")
+		return false
 	bind(value)
+	return combatant == value
 
 
 func bind(value: BattleCombatant) -> void:

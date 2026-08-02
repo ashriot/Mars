@@ -61,9 +61,16 @@ func _on_target_mouse_exited() -> void:
 	target_unhovered.emit(self)
 
 
-func bind_combatant(value: BattleCombatant) -> void:
-	assert(value != null, "ActorCard requires a BattleCombatant.")
-	assert(_combatant == null, "ActorCard cannot be rebound to another BattleCombatant.")
+func bind_combatant(value: BattleCombatant) -> bool:
+	if not is_instance_valid(value):
+		push_error("ActorCard requires a valid BattleCombatant.")
+		return false
+	if _combatant != null:
+		push_error("ActorCard cannot be rebound to another BattleCombatant.")
+		return false
+	if not is_instance_valid(presentation):
+		push_error("ActorCard requires a CardCombatantPresentation child.")
+		return false
 	_combatant = value
 	_ensure_battle_manager()
 	presentation.card = self
@@ -77,6 +84,7 @@ func bind_combatant(value: BattleCombatant) -> void:
 	value.revived.connect(_on_combatant_revived)
 	value.presentation_event.connect(_on_combatant_presentation_event)
 	_render_full_state()
+	return presentation.combatant == value
 
 
 func _require_combatant() -> BattleCombatant:

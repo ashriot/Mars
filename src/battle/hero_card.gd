@@ -15,7 +15,8 @@ signal hero_clicked(hero_card)
 
 func setup_from_combatant(model: HeroCombatant) -> void:
 	_ensure_battle_manager()
-	bind_combatant(model)
+	if not bind_combatant(model):
+		return
 	model.focus_changed.connect(_on_focus_changed)
 	model.presentation_event.connect(_on_hero_presentation_event)
 	await _setup_card_visuals()

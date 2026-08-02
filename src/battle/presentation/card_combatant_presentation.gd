@@ -8,16 +8,26 @@ func _ready() -> void:
 	card = get_parent() as ActorCard
 
 
-func setup_view(value: BattleCombatant) -> void:
-	assert(is_instance_valid(card), "CardCombatantPresentation requires an ActorCard parent.")
+func setup_view(value: BattleCombatant) -> bool:
+	if not is_instance_valid(card):
+		card = get_parent() as ActorCard
+	if not is_instance_valid(card):
+		push_error("CardCombatantPresentation requires an ActorCard parent.")
+		return false
 	if card is HeroCard:
-		assert(value is HeroCombatant, "HeroCard requires a HeroCombatant.")
+		if not (value is HeroCombatant):
+			push_error("HeroCard requires a HeroCombatant.")
+			return false
 		(card as HeroCard).setup_from_combatant(value as HeroCombatant)
 	elif card is EnemyCard:
-		assert(value is EnemyCombatant, "EnemyCard requires an EnemyCombatant.")
+		if not (value is EnemyCombatant):
+			push_error("EnemyCard requires an EnemyCombatant.")
+			return false
 		(card as EnemyCard).setup_from_combatant(value as EnemyCombatant)
 	else:
-		card.bind_combatant(value)
+		if not card.bind_combatant(value):
+			return false
+	return card.combatant == value and combatant == value
 
 
 func bind(value: BattleCombatant) -> void:

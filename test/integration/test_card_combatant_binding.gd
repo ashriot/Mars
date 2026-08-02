@@ -36,9 +36,14 @@ class SpawnFailureBattleManager extends TestBattleManager:
 
 
 class TrackingCombatantPresentation extends CombatantPresentation:
-	func setup_view(value: BattleCombatant) -> void:
+	func setup_view(value: BattleCombatant) -> bool:
 		value.set_meta(&"tracking_presentation_bound", true)
-		super.setup_view(value)
+		return super.setup_view(value)
+
+
+class NoOpSetupPresentation extends CombatantPresentation:
+	func setup_view(_value: BattleCombatant) -> bool:
+		return true
 
 
 func _combatant(
@@ -94,6 +99,15 @@ func _view_scene_with_presentation_count(count: int) -> PackedScene:
 	return scene
 
 
+func _no_op_view_scene() -> PackedScene:
+	var scene := PackedScene.new()
+	var presentation := NoOpSetupPresentation.new()
+	presentation.name = "NoOpPresentation"
+	assert_eq(scene.pack(presentation), OK)
+	presentation.free()
+	return scene
+
+
 func _assert_invalid_view_is_rejected(presentation_count: int) -> void:
 	var manager := TestBattleManager.new()
 	var view_parent := Node3D.new()
@@ -141,6 +155,64 @@ func test_manager_rejects_missing_view_inputs_with_runtime_errors() -> void:
 	assert_push_error("for an invalid combatant")
 	assert_eq(view_parent.get_child_count(), 0)
 	assert_true(manager._presentations.is_empty())
+
+
+func test_manager_rejects_no_op_setup_and_removes_partial_view() -> void:
+	var manager := TestBattleManager.new()
+	var view_parent := Node3D.new()
+	manager.add_child(view_parent)
+	add_child_autofree(manager)
+	var model := _combatant(100, BattleCombatant.Faction.ENEMY, manager)
+
+	var presentation := manager._spawn_presentation_view(
+		_no_op_view_scene(), view_parent, model,
+	)
+
+	assert_push_error("did not bind the requested combatant")
+	assert_null(presentation)
+	assert_eq(view_parent.get_child_count(), 0)
+	assert_null(manager.presentation_for(model))
+	assert_true(manager._presentations.is_empty())
+	assert_true(manager._presentation_exit_callbacks.is_empty())
+
+
+func test_manager_rejects_hero_card_for_enemy_and_removes_partial_view() -> void:
+	var manager := TestBattleManager.new()
+	var view_parent := Control.new()
+	manager.add_child(view_parent)
+	add_child_autofree(manager)
+	var enemy := _combatant(100, BattleCombatant.Faction.ENEMY, manager)
+
+	var presentation := manager._spawn_presentation_view(
+		HeroCardScene, view_parent, enemy,
+	)
+
+	assert_push_error("HeroCard requires a HeroCombatant")
+	assert_null(presentation)
+	assert_eq(view_parent.get_child_count(), 0)
+	assert_null(manager.presentation_for(enemy))
+	assert_true(manager._presentations.is_empty())
+	assert_true(manager._presentation_exit_callbacks.is_empty())
+
+
+func test_registry_rejects_one_presentation_for_two_combatants() -> void:
+	var manager := TestBattleManager.new()
+	var presentation := CombatantPresentation.new()
+	manager.add_child(presentation)
+	add_child_autofree(manager)
+	var first := _combatant(100, BattleCombatant.Faction.HERO, manager)
+	var second := _combatant(100, BattleCombatant.Faction.ENEMY, manager)
+	presentation.bind(first)
+
+	assert_true(manager.register_presentation(first, presentation))
+	assert_false(manager.register_presentation(second, presentation))
+
+	assert_push_error("already registered to another combatant")
+	assert_same(manager.presentation_for(first), presentation)
+	assert_null(manager.presentation_for(second))
+	assert_same(presentation.combatant, first)
+	assert_eq(manager._presentations.size(), 1)
+	assert_eq(manager._presentation_exit_callbacks.size(), 1)
 
 
 func test_spawn_encounter_aborts_and_discards_model_when_view_is_invalid() -> void:
