@@ -17,3 +17,6 @@ mono_crash.*.json
 .DS_Store
 .worktrees/
 .superpowers/brainstorm/
+
+# Local CC0 Quaternius source assets; installed by tools/setup_quaternius_local_assets.sh
+/assets/graphics/models/quaternius_local/

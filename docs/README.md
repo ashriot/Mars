@@ -5,6 +5,7 @@ Use this page as the index for project knowledge that is more detailed or more l
 ## Development and Testing
 
 - [Automated testing](testing/README.md) — Supported Godot and GUT versions, isolated test commands, and accepted diagnostics.
+- [Curated local Quaternius assets](assets/quaternius-local-assets.md) — Local-only CC0 battle-model installation, exact manifest, and Git-safety checks.
 - [CTB combat checklist](testing/ctb-combat-checklist.md) — Manual acceptance for the combat timeline rail, previews, and action recovery.
 - [Controller checklist](testing/controller-manual-checklist.md) — Manual controller and keyboard/mouse verification across the playable loop.
 - [Dungeon checklist](testing/dungeon-manual-checklist.md) — Manual dungeon traversal, interaction, save, and restoration checks.
