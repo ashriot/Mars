@@ -9,12 +9,13 @@ All checks below are intentionally unchecked until performed interactively in co
 
 ## Battle combatant foundation regression
 
-Automated evidence recorded on 2026-08-02 with Godot 4.6.3, an isolated test `HOME`, and source commit `5a8226674a74965f7f30061cbd8875ed4b3d1294`:
+Automated evidence recorded on 2026-08-02 with Godot 4.6.3, an isolated test `HOME`, and source commit `04365d656c5d356e29b4534373c57aa3e8a463e3`:
 
-- Headless project import and parse exited successfully in a clean clone of the exact source commit, with no script parser errors.
-- Card/combatant binding passed 18/18 tests with 111 assertions. This includes release-safe ordinary runtime guards for missing view inputs, zero or multiple presentation nodes, off-tree validation, no invalid binding or event registration, and complete encounter rollback before fade, passives, or turn start.
-- The complete clean-clone run passed 932/932 tests with 14593 assertions.
-- The complete dirty-workspace run passed 931/932 tests and 14592/14593 assertions. Its sole failure is the intentionally preserved, unrelated `src/dev/endgame_battle_lab.tscn` HP-multiplier edit: the dirty scene contains `1.0` while the committed expectation is `5.0`.
+- The second headless import and parse in a clean exact-commit clone exited successfully with only the documented macOS certificate warning and no parser errors.
+- Card/combatant binding passed 26/26 tests with 169 assertions. This includes release-safe setup results, exact-model validation, specialized card pairing, ownership/rebinding rejection, off-tree scene validation, and complete encounter rollback.
+- Presentation-operation cancellation passed 11/11 tests with 37 assertions. Acting, action-hide, and health waits complete when views are freed, replaced, unregistered, or pruned, including repeated health synchronization.
+- The complete clean-clone run passed 951/951 tests with 14705 assertions, and the independent final boundary re-review reported PASS with no findings.
+- The complete dirty-workspace run passed 950/951 tests and 14704/14705 assertions. Its sole failure is the intentionally preserved, unrelated `src/dev/endgame_battle_lab.tscn` HP-multiplier edit: the dirty scene contains `1.0` while the committed scene and test expect `5.0`.
 
 Automated coverage does not establish the following visual or physical-input behavior. Leave every item unchecked until it is performed interactively against the recorded commit.
 

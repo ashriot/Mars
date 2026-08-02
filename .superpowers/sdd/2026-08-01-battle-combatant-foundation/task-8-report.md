@@ -171,3 +171,49 @@ Discovery and hazard audits:
 - `.superpowers/sdd/2026-08-01-battle-combatant-foundation/task-8-report.md`
 
 The unrelated user edit in `src/dev/endgame_battle_lab.tscn` remains preserved and excluded. Interactive visual, mouse, and physical-controller acceptance remains unchecked; no kit assets were added in this fix round.
+
+## Fix Round 2 — Release-safe view validation and encounter rollback
+
+Implementation fix commit: `5a8226674a74965f7f30061cbd8875ed4b3d1294` (`fix: reject invalid combatant presentation scenes`). Verification was recorded separately in docs commit `0e059056807f41ef669ebdc04792258b2dd020fc` so the report could name the exact tested source commit.
+
+### Findings addressed
+
+- Replaced debug-only presentation-scene assertions with ordinary runtime guards for null scenes, invalid parents or combatants, failed instantiation, and zero or multiple `CombatantPresentation` nodes.
+- Collected and validated the presentation while its view root was still off-tree. Invalid roots are freed without setup, model binding, registry entries, event handlers, or an adopted child.
+- Made encounter callers detect a failed view spawn, abort before fades, passives, or turn selection, and roll back every combatant and view created by that encounter attempt. Rollback removes model signals, manager back-references, roster entries, registry state, and scene-tree roots, including participants created before a later failure.
+
+### TDD and verification evidence
+
+- RED: `card_combatant_binding` passed 14/17 tests and 87/102 assertions. Zero- and two-presentation scenes asserted only after entering the tree, while encounter startup retained the invalid participant and continued into fade/passive/turn work.
+- GREEN: `card_combatant_binding` passed 18/18 tests with 111 assertions, including missing-input runtime guards and rollback after a valid hero view precedes an invalid enemy view.
+- Dirty-workspace full suite: 931/932 tests and 14,592/14,593 assertions. The sole failure was the preserved lab-scene multiplier mismatch.
+- Clean clone of the exact implementation commit: headless parse exited 0 and the complete suite passed 932/932 tests with 14,593 assertions.
+
+## Final binding and cancellation review rounds
+
+### Release-safe setup and presentation ownership
+
+- `e7a9063e56b535468f5e0afd19653bbffe94d7f6` (`Guard combatant presentation binding`) made combatant, card, and presentation binding report success explicitly. Spawn validates that setup succeeded and that the presentation owns the exact requested combatant before registration; failure frees the partially adopted view and leaves no registry or event state.
+- Specialized Hero/Enemy card mismatches, no-op setup, invalid values, card rebinding, and offering one presentation to two combatants now fail through ordinary runtime errors rather than release-elided assertions.
+- `BattleManager.register_presentation` now returns success or failure and rejects invalid values, combatant mismatches, and a presentation already owned by another combatant without disturbing the first valid registration.
+- RED for the initial three binding findings: `card_combatant_binding` passed 18/21 tests and 115/131 assertions. The wrong specialized card asserted, no-op setup remained adopted and registered, and one presentation appeared under two combatants.
+- `be9b39cbb65c5549f7a25389fd53685300232305` (`Reject presentation setup rebinding`) added the remaining direct setup-rebind guard so a registered presentation preserves its first combatant identity.
+
+### Cancellation-safe presentation operations
+
+- `2c44190cec724edee2e78627028dc7f652e97b4c` (`Cancel presentation waits on view teardown`) introduced `PresentationOperation`, a small manager-visible completion contract for acting transitions, action hiding, and health synchronization. Presentation exit, replacement, and unregistration complete pending operations so manager awaits resume and their existing generation/identity guards can run.
+- Real card slide, action-fade, and health tweens are wrapped by the same contract. The cards remain presentation-only, and model state remains authoritative.
+- Regressions free and replace views during acting, hide-action, and health operations and verify bounded manager completion rather than a suspended coroutine.
+- `04365d656c5d356e29b4534373c57aa3e8a463e3` (`Stabilize presentation lifecycle transitions`) completed the boundary by covering direct invalid/repeated binding, failed card binding, explicit unregistration, freed-combatant pruning, and replacement of an in-flight card health operation.
+
+## Final exact-source verification
+
+Source commit: `04365d656c5d356e29b4534373c57aa3e8a463e3`.
+
+- Independent final boundary re-review: PASS with no findings.
+- Final focused `card_combatant_binding`: 26/26 tests, 169 assertions.
+- Final focused `presentation_operation_cancellation`: 11/11 tests, 37 assertions.
+- Working checkout full suite: 950/951 tests and 14,704/14,705 assertions. The only failure is the protected dirty `src/dev/endgame_battle_lab.tscn`, whose multiplier is `1.0` while the committed scene and test expect `5.0`.
+- Clean exact-commit clone at `/private/tmp/mars-final-7c8fYA`: the second headless import/parse exited 0 with only the documented macOS certificate warning and no parser errors; the complete suite exited 0 with 951/951 tests and 14,705 assertions.
+- No interactive visual, mouse, physical-controller, touch, or Steam Deck acceptance was performed. Every manual checklist item remains unchecked.
+- This final amendment changes only the Task 8 report, its progress ledger, and the existing CTB checklist. The tested source, scene, data, and test tree remains identical to `04365d656c5d356e29b4534373c57aa3e8a463e3`.
