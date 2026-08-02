@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://b4tt3yil85l7j"]
 
 [ext_resource type="Script" uid="uid://carvfoj4h04nm" path="res://src/battle/enemy_card.gd" id="1_cu1kv"]
-[ext_resource type="Resource" uid="uid://bg7k6ixvwst7t" path="res://data/enemies/actions/recover_breach.tres" id="2_dmmmv"]
 [ext_resource type="Texture2D" uid="uid://jeiq1r6ke2t7" path="res://assets/graphics/icons/textures/plus.png" id="2_e8ixv"]
 [ext_resource type="PackedScene" uid="uid://ckw8rm3jl32bx" path="res://src/battle/damage_popup.tscn" id="2_xkcvw"]
 [ext_resource type="PackedScene" uid="uid://dwpde7pjb1jds" path="res://src/battle/debuff.tscn" id="3_1mnyd"]
@@ -100,7 +99,6 @@ offset_right = 40.0
 offset_bottom = 40.0
 mouse_filter = 2
 script = ExtResource("1_cu1kv")
-recover_action = ExtResource("2_dmmmv")
 damage_popup_scene = ExtResource("2_xkcvw")
 buff_scene = ExtResource("3_pdx0h")
 debuff_scene = ExtResource("3_1mnyd")

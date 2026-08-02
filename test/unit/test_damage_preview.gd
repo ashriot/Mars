@@ -751,10 +751,11 @@ func test_enemy_intent_displays_per_target_preview_range_without_averaging() -> 
 	)
 	enemy.intent_text = RichTextLabel.new()
 	enemy.intent_tooltip = RichTooltip.new()
-	enemy.intended_action = load("res://data/enemies/actions/rapid_fire.tres") as Action
+	var enemy_model := enemy.combatant as EnemyCombatant
+	enemy_model.intended_action = load("res://data/enemies/actions/rapid_fire.tres") as Action
 	var unarmored := _target(false, 0, 0)
 	var armored := _target(false, 50, 0)
-	enemy.intended_targets = [unarmored, armored]
+	enemy_model.intended_targets = [unarmored.combatant, armored.combatant]
 
 	enemy._update_intent_ui()
 
@@ -784,12 +785,13 @@ func test_enemy_intent_incomplete_random_split_uses_authored_total_budget() -> v
 	var rule := LivingEnemyPotencyRule.new()
 	rule.phase = DamageScalingRule.Phase.CURRENT_HIT
 	effect.scaling_rules = [rule]
-	enemy.intended_action = action
-	enemy.intended_targets = [low_hp_target, healthy_target]
+	var enemy_model := enemy.combatant as EnemyCombatant
+	enemy_model.intended_action = action
+	enemy_model.intended_targets = [low_hp_target.combatant, healthy_target.combatant]
 	var sequence := DamagePreview.for_plan(
 		effect,
 		enemy,
-		enemy.intended_targets,
+		[low_hp_target, healthy_target],
 		action,
 		false,
 		manager,
@@ -824,8 +826,9 @@ func test_enemy_intent_uses_sequential_guard_to_breach_preview() -> void:
 	var target := _intent_hero_target(50)
 	target.current_guard = 1
 	var original_hp := target.current_hp
-	enemy.intended_action = action
-	enemy.intended_targets = [target]
+	var enemy_model := enemy.combatant as EnemyCombatant
+	enemy_model.intended_action = action
+	enemy_model.intended_targets = [target.combatant]
 
 	enemy._update_intent_ui()
 
@@ -845,8 +848,9 @@ func test_enemy_intent_uses_resolved_damage_type_icon() -> void:
 	var second := _target(false, 0, 0)
 	first.active_conditions = [_forced_type_condition(Action.DamageType.PIERCING)]
 	second.active_conditions = [_forced_type_condition(Action.DamageType.PIERCING)]
-	enemy.intended_action = action
-	enemy.intended_targets = [first, second]
+	var enemy_model := enemy.combatant as EnemyCombatant
+	enemy_model.intended_action = action
+	enemy_model.intended_targets = [first.combatant, second.combatant]
 
 	enemy._update_intent_ui()
 
@@ -862,8 +866,9 @@ func test_enemy_intent_keeps_heterogeneous_resolved_types_separate() -> void:
 	kinetic.current_guard = 1
 	var piercing := _target(false, 90, 0)
 	piercing.active_conditions = [_forced_type_condition(Action.DamageType.PIERCING)]
-	enemy.intended_action = action
-	enemy.intended_targets = [kinetic, piercing]
+	var enemy_model := enemy.combatant as EnemyCombatant
+	enemy_model.intended_action = action
+	enemy_model.intended_targets = [kinetic.combatant, piercing.combatant]
 
 	enemy._update_intent_ui()
 
@@ -876,8 +881,9 @@ func test_enemy_intent_keeps_heterogeneous_resolved_types_separate() -> void:
 
 func test_enemy_intent_without_valid_target_uses_authored_relationship() -> void:
 	var enemy := _intent_enemy(100)
-	enemy.intended_action = _intent_action()
-	enemy.intended_targets = []
+	var enemy_model := enemy.combatant as EnemyCombatant
+	enemy_model.intended_action = _intent_action()
+	enemy_model.intended_targets = []
 
 	enemy._update_intent_ui()
 
@@ -891,8 +897,9 @@ func test_enemy_intent_without_valid_target_uses_authored_relationship() -> void
 func test_debilitate_reduces_enemy_intent_damage_by_thirty_five_percent() -> void:
 	var enemy := _intent_enemy(100)
 	var target := _intent_hero_target(0)
-	enemy.intended_action = _intent_action()
-	enemy.intended_targets = [target]
+	var enemy_model := enemy.combatant as EnemyCombatant
+	enemy_model.intended_action = _intent_action()
+	enemy_model.intended_targets = [target.combatant]
 	enemy._update_intent_ui()
 	assert_string_contains(enemy.intent_text.text, "100")
 
@@ -1025,7 +1032,13 @@ func _bind_headless_card(
 	stats: ActorStats,
 	faction: BattleCombatant.Faction,
 ) -> void:
-	var model := BattleCombatant.new()
+	var model: BattleCombatant
+	if card is HeroCard:
+		model = HeroCombatant.new()
+	elif card is EnemyCard:
+		model = EnemyCombatant.new()
+	else:
+		model = BattleCombatant.new()
 	card.add_child(model)
 	model.setup_base(stats, faction)
 	card.bind_combatant(model, true)

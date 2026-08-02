@@ -147,7 +147,13 @@ func _bind_headless(
 	faction: BattleCombatant.Faction,
 	manager: BattleManager = null,
 ) -> ActorCard:
-	var combatant := BattleCombatant.new()
+	var combatant: BattleCombatant
+	if actor is HeroCard:
+		combatant = HeroCombatant.new()
+	elif actor is EnemyCard:
+		combatant = EnemyCombatant.new()
+	else:
+		combatant = BattleCombatant.new()
 	actor.add_child(combatant)
 	combatant.setup_base(ActorStats.new(), faction, manager)
 	actor.battle_manager = manager

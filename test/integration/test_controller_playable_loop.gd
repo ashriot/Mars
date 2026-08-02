@@ -119,17 +119,18 @@ class LoopManager extends GameManager:
 		var first_enemy := battle_manager.enemy_area.get_child(0) as EnemyCard
 		var other_enemy := enemy_card_scene.instantiate() as EnemyCard
 		other_enemy.battle_manager = battle_manager
-		other_enemy.enemy_data = first_enemy.enemy_data.duplicate(true) as EnemyData
-		other_enemy.initialize_ai(battle_manager.encounter_seed)
 		battle_manager.enemy_area.add_child(other_enemy)
-		var other_model := BattleCombatant.new()
+		var other_model := EnemyCombatant.new()
 		other_enemy.add_child(other_model)
 		other_model.setup_base(
 			first_enemy.current_stats,
 			BattleCombatant.Faction.ENEMY,
 			battle_manager,
 		)
+		other_model.enemy_data = first_enemy.enemy_data.duplicate(true) as EnemyData
+		other_model.recover_action = other_model.enemy_data.recover_action
 		other_enemy.bind_combatant(other_model)
+		other_enemy.initialize_ai(battle_manager.encounter_seed)
 		other_enemy.position = first_enemy.position + Vector2(first_enemy.size.x + 40.0, 0.0)
 		battle_manager.forced_enemies.assign([first_enemy, other_enemy])
 		battle_manager.current_actor = hero

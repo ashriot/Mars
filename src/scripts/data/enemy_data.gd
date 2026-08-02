@@ -18,6 +18,9 @@ class_name EnemyData
 @export var energy_defense_rank: int = 5
 
 @export var abilities: Array[EnemyAbility] = []
+@export var recover_action: Action = preload(
+	"res://data/enemies/actions/recover_breach.tres"
+)
 
 var stats: ActorStats
 

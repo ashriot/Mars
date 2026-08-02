@@ -8,7 +8,13 @@ static func bind(
 	manager: BattleManager = null,
 	with_presentation: bool = false,
 ) -> ActorCard:
-	var combatant := BattleCombatant.new()
+	var combatant: BattleCombatant
+	if card is HeroCard:
+		combatant = HeroCombatant.new()
+	elif card is EnemyCard:
+		combatant = EnemyCombatant.new()
+	else:
+		combatant = BattleCombatant.new()
 	card.add_child(combatant)
 	combatant.setup_base(stats if stats != null else ActorStats.new(), faction, manager)
 	card.battle_manager = manager

@@ -2,7 +2,7 @@ extends RefCounted
 class_name EnemyDecisionEngine
 
 
-static func choose(enemy: EnemyCard, abilities: Array[EnemyAbility], state: EnemyAIRuntimeState,
+static func choose(enemy: EnemyCombatant, abilities: Array[EnemyAbility], state: EnemyAIRuntimeState,
 	context: EnemyAIContext) -> EnemyDecision:
 	var candidates: Array[Dictionary] = []
 	for ability in abilities:
@@ -38,7 +38,7 @@ static func choose(enemy: EnemyCard, abilities: Array[EnemyAbility], state: Enem
 	return decision
 
 
-static func _stable_key(enemy: EnemyCard, state: EnemyAIRuntimeState,
+static func _stable_key(enemy: EnemyCombatant, state: EnemyAIRuntimeState,
 	context: EnemyAIContext, salt: String) -> int:
 	return hash("%d:%d:%d:%s" % [
 		context.encounter_seed,

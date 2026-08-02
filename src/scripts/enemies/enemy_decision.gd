@@ -4,7 +4,7 @@ class_name EnemyDecision
 var ability: EnemyAbility
 var action: Action
 var rule: EnemyDecisionRule
-var targets: Array[ActorCard] = []
+var targets: Array[BattleCombatant] = []
 var reason: String = ""
 var is_recovery := false
 

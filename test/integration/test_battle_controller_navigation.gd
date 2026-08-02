@@ -923,6 +923,7 @@ func test_active_hero_turn_uses_slide_and_static_queue_gold_border() -> void:
 	var hero := preload("res://src/battle/hero_card.tscn").instantiate() as HeroCard
 	add_child_autofree(hero)
 	await get_tree().process_frame
+	CardTestFactory.bind(hero, BattleCombatant.Faction.HERO)
 	var definition := RoleDefinition.new()
 	definition.color = Color(0.2, 0.65, 0.9, 1.0)
 	var role := RoleData.new()

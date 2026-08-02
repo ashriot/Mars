@@ -33,7 +33,8 @@ func _cards() -> Array[ActorCard]:
 	for scene: PackedScene in [HeroCardScene, EnemyCardScene]:
 		var card := scene.instantiate() as ActorCard
 		add_child_autofree(card)
-		var model := BattleCombatant.new()
+		var model: BattleCombatant = HeroCombatant.new() \
+			if card is HeroCard else EnemyCombatant.new()
 		card.add_child(model)
 		var stats := ActorStats.new()
 		stats.actor_name = "Card"

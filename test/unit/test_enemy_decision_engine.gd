@@ -1,17 +1,5 @@
 extends GutTest
 
-const CardTestFactory := preload("res://test/helpers/card_test_factory.gd")
-
-
-class QuietHero extends HeroCard:
-	func _update_conditions_ui() -> void:
-		return
-
-
-class QuietEnemy extends EnemyCard:
-	func _update_intent_ui() -> void:
-		return
-
 
 func test_high_focus_free_rule_beats_lower_priority_cooldown() -> void:
 	var fixture := _fixture()
@@ -73,24 +61,12 @@ func test_low_hp_percentage_selector_and_urgent_heal() -> void:
 
 
 func _fixture() -> Dictionary:
-	var sands := CardTestFactory.bind(
-		QuietHero.new(), BattleCombatant.Faction.HERO,
-	) as QuietHero
-	var echo := CardTestFactory.bind(
-		QuietHero.new(), BattleCombatant.Faction.HERO,
-	) as QuietHero
-	var enemy := CardTestFactory.bind(
-		QuietEnemy.new(), BattleCombatant.Faction.ENEMY,
-	) as QuietEnemy
-	var ally := CardTestFactory.bind(
-		QuietEnemy.new(), BattleCombatant.Faction.ENEMY,
-	) as QuietEnemy
-	_initialize_actor(sands, 100, 1, 0)
-	_initialize_actor(echo, 100, 2, 0)
-	_initialize_actor(enemy, 100, 3, 2)
-	_initialize_actor(ally, 100, 4, 1)
-	var heroes: Array[HeroCard] = [sands, echo]
-	var enemies: Array[EnemyCard] = [enemy, ally]
+	var sands := _hero(100, 1, 0)
+	var echo := _hero(100, 2, 0)
+	var enemy := _enemy(100, 3, 2)
+	var ally := _enemy(100, 4, 1)
+	var heroes: Array[HeroCombatant] = [sands, echo]
+	var enemies: Array[EnemyCombatant] = [enemy, ally]
 	var ticks := {sands: 8, echo: 3, enemy: 6, ally: 12}
 	var state := EnemyAIRuntimeState.new()
 	return {
@@ -103,14 +79,33 @@ func _fixture() -> Dictionary:
 	}
 
 
-func _initialize_actor(actor: ActorCard, max_hp: int, priority: int, guard: int) -> void:
-	actor.current_stats = ActorStats.new()
-	actor.current_stats.max_hp = max_hp
-	actor.current_hp = max_hp
+func _hero(max_hp: int, priority: int, guard: int) -> HeroCombatant:
+	var hero := HeroCombatant.new()
+	_initialize_actor(hero, max_hp, priority, guard)
+	return hero
+
+
+func _enemy(max_hp: int, priority: int, guard: int) -> EnemyCombatant:
+	var enemy := EnemyCombatant.new()
+	_initialize_actor(enemy, max_hp, priority, guard)
+	return enemy
+
+
+func _initialize_actor(
+	actor: BattleCombatant,
+	max_hp: int,
+	priority: int,
+	guard: int,
+) -> void:
+	var stats := ActorStats.new()
+	stats.max_hp = max_hp
+	actor.setup_base(
+		stats,
+		BattleCombatant.Faction.HERO if actor is HeroCombatant \
+		else BattleCombatant.Faction.ENEMY,
+	)
 	actor.current_guard = guard
 	actor.battle_priority = priority
-	actor.is_breached = false
-	actor.is_defeated = false
 
 
 func _ability(id: StringName, cooldown: int, priority: int,
@@ -142,7 +137,7 @@ func _taunt() -> Condition:
 
 
 func _free_fixture(fixture: Dictionary) -> void:
-	(fixture.enemy as EnemyCard).free()
-	(fixture.ally as EnemyCard).free()
-	(fixture.sands as HeroCard).free()
-	(fixture.echo as HeroCard).free()
+	(fixture.enemy as EnemyCombatant).free()
+	(fixture.ally as EnemyCombatant).free()
+	(fixture.sands as HeroCombatant).free()
+	(fixture.echo as HeroCombatant).free()

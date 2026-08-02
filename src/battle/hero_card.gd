@@ -16,76 +16,69 @@ signal focus_updated
 @onready var role_label: Label = $Panel/Role
 @onready var role_icon: TextureRect = $Panel/RoleIcon
 
-# --- UNIQUE Data ---
-var hero_data: HeroData
-var loaded_roles: Array[RoleData] = []
-var current_role_index: int
-var current_focus: int = 0
-var shifted_this_turn: bool
+# --- Temporary model-backed compatibility properties ---
+var hero_data: HeroData:
+	get: return (combatant as HeroCombatant).hero_data
+	set(value): (combatant as HeroCombatant).hero_data = value
+var loaded_roles: Array[RoleData]:
+	get: return (combatant as HeroCombatant).loaded_roles
+	set(value): (combatant as HeroCombatant).loaded_roles = value
+var current_role_index: int:
+	get: return (combatant as HeroCombatant).current_role_index
+	set(value): (combatant as HeroCombatant).current_role_index = value
+var current_focus: int:
+	get: return (combatant as HeroCombatant).current_focus
+	set(value): (combatant as HeroCombatant).current_focus = value
+var shifted_this_turn: bool:
+	get: return (combatant as HeroCombatant).shifted_this_turn
+	set(value): (combatant as HeroCombatant).shifted_this_turn = value
 
 
-func setup(data: HeroData):
-	hero_data = data as HeroData
-	hero_data.calculate_stats()
+func setup(data: HeroData) -> void:
 	_ensure_battle_manager()
-	var model := BattleCombatant.new()
+	var model := HeroCombatant.new()
 	add_child(model)
-	model.setup_base(hero_data.stats, BattleCombatant.Faction.HERO, battle_manager)
+	model.setup(data, battle_manager)
+	await setup_from_combatant(model)
+
+
+func setup_from_combatant(model: HeroCombatant) -> void:
+	_ensure_battle_manager()
 	bind_combatant(model)
-	current_role_index = hero_data.active_role_index
+	model.focus_changed.connect(_on_focus_changed)
+	model.presentation_event.connect(_on_hero_presentation_event)
+	await _setup_card_visuals()
+	_render_hero_state()
+
+
+func _render_hero_state() -> void:
 	if hero_data.portrait:
 		portrait_rect.texture = hero_data.portrait
-
-	loaded_roles.clear()
-	for def in data.role_definitions:
-		var role = data.get_battle_role(def.role_id)
-		if role:
-			loaded_roles.append(role)
-
-	await _setup_card_visuals()
-
-	# --- LOAD TRAITS ---
-	active_traits.clear()
-	if data.weapon and data.weapon.unique_trait:
-		_add_trait(data.weapon.unique_trait, data.weapon.tier)
-	if data.armor and data.armor.unique_trait:
-		_add_trait(data.armor.unique_trait, data.armor.tier)
-
-	duration /= battle_manager.battle_speed
+	if is_instance_valid(battle_manager):
+		duration /= battle_manager.battle_speed
 	name_label.text = hero_data.stats.actor_name
-	current_focus = hero_data.stats.starting_focus
-
-	if hero_data.boon_focused:
-		current_focus = clamp(current_focus + 5, 0, 10)
-		print("Boon Applied: +5 Focus")
-		hero_data.boon_focused = false
-
-	if hero_data.boon_armored:
-		current_guard = clamp(current_guard + 5, 0, 10)
-		print("Boon Applied: +5 Guard")
-		hero_data.boon_armored = false
-		update_guard_bar(false)
-
-
-	if hero_data.injuries > 0:
-		var penalty_percent = 0.34 * hero_data.injuries
-		penalty_percent = min(penalty_percent, 1.0)
-		var penalty_amount = int(hero_data.stats.max_hp * penalty_percent)
-		#hero_data.stats.max_hp = max(0, hero_data.stats.max_hp - penalty_amount)
-		current_hp = max(0, hero_data.stats.max_hp - penalty_amount)
-		print(hero_data.hero_name, " starts with Injury penalty!! HP: ", current_hp)
-		if current_hp <= 0:
-			current_hp = 0
-			defeated()
-
 	update_focus_bar(false)
 	update_current_role()
 	panel.self_modulate.a = 1.0
 
+
+func _on_focus_changed(_hero: HeroCombatant) -> void:
+	update_focus_bar()
+	focus_updated.emit()
+
+
+func _on_hero_presentation_event(
+	_hero: BattleCombatant,
+	event: StringName,
+	_payload: Dictionary,
+) -> void:
+	if event == &"role_changed":
+		update_current_role()
+
 func on_turn_started() -> void:
 	#if current_focus < 10:
 		#modify_focus(1)
-	shifted_this_turn = false
+	(combatant as HeroCombatant).shifted_this_turn = false
 	await _slide_up()
 	await battle_manager.action_bar.load_actions(self, false)
 	await super.on_turn_started()
@@ -97,16 +90,6 @@ func on_turn_ended() -> void:
 	_slide_down()
 	await super.on_turn_ended()
 
-func take_healing(heal_amount: int, is_revive: bool = false):
-	var was_defeated := is_defeated
-	await super.take_healing(heal_amount, is_revive)
-	if was_defeated and is_revive and heal_amount > 0 and current_hp > 0:
-		combatant.revive()
-
-func defeated():
-	super.defeated()
-
-
 func _show_defeated_visual(_immediate: bool = false) -> void:
 	self_modulate.a = 0.25
 
@@ -116,55 +99,29 @@ func _show_revived_visual() -> void:
 	self_modulate = Color.WHITE
 
 func get_current_role() -> RoleData:
-	if loaded_roles.is_empty(): return null
-	return loaded_roles[current_role_index]
+	return (combatant as HeroCombatant).get_current_role()
 
 func get_previous_role() -> RoleData:
-	if loaded_roles.is_empty(): return null
-	var prev_index = (current_role_index - 1 + loaded_roles.size()) % loaded_roles.size()
-	return loaded_roles[prev_index]
+	return (combatant as HeroCombatant).get_previous_role()
 
 func get_next_role() -> RoleData:
-	if loaded_roles.is_empty(): return null
-	var next_index = (current_role_index + 1) % loaded_roles.size()
-	return loaded_roles[next_index]
+	return (combatant as HeroCombatant).get_next_role()
 
-func shift_role(direction: String):
-	shifted_this_turn = true
-	var role_count = hero_data.unlocked_role_ids.size()
-	if role_count == 0: return
-
-	if direction == "left":
-		current_role_index = (current_role_index - 1 + role_count) % role_count
-	else:
-		current_role_index = (current_role_index + 1) % role_count
-	update_current_role()
-	await _fire_condition_event(Trigger.TriggerType.ON_SHIFT)
+func shift_role(direction: String) -> void:
+	await (combatant as HeroCombatant).shift_role(direction)
 
 func update_current_role():
-	role_label.text = get_current_role().role_name
-	role_icon.texture = get_current_role().icon
+	var role := get_current_role()
+	if role == null:
+		role_label.text = ""
+		role_icon.texture = null
+		return
+	role_label.text = role.role_name
+	role_icon.texture = role.icon
 	recolor()
 
 func modify_focus(amount: int, context: Dictionary = {}) -> void:
-	var paid_focus_cost := maxi(0, int(context.get("paid_focus_cost", -amount)))
-	var is_zero_cost_action_payment := amount == 0 \
-		and context.has("paid_focus_cost") \
-		and context.has("action")
-	var is_focus_spend := amount < 0 or is_zero_cost_action_payment
-	var should_refund := is_focus_spend and active_conditions.any(
-		func(condition: Condition) -> bool:
-			return condition != null and condition.refund_focus_cost_on_spend
-	)
-	current_focus = clampi(current_focus + amount, 0, 10)
-	update_focus_bar()
-	focus_updated.emit()
-	if is_focus_spend:
-		var spend_context := context.duplicate(true)
-		spend_context["paid_focus_cost"] = paid_focus_cost
-		await _fire_condition_event(Trigger.TriggerType.ON_SPENDING_FOCUS, spend_context)
-	if should_refund and paid_focus_cost > 0:
-		await modify_focus(paid_focus_cost)
+	await (combatant as HeroCombatant).modify_focus(amount, context)
 
 func update_focus_bar(animate: bool = true):
 	var pips = focus_bar.get_children()
@@ -179,14 +136,7 @@ func update_focus_bar(animate: bool = true):
 			_animate_pip_loss(pip_node, animate)
 
 func get_scaled_focus_cost(cost: int) -> int:
-	var scalar: float = 1.0
-	for condition in active_conditions:
-		scalar -= condition.focus_cost_reduction
-	return int(cost * scalar)
-
-func _add_trait(trait_res: Trait, tier: int):
-	_require_combatant()._add_trait(trait_res, tier)
-	print("Added Trait: ", trait_res.trait_name, " (Tier ", tier, ")")
+	return (combatant as HeroCombatant).get_scaled_focus_cost(cost)
 
 func highlight(value: bool):
 	highlight_panel.visible = value

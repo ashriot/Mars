@@ -72,6 +72,19 @@ func test_identical_planning_and_presentation_refresh_do_not_flash_again() -> vo
 	_free_fixture(fixture)
 
 
+func test_clearing_spent_intent_refreshes_without_flashing_again() -> void:
+	var fixture := _fixture()
+	fixture.enemy.initialize_ai(77)
+	fixture.manager._update_all_enemy_intents()
+	assert_eq(fixture.enemy.intent_flash_count, 1)
+
+	fixture.enemy.clear_intent()
+
+	assert_null(fixture.enemy.intended_action)
+	assert_eq(fixture.enemy.intent_flash_count, 1)
+	_free_fixture(fixture)
+
+
 func test_focus_signal_preserves_locked_intent() -> void:
 	var fixture := _fixture()
 	_connect_actor_refresh_signals(fixture)
@@ -141,7 +154,7 @@ func test_decoy_retargets_locked_action_without_replanning() -> void:
 	fixture.enemy.initialize_ai(77)
 	fixture.manager._update_all_enemy_intents()
 	var locked_action: Action = fixture.enemy.intended_action
-	var original_target := fixture.enemy.intended_targets[0] as HeroCard
+	var original_target := fixture.enemy.intended_targets[0] as HeroCombatant
 	var decoy := Condition.new()
 	decoy.condition_name = "Decoy"
 	decoy.is_untargetable = true
@@ -159,9 +172,10 @@ func test_taunt_redirects_locked_action_without_replanning() -> void:
 	fixture.enemy.initialize_ai(77)
 	fixture.manager._update_all_enemy_intents()
 	var locked_action: Action = fixture.enemy.intended_action
-	var original_target := fixture.enemy.intended_targets[0] as HeroCard
-	var taunter: HeroCard = fixture.sands \
-		if original_target == fixture.echo else fixture.echo
+	var original_target := fixture.enemy.intended_targets[0] as HeroCombatant
+	var taunter := fixture.sands.combatant as HeroCombatant \
+		if original_target == fixture.echo.combatant \
+		else fixture.echo.combatant as HeroCombatant
 	var draw_fire := Condition.new()
 	draw_fire.condition_name = "Draw Fire"
 	draw_fire.is_taunting = true
@@ -179,7 +193,7 @@ func test_ordinary_condition_does_not_change_locked_targets() -> void:
 	fixture.enemy.initialize_ai(77)
 	fixture.manager._update_all_enemy_intents()
 	var locked_action: Action = fixture.enemy.intended_action
-	var locked_targets: Array[ActorCard] = []
+	var locked_targets: Array[BattleCombatant] = []
 	locked_targets.assign(fixture.enemy.intended_targets)
 	var buff := Condition.new()
 	buff.condition_name = "Ordinary Buff"
@@ -262,7 +276,7 @@ func test_execution_retargets_cached_action_when_target_is_invalid() -> void:
 	await fixture.manager.execute_enemy_turn(fixture.enemy)
 	assert_eq(fixture.enemy.intent_decision_count, 1)
 	assert_eq(fixture.manager.executed_action, stale_action)
-	assert_eq(fixture.manager.executed_targets, [fixture.sands])
+	assert_eq(fixture.manager.executed_targets, [fixture.sands.combatant])
 	assert_eq(fixture.enemy.ai_state.completed_turns, 1)
 	assert_eq(fixture.enemy.ai_state.remaining(&"focus_attack"), 3)
 	_free_fixture(fixture)
@@ -348,8 +362,11 @@ func _fixture() -> Dictionary:
 	)
 	var enemy_data := EnemyData.new()
 	enemy_data.abilities = [basic, focus_attack]
-	enemy.enemy_data = enemy_data
-	enemy.recover_action = _action("Recover", Action.TargetType.SELF)
+	enemy_data.recover_action = _action("Recover", Action.TargetType.SELF)
+	var enemy_model := enemy.combatant as EnemyCombatant
+	enemy_model.enemy_data = enemy_data
+	enemy_model.recover_action = enemy_data.recover_action
+	enemy_model.presentation_event.connect(enemy._on_enemy_presentation_event)
 	return {
 		"manager": manager,
 		"sands": sands,

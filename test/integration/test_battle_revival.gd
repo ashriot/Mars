@@ -331,7 +331,13 @@ func _bind_card(
 	faction: BattleCombatant.Faction,
 	manager: BattleManager,
 ) -> void:
-	var model := BattleCombatant.new()
+	var model: BattleCombatant
+	if card is HeroCard:
+		model = HeroCombatant.new()
+	elif card is EnemyCard:
+		model = EnemyCombatant.new()
+	else:
+		model = BattleCombatant.new()
 	card.add_child(model)
 	card.battle_manager = manager
 	model.setup_base(stats, faction, manager)

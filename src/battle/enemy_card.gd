@@ -4,8 +4,6 @@ class_name EnemyCard
 # --- UNIQUE Signals ---
 signal enemy_clicked(enemy_card)
 
-@export var recover_action: Action
-
 # --- UNIQUE UI Node References ---
 @onready var intent_text: RichTextLabel = $Panel/IntentText
 @onready var intent_tooltip: RichTooltip = $Panel/IntentText/RichTooltip
@@ -14,13 +12,19 @@ signal enemy_clicked(enemy_card)
 @onready var nrg_def_gauge: TextureProgressBar = $Panel/NrgDef
 @onready var nrg_def_value: Label = $Panel/NrgDef/Value
 
-# --- UNIQUE Data ---
-var enemy_data: EnemyData
-var ai_state := EnemyAIRuntimeState.new()
-var intended_decision := EnemyDecision.new()
-var encounter_seed := 0
-var intended_action: Action
-var intended_targets: Array[ActorCard]
+# --- Temporary model-backed compatibility properties ---
+var enemy_data: EnemyData:
+	get: return (combatant as EnemyCombatant).enemy_data
+var ai_state: EnemyAIRuntimeState:
+	get: return (combatant as EnemyCombatant).ai_state
+var intended_decision: EnemyDecision:
+	get: return (combatant as EnemyCombatant).intended_decision
+var encounter_seed: int:
+	get: return (combatant as EnemyCombatant).encounter_seed
+var intended_action: Action:
+	get: return (combatant as EnemyCombatant).intended_action
+var intended_targets: Array[BattleCombatant]:
+	get: return (combatant as EnemyCombatant).intended_targets
 var intent_flash_tween: Tween
 
 
@@ -31,109 +35,68 @@ func setup(
 	is_boss: bool,
 	hp_multiplier: float = 1.0,
 ):
-	enemy_data = data.duplicate(true) as EnemyData
-	enemy_data.level = fight_level
-	enemy_data.calculate_stats()
-	$Panel/Info/Text.text = "Rk. " + str(enemy_data.level)
-	if is_elite:
-		$Panel/Info/Text.text += " ELITE"
-		_apply_elite_scaling(enemy_data.stats)
-		name_label.modulate = Color.ORANGE_RED
-	elif is_boss:
-		$Panel/Info/Text.text += " BOSS"
-		#_apply_boss_scaling(enemy_data.stats)
-		name_label.modulate = Color.MAGENTA
-	enemy_data.stats.max_hp = maxi(
-		1,
-		roundi(enemy_data.stats.max_hp * maxf(hp_multiplier, 1.0)),
-	)
 	_ensure_battle_manager()
-	var model := BattleCombatant.new()
+	var model := EnemyCombatant.new()
 	add_child(model)
-	model.setup_base(enemy_data.stats, BattleCombatant.Faction.ENEMY, battle_manager)
+	model.setup(
+		data, fight_level, is_elite, is_boss, hp_multiplier, battle_manager,
+	)
+	await setup_from_combatant(model)
+
+
+func setup_from_combatant(model: EnemyCombatant) -> void:
+	_ensure_battle_manager()
 	bind_combatant(model)
+	model.presentation_event.connect(_on_enemy_presentation_event)
 	await _setup_card_visuals()
+	_render_enemy_state()
+
+
+func _render_enemy_state() -> void:
+	var model := combatant as EnemyCombatant
+	$Panel/Info/Text.text = "Rk. " + str(enemy_data.level)
+	if model.is_elite:
+		$Panel/Info/Text.text += " ELITE"
+		name_label.modulate = Color.ORANGE_RED
+	elif model.is_boss:
+		$Panel/Info/Text.text += " BOSS"
+		name_label.modulate = Color.MAGENTA
 	update_defenses()
-
 	name_label.text = enemy_data.stats.actor_name
-
 	if enemy_data.portrait:
 		portrait_rect.texture = enemy_data.portrait
 
-func _apply_elite_scaling(stats: ActorStats):
-	stats.max_hp = int(stats.max_hp * 5.0)
-	stats.attack = int(stats.attack * 1.15)
-	stats.psyche = int(stats.psyche * 1.15)
-	stats.speed = int(stats.speed * 1.15)
+
+func _on_enemy_presentation_event(
+	_enemy: BattleCombatant,
+	event: StringName,
+	payload: Dictionary,
+) -> void:
+	if event != &"intent_changed":
+		return
+	_update_intent_ui()
+	if bool(payload.get("changed", false)):
+		flash_intent()
 
 func initialize_ai(seed_value: int) -> void:
-	encounter_seed = seed_value
-	ai_state.initialize(enemy_data.abilities)
+	(combatant as EnemyCombatant).initialize_ai(seed_value)
 
 
 func decide_intent(context: EnemyAIContext) -> void:
-	var next := EnemyDecision.new()
-	if is_breached and recover_action != null:
-		next.action = recover_action
-		next.targets = [self]
-		next.reason = "recover_breach"
-		next.is_recovery = true
-	else:
-		next = EnemyDecisionEngine.choose(self, enemy_data.abilities, ai_state, context)
-	if not next.is_valid():
-		push_error("Enemy '%s' could not produce a valid intent on AI turn %d." % [
-			actor_name, ai_state.completed_turns,
-		])
-		clear_intent()
-		return
-	var intent_changed := intended_action != next.action \
-		or not _targets_match(next.targets)
-	intended_decision = next
-	intended_action = next.action
-	intended_targets.assign(next.targets)
-	_update_intent_ui()
-	if intent_changed:
-		flash_intent()
+	(combatant as EnemyCombatant).decide_intent(context)
 
 
 func complete_ai_turn(used_ability_id: StringName = &"") -> void:
-	ai_state.complete_turn(used_ability_id)
+	(combatant as EnemyCombatant).complete_ai_turn(used_ability_id)
 
 
 func revalidate_intent_targets(context: EnemyAIContext) -> bool:
-	if intended_action == null or intended_decision.is_recovery:
-		return false
-	var ability := intended_decision.ability
-	var rule := intended_decision.rule
-	if ability == null or rule == null or rule.selector == null:
-		return false
-	if rule.selector.targets_are_legal(self, intended_targets, context):
-		return false
-	var rule_index := ability.rules.find(rule)
-	if rule_index < 0:
-		return false
-	var salt := "%s:%d" % [ability.ability_id, rule_index]
-	var next_targets := rule.selector.select(self, ai_state, context, salt)
-	if next_targets == intended_targets:
-		return false
-	intended_decision.targets.assign(next_targets)
-	intended_targets.assign(next_targets)
-	_update_intent_ui()
-	flash_intent()
-	return true
+	return (combatant as EnemyCombatant).revalidate_intent_targets(context)
 
 
 func refresh_intent_presentation() -> void:
 	_update_intent_ui()
 
-
-func _targets_match(other_targets: Array) -> bool:
-	if intended_targets.size() != other_targets.size():
-		return false
-	for index in intended_targets.size():
-		if intended_targets[index] != other_targets[index]:
-			return false
-	return true
 
 func _update_intent_ui():
 	if not intended_action:
@@ -148,10 +111,11 @@ func _update_intent_ui():
 	if first_effect is Effect_Damage:
 		var damage_effect: Effect_Damage = first_effect
 		var resolved_hit_count := damage_effect._resolve_hit_count(self)
+		var presentation_targets := _presentation_targets()
 		var sequence := DamagePreview.for_plan(
 			damage_effect,
 			self,
-			intended_targets,
+			presentation_targets,
 			intended_action,
 			false,
 			battle_manager,
@@ -187,8 +151,8 @@ func _update_intent_ui():
 				else:
 					final_text += " EVERYONE"
 			else:
-				var tar = intended_targets[0] as HeroCard
-				var col = tar.get_current_role().color.to_html()
+				var tar := intended_targets[0] as HeroCombatant
+				var col := tar.get_current_role().color.to_html()
 				final_text += " [color=" + col + "]" + intended_targets[0].actor_name
 
 		intent_text.text = final_text
@@ -202,17 +166,26 @@ func _update_intent_ui():
 				final_text += " " + intended_targets[0].actor_name
 
 		intent_text.text = final_text
-	var tooltip_target: ActorCard = intended_targets[0] \
+	var presentation_targets := _presentation_targets()
+	var tooltip_target: ActorCard = presentation_targets[0] \
 		if intended_targets.size() == 1 else null
 	intent_tooltip.bbcode_text = intended_action.get_rich_description(
-		self, tooltip_target, intended_targets, battle_manager,
+		self, tooltip_target, presentation_targets, battle_manager,
 	)
 
+
+func _presentation_targets() -> Array[ActorCard]:
+	var targets: Array[ActorCard] = []
+	for target: BattleCombatant in intended_targets:
+		assert(
+			is_instance_valid(target.legacy_effect_actor),
+			"Enemy intent presentation requires bound target cards until Task 6.",
+		)
+		targets.append(target.legacy_effect_actor)
+	return targets
+
 func clear_intent() -> void:
-	intended_decision = EnemyDecision.new()
-	intended_action = null
-	intended_targets = []
-	_update_intent_ui()
+	(combatant as EnemyCombatant).clear_intent()
 
 func breach():
 	await super.breach()

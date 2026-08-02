@@ -295,7 +295,7 @@ func _on_actor_breached(breached_actor: ActorCard) -> void:
 	print("\n Actor was Breached -> New Queue: ")
 	update_turn_order()
 	if breached_actor is EnemyCard \
-		and (breached_actor as EnemyCard).recover_action != null \
+		and (breached_actor.combatant as EnemyCombatant).recover_action != null \
 		and (breached_actor != current_actor or current_state != State.EXECUTING_ACTION):
 		(breached_actor as EnemyCard).decide_intent(_enemy_ai_context())
 	for observer: ActorCard in actor_list:
@@ -647,7 +647,9 @@ func _is_enemy_decision_executable(enemy: EnemyCard, context: EnemyAIContext) ->
 		return false
 	if ability.rules.find(rule) < 0:
 		return false
-	return rule.selector.targets_are_legal(enemy, decision.targets, context)
+	return rule.selector.targets_are_legal(
+		enemy.combatant as EnemyCombatant, decision.targets, context,
+	)
 
 func get_living_heroes() -> Array[HeroCard]:
 	var living_heroes: Array[HeroCard] = []

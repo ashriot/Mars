@@ -474,7 +474,13 @@ static func _bind_preview_card(
 	if source != null:
 		stats = _copy_stats(source.current_stats)
 		faction = source.combatant.faction
-	var model := BattleCombatant.new()
+	var model: BattleCombatant
+	if preview_card is HeroCard:
+		model = HeroCombatant.new()
+	elif preview_card is EnemyCard:
+		model = EnemyCombatant.new()
+	else:
+		model = BattleCombatant.new()
 	preview_card.add_child(model)
 	model.setup_base(stats, faction)
 	preview_card.bind_combatant(model, true)

@@ -39,6 +39,14 @@ var _condition_removal_batch_depth := 0
 var _condition_removal_batch_dirty := false
 
 
+static func resolve_model(value: Node) -> BattleCombatant:
+	if value is BattleCombatant:
+		return value
+	var candidate: Variant = value.get("combatant") if value != null else null
+	assert(candidate is BattleCombatant, "Expected a combatant or bound presentation.")
+	return candidate as BattleCombatant
+
+
 func setup_base(
 	stats: ActorStats,
 	combatant_faction: Faction,
