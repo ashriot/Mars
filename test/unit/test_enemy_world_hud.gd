@@ -205,6 +205,62 @@ func test_world_layout_resolves_visible_huds_in_spawn_order() -> void:
 	assert_eq(first.compact_stack.global_position, Vector2(390, 210))
 
 
+func test_controller_selected_details_flip_below_compact_at_safe_top() -> void:
+	var fixture := _world_in_viewport(Vector2i(1280, 800))
+	var world := fixture.world as BattleWorld3D
+	var hud := HUD_SCENE.instantiate() as EnemyWorldHUD
+	world.hud_layer.add_child(hud)
+	hud.bind_combatant(_enemy_with_state(80, 3))
+	hud.set_projected_head_position(Vector2(500, 114))
+	hud.set_target_state(CombatantPresentation.TargetState.SELECTED)
+
+	world._layout_enemy_huds()
+
+	var safe_rect := Rect2(24, 24, 1232, 752)
+	assert_true(hud.details.visible)
+	assert_gt(hud.details.global_position.y, hud.compact_stack.global_position.y)
+	assert_true(safe_rect.encloses(hud.get_visible_layout_rect()))
+
+
+func test_hovered_details_stay_inside_safe_bottom_above_compact() -> void:
+	var fixture := _world_in_viewport(Vector2i(1280, 800))
+	var world := fixture.world as BattleWorld3D
+	var hud := HUD_SCENE.instantiate() as EnemyWorldHUD
+	world.hud_layer.add_child(hud)
+	hud.bind_combatant(_enemy_with_state(80, 3))
+	hud.set_projected_head_position(Vector2(500, 790))
+	hud.target_region.mouse_entered.emit()
+
+	world._layout_enemy_huds()
+
+	var safe_rect := Rect2(24, 24, 1232, 752)
+	assert_true(hud.details.visible)
+	assert_lt(hud.details.global_position.y, hud.compact_stack.global_position.y)
+	assert_true(safe_rect.encloses(hud.get_visible_layout_rect()))
+
+
+func test_multiple_expanded_huds_resolve_without_visible_overlap() -> void:
+	var fixture := _world_in_viewport(Vector2i(1280, 800))
+	var world := fixture.world as BattleWorld3D
+	var huds: Array[EnemyWorldHUD] = []
+	for index in 5:
+		var hud := HUD_SCENE.instantiate() as EnemyWorldHUD
+		world.hud_layer.add_child(hud)
+		hud.bind_combatant(_enemy_with_state(80 - index * 10, 3))
+		hud.set_projected_head_position(Vector2(500, 300))
+		hud.set_target_state(CombatantPresentation.TargetState.SELECTED)
+		huds.append(hud)
+
+	world._layout_enemy_huds()
+
+	var safe_rect := Rect2(24, 24, 1232, 752)
+	for index in huds.size():
+		var bounds: Rect2 = huds[index].get_visible_layout_rect()
+		assert_true(safe_rect.encloses(bounds))
+		for prior_index in index:
+			assert_false(bounds.intersects(huds[prior_index].get_visible_layout_rect()))
+
+
 func test_defeat_immediately_hides_disables_and_excludes_hud_from_layout() -> void:
 	var world := WORLD_SCENE.instantiate() as BattleWorld3D
 	add_child_autofree(world)
@@ -296,6 +352,16 @@ func _enemy_with_state(hp: int, guard: int) -> EnemyCombatant:
 	enemy.current_hp = hp
 	enemy.current_guard = guard
 	return enemy
+
+
+func _world_in_viewport(size: Vector2i) -> Dictionary:
+	var viewport := SubViewport.new()
+	viewport.size = size
+	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	add_child_autofree(viewport)
+	var world := WORLD_SCENE.instantiate() as BattleWorld3D
+	viewport.add_child(world)
+	return {"viewport": viewport, "world": world}
 
 
 func _mouse_motion_at(position: Vector2) -> InputEventMouseMotion:

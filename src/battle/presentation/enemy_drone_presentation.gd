@@ -8,6 +8,10 @@ const DEFEAT_FADE_DURATION := 0.2
 @export var model_loader: OptionalLocalModel3D
 @export var head_anchor: Marker3D
 @export var foot_anchor: Marker3D
+@export var bounds_left_anchor: Marker3D
+@export var bounds_right_anchor: Marker3D
+@export var bounds_top_anchor: Marker3D
+@export var bounds_bottom_anchor: Marker3D
 
 var camera: Camera3D
 var hud: EnemyWorldHUD
@@ -43,7 +47,11 @@ func setup_view(value: BattleCombatant) -> bool:
 	if not is_instance_valid(view_root) \
 		or not is_instance_valid(model_loader) \
 		or not is_instance_valid(head_anchor) \
-		or not is_instance_valid(foot_anchor):
+		or not is_instance_valid(foot_anchor) \
+		or not is_instance_valid(bounds_left_anchor) \
+		or not is_instance_valid(bounds_right_anchor) \
+		or not is_instance_valid(bounds_top_anchor) \
+		or not is_instance_valid(bounds_bottom_anchor):
 		push_error("EnemyDronePresentation requires configured view nodes.")
 		return false
 	camera = get_viewport().get_camera_3d()
@@ -144,6 +152,10 @@ func _update_projection() -> void:
 		or not is_instance_valid(hud) \
 		or not is_instance_valid(head_anchor) \
 		or not is_instance_valid(foot_anchor) \
+		or not is_instance_valid(bounds_left_anchor) \
+		or not is_instance_valid(bounds_right_anchor) \
+		or not is_instance_valid(bounds_top_anchor) \
+		or not is_instance_valid(bounds_bottom_anchor) \
 		or not is_instance_valid(combatant) \
 		or combatant.is_defeated:
 		if is_instance_valid(hud):
@@ -159,7 +171,25 @@ func _update_projection() -> void:
 	hud.set_projected_foot_position(
 		camera.unproject_position(foot_anchor.global_position),
 	)
+	hud.set_projected_model_bounds(_projected_model_bounds())
 	hud.set_projection_visible(true)
+
+
+func _projected_model_bounds() -> Rect2:
+	var points: Array[Vector2] = []
+	for anchor: Marker3D in [
+		bounds_left_anchor,
+		bounds_right_anchor,
+		bounds_top_anchor,
+		bounds_bottom_anchor,
+	]:
+		points.append(camera.unproject_position(anchor.global_position))
+	var minimum := points[0]
+	var maximum := points[0]
+	for point: Vector2 in points:
+		minimum = minimum.min(point)
+		maximum = maximum.max(point)
+	return Rect2(minimum, maximum - minimum)
 
 
 func _refresh_details_visibility() -> void:

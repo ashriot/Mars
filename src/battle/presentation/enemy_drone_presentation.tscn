@@ -40,9 +40,25 @@ position = Vector3(0, 0.85, 0)
 [node name="FootAnchor" type="Marker3D" parent="ModelPivot"]
 position = Vector3(0, -0.85, 0)
 
-[node name="CombatantPresentation" type="Node" parent="." node_paths=PackedStringArray("view_root", "model_loader", "head_anchor", "foot_anchor")]
+[node name="BoundsLeftAnchor" type="Marker3D" parent="ModelPivot"]
+position = Vector3(-0.75, 0, 0)
+
+[node name="BoundsRightAnchor" type="Marker3D" parent="ModelPivot"]
+position = Vector3(0.75, 0, 0)
+
+[node name="BoundsTopAnchor" type="Marker3D" parent="ModelPivot"]
+position = Vector3(0, 0.85, 0)
+
+[node name="BoundsBottomAnchor" type="Marker3D" parent="ModelPivot"]
+position = Vector3(0, -0.85, 0)
+
+[node name="CombatantPresentation" type="Node" parent="." node_paths=PackedStringArray("view_root", "model_loader", "head_anchor", "foot_anchor", "bounds_left_anchor", "bounds_right_anchor", "bounds_top_anchor", "bounds_bottom_anchor")]
 script = ExtResource("2_presentation")
 view_root = NodePath("..")
 model_loader = NodePath("../ModelPivot/OptionalLocalModel3D")
 head_anchor = NodePath("../ModelPivot/HeadAnchor")
 foot_anchor = NodePath("../ModelPivot/FootAnchor")
+bounds_left_anchor = NodePath("../ModelPivot/BoundsLeftAnchor")
+bounds_right_anchor = NodePath("../ModelPivot/BoundsRightAnchor")
+bounds_top_anchor = NodePath("../ModelPivot/BoundsTopAnchor")
+bounds_bottom_anchor = NodePath("../ModelPivot/BoundsBottomAnchor")

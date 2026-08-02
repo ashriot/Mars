@@ -12,6 +12,11 @@ const MISSING_MODEL_PATH := (
 )
 const TRACKED_MODEL_PATH := "res://test/fixtures/presentation/optional_model_fixture.tscn"
 
+var _saved_input_mode: InputManager.InputMode
+var _saved_presentation_mode: InputManager.PresentationMode
+var _saved_consumed_mouse_button: MouseButton
+var _saved_mouse_mode: Input.MouseMode
+
 
 class RegistryTrackingBattleManager extends BattleManager:
 	func _ready() -> void:
@@ -29,9 +34,20 @@ class FixedTargetPresentation extends CombatantPresentation:
 		return target_visible
 
 
+func before_each() -> void:
+	_saved_input_mode = InputManager._active_mode
+	_saved_presentation_mode = InputManager._presentation_mode
+	_saved_consumed_mouse_button = InputManager._consumed_mouse_button
+	_saved_mouse_mode = Input.mouse_mode
+
+
 func after_each() -> void:
 	for tween: Tween in get_tree().get_processed_tweens():
 		tween.kill()
+	InputManager._set_active_mode(_saved_input_mode)
+	InputManager._set_presentation_mode(_saved_presentation_mode)
+	InputManager._consumed_mouse_button = _saved_consumed_mouse_button
+	Input.mouse_mode = _saved_mouse_mode
 
 
 func test_scene_has_one_nested_presentation_and_string_only_model_path() -> void:
@@ -190,10 +206,7 @@ func test_projection_uses_active_transformed_camera_and_hides_behind_it() -> voi
 	assert_true(fixture.presentation.is_target_visible())
 	assert_eq(
 		fixture.presentation.hud.get_target_rect(),
-		Rect2(
-			Vector2(expected_head.x - 48.0, minf(expected_head.y, expected_foot.y) - 18.0),
-			Vector2(96.0, absf(expected_head.y - expected_foot.y) + 36.0),
-		),
+		_projected_proxy_rect(camera, fixture.presentation).grow(18.0),
 	)
 
 	fixture.root.global_position = camera.global_position + camera.global_basis.z * 2.0
@@ -205,6 +218,62 @@ func test_projection_uses_active_transformed_camera_and_hides_behind_it() -> voi
 	assert_eq(
 		fixture.presentation.hud.target_region.mouse_filter,
 		Control.MOUSE_FILTER_IGNORE,
+	)
+
+
+func test_projected_target_contains_authored_proxy_at_depth_and_outer_positions() -> void:
+	var world_fixture := _world()
+	var fixture := _bound_drone(world_fixture, _enemy())
+	var camera: Camera3D = world_fixture.world.camera
+	var projected_widths: Array[float] = []
+	for position: Vector3 in [
+		Vector3(0.0, 0.0, -1.4),
+		Vector3(0.0, 0.0, 4.0),
+		Vector3(-3.6, 0.0, -1.0),
+		Vector3(3.6, 0.0, 1.0),
+	]:
+		fixture.root.position = position
+		fixture.presentation._process(0.0)
+		world_fixture.world._layout_enemy_huds()
+		var proxy_rect: Rect2 = _projected_proxy_rect(camera, fixture.presentation)
+		var target_rect: Rect2 = fixture.presentation.hud.get_target_rect()
+		projected_widths.append(proxy_rect.size.x)
+		assert_true(target_rect.encloses(proxy_rect))
+		assert_true(Rect2(24, 24, 1232, 752).encloses(target_rect))
+
+	assert_gt(projected_widths[1], projected_widths[0])
+	assert_gt(projected_widths[2], 96.0)
+	assert_gt(projected_widths[3], 96.0)
+
+
+func test_real_pointer_selects_at_projected_model_side_edge() -> void:
+	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
+	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)
+	InputManager._consumed_mouse_button = MOUSE_BUTTON_NONE
+	var world_fixture := _world()
+	var fixture := _bound_drone(world_fixture, _enemy())
+	fixture.root.position = Vector3(0.0, 0.0, 4.0)
+	fixture.presentation._process(0.0)
+	world_fixture.world._layout_enemy_huds()
+	var proxy_rect: Rect2 = _projected_proxy_rect(
+		world_fixture.world.camera,
+		fixture.presentation,
+	)
+	var side_edge := Vector2(proxy_rect.position.x + 1.0, proxy_rect.get_center().y)
+	watch_signals(fixture.presentation)
+
+	world_fixture.viewport.push_input(_mouse_motion_at(Vector2(12, 740)), true)
+	await get_tree().process_frame
+	world_fixture.viewport.push_input(_mouse_motion_at(side_edge), true)
+	await get_tree().process_frame
+	world_fixture.viewport.push_input(_mouse_button_at(side_edge, true), true)
+	world_fixture.viewport.push_input(_mouse_button_at(side_edge, false), true)
+	await get_tree().process_frame
+
+	assert_signal_emitted_with_parameters(
+		fixture.presentation,
+		&"target_pressed",
+		[fixture.presentation.combatant],
 	)
 
 
@@ -538,3 +607,39 @@ func _collect_presentations(
 		result.append(node as CombatantPresentation)
 	for child: Node in node.get_children():
 		_collect_presentations(child, result)
+
+
+func _projected_proxy_rect(
+	camera: Camera3D,
+	presentation: EnemyDronePresentation,
+) -> Rect2:
+	var points: Array[Vector2] = []
+	for anchor: Marker3D in [
+		presentation.bounds_left_anchor,
+		presentation.bounds_right_anchor,
+		presentation.bounds_top_anchor,
+		presentation.bounds_bottom_anchor,
+	]:
+		points.append(camera.unproject_position(anchor.global_position))
+	var minimum := points[0]
+	var maximum := points[0]
+	for point: Vector2 in points:
+		minimum = minimum.min(point)
+		maximum = maximum.max(point)
+	return Rect2(minimum, maximum - minimum)
+
+
+func _mouse_motion_at(position: Vector2) -> InputEventMouseMotion:
+	var event := InputEventMouseMotion.new()
+	event.position = position
+	event.global_position = position
+	return event
+
+
+func _mouse_button_at(position: Vector2, pressed: bool) -> InputEventMouseButton:
+	var event := InputEventMouseButton.new()
+	event.position = position
+	event.global_position = position
+	event.button_index = MOUSE_BUTTON_LEFT
+	event.pressed = pressed
+	return event
