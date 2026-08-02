@@ -370,20 +370,34 @@ func _spawn_presentation_view(
 	view_parent: Node,
 	combatant: BattleCombatant,
 ) -> CombatantPresentation:
-	assert(view_scene != null, "BattleManager requires a combatant presentation scene.")
-	assert(is_instance_valid(view_parent), "BattleManager requires a valid presentation root.")
-	assert(is_instance_valid(combatant), "BattleManager cannot present an invalid combatant.")
+	if view_scene == null:
+		push_error("BattleManager cannot spawn a combatant view from a null scene.")
+		return null
+	if not is_instance_valid(view_parent):
+		push_error("BattleManager cannot spawn a combatant view without a valid parent.")
+		return null
+	if not is_instance_valid(combatant):
+		push_error("BattleManager cannot spawn a view for an invalid combatant.")
+		return null
 	var view_root := view_scene.instantiate()
-	view_parent.add_child(view_root)
+	if view_root == null:
+		push_error(
+			"BattleManager could not instantiate combatant view '%s'." %
+				view_scene.resource_path,
+		)
+		return null
 	var presentations: Array[CombatantPresentation] = []
 	_collect_presentations(view_root, presentations)
-	assert(
-		presentations.size() == 1,
-		"Combatant view '%s' must contain exactly one CombatantPresentation; found %d." % [
+	if presentations.size() != 1:
+		push_error(
+			"Combatant view '%s' must contain exactly one CombatantPresentation; found %d." % [
 			view_scene.resource_path if not view_scene.resource_path.is_empty() else view_root.name,
 			presentations.size(),
 		],
-	)
+		)
+		view_root.free()
+		return null
+	view_parent.add_child(view_root)
 	var presentation := presentations[0]
 	presentation.setup_view(combatant)
 	register_presentation(combatant, presentation)
@@ -398,6 +412,31 @@ func _collect_presentations(
 		result.append(node as CombatantPresentation)
 	for child: Node in node.get_children():
 		_collect_presentations(child, result)
+
+
+func _discard_encounter_spawn(combatants: Array[BattleCombatant]) -> void:
+	for index in range(combatants.size() - 1, -1, -1):
+		var combatant := combatants[index]
+		if not is_instance_valid(combatant):
+			continue
+		var view_parent: Node = hero_area \
+			if combatant is HeroCombatant else enemy_area
+		var presentation := presentation_for(combatant)
+		var view_root: Node = presentation
+		while is_instance_valid(view_root) \
+			and view_root.get_parent() != null \
+			and view_root.get_parent() != view_parent:
+			view_root = view_root.get_parent()
+		if not is_instance_valid(view_root) or view_root.get_parent() != view_parent:
+			view_root = null
+		unregister_presentation(combatant)
+		_disconnect_combatant_signals(combatant)
+		actor_list.erase(combatant)
+		if combatant.battle_manager == self:
+			combatant.battle_manager = null
+		if is_instance_valid(view_root):
+			view_root.free()
+		combatant.free()
 
 func spawn_encounter(
 	roster_override: Array[HeroData] = [],
@@ -419,6 +458,7 @@ func spawn_encounter(
 	_configure_combat_rng(seed_override)
 
 	assert(is_instance_valid(combatant_root), "BattleManager requires a combatant root.")
+	var encounter_combatants: Array[BattleCombatant] = []
 	for hero_data: HeroData in roster:
 		var hero := HeroCombatant.new()
 		combatant_root.add_child(hero)
@@ -426,8 +466,12 @@ func spawn_encounter(
 		hero.current_ct = 0
 		hero.battle_priority = actor_list.size()
 		actor_list.append(hero)
+		encounter_combatants.append(hero)
 		_connect_combatant_signals(hero)
-		_spawn_presentation_view(hero_card_scene, hero_area, hero)
+		var presentation := _spawn_presentation_view(hero_card_scene, hero_area, hero)
+		if presentation == null:
+			_discard_encounter_spawn(encounter_combatants)
+			return
 		print(hero.actor_name, "'s CT: ", hero.current_ct)
 
 	var spawned_enemies: Array[EnemyCombatant] = []
@@ -455,6 +499,7 @@ func spawn_encounter(
 		enemy.current_ct = 0
 		enemy.battle_priority = actor_list.size()
 		actor_list.append(enemy)
+		encounter_combatants.append(enemy)
 		spawned_enemies.append(enemy)
 		_connect_combatant_signals(enemy)
 
@@ -469,7 +514,10 @@ func spawn_encounter(
 				enemy.actor_name = new_name
 				enemy.current_stats.actor_name = new_name
 				current_indices[base_name] = idx + 1
-		_spawn_presentation_view(enemy_card_scene, enemy_area, enemy)
+		var presentation := _spawn_presentation_view(enemy_card_scene, enemy_area, enemy)
+		if presentation == null:
+			_discard_encounter_spawn(encounter_combatants)
+			return
 		enemy.initialize_ai(encounter_seed)
 		print(enemy.actor_name, "'s CT: ", enemy.current_ct)
 

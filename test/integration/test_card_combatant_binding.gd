@@ -14,6 +14,33 @@ class TestBattleManager extends BattleManager:
 		particle_requests.append({"position": pos, "type": type})
 
 
+class SpawnFailureBattleManager extends TestBattleManager:
+	var fade_calls := 0
+	var passive_calls := 0
+	var turn_calls := 0
+
+	func _fade_in(_duration: float = 0.5) -> void:
+		fade_calls += 1
+
+	func wait(_duration: float = 0.01) -> void:
+		pass
+
+	func _flush_all_health_animations() -> void:
+		pass
+
+	func _apply_starting_passives() -> void:
+		passive_calls += 1
+
+	func find_and_start_next_turn() -> void:
+		turn_calls += 1
+
+
+class TrackingCombatantPresentation extends CombatantPresentation:
+	func setup_view(value: BattleCombatant) -> void:
+		value.set_meta(&"tracking_presentation_bound", true)
+		super.setup_view(value)
+
+
 func _combatant(
 	max_hp: int = 100,
 	faction: BattleCombatant.Faction = BattleCombatant.Faction.HERO,
@@ -51,6 +78,104 @@ func _non_card_view_scene(nested: bool) -> PackedScene:
 	assert_eq(scene.pack(view_root), OK)
 	view_root.free()
 	return scene
+
+
+func _view_scene_with_presentation_count(count: int) -> PackedScene:
+	var scene := PackedScene.new()
+	var view_root := Node3D.new()
+	view_root.name = "InvalidEnemyView"
+	for index in count:
+		var presentation := TrackingCombatantPresentation.new()
+		presentation.name = "FloatingStatus%d" % index
+		view_root.add_child(presentation)
+		presentation.owner = view_root
+	assert_eq(scene.pack(view_root), OK)
+	view_root.free()
+	return scene
+
+
+func _assert_invalid_view_is_rejected(presentation_count: int) -> void:
+	var manager := TestBattleManager.new()
+	var view_parent := Node3D.new()
+	manager.add_child(view_parent)
+	add_child_autofree(manager)
+	var model := _combatant(100, BattleCombatant.Faction.ENEMY, manager)
+	var initial_child_count := view_parent.get_child_count()
+
+	var presentation := manager._spawn_presentation_view(
+		_view_scene_with_presentation_count(presentation_count),
+		view_parent,
+		model,
+	)
+
+	assert_push_error("found %d" % presentation_count)
+	assert_null(presentation)
+	assert_eq(view_parent.get_child_count(), initial_child_count)
+	assert_null(manager.presentation_for(model))
+	assert_false(model.has_meta(&"tracking_presentation_bound"))
+	assert_true(manager._presentations.is_empty())
+	assert_true(manager._presentation_exit_callbacks.is_empty())
+
+
+func test_manager_rejects_view_scene_without_a_presentation_before_adoption() -> void:
+	_assert_invalid_view_is_rejected(0)
+
+
+func test_manager_rejects_view_scene_with_multiple_presentations_before_adoption() -> void:
+	_assert_invalid_view_is_rejected(2)
+
+
+func test_manager_rejects_missing_view_inputs_with_runtime_errors() -> void:
+	var manager := TestBattleManager.new()
+	var view_parent := Node3D.new()
+	manager.add_child(view_parent)
+	add_child_autofree(manager)
+	var model := _combatant(100, BattleCombatant.Faction.ENEMY, manager)
+	var view_scene := _non_card_view_scene(false)
+
+	assert_null(manager._spawn_presentation_view(null, view_parent, model))
+	assert_push_error("null scene")
+	assert_null(manager._spawn_presentation_view(view_scene, null, model))
+	assert_push_error("without a valid parent")
+	assert_null(manager._spawn_presentation_view(view_scene, view_parent, null))
+	assert_push_error("for an invalid combatant")
+	assert_eq(view_parent.get_child_count(), 0)
+	assert_true(manager._presentations.is_empty())
+
+
+func test_spawn_encounter_aborts_and_discards_model_when_view_is_invalid() -> void:
+	var manager := SpawnFailureBattleManager.new()
+	manager.combatant_root = Node.new()
+	manager.hero_area = Node3D.new()
+	manager.enemy_area = Node3D.new()
+	manager.add_child(manager.combatant_root)
+	manager.add_child(manager.hero_area)
+	manager.add_child(manager.enemy_area)
+	manager.hero_card_scene = _non_card_view_scene(false)
+	manager.enemy_card_scene = _view_scene_with_presentation_count(0)
+	manager.current_encounter = Encounter.new()
+	manager.current_encounter.enemies = [EnemyData.new()]
+	add_child_autofree(manager)
+	var hero_data := HeroData.new()
+	hero_data.hero_name = "Failed Hero"
+	hero_data.derived_state_is_prebuilt = true
+	hero_data.stats = ActorStats.new()
+	hero_data.stats.actor_name = hero_data.hero_name
+	hero_data.stats.max_hp = 100
+	hero_data.stats.speed = 10
+
+	await manager.spawn_encounter([hero_data], 1, 77, false)
+
+	assert_push_error("found 0")
+	assert_true(manager.actor_list.is_empty())
+	assert_eq(manager.combatant_root.get_child_count(), 0)
+	assert_eq(manager.hero_area.get_child_count(), 0)
+	assert_eq(manager.enemy_area.get_child_count(), 0)
+	assert_true(manager._combatant_exit_callbacks.is_empty())
+	assert_true(manager._presentations.is_empty())
+	assert_eq(manager.fade_calls, 0)
+	assert_eq(manager.passive_calls, 0)
+	assert_eq(manager.turn_calls, 0)
 
 
 func test_manager_spawns_root_and_nested_non_card_views_through_presentation_contract() -> void:
