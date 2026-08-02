@@ -73,7 +73,11 @@ func test_revive_flag_controls_defeated_ally_targeting() -> void:
 	manager.set_current_action(action)
 
 	assert_true(defeated.is_valid_target, "reviving actions expose defeated allies to pointer targeting")
-	assert_has(scene._valid_targets(), defeated, "reviving actions expose defeated allies to controller targeting")
+	assert_has(
+		scene._valid_targets(),
+		defeated.combatant,
+		"reviving actions expose defeated allies to controller targeting",
+	)
 
 	manager._clear_all_targeting_ui()
 	healing.is_revive = false
@@ -100,7 +104,7 @@ func test_non_revive_enemy_heal_ignores_defeated_target() -> void:
 	effect.potency = 2.0
 	effect.is_revive = false
 
-	await effect.execute(attacker, [target], manager)
+	await effect.execute(attacker.combatant, [target.combatant], manager)
 
 	assert_eq(target.current_hp, 0)
 	assert_true(target.is_defeated)
@@ -160,46 +164,85 @@ func test_defeated_hero_rejoins_projection_through_reviving_heal_once() -> void:
 	hero.actor_name = hero_stats.actor_name
 	hero.battle_priority = 0
 	enemy.battle_priority = 1
-	manager.actor_list = [hero, enemy]
+	manager.actor_list = [hero.combatant, enemy.combatant]
 	manager.battle_ct_speed_scale = 0.75
 	hero.ct_speed_scale = 3.0
-	hero.actor_defeated.connect(manager._on_actor_died)
+	var hero_presentation := manager.presentation_for(hero.combatant)
+	hero.combatant.defeated.connect(manager._on_actor_died)
 	assert_true(hero.has_signal("actor_revived"), "production heroes expose a revival seam")
 	if hero.has_signal("actor_revived"):
-		hero.connect("actor_revived", manager._on_actor_revived)
+		hero.combatant.revived.connect(manager._on_actor_revived)
 	var published_queues := {count = 0}
 	manager.turn_order_updated.connect(
 		func(_queue: Array, _kind: BattleManager.TurnOrderUpdate) -> void:
 			published_queues.count += 1
 	)
 
-	hero.defeated()
+	hero.combatant.defeat()
 	await get_tree().process_frame
-	assert_does_not_have(manager.actor_list, hero)
+	assert_does_not_have(manager.actor_list, hero.combatant)
+	assert_same(
+		manager.presentation_for(hero.combatant),
+		hero_presentation,
+		"defeat retains the presentation needed by defeat animation and revival",
+	)
 	var queues_after_death: int = published_queues.count
 	var stable_priority := hero.battle_priority
 	var heal := Effect_Healing.new()
 	heal.potency = 1.0
 	heal.is_revive = true
 
-	await heal.execute(hero, [hero], manager)
+	await heal.execute(hero.combatant, [hero.combatant], manager)
 
 	assert_false(hero.is_defeated)
-	assert_eq(manager.actor_list.count(hero), 1)
+	assert_eq(manager.actor_list.count(hero.combatant), 1)
+	assert_same(manager.presentation_for(hero.combatant), hero_presentation)
 	assert_eq(hero.ct_speed_scale, manager.battle_ct_speed_scale)
 	assert_eq(hero.battle_priority, stable_priority)
 	assert_eq(published_queues.count, queues_after_death + 1, "revival publishes the refreshed queue once")
 	assert_has(
 		manager._run_ct_simulation(4).map(func(entry: Dictionary): return entry.actor),
-		hero,
+		hero.combatant,
 		"revived hero can receive a future turn",
 	)
 	var queues_after_revive: int = published_queues.count
-	await heal.execute(hero, [hero], manager)
-	assert_eq(manager.actor_list.count(hero), 1, "ordinary healing cannot duplicate roster entry")
+	await heal.execute(hero.combatant, [hero.combatant], manager)
+	assert_eq(manager.actor_list.count(hero.combatant), 1, "ordinary healing cannot duplicate roster entry")
 	assert_eq(published_queues.count, queues_after_revive, "ordinary healing does not publish a revival queue")
 
 	manager.free()
+
+
+func test_revived_middle_hero_returns_to_stable_faction_order() -> void:
+	var manager := RevivalBattleManager.new()
+	add_child_autofree(manager)
+	var heroes: Array[HeroCombatant] = []
+	for index in 3:
+		var hero := HeroCombatant.new()
+		manager.add_child(hero)
+		hero.setup_base(
+			_hero_stats("Hero %d" % (index + 1)),
+			BattleCombatant.Faction.HERO,
+			manager,
+		)
+		hero.hero_data = HeroData.new()
+		hero.battle_priority = index
+		heroes.append(hero)
+	manager.actor_list.assign(heroes)
+	var middle := heroes[1]
+	middle.defeated.connect(manager._on_actor_died)
+	middle.revived.connect(manager._on_actor_revived)
+
+	middle.defeat()
+	await get_tree().process_frame
+	middle.revive()
+	await get_tree().process_frame
+
+	assert_eq(
+		manager.get_living_heroes(),
+		heroes,
+		"revival preserves stable faction order for deterministic target selection",
+	)
 
 
 func test_nested_simultaneous_lethal_barrier_finalizes_victory_once() -> void:
@@ -240,11 +283,11 @@ func test_nested_simultaneous_lethal_barrier_finalizes_victory_once() -> void:
 	enemy.current_guard = 0
 	enemy.is_breached = true
 	enemy.update_health_bar()
-	manager.actor_list = [hero, enemy]
-	manager.current_actor = enemy
+	manager.actor_list = [hero.combatant, enemy.combatant]
+	manager.current_actor = enemy.combatant
 	manager.current_state = BattleManager.State.EXECUTING_ACTION
-	hero.actor_defeated.connect(manager._on_actor_died)
-	enemy.actor_defeated.connect(manager._on_actor_died)
+	hero.combatant.defeated.connect(manager._on_actor_died)
+	enemy.combatant.defeated.connect(manager._on_actor_died)
 	var outcomes: Array[bool] = []
 	manager.battle_ended.connect(func(won: bool) -> void:
 		outcomes.append(won)
@@ -253,14 +296,14 @@ func test_nested_simultaneous_lethal_barrier_finalizes_victory_once() -> void:
 	var barrier := (load(
 		"res://data/heroes/echo/conditions/energy_barrier.tres"
 	) as Condition).duplicate(true) as Condition
-	barrier.attacker = hero
+	barrier.attacker = hero.combatant
 	hero.active_conditions = [barrier]
 	var lethal_hit := ApplyingDamageEffect.new()
 	lethal_hit.potency = 1.0
 	lethal_hit.power_type = Action.PowerType.ATTACK
 	lethal_hit.damage_type = Action.DamageType.PIERCING
 
-	await lethal_hit.execute(enemy, [hero], manager)
+	await lethal_hit.execute(enemy.combatant, [hero.combatant], manager)
 	await get_tree().process_frame
 
 	assert_true(enemy.is_defeated, "Barrier retaliation defeats the last enemy")
@@ -321,8 +364,8 @@ func _targeting_fixture() -> Dictionary:
 	var healer_model := healer.combatant as HeroCombatant
 	healer_model.loaded_roles = [role]
 	healer_model.current_role_index = 0
-	manager.current_actor = healer
-	manager.actor_list = [healer]
+	manager.current_actor = healer.combatant
+	manager.actor_list = [healer.combatant]
 	return {scene = scene, manager = manager, healer = healer, defeated = defeated}
 
 
@@ -332,6 +375,10 @@ func _bind_card(
 	faction: BattleCombatant.Faction,
 	manager: BattleManager,
 ) -> void:
+	if manager.combatant_root == null:
+		manager.combatant_root = Node.new()
+		manager.combatant_root.name = "Combatants"
+		manager.add_child(manager.combatant_root)
 	var model: BattleCombatant
 	if card is HeroCard:
 		model = HeroCombatant.new()
@@ -339,10 +386,11 @@ func _bind_card(
 		model = EnemyCombatant.new()
 	else:
 		model = BattleCombatant.new()
-	card.add_child(model)
+	manager.combatant_root.add_child(model)
 	card.battle_manager = manager
 	model.setup_base(stats, faction, manager)
 	card.bind_combatant(model)
+	manager.register_presentation(model, card.presentation)
 
 
 func _action_panel() -> PanelContainer:

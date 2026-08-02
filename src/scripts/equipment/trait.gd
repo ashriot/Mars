@@ -20,12 +20,10 @@ func get_stat_mod(_stat: ActorStats.Stats, _rank: int) -> int:
 	return 0
 
 # 2. Damage Modifiers
-func get_damage_dealt_modifier(target_node: Node) -> float:
-	BattleCombatant.resolve_model(target_node)
+func get_damage_dealt_modifier(_target: BattleCombatant) -> float:
 	return 0.0
 
-func get_damage_taken_modifier(attacker_node: Node) -> float:
-	BattleCombatant.resolve_model(attacker_node)
+func get_damage_taken_modifier(_attacker: BattleCombatant) -> float:
 	return 0.0
 
 func get_action_ct_multiplier(_action: Action) -> float:
@@ -35,8 +33,7 @@ func get_action_ct_multiplier(_action: Action) -> float:
 func on_trigger(
 	_trigger_type: Trigger.TriggerType,
 	_context: Dictionary,
-	owner_node: Node,
+	_owner: BattleCombatant,
 	_rank: int,
 ) -> void:
-	BattleCombatant.resolve_model(owner_node)
 	pass

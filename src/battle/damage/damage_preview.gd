@@ -45,28 +45,26 @@ class Sequence extends RefCounted:
 
 static func for_plan(
 	effect: Effect_Damage,
-	attacker_node: Node,
-	target_nodes: Array,
+	attacker: BattleCombatant,
+	target_nodes: Array[BattleCombatant],
 	action: Action,
 	critical: bool,
 	battle_manager: BattleManager = null,
 	pre_hit_context: Dictionary = {},
 ) -> Sequence:
-	if not is_instance_valid(attacker_node):
+	if not is_instance_valid(attacker):
 		return Sequence.new([], false, false, effect.hit_count, 1, target_nodes.size())
-	var attacker := BattleCombatant.resolve_model(attacker_node)
 	var resolved_hit_count := effect._resolve_hit_count(attacker)
 	if attacker.current_stats == null or target_nodes.is_empty():
 		return Sequence.new([], false, false, resolved_hit_count, 1, target_nodes.size())
 	if effect._requires_battlefield_context() and battle_manager == null:
 		return Sequence.new([], false, false, resolved_hit_count, 1, target_nodes.size())
 	var valid_targets: Array[BattleCombatant] = []
-	for target_node: Node in target_nodes:
-		if not is_instance_valid(target_node):
+	for target: BattleCombatant in target_nodes:
+		if not is_instance_valid(target):
 			return Sequence.new(
 				[], false, false, resolved_hit_count, 1, target_nodes.size(),
 			)
-		var target := BattleCombatant.resolve_model(target_node)
 		if target.current_stats == null or target.is_defeated:
 			return Sequence.new(
 				[], false, false, resolved_hit_count, 1, target_nodes.size(),
@@ -179,17 +177,15 @@ static func for_plan(
 
 static func for_effect(
 	effect: Effect_Damage,
-	attacker_node: Node,
-	target_node: Node,
+	attacker: BattleCombatant,
+	target: BattleCombatant,
 	action: Action,
 	distribution_count: int,
 	critical: bool,
 	pre_hit_context: Dictionary = {},
 ) -> DamageResult:
-	if not is_instance_valid(attacker_node) or not is_instance_valid(target_node):
+	if not is_instance_valid(attacker) or not is_instance_valid(target):
 		return null
-	var attacker := BattleCombatant.resolve_model(attacker_node)
-	var target := BattleCombatant.resolve_model(target_node)
 	var resolver_target := target
 	var owns_resolver_target := false
 	var decision := effect._resolve_damage_type_decision(
@@ -338,10 +334,9 @@ static func _living_counts(
 		return {"allies": 0, "enemies": 0}
 	var other_living_allies := 0
 	var other_living_enemies := 0
-	for value: Node in battle_manager.actor_list:
-		if not is_instance_valid(value):
+	for combatant: BattleCombatant in battle_manager.actor_list:
+		if not is_instance_valid(combatant):
 			continue
-		var combatant := BattleCombatant.resolve_model(value)
 		var defeated := combatant.is_defeated
 		if preview_targets.has(combatant):
 			defeated = (preview_targets[combatant] as BattleCombatant).is_defeated

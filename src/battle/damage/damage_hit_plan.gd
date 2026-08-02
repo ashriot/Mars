@@ -3,12 +3,12 @@ extends RefCounted
 
 enum TargetMode { SINGLE, ALL, RANDOM }
 
-var _candidates: Array
+var _candidates: Array[BattleCombatant]
 var _planned_hit_count: int
 var _distribution_count: int
 var _target_mode: TargetMode
 
-var candidates: Array:
+var candidates: Array[BattleCombatant]:
 	get: return _candidates.duplicate()
 var planned_hit_count: int:
 	get: return _planned_hit_count
@@ -19,19 +19,19 @@ var target_mode: TargetMode:
 
 
 func _init(
-	plan_candidates: Array,
+	plan_candidates: Array[BattleCombatant],
 	plan_hit_count: int,
 	plan_split_damage: bool,
 	plan_target_mode: TargetMode,
 ) -> void:
-	_candidates = plan_candidates.duplicate()
+	_candidates.assign(plan_candidates)
 	_planned_hit_count = maxi(0, plan_hit_count)
 	_distribution_count = maxi(1, _planned_hit_count) if plan_split_damage else 1
 	_target_mode = plan_target_mode
 
 
-static func single_target(target: Node, plan_hit_count: int, split_damage: bool) -> DamageHitPlan:
-	var plan_candidates: Array = []
+static func single_target(target: BattleCombatant, plan_hit_count: int, split_damage: bool) -> DamageHitPlan:
+	var plan_candidates: Array[BattleCombatant] = []
 	if target != null:
 		plan_candidates.append(target)
 	return DamageHitPlan.new(
@@ -40,14 +40,17 @@ static func single_target(target: Node, plan_hit_count: int, split_damage: bool)
 	)
 
 
-static func all_targets(plan_candidates: Array, split_damage: bool) -> DamageHitPlan:
+static func all_targets(
+	plan_candidates: Array[BattleCombatant],
+	split_damage: bool,
+) -> DamageHitPlan:
 	return DamageHitPlan.new(
 		plan_candidates, plan_candidates.size(), split_damage, TargetMode.ALL,
 	)
 
 
 static func random_targets(
-	plan_candidates: Array,
+	plan_candidates: Array[BattleCombatant],
 	plan_hit_count: int,
 	split_damage: bool,
 ) -> DamageHitPlan:

@@ -1,12 +1,7 @@
 extends GutTest
 
-const CardSceneTestFixture := preload("res://test/helpers/card_scene_test_fixture.gd")
-
-const HeroCardScene := preload("res://src/battle/hero_card.tscn")
-
-
 class ApplicationFixture extends RefCounted:
-	var attacker: ActorCard
+	var attacker: HeroCombatant
 	var target: RecordingApplicationTarget
 	var effect: Effect_Damage
 	var battle_manager: BattleManager
@@ -16,17 +11,19 @@ class IntCounter extends RefCounted:
 	var value := 0
 
 
-class RecordingApplicationTarget extends ActorCard:
+class RecordingApplicationTarget extends HeroCombatant:
 	var recorded_events: Array[Trigger.TriggerType] = []
 	var last_damage_context: Dictionary = {}
 	var popup_critical_states: Array[bool] = []
 
-	func _spawn_damage_popup(
-		_amount: int,
-		_damage_type: Action.DamageType,
-		is_critical: bool,
+	func _on_presentation_event(
+		_combatant: BattleCombatant,
+		event: StringName,
+		payload: Dictionary,
 	) -> void:
-		popup_critical_states.append(is_critical)
+		if event == &"damage_received":
+			var result := payload.get("result") as DamageResult
+			popup_critical_states.append(result != null and result.is_critical)
 
 
 class RecordingConditionEffect extends ActionEffect:
@@ -34,8 +31,8 @@ class RecordingConditionEffect extends ActionEffect:
 	var recorded_event: Trigger.TriggerType
 
 	func execute(
-		_attacker: Node,
-		_parent_targets: Array,
+		_attacker: BattleCombatant,
+		_parent_targets: Array[BattleCombatant],
 		_battle_manager: BattleManager,
 		_action: Action = null,
 		context: Dictionary = {},
@@ -63,20 +60,22 @@ class RecordingBattleManager extends BattleManager:
 
 
 class CardReturningTargetManager extends RecordingBattleManager:
-	var returned_targets: Array = []
-	var received_parent_targets: Array = []
-	var received_attacker: Node
+	var returned_targets: Array[BattleCombatant] = []
+	var received_parent_targets: Array[BattleCombatant] = []
+	var received_attacker: BattleCombatant
 
 	func get_targets(
 		_target_type: Action.TargetType,
 		_friendly: bool,
-		parent_targets: Array = [],
-		attacker: Node = null,
+		parent_targets: Array[BattleCombatant] = [],
+		attacker: BattleCombatant = null,
 		_include_defeated_heroes: bool = false,
-	) -> Array:
-		received_parent_targets = parent_targets.duplicate()
+	) -> Array[BattleCombatant]:
+		received_parent_targets.assign(parent_targets)
 		received_attacker = attacker
-		return returned_targets.duplicate()
+		var result: Array[BattleCombatant] = []
+		result.assign(returned_targets)
+		return result
 
 
 class ApplicationBattleManager extends BattleManager:
@@ -92,9 +91,11 @@ class RecordingCombatRandomBattleManager extends RecordingBattleManager:
 		rolled_chances.append(chance)
 		return false
 
-	func combat_random_actor(candidates: Array) -> Node:
+	func combat_random_actor(
+		candidates: Array[BattleCombatant],
+	) -> BattleCombatant:
 		random_actor_calls += 1
-		return candidates[-1] as Node if not candidates.is_empty() else null
+		return candidates[-1] if not candidates.is_empty() else null
 
 
 class RecordingActor extends BattleCombatant:
@@ -117,7 +118,7 @@ class RecordingActor extends BattleCombatant:
 	func take_one_hit(
 		_result: DamageResult,
 		_damage_effect: Effect_Damage,
-		_attacker: Node,
+		_attacker: BattleCombatant,
 		_resolved_damage_type: Action.DamageType,
 	) -> int:
 		return 0
@@ -133,25 +134,21 @@ class RecordingActor extends BattleCombatant:
 			event_log.append("after")
 		elif event_type == Trigger.TriggerType.ON_HIT:
 			on_hit_contexts.append(context.duplicate(true))
+		await super._fire_condition_event(event_type, context)
 
 
-class RecordingHero extends HeroCard:
+class RecordingHero extends HeroCombatant:
 	var focus_changes: Array[int] = []
 	var focus_contexts: Array[Dictionary] = []
 
 	func modify_focus(amount: int, context: Dictionary = {}) -> void:
 		focus_changes.append(amount)
 		focus_contexts.append(context.duplicate(true))
-		var model := combatant as HeroCombatant
-		model.current_focus = clampi(model.current_focus + amount, 0, 10)
+		current_focus = clampi(current_focus + amount, 0, 10)
 
 
-class FocusRefundHero extends HeroCard:
-	func update_focus_bar(_animate: bool = true) -> void:
-		return
-
-	func _update_conditions_ui() -> void:
-		return
+class FocusRefundHero extends HeroCombatant:
+	pass
 
 
 class EchoRuntimeHero extends HeroCombatant:
@@ -181,7 +178,7 @@ class EchoRuntimeEnemy extends EnemyCombatant:
 	func take_one_hit(
 		result: DamageResult,
 		_damage_effect: Effect_Damage,
-		_attacker: Node,
+		_attacker: BattleCombatant,
 		_resolved_damage_type: Action.DamageType,
 	) -> int:
 		damage_results.append(result)
@@ -201,11 +198,11 @@ class EchoRuntimeEnemy extends EnemyCombatant:
 
 class RecordingActionEffect extends ActionEffect:
 	var received_contexts: Array[Dictionary] = []
-	var received_target_sets: Array = []
+	var received_target_sets: Array[Array] = []
 
 	func execute(
-		_attacker: Node,
-		parent_targets: Array,
+		_attacker: BattleCombatant,
+		parent_targets: Array[BattleCombatant],
 		_battle_manager: BattleManager,
 		_action: Action = null,
 		context: Dictionary = {},
@@ -273,7 +270,7 @@ class RecordingDamageEffect extends Effect_Damage:
 		return roll_value <= chance
 
 	func _pick_random_target(
-		candidates: Array,
+		candidates: Array[BattleCombatant],
 		_battle_manager: BattleManager,
 	) -> BattleCombatant:
 		return candidates[0] as BattleCombatant if not candidates.is_empty() else null
@@ -368,14 +365,10 @@ func test_lifedrain_cannot_revive_an_attacker_defeated_by_hit_reaction() -> void
 	var manager := ApplicationBattleManager.new()
 	manager.battle_speed = 1.0
 	add_child_autofree(manager)
-	var attacker := CardSceneTestFixture.bind(
-		self, FocusRefundHero.new(), BattleCombatant.Faction.HERO, null, manager,
-	) as FocusRefundHero
-	attacker.current_stats = ActorStats.new()
+	var attacker := _setup_test_hero(FocusRefundHero.new(), manager) as FocusRefundHero
 	attacker.current_stats.attack = 100
 	attacker.current_stats.max_hp = 100
 	attacker.current_hp = 50
-	attacker.battle_manager = manager
 	var target := EchoRuntimeEnemy.new()
 	var target_stats := ActorStats.new()
 	target_stats.max_hp = 100
@@ -510,8 +503,7 @@ func test_damage_source_identity_reaches_target_on_hit_and_attacker_contexts() -
 
 
 func test_attacker_on_hit_parent_effect_receives_the_hit_target() -> void:
-	var attacker := CardSceneTestFixture.actor(self)
-	attacker.current_stats = ActorStats.new()
+	var attacker := _recording_actor(100, 0, 0)
 	attacker.current_stats.attack = 100
 	attacker.current_stats.max_hp = 1000
 	attacker.current_hp = 1000
@@ -523,7 +515,6 @@ func test_attacker_on_hit_parent_effect_receives_the_hit_target() -> void:
 	manager.add_child(manager.enemy_area)
 	manager.actor_list = [attacker, target]
 	attacker.battle_manager = manager
-	attacker.combatant.battle_manager = manager
 	var parent_effect := RecordingActionEffect.new()
 	parent_effect.target_type = Action.TargetType.PARENT
 	var trigger := Trigger.new()
@@ -544,15 +535,11 @@ func test_attacker_on_hit_parent_effect_receives_the_hit_target() -> void:
 	_free_recorded_nodes(manager, [attacker, target])
 
 
-func test_on_hit_targeting_normalizes_manager_card_results_before_nested_effect() -> void:
-	var attacker_card := CardSceneTestFixture.actor(self)
-	var target_card := CardSceneTestFixture.actor(
-		self, BattleCombatant.Faction.ENEMY,
-	)
-	var attacker := attacker_card.combatant
-	var target := target_card.combatant
+func test_on_hit_targeting_preserves_manager_combatant_results_for_nested_effect() -> void:
+	var attacker := _recording_actor(100, 0, 0)
+	var target := _recording_actor(0, 0, 0)
 	var manager := CardReturningTargetManager.new()
-	manager.returned_targets = [target_card]
+	manager.returned_targets = [target]
 	var nested_effect := RecordingActionEffect.new()
 	nested_effect.target_type = Action.TargetType.PARENT
 	var trigger := HitTrigger.new()
@@ -567,8 +554,8 @@ func test_on_hit_targeting_normalizes_manager_card_results_before_nested_effect(
 	assert_same(manager.received_attacker, target)
 	assert_eq(nested_effect.received_target_sets, [[target]])
 	manager.free()
-	attacker_card.free()
-	target_card.free()
+	attacker.free()
+	target.free()
 
 
 func test_production_reverberate_routes_parent_target_and_removes_after_energy_hit() -> void:
@@ -702,6 +689,7 @@ func test_lethal_incoming_hit_triggers_pain_transfer_for_living_party_once() -> 
 	var fixture := _application_fixture(10, 200)
 	var defeat_count := _track_defeats(fixture.target)
 	fixture.attacker.reparent(fixture.battle_manager.hero_area)
+	fixture.battle_manager.actor_list.append(fixture.attacker)
 	_configure_application_actor(fixture.attacker, "Ally", 20, 5, 100, 50)
 	var echo := _application_party_hero(
 		fixture.battle_manager, "Echo", 100, 40, 100, 50,
@@ -1320,11 +1308,8 @@ func _early_lethal_nonrandom_event_log(
 
 func test_execute_action_pays_scaled_focus_once_and_passes_cost_context() -> void:
 	var manager := _recording_action_manager()
-	var hero := CardSceneTestFixture.bind(
-		self, RecordingHero.new(), BattleCombatant.Faction.HERO, null, manager,
-	) as RecordingHero
-	hero.current_stats = ActorStats.new()
-	(hero.combatant as HeroCombatant).current_focus = 10
+	var hero := _setup_test_hero(RecordingHero.new(), manager) as RecordingHero
+	hero.current_focus = 10
 	var discount := Condition.new()
 	discount.focus_cost_reduction = 0.5
 	hero.active_conditions = [discount]
@@ -1349,11 +1334,8 @@ func test_execute_action_pays_scaled_focus_once_and_passes_cost_context() -> voi
 
 func test_free_action_consumes_refund_before_later_paid_action() -> void:
 	var manager := _recording_action_manager()
-	var hero := CardSceneTestFixture.bind(
-		self, FocusRefundHero.new(), BattleCombatant.Faction.HERO, null, manager,
-	) as FocusRefundHero
-	hero.current_stats = ActorStats.new()
-	(hero.combatant as HeroCombatant).current_focus = 5
+	var hero := _setup_test_hero(FocusRefundHero.new(), manager) as FocusRefundHero
+	hero.current_focus = 5
 	var refund := Condition.new()
 	refund.condition_name = "Coordinate"
 	refund.refund_focus_cost_on_spend = true
@@ -1378,11 +1360,8 @@ func test_free_action_consumes_refund_before_later_paid_action() -> void:
 
 func test_execute_action_rejects_insufficient_scaled_focus_before_effects() -> void:
 	var manager := _recording_action_manager()
-	var hero := CardSceneTestFixture.bind(
-		self, RecordingHero.new(), BattleCombatant.Faction.HERO, null, manager,
-	) as RecordingHero
-	hero.current_stats = ActorStats.new()
-	(hero.combatant as HeroCombatant).current_focus = 1
+	var hero := _setup_test_hero(RecordingHero.new(), manager) as RecordingHero
+	hero.current_focus = 1
 	var capture_effect := RecordingActionEffect.new()
 	var action := Action.new()
 	action.action_name = "Too Expensive"
@@ -1448,6 +1427,17 @@ func _recording_actor(base_power: int, overload: int, guard: int) -> RecordingAc
 	return actor
 
 
+func _setup_test_hero(
+	hero: HeroCombatant,
+	manager: BattleManager,
+) -> HeroCombatant:
+	var stats := ActorStats.new()
+	stats.max_hp = 100
+	hero.setup_base(stats, BattleCombatant.Faction.HERO, manager)
+	add_child_autofree(hero)
+	return hero
+
+
 func _application_fixture(hp: int, max_hp: int) -> ApplicationFixture:
 	var battle_manager := ApplicationBattleManager.new()
 	battle_manager.battle_speed = 1.0
@@ -1458,12 +1448,7 @@ func _application_fixture(hp: int, max_hp: int) -> ApplicationFixture:
 	battle_manager.add_child(battle_manager.enemy_area)
 	var target := _application_target(battle_manager, hp, max_hp)
 
-	var attacker := HeroCardScene.instantiate() as ActorCard
-	add_child_autofree(attacker)
-	CardSceneTestFixture.bind(
-		self, attacker, BattleCombatant.Faction.HERO, ActorStats.new(),
-		battle_manager,
-	)
+	var attacker := _setup_test_hero(HeroCombatant.new(), battle_manager)
 	var effect := Effect_Damage.new()
 	effect.damage_type = Action.DamageType.KINETIC
 	for event_type in [
@@ -1486,27 +1471,14 @@ func _application_target(
 	hp: int,
 	max_hp: int,
 ) -> RecordingApplicationTarget:
-	var scene_card := HeroCardScene.instantiate() as ActorCard
-	_clear_scene_owners(scene_card)
 	var target := RecordingApplicationTarget.new()
-	target.damage_popup_scene = scene_card.damage_popup_scene
-	target.buff_scene = scene_card.buff_scene
-	target.debuff_scene = scene_card.debuff_scene
-	while scene_card.get_child_count() > 0:
-		var child := scene_card.get_child(0)
-		scene_card.remove_child(child)
-		target.add_child(child)
-	scene_card.free()
 	add_child_autofree(target)
 	var stats := ActorStats.new()
 	stats.max_hp = max_hp
-	CardSceneTestFixture.bind(
-		self, target, BattleCombatant.Faction.HERO, stats, manager,
-	)
-	target.current_stats.max_hp = max_hp
+	target.setup_base(stats, BattleCombatant.Faction.HERO, manager)
+	target.presentation_event.connect(target._on_presentation_event)
 	target.current_hp = hp
 	target.current_guard = 0
-	target.update_health_bar()
 	return target
 
 
@@ -1517,15 +1489,15 @@ func _applying_damage(damage_type: Action.DamageType) -> ApplyingDamageEffect:
 	return effect
 
 
-func _track_defeats(actor: ActorCard) -> IntCounter:
+func _track_defeats(actor: BattleCombatant) -> IntCounter:
 	var counter := IntCounter.new()
-	actor.actor_defeated.connect(func(_defeated_actor: ActorCard) -> void:
+	actor.defeated.connect(func(_defeated_actor: BattleCombatant) -> void:
 		counter.value += 1
 	)
 	return counter
 
 
-func _production_condition(path: String, attacker: ActorCard) -> Condition:
+func _production_condition(path: String, attacker: BattleCombatant) -> Condition:
 	var condition := (load(path) as Condition).duplicate(true) as Condition
 	condition.attacker = attacker
 	return condition
@@ -1539,20 +1511,19 @@ func _application_party_hero(
 	max_hp: int,
 	hp: int,
 	defeated: bool = false,
-) -> HeroCard:
-	var hero := HeroCardScene.instantiate() as HeroCard
+) -> HeroCombatant:
+	var hero := HeroCombatant.new()
 	manager.hero_area.add_child(hero)
-	CardSceneTestFixture.bind(
-		self, hero, BattleCombatant.Faction.HERO, ActorStats.new(), manager,
-	)
+	hero.setup_base(ActorStats.new(), BattleCombatant.Faction.HERO, manager)
 	_configure_application_actor(
 		hero, actor_name, attack, psyche, max_hp, hp, defeated,
 	)
+	manager.actor_list.append(hero)
 	return hero
 
 
 func _configure_application_actor(
-	actor: ActorCard,
+	actor: BattleCombatant,
 	actor_name: String,
 	attack: int,
 	psyche: int,
@@ -1569,18 +1540,11 @@ func _configure_application_actor(
 	actor.current_hp = hp
 	actor.current_guard = 0
 	actor.is_defeated = defeated
-	actor.update_health_bar()
-
-
-func _clear_scene_owners(node: Node) -> void:
-	node.owner = null
-	for child in node.get_children():
-		_clear_scene_owners(child)
 
 
 func _recording_condition(
 	target: RecordingApplicationTarget,
-	attacker: ActorCard,
+	attacker: BattleCombatant,
 	event_type: Trigger.TriggerType,
 ) -> Condition:
 	var effect := RecordingConditionEffect.new()
@@ -1625,8 +1589,8 @@ func _resolved_application_result(
 		fixture.effect,
 	)
 	return DamageResolver.resolve_hit(
-		fixture.attacker.combatant,
-		fixture.target.combatant,
+		fixture.attacker,
+		fixture.target,
 		Action.PowerType.ATTACK,
 		DamageResolver.resolve_potency(1.0, [], hit_context),
 		1,

@@ -5,9 +5,7 @@ class_name Effect_ModifyStat
 @export var mod: int = 0
 @export var scalar: float = 0.0
 
-func execute(attacker_node: Node, parent_targets: Array, battle_manager: BattleManager, _action: Action = null, _context: Dictionary = {}) -> void:
-	BattleCombatant.resolve_model(attacker_node)
-	var targets := BattleCombatant.resolve_models(parent_targets)
+func execute(_attacker: BattleCombatant, targets: Array[BattleCombatant], battle_manager: BattleManager, _action: Action = null, _context: Dictionary = {}) -> void:
 	for target_combatant: BattleCombatant in targets:
 		var target := target_combatant as HeroCombatant
 		if target == null:

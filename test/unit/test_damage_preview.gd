@@ -770,7 +770,7 @@ func test_enemy_intent_incomplete_random_split_uses_authored_total_budget() -> v
 	var low_hp_target := _intent_hero_target(0)
 	var healthy_target := _intent_hero_target(0)
 	low_hp_target.current_hp = 50
-	manager.actor_list = [enemy, low_hp_target, healthy_target]
+	manager.actor_list = [enemy.combatant, low_hp_target, healthy_target]
 	var action := (load(
 		"res://data/enemies/actions/rapid_fire.tres"
 	) as Action).duplicate(true) as Action
@@ -783,7 +783,7 @@ func test_enemy_intent_incomplete_random_split_uses_authored_total_budget() -> v
 	enemy_model.intended_targets = [low_hp_target, healthy_target]
 	var sequence := DamagePreview.for_plan(
 		effect,
-		enemy,
+		enemy.combatant,
 		[low_hp_target, healthy_target],
 		action,
 		false,

@@ -15,7 +15,7 @@ const ABBREVIATION_FONT_SIZE_COMPACT := 24
 @onready var role_icon: TextureRect = $Interior/RoleIcon
 @onready var enemy_label: Label = $Interior/EnemyLabel
 
-var actor_ref: ActorCard
+var actor_ref: BattleCombatant
 var occurrence_index := 0
 var _move_tween: Tween
 var _exit_tween: Tween
@@ -31,7 +31,7 @@ func apply_display_profile(profile: int) -> void:
 
 
 func setup(
-	actor: ActorCard,
+	actor: BattleCombatant,
 	ticks: int,
 	is_current: bool,
 	occurrence: int,
@@ -41,21 +41,21 @@ func setup(
 	occurrence_index = occurrence
 	var interior_style := interior.get_theme_stylebox("panel") as StyleBoxFlat
 	interior_style.bg_color = (
-		HERO_INTERIOR_COLOR if actor is HeroCard else ENEMY_INTERIOR_COLOR
+		HERO_INTERIOR_COLOR if actor.is_hero() else ENEMY_INTERIOR_COLOR
 	)
 	custom_minimum_size = ITEM_SIZE
 	size = ITEM_SIZE
-	role_icon.visible = actor is HeroCard
-	enemy_label.visible = actor is EnemyCard
-	if actor is HeroCard:
-		var role := (actor as HeroCard).get_current_role()
+	role_icon.visible = actor is HeroCombatant
+	enemy_label.visible = actor is EnemyCombatant
+	if actor is HeroCombatant:
+		var role := (actor as HeroCombatant).get_current_role()
 		role_icon.texture = role.icon if role else null
 		role_icon.self_modulate = role.color if role else Color.WHITE
 	else:
 		enemy_label.text = enemy_abbreviation(actor.actor_name)
 	gauge.configure(
 		ticks,
-		CTBGauge.Faction.HERO if actor is HeroCard else CTBGauge.Faction.ENEMY,
+		CTBGauge.Faction.HERO if actor.is_hero() else CTBGauge.Faction.ENEMY,
 		is_current,
 		animate_gauge,
 	)

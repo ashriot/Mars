@@ -14,13 +14,12 @@ func resolve_guard_delta(current_guard: int) -> int:
 	return delta
 
 
-func execute(attacker_node: Node, parent_targets: Array, battle_manager: BattleManager, _action: Action = null, _context: Dictionary = {}) -> void:
+func execute(_attacker: BattleCombatant, parent_targets: Array[BattleCombatant], battle_manager: BattleManager, _action: Action = null, _context: Dictionary = {}) -> void:
 	print("--- Executing Change Guard Effect ---")
-	BattleCombatant.resolve_model(attacker_node)
 	var targets: Array[BattleCombatant] = []
-	for target_node: Node in parent_targets:
-		if is_instance_valid(target_node):
-			targets.append(BattleCombatant.resolve_model(target_node))
+	for target: BattleCombatant in parent_targets:
+		if is_instance_valid(target):
+			targets.append(target)
 	for target_actor: BattleCombatant in targets:
 		if target_actor.is_defeated:
 			continue

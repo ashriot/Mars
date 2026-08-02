@@ -14,9 +14,9 @@ var current_state = State.LOADING
 signal turn_order_updated(projected_queue: Array, update_kind: TurnOrderUpdate)
 signal battle_state_changed(new_state)
 signal battle_ended(won)
-signal target_hovered(actor: ActorCard)
-signal target_unhovered(actor: ActorCard)
-signal target_invalidated(actor: ActorCard)
+signal target_hovered(combatant: BattleCombatant)
+signal target_unhovered(combatant: BattleCombatant)
+signal target_invalidated(combatant: BattleCombatant)
 
 @export_range(0.1, 5.0) var battle_speed: float = 1.0
 
@@ -28,26 +28,98 @@ signal target_invalidated(actor: ActorCard)
 @export var enemy_area: Control
 @export var action_bar: ActionBar
 @export var current_action_panel: PanelContainer
+@export var combatant_root: Node
 
 @export_group("Packed Scenes")
 @export var hero_card_scene: PackedScene
 @export var enemy_card_scene: PackedScene
 
 # --- Actor Tracking ---
-var current_actor = null
+var current_actor: BattleCombatant
 var current_action: Action = null
 var executing_action: Action = null
-var _pending_after_shift_action: HeroCard
+var _pending_after_shift_action: HeroCombatant
 var executing_action_ct_percent := 100
 var executing_action_ends_turn := false
 var focused_button: ActionButton = null
-var actor_list: Array = []
+var actor_list: Array[BattleCombatant] = []
 var TARGET_CT: int = 4000
 var battle_ct_speed_scale := 1.0
 var current_encounter: Encounter
 var encounter_seed := 0
 var rewards_enabled := true
 var _combat_rng: RandomNumberGenerator
+var _presentations: Dictionary = {}
+
+
+func register_presentation(
+	combatant: BattleCombatant,
+	presentation: CombatantPresentation,
+) -> void:
+	assert(combatant != null and presentation != null)
+	var previous := presentation_for(combatant)
+	var previous_state := CombatantPresentation.TargetState.NORMAL
+	if previous != null:
+		previous_state = previous.target_state
+	if previous != null and previous != presentation:
+		previous.set_target_presentation(CombatantPresentation.TargetState.NORMAL)
+		_disconnect_presentation(previous)
+	_presentations[combatant] = presentation
+	if not presentation.target_hovered.is_connected(_on_target_hovered):
+		presentation.target_hovered.connect(_on_target_hovered)
+	if not presentation.target_unhovered.is_connected(_on_target_unhovered):
+		presentation.target_unhovered.connect(_on_target_unhovered)
+	if not presentation.target_pressed.is_connected(_on_target_pressed):
+		presentation.target_pressed.connect(_on_target_pressed)
+	presentation.set_target_presentation(previous_state)
+
+
+func presentation_for(combatant: BattleCombatant) -> CombatantPresentation:
+	return _presentations.get(combatant) as CombatantPresentation
+
+
+func unregister_presentation(combatant: BattleCombatant) -> void:
+	var presentation := presentation_for(combatant)
+	if presentation != null:
+		presentation.set_target_presentation(CombatantPresentation.TargetState.NORMAL)
+		_disconnect_presentation(presentation)
+	_presentations.erase(combatant)
+
+
+func _disconnect_presentation(presentation: CombatantPresentation) -> void:
+	if presentation.target_hovered.is_connected(_on_target_hovered):
+		presentation.target_hovered.disconnect(_on_target_hovered)
+	if presentation.target_unhovered.is_connected(_on_target_unhovered):
+		presentation.target_unhovered.disconnect(_on_target_unhovered)
+	if presentation.target_pressed.is_connected(_on_target_pressed):
+		presentation.target_pressed.disconnect(_on_target_pressed)
+
+
+func _set_target_state(
+	combatant: BattleCombatant,
+	state: CombatantPresentation.TargetState,
+) -> void:
+	var presentation := presentation_for(combatant)
+	if presentation != null:
+		presentation.set_target_presentation(state)
+
+
+func _set_actor_acting(combatant: BattleCombatant, active: bool) -> void:
+	var presentation := presentation_for(combatant)
+	if presentation != null:
+		await presentation.set_acting(active)
+
+
+func _show_action(combatant: BattleCombatant, action_name: String) -> void:
+	var presentation := presentation_for(combatant)
+	if presentation != null:
+		presentation.show_action(action_name)
+
+
+func _hide_action(combatant: BattleCombatant) -> void:
+	var presentation := presentation_for(combatant)
+	if presentation != null:
+		await presentation.hide_action()
 
 func change_state(new_state):
 	if current_state == State.BATTLE_OVER:
@@ -63,6 +135,12 @@ func _ready():
 	action_bar.action_selected.connect(_on_action_button_pressed)
 	action_bar.shift_button_pressed.connect(_on_shift_button_pressed)
 	current_action_panel.hide()
+
+
+func _exit_tree() -> void:
+	_clear_all_targeting_ui()
+	for combatant: BattleCombatant in _presentations.keys():
+		unregister_presentation(combatant)
 
 func spawn_encounter(
 	roster_override: Array[HeroData] = [],
@@ -83,71 +161,68 @@ func spawn_encounter(
 	rewards_enabled = allow_rewards
 	_configure_combat_rng(seed_override)
 
+	assert(is_instance_valid(combatant_root), "BattleManager requires a combatant root.")
 	for hero_data: HeroData in roster:
-		var hero_card: HeroCard = hero_card_scene.instantiate()
+		var hero := HeroCombatant.new()
+		combatant_root.add_child(hero)
+		hero.setup(hero_data, self)
+		hero.current_ct = 0
+		hero.battle_priority = actor_list.size()
+		actor_list.append(hero)
+		_connect_combatant_signals(hero)
+		var hero_card := hero_card_scene.instantiate() as HeroCard
 		hero_area.add_child(hero_card)
-		hero_card.setup(hero_data)
-		hero_card.hero_clicked.connect(_on_hero_clicked)
-		hero_card.target_hovered.connect(_on_target_hovered)
-		hero_card.target_unhovered.connect(_on_target_unhovered)
-		hero_card.actor_defeated.connect(_on_actor_died)
-		hero_card.actor_revived.connect(_on_actor_revived)
+		hero_card.setup_from_combatant(hero)
+		register_presentation(hero, hero_card.presentation)
 		hero_card.spawn_particles.connect(_on_spawn_particles)
-		hero_card.actor_conditions_changed.connect(_on_actor_conditions_changed)
-		_connect_actor_intent_refresh_signals(hero_card)
-		hero_card.current_ct = 0
-		print(hero_card.actor_name, "'s CT: ", hero_card.current_ct)
-		hero_card.battle_priority = actor_list.size()
-		actor_list.append(hero_card)
+		print(hero.actor_name, "'s CT: ", hero.current_ct)
 
-	var spawned_enemies: Array[EnemyCard] = []
+	var spawned_enemies: Array[EnemyCombatant] = []
 	var name_counts: Dictionary = {}
 
 	var enemies_to_spawn = current_encounter.enemies
 	var is_elite = current_encounter.is_elite
 	var is_boss = current_encounter.is_boss
 
-	for enemy_data in enemies_to_spawn:
-		var enemy_card: EnemyCard = enemy_card_scene.instantiate()
-		enemy_area.add_child(enemy_card)
-		enemy_card.setup(
+	for enemy_data: EnemyData in enemies_to_spawn:
+		var enemy := EnemyCombatant.new()
+		combatant_root.add_child(enemy)
+		enemy.setup(
 			enemy_data,
 			fight_level,
 			is_elite,
 			is_boss,
 			enemy_hp_multiplier,
+			self,
 		)
-		var base_name = enemy_card.actor_name
+		var base_name := enemy.actor_name
 		if not name_counts.has(base_name):
 			name_counts[base_name] = 0
 		name_counts[base_name] += 1
-		spawned_enemies.append(enemy_card)
-
-		enemy_card.enemy_clicked.connect(_on_enemy_clicked)
-		enemy_card.target_hovered.connect(_on_target_hovered)
-		enemy_card.target_unhovered.connect(_on_target_unhovered)
-		enemy_card.actor_defeated.connect(_on_actor_died)
-		enemy_card.spawn_particles.connect(_on_spawn_particles)
-		enemy_card.actor_conditions_changed.connect(_on_actor_conditions_changed)
-		_connect_actor_intent_refresh_signals(enemy_card)
-		enemy_card.current_ct = 0
-		print(enemy_card.actor_name, "'s CT: ", enemy_card.current_ct)
-		enemy_card.battle_priority = actor_list.size()
-		enemy_card.initialize_ai(encounter_seed)
-		actor_list.append(enemy_card)
+		enemy.current_ct = 0
+		enemy.battle_priority = actor_list.size()
+		actor_list.append(enemy)
+		spawned_enemies.append(enemy)
+		_connect_combatant_signals(enemy)
 
 	var current_indices = {}
 	var suffixes = [" A", " B", " C", " D"]
-	for enemy_card in spawned_enemies:
-		var base_name = enemy_card.actor_name
+	for enemy: EnemyCombatant in spawned_enemies:
+		var base_name := enemy.actor_name
 		if name_counts[base_name] > 1:
 			var idx = current_indices.get(base_name, 0)
 			if idx < suffixes.size():
 				var new_name = base_name + suffixes[idx]
-				enemy_card.actor_name = new_name
-				enemy_card.current_stats.actor_name = new_name
-				enemy_card.name_label.text = new_name
+				enemy.actor_name = new_name
+				enemy.current_stats.actor_name = new_name
 				current_indices[base_name] = idx + 1
+		var enemy_card := enemy_card_scene.instantiate() as EnemyCard
+		enemy_area.add_child(enemy_card)
+		enemy_card.setup_from_combatant(enemy)
+		register_presentation(enemy, enemy_card.presentation)
+		enemy_card.spawn_particles.connect(_on_spawn_particles)
+		enemy.initialize_ai(encounter_seed)
+		print(enemy.actor_name, "'s CT: ", enemy.current_ct)
 
 	print("Spawning complete.")
 	change_state(State.LOADING)
@@ -163,26 +238,26 @@ func _apply_starting_passives() -> void:
 	print("--- Applying Starting Passives ---")
 
 	for actor in actor_list:
-		if actor is HeroCard and not actor.is_defeated:
-			await _apply_role_passive(actor)
+		if actor is HeroCombatant and not actor.is_defeated:
+			await _apply_role_passive(actor as HeroCombatant)
 	print("--- Starting Passives Applied ---")
 	return
 
 
 func _configure_battle_ct_speed_scale() -> void:
 	var raw_speeds: Array = []
-	for actor: ActorCard in actor_list:
+	for actor: BattleCombatant in actor_list:
 		if is_instance_valid(actor) and not actor.is_defeated:
 			raw_speeds.append(maxi(actor.get_speed(), 1))
 	battle_ct_speed_scale = CTBSpeed.scale_for(raw_speeds)
-	for actor: ActorCard in actor_list:
+	for actor: BattleCombatant in actor_list:
 		if is_instance_valid(actor):
 			actor.ct_speed_scale = battle_ct_speed_scale
 
 
 func _apply_initial_ct_head_starts(test_rolls: Array = []) -> void:
 	for index in actor_list.size():
-		var actor := actor_list[index] as ActorCard
+		var actor := actor_list[index]
 		if not is_instance_valid(actor) or actor.is_defeated:
 			continue
 		var roll := float(test_rolls[index]) \
@@ -212,12 +287,12 @@ func combat_roll_percent(chance: int) -> bool:
 	return roll <= chance
 
 
-func combat_random_actor(candidates: Array) -> Node:
+func combat_random_actor(candidates: Array[BattleCombatant]) -> BattleCombatant:
 	if candidates.is_empty():
 		return null
 	var index := _combat_rng.randi_range(0, candidates.size() - 1) \
 		if _combat_rng != null else randi_range(0, candidates.size() - 1)
-	return candidates[index] as Node
+	return candidates[index]
 
 
 func _award_victory_xp(amount: int) -> void:
@@ -251,7 +326,7 @@ func find_and_start_next_turn():
 	if current_state == State.BATTLE_OVER:
 		return
 	if current_actor:
-		current_actor.highlight(false)
+		await _set_actor_acting(current_actor, false)
 	change_state(State.LOADING)
 
 	var projection := _run_ct_simulation()
@@ -261,7 +336,7 @@ func find_and_start_next_turn():
 		return
 
 	var first_turn_data = projection[0]
-	var winner: ActorCard = first_turn_data.actor
+	var winner := first_turn_data.actor as BattleCombatant
 	var real_ticks_passed = first_turn_data.ticks_needed
 
 	for actor in actor_list:
@@ -270,10 +345,12 @@ func find_and_start_next_turn():
 	winner.current_ct = 0
 	current_actor = winner
 	_publish_turn_order(TurnOrderUpdate.ADVANCE)
-	if winner is HeroCard:
+	await _set_actor_acting(winner, true)
+	if winner is HeroCombatant:
 		if action_bar.sliding:
 			await action_bar.slide_finished
 		change_state(State.PLAYER_ACTION)
+		await action_bar.load_actions(winner as HeroCombatant, false)
 		await winner.on_turn_started()
 		await _flush_all_health_animations()
 	else:
@@ -282,28 +359,26 @@ func find_and_start_next_turn():
 		await _flush_all_health_animations()
 		await execute_enemy_turn(winner)
 		await winner.on_turn_ended()
+		await _set_actor_acting(winner, false)
 		current_actor = null
 		if await _check_if_battle_ended():
 			return
 		change_state(State.LOADING)
 		if is_instance_valid(winner) and not winner.is_defeated:
-			(winner as EnemyCard).decide_intent(_enemy_ai_context())
+			(winner as EnemyCombatant).decide_intent(_enemy_ai_context())
 		await wait(0.5)
 		find_and_start_next_turn()
 
 func _on_combatant_breached(breached: BattleCombatant) -> void:
 	print("\n Actor was Breached -> New Queue: ")
 	update_turn_order()
-	var current_model := BattleCombatant.resolve_model(current_actor) \
-		if is_instance_valid(current_actor) else null
 	if breached is EnemyCombatant \
 		and (breached as EnemyCombatant).recover_action != null \
-		and (breached != current_model or current_state != State.EXECUTING_ACTION):
+		and (breached != current_actor or current_state != State.EXECUTING_ACTION):
 		(breached as EnemyCombatant).decide_intent(_enemy_ai_context())
-	for value: Node in actor_list:
-		if not is_instance_valid(value):
+	for observer: BattleCombatant in actor_list:
+		if not is_instance_valid(observer):
 			continue
-		var observer := BattleCombatant.resolve_model(value)
 		if observer.is_defeated or observer.faction == breached.faction:
 			continue
 		await observer._fire_condition_event(
@@ -318,12 +393,11 @@ func update_turn_order() -> void:
 func _publish_turn_order(update_kind: TurnOrderUpdate) -> void:
 	turn_order_updated.emit(_display_projection(), update_kind)
 
-func get_action_recovery_adjustment(actor_node: Node, action: Action) -> int:
-	var actor := BattleCombatant.resolve_model(actor_node)
+func get_action_recovery_adjustment(actor: BattleCombatant, action: Action) -> int:
 	var percent := actor.get_action_ct_percent(action)
 	return int(TARGET_CT * (100 - percent) / 100.0)
 
-func _apply_executing_action_recovery(actor: ActorCard) -> void:
+func _apply_executing_action_recovery(actor: BattleCombatant) -> void:
 	if not executing_action_ends_turn:
 		return
 	actor.current_ct += int(TARGET_CT * (100 - executing_action_ct_percent) / 100.0)
@@ -336,7 +410,7 @@ func _clear_executing_action_recovery() -> void:
 
 func _enemy_ai_context() -> EnemyAIContext:
 	var ticks := {}
-	for actor: ActorCard in actor_list:
+	for actor: BattleCombatant in actor_list:
 		if not is_instance_valid(actor) or actor.is_defeated:
 			continue
 		ticks[actor] = maxi(
@@ -352,7 +426,7 @@ func _update_all_enemy_intents() -> void:
 	if not is_instance_valid(hero_area) or not is_instance_valid(enemy_area):
 		return
 	var context := _enemy_ai_context()
-	for enemy: EnemyCard in get_living_enemies():
+	for enemy: EnemyCombatant in get_living_enemies():
 		if enemy != current_actor or current_state != State.EXECUTING_ACTION:
 			enemy.decide_intent(context)
 
@@ -360,31 +434,33 @@ func _update_all_enemy_intents() -> void:
 func _revalidate_all_enemy_intent_targets() -> void:
 	if not is_instance_valid(hero_area) or not is_instance_valid(enemy_area):
 		return
-	var planned_enemies: Array[EnemyCard] = []
-	for value: Node in get_living_enemies():
-		if value is EnemyCard and (value as EnemyCard).intended_action != null:
-			planned_enemies.append(value as EnemyCard)
+	var planned_enemies: Array[EnemyCombatant] = []
+	for enemy: EnemyCombatant in get_living_enemies():
+		if enemy.intended_action != null:
+			planned_enemies.append(enemy)
 	if planned_enemies.is_empty():
 		return
 	var context := _enemy_ai_context()
-	for enemy: EnemyCard in planned_enemies:
+	for enemy: EnemyCombatant in planned_enemies:
 		enemy.revalidate_intent_targets(context)
 
 
 func _refresh_all_enemy_intent_presentations() -> void:
 	if not is_instance_valid(enemy_area):
 		return
-	for enemy: EnemyCard in get_living_enemies():
-		enemy.refresh_intent_presentation()
+	for enemy: EnemyCombatant in get_living_enemies():
+		var presentation := presentation_for(enemy)
+		if presentation != null:
+			presentation.refresh_intent()
 
-func _on_actor_died(actor: ActorCard):
+func _on_actor_died(actor: BattleCombatant):
 	print(actor.actor_name, " has died. Removing from actor_list.")
 	actor.is_valid_target = false
-	actor.set_target_presentation(ActorCard.TargetPresentation.NORMAL)
+	_set_target_state(actor, CombatantPresentation.TargetState.NORMAL)
 
-	if actor is HeroCard:
-		actor.hero_data.injuries += 1
-		print("Hero gained an injury. Total: ", actor.hero_data.injuries)
+	if actor is HeroCombatant:
+		(actor as HeroCombatant).hero_data.injuries += 1
+		print("Hero gained an injury. Total: ", (actor as HeroCombatant).hero_data.injuries)
 
 	actor_list.erase(actor)
 	target_invalidated.emit(actor)
@@ -393,14 +469,19 @@ func _on_actor_died(actor: ActorCard):
 	_revalidate_all_enemy_intent_targets()
 	update_turn_order()
 
-func _on_actor_revived(actor: ActorCard):
-	print(actor.name, " has revived! Adding back to actor_list.")
+func _on_actor_revived(actor: BattleCombatant):
+	print(actor.actor_name, " has revived! Adding back to actor_list.")
 
 	if actor_list.has(actor):
 		print("Actor was already in actor_list?")
 		return
 	actor.ct_speed_scale = battle_ct_speed_scale
-	actor_list.append(actor)
+	var insertion_index := actor_list.size()
+	for index in actor_list.size():
+		if actor.battle_priority < actor_list[index].battle_priority:
+			insertion_index = index
+			break
+	actor_list.insert(insertion_index, actor)
 
 	_revalidate_all_enemy_intent_targets()
 	update_turn_order()
@@ -415,7 +496,7 @@ func set_current_action(action: Action):
 	ct_label.add_theme_color_override(
 		"font_color", _action_ct_color(current_action.ct_cost_percent, final_percent)
 	)
-	var hero := current_actor as HeroCard
+	var hero := current_actor as HeroCombatant
 	current_action_panel.modulate = Color.WHITE
 	current_action_panel.get_node("HBoxContainer/Mask").self_modulate = (
 		hero.get_current_role().color
@@ -425,7 +506,7 @@ func set_current_action(action: Action):
 	_apply_target_presentation(action, targets)
 
 
-func refresh_current_action_presentation(target: ActorCard = null) -> void:
+func refresh_current_action_presentation(target: BattleCombatant = null) -> void:
 	if current_action == null \
 		or not is_instance_valid(current_actor) \
 		or current_actor.current_stats == null:
@@ -479,14 +560,14 @@ func action_uses_exact_selected_target(action: Action) -> bool:
 
 
 func _apply_target_presentation(action: Action, targets: Array) -> void:
-	var presentation := ActorCard.TargetPresentation.SELECTED \
+	var presentation := CombatantPresentation.TargetState.SELECTED \
 		if is_group_target_action(action) \
-		else ActorCard.TargetPresentation.AVAILABLE
-	for target: ActorCard in targets:
+		else CombatantPresentation.TargetState.AVAILABLE
+	for target: BattleCombatant in targets:
 		if not is_instance_valid(target):
 			continue
 		target.is_valid_target = true
-		target.set_target_presentation(presentation)
+		_set_target_state(target, presentation)
 
 func _focus_button(button: ActionButton):
 	if focused_button:
@@ -525,21 +606,22 @@ func _finish_hero_turn():
 	executing_action = null
 	change_state(BattleManager.State.PLAYER_ACTION)
 	if is_shift_action:
-		await _finish_shift_reactions(current_actor as HeroCard)
+		await _finish_shift_reactions(current_actor as HeroCombatant)
 	else:
 		await current_actor.on_turn_ended()
+		await _set_actor_acting(current_actor, false)
 		find_and_start_next_turn()
 	await wait()
 
 
-func _finish_shift_reactions(hero: HeroCard) -> void:
+func _finish_shift_reactions(hero: HeroCombatant) -> void:
 	if _pending_after_shift_action != hero:
 		return
 	_pending_after_shift_action = null
 	await hero._fire_condition_event(Trigger.TriggerType.AFTER_SHIFT_ACTION)
 	update_turn_order()
 
-func _apply_role_passive(hero: HeroCard):
+func _apply_role_passive(hero: HeroCombatant):
 	current_actor = hero
 	var current_role = hero.get_current_role()
 	if current_role and current_role.passive:
@@ -549,13 +631,13 @@ func _apply_role_passive(hero: HeroCard):
 		if executing_action == action:
 			executing_action = null
 
-func execute_action(actor: ActorCard, action: Action, targets: Array, display_name: bool = true, ends_turn: bool = false):
+func execute_action(actor: BattleCombatant, action: Action, targets: Array[BattleCombatant], display_name: bool = true, ends_turn: bool = false):
 	var paid_focus_cost := action.focus_cost
-	if actor is HeroCard:
-		paid_focus_cost = (actor as HeroCard).get_scaled_focus_cost(action.focus_cost)
-		if (actor as HeroCard).current_focus < paid_focus_cost:
+	if actor is HeroCombatant:
+		paid_focus_cost = (actor as HeroCombatant).get_scaled_focus_cost(action.focus_cost)
+		if (actor as HeroCombatant).current_focus < paid_focus_cost:
 			return
-		await (actor as HeroCard).modify_focus(
+		await (actor as HeroCombatant).modify_focus(
 			-paid_focus_cost,
 			{"paid_focus_cost": paid_focus_cost, "action": action},
 		)
@@ -567,11 +649,11 @@ func execute_action(actor: ActorCard, action: Action, targets: Array, display_na
 	if display_name:
 		_publish_turn_order(TurnOrderUpdate.COMMIT)
 	current_action = null
-	if actor is HeroCard:
+	if actor is HeroCombatant:
 		current_action_panel.hide()
 		_clear_all_targeting_ui()
 		if display_name:
-			actor.show_action(action.action_name)
+			_show_action(actor, action.action_name)
 			await wait(0.25)
 		if action.is_shift_action:
 			action_bar.stop_flashing_panel()
@@ -581,7 +663,7 @@ func execute_action(actor: ActorCard, action: Action, targets: Array, display_na
 	for effect in action.effects:
 		if effect.target_type in [Action.TargetType.ALL_ALLIES, Action.TargetType.ALL_ENEMIES, Action.TargetType.ALLIES_ONLY, Action.TargetType.LEAST_GUARD_ALLY, Action.TargetType.LEAST_FOCUS_ALLY]:
 			var revives_defeated := effect is Effect_Healing and (effect as Effect_Healing).is_revive
-			targets = get_targets(effect.target_type, actor is HeroCard, [], null, revives_defeated)
+			targets = get_targets(effect.target_type, actor is HeroCombatant, [], null, revives_defeated)
 		else:
 			if effect.target_type == Action.TargetType.SELF:
 				targets = [current_actor]
@@ -592,15 +674,16 @@ func execute_action(actor: ActorCard, action: Action, targets: Array, display_na
 		var context = { "targets": targets, "action": action }
 		await actor._fire_condition_event(Trigger.TriggerType.AFTER_ATTACKING, context)
 		await _flush_all_health_animations()
-	if display_name: await actor.hide_action()
+	if display_name:
+		await _hide_action(actor)
 	await _flush_all_health_animations()
 	_apply_executing_action_recovery(actor)
 	return
 
-func execute_triggered_effect(actor: Node, effect: ActionEffect, targets: Array, action: Action, context: Dictionary = {}):
+func execute_triggered_effect(actor: BattleCombatant, effect: ActionEffect, targets: Array[BattleCombatant], action: Action, context: Dictionary = {}):
 	await effect.execute(actor, targets, self, action, context)
 
-func execute_enemy_turn(enemy: EnemyCard) -> void:
+func execute_enemy_turn(enemy: EnemyCombatant) -> void:
 	change_state(State.EXECUTING_ACTION)
 	print("\n", enemy.actor_name, " is executing its turn!")
 	var context := _enemy_ai_context()
@@ -626,7 +709,7 @@ func execute_enemy_turn(enemy: EnemyCard) -> void:
 
 	var used_ability_id := enemy.intended_decision.ability.ability_id \
 		if enemy.intended_decision.ability != null else &""
-	enemy.show_action(action.action_name)
+	_show_action(enemy, action.action_name)
 	await wait(0.5)
 	await execute_action(enemy, action, targets, true, true)
 	if current_state == State.BATTLE_OVER:
@@ -637,12 +720,12 @@ func execute_enemy_turn(enemy: EnemyCard) -> void:
 	return
 
 
-func _is_enemy_decision_executable(enemy: EnemyCard, context: EnemyAIContext) -> bool:
+func _is_enemy_decision_executable(enemy: EnemyCombatant, context: EnemyAIContext) -> bool:
 	var decision := enemy.intended_decision
 	if not decision.is_valid():
 		return false
 	if decision.is_recovery:
-		return enemy.is_breached and decision.targets == [enemy.combatant]
+		return enemy.is_breached and decision.targets == [enemy]
 	var ability := decision.ability
 	var rule := decision.rule
 	if ability == null or rule == null or rule.selector == null:
@@ -653,52 +736,59 @@ func _is_enemy_decision_executable(enemy: EnemyCard, context: EnemyAIContext) ->
 		return false
 	if ability.rules.find(rule) < 0:
 		return false
-	return rule.selector.targets_are_legal(
-		enemy.combatant as EnemyCombatant, decision.targets, context,
-	)
+	return rule.selector.targets_are_legal(enemy, decision.targets, context)
 
-func get_living_heroes() -> Array:
-	var living_heroes: Array = []
-	for value: Node in hero_area.get_children():
-		if value is ActorCard or value is BattleCombatant:
-			var hero := BattleCombatant.resolve_model(value)
-			if not hero.is_defeated:
-				living_heroes.append(value)
+func get_living_heroes() -> Array[HeroCombatant]:
+	var living_heroes: Array[HeroCombatant] = []
+	for actor: BattleCombatant in actor_list:
+		if actor is HeroCombatant and not actor.is_defeated:
+			living_heroes.append(actor as HeroCombatant)
 	return living_heroes
 
-func get_living_enemies() -> Array:
-	var living_enemies: Array = []
-	for value: Node in enemy_area.get_children():
-		if value is ActorCard or value is BattleCombatant:
-			var enemy := BattleCombatant.resolve_model(value)
-			if not enemy.is_defeated:
-				living_enemies.append(value)
+func get_living_enemies() -> Array[EnemyCombatant]:
+	var living_enemies: Array[EnemyCombatant] = []
+	for actor: BattleCombatant in actor_list:
+		if actor is EnemyCombatant and not actor.is_defeated:
+			living_enemies.append(actor as EnemyCombatant)
 	return living_enemies
 
-func _connect_actor_intent_refresh_signals(actor: ActorCard) -> void:
+func _connect_combatant_signals(actor: BattleCombatant) -> void:
 	if not actor.hp_changed.is_connected(_on_actor_hp_changed):
 		actor.hp_changed.connect(_on_actor_hp_changed)
-	if not actor.armor_changed.is_connected(_on_actor_armor_changed):
-		actor.armor_changed.connect(_on_actor_armor_changed)
-	if actor is HeroCard and not (actor as HeroCard).focus_updated.is_connected(
+	if not actor.guard_changed.is_connected(_on_actor_guard_changed):
+		actor.guard_changed.connect(_on_actor_guard_changed)
+	if not actor.conditions_changed.is_connected(_on_actor_conditions_changed):
+		actor.conditions_changed.connect(_on_actor_conditions_changed)
+	if not actor.defeated.is_connected(_on_actor_died):
+		actor.defeated.connect(_on_actor_died)
+	if not actor.revived.is_connected(_on_actor_revived):
+		actor.revived.connect(_on_actor_revived)
+	if actor is HeroCombatant and not (actor as HeroCombatant).focus_changed.is_connected(
 		_on_hero_focus_updated
 	):
-		(actor as HeroCard).focus_updated.connect(_on_hero_focus_updated)
+		(actor as HeroCombatant).focus_changed.connect(_on_hero_focus_updated)
 
 
-func _on_hero_focus_updated() -> void:
+func _on_hero_focus_updated(_hero: HeroCombatant) -> void:
 	_refresh_all_enemy_intent_presentations()
 
 
-func _on_actor_hp_changed(_current_hp: int, _max_hp: int) -> void:
+func _on_actor_hp_changed(
+	_actor: BattleCombatant,
+	_current_hp: int,
+	_max_hp: int,
+) -> void:
 	_refresh_all_enemy_intent_presentations()
 
 
-func _on_actor_armor_changed(_current_guard: int) -> void:
+func _on_actor_guard_changed(
+	_actor: BattleCombatant,
+	_current_guard: int,
+) -> void:
 	_refresh_all_enemy_intent_presentations()
 
 
-func _on_actor_conditions_changed() -> void:
+func _on_actor_conditions_changed(_actor: BattleCombatant) -> void:
 	_revalidate_all_enemy_intent_targets()
 	_refresh_all_enemy_intent_presentations()
 	_publish_turn_order(TurnOrderUpdate.REFRESH)
@@ -715,7 +805,7 @@ func _on_action_button_pressed(button: ActionButton):
 	_focus_button(button)
 	set_current_action(action)
 
-func _on_hero_clicked(target_hero: HeroCard):
+func _on_hero_clicked(target_hero: HeroCombatant):
 	if executing_action: return
 	if not target_hero.is_valid_target: return
 
@@ -724,11 +814,11 @@ func _on_hero_clicked(target_hero: HeroCard):
 	if not current_action.is_shift_action:
 		action_bar.hide_bar()
 
-	var target_list = [target_hero]
+	var target_list: Array[BattleCombatant] = [target_hero]
 	await execute_action(current_actor, current_action, target_list, true, not current_action.is_shift_action)
 	await _finish_hero_turn()
 
-func _on_enemy_clicked(target_enemy: EnemyCard):
+func _on_enemy_clicked(target_enemy: EnemyCombatant):
 	if executing_action: return
 	if not target_enemy.is_valid_target: return
 
@@ -740,27 +830,34 @@ func _on_enemy_clicked(target_enemy: EnemyCard):
 	if not current_action.is_shift_action:
 		action_bar.hide_bar()
 
-	var targets_array = []
+	var targets_array: Array[BattleCombatant] = []
 
 	match current_action.target_type:
 		Action.TargetType.ONE_ENEMY:
 			targets_array.append(target_enemy)
 
 		Action.TargetType.ALL_ENEMIES, Action.TargetType.RANDOM_ENEMY:
-			targets_array = get_living_enemies()
+			targets_array.assign(get_living_enemies())
 
 	await execute_action(current_actor, current_action, targets_array, true, not current_action.is_shift_action)
 	await _finish_hero_turn()
 
-func _on_target_hovered(actor: ActorCard) -> void:
+func _on_target_hovered(actor: BattleCombatant) -> void:
 	target_hovered.emit(actor)
 
 
-func _on_target_unhovered(actor: ActorCard) -> void:
+func _on_target_unhovered(actor: BattleCombatant) -> void:
 	target_unhovered.emit(actor)
 
+
+func _on_target_pressed(actor: BattleCombatant) -> void:
+	if actor is HeroCombatant:
+		_on_hero_clicked(actor as HeroCombatant)
+	elif actor is EnemyCombatant:
+		_on_enemy_clicked(actor as EnemyCombatant)
+
 func _on_shift_button_pressed(direction: String):
-	var current_hero = current_actor as HeroCard
+	var current_hero := current_actor as HeroCombatant
 	if current_state in [State.LOADING, State.FORCED_TARGET]: return
 	_clear_all_targeting_ui()
 	if focused_button:
@@ -806,20 +903,20 @@ func _on_shift_button_pressed(direction: String):
 func get_targets(
 	target_type: Action.TargetType,
 	friendly: bool,
-	parent_targets: Array = [],
-	attacker: Node = null,
+	parent_targets: Array[BattleCombatant] = [],
+	attacker: BattleCombatant = null,
 	include_defeated_heroes: bool = false,
-) -> Array:
-	var enemies = []
-	var heroes = []
-	enemies = get_living_enemies()
-	heroes = get_living_heroes()
-	if include_defeated_heroes and is_instance_valid(hero_area):
-		for child in hero_area.get_children():
-			if child is HeroCard and not heroes.has(child):
-				heroes.append(child)
+) -> Array[BattleCombatant]:
+	var enemies: Array[BattleCombatant] = []
+	enemies.assign(get_living_enemies())
+	var heroes: Array[BattleCombatant] = []
+	heroes.assign(get_living_heroes())
+	if include_defeated_heroes:
+		for actor: BattleCombatant in _all_combatants_with_presentations():
+			if actor is HeroCombatant and not heroes.has(actor):
+				heroes.append(actor)
 
-	var target_list = []
+	var target_list: Array[BattleCombatant] = []
 	match target_type:
 		Action.TargetType.PARENT:
 			target_list = parent_targets
@@ -855,7 +952,7 @@ func get_targets(
 			if allies.is_empty():
 				push_error("No allies found!")
 				return []
-			var target_ally: ActorCard = allies[0]
+			var target_ally := allies[0] as BattleCombatant
 			for ally in allies:
 				if ally.current_guard < target_ally.current_guard:
 					target_ally = ally
@@ -869,7 +966,7 @@ func get_targets(
 			if allies.is_empty():
 				push_error("No allies found!")
 				return []
-			var target_ally: ActorCard = allies[0]
+			var target_ally := allies[0] as HeroCombatant
 			for ally in allies:
 				if ally.current_focus < target_ally.current_focus:
 					target_ally = ally
@@ -880,8 +977,9 @@ func get_targets(
 
 func _flush_all_health_animations() -> void:
 	var tweens_to_await = []
-	for actor in _all_actor_cards():
-		var new_tween = actor.sync_visual_health()
+	for actor: BattleCombatant in _all_combatants_with_presentations():
+		var presentation := presentation_for(actor)
+		var new_tween := presentation.sync_visual_health() if presentation != null else null
 		if new_tween:
 			tweens_to_await.append(new_tween)
 
@@ -892,23 +990,18 @@ func _flush_all_health_animations() -> void:
 		await tween.finished
 
 func _clear_all_targeting_ui():
-	for actor: ActorCard in _all_actor_cards():
+	for actor: BattleCombatant in _all_combatants_with_presentations():
 		actor.is_valid_target = false
-		actor.set_target_presentation(ActorCard.TargetPresentation.NORMAL)
+		_set_target_state(actor, CombatantPresentation.TargetState.NORMAL)
 
 
-func _all_actor_cards() -> Array[ActorCard]:
-	var cards: Array[ActorCard] = []
-	for area: Control in [hero_area, enemy_area]:
-		if not is_instance_valid(area):
-			continue
-		for child in area.get_children():
-			if child is ActorCard and not cards.has(child):
-				cards.append(child)
-	for actor in actor_list:
-		if is_instance_valid(actor) and actor is ActorCard and not cards.has(actor):
-			cards.append(actor)
-	return cards
+func _all_combatants_with_presentations() -> Array[BattleCombatant]:
+	var combatants: Array[BattleCombatant] = []
+	for value: Variant in _presentations.keys():
+		var actor := value as BattleCombatant
+		if is_instance_valid(actor) and presentation_for(actor) != null:
+			combatants.append(actor)
+	return combatants
 
 func _on_spawn_particles(pos: Vector2, _type: String):
 	fx_manager.play_hit_effect(pos, false)
@@ -943,7 +1036,7 @@ func _fade_out(duration: float = 0.5):
 	)
 	await tween.finished
 
-func preview_action_turn_order(actor: ActorCard, action: Action, selected_target: ActorCard = null) -> void:
+func preview_action_turn_order(actor: BattleCombatant, action: Action, selected_target: BattleCombatant = null) -> void:
 	var adjustments: Dictionary = {}
 	if not action.is_shift_action:
 		adjustments[actor] = get_action_recovery_adjustment(actor, action)
@@ -952,7 +1045,7 @@ func preview_action_turn_order(actor: ActorCard, action: Action, selected_target
 		primary_targets.append(selected_target)
 	elif is_group_target_action(action):
 		primary_targets = get_targets(
-			action.target_type, actor is HeroCard, [], actor, action.can_revive_targets,
+			action.target_type, actor is HeroCombatant, [], actor, action.can_revive_targets,
 		)
 
 	for effect: ActionEffect in action.effects:
@@ -960,12 +1053,12 @@ func preview_action_turn_order(actor: ActorCard, action: Action, selected_target
 			continue
 		if effect.target_type == Action.TargetType.PARENT and primary_targets.is_empty():
 			continue
-		for target: ActorCard in get_targets(effect.target_type, actor is HeroCard, primary_targets, actor):
+		for target: BattleCombatant in get_targets(effect.target_type, actor is HeroCombatant, primary_targets, actor):
 			adjustments[target] = int(adjustments.get(target, 0)) \
 				+ int(TARGET_CT * effect.ct_change_percent)
 	turn_order_updated.emit(_display_projection(adjustments), TurnOrderUpdate.PREVIEW)
 
-func _get_effect_targets(effect: ActionEffect, user: ActorCard, selected_target: ActorCard = null) -> Array:
+func _get_effect_targets(effect: ActionEffect, user: BattleCombatant, selected_target: BattleCombatant = null) -> Array[BattleCombatant]:
 	"""Helper to resolve who an action will target"""
 	match effect.target_type:
 		Action.TargetType.SELF, Action.TargetType.ATTACKER:
@@ -973,15 +1066,19 @@ func _get_effect_targets(effect: ActionEffect, user: ActorCard, selected_target:
 		Action.TargetType.ONE_ENEMY:
 			return [selected_target] if selected_target else []
 		Action.TargetType.ALL_ENEMIES:
-			return get_living_enemies()
+			var enemies: Array[BattleCombatant] = []
+			enemies.assign(get_living_enemies())
+			return enemies
 		Action.TargetType.ALL_ALLIES:
-			return get_living_heroes()
+			var heroes: Array[BattleCombatant] = []
+			heroes.assign(get_living_heroes())
+			return heroes
 		_:
 			return []
 
-func _get_rich_description(action: Action, target: ActorCard = null) -> String:
-	var presentation_target: ActorCard = null
-	var presentation_targets: Array[ActorCard] = []
+func _get_rich_description(action: Action, target: BattleCombatant = null) -> String:
+	var presentation_target: BattleCombatant = null
+	var presentation_targets: Array[BattleCombatant] = []
 	if action_uses_exact_selected_target(action) \
 		and is_instance_valid(target) \
 		and target.current_stats != null:
@@ -990,12 +1087,12 @@ func _get_rich_description(action: Action, target: ActorCard = null) -> String:
 	elif is_group_target_action(action):
 		var resolved_targets := get_targets(
 			action.target_type,
-			current_actor is HeroCard,
+			current_actor is HeroCombatant,
 			[],
 			current_actor,
 			action.can_revive_targets,
 		)
-		for resolved_target: ActorCard in resolved_targets:
+		for resolved_target: BattleCombatant in resolved_targets:
 			if is_instance_valid(resolved_target) \
 				and resolved_target.current_stats != null:
 				presentation_targets.append(resolved_target)

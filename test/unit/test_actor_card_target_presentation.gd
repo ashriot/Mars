@@ -18,9 +18,9 @@ class LifecycleBattleManager extends BattleManager:
 
 
 	func execute_triggered_effect(
-		_actor: Node,
+		_actor: BattleCombatant,
 		_effect: ActionEffect,
-		_targets: Array,
+		_targets: Array[BattleCombatant],
 		_action: Action,
 		_context: Dictionary = {},
 	) -> void:
@@ -57,7 +57,7 @@ func _visible_focus_pips(hero: HeroCard) -> int:
 	return visible_count
 
 
-func _condition_for(event_type: Trigger.TriggerType, owner: ActorCard) -> Condition:
+func _condition_for(event_type: Trigger.TriggerType, owner: BattleCombatant) -> Condition:
 	var effect := ActionEffect.new()
 	effect.target_type = Action.TargetType.SELF
 	var trigger := Trigger.new()
@@ -187,7 +187,9 @@ func test_acting_outline_ends_after_turn_end_triggers_complete() -> void:
 	var manager := LifecycleBattleManager.new()
 	card.battle_manager = manager
 	card.combatant.battle_manager = manager
-	card.active_conditions = [_condition_for(Trigger.TriggerType.ON_TURN_END, card)]
+	card.active_conditions = [
+		_condition_for(Trigger.TriggerType.ON_TURN_END, card.combatant),
+	]
 	card.highlight(true)
 
 	card.on_turn_ended()

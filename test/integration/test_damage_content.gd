@@ -1,8 +1,5 @@
 extends GutTest
 
-const CardSceneTestFixture := preload("res://test/helpers/card_scene_test_fixture.gd")
-
-
 class UnsupportedScalingRule extends DamageScalingRule:
 	func resolve(_base_potency: float, _context: DamageContext) -> DamageContribution:
 		return DamageContribution.new(&"unsupported", DamageContribution.Stage.POTENCY, 0.5)
@@ -68,7 +65,7 @@ class SandsRuntimeHeroModel extends HeroCombatant:
 	func take_one_hit(
 		result: DamageResult,
 		damage_effect: Effect_Damage,
-		attacker: Node,
+		attacker: BattleCombatant,
 		resolved_damage_type: Action.DamageType,
 	) -> int:
 		damage_results.append(result)
@@ -84,7 +81,7 @@ class SandsRuntimeEnemyModel extends EnemyCombatant:
 	func take_one_hit(
 		result: DamageResult,
 		damage_effect: Effect_Damage,
-		attacker: Node,
+		attacker: BattleCombatant,
 		resolved_damage_type: Action.DamageType,
 	) -> int:
 		damage_results.append(result)
@@ -97,67 +94,12 @@ class SandsRuntimeEnemyModel extends EnemyCombatant:
 		await super.modify_guard(amount, is_recovering)
 
 
-class SandsRuntimeHero extends HeroCard:
-	var guard_events: Array[int]:
-		get: return (combatant as SandsRuntimeHeroModel).guard_events
-	var healing_events: Array[int]:
-		get: return (combatant as SandsRuntimeHeroModel).healing_events
-	var focus_events: Array[int]:
-		get: return (combatant as SandsRuntimeHeroModel).focus_events
-	var damage_results: Array[DamageResult]:
-		get: return (combatant as SandsRuntimeHeroModel).damage_results
-
-	func _update_conditions_ui() -> void:
-		return
-
-	func _spawn_damage_popup(
-		_amount: int,
-		_damage_type: Action.DamageType,
-		_is_critical: bool,
-	) -> void:
-		return
-
-	func shake_panel(_intensity: float = 0.5) -> void:
-		return
-
-	func set_target_presentation(_state: TargetPresentation) -> void:
-		return
-
-	func sync_visual_health() -> Tween:
-		return null
-
-	func update_current_role() -> void:
-		return
-
-	func on_turn_started() -> void:
-		(combatant as HeroCombatant).shifted_this_turn = false
-		await _fire_condition_event(Trigger.TriggerType.ON_TURN_START)
+class SandsRuntimeHero extends SandsRuntimeHeroModel:
+	pass
 
 
-class SandsRuntimeEnemy extends EnemyCard:
-	var damage_results: Array[DamageResult]:
-		get: return (combatant as SandsRuntimeEnemyModel).damage_results
-	var guard_events: Array[int]:
-		get: return (combatant as SandsRuntimeEnemyModel).guard_events
-
-	func _update_conditions_ui() -> void:
-		return
-
-	func _spawn_damage_popup(
-		_amount: int,
-		_damage_type: Action.DamageType,
-		_is_critical: bool,
-	) -> void:
-		return
-
-	func shake_panel(_intensity: float = 0.5) -> void:
-		return
-
-	func set_target_presentation(_state: TargetPresentation) -> void:
-		return
-
-	func sync_visual_health() -> Tween:
-		return null
+class SandsRuntimeEnemy extends SandsRuntimeEnemyModel:
+	pass
 
 
 const CONTENT_ROOTS: Array[String] = [
@@ -522,20 +464,23 @@ const NESTED_COMPATIBILITY_CASES: Array[Dictionary] = [
 var _effect_binding_regex := RegEx.new()
 var _obsolete_damage_binding_regex := RegEx.new()
 var _legacy_formula_regex := RegEx.new()
-var _presentation_actor: HeroCard
+var _presentation_actor: HeroCombatant
 
 
 func before_all() -> void:
 	assert_eq(_effect_binding_regex.compile("\\{effect:([^}]+)\\}"), OK)
 	assert_eq(_obsolete_damage_binding_regex.compile("\\{dmg[0-9]+\\}"), OK)
 	assert_eq(_legacy_formula_regex.compile("\\{(?:atk|psy)[^}]*\\}"), OK)
-	_presentation_actor = CardSceneTestFixture.hero(self)
-	_presentation_actor.current_stats = ActorStats.new()
+	_presentation_actor = HeroCombatant.new()
+	var presentation_stats := ActorStats.new()
+	presentation_stats.max_hp = 100
+	_presentation_actor.setup_base(
+		presentation_stats, BattleCombatant.Faction.HERO,
+	)
 	_presentation_actor.current_stats.attack = 100
 	_presentation_actor.current_stats.psyche = 100
-	_presentation_actor.current_stats.max_hp = 100
 	_presentation_actor.current_hp = 100
-	(_presentation_actor.combatant as HeroCombatant).current_focus = 5
+	_presentation_actor.current_focus = 5
 	_presentation_actor.current_guard = 3
 
 
@@ -1029,7 +974,7 @@ func test_echo_psion_actions_match_gdd() -> void:
 	assert_eq(shatter_rule.resource, DamageScalingFlatPerResource.ResourceType.GUARD)
 	assert_eq(shatter_damage.split_damage, ECHO_GDD.shatter.split)
 	assert_eq(
-		shatter_clear.guard_amount <= -ActorCard.MAX_GUARD,
+		shatter_clear.guard_amount <= -BattleCombatant.MAX_GUARD,
 		ECHO_GDD.shatter.clears_guard,
 	)
 	assert_eq(shatter_clear.target_type, Action.TargetType.SELF)
@@ -1092,7 +1037,7 @@ func test_focused_bolt_runtime_matches_no_base_remaining_focus_curve() -> void:
 	var manager := fixture.manager as SandsRuntimeBattleManager
 	echo.actor_name = "Echo"
 	echo.current_stats.attack = 100
-	(echo.combatant as HeroCombatant).current_focus = 5
+	echo.current_focus = 5
 	enemy.current_guard = 10
 	var action := load(
 		"res://data/heroes/echo/actions/focused_bolt.tres"
@@ -1203,7 +1148,7 @@ func test_acuity_fires_on_echo_turn_start_and_expires_on_echo_shift() -> void:
 	var ally := fixture.first_ally as SandsRuntimeHero
 	var manager := fixture.manager as SandsRuntimeBattleManager
 	echo.actor_name = "Echo"
-	(echo.combatant as HeroCombatant).current_focus = 3
+	echo.current_focus = 3
 	var acuity := load("res://data/heroes/echo/actions/telepathy.tres") as Action
 
 	await manager.execute_action(echo, acuity, [echo], false)
@@ -1212,7 +1157,7 @@ func test_acuity_fires_on_echo_turn_start_and_expires_on_echo_shift() -> void:
 	var applied := echo.active_conditions.filter(
 		func(condition: Condition) -> bool: return condition.condition_name == "Acuity"
 	)[0] as Condition
-	assert_same(applied.attacker, echo.combatant)
+	assert_same(applied.attacker, echo)
 	assert_true(applied.is_passive)
 	assert_eq(applied.triggers[0].trigger_type, Trigger.TriggerType.ON_TURN_START)
 	assert_eq(applied.remove_on_triggers, [Trigger.TriggerType.ON_SHIFT])
@@ -1337,7 +1282,7 @@ func test_precognition_fires_for_party_on_echo_turn_start_until_echo_shifts() ->
 		func(condition: Condition) -> bool:
 			return condition.condition_name == "Precognition"
 	)[0] as Condition
-	assert_same(applied.attacker, echo.combatant)
+	assert_same(applied.attacker, echo)
 	assert_true(applied.is_passive)
 	assert_eq(applied.triggers[0].trigger_type, Trigger.TriggerType.ON_TURN_START)
 	assert_eq(applied.remove_on_triggers, [Trigger.TriggerType.ON_SHIFT])
@@ -1440,10 +1385,10 @@ func test_phalanx_retargets_the_current_least_guard_teammate_per_breached_hit() 
 	var damage := phalanx.effects[0] as Effect_Damage
 
 	await damage._process_on_hit_triggers(
-		sands.combatant, enemy.combatant, fixture.manager, {},
+		sands, enemy, fixture.manager, {},
 	)
 	await damage._process_on_hit_triggers(
-		sands.combatant, enemy.combatant, fixture.manager, {},
+		sands, enemy, fixture.manager, {},
 	)
 
 	assert_eq(first_ally.guard_events, [1])
@@ -1571,7 +1516,7 @@ func test_covering_fire_runs_full_action_scope_stack_and_sands_shift_lifecycle()
 			func(condition: Condition) -> bool:
 				return condition.condition_name == "Covering Fire"
 		)[0] as Condition
-		assert_same(boost.attacker, sands.combatant)
+		assert_same(boost.attacker, sands)
 	assert_eq(_condition_count(sands, "Covering Fire Passive"), 1)
 	assert_eq(_condition_count(first_ally, "Covering Fire Passive"), 0)
 	assert_eq(_condition_count(second_ally, "Covering Fire Passive"), 0)
@@ -1635,7 +1580,7 @@ func test_auto_shield_uses_manager_eligibility_and_public_turn_start_lifecycle()
 		_free_sands_runtime_fixture(fixture)
 		return
 	var applied := matching_conditions[0] as Condition
-	assert_same(applied.attacker, sands.combatant)
+	assert_same(applied.attacker, sands)
 
 	await target.on_turn_started()
 	assert_eq(target.guard_events, [1, 1])
@@ -1723,7 +1668,7 @@ func test_advantage_executes_direct_ct_and_source_power_through_next_attack() ->
 	var applied := ally.active_conditions.filter(
 		func(condition: Condition) -> bool: return condition.condition_name == "Advantage"
 	)[0] as Condition
-	assert_same(applied.attacker, sands.combatant)
+	assert_same(applied.attacker, sands)
 
 	manager.current_actor = ally
 	var double_tap := load("res://data/heroes/asher/actions/double_tap.tres") as Action
@@ -1897,20 +1842,15 @@ func _sands_runtime_fixture() -> Dictionary:
 	var sands := _sands_runtime_hero("Sands", manager)
 	var first_ally := _sands_runtime_hero("Asher", manager)
 	var second_ally := _sands_runtime_hero("Echo", manager)
-	var enemy := CardSceneTestFixture.bind(
-		self, SandsRuntimeEnemy.new(), BattleCombatant.Faction.ENEMY, null, manager,
-		SandsRuntimeEnemyModel.new(),
-	) as SandsRuntimeEnemy
-	enemy.actor_name = "Target"
-	enemy.current_stats = ActorStats.new()
-	enemy.current_stats.max_hp = 2000
-	enemy.current_hp = 2000
+	var enemy := SandsRuntimeEnemy.new()
+	var enemy_stats := ActorStats.new()
+	enemy_stats.actor_name = "Target"
+	enemy_stats.max_hp = 2000
+	enemy.setup_base(enemy_stats, BattleCombatant.Faction.ENEMY, manager)
 	enemy.current_guard = 10
 	for hero: SandsRuntimeHero in [sands, first_ally, second_ally]:
-		hero.battle_manager = manager
-		hero.reparent(manager.hero_area)
-	enemy.battle_manager = manager
-	enemy.reparent(manager.enemy_area)
+		manager.hero_area.add_child(hero)
+	manager.enemy_area.add_child(enemy)
 	manager.current_actor = sands
 	manager.actor_list = [sands, first_ally, second_ally, enemy]
 	return {
@@ -1926,21 +1866,17 @@ func _sands_runtime_hero(
 	actor_name: String,
 	manager: BattleManager,
 ) -> SandsRuntimeHero:
-	var hero := CardSceneTestFixture.bind(
-		self, SandsRuntimeHero.new(), BattleCombatant.Faction.HERO, null, manager,
-		SandsRuntimeHeroModel.new(),
-	) as SandsRuntimeHero
-	hero.actor_name = actor_name
-	hero.current_stats = ActorStats.new()
-	hero.current_stats.attack = 100
-	hero.current_stats.psyche = 100
-	hero.current_stats.speed = 100
-	hero.current_stats.max_hp = 100
-	hero.current_hp = 100
-	var hero_model := hero.combatant as HeroCombatant
-	hero_model.current_focus = 10
-	hero_model.hero_data = HeroData.new()
-	hero_model.hero_data.unlocked_role_ids = ["first", "second"]
+	var hero := SandsRuntimeHero.new()
+	var stats := ActorStats.new()
+	stats.actor_name = actor_name
+	stats.attack = 100
+	stats.psyche = 100
+	stats.speed = 100
+	stats.max_hp = 100
+	hero.setup_base(stats, BattleCombatant.Faction.HERO, manager)
+	hero.current_focus = 10
+	hero.hero_data = HeroData.new()
+	hero.hero_data.unlocked_role_ids = ["first", "second"]
 	return hero
 
 
@@ -1948,7 +1884,7 @@ func _free_sands_runtime_fixture(fixture: Dictionary) -> void:
 	(fixture.manager as BattleManager).free()
 
 
-func _condition_count(actor: ActorCard, condition_name: String) -> int:
+func _condition_count(actor: BattleCombatant, condition_name: String) -> int:
 	return actor.active_conditions.filter(
 		func(condition: Condition) -> bool:
 			return condition.condition_name == condition_name
@@ -1973,7 +1909,7 @@ func _validate_action(action: Action, path: String) -> void:
 		if effect == null:
 			continue
 		var context := EffectPresentationContext.new(
-			_presentation_actor.combatant, null, action, effect_index, 1, false,
+			_presentation_actor, null, action, effect_index, 1, false,
 		)
 		assert_not_null(effect.get_presentation(context), "%s effect binding %s is presentable" % [path, index_text])
 		binding_counts[effect_index] = int(binding_counts.get(effect_index, 0)) + 1
@@ -2083,7 +2019,7 @@ func _direct_damage_presentation_errors(
 	var errors: Array[String] = []
 	var distribution_count := _direct_damage_distribution_count(action, effect)
 	var context := EffectPresentationContext.new(
-		_presentation_actor.combatant,
+		_presentation_actor,
 		null,
 		action,
 		effect_index,
@@ -2141,7 +2077,7 @@ func _direct_damage_distribution_count(action: Action, effect: Effect_Damage) ->
 		Action.TargetType.ALLIES_ONLY,
 	]:
 		return 1
-	return maxi(1, effect._resolve_hit_count(_presentation_actor.combatant))
+	return maxi(1, effect._resolve_hit_count(_presentation_actor))
 
 
 func _expected_direct_damage_bindings(

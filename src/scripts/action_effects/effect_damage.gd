@@ -337,14 +337,12 @@ func _format_number(value: float) -> String:
 
 
 func execute(
-	attacker_node: Node,
-	parent_targets: Array,
+	attacker: BattleCombatant,
+	targets: Array[BattleCombatant],
 	battle_manager: BattleManager,
 	action: Action = null,
 	context: Dictionary = {},
 ) -> void:
-	var attacker := BattleCombatant.resolve_model(attacker_node)
-	var targets := BattleCombatant.resolve_models(parent_targets)
 	var resolved_hit_count := _resolve_hit_count(attacker, context)
 	var plan := _build_hit_plan(targets, action, resolved_hit_count)
 	var source_action := _resolve_source_action(action, context)
@@ -407,7 +405,7 @@ func _build_hit_plan(
 		return DamageHitPlan.single_target(parent_targets[0], hits, split_damage)
 	if hits <= 1:
 		return DamageHitPlan.all_targets(parent_targets, split_damage)
-	var expanded_targets: Array = []
+	var expanded_targets: Array[BattleCombatant] = []
 	for target in parent_targets:
 		for _hit_index in hits:
 			expanded_targets.append(target)
@@ -566,9 +564,11 @@ func _should_wait_between_hits(
 		and plan_candidates[hit_index + 1] == target
 
 
-func _filter_valid_targets(list: Array) -> Array:
-	var valid := []
-	for target in list:
+func _filter_valid_targets(
+	list: Array[BattleCombatant],
+) -> Array[BattleCombatant]:
+	var valid: Array[BattleCombatant] = []
+	for target: BattleCombatant in list:
 		if target and is_instance_valid(target) and not target.is_defeated:
 			valid.append(target)
 	return valid
@@ -646,12 +646,10 @@ func _roll_percent(chance: int, battle_manager: BattleManager) -> bool:
 
 
 func _pick_random_target(
-	candidates: Array,
+	candidates: Array[BattleCombatant],
 	battle_manager: BattleManager,
 ) -> BattleCombatant:
-	var selected := battle_manager.combat_random_actor(candidates)
-	return BattleCombatant.resolve_model(selected) \
-		if is_instance_valid(selected) else null
+	return battle_manager.combat_random_actor(candidates)
 
 
 func _modify_damage_request(
@@ -789,9 +787,9 @@ func _process_on_hit_triggers(
 		if condition_met:
 			print("On-hit trigger fired!")
 			for effect in hit_trigger.effects_to_run:
-				var targets := BattleCombatant.resolve_models(battle_manager.get_targets(
+				var targets := battle_manager.get_targets(
 					effect.target_type, attacker.is_hero(), [target], target,
-				))
+				)
 				if effect is Effect_Damage:
 					await battle_manager.wait(0.25)
 				await battle_manager.execute_triggered_effect(

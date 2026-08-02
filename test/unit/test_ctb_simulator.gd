@@ -1,18 +1,11 @@
 extends GutTest
 
-const CardSceneTestFixture := preload("res://test/helpers/card_scene_test_fixture.gd")
-
-
-class ConditionActor extends ActorCard:
+class ConditionActor extends HeroCombatant:
 	func _fire_condition_event(
 		_event_type: Trigger.TriggerType,
 		_context: Dictionary = {},
 	) -> void:
 		return
-
-	func _update_conditions_ui() -> void:
-		return
-
 
 class ConditionBattleManager extends BattleManager:
 	var intent_refresh_count := 0
@@ -21,11 +14,13 @@ class ConditionBattleManager extends BattleManager:
 		intent_refresh_count += 1
 
 
-class AdvancementHero extends HeroCard:
-	func highlight(_value: bool) -> void:
+class AdvancementHero extends HeroCombatant:
+	func on_turn_started() -> void:
 		return
 
-	func on_turn_started() -> void:
+
+class AdvancementActionBar extends ActionBar:
+	func load_actions(_hero: HeroCombatant, _shifted: bool = false):
 		return
 
 
@@ -47,21 +42,11 @@ class PublishingBattleManager extends BattleManager:
 		return
 
 
-class PublishingActor extends ActorCard:
-	func show_action(_action_name: String) -> void:
-		return
-
-	func hide_action() -> void:
-		return
+class PublishingActor extends HeroCombatant:
+	pass
 
 
-class BreachSignalActor extends ActorCard:
-	func _start_breach_pulse() -> void:
-		return
-
-	func shake_panel(_intensity: float = 0.5) -> void:
-		return
-
+class BreachSignalActor extends HeroCombatant:
 	func _fire_condition_event(
 		_event_type: Trigger.TriggerType,
 		_context: Dictionary = {},
@@ -69,12 +54,8 @@ class BreachSignalActor extends ActorCard:
 		return
 
 
-class BreachLifecycleActor extends ActorCard:
-	func _start_breach_pulse() -> void:
-		return
-
-	func shake_panel(_intensity: float = 0.5) -> void:
-		return
+class BreachLifecycleActor extends EnemyCombatant:
+	pass
 
 
 class SuspendingBreachEffect extends ActionEffect:
@@ -87,8 +68,8 @@ class SuspendingBreachEffect extends ActionEffect:
 		target_type = Action.TargetType.SELF
 
 	func execute(
-		_attacker: Node,
-		_parent_targets: Array,
+		_attacker: BattleCombatant,
+		_parent_targets: Array[BattleCombatant],
 		_battle_manager: BattleManager,
 		_action: Action = null,
 		_context: Dictionary = {},
@@ -106,8 +87,8 @@ class BreachLogEffect extends ActionEffect:
 		target_type = Action.TargetType.SELF
 
 	func execute(
-		_attacker: Node,
-		_parent_targets: Array,
+		_attacker: BattleCombatant,
+		_parent_targets: Array[BattleCombatant],
 		_battle_manager: BattleManager,
 		_action: Action = null,
 		_context: Dictionary = {},
@@ -144,26 +125,14 @@ class BreachBattleManager extends BattleManager:
 		update_count += 1
 
 
-func _scene_backed_actor(
-	actor: ActorCard,
-	faction: BattleCombatant.Faction,
-	manager: BattleManager = null,
-	combatant_override: BattleCombatant = null,
-) -> ActorCard:
-	return CardSceneTestFixture.bind(
-		self, actor, faction, ActorStats.new(), manager, combatant_override,
-	)
-
-
-func _actor(hero: bool, speed: int, ct: int, priority: int) -> ActorCard:
-	var actor: ActorCard = HeroCard.new() if hero else EnemyCard.new()
-	_scene_backed_actor(
-		actor,
-		BattleCombatant.Faction.HERO if hero else BattleCombatant.Faction.ENEMY,
-	)
+func _actor(hero: bool, speed: int, ct: int, priority: int) -> BattleCombatant:
+	var actor: BattleCombatant = HeroCombatant.new() if hero else EnemyCombatant.new()
 	var stats := ActorStats.new()
 	stats.speed = speed
-	actor.current_stats = stats
+	actor.setup_base(
+		stats,
+		BattleCombatant.Faction.HERO if hero else BattleCombatant.Faction.ENEMY,
+	)
 	actor.current_ct = ct
 	actor.battle_priority = priority
 	return actor
@@ -177,52 +146,32 @@ func test_negative_ct_requires_extra_ticks() -> void:
 
 
 func test_breach_signal_supplies_actor() -> void:
-	var actor := _scene_backed_actor(
-		BreachSignalActor.new(), BattleCombatant.Faction.HERO,
-	) as BreachSignalActor
+	var actor := BreachSignalActor.new()
+	actor.setup_base(ActorStats.new(), BattleCombatant.Faction.HERO)
 	actor.actor_name = "Signal target"
-	actor.breached_label = Label.new()
-	actor.guard_bar = HBoxContainer.new()
-	var received: Array[ActorCard] = []
-	actor.actor_breached.connect(
-		func(value: ActorCard) -> void: received.append(value)
+	var received: Array[BattleCombatant] = []
+	actor.breached.connect(
+		func(value: BattleCombatant) -> void: received.append(value)
 	)
 
 	await actor.breach()
 
 	assert_eq(received, [actor])
-	actor.breached_label.free()
-	actor.guard_bar.free()
 	actor.free()
 
 
 func test_enemy_breach_notifies_only_living_opposing_observers() -> void:
 	var manager := BreachBattleManager.new()
 	var breached_enemy_model := BreachObserverEnemyModel.new()
-	var breached_enemy := _scene_backed_actor(
-		ActorCard.new(), BattleCombatant.Faction.ENEMY, manager,
-		breached_enemy_model,
-	)
+	breached_enemy_model.setup_base(ActorStats.new(), BattleCombatant.Faction.ENEMY, manager)
 	var enemy_ally_model := BreachObserverEnemyModel.new()
-	var enemy_ally := _scene_backed_actor(
-		ActorCard.new(), BattleCombatant.Faction.ENEMY, manager,
-		enemy_ally_model,
-	)
+	enemy_ally_model.setup_base(ActorStats.new(), BattleCombatant.Faction.ENEMY, manager)
 	var living_hero_model := BreachObserverHeroModel.new()
-	var living_hero := _scene_backed_actor(
-		ActorCard.new(), BattleCombatant.Faction.HERO, manager,
-		living_hero_model,
-	)
+	living_hero_model.setup_base(ActorStats.new(), BattleCombatant.Faction.HERO, manager)
 	var defeated_hero_model := BreachObserverHeroModel.new()
-	var defeated_hero := _scene_backed_actor(
-		ActorCard.new(), BattleCombatant.Faction.HERO, manager,
-		defeated_hero_model,
-	)
-	breached_enemy.is_defeated = false
-	enemy_ally.is_defeated = false
-	living_hero.is_defeated = false
-	defeated_hero.is_defeated = true
-	manager.actor_list = [breached_enemy, enemy_ally, living_hero, defeated_hero]
+	defeated_hero_model.setup_base(ActorStats.new(), BattleCombatant.Faction.HERO, manager)
+	defeated_hero_model.is_defeated = true
+	manager.actor_list = [breached_enemy_model, enemy_ally_model, living_hero_model, defeated_hero_model]
 
 	await manager._on_combatant_breached(breached_enemy_model)
 
@@ -238,25 +187,19 @@ func test_enemy_breach_notifies_only_living_opposing_observers() -> void:
 	assert_eq(enemy_ally_model.recorded_events, [])
 	assert_eq(breached_enemy_model.recorded_events, [])
 	manager.free()
-	breached_enemy.free()
-	enemy_ally.free()
-	living_hero.free()
-	defeated_hero.free()
+	breached_enemy_model.free()
+	enemy_ally_model.free()
+	living_hero_model.free()
+	defeated_hero_model.free()
 
 
 func test_breach_awaits_enemy_observer_before_own_breached_event() -> void:
 	var manager := BreachBattleManager.new()
-	var breached_actor := _scene_backed_actor(
-		BreachLifecycleActor.new(), BattleCombatant.Faction.ENEMY, manager,
-	) as BreachLifecycleActor
-	var observer := _scene_backed_actor(
-		HeroCard.new(), BattleCombatant.Faction.HERO, manager,
-	) as HeroCard
+	var breached_actor := BreachLifecycleActor.new()
+	breached_actor.setup_base(ActorStats.new(), BattleCombatant.Faction.ENEMY, manager)
+	var observer := HeroCombatant.new()
+	observer.setup_base(ActorStats.new(), BattleCombatant.Faction.HERO, manager)
 	breached_actor.actor_name = "Awaited breach target"
-	breached_actor.breached_label = Label.new()
-	breached_actor.guard_bar = HBoxContainer.new()
-	breached_actor.battle_manager = manager
-	observer.battle_manager = manager
 	breached_actor.is_defeated = false
 	observer.is_defeated = false
 	manager.actor_list = [breached_actor, observer]
@@ -290,8 +233,6 @@ func test_breach_awaits_enemy_observer_before_own_breached_event() -> void:
 		"enemy_observer_finished",
 		"breached_actor_on_breached",
 	])
-	breached_actor.breached_label.free()
-	breached_actor.guard_bar.free()
 	breached_actor.free()
 	observer.free()
 	manager.free()
@@ -332,7 +273,7 @@ func test_equal_tick_equal_speed_hero_wins_over_enemy() -> void:
 func test_readded_actor_keeps_immutable_priority_for_ties() -> void:
 	var first := _actor(true, 100, 0, 0)
 	var second := _actor(true, 100, 0, 1)
-	var actors := [first, second]
+	var actors: Array[BattleCombatant] = [first, second]
 	first.is_defeated = true
 	actors.erase(first)
 	first.is_defeated = false
@@ -436,17 +377,13 @@ func test_head_starts_add_normalized_ct_without_replacing_passive_adjustment() -
 
 func test_live_advancement_matches_projected_normalized_ticks() -> void:
 	var manager := AdvancementBattleManager.new()
-	manager.action_bar = ActionBar.new()
-	var winner := _scene_backed_actor(
-		AdvancementHero.new(), BattleCombatant.Faction.HERO, manager,
-	) as AdvancementHero
-	winner.current_stats = ActorStats.new()
+	manager.action_bar = AdvancementActionBar.new()
+	var winner := AdvancementHero.new()
+	winner.setup_base(ActorStats.new(), BattleCombatant.Faction.HERO, manager)
 	winner.current_stats.speed = 200
 	winner.ct_speed_scale = 0.5
-	var observer := _scene_backed_actor(
-		ActorCard.new(), BattleCombatant.Faction.HERO, manager,
-	)
-	observer.current_stats = ActorStats.new()
+	var observer := HeroCombatant.new()
+	observer.setup_base(ActorStats.new(), BattleCombatant.Faction.HERO, manager)
 	observer.current_stats.speed = 50
 	observer.ct_speed_scale = 2.0
 	manager.actor_list = [winner, observer]
@@ -517,10 +454,9 @@ func test_manager_publishes_explicit_preview_and_refresh_kinds() -> void:
 
 func test_visible_execution_commits_but_hidden_passive_execution_does_not() -> void:
 	var manager := PublishingBattleManager.new()
-	var actor := _scene_backed_actor(
-		PublishingActor.new(), BattleCombatant.Faction.HERO, manager,
-	) as PublishingActor
-	actor.current_stats = ActorStats.new()
+	manager.current_action_panel = PanelContainer.new()
+	var actor := PublishingActor.new()
+	actor.setup_base(ActorStats.new(), BattleCombatant.Faction.HERO, manager)
 	actor.current_stats.speed = 100
 	actor.actor_name = "Publisher"
 	manager.actor_list = [actor]
@@ -536,20 +472,19 @@ func test_visible_execution_commits_but_hidden_passive_execution_does_not() -> v
 
 	assert_eq(kinds, [BattleManager.TurnOrderUpdate.COMMIT])
 	actor.free()
+	manager.current_action_panel.free()
 	manager.free()
 
 
 func test_condition_mutations_publish_one_current_queue_through_manager() -> void:
 	var manager := ConditionBattleManager.new()
-	var actor := _scene_backed_actor(
-		ConditionActor.new(), BattleCombatant.Faction.HERO, manager,
-	) as ConditionActor
-	actor.current_stats = ActorStats.new()
+	var actor := ConditionActor.new()
+	actor.setup_base(ActorStats.new(), BattleCombatant.Faction.HERO, manager)
 	actor.current_stats.speed = 100
 	actor.battle_manager = manager
 	manager.actor_list = [actor]
 	manager.current_actor = actor
-	actor.actor_conditions_changed.connect(manager._on_actor_conditions_changed)
+	actor.conditions_changed.connect(manager._on_actor_conditions_changed)
 	watch_signals(manager)
 
 	var buff := Condition.new()

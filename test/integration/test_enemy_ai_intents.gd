@@ -40,9 +40,16 @@ class QuietEnemy extends EnemyCard:
 		return
 
 
+class IntentRefreshPresentation extends CombatantPresentation:
+	var refresh_count := 0
+
+	func refresh_intent() -> void:
+		refresh_count += 1
+
+
 class QuietBattleManager extends BattleManager:
 	var executed_action: Action
-	var executed_targets: Array = []
+	var executed_targets: Array[BattleCombatant] = []
 
 	func _ready() -> void:
 		pass
@@ -50,10 +57,13 @@ class QuietBattleManager extends BattleManager:
 	func wait(_duration: float = 0.01) -> void:
 		return
 
-	func execute_action(_actor: ActorCard, action: Action, targets: Array,
+	func execute_action(
+		_actor: BattleCombatant,
+		action: Action,
+		targets: Array[BattleCombatant],
 		_display_name: bool = true, _ends_turn: bool = false) -> void:
 		executed_action = action
-		executed_targets = targets.duplicate()
+		executed_targets.assign(targets)
 
 
 class ProductionEffectBattleManager extends BattleManager:
@@ -87,6 +97,29 @@ func test_identical_planning_and_presentation_refresh_do_not_flash_again() -> vo
 	fixture.enemy.refresh_intent_presentation()
 	assert_eq(fixture.enemy.intent_flash_count, 1)
 	_free_fixture(fixture)
+
+
+func test_intent_value_refresh_uses_replaceable_presentation_contract() -> void:
+	var manager := QuietBattleManager.new()
+	manager.hero_area = Control.new()
+	manager.enemy_area = Control.new()
+	manager.add_child(manager.hero_area)
+	manager.add_child(manager.enemy_area)
+	add_child_autofree(manager)
+	var enemy := EnemyCombatant.new()
+	manager.add_child(enemy)
+	enemy.setup_base(
+		ActorStats.new(), BattleCombatant.Faction.ENEMY, manager,
+	)
+	manager.actor_list = [enemy]
+	var presentation := IntentRefreshPresentation.new()
+	manager.add_child(presentation)
+	presentation.bind(enemy)
+	manager.register_presentation(enemy, presentation)
+
+	manager._refresh_all_enemy_intent_presentations()
+
+	assert_eq(presentation.refresh_count, 1)
 
 
 func test_clearing_spent_intent_refreshes_without_flashing_again() -> void:
@@ -232,8 +265,9 @@ func test_debilitate_refreshes_locked_intent_presentation_without_replanning() -
 		"res://data/heroes/asher/actions/debilitate.tres"
 	) as Action
 	var apply_effect := debilitate_action.effects[0] as Effect_ApplyCondition
-	fixture.enemy.active_conditions.append(apply_effect.condition.duplicate(true))
-	fixture.enemy.actor_conditions_changed.emit()
+	var enemy := fixture.enemy.combatant as EnemyCombatant
+	enemy.active_conditions.append(apply_effect.condition.duplicate(true))
+	enemy.conditions_changed.emit(enemy)
 	assert_eq(fixture.enemy.intended_action, locked_action)
 	assert_eq(fixture.enemy.intent_decision_count, 1)
 	assert_eq(fixture.enemy.intent_presentation_refresh_count, 1)
@@ -290,7 +324,7 @@ func test_execution_retargets_cached_action_when_target_is_invalid() -> void:
 	fixture.manager._update_all_enemy_intents()
 	var stale_action: Action = fixture.enemy.intended_action
 	fixture.echo.is_defeated = true
-	await fixture.manager.execute_enemy_turn(fixture.enemy)
+	await fixture.manager.execute_enemy_turn(fixture.enemy.combatant)
 	assert_eq(fixture.enemy.intent_decision_count, 1)
 	assert_eq(fixture.manager.executed_action, stale_action)
 	assert_eq(fixture.manager.executed_targets, [fixture.sands.combatant])
@@ -306,7 +340,7 @@ func test_execution_keeps_cached_action_when_trigger_no_longer_matches() -> void
 	fixture.manager._update_all_enemy_intents()
 	var stale_action: Action = fixture.enemy.intended_action
 	(fixture.echo.combatant as HeroCombatant).current_focus = 0
-	await fixture.manager.execute_enemy_turn(fixture.enemy)
+	await fixture.manager.execute_enemy_turn(fixture.enemy.combatant)
 	assert_eq(fixture.enemy.intent_decision_count, 1)
 	assert_eq(fixture.manager.executed_action, stale_action)
 	assert_eq(fixture.enemy.ai_state.remaining(&"focus_attack"), 3)
@@ -319,7 +353,7 @@ func test_execution_skips_locked_ability_that_became_unavailable() -> void:
 	(fixture.echo.combatant as HeroCombatant).current_focus = 6
 	fixture.manager._update_all_enemy_intents()
 	fixture.enemy.complete_ai_turn(&"focus_attack")
-	await fixture.manager.execute_enemy_turn(fixture.enemy)
+	await fixture.manager.execute_enemy_turn(fixture.enemy.combatant)
 	assert_eq(fixture.enemy.intent_decision_count, 1)
 	assert_null(fixture.manager.executed_action)
 	assert_null(fixture.enemy.intended_action)
@@ -335,7 +369,7 @@ func test_execution_fails_safely_when_locked_action_has_no_legal_target() -> voi
 	fixture.manager._update_all_enemy_intents()
 	fixture.sands.is_defeated = true
 	fixture.echo.is_defeated = true
-	await fixture.manager.execute_enemy_turn(fixture.enemy)
+	await fixture.manager.execute_enemy_turn(fixture.enemy.combatant)
 	assert_eq(fixture.enemy.intent_decision_count, 1)
 	assert_null(fixture.manager.executed_action)
 	assert_eq(fixture.enemy.ai_state.completed_turns, 1)
@@ -347,8 +381,8 @@ func test_execution_fails_safely_when_locked_action_has_no_legal_target() -> voi
 func test_real_enemy_damage_turn_reduces_bound_hero_hp() -> void:
 	var fixture := await _production_execution_fixture()
 	var manager := fixture.manager as BattleManager
-	var enemy := fixture.enemy as EnemyCard
-	var hero := fixture.hero as HeroCard
+	var enemy := (fixture.enemy as EnemyCard).combatant as EnemyCombatant
+	var hero := (fixture.hero as HeroCard).combatant as HeroCombatant
 	var starting_hp := hero.current_hp
 
 	enemy.initialize_ai(77)
@@ -363,18 +397,17 @@ func test_real_enemy_damage_turn_reduces_bound_hero_hp() -> void:
 func test_real_enemy_recovery_intent_is_executable() -> void:
 	var fixture := await _production_execution_fixture()
 	var manager := fixture.manager as BattleManager
-	var enemy := fixture.enemy as EnemyCard
-	var model := enemy.combatant as EnemyCombatant
-	model.is_breached = true
-	model.current_guard = 0
+	var enemy := (fixture.enemy as EnemyCard).combatant as EnemyCombatant
+	enemy.is_breached = true
+	enemy.current_guard = 0
 
 	enemy.initialize_ai(77)
 	enemy.decide_intent(manager._enemy_ai_context())
 	manager.current_actor = enemy
 	await manager.execute_enemy_turn(enemy)
 
-	assert_false(model.is_breached)
-	assert_gt(model.current_guard, 0)
+	assert_false(enemy.is_breached)
+	assert_gt(enemy.current_guard, 0)
 	_free_fixture(fixture)
 
 
@@ -404,7 +437,7 @@ func _fixture() -> Dictionary:
 		enemy, BattleCombatant.Faction.ENEMY, "Drone", 3, manager,
 		QuietEnemyModel.new(),
 	) as EnemyCombatant
-	manager.actor_list = [sands, echo, enemy]
+	manager.actor_list = [_sands_model, _echo_model, enemy_model]
 
 	var basic := _ability(
 		&"basic", 0, 10, EnemyDecisionCondition.Type.ALWAYS,
@@ -432,8 +465,10 @@ func _production_execution_fixture() -> Dictionary:
 	var manager := ProductionEffectBattleManager.new()
 	manager.hero_area = Control.new()
 	manager.enemy_area = Control.new()
+	manager.combatant_root = Node.new()
 	manager.add_child(manager.hero_area)
 	manager.add_child(manager.enemy_area)
+	manager.add_child(manager.combatant_root)
 	add_child_autofree(manager)
 
 	var hero := HeroCardScene.instantiate() as HeroCard
@@ -447,10 +482,11 @@ func _production_execution_fixture() -> Dictionary:
 	hero_stats.max_hp = 100
 	hero_stats.speed = 10
 	var hero_model := HeroCombatant.new()
-	hero.add_child(hero_model)
+	manager.combatant_root.add_child(hero_model)
 	hero_model.setup_base(hero_stats, BattleCombatant.Faction.HERO, manager)
 	hero.battle_manager = manager
 	hero.bind_combatant(hero_model)
+	manager.register_presentation(hero_model, hero.presentation)
 
 	var enemy_stats := ActorStats.new()
 	enemy_stats.actor_name = "Bound Enemy"
@@ -460,10 +496,11 @@ func _production_execution_fixture() -> Dictionary:
 	enemy_stats.speed = 10
 	enemy_stats.starting_guard = 4
 	var enemy_model := EnemyCombatant.new()
-	enemy.add_child(enemy_model)
+	manager.combatant_root.add_child(enemy_model)
 	enemy_model.setup_base(enemy_stats, BattleCombatant.Faction.ENEMY, manager)
 	enemy.battle_manager = manager
 	enemy.bind_combatant(enemy_model)
+	manager.register_presentation(enemy_model, enemy.presentation)
 
 	var effect := Effect_Damage.new()
 	effect.potency = 1.0
@@ -488,7 +525,7 @@ func _production_execution_fixture() -> Dictionary:
 	enemy_model.enemy_data = enemy_data
 	enemy_model.recover_action = enemy_data.recover_action
 
-	manager.actor_list = [hero, enemy]
+	manager.actor_list = [hero_model, enemy_model]
 	manager.encounter_seed = 77
 	return {
 		"manager": manager,
@@ -533,20 +570,23 @@ func _bind_actor(
 	if model == null:
 		model = HeroCombatant.new() \
 			if faction == BattleCombatant.Faction.HERO else EnemyCombatant.new()
-	card.add_child(model)
+	if manager.combatant_root == null:
+		manager.combatant_root = Node.new()
+		manager.add_child(manager.combatant_root)
+	manager.combatant_root.add_child(model)
 	model.setup_base(stats, faction, manager)
 	model.current_guard = 2
 	model.battle_priority = priority
 	card.battle_manager = manager
 	card.bind_combatant(model)
+	manager.register_presentation(model, card.presentation)
 	return model
 
 
 func _connect_actor_refresh_signals(fixture: Dictionary) -> void:
 	var manager := fixture.manager as BattleManager
-	for actor: ActorCard in manager.actor_list:
-		manager._connect_actor_intent_refresh_signals(actor)
-		actor.actor_conditions_changed.connect(manager._on_actor_conditions_changed)
+	for actor: BattleCombatant in manager.actor_list:
+		manager._connect_combatant_signals(actor)
 
 
 func _ability(id: StringName, cooldown: int, priority: int,

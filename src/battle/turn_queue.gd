@@ -129,7 +129,7 @@ func _on_turn_order_updated(
 	var occurrences: Dictionary = {}
 	for index in projected_queue.size():
 		var turn_data: Dictionary = projected_queue[index]
-		var actor: ActorCard = turn_data.actor
+		var actor := turn_data.actor as BattleCombatant
 		var occurrence := int(occurrences.get(actor, 0))
 		occurrences[actor] = occurrence + 1
 		var item := _take_actor_item(actor, reusable)
@@ -159,7 +159,7 @@ func _on_turn_order_updated(
 	call_deferred("_restore_scroll", saved_scroll, generation)
 
 
-func _take_actor_item(actor: ActorCard, pool: Array[ActorQueue]) -> ActorQueue:
+func _take_actor_item(actor: BattleCombatant, pool: Array[ActorQueue]) -> ActorQueue:
 	for index in pool.size():
 		if pool[index].actor_ref == actor:
 			return pool.pop_at(index)

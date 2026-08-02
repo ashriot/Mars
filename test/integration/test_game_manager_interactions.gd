@@ -1,8 +1,5 @@
 extends GutTest
 
-const CardSceneTestFixture := preload("res://test/helpers/card_scene_test_fixture.gd")
-
-
 class FakeDungeonMap extends DungeonMap:
 	func _ready() -> void:
 		pass
@@ -196,7 +193,11 @@ func test_ordinary_battle_setup_forwards_default_sentinels_and_enables_rewards()
 
 func test_explicit_combat_rng_replays_and_can_return_to_default_mode() -> void:
 	var manager := BattleManager.new()
-	var candidates: Array = [ActorCard.new(), ActorCard.new(), ActorCard.new()]
+	var candidates: Array[BattleCombatant] = [
+		BattleCombatant.new(),
+		BattleCombatant.new(),
+		BattleCombatant.new(),
+	]
 	manager._configure_combat_rng(4242)
 	var first := [
 		manager.combat_random_float(),
@@ -214,33 +215,35 @@ func test_explicit_combat_rng_replays_and_can_return_to_default_mode() -> void:
 	manager._configure_combat_rng(-1)
 	assert_false(manager.has_local_combat_rng())
 	manager.free()
-	for candidate: ActorCard in candidates:
+	for candidate: BattleCombatant in candidates:
 		candidate.free()
 
 
 func test_initial_ct_head_starts_use_the_explicit_combat_rng() -> void:
 	var manager := BattleManager.new()
-	var actors: Array[ActorCard] = [
-		CardSceneTestFixture.actor(self), CardSceneTestFixture.actor(self),
+	var actors: Array[BattleCombatant] = [
+		BattleCombatant.new(), BattleCombatant.new(),
 	]
-	for actor: ActorCard in actors:
-		actor.current_stats = ActorStats.new()
-		actor.current_stats.speed = 100
+	for actor: BattleCombatant in actors:
+		var stats := ActorStats.new()
+		stats.max_hp = 100
+		stats.speed = 100
+		actor.setup_base(stats, BattleCombatant.Faction.HERO, manager)
 	manager.actor_list = actors
 	manager._configure_combat_rng(4242)
 	manager._apply_initial_ct_head_starts()
-	var first_cts := actors.map(func(actor: ActorCard) -> int: return actor.current_ct)
-	for actor: ActorCard in actors:
+	var first_cts := actors.map(func(actor: BattleCombatant) -> int: return actor.current_ct)
+	for actor: BattleCombatant in actors:
 		actor.current_ct = 0
 	manager._configure_combat_rng(4242)
 
 	manager._apply_initial_ct_head_starts()
-	var second_cts := actors.map(func(actor: ActorCard) -> int: return actor.current_ct)
+	var second_cts := actors.map(func(actor: BattleCombatant) -> int: return actor.current_ct)
 
 	assert_eq(first_cts, second_cts)
 	assert_ne(first_cts, [0, 0])
 	manager.free()
-	for actor: ActorCard in actors:
+	for actor: BattleCombatant in actors:
 		actor.free()
 
 

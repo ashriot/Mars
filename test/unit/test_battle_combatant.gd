@@ -1,8 +1,5 @@
 extends GutTest
 
-const CardSceneTestFixture := preload("res://test/helpers/card_scene_test_fixture.gd")
-
-
 class ActionCtTrait extends Trait:
 	func get_action_ct_multiplier(_action: Action) -> float:
 		return 0.75
@@ -65,15 +62,6 @@ func test_setup_owns_state_without_control_or_scene_nodes() -> void:
 	assert_eq(combatant.current_guard, 4)
 	assert_true(combatant.is_enemy())
 	assert_false((combatant as Node) is CanvasItem)
-
-
-func test_resolve_model_returns_combatant_identity_and_bound_card_model() -> void:
-	var combatant := _combatant_with_stats(20, 3)
-	var card := CardSceneTestFixture.hero(self)
-
-	assert_same(BattleCombatant.resolve_model(combatant), combatant)
-	assert_same(BattleCombatant.resolve_model(card), card.combatant)
-	card.free()
 
 
 func test_breach_awaits_opposing_reactions_before_own_reaction() -> void:

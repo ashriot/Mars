@@ -29,7 +29,7 @@ var right_shift_on_screen_pos: Vector2
 var actions_on_screen_pos: Vector2
 var passive_flash_tween: Tween
 var flashing_tween: Tween
-var active_hero: HeroCard
+var active_hero: HeroCombatant
 var buttons_disabled: bool
 
 
@@ -74,10 +74,10 @@ func apply_display_profile(profile: int, _window_size: Vector2i, _logical_size: 
 			if child is ActionButton:
 				(child as ActionButton).apply_display_profile(profile)
 
-func load_actions(hero_card: HeroCard, shifted: bool = false):
-	active_hero = hero_card
-	if not active_hero.passive_fired.is_connected(_on_hero_passive_fired):
-		active_hero.passive_fired.connect(_on_hero_passive_fired)
+func load_actions(hero: HeroCombatant, shifted: bool = false):
+	active_hero = hero
+	if not active_hero.presentation_event.is_connected(_on_hero_presentation_event):
+		active_hero.presentation_event.connect(_on_hero_presentation_event)
 	update_action_bar(active_hero, shifted)
 	await slide_in()
 
@@ -88,22 +88,22 @@ func hide_bar():
 		button.hide()
 		if button.pressed.is_connected(_on_action_button_pressed):
 			button.pressed.disconnect(_on_action_button_pressed)
-	if active_hero.focus_updated.is_connected(_on_hero_focus_updated):
-		active_hero.focus_updated.disconnect(_on_hero_focus_updated)
+	if active_hero.focus_changed.is_connected(_on_hero_focus_updated):
+		active_hero.focus_changed.disconnect(_on_hero_focus_updated)
 
 	await slide_out()
 
-func update_action_bar(hero_card: HeroCard, shifted: bool = false):
-	if not hero_card:
+func update_action_bar(hero: HeroCombatant, shifted: bool = false):
+	if not hero:
 		return
 
-	var current_role: RoleData = hero_card.get_current_role()
+	var current_role: RoleData = hero.get_current_role()
 	if not current_role:
 		push_error("Hero has no role!")
 		return
-	if hero_card.focus_updated.is_connected(_on_hero_focus_updated):
-		hero_card.focus_updated.disconnect(_on_hero_focus_updated)
-	hero_card.focus_updated.connect(_on_hero_focus_updated)
+	if hero.focus_changed.is_connected(_on_hero_focus_updated):
+		hero.focus_changed.disconnect(_on_hero_focus_updated)
+	hero.focus_changed.connect(_on_hero_focus_updated)
 
 	for i in range(4):
 		var button = actions_ui.get_child(i) as ActionButton
@@ -114,7 +114,7 @@ func update_action_bar(hero_card: HeroCard, shifted: bool = false):
 		if button.pressed.is_connected(_on_action_button_pressed):
 			button.pressed.disconnect(_on_action_button_pressed)
 		button.pressed.connect(_on_action_button_pressed.bind(button))
-		button.setup(action_data, hero_card, hero_card.get_scaled_focus_cost(action_data.focus_cost),current_role.color)
+		button.setup(action_data, hero, hero.get_scaled_focus_cost(action_data.focus_cost),current_role.color)
 		button.show()
 
 	if current_role.passive:
@@ -122,7 +122,7 @@ func update_action_bar(hero_card: HeroCard, shifted: bool = false):
 		$Actions/Passive/Mask/Icon.texture = current_role.passive.icon
 		passive_panel.modulate = current_role.color
 		passive_panel.modulate.a = 0.75
-		$Actions/Passive/RichTooltip.bbcode_text = current_role.passive.get_rich_description(hero_card)
+		$Actions/Passive/RichTooltip.bbcode_text = current_role.passive.get_rich_description(hero)
 		passive_panel.show()
 	else:
 		passive_panel.hide()
@@ -132,9 +132,9 @@ func update_action_bar(hero_card: HeroCard, shifted: bool = false):
 		$Actions/ShiftAction/Mask/Icon.texture = current_role.shift_action.icon
 		shift_action_panel.modulate = current_role.color
 		shift_action_panel.modulate.a = 0.75
-		$Actions/ShiftAction/RichTooltip.bbcode_text = current_role.shift_action.get_rich_description(hero_card)
+		$Actions/ShiftAction/RichTooltip.bbcode_text = current_role.shift_action.get_rich_description(hero)
 		shift_action_panel.show()
-		var pending = ! hero_card.get_current_role().shift_action.auto_target
+		var pending = ! hero.get_current_role().shift_action.auto_target
 		if shifted:
 			if pending:
 				start_flashing_panel(shift_action_panel)
@@ -143,8 +143,8 @@ func update_action_bar(hero_card: HeroCard, shifted: bool = false):
 	else:
 		shift_action_panel.hide()
 
-	var prev_role: RoleData = hero_card.get_previous_role()
-	var next_role: RoleData = hero_card.get_next_role()
+	var prev_role: RoleData = hero.get_previous_role()
+	var next_role: RoleData = hero.get_next_role()
 
 	left_shift_ui.visible = prev_role != null
 	right_shift_ui.visible = next_role != null
@@ -166,7 +166,7 @@ func update_action_bar(hero_card: HeroCard, shifted: bool = false):
 		right_shift_button.disabled = active_hero.shifted_this_turn
 	availability_changed.emit()
 
-func _on_hero_focus_updated():
+func _on_hero_focus_updated(_hero: HeroCombatant):
 	if not active_hero: return
 	for i in range(4):
 		var button = actions_ui.get_child(i) as ActionButton
@@ -250,6 +250,15 @@ func flash_panel(panel: Panel):
 
 func _on_hero_passive_fired():
 	flash_panel(passive_panel)
+
+
+func _on_hero_presentation_event(
+	_hero: BattleCombatant,
+	event: StringName,
+	_payload: Dictionary,
+) -> void:
+	if event == &"passive_fired":
+		_on_hero_passive_fired()
 
 func start_flashing_panel(panel: Panel):
 	panel.modulate.a = 0.0

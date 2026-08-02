@@ -1,8 +1,5 @@
 extends GutTest
 
-const CardSceneTestFixture := preload("res://test/helpers/card_scene_test_fixture.gd")
-
-
 const TURN_QUEUE_SCENE := preload("res://src/battle/turn_queue.tscn")
 const BATTLE_SCENE := preload("res://src/battle/battle_scene.tscn")
 const ARCHIVO := preload("res://data/theme/fonts/archivo.tres")
@@ -10,7 +7,7 @@ const ResponsiveFixture = preload("res://test/fixtures/responsive_viewport_fixtu
 
 var queue: TurnQueue
 var manager: BattleManager
-var actors: Array[ActorCard] = []
+var actors: Array[BattleCombatant] = []
 
 
 func before_each() -> void:
@@ -31,29 +28,30 @@ func after_each() -> void:
 		manager.free()
 
 
-func _enemy(actor_name: String) -> EnemyCard:
-	var actor := CardSceneTestFixture.enemy(self)
+func _enemy(actor_name: String) -> EnemyCombatant:
+	var actor := EnemyCombatant.new()
+	actor.setup_base(ActorStats.new(), BattleCombatant.Faction.ENEMY)
 	actor.actor_name = actor_name
 	actors.append(actor)
 	return actor
 
 
-func _hero(actor_name: String, icon: Texture2D = null, color := Color.WHITE) -> HeroCard:
-	var actor := CardSceneTestFixture.hero(self)
+func _hero(actor_name: String, icon: Texture2D = null, color := Color.WHITE) -> HeroCombatant:
+	var actor := HeroCombatant.new()
+	actor.setup_base(ActorStats.new(), BattleCombatant.Faction.HERO)
 	actor.actor_name = actor_name
 	var definition := RoleDefinition.new()
 	definition.icon = icon
 	definition.color = color
 	var role := RoleData.new()
 	role.source_definition = definition
-	var hero_model := actor.combatant as HeroCombatant
-	hero_model.loaded_roles = [role]
-	hero_model.current_role_index = 0
+	actor.loaded_roles = [role]
+	actor.current_role_index = 0
 	actors.append(actor)
 	return actor
 
 
-func _projection(active: ActorCard, count: int, alternate: ActorCard = null) -> Array:
+func _projection(active: BattleCombatant, count: int, alternate: BattleCombatant = null) -> Array:
 	var result: Array = [{"actor": active, "ticks_needed": 0}]
 	for index in range(1, count):
 		var actor := alternate if alternate and index % 2 == 1 else active
@@ -65,7 +63,7 @@ func test_display_projection_publishes_active_plus_twenty_future_entries() -> vo
 	var hero := _hero("Asher")
 	var enemy := _enemy("Scout Drone A")
 	for index in 2:
-		var actor := [hero, enemy][index] as ActorCard
+		var actor := [hero, enemy][index] as BattleCombatant
 		var stats := ActorStats.new()
 		stats.speed = 100 + index * 20
 		actor.current_stats = stats

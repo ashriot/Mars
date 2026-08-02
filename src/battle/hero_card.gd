@@ -75,7 +75,7 @@ func on_turn_started() -> void:
 		#modify_focus(1)
 	(combatant as HeroCombatant).shifted_this_turn = false
 	await _slide_up()
-	await battle_manager.action_bar.load_actions(self, false)
+	await battle_manager.action_bar.load_actions(combatant as HeroCombatant, false)
 	await super.on_turn_started()
 	if is_breached:
 		recover_breach()

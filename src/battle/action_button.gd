@@ -84,10 +84,10 @@ func _ensure_glyph_backing() -> void:
 
 func setup(
 	_action: Action,
-	actor: HeroCard,
+	actor: HeroCombatant,
 	scaled_focus: int,
 	color: Color,
-	target: ActorCard = null,
+	target: BattleCombatant = null,
 ):
 	action = _action
 	tooltip.bbcode_text = action.get_rich_description(actor, target)

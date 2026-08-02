@@ -44,14 +44,12 @@ func _resolve_current_hit_potency(
 
 
 func execute(
-	attacker_node: Node,
-	parent_targets: Array,
+	attacker: BattleCombatant,
+	targets: Array[BattleCombatant],
 	battle_manager: BattleManager,
 	action: Action = null,
 	context: Dictionary = {},
 ) -> void:
-	var attacker := BattleCombatant.resolve_model(attacker_node)
-	var targets := BattleCombatant.resolve_models(parent_targets)
 	for target: BattleCombatant in targets:
 		if not is_instance_valid(target) or target.is_defeated:
 			continue

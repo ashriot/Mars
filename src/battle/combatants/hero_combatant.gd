@@ -87,6 +87,13 @@ func shift_role(direction: String) -> void:
 	await _fire_condition_event(Trigger.TriggerType.ON_SHIFT)
 
 
+func on_turn_started() -> void:
+	shifted_this_turn = false
+	await super.on_turn_started()
+	if is_breached:
+		await recover_breach()
+
+
 func modify_focus(amount: int, context: Dictionary = {}) -> void:
 	var paid_focus_cost := maxi(0, int(context.get("paid_focus_cost", -amount)))
 	var is_zero_cost_action_payment := amount == 0 \

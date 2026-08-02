@@ -25,7 +25,7 @@ const STARTING_NODE_IDS := {
 class LoopBattleManager extends BattleManager:
 	signal target_confirmed
 	var confirmed_targets := 0
-	var forced_enemies: Array[EnemyCard] = []
+	var forced_enemies: Array[EnemyCombatant] = []
 
 	func _ready() -> void:
 		action_bar.action_selected.connect(_on_action_button_pressed)
@@ -35,7 +35,7 @@ class LoopBattleManager extends BattleManager:
 		current_state = State.FORCED_TARGET
 		_apply_target_presentation(current_action, forced_enemies)
 
-	func _on_enemy_clicked(enemy: EnemyCard):
+	func _on_enemy_clicked(enemy: EnemyCombatant):
 		confirmed_targets += 1
 		assert(enemy in forced_enemies)
 		target_confirmed.emit()
@@ -101,6 +101,7 @@ class LoopManager extends GameManager:
 		battle_manager.enemy_area = scene.get_node("UI/Enemies/HBox")
 		battle_manager.action_bar = scene.get_node("UI/ActionBar")
 		battle_manager.current_action_panel = scene.get_node("UI/CurrentAction")
+		battle_manager.combatant_root = scene.get_node("Combatants")
 		battle_manager.hero_card_scene = hero_card_scene
 		battle_manager.enemy_card_scene = enemy_card_scene
 		battle_manager.action_bar.battle_manager = battle_manager
@@ -121,21 +122,27 @@ class LoopManager extends GameManager:
 		other_enemy.battle_manager = battle_manager
 		battle_manager.enemy_area.add_child(other_enemy)
 		var other_model := EnemyCombatant.new()
-		other_enemy.add_child(other_model)
-		other_model.setup_base(
-			first_enemy.current_stats,
-			BattleCombatant.Faction.ENEMY,
+		battle_manager.combatant_root.add_child(other_model)
+		other_model.setup(
+			first_enemy.enemy_data,
+			first_enemy.enemy_data.level,
+			false,
+			false,
+			1.0,
 			battle_manager,
 		)
-		other_model.enemy_data = first_enemy.enemy_data.duplicate(true) as EnemyData
-		other_model.recover_action = other_model.enemy_data.recover_action
-		other_enemy.bind_combatant(other_model)
-		other_enemy.initialize_ai(battle_manager.encounter_seed)
+		await other_enemy.setup_from_combatant(other_model)
+		other_model.initialize_ai(battle_manager.encounter_seed)
+		battle_manager.actor_list.append(other_model)
+		battle_manager.register_presentation(other_model, other_enemy.presentation)
 		other_enemy.position = first_enemy.position + Vector2(first_enemy.size.x + 40.0, 0.0)
-		battle_manager.forced_enemies.assign([first_enemy, other_enemy])
-		battle_manager.current_actor = hero
+		battle_manager.forced_enemies.assign([
+			first_enemy.combatant,
+			other_model,
+		])
+		battle_manager.current_actor = hero.combatant
 		battle_manager.current_state = BattleManager.State.PLAYER_ACTION
-		await battle_manager.action_bar.load_actions(hero)
+		await battle_manager.action_bar.load_actions(hero.combatant as HeroCombatant)
 
 	func _fixture_enemy_ability() -> EnemyAbility:
 		var action := Action.new()
@@ -361,8 +368,14 @@ func test_controller_events_route_the_complete_playable_loop() -> void:
 	assert_gte(valid_enemies.size(), 2, "the playable-loop fixture exposes two valid targets")
 	if valid_enemies.size() < 2:
 		return
-	var first_valid := valid_enemies[0] as EnemyCard
-	var other_valid := valid_enemies[1] as EnemyCard
+	var first_valid := (
+		router.manager.battle_manager.presentation_for(valid_enemies[0]) \
+			as CardCombatantPresentation
+	).card as EnemyCard
+	var other_valid := (
+		router.manager.battle_manager.presentation_for(valid_enemies[1]) \
+			as CardCombatantPresentation
+	).card as EnemyCard
 	assert_eq(first_valid.get_target_presentation(), ActorCard.TargetPresentation.SELECTED)
 	assert_eq(other_valid.get_target_presentation(), ActorCard.TargetPresentation.AVAILABLE)
 	Input.parse_input_event(_joy_direction(JOY_BUTTON_DPAD_RIGHT, true))

@@ -7,14 +7,12 @@ var ticks_by_actor: Dictionary = {}
 var encounter_seed := 0
 
 
-func _init(living_heroes: Array, living_enemies: Array,
+func _init(living_heroes: Array[HeroCombatant], living_enemies: Array[EnemyCombatant],
 	turn_ticks: Dictionary, seed_value: int) -> void:
-	for value: Node in living_heroes:
-		heroes.append(BattleCombatant.resolve_model(value) as HeroCombatant)
-	for value: Node in living_enemies:
-		enemies.append(BattleCombatant.resolve_model(value) as EnemyCombatant)
-	for value: Node in turn_ticks:
-		ticks_by_actor[BattleCombatant.resolve_model(value)] = turn_ticks[value]
+	heroes.assign(living_heroes)
+	enemies.assign(living_enemies)
+	for value: BattleCombatant in turn_ticks:
+		ticks_by_actor[value] = turn_ticks[value]
 	encounter_seed = seed_value
 
 

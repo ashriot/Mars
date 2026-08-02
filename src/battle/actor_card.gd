@@ -290,7 +290,7 @@ func on_turn_ended() -> void:
 func take_one_hit(
 	result: DamageResult,
 	damage_effect: Effect_Damage,
-	attacker: ActorCard,
+	attacker: BattleCombatant,
 	resolved_damage_type: Action.DamageType,
 ) -> int:
 	return await _require_combatant().take_one_hit(
@@ -602,22 +602,22 @@ func get_incoming_aim_mods() -> int:
 func get_crit_damage_bonus() -> int:
 	return _require_combatant().get_crit_damage_bonus()
 
-func get_damage_dealt_modifier(target: ActorCard) -> float:
+func get_damage_dealt_modifier(target: BattleCombatant) -> float:
 	return _require_combatant().get_damage_dealt_modifier(target)
 
 
 func get_damage_dealt_contributions(
-	target: ActorCard,
+	target: BattleCombatant,
 ) -> Array[DamageContribution]:
 	return _require_combatant().get_damage_dealt_contributions(target)
 
 
-func get_damage_taken_modifier(attacker: ActorCard) -> float:
+func get_damage_taken_modifier(attacker: BattleCombatant) -> float:
 	return _require_combatant().get_damage_taken_modifier(attacker)
 
 
 func get_damage_taken_contributions(
-	attacker: ActorCard,
+	attacker: BattleCombatant,
 ) -> Array[DamageContribution]:
 	return _require_combatant().get_damage_taken_contributions(attacker)
 

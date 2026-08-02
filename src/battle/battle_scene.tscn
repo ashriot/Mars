@@ -50,7 +50,9 @@ grow_vertical = 2
 script = ExtResource("1_1pykk")
 manager = NodePath("BattleManager")
 
-[node name="BattleManager" type="Node" parent="." node_paths=PackedStringArray("UI", "fx_manager", "hero_area", "enemy_area", "action_bar", "current_action_panel")]
+[node name="Combatants" type="Node" parent="."]
+
+[node name="BattleManager" type="Node" parent="." node_paths=PackedStringArray("UI", "fx_manager", "hero_area", "enemy_area", "action_bar", "current_action_panel", "combatant_root")]
 unique_name_in_owner = true
 script = ExtResource("1_6cbqe")
 UI = NodePath("../UI")
@@ -59,6 +61,7 @@ hero_area = NodePath("../UI/Heroes/HBox")
 enemy_area = NodePath("../UI/Enemies/HBox")
 action_bar = NodePath("../UI/ActionBar")
 current_action_panel = NodePath("../UI/CurrentAction")
+combatant_root = NodePath("../Combatants")
 hero_card_scene = ExtResource("1_sft4c")
 enemy_card_scene = ExtResource("1_u5n4n")
 

@@ -3,14 +3,14 @@ class_name CTBSimulator
 
 
 static func project(
-	actors: Array,
+	actors: Array[BattleCombatant],
 	target_ct: int,
 	num_turns: int = 10,
 	ct_adjustments: Dictionary = {}
 ) -> Array:
 	var projection: Array = []
 	var sim_data: Array[Dictionary] = []
-	for actor: ActorCard in actors:
+	for actor: BattleCombatant in actors:
 		if not is_instance_valid(actor) or actor.is_defeated:
 			continue
 		sim_data.append({
@@ -42,8 +42,8 @@ static func project(
 static func _comes_first(candidate: Dictionary, incumbent: Dictionary) -> bool:
 	if candidate.raw_speed != incumbent.raw_speed:
 		return candidate.raw_speed > incumbent.raw_speed
-	var candidate_is_hero := candidate.actor is HeroCard
-	var incumbent_is_hero := incumbent.actor is HeroCard
+	var candidate_is_hero := (candidate.actor as BattleCombatant).is_hero()
+	var incumbent_is_hero := (incumbent.actor as BattleCombatant).is_hero()
 	if candidate_is_hero != incumbent_is_hero:
 		return candidate_is_hero
 	return candidate.actor.battle_priority < incumbent.actor.battle_priority

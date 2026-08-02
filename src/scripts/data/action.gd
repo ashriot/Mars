@@ -50,17 +50,11 @@ var can_revive_targets: bool:
 		return false
 
 func get_rich_description(
-	user_node: Node,
-	target_node: Node = null,
-	presentation_target_nodes: Array = [],
+	user: BattleCombatant,
+	target: BattleCombatant = null,
+	presentation_targets: Array[BattleCombatant] = [],
 	battle_manager: BattleManager = null,
 ) -> String:
-	var user := BattleCombatant.resolve_model(user_node)
-	var target := BattleCombatant.resolve_model(target_node) \
-		if is_instance_valid(target_node) else null
-	var presentation_targets := BattleCombatant.resolve_models(
-		presentation_target_nodes,
-	)
 	_init_regex()
 	var final_desc := _compose_effect_presentations(
 		description, user, target, presentation_targets, battle_manager,

@@ -8,6 +8,7 @@ signal target_unhovered(combatant: BattleCombatant)
 signal target_pressed(combatant: BattleCombatant)
 
 var combatant: BattleCombatant
+var target_state := TargetState.NORMAL
 
 
 func bind(value: BattleCombatant) -> void:
@@ -22,8 +23,8 @@ func is_target_visible() -> bool:
 	return false
 
 
-func set_target_presentation(_state: TargetState) -> void:
-	pass
+func set_target_presentation(state: TargetState) -> void:
+	target_state = state
 
 
 func set_acting(_active: bool) -> void:
@@ -40,3 +41,7 @@ func hide_action() -> void:
 
 func sync_visual_health() -> Tween:
 	return null
+
+
+func refresh_intent() -> void:
+	pass

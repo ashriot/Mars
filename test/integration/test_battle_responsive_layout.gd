@@ -1,8 +1,5 @@
 extends GutTest
 
-const CardSceneTestFixture := preload("res://test/helpers/card_scene_test_fixture.gd")
-
-
 const ResponsiveFixture = preload("res://test/fixtures/responsive_viewport_fixture.gd")
 const BattleSceneResource = preload("res://src/battle/battle_scene.tscn")
 const DECK_SIZE := Vector2i(1280, 800)
@@ -83,7 +80,11 @@ func _battle_in_viewport(window_size: Vector2i) -> BattleScene:
 	return battle
 
 
-func _enemy(actor_name: String) -> EnemyCard:
-	var actor := CardSceneTestFixture.enemy(self)
-	actor.actor_name = actor_name
+func _enemy(actor_name: String) -> EnemyCombatant:
+	var stats := ActorStats.new()
+	stats.actor_name = actor_name
+	stats.max_hp = 100
+	stats.speed = 10
+	var actor := EnemyCombatant.new()
+	actor.setup_base(stats, BattleCombatant.Faction.ENEMY)
 	return actor

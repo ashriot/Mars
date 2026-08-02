@@ -5,10 +5,10 @@ signal battle_ended(won)
 
 @export var manager: BattleManager
 
-var _current_target: ActorCard
-var _navigation_origin: ActorCard
-var _last_enemy_target: EnemyCard
-var _last_hero_target: HeroCard
+var _current_target: BattleCombatant
+var _navigation_origin: BattleCombatant
+var _last_enemy_target: EnemyCombatant
+var _last_hero_target: HeroCombatant
 var _last_controller_direction := Vector2.ZERO
 var _direction_hold_time := 0.0
 const REPEAT_DELAY := 0.32
@@ -113,14 +113,15 @@ func select_direction(direction: Vector2) -> void:
 	var candidates := _valid_targets()
 	if candidates.is_empty():
 		return
-	var origin: Vector2 = _current_target.global_position + _current_target.size * 0.5 if _is_valid_candidate(_current_target) else _target_origin(candidates)
-	var best: ActorCard
+	var origin: Vector2 = _target_position(_current_target) \
+		if _is_valid_candidate(_current_target) else _target_origin(candidates)
+	var best: BattleCombatant
 	var best_angle := INF
 	var best_distance := INF
-	for candidate: ActorCard in candidates:
+	for candidate: BattleCombatant in candidates:
 		if candidate == _current_target:
 			continue
-		var offset := candidate.global_position + candidate.size * 0.5 - origin
+		var offset := _target_position(candidate) - origin
 		if offset.dot(direction) <= 0.0:
 			continue
 		var angle: float = abs(direction.normalized().angle_to(offset.normalized()))
@@ -133,12 +134,12 @@ func select_direction(direction: Vector2) -> void:
 		_set_current_target(best)
 		return
 	# Cycle at the edge to the geometrically opposite extreme.
-	var wrapped: ActorCard
+	var wrapped: BattleCombatant
 	var wrapped_projection := INF
-	for candidate: ActorCard in candidates:
+	for candidate: BattleCombatant in candidates:
 		if candidate == _current_target:
 			continue
-		var projection := (candidate.global_position + candidate.size * 0.5).dot(direction.normalized())
+		var projection := _target_position(candidate).dot(direction.normalized())
 		if projection < wrapped_projection:
 			wrapped = candidate
 			wrapped_projection = projection
@@ -148,13 +149,13 @@ func select_direction(direction: Vector2) -> void:
 
 func confirm_target() -> void:
 	if not _is_valid_candidate(_current_target) \
-		or not _current_target.is_visible_in_tree() \
-		or _current_target.get_target_presentation() != ActorCard.TargetPresentation.SELECTED:
+		or not _is_presentation_visible(_current_target) \
+		or _presentation_target_state(_current_target) != CombatantPresentation.TargetState.SELECTED:
 		return
-	if _current_target is HeroCard:
-		manager._on_hero_clicked(_current_target as HeroCard)
-	elif _current_target is EnemyCard:
-		manager._on_enemy_clicked(_current_target as EnemyCard)
+	if _current_target is HeroCombatant:
+		manager._on_hero_clicked(_current_target as HeroCombatant)
+	elif _current_target is EnemyCombatant:
+		manager._on_enemy_clicked(_current_target as EnemyCombatant)
 
 
 func cancel_targeting() -> void:
@@ -197,7 +198,7 @@ func _on_presentation_mode_changed(mode: InputManager.PresentationMode) -> void:
 		_clear_current_target(true)
 
 
-func _on_target_hovered(actor: ActorCard) -> void:
+func _on_target_hovered(actor: BattleCombatant) -> void:
 	if InputManager.get_active_mode() != InputManager.InputMode.KEYBOARD_MOUSE \
 		or InputManager.get_presentation_mode() != InputManager.PresentationMode.POINTER \
 		or not _is_targeting() \
@@ -206,14 +207,14 @@ func _on_target_hovered(actor: ActorCard) -> void:
 	_set_current_target(actor)
 
 
-func _on_target_unhovered(actor: ActorCard) -> void:
+func _on_target_unhovered(actor: BattleCombatant) -> void:
 	if InputManager.get_active_mode() == InputManager.InputMode.KEYBOARD_MOUSE \
 		and InputManager.get_presentation_mode() == InputManager.PresentationMode.POINTER \
 		and actor == _current_target:
 		_clear_current_target(true)
 
 
-func _on_target_invalidated(actor: ActorCard) -> void:
+func _on_target_invalidated(actor: BattleCombatant) -> void:
 	if _navigation_origin == actor:
 		_navigation_origin = null
 	if _last_enemy_target == actor:
@@ -235,11 +236,11 @@ func _refresh_targeting() -> void:
 		else:
 			_clear_current_target(false)
 	var group_targeting := _is_group_targeting()
-	for candidate: ActorCard in _valid_targets():
+	for candidate: BattleCombatant in _valid_targets():
 		if group_targeting:
-			candidate.set_target_presentation(ActorCard.TargetPresentation.SELECTED)
+			_set_target_state(candidate, CombatantPresentation.TargetState.SELECTED)
 		elif candidate != _current_target:
-			candidate.set_target_presentation(ActorCard.TargetPresentation.AVAILABLE)
+			_set_target_state(candidate, CombatantPresentation.TargetState.AVAILABLE)
 	if InputManager.get_active_mode() == InputManager.InputMode.CONTROLLER \
 		and not _is_valid_candidate(_current_target):
 		_restore_remembered_target()
@@ -261,69 +262,98 @@ func navigation_focus_restored() -> void:
 	_refresh_targeting()
 
 
-func _valid_targets() -> Array[ActorCard]:
-	var targets: Array[ActorCard] = []
+func _valid_targets() -> Array[BattleCombatant]:
+	var targets: Array[BattleCombatant] = []
 	if not manager:
 		return targets
-	for actor in manager._all_actor_cards():
-		if actor is ActorCard \
-			and actor.is_visible_in_tree() \
+	for actor: BattleCombatant in manager._all_combatants_with_presentations():
+		if _is_presentation_visible(actor) \
 			and actor.is_valid_target \
 			and (not actor.is_defeated or _allows_defeated_target(actor)):
 			targets.append(actor)
 	return targets
 
 
-func _allows_defeated_target(actor: ActorCard) -> bool:
-	return actor is HeroCard \
+func _allows_defeated_target(actor: BattleCombatant) -> bool:
+	return actor is HeroCombatant \
 		and manager.current_action != null \
 		and manager.current_action.can_revive_targets
 
 
-func _is_valid_candidate(target: ActorCard) -> bool:
+func _is_valid_candidate(target: BattleCombatant) -> bool:
 	return is_instance_valid(target) \
 		and target.is_inside_tree() \
 		and target.is_valid_target \
 		and _valid_targets().has(target)
 
 
-func _target_origin(candidates: Array[ActorCard]) -> Vector2:
+func _target_origin(candidates: Array[BattleCombatant]) -> Vector2:
 	if manager and is_instance_valid(manager.current_actor):
-		return manager.current_actor.global_position + manager.current_actor.size * 0.5
-	return candidates[0].global_position + candidates[0].size * 0.5
+		return _target_position(manager.current_actor)
+	return _target_position(candidates[0])
 
 
-func _set_current_target(target: ActorCard) -> void:
+func _target_position(combatant: BattleCombatant) -> Vector2:
+	var presentation := manager.presentation_for(combatant) if manager != null else null
+	return presentation.get_target_screen_position() \
+		if presentation != null else Vector2.ZERO
+
+
+func _is_presentation_visible(combatant: BattleCombatant) -> bool:
+	var presentation := manager.presentation_for(combatant) if manager != null else null
+	return presentation != null and presentation.is_target_visible()
+
+
+func _presentation_target_state(
+	combatant: BattleCombatant,
+) -> CombatantPresentation.TargetState:
+	var presentation := manager.presentation_for(combatant) if manager != null else null
+	return presentation.target_state \
+		if presentation != null else CombatantPresentation.TargetState.NORMAL
+
+
+func _set_target_state(
+	combatant: BattleCombatant,
+	state: CombatantPresentation.TargetState,
+) -> void:
+	var presentation := manager.presentation_for(combatant) if manager != null else null
+	if presentation != null:
+		presentation.set_target_presentation(state)
+
+
+func _set_current_target(target: BattleCombatant) -> void:
 	if not _is_valid_candidate(target):
 		return
 	if is_instance_valid(_current_target) and _current_target != target:
 		if _is_group_targeting() and _is_valid_candidate(_current_target):
-			_current_target.set_target_presentation(ActorCard.TargetPresentation.SELECTED)
+			_set_target_state(_current_target, CombatantPresentation.TargetState.SELECTED)
 		else:
-			_current_target.set_target_presentation(
-				ActorCard.TargetPresentation.AVAILABLE
+			_set_target_state(
+				_current_target,
+				CombatantPresentation.TargetState.AVAILABLE
 				if _is_valid_candidate(_current_target)
-				else ActorCard.TargetPresentation.NORMAL
+				else CombatantPresentation.TargetState.NORMAL
 			)
 	_current_target = target
 	_navigation_origin = target
-	target.set_target_presentation(ActorCard.TargetPresentation.SELECTED)
-	if target is EnemyCard:
-		_last_enemy_target = target
-	elif target is HeroCard:
-		_last_hero_target = target
+	_set_target_state(target, CombatantPresentation.TargetState.SELECTED)
+	if target is EnemyCombatant:
+		_last_enemy_target = target as EnemyCombatant
+	elif target is HeroCombatant:
+		_last_hero_target = target as HeroCombatant
 	_refresh_target_preview()
 
 
 func _clear_current_target(retain_origin: bool) -> void:
 	if is_instance_valid(_current_target):
 		if _is_group_targeting() and _is_valid_candidate(_current_target):
-			_current_target.set_target_presentation(ActorCard.TargetPresentation.SELECTED)
+			_set_target_state(_current_target, CombatantPresentation.TargetState.SELECTED)
 		else:
-			_current_target.set_target_presentation(
-				ActorCard.TargetPresentation.AVAILABLE
+			_set_target_state(
+				_current_target,
+				CombatantPresentation.TargetState.AVAILABLE
 				if _is_valid_candidate(_current_target)
-				else ActorCard.TargetPresentation.NORMAL
+				else CombatantPresentation.TargetState.NORMAL
 			)
 		if retain_origin:
 			_navigation_origin = _current_target
@@ -335,7 +365,7 @@ func _clear_current_target(retain_origin: bool) -> void:
 
 func _refresh_target_preview() -> void:
 	if manager and is_instance_valid(manager.current_actor) and manager.current_action:
-		var preview_target: ActorCard = _current_target \
+		var preview_target: BattleCombatant = _current_target \
 			if manager.action_uses_exact_selected_target(manager.current_action) \
 			else null
 		manager.refresh_current_action_presentation(preview_target)
@@ -347,7 +377,8 @@ func _restore_remembered_target() -> void:
 	if candidates.is_empty():
 		_clear_current_target(false)
 		return
-	var remembered: ActorCard = _last_hero_target if candidates[0] is HeroCard else _last_enemy_target
+	var remembered: BattleCombatant = _last_hero_target \
+		if candidates[0] is HeroCombatant else _last_enemy_target
 	_set_current_target(remembered if _is_valid_candidate(remembered) else candidates[0])
 
 

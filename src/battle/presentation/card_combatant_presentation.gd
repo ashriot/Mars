@@ -35,6 +35,7 @@ func is_target_visible() -> bool:
 
 
 func set_target_presentation(state: TargetState) -> void:
+	super.set_target_presentation(state)
 	if not is_instance_valid(card):
 		return
 	match state:
@@ -47,6 +48,13 @@ func set_target_presentation(state: TargetState) -> void:
 
 
 func set_acting(active: bool) -> void:
+	if not is_instance_valid(card):
+		return
+	if card is HeroCard:
+		if active:
+			await (card as HeroCard)._slide_up()
+		else:
+			await (card as HeroCard)._slide_down()
 	card.highlight(active)
 
 
@@ -60,3 +68,8 @@ func hide_action() -> void:
 
 func sync_visual_health() -> Tween:
 	return card.sync_visual_health()
+
+
+func refresh_intent() -> void:
+	if card is EnemyCard:
+		(card as EnemyCard).refresh_intent_presentation()

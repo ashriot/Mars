@@ -61,12 +61,11 @@ func test_lab_builds_max_party_and_forwards_rank_twenty_five_fixed_seed() -> voi
 	await get_tree().process_frame
 
 	assert_true(lab.last_build_succeeded)
-	var heroes := lab.battle_scene.manager.actor_list.filter(
-		func(actor: ActorCard) -> bool: return actor is HeroCard
-	)
-	var enemies := lab.battle_scene.manager.actor_list.filter(
-		func(actor: ActorCard) -> bool: return actor is EnemyCard
-	)
+	assert_true(lab.battle_scene.manager.actor_list.all(
+		func(actor: BattleCombatant) -> bool: return actor is BattleCombatant
+	))
+	var heroes := lab.battle_scene.manager.get_living_heroes()
+	var enemies := lab.battle_scene.manager.get_living_enemies()
 	var expected_enemy_ids: Array[String] = [
 		"attack_drone",
 		"defense_drone",
@@ -77,7 +76,7 @@ func test_lab_builds_max_party_and_forwards_rank_twenty_five_fixed_seed() -> voi
 	assert_eq(_authored_enemy_ids(authored_enemies), expected_enemy_ids)
 	assert_eq(_spawned_enemy_ids(enemies), expected_enemy_ids)
 	assert_eq(lab.equipment_preset, EndgamePartyFactory.EquipmentPreset.MAX_EQUIPMENT)
-	for hero: HeroCard in heroes:
+	for hero: HeroCombatant in heroes:
 		assert_eq(hero.hero_data.weapon.tier, 5, hero.actor_name)
 		assert_eq(hero.hero_data.weapon.rank, 30, hero.actor_name)
 		assert_eq(hero.hero_data.weapon.current_xp, 0, hero.actor_name)
@@ -87,12 +86,19 @@ func test_lab_builds_max_party_and_forwards_rank_twenty_five_fixed_seed() -> voi
 	assert_eq(lab.enemy_level, 25)
 	assert_false(enemies.is_empty())
 	for enemy_index in enemies.size():
-		var enemy := enemies[enemy_index] as EnemyCard
+		var enemy := enemies[enemy_index] as EnemyCombatant
+		var enemy_card := _card_for(lab, enemy) as EnemyCard
 		var authored_enemy := authored_enemies[enemy_index] as EnemyData
 		var unscaled_stats := _enemy_stats_at_level(authored_enemy, lab.enemy_level)
 		var expected_hp := roundi(unscaled_stats.max_hp * lab.enemy_hp_multiplier)
 		assert_eq(enemy.enemy_data.level, 25, enemy.actor_name)
-		assert_eq(enemy.get_node("Panel/Info/Text").text, "Rk. 25", enemy.actor_name)
+		assert_not_null(enemy_card, enemy.actor_name)
+		if enemy_card != null:
+			assert_eq(
+				enemy_card.get_node("Panel/Info/Text").text,
+				"Rk. 25",
+				enemy.actor_name,
+			)
 		assert_eq(enemy.current_stats.max_hp, expected_hp, enemy.actor_name)
 		assert_eq(enemy.current_hp, expected_hp, enemy.actor_name)
 		assert_eq(enemy.current_stats.attack, unscaled_stats.attack, enemy.actor_name)
@@ -116,11 +122,9 @@ func test_hp_multiplier_remains_active_when_enemy_rank_changes_to_thirty() -> vo
 
 	assert_true(lab.start_benchmark())
 	await get_tree().process_frame
-	var enemies := lab.battle_scene.manager.actor_list.filter(
-		func(actor: ActorCard) -> bool: return actor is EnemyCard
-	)
+	var enemies := lab.battle_scene.manager.get_living_enemies()
 	for enemy_index in enemies.size():
-		var enemy := enemies[enemy_index] as EnemyCard
+		var enemy := enemies[enemy_index] as EnemyCombatant
 		var authored_enemy := authored_enemies[enemy_index] as EnemyData
 		var unscaled_stats := _enemy_stats_at_level(authored_enemy, lab.enemy_level)
 		assert_eq(
@@ -137,7 +141,7 @@ func test_spawned_heroes_retain_complete_benchmark_kits() -> void:
 	await get_tree().process_frame
 
 	assert_true(lab.last_build_succeeded)
-	for hero: HeroCard in _spawned_heroes(lab):
+	for hero: HeroCombatant in _spawned_heroes(lab):
 		for definition: RoleDefinition in hero.hero_data.role_definitions:
 			var role := _loaded_role(hero, definition.role_id)
 			assert_not_null(role, "%s/%s" % [hero.hero_data.hero_id, definition.role_id])
@@ -276,12 +280,8 @@ func _restore_current_slot_file(state: Dictionary) -> void:
 		DirAccess.remove_absolute(path)
 
 
-func _spawned_heroes(lab: EndgameBattleLab) -> Array[HeroCard]:
-	var heroes: Array[HeroCard] = []
-	for actor: ActorCard in lab.battle_scene.manager.actor_list:
-		if actor is HeroCard:
-			heroes.append(actor as HeroCard)
-	return heroes
+func _spawned_heroes(lab: EndgameBattleLab) -> Array[HeroCombatant]:
+	return lab.battle_scene.manager.get_living_heroes()
 
 
 func _enemy_stats_at_level(authored_enemy: EnemyData, level: int) -> ActorStats:
@@ -300,20 +300,26 @@ func _authored_enemy_ids(enemies: Array) -> Array[String]:
 
 func _spawned_enemy_ids(enemies: Array) -> Array[String]:
 	var ids: Array[String] = []
-	for enemy: EnemyCard in enemies:
+	for enemy: EnemyCombatant in enemies:
 		ids.append(enemy.enemy_data.enemy_id)
 	return ids
 
 
-func _spawned_hero_by_id(lab: EndgameBattleLab, hero_id: String) -> HeroCard:
-	for hero: HeroCard in _spawned_heroes(lab):
+func _spawned_hero_by_id(lab: EndgameBattleLab, hero_id: String) -> HeroCombatant:
+	for hero: HeroCombatant in _spawned_heroes(lab):
 		if hero.hero_data.hero_id == hero_id:
 			return hero
 	return null
 
 
-func _loaded_role(hero: HeroCard, role_id: String) -> RoleData:
+func _loaded_role(hero: HeroCombatant, role_id: String) -> RoleData:
 	for role: RoleData in hero.loaded_roles:
 		if role.source_definition.role_id == role_id:
 			return role
 	return null
+
+
+func _card_for(lab: EndgameBattleLab, actor: BattleCombatant) -> ActorCard:
+	var presentation := lab.battle_scene.manager.presentation_for(actor)
+	return (presentation as CardCombatantPresentation).card \
+		if presentation is CardCombatantPresentation else null
