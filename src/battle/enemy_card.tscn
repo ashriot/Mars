@@ -646,10 +646,6 @@ text = "NEXT"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="RichTooltip" type="Node" parent="Panel" unique_id=1140040464]
-script = ExtResource("13_mu8yp")
-metadata/_custom_type_script = "uid://m4vn3jl6sqd6"
-
 [node name="Debuffs" type="HBoxContainer" parent="." unique_id=145389976]
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 1
@@ -706,6 +702,10 @@ grow_horizontal = 2
 grow_vertical = 2
 focus_mode = 1
 mouse_filter = 0
+
+[node name="RichTooltip" type="Node" parent="InputSurface" unique_id=1140040464]
+script = ExtResource("13_mu8yp")
+metadata/_custom_type_script = "uid://m4vn3jl6sqd6"
 
 [connection signal="gui_input" from="InputSurface" to="." method="_on_gui_input"]
 [connection signal="mouse_entered" from="InputSurface" to="." method="_on_target_mouse_entered"]

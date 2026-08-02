@@ -13,7 +13,7 @@ signal target_hovered(actor: ActorCard)
 signal target_unhovered(actor: ActorCard)
 
 # --- UI Node References (Shared) ---
-@onready var rich_tooltip: RichTooltip = $Panel/RichTooltip
+@onready var rich_tooltip: RichTooltip = $InputSurface/RichTooltip
 @onready var name_label: Label = $Panel/Title
 @onready var hp_bar_ghost: ProgressBar = $Panel/HP/BarGhost
 @onready var hp_bar_actual: ProgressBar = $Panel/HP/BarActual
