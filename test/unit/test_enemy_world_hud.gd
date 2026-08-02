@@ -7,18 +7,21 @@ const WORLD_SCENE := preload("res://src/battle/presentation/battle_world_3d.tscn
 var _saved_input_mode: InputManager.InputMode
 var _saved_presentation_mode: InputManager.PresentationMode
 var _saved_consumed_mouse_button: MouseButton
+var _saved_mouse_mode: Input.MouseMode
 
 
 func before_each() -> void:
 	_saved_input_mode = InputManager._active_mode
 	_saved_presentation_mode = InputManager._presentation_mode
 	_saved_consumed_mouse_button = InputManager._consumed_mouse_button
+	_saved_mouse_mode = Input.mouse_mode
 
 
 func after_each() -> void:
-	InputManager._active_mode = _saved_input_mode
-	InputManager._presentation_mode = _saved_presentation_mode
+	InputManager._set_active_mode(_saved_input_mode)
+	InputManager._set_presentation_mode(_saved_presentation_mode)
 	InputManager._consumed_mouse_button = _saved_consumed_mouse_button
+	Input.mouse_mode = _saved_mouse_mode
 
 
 func _hud() -> EnemyWorldHUD:

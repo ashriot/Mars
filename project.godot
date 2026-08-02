@@ -21,6 +21,7 @@ config/icon="res://icon.svg"
 
 [autoload]
 
+ThemeBootstrap="*res://src/ui/theme_bootstrap.gd"
 DisplayProfile="*res://src/ui/display/display_profile_service.gd"
 CombatPresentationSettings="*res://src/singletons/combat_presentation_settings.gd"
 SaveSystem="*res://src/singletons/save_system.gd"
