@@ -106,6 +106,15 @@ func register_presentation(
 	combatant: BattleCombatant,
 	presentation: CombatantPresentation,
 ) -> bool:
+	return _register_presentation(combatant, presentation, null, false)
+
+
+func _register_presentation(
+	combatant: BattleCombatant,
+	presentation: CombatantPresentation,
+	view_root: Node,
+	registers_exact_view_root: bool,
+) -> bool:
 	if not is_instance_valid(combatant):
 		push_error("BattleManager cannot register an invalid combatant.")
 		return false
@@ -136,8 +145,11 @@ func register_presentation(
 		previous.set_acting(false)
 		_disconnect_presentation(previous)
 	_presentations[combatant] = presentation
-	if previous != null and previous != presentation:
-		_presentation_view_roots.erase(combatant)
+	if previous != presentation:
+		if registers_exact_view_root:
+			_presentation_view_roots[combatant] = view_root
+		else:
+			_presentation_view_roots.erase(combatant)
 	if not presentation.target_hovered.is_connected(_on_target_hovered):
 		presentation.target_hovered.connect(_on_target_hovered)
 	if not presentation.target_unhovered.is_connected(_on_target_unhovered):
@@ -163,6 +175,19 @@ func presentation_for(combatant: BattleCombatant) -> CombatantPresentation:
 		_prune_stale_presentations()
 		return null
 	return candidate as CombatantPresentation
+
+
+func has_active_battle_world() -> bool:
+	return is_instance_valid(battle_world) \
+		and battle_world.is_inside_tree() \
+		and battle_world.visible
+
+
+func presentation_uses_battle_world(combatant: BattleCombatant) -> bool:
+	var view_root := presentation_view_root_for(combatant)
+	return is_instance_valid(battle_world) \
+		and is_instance_valid(view_root) \
+		and battle_world.is_ancestor_of(view_root)
 
 
 func presentation_view_root_for(combatant: BattleCombatant) -> Node:
@@ -455,10 +480,9 @@ func _spawn_presentation_view(
 		)
 		view_root.free()
 		return null
-	if not register_presentation(combatant, presentation):
+	if not _register_presentation(combatant, presentation, view_root, true):
 		view_root.free()
 		return null
-	_presentation_view_roots[combatant] = view_root
 	return presentation
 
 
@@ -551,6 +575,10 @@ func spawn_encounter(
 		encounter_combatants.append(enemy)
 		spawned_enemies.append(enemy)
 		_connect_combatant_signals(enemy)
+	if not spawned_enemies.is_empty() and not has_active_battle_world():
+		push_error("BattleManager requires an active BattleWorld3D for enemy views.")
+		_discard_encounter_spawn(encounter_combatants)
+		return
 
 	var current_indices = {}
 	var suffixes = [" A", " B", " C", " D"]
@@ -564,12 +592,19 @@ func spawn_encounter(
 				enemy.actor_name = new_name
 				enemy.current_stats.actor_name = new_name
 				current_indices[base_name] = idx + 1
-		var enemy_view_parent: Node = battle_world.enemy_views \
-			if is_instance_valid(battle_world) else null
+		if not has_active_battle_world():
+			push_error("BattleManager requires an active BattleWorld3D for enemy views.")
+			_discard_encounter_spawn(encounter_combatants)
+			return
+		var enemy_view_parent: Node = battle_world.enemy_views
 		var presentation := _spawn_presentation_view(
 			enemy_view_scene, enemy_view_parent, enemy,
 		)
 		if presentation == null:
+			_discard_encounter_spawn(encounter_combatants)
+			return
+		if not has_active_battle_world():
+			push_error("BattleManager requires an active BattleWorld3D for enemy views.")
 			_discard_encounter_spawn(encounter_combatants)
 			return
 		var view_root := presentation_view_root_for(enemy) as Node3D

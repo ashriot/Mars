@@ -794,6 +794,32 @@ func test_drone_targeting_uses_projected_heads_wraps_and_forwards_exact_enemy() 
 	assert_same(manager.selected_enemy, first, "controller confirmation forwards its exact model")
 
 
+func test_runtime_hidden_world_removes_projected_enemies_from_targeting_until_shown() -> void:
+	var fixture := await _drone_navigation_fixture()
+	var scene := fixture.scene as BattleScene
+	var manager := fixture.manager as TrackingBattleManager
+	var enemies: Array = fixture.enemies
+	var first := enemies[0] as EnemyCombatant
+	scene._set_current_target(first)
+	assert_same(scene._current_target, first)
+
+	manager.battle_world.hide()
+	await get_tree().process_frame
+
+	assert_true(scene._valid_targets().is_empty())
+	assert_null(scene._current_target)
+	assert_false(manager.battle_world.hud_layer.visible)
+	manager.selected_enemy = null
+	scene.confirm_target()
+	assert_null(manager.selected_enemy)
+
+	manager.battle_world.show()
+	await get_tree().process_frame
+
+	assert_eq(scene._valid_targets().size(), 2)
+	assert_true(manager.battle_world.hud_layer.visible)
+
+
 func test_presentation_replacement_routes_input_only_from_current_registration() -> void:
 	var scene := BattleScene.new()
 	var manager := TrackingBattleManager.new()

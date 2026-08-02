@@ -51,6 +51,9 @@ class NoOpSetupPresentation extends CombatantPresentation:
 
 
 class ProjectedNode3DPresentation extends CombatantPresentation:
+	func begin_pending_operation() -> PresentationOperation:
+		return _begin_operation()
+
 	func get_target_screen_position() -> Vector2:
 		var root := get_parent() as Node3D
 		return Vector2(root.position.x, root.position.z) \
@@ -349,6 +352,38 @@ func test_spawned_presentation_replacement_tracks_only_the_new_exact_root() -> v
 	replacement_root.free()
 
 
+func test_spawned_replacement_publishes_presentation_and_root_before_cancellation() -> void:
+	var manager := TestBattleManager.new()
+	var world := BattleWorldScene.instantiate() as BattleWorld3D
+	manager.add_child(world)
+	add_child_autofree(manager)
+	var enemy := _combatant(100, BattleCombatant.Faction.ENEMY, manager)
+	var scene := _projected_node_3d_view_scene()
+	var first := manager._spawn_presentation_view(
+		scene, world.enemy_views, enemy,
+	) as ProjectedNode3DPresentation
+	var operation := first.begin_pending_operation()
+	var observed_presentation: Array[CombatantPresentation] = []
+	var observed_root: Array[Node] = []
+	operation.completed.connect(
+		func() -> void:
+			observed_presentation.append(manager.presentation_for(enemy))
+			observed_root.append(manager.presentation_view_root_for(enemy))
+	)
+
+	var replacement := manager._spawn_presentation_view(
+		scene, world.enemy_views, enemy,
+	)
+	var replacement_root := manager.presentation_view_root_for(enemy)
+
+	assert_true(operation.is_completed)
+	assert_eq(observed_presentation.size(), 1)
+	assert_eq(observed_root.size(), 1)
+	assert_same(observed_presentation[0], replacement)
+	assert_same(observed_root[0], replacement_root)
+	assert_ne(observed_root[0], first.get_parent())
+
+
 func test_failed_later_enemy_view_rolls_back_only_exact_spawn_roots() -> void:
 	FailAfterFirstNode3DPresentation.setup_calls = 0
 	var fixture := _spawn_manager_with_world(
@@ -393,6 +428,24 @@ func test_boss_flagged_encounter_still_places_five_enemy_roots_in_ordinary_m_lay
 		Vector3(0.0, 0.0, 1.4),
 		Vector3(3.6, 0.0, 1.0),
 	], true)
+
+
+func test_spawn_encounter_rejects_a_runtime_hidden_battle_world() -> void:
+	var fixture := _spawn_manager_with_world(_projected_node_3d_view_scene())
+	var manager := fixture.manager as SpawnFailureBattleManager
+	var world := fixture.world as BattleWorld3D
+	manager.current_encounter.enemies = _five_unique_enemies().slice(0, 1)
+	world.hide()
+
+	await manager.spawn_encounter([], 3, 41, false)
+
+	assert_push_error("active BattleWorld3D")
+	assert_true(manager.actor_list.is_empty())
+	assert_eq(manager.combatant_root.get_child_count(), 0)
+	assert_eq(world.enemy_views.get_child_count(), 0)
+	assert_true(manager._presentations.is_empty())
+	assert_true(manager._presentation_view_roots.is_empty())
+	assert_eq(manager.fade_calls, 0)
 
 
 func test_registry_rejects_one_presentation_for_two_combatants() -> void:

@@ -86,6 +86,57 @@ func test_battle_scene_world_replaces_only_legacy_enemy_lane_and_backdrop() -> v
 	assert_true(world.hud_layer.visible)
 
 
+func test_enemy_hud_canvas_is_effectively_between_world_and_player_ui() -> void:
+	var battle := await _battle_in_viewport(DECK_SIZE)
+	var world := battle.manager.battle_world
+	var enemy_hud_canvas := world.get_node("EnemyHUDCanvas") as CanvasLayer
+	var enemy_hud_layer := _effective_canvas_layer(world.hud_layer)
+	var player_ui_layer := _effective_canvas_layer(battle.get_node("UI"))
+
+	assert_same(world.hud_layer.get_parent(), enemy_hud_canvas)
+	assert_eq(enemy_hud_layer, enemy_hud_canvas.layer)
+	assert_lt(enemy_hud_layer, player_ui_layer)
+	assert_true(world.hud_layer.visible, "enemy HUD remains a canvas overlay above 3D")
+
+
+func test_runtime_world_visibility_switches_fallbacks_and_projected_hud_together() -> void:
+	var battle := await _battle_in_viewport(DECK_SIZE)
+	var world := battle.manager.battle_world
+
+	world.hide()
+	await get_tree().process_frame
+
+	assert_true(battle.get_node("UI/Backdrop").visible)
+	assert_true(battle.get_node("UI/Enemies/HBox").visible)
+	assert_false(world.hud_layer.visible)
+
+	world.show()
+	await get_tree().process_frame
+
+	assert_false(battle.get_node("UI/Backdrop").visible)
+	assert_false(battle.get_node("UI/Enemies/HBox").visible)
+	assert_true(world.hud_layer.visible)
+
+
+func test_runtime_world_removal_and_readdition_switches_the_same_layers() -> void:
+	var battle := await _battle_in_viewport(DECK_SIZE)
+	var world := battle.manager.battle_world
+
+	battle.remove_child(world)
+	await get_tree().process_frame
+
+	assert_true(battle.get_node("UI/Backdrop").visible)
+	assert_true(battle.get_node("UI/Enemies/HBox").visible)
+	assert_false(world.hud_layer.visible)
+
+	battle.add_child(world)
+	await get_tree().process_frame
+
+	assert_false(battle.get_node("UI/Backdrop").visible)
+	assert_false(battle.get_node("UI/Enemies/HBox").visible)
+	assert_true(world.hud_layer.visible)
+
+
 func test_battle_scene_without_world_restores_legacy_visual_fallbacks() -> void:
 	var viewport := SubViewport.new()
 	viewport.size = DECK_SIZE
@@ -160,6 +211,15 @@ func _assert_five_projected_enemy_huds_fit(window_size: Vector2i) -> void:
 				window_size.x, window_size.y,
 			],
 		)
+
+
+func _effective_canvas_layer(node: Node) -> int:
+	var current := node
+	while current != null:
+		if current is CanvasLayer:
+			return (current as CanvasLayer).layer
+		current = current.get_parent()
+	return 0
 
 
 func _enemy(actor_name: String) -> EnemyCombatant:

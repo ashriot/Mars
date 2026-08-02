@@ -19,6 +19,7 @@ const TURN_QUEUE_TOP_MARGIN_COMPACT := 16.0
 const TURN_QUEUE_BOTTOM_MARGIN_COMPACT := 300.0
 
 func _ready():
+	_connect_battle_world_activity()
 	_configure_presentation_layers()
 	DisplayProfile.bind(apply_display_profile)
 	manager.battle_ended.connect(_on_battle_ended)
@@ -40,16 +41,45 @@ func _ready():
 
 
 func _configure_presentation_layers() -> void:
-	var world_is_active := manager != null \
-		and is_instance_valid(manager.battle_world) \
-		and manager.battle_world.is_inside_tree() \
-		and manager.battle_world.visible
+	var world_is_active := manager != null and manager.has_active_battle_world()
 	var backdrop := get_node_or_null("UI/Backdrop") as Control
 	if backdrop:
 		backdrop.visible = not world_is_active
 	var legacy_enemy_lane := get_node_or_null("UI/Enemies/HBox") as Control
 	if legacy_enemy_lane:
 		legacy_enemy_lane.visible = not world_is_active
+	if manager != null and is_instance_valid(manager.battle_world) \
+		and is_instance_valid(manager.battle_world.hud_layer):
+		manager.battle_world.hud_layer.visible = world_is_active
+
+
+func _connect_battle_world_activity() -> void:
+	if manager == null or not is_instance_valid(manager.battle_world):
+		return
+	var world := manager.battle_world
+	if not world.visibility_changed.is_connected(_on_battle_world_activity_changed):
+		world.visibility_changed.connect(_on_battle_world_activity_changed)
+	if not world.tree_entered.is_connected(_on_battle_world_activity_changed):
+		world.tree_entered.connect(_on_battle_world_activity_changed)
+	if not world.tree_exited.is_connected(_on_battle_world_activity_changed):
+		world.tree_exited.connect(_on_battle_world_activity_changed)
+
+
+func _disconnect_battle_world_activity() -> void:
+	if manager == null or not is_instance_valid(manager.battle_world):
+		return
+	var world := manager.battle_world
+	if world.visibility_changed.is_connected(_on_battle_world_activity_changed):
+		world.visibility_changed.disconnect(_on_battle_world_activity_changed)
+	if world.tree_entered.is_connected(_on_battle_world_activity_changed):
+		world.tree_entered.disconnect(_on_battle_world_activity_changed)
+	if world.tree_exited.is_connected(_on_battle_world_activity_changed):
+		world.tree_exited.disconnect(_on_battle_world_activity_changed)
+
+
+func _on_battle_world_activity_changed() -> void:
+	_configure_presentation_layers()
+	_refresh_targeting()
 
 
 func apply_display_profile(profile: int, window_size: Vector2i, logical_size: Vector2) -> void:
@@ -69,6 +99,7 @@ func apply_display_profile(profile: int, window_size: Vector2i, logical_size: Ve
 
 
 func _exit_tree() -> void:
+	_disconnect_battle_world_activity()
 	_clear_current_target(false)
 	if manager:
 		manager._clear_all_targeting_ui()
@@ -328,6 +359,10 @@ func _target_position(combatant: BattleCombatant) -> Vector2:
 
 
 func _is_presentation_visible(combatant: BattleCombatant) -> bool:
+	if manager != null \
+		and manager.presentation_uses_battle_world(combatant) \
+		and not manager.has_active_battle_world():
+		return false
 	var presentation := manager.presentation_for(combatant) if manager != null else null
 	return presentation != null and presentation.is_target_visible()
 
