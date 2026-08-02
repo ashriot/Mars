@@ -230,6 +230,7 @@ func unregister_presentation(combatant: BattleCombatant) -> void:
 
 
 func _disconnect_presentation(presentation: CombatantPresentation) -> void:
+	presentation.cancel_pending_operations()
 	if presentation.target_hovered.is_connected(_on_target_hovered):
 		presentation.target_hovered.disconnect(_on_target_hovered)
 	if presentation.target_unhovered.is_connected(_on_target_unhovered):
@@ -334,7 +335,12 @@ func _set_target_state(
 func _set_actor_acting(combatant: BattleCombatant, active: bool) -> void:
 	var presentation := presentation_for(combatant)
 	if presentation != null:
-		await presentation.set_acting(active)
+		await _await_presentation_operation(presentation.set_acting(active))
+
+
+func _await_presentation_operation(operation: PresentationOperation) -> void:
+	if operation != null and not operation.is_completed:
+		await operation.completed
 
 
 func _show_action(combatant: BattleCombatant, action_name: String) -> void:
@@ -346,7 +352,7 @@ func _show_action(combatant: BattleCombatant, action_name: String) -> void:
 func _hide_action(combatant: BattleCombatant) -> void:
 	var presentation := presentation_for(combatant)
 	if presentation != null:
-		await presentation.hide_action()
+		await _await_presentation_operation(presentation.hide_action())
 
 func change_state(new_state):
 	if current_state == State.BATTLE_OVER:
@@ -1479,18 +1485,19 @@ func get_targets(
 
 func _flush_all_health_animations() -> void:
 	var continuation := _capture_continuation(current_actor, executing_action)
-	var tweens_to_await = []
+	var operations_to_await: Array[PresentationOperation] = []
 	for actor: BattleCombatant in _all_combatants_with_presentations():
 		var presentation := presentation_for(actor)
-		var new_tween := presentation.sync_visual_health() if presentation != null else null
-		if new_tween:
-			tweens_to_await.append(new_tween)
+		if presentation != null:
+			var operation: PresentationOperation = presentation.sync_visual_health()
+			if operation != null and not operation.is_completed:
+				operations_to_await.append(operation)
 
-	if tweens_to_await.is_empty(): return
+	if operations_to_await.is_empty(): return
 	print("flushing health animations")
 
-	for tween in tweens_to_await:
-		await tween.finished
+	for operation: PresentationOperation in operations_to_await:
+		await _await_presentation_operation(operation)
 		if not _continuation_is_current(continuation):
 			return
 

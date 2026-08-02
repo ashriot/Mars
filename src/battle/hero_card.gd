@@ -81,7 +81,7 @@ func update_focus_bar(animate: bool = true):
 func highlight(value: bool):
 	highlight_panel.visible = value
 
-func _slide_up():
+func _slide_up() -> Tween:
 	var tween = create_tween().set_parallel()
 	tween.tween_property(
 		panel,
@@ -90,8 +90,9 @@ func _slide_up():
 		duration
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	tween.tween_property(panel, "self_modulate:a", 1.0, duration)
+	return tween
 
-func _slide_down():
+func _slide_down() -> Tween:
 	var tween = create_tween().set_parallel()
 	tween.tween_property(
 		panel,
@@ -100,6 +101,7 @@ func _slide_down():
 		duration
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 	tween.tween_property(panel, "self_modulate:a", 1.0, duration)
+	return tween
 
 func _on_gui_input(event: InputEvent):
 	if event.is_action_pressed("ui_accept"):

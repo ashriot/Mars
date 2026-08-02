@@ -300,11 +300,12 @@ func show_action(action_name: String):
 	var tween = create_tween()
 	tween.tween_property(action_display, "modulate:a", 1.0, duration)
 
-func hide_action():
+func hide_action() -> Tween:
 	var duration = 0.3 / battle_manager.battle_speed
 	var tween = create_tween()
 	tween.tween_property(action_display, "modulate:a", 0.0, duration)
-	await tween.finished.connect(func(): action_display.hide())
+	tween.finished.connect(func(): action_display.hide(), CONNECT_ONE_SHOT)
+	return tween
 
 func show_next():
 	#next_panel.show()

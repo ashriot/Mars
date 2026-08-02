@@ -36,8 +36,8 @@ class QuietEnemy extends EnemyCard:
 	func show_action(_action_name: String) -> void:
 		return
 
-	func hide_action() -> void:
-		return
+	func hide_action() -> Tween:
+		return null
 
 
 class IntentRefreshPresentation extends CombatantPresentation:

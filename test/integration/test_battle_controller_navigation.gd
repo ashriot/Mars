@@ -202,11 +202,18 @@ class AsyncActingPresentation extends CombatantPresentation:
 	var acting_calls: Array[bool] = []
 	var visual_acting := false
 
-	func set_acting(active: bool) -> void:
-		super.set_acting(active)
+	func set_acting(active: bool):
+		acting = active
 		acting_calls.append(active)
-		await get_tree().process_frame
+		var operation := _begin_operation()
+		get_tree().process_frame.connect(
+			_complete_acting.bind(active, operation), CONNECT_ONE_SHOT,
+		)
+		return operation
+
+	func _complete_acting(active: bool, operation: PresentationOperation) -> void:
 		visual_acting = active
+		operation.complete()
 
 
 class TrackingBattleManager extends BattleManager:

@@ -89,28 +89,30 @@ func set_target_presentation(state: TargetState) -> void:
 			card.set_target_presentation(ActorCard.TargetPresentation.SELECTED)
 
 
-func set_acting(active: bool) -> void:
-	super.set_acting(active)
+func set_acting(active: bool):
+	acting = active
 	if not is_instance_valid(card):
-		return
+		return PresentationOperation.already_completed()
+	var tween: Tween
 	if card is HeroCard:
 		if active:
-			await (card as HeroCard)._slide_up()
+			tween = (card as HeroCard)._slide_up()
 		else:
-			await (card as HeroCard)._slide_down()
+			tween = (card as HeroCard)._slide_down()
 	card.highlight(active)
+	return _operation_for_tween(tween)
 
 
 func show_action(action_name: String) -> void:
 	card.show_action(action_name)
 
 
-func hide_action() -> void:
-	card.hide_action()
+func hide_action():
+	return _operation_for_tween(card.hide_action())
 
 
-func sync_visual_health() -> Tween:
-	return card.sync_visual_health()
+func sync_visual_health():
+	return _operation_for_tween(card.sync_visual_health())
 
 
 func refresh_intent() -> void:
