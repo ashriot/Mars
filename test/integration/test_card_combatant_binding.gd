@@ -792,6 +792,28 @@ func test_card_shake_setting_zero_is_a_true_no_op() -> void:
 	CombatPresentationSettings.set_shake_intensity(saved_intensity, false)
 
 
+func test_partial_shake_setting_scales_the_whole_requested_displacement() -> void:
+	var saved_intensity := CombatPresentationSettings.shake_intensity
+	var full_card := HeroCardScene.instantiate() as HeroCard
+	var partial_card := HeroCardScene.instantiate() as HeroCard
+	add_child_autofree(full_card)
+	add_child_autofree(partial_card)
+	var full_home := full_card.position
+	var partial_home := partial_card.position
+	CombatPresentationSettings.set_shake_intensity(1.0, false)
+	full_card.shake_panel(1.0)
+	full_card.shake_tween.custom_step(0.025)
+	var full_displacement := full_card.position.y - full_home.y
+	CombatPresentationSettings.set_shake_intensity(0.1, false)
+	partial_card.shake_panel(1.0)
+	partial_card.shake_tween.custom_step(0.025)
+	var partial_displacement := partial_card.position.y - partial_home.y
+
+	assert_gt(full_displacement, 0.0)
+	assert_almost_eq(partial_displacement, full_displacement * 0.1, 0.001)
+	CombatPresentationSettings.set_shake_intensity(saved_intensity, false)
+
+
 func test_card_adapter_forwards_particles_through_presentation_contract() -> void:
 	var card := HeroCardScene.instantiate() as HeroCard
 	add_child_autofree(card)

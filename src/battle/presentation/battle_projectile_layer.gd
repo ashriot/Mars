@@ -9,18 +9,27 @@ class_name BattleProjectileLayer
 var active_lasers: Array[Line2D] = []
 var active_tweens: Dictionary = {}
 var _active_operations: Dictionary = {}
+var _is_tearing_down := false
 
 
 func _exit_tree() -> void:
+	_is_tearing_down = true
+	var pending_operations: Array[PresentationOperation] = []
+	var pending_tweens: Array[Tween] = []
 	for operation_value: Variant in _active_operations.keys():
 		var operation := operation_value as PresentationOperation
 		var tween := active_tweens.get(operation) as Tween
-		if tween != null and tween.is_valid():
-			tween.kill()
-		operation.complete()
+		pending_operations.append(operation)
+		if tween != null:
+			pending_tweens.append(tween)
 	active_lasers.clear()
 	active_tweens.clear()
 	_active_operations.clear()
+	for tween: Tween in pending_tweens:
+		if tween.is_valid():
+			tween.kill()
+	for operation: PresentationOperation in pending_operations:
+		operation.complete()
 
 
 func fire_laser(
@@ -28,7 +37,9 @@ func fire_laser(
 	to_screen: Vector2,
 	color: Color,
 ) -> PresentationOperation:
-	if not is_instance_valid(effect_root) or not is_inside_tree():
+	if _is_tearing_down \
+		or not is_instance_valid(effect_root) \
+		or not is_inside_tree():
 		return PresentationOperation.already_completed()
 	var laser := Line2D.new()
 	laser.name = "Laser"

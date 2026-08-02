@@ -347,9 +347,11 @@ func _stop_breach_pulse():
 	breached_label.self_modulate = Color.WHITE
 
 func shake_panel(intensity: float = 0.5):
-	var effective_intensity := clampf(intensity, 0.0, 1.0) \
-		* CombatPresentationSettings.shake_intensity
-	if is_zero_approx(effective_intensity):
+	var requested_intensity := clampf(intensity, 0.0, 1.0)
+	var shared_setting := clampf(
+		CombatPresentationSettings.shake_intensity, 0.0, 1.0,
+	)
+	if is_zero_approx(requested_intensity * shared_setting):
 		return
 	var home_position = position
 	# Kill old shake if it's running
@@ -357,7 +359,7 @@ func shake_panel(intensity: float = 0.5):
 		shake_tween.kill()
 
 	# 1. Define shake properties
-	var shake_strength = 5.0 + (20.0 * effective_intensity)
+	var shake_strength = (5.0 + 20.0 * requested_intensity) * shared_setting
 	var duration = 0.05
 
 	# 2. Create the tween
