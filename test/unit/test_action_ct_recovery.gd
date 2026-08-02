@@ -1,6 +1,6 @@
 extends GutTest
 
-const CardTestFactory := preload("res://test/helpers/card_test_factory.gd")
+const CardSceneTestFixture := preload("res://test/helpers/card_scene_test_fixture.gd")
 
 
 class RecoveryTrait extends Trait:
@@ -16,7 +16,7 @@ class ImmediateBattleManager extends BattleManager:
 
 
 func _actor() -> HeroCard:
-	var actor := CardTestFactory.hero()
+	var actor := CardSceneTestFixture.hero(self)
 	actor.current_stats = ActorStats.new()
 	actor.current_stats.speed = 100
 	return actor

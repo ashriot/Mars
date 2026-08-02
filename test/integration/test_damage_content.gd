@@ -1,6 +1,6 @@
 extends GutTest
 
-const CardTestFactory := preload("res://test/helpers/card_test_factory.gd")
+const CardSceneTestFixture := preload("res://test/helpers/card_scene_test_fixture.gd")
 
 
 class UnsupportedScalingRule extends DamageScalingRule:
@@ -498,7 +498,7 @@ func before_all() -> void:
 	assert_eq(_effect_binding_regex.compile("\\{effect:([^}]+)\\}"), OK)
 	assert_eq(_obsolete_damage_binding_regex.compile("\\{dmg[0-9]+\\}"), OK)
 	assert_eq(_legacy_formula_regex.compile("\\{(?:atk|psy)[^}]*\\}"), OK)
-	_presentation_actor = CardTestFactory.hero()
+	_presentation_actor = CardSceneTestFixture.hero(self)
 	_presentation_actor.current_stats = ActorStats.new()
 	_presentation_actor.current_stats.attack = 100
 	_presentation_actor.current_stats.psyche = 100
@@ -1862,8 +1862,8 @@ func _sands_runtime_fixture() -> Dictionary:
 	var sands := _sands_runtime_hero("Sands", manager)
 	var first_ally := _sands_runtime_hero("Asher", manager)
 	var second_ally := _sands_runtime_hero("Echo", manager)
-	var enemy := CardTestFactory.bind(
-		SandsRuntimeEnemy.new(), BattleCombatant.Faction.ENEMY, null, manager,
+	var enemy := CardSceneTestFixture.bind(
+		self, SandsRuntimeEnemy.new(), BattleCombatant.Faction.ENEMY, null, manager,
 	) as SandsRuntimeEnemy
 	enemy.actor_name = "Target"
 	enemy.current_stats = ActorStats.new()
@@ -1872,9 +1872,9 @@ func _sands_runtime_fixture() -> Dictionary:
 	enemy.current_guard = 10
 	for hero: SandsRuntimeHero in [sands, first_ally, second_ally]:
 		hero.battle_manager = manager
-		manager.hero_area.add_child(hero)
+		hero.reparent(manager.hero_area)
 	enemy.battle_manager = manager
-	manager.enemy_area.add_child(enemy)
+	enemy.reparent(manager.enemy_area)
 	manager.current_actor = sands
 	manager.actor_list = [sands, first_ally, second_ally, enemy]
 	return {
@@ -1890,8 +1890,8 @@ func _sands_runtime_hero(
 	actor_name: String,
 	manager: BattleManager,
 ) -> SandsRuntimeHero:
-	var hero := CardTestFactory.bind(
-		SandsRuntimeHero.new(), BattleCombatant.Faction.HERO, null, manager,
+	var hero := CardSceneTestFixture.bind(
+		self, SandsRuntimeHero.new(), BattleCombatant.Faction.HERO, null, manager,
 	) as SandsRuntimeHero
 	hero.actor_name = actor_name
 	hero.current_stats = ActorStats.new()

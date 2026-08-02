@@ -1,6 +1,6 @@
 extends GutTest
 
-const CardTestFactory := preload("res://test/helpers/card_test_factory.gd")
+const CardSceneTestFixture := preload("res://test/helpers/card_scene_test_fixture.gd")
 
 
 class FakeDungeonMap extends DungeonMap:
@@ -221,7 +221,7 @@ func test_explicit_combat_rng_replays_and_can_return_to_default_mode() -> void:
 func test_initial_ct_head_starts_use_the_explicit_combat_rng() -> void:
 	var manager := BattleManager.new()
 	var actors: Array[ActorCard] = [
-		CardTestFactory.actor(), CardTestFactory.actor(),
+		CardSceneTestFixture.actor(self), CardSceneTestFixture.actor(self),
 	]
 	for actor: ActorCard in actors:
 		actor.current_stats = ActorStats.new()

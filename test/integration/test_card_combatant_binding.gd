@@ -9,6 +9,25 @@ class TestBattleManager extends BattleManager:
 		pass
 
 
+func _gdscript_paths(root: String) -> PackedStringArray:
+	var paths := PackedStringArray()
+	var directory := DirAccess.open(root)
+	assert_not_null(directory, "source directory exists: %s" % root)
+	if directory == null:
+		return paths
+	directory.list_dir_begin()
+	var entry := directory.get_next()
+	while not entry.is_empty():
+		var path := root.path_join(entry)
+		if directory.current_is_dir():
+			paths.append_array(_gdscript_paths(path))
+		elif entry.ends_with(".gd"):
+			paths.append(path)
+		entry = directory.get_next()
+	directory.list_dir_end()
+	return paths
+
+
 func _combatant(
 	max_hp: int = 100,
 	faction: BattleCombatant.Faction = BattleCombatant.Faction.HERO,
@@ -30,6 +49,34 @@ func _damage_result(amount: int) -> DamageResult:
 	)
 	return DamageResult.new(
 		request, amount, 0, 1.0, 1.0, 1.0, amount, amount,
+	)
+
+
+func test_preview_only_card_binding_is_reserved_for_damage_preview_snapshots() -> void:
+	assert_false(
+		FileAccess.file_exists("res://test/helpers/" + "card_test_factory.gd"),
+		"ordinary test fixtures must not default cards into preview-only binding",
+	)
+	var preview_binding := RegEx.new()
+	assert_eq(
+		preview_binding.compile("bind_combatant\\([^\\)]*,[^\\)]*\\)"),
+		OK,
+	)
+	var allowed_paths := {
+		"res://src/battle/actor_card.gd": true,
+		"res://src/battle/damage/damage_preview.gd": true,
+		"res://test/unit/test_damage_preview.gd": true,
+	}
+	var unexpected_paths := PackedStringArray()
+	for root in ["res://src", "res://test"]:
+		for path in _gdscript_paths(root):
+			var source := FileAccess.get_file_as_string(path)
+			if preview_binding.search(source) != null and not allowed_paths.has(path):
+				unexpected_paths.append(path)
+	assert_eq(
+		unexpected_paths,
+		PackedStringArray(),
+		"preview-only card bindings are limited to detached DamagePreview snapshots",
 	)
 
 

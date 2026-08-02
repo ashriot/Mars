@@ -1,6 +1,6 @@
 extends GutTest
 
-const CardTestFactory := preload("res://test/helpers/card_test_factory.gd")
+const CardSceneTestFixture := preload("res://test/helpers/card_scene_test_fixture.gd")
 
 
 const ResponsiveFixture = preload("res://test/fixtures/responsive_viewport_fixture.gd")
@@ -84,6 +84,6 @@ func _battle_in_viewport(window_size: Vector2i) -> BattleScene:
 
 
 func _enemy(actor_name: String) -> EnemyCard:
-	var actor := CardTestFactory.enemy()
+	var actor := CardSceneTestFixture.enemy(self)
 	actor.actor_name = actor_name
 	return actor

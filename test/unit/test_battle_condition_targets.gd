@@ -1,6 +1,6 @@
 extends GutTest
 
-const CardTestFactory := preload("res://test/helpers/card_test_factory.gd")
+const CardSceneTestFixture := preload("res://test/helpers/card_scene_test_fixture.gd")
 
 
 class RecordingEffect extends ActionEffect:
@@ -56,16 +56,16 @@ func test_off_turn_condition_self_target_resolves_to_condition_owner() -> void:
 	var manager := CapturingBattleManager.new()
 	var hero_area := Control.new()
 	var enemy_area := Control.new()
-	var hero := CardTestFactory.hero(null, manager)
-	var enemy := CardTestFactory.enemy(null, manager)
+	var hero := CardSceneTestFixture.hero(self, null, manager)
+	var enemy := CardSceneTestFixture.enemy(self, null, manager)
 	manager.hero_area = hero_area
 	manager.enemy_area = enemy_area
 	manager.current_actor = enemy
 	hero.battle_manager = manager
 	hero.is_defeated = false
 	enemy.is_defeated = false
-	hero_area.add_child(hero)
-	enemy_area.add_child(enemy)
+	hero.reparent(hero_area)
+	enemy.reparent(enemy_area)
 
 	var effect := ActionEffect.new()
 	effect.target_type = Action.TargetType.SELF
@@ -87,8 +87,8 @@ func test_off_turn_condition_self_target_resolves_to_condition_owner() -> void:
 
 
 func test_focus_refund_restores_paid_cost_and_consumes_condition() -> void:
-	var hero := CardTestFactory.bind(
-		ConditionHeroCard.new(), BattleCombatant.Faction.HERO,
+	var hero := CardSceneTestFixture.bind(
+		self, ConditionHeroCard.new(), BattleCombatant.Faction.HERO,
 	) as ConditionHeroCard
 	(hero.combatant as HeroCombatant).current_focus = 5
 	var refund := Condition.new()
@@ -105,8 +105,8 @@ func test_focus_refund_restores_paid_cost_and_consumes_condition() -> void:
 
 
 func test_zero_focus_modification_without_action_context_preserves_refund() -> void:
-	var hero := CardTestFactory.bind(
-		ConditionHeroCard.new(), BattleCombatant.Faction.HERO,
+	var hero := CardSceneTestFixture.bind(
+		self, ConditionHeroCard.new(), BattleCombatant.Faction.HERO,
 	) as ConditionHeroCard
 	var refund := Condition.new()
 	refund.condition_name = "Coordinate"
@@ -124,19 +124,19 @@ func test_enemy_held_condition_targets_living_allies_of_hero_caster() -> void:
 	var manager := CapturingBattleManager.new()
 	var hero_area := Control.new()
 	var enemy_area := Control.new()
-	var echo := CardTestFactory.hero(null, manager)
-	var living_hero := CardTestFactory.hero(null, manager)
-	var defeated_hero := CardTestFactory.hero(null, manager)
-	var enemy_holder := CardTestFactory.enemy(null, manager)
+	var echo := CardSceneTestFixture.hero(self, null, manager)
+	var living_hero := CardSceneTestFixture.hero(self, null, manager)
+	var defeated_hero := CardSceneTestFixture.hero(self, null, manager)
+	var enemy_holder := CardSceneTestFixture.enemy(self, null, manager)
 	manager.hero_area = hero_area
 	manager.enemy_area = enemy_area
 	manager.current_actor = enemy_holder
 	enemy_holder.battle_manager = manager
 	for hero: HeroCard in [echo, living_hero, defeated_hero]:
 		hero.is_defeated = hero == defeated_hero
-		hero_area.add_child(hero)
+		hero.reparent(hero_area)
 	enemy_holder.is_defeated = false
-	enemy_area.add_child(enemy_holder)
+	enemy_holder.reparent(enemy_area)
 
 	var effect := ActionEffect.new()
 	effect.target_type = Action.TargetType.ALL_ALLIES
@@ -161,9 +161,9 @@ func test_non_self_condition_uses_holder_allegiance_when_caster_is_invalid() -> 
 	var manager := CapturingBattleManager.new()
 	var hero_area := Control.new()
 	var enemy_area := Control.new()
-	var holder := CardTestFactory.hero(null, manager)
-	var living_hero := CardTestFactory.hero(null, manager)
-	var enemy := CardTestFactory.enemy(null, manager)
+	var holder := CardSceneTestFixture.hero(self, null, manager)
+	var living_hero := CardSceneTestFixture.hero(self, null, manager)
+	var enemy := CardSceneTestFixture.enemy(self, null, manager)
 	manager.hero_area = hero_area
 	manager.enemy_area = enemy_area
 	manager.current_actor = enemy
@@ -171,9 +171,9 @@ func test_non_self_condition_uses_holder_allegiance_when_caster_is_invalid() -> 
 	holder.is_defeated = false
 	living_hero.is_defeated = false
 	enemy.is_defeated = false
-	hero_area.add_child(holder)
-	hero_area.add_child(living_hero)
-	enemy_area.add_child(enemy)
+	holder.reparent(hero_area)
+	living_hero.reparent(hero_area)
+	enemy.reparent(enemy_area)
 
 	var effect := ActionEffect.new()
 	effect.target_type = Action.TargetType.ALL_ALLIES
@@ -196,10 +196,10 @@ func test_non_self_condition_uses_holder_allegiance_when_caster_is_invalid() -> 
 
 func test_healing_effect_heals_living_enemy_without_hero_focus_scaling() -> void:
 	var manager := CapturingBattleManager.new()
-	var attacker := CardTestFactory.enemy(null, manager)
+	var attacker := CardSceneTestFixture.enemy(self, null, manager)
 	attacker.current_stats = ActorStats.new()
 	attacker.current_stats.psyche = 20
-	var target := CardTestFactory.enemy(null, manager)
+	var target := CardSceneTestFixture.enemy(self, null, manager)
 	target.current_stats = ActorStats.new()
 	target.current_stats.max_hp = 100
 	target.hp_bar_ghost = ProgressBar.new()
@@ -354,8 +354,8 @@ func test_new_trigger_values_are_appended_after_existing_values() -> void:
 
 func _condition_fixture() -> Dictionary:
 	var manager := CapturingBattleManager.new()
-	var actor := CardTestFactory.bind(
-		ConditionActor.new(), BattleCombatant.Faction.HERO, null, manager,
+	var actor := CardSceneTestFixture.bind(
+		self, ConditionActor.new(), BattleCombatant.Faction.HERO, null, manager,
 	) as ConditionActor
 	actor.battle_manager = manager
 	manager.current_actor = actor
@@ -371,15 +371,15 @@ func _healing_target_fixture() -> Dictionary:
 	var manager := CapturingBattleManager.new()
 	var hero_area := Control.new()
 	var enemy_area := Control.new()
-	var healer := CardTestFactory.hero(null, manager)
-	var defeated := CardTestFactory.hero(null, manager)
+	var healer := CardSceneTestFixture.hero(self, null, manager)
+	var defeated := CardSceneTestFixture.hero(self, null, manager)
 	manager.hero_area = hero_area
 	manager.enemy_area = enemy_area
 	manager.current_actor = healer
 	healer.is_defeated = false
 	defeated.is_defeated = true
-	hero_area.add_child(healer)
-	hero_area.add_child(defeated)
+	healer.reparent(hero_area)
+	defeated.reparent(hero_area)
 	return {
 		manager = manager,
 		hero_area = hero_area,
@@ -397,9 +397,9 @@ func _free_healing_target_fixture(fixture: Dictionary) -> void:
 
 func _defeated_condition_healing_fixture() -> Dictionary:
 	var manager := CapturingBattleManager.new()
-	var attacker := CardTestFactory.enemy(null, manager)
-	var holder := CardTestFactory.bind(
-		ConditionHeroCard.new(), BattleCombatant.Faction.HERO, null, manager,
+	var attacker := CardSceneTestFixture.enemy(self, null, manager)
+	var holder := CardSceneTestFixture.bind(
+		self, ConditionHeroCard.new(), BattleCombatant.Faction.HERO, null, manager,
 	) as ConditionHeroCard
 	attacker.current_stats = ActorStats.new()
 	attacker.current_stats.psyche = 20

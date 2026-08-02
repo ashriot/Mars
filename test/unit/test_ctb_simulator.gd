@@ -1,5 +1,7 @@
 extends GutTest
 
+const CardSceneTestFixture := preload("res://test/helpers/card_scene_test_fixture.gd")
+
 
 class ConditionActor extends ActorCard:
 	func _fire_condition_event(
@@ -142,34 +144,19 @@ class BreachBattleManager extends BattleManager:
 		update_count += 1
 
 
-func _bind_headless(
+func _scene_backed_actor(
 	actor: ActorCard,
 	faction: BattleCombatant.Faction,
 	manager: BattleManager = null,
 ) -> ActorCard:
-	var combatant: BattleCombatant
-	if actor is HeroCard:
-		combatant = HeroCombatant.new()
-	elif actor is EnemyCard:
-		combatant = EnemyCombatant.new()
-	else:
-		combatant = BattleCombatant.new()
-	actor.add_child(combatant)
-	combatant.setup_base(ActorStats.new(), faction, manager)
-	actor.battle_manager = manager
-	actor.bind_combatant(combatant, true)
-	combatant.conditions_changed.connect(
-		func(_actor): actor.actor_conditions_changed.emit()
+	return CardSceneTestFixture.bind(
+		self, actor, faction, ActorStats.new(), manager,
 	)
-	combatant.breached.connect(
-		func(_actor): actor.actor_breached.emit(actor)
-	)
-	return actor
 
 
 func _actor(hero: bool, speed: int, ct: int, priority: int) -> ActorCard:
 	var actor: ActorCard = HeroCard.new() if hero else EnemyCard.new()
-	_bind_headless(
+	_scene_backed_actor(
 		actor,
 		BattleCombatant.Faction.HERO if hero else BattleCombatant.Faction.ENEMY,
 	)
@@ -189,7 +176,7 @@ func test_negative_ct_requires_extra_ticks() -> void:
 
 
 func test_breach_signal_supplies_actor() -> void:
-	var actor := _bind_headless(
+	var actor := _scene_backed_actor(
 		BreachSignalActor.new(), BattleCombatant.Faction.HERO,
 	) as BreachSignalActor
 	actor.actor_name = "Signal target"
@@ -210,16 +197,16 @@ func test_breach_signal_supplies_actor() -> void:
 
 func test_enemy_breach_notifies_only_living_opposing_observers() -> void:
 	var manager := BreachBattleManager.new()
-	var breached_enemy := _bind_headless(
+	var breached_enemy := _scene_backed_actor(
 		BreachObserverEnemy.new(), BattleCombatant.Faction.ENEMY, manager,
 	) as BreachObserverEnemy
-	var enemy_ally := _bind_headless(
+	var enemy_ally := _scene_backed_actor(
 		BreachObserverEnemy.new(), BattleCombatant.Faction.ENEMY, manager,
 	) as BreachObserverEnemy
-	var living_hero := _bind_headless(
+	var living_hero := _scene_backed_actor(
 		BreachObserverHero.new(), BattleCombatant.Faction.HERO, manager,
 	) as BreachObserverHero
-	var defeated_hero := _bind_headless(
+	var defeated_hero := _scene_backed_actor(
 		BreachObserverHero.new(), BattleCombatant.Faction.HERO, manager,
 	) as BreachObserverHero
 	breached_enemy.is_defeated = false
@@ -250,10 +237,10 @@ func test_enemy_breach_notifies_only_living_opposing_observers() -> void:
 
 func test_breach_awaits_enemy_observer_before_own_breached_event() -> void:
 	var manager := BreachBattleManager.new()
-	var breached_actor := _bind_headless(
+	var breached_actor := _scene_backed_actor(
 		BreachLifecycleActor.new(), BattleCombatant.Faction.ENEMY, manager,
 	) as BreachLifecycleActor
-	var observer := _bind_headless(
+	var observer := _scene_backed_actor(
 		HeroCard.new(), BattleCombatant.Faction.HERO, manager,
 	) as HeroCard
 	breached_actor.actor_name = "Awaited breach target"
@@ -441,13 +428,13 @@ func test_head_starts_add_normalized_ct_without_replacing_passive_adjustment() -
 func test_live_advancement_matches_projected_normalized_ticks() -> void:
 	var manager := AdvancementBattleManager.new()
 	manager.action_bar = ActionBar.new()
-	var winner := _bind_headless(
+	var winner := _scene_backed_actor(
 		AdvancementHero.new(), BattleCombatant.Faction.HERO, manager,
 	) as AdvancementHero
 	winner.current_stats = ActorStats.new()
 	winner.current_stats.speed = 200
 	winner.ct_speed_scale = 0.5
-	var observer := _bind_headless(
+	var observer := _scene_backed_actor(
 		ActorCard.new(), BattleCombatant.Faction.HERO, manager,
 	)
 	observer.current_stats = ActorStats.new()
@@ -521,7 +508,7 @@ func test_manager_publishes_explicit_preview_and_refresh_kinds() -> void:
 
 func test_visible_execution_commits_but_hidden_passive_execution_does_not() -> void:
 	var manager := PublishingBattleManager.new()
-	var actor := _bind_headless(
+	var actor := _scene_backed_actor(
 		PublishingActor.new(), BattleCombatant.Faction.HERO, manager,
 	) as PublishingActor
 	actor.current_stats = ActorStats.new()
@@ -545,7 +532,7 @@ func test_visible_execution_commits_but_hidden_passive_execution_does_not() -> v
 
 func test_condition_mutations_publish_one_current_queue_through_manager() -> void:
 	var manager := ConditionBattleManager.new()
-	var actor := _bind_headless(
+	var actor := _scene_backed_actor(
 		ConditionActor.new(), BattleCombatant.Faction.HERO, manager,
 	) as ConditionActor
 	actor.current_stats = ActorStats.new()
