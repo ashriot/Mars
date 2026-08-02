@@ -6,8 +6,8 @@ Implementation commit verified before this report-only amendment: `68761ebdab093
 
 - Removed the remaining gameplay compatibility properties, lifecycle methods, combat mutations, stat delegates, enemy AI delegates, and hero role/Focus delegates from `ActorCard`, `HeroCard`, and `EnemyCard`.
 - Kept cards limited to binding, rendering, animation, hover/click input, geometry, popups, and other presentation behavior. Visual code now reads authoritative state directly from the bound combatant.
-- Removed card-type knowledge from `BattleManager` encounter spawning. It now instantiates the configured view scene, binds it dynamically, and registers its `CombatantPresentation` child without treating the view as a gameplay identity.
-- Strengthened `DamagePreview` cloning so specialized Hero/Enemy copies preserve all actor stats and runtime combat state while conditions and traits remain isolated. Explicitly preserved a trait's runtime `current_tier`, which Godot's recursive resource duplicate did not copy.
+- Removed card-type knowledge from `BattleManager` encounter spawning. It now instantiates the configured view scene through the typed presentation contract, resolves exactly one root or descendant `CombatantPresentation`, and registers it without treating the view as a gameplay identity.
+- Strengthened `DamagePreview` cloning so specialized Hero/Enemy copies preserve all actor stats and damage-relevant runtime state while conditions and traits remain isolated. This includes HP, Guard, CT, CT speed scale, battle priority, Breach/Danger/defeat state, and Hero Focus; targetability plus specialized AI and role-planning state are intentionally outside the damage-preview copy. Explicitly preserved a trait's runtime `current_tier`, which Godot's recursive resource duplicate did not copy.
 - Migrated the remaining card-oriented fixtures to act on bound combatants and assert the card/view boundary directly.
 - Added direct headless Hero and Enemy tests for setup, equipment traits, boons, injury HP, Focus spend/refund signals, defeat/revival signals, enemy scaling and authored-data isolation, recovery intent, cooldown completion, and target revalidation.
 - Added an unchecked manual foundation regression section for controller-only and mouse interaction with the current 2D presentation.
@@ -94,3 +94,80 @@ The unrelated user edit in `src/dev/endgame_battle_lab.tscn` was preserved and e
 - No interactive visual, mouse, or physical-controller acceptance was performed. The new checklist items remain unchecked.
 - Automated controller-loop, target-navigation, revival, enemy-intent, card-presentation, and responsive-layout coverage are green.
 - The combatant/presentation boundary is ready for the planned 3D enemy-view work. The next asset handoff should provide local paths for the imported Quaternius environment and enemy model assets; no external kit files were added in this task.
+
+## Fix Round 1 — Typed presentation spawning
+
+Implementation fix commit verified before this report-only amendment: `0318a776bf860ee38bf3c2f1807b098ab9b85ca2` (`fix: type combatant presentation spawning`). The final amended commit is recorded in the handoff.
+
+### Findings addressed
+
+- Replaced the manager's hidden card-root protocol with `CombatantPresentation.setup_view(BattleCombatant)`. The base implementation binds the combatant, while `CardCombatantPresentation` delegates to the existing typed Hero/Enemy card setup internally and preserves its non-blocking entrance timing.
+- Added typed `CombatantPresentation.particles_requested(position, type)` events. The card adapter forwards its visual particle request through this signal, and the presentation registry connects and disconnects it alongside target input exactly once.
+- Added one generic manager spawn boundary that instantiates a configured view under a generic `Node` root, recursively resolves exactly one root or descendant `CombatantPresentation`, asserts a clear error for an invalid count, invokes typed setup, and registers it.
+- Removed manager assumptions about a root `setup_from_combatant` method, a child named `CombatantPresentation`, and a root `spawn_particles` signal. `BattleManager` contains no concrete card type or cast.
+- Broadened hero and enemy presentation roots from `Control` to `Node`, allowing a future `Node3D` view root while preserving the current scene's existing `HBoxContainer` paths.
+- Made optional particle playback safe for headless managers that intentionally have no `FXManager`.
+- Removed the unused `ActorCard.MAX_GUARD`; authoritative Guard clamping remains in `BattleCombatant.MAX_GUARD`.
+- Corrected the preview-copy claim above to all damage-relevant runtime state and explicitly documented the omitted targetability, specialized AI, and role-planning state.
+
+### TDD and regression evidence
+
+1. Added real runtime-packed view scenes with a bare `CombatantPresentation` root and a presentation nested beneath a non-card `Node3D` root.
+   - RED: `card_combatant_binding` was 11/13 passing with 56/58 assertions because the typed manager spawn boundary and presentation event contract did not exist.
+   - GREEN: both shapes bind their exact models, register under the manager, retain their generic roots, require no card method/signal, and unregister cleanly when freed.
+2. Added presentation event lifecycle and card-adapter forwarding coverage.
+   - Replacement/teardown coverage verifies duplicate registration routes one event, the replaced view routes none, the replacement routes one, and an unregistered view routes none.
+   - Mutation RED: with card particle forwarding removed, `card_combatant_binding` was 13/14 passing with 75/76 assertions because `particles_requested` was not emitted.
+   - Final GREEN after typed forwarding and test refactor: 14/14 passing, 74 assertions.
+3. Broader AI coverage exposed the newly centralized visual event at a headless boundary.
+   - RED: `enemy_ai_intents` was 22/23 passing with 71/72 assertions because a manually registered card presentation requested particles from a manager with no `FXManager`.
+   - GREEN: the optional visual consumer now returns when the service is absent; `enemy_ai_intents` is 23/23 passing with 71 assertions and the real damage turn remains intact.
+4. The real controller loop proves card setup remains non-blocking through the new typed presentation entry point: 2/2 passing, 104 assertions.
+
+### Dirty-workspace verification
+
+Every Godot invocation used `HOME=/tmp/mars-godot-home` and Godot 4.6.3.
+
+- Headless editor import and parse: exit 0 with no parser errors.
+- `card_combatant_binding`: 14/14 passing, 74 assertions.
+- `damage_preview`: 39/39 passing, 173 assertions.
+- `hero_combatant`: 4/4 passing, 17 assertions.
+- `enemy_combatant`: 4/4 passing, 21 assertions.
+- `actor_card_target_presentation`: 8/8 passing, 61 assertions.
+- `ctb_action_content`: 4/4 passing, 20 assertions.
+- `battle_controller_navigation`: 78/78 passing, 434 assertions.
+- `controller_playable_loop`: 2/2 passing, 104 assertions.
+- `battle_revival`: 6/6 passing, 27 assertions.
+- `enemy_ai_intents`: 23/23 passing, 71 assertions.
+- `battle_responsive_layout`: 2/2 passing, 12 assertions.
+- Complete GUT suite: 927/928 passing, 14,555/14,556 assertions across 68 scripts.
+- The sole full-suite failure remains the intentionally preserved unrelated user edit in `src/dev/endgame_battle_lab.tscn`: its enemy HP multiplier is `1.0`, while the committed test fixture expects `5.0`.
+
+Discovery and hazard audits:
+
+- The repository still contains exactly 68 configured `test_*.gd` files and GUT discovered exactly 68 scripts.
+- No pending or skip directives were found; the full log contained no parser, script, unexpected, skipped, or pending test errors.
+- `BattleManager` contains no card types/casts, dynamic setup calls, hard-coded presentation child lookup, or root particle-signal connection.
+- Card types remain confined to the card presentation layer; gameplay-domain card, duplicate-state, and wrapper scans remain clean.
+- `ActorCard.MAX_GUARD` has no remaining declaration or use, and `git diff --check` passed.
+
+### Clean committed-state verification
+
+- Cloned fix commit `0318a776bf860ee38bf3c2f1807b098ab9b85ca2` with `--no-local` into `/tmp/mars-task8-fix1-verify.mkhtzZ/repo` and used `/tmp/mars-task8-fix1-verify.mkhtzZ/home` as its isolated `HOME`/save root.
+- After the clean clone's one-time asset import, headless editor import and parse exited 0 with no parser, script, or resource-load errors.
+- Complete GUT suite: 928/928 passing, 14,556 assertions across exactly 68 scripts, exit 0.
+- The clean full-run hazard scan found no failing, skipped, pending, parser-error, script-error, or unexpected-error entries.
+- `git status --short` remained empty in the verification clone; only ignored Godot import cache files were generated.
+- The temporary `/tmp/mars-task8-fix1-verify.mkhtzZ` verification root was removed after the results were captured.
+- The final amendment changes this Markdown report only; the verified source, scene, data, and test tree is identical.
+
+### Files changed
+
+- `src/battle/actor_card.gd`
+- `src/battle/battle_manager.gd`
+- `src/battle/presentation/card_combatant_presentation.gd`
+- `src/battle/presentation/combatant_presentation.gd`
+- `test/integration/test_card_combatant_binding.gd`
+- `.superpowers/sdd/2026-08-01-battle-combatant-foundation/task-8-report.md`
+
+The unrelated user edit in `src/dev/endgame_battle_lab.tscn` remains preserved and excluded. Interactive visual, mouse, and physical-controller acceptance remains unchecked; no kit assets were added in this fix round.

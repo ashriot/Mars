@@ -5,8 +5,13 @@ const EnemyCardScene := preload("res://src/battle/enemy_card.tscn")
 
 
 class TestBattleManager extends BattleManager:
+	var particle_requests: Array[Dictionary] = []
+
 	func _ready() -> void:
 		pass
+
+	func _on_spawn_particles(pos: Vector2, type: String) -> void:
+		particle_requests.append({"position": pos, "type": type})
 
 
 func _combatant(
@@ -30,6 +35,102 @@ func _damage_result(amount: int) -> DamageResult:
 	)
 	return DamageResult.new(
 		request, amount, 0, 1.0, 1.0, 1.0, amount, amount,
+	)
+
+
+func _non_card_view_scene(nested: bool) -> PackedScene:
+	var scene := PackedScene.new()
+	var presentation := CombatantPresentation.new()
+	presentation.name = "FloatingStatus"
+	var view_root: Node = presentation
+	if nested:
+		view_root = Node3D.new()
+		view_root.name = "EnemyModel"
+		view_root.add_child(presentation)
+		presentation.owner = view_root
+	assert_eq(scene.pack(view_root), OK)
+	view_root.free()
+	return scene
+
+
+func test_manager_spawns_root_and_nested_non_card_views_through_presentation_contract() -> void:
+	var manager := TestBattleManager.new()
+	var view_parent := Node3D.new()
+	manager.add_child(view_parent)
+	add_child_autofree(manager)
+	var root_model := _combatant(100, BattleCombatant.Faction.HERO, manager)
+	var nested_model := _combatant(100, BattleCombatant.Faction.ENEMY, manager)
+
+	var root_presentation := manager._spawn_presentation_view(
+		_non_card_view_scene(false),
+		view_parent,
+		root_model,
+	)
+	var nested_presentation := manager._spawn_presentation_view(
+		_non_card_view_scene(true),
+		view_parent,
+		nested_model,
+	)
+
+	assert_not_null(root_presentation)
+	assert_not_null(nested_presentation)
+	assert_same(root_presentation.combatant, root_model)
+	assert_same(nested_presentation.combatant, nested_model)
+	assert_same(manager.presentation_for(root_model), root_presentation)
+	assert_same(manager.presentation_for(nested_model), nested_presentation)
+	assert_same(root_presentation.get_parent(), view_parent)
+	assert_true(nested_presentation.get_parent().get_parent() == view_parent)
+	assert_true(nested_presentation.get_parent() is Node3D)
+	assert_false(nested_presentation.get_parent().has_method(&"setup_from_combatant"))
+	assert_false(nested_presentation.get_parent().has_signal(&"spawn_particles"))
+
+	root_presentation.queue_free()
+	nested_presentation.get_parent().queue_free()
+	await get_tree().process_frame
+	assert_null(manager.presentation_for(root_model))
+	assert_null(manager.presentation_for(nested_model))
+	assert_true(manager._presentation_exit_callbacks.is_empty())
+
+
+func test_presentation_events_follow_registry_replacement_and_teardown_once() -> void:
+	var manager := TestBattleManager.new()
+	var model := _combatant(100, BattleCombatant.Faction.ENEMY, manager)
+	var first := CombatantPresentation.new()
+	var replacement := CombatantPresentation.new()
+	manager.add_child(first)
+	manager.add_child(replacement)
+	add_child_autofree(manager)
+	first.bind(model)
+	replacement.bind(model)
+
+	manager.register_presentation(model, first)
+	manager.register_presentation(model, first)
+	first.particles_requested.emit(Vector2(10, 20), "first")
+	manager.register_presentation(model, replacement)
+	first.particles_requested.emit(Vector2(30, 40), "stale")
+	replacement.particles_requested.emit(Vector2(50, 60), "replacement")
+	manager.unregister_presentation(model)
+	replacement.particles_requested.emit(Vector2(70, 80), "detached")
+
+	assert_eq(manager.particle_requests, [
+		{"position": Vector2(10, 20), "type": "first"},
+		{"position": Vector2(50, 60), "type": "replacement"},
+	])
+
+
+func test_card_adapter_forwards_particles_through_presentation_contract() -> void:
+	var card := HeroCardScene.instantiate() as HeroCard
+	add_child_autofree(card)
+	var model := _combatant()
+	card.bind_combatant(model)
+	watch_signals(card.presentation)
+
+	card.spawn_particles.emit(Vector2(12, 34), "gunshot")
+
+	assert_signal_emitted_with_parameters(
+		card.presentation,
+		"particles_requested",
+		[Vector2(12, 34), "gunshot"],
 	)
 
 

@@ -6,10 +6,15 @@ enum TargetState { NORMAL, AVAILABLE, SELECTED }
 signal target_hovered(combatant: BattleCombatant)
 signal target_unhovered(combatant: BattleCombatant)
 signal target_pressed(combatant: BattleCombatant)
+signal particles_requested(position: Vector2, type: String)
 
 var combatant: BattleCombatant
 var target_state := TargetState.NORMAL
 var acting := false
+
+
+func setup_view(value: BattleCombatant) -> void:
+	bind(value)
 
 
 func bind(value: BattleCombatant) -> void:

@@ -8,22 +8,54 @@ func _ready() -> void:
 	card = get_parent() as ActorCard
 
 
+func setup_view(value: BattleCombatant) -> void:
+	assert(is_instance_valid(card), "CardCombatantPresentation requires an ActorCard parent.")
+	if card is HeroCard:
+		assert(value is HeroCombatant, "HeroCard requires a HeroCombatant.")
+		(card as HeroCard).setup_from_combatant(value as HeroCombatant)
+	elif card is EnemyCard:
+		assert(value is EnemyCombatant, "EnemyCard requires an EnemyCombatant.")
+		(card as EnemyCard).setup_from_combatant(value as EnemyCombatant)
+	else:
+		card.bind_combatant(value)
+
+
 func bind(value: BattleCombatant) -> void:
 	super.bind(value)
-	card.target_hovered.connect(
-		func(_card: ActorCard): target_hovered.emit(combatant)
-	)
-	card.target_unhovered.connect(
-		func(_card: ActorCard): target_unhovered.emit(combatant)
-	)
+	if not card.target_hovered.is_connected(_on_card_target_hovered):
+		card.target_hovered.connect(_on_card_target_hovered)
+	if not card.target_unhovered.is_connected(_on_card_target_unhovered):
+		card.target_unhovered.connect(_on_card_target_unhovered)
+	if not card.spawn_particles.is_connected(_on_card_particles_requested):
+		card.spawn_particles.connect(_on_card_particles_requested)
 	if card is HeroCard:
-		(card as HeroCard).hero_clicked.connect(
-			func(_card: HeroCard): target_pressed.emit(combatant)
-		)
+		var hero_card := card as HeroCard
+		if not hero_card.hero_clicked.is_connected(_on_hero_card_clicked):
+			hero_card.hero_clicked.connect(_on_hero_card_clicked)
 	elif card is EnemyCard:
-		(card as EnemyCard).enemy_clicked.connect(
-			func(_card: EnemyCard): target_pressed.emit(combatant)
-		)
+		var enemy_card := card as EnemyCard
+		if not enemy_card.enemy_clicked.is_connected(_on_enemy_card_clicked):
+			enemy_card.enemy_clicked.connect(_on_enemy_card_clicked)
+
+
+func _on_card_target_hovered(_card: ActorCard) -> void:
+	target_hovered.emit(combatant)
+
+
+func _on_card_target_unhovered(_card: ActorCard) -> void:
+	target_unhovered.emit(combatant)
+
+
+func _on_hero_card_clicked(_card: HeroCard) -> void:
+	target_pressed.emit(combatant)
+
+
+func _on_enemy_card_clicked(_card: EnemyCard) -> void:
+	target_pressed.emit(combatant)
+
+
+func _on_card_particles_requested(position: Vector2, type: String) -> void:
+	particles_requested.emit(position, type)
 
 
 func get_target_screen_position() -> Vector2:

@@ -12,8 +12,6 @@ signal spawn_particles(pos, type)
 signal target_hovered(actor: ActorCard)
 signal target_unhovered(actor: ActorCard)
 
-const MAX_GUARD = 10
-
 # --- UI Node References (Shared) ---
 @onready var rich_tooltip: RichTooltip = $Panel/RichTooltip
 @onready var name_label: Label = $Panel/Title

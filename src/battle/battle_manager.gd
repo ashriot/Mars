@@ -24,8 +24,8 @@ signal target_invalidated(combatant: BattleCombatant)
 @export_group("Scene Links")
 @export var UI: Control
 @export var fx_manager: FXManager
-@export var hero_area: Control
-@export var enemy_area: Control
+@export var hero_area: Node
+@export var enemy_area: Node
 @export var action_bar: ActionBar
 @export var current_action_panel: PanelContainer
 @export var combatant_root: Node
@@ -122,6 +122,8 @@ func register_presentation(
 		presentation.target_unhovered.connect(_on_target_unhovered)
 	if not presentation.target_pressed.is_connected(_on_target_pressed):
 		presentation.target_pressed.connect(_on_target_pressed)
+	if not presentation.particles_requested.is_connected(_on_spawn_particles):
+		presentation.particles_requested.connect(_on_spawn_particles)
 	_connect_presentation_cleanup(combatant, presentation)
 	presentation.set_target_presentation(previous_state)
 	if previous != null and previous != presentation:
@@ -215,6 +217,8 @@ func _disconnect_presentation(presentation: CombatantPresentation) -> void:
 		presentation.target_unhovered.disconnect(_on_target_unhovered)
 	if presentation.target_pressed.is_connected(_on_target_pressed):
 		presentation.target_pressed.disconnect(_on_target_pressed)
+	if presentation.particles_requested.is_connected(_on_spawn_particles):
+		presentation.particles_requested.disconnect(_on_spawn_particles)
 	var exit_callback: Callable = _presentation_exit_callbacks.get(
 		presentation, Callable(),
 	)
@@ -360,6 +364,41 @@ func _exit_tree() -> void:
 		else:
 			_combatant_exit_callbacks.erase(combatant_value)
 
+
+func _spawn_presentation_view(
+	view_scene: PackedScene,
+	view_parent: Node,
+	combatant: BattleCombatant,
+) -> CombatantPresentation:
+	assert(view_scene != null, "BattleManager requires a combatant presentation scene.")
+	assert(is_instance_valid(view_parent), "BattleManager requires a valid presentation root.")
+	assert(is_instance_valid(combatant), "BattleManager cannot present an invalid combatant.")
+	var view_root := view_scene.instantiate()
+	view_parent.add_child(view_root)
+	var presentations: Array[CombatantPresentation] = []
+	_collect_presentations(view_root, presentations)
+	assert(
+		presentations.size() == 1,
+		"Combatant view '%s' must contain exactly one CombatantPresentation; found %d." % [
+			view_scene.resource_path if not view_scene.resource_path.is_empty() else view_root.name,
+			presentations.size(),
+		],
+	)
+	var presentation := presentations[0]
+	presentation.setup_view(combatant)
+	register_presentation(combatant, presentation)
+	return presentation
+
+
+func _collect_presentations(
+	node: Node,
+	result: Array[CombatantPresentation],
+) -> void:
+	if node is CombatantPresentation:
+		result.append(node as CombatantPresentation)
+	for child: Node in node.get_children():
+		_collect_presentations(child, result)
+
 func spawn_encounter(
 	roster_override: Array[HeroData] = [],
 	enemy_level_override: int = -1,
@@ -388,14 +427,7 @@ func spawn_encounter(
 		hero.battle_priority = actor_list.size()
 		actor_list.append(hero)
 		_connect_combatant_signals(hero)
-		var hero_view := hero_card_scene.instantiate()
-		hero_area.add_child(hero_view)
-		hero_view.call(&"setup_from_combatant", hero)
-		var hero_presentation := hero_view.get_node(
-			"CombatantPresentation",
-		) as CombatantPresentation
-		register_presentation(hero, hero_presentation)
-		hero_view.connect(&"spawn_particles", _on_spawn_particles)
+		_spawn_presentation_view(hero_card_scene, hero_area, hero)
 		print(hero.actor_name, "'s CT: ", hero.current_ct)
 
 	var spawned_enemies: Array[EnemyCombatant] = []
@@ -437,14 +469,7 @@ func spawn_encounter(
 				enemy.actor_name = new_name
 				enemy.current_stats.actor_name = new_name
 				current_indices[base_name] = idx + 1
-		var enemy_view := enemy_card_scene.instantiate()
-		enemy_area.add_child(enemy_view)
-		enemy_view.call(&"setup_from_combatant", enemy)
-		var enemy_presentation := enemy_view.get_node(
-			"CombatantPresentation",
-		) as CombatantPresentation
-		register_presentation(enemy, enemy_presentation)
-		enemy_view.connect(&"spawn_particles", _on_spawn_particles)
+		_spawn_presentation_view(enemy_card_scene, enemy_area, enemy)
 		enemy.initialize_ai(encounter_seed)
 		print(enemy.actor_name, "'s CT: ", enemy.current_ct)
 
@@ -1407,6 +1432,8 @@ func _all_combatants_with_presentations() -> Array[BattleCombatant]:
 	return combatants
 
 func _on_spawn_particles(pos: Vector2, _type: String):
+	if not is_instance_valid(fx_manager):
+		return
 	fx_manager.play_hit_effect(pos, false)
 
 func wait(duration: float = 0.01) -> void:
