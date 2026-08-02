@@ -23,6 +23,7 @@ Use this page as the index for project knowledge that is more detailed or more l
 - [Battle damage architecture](superpowers/specs/2026-07-17-battle-damage-architecture-design.md) — Authoritative damage math, contextual scaling, extension boundaries, presentation, and verification design.
 - [Endgame enemy AI and combat benchmark](superpowers/specs/2026-07-18-endgame-enemy-ai-benchmark-design.md) — Cooldown-driven enemy decisions, reusable combat extensions, max-party battle lab, and endgame benchmark encounters.
 - [Endgame full hero kits](superpowers/specs/2026-07-18-endgame-full-hero-kits-design.md) — Benchmark-only complete authored role kits with tier-5, rank-30 equipment and unchanged campaign progression.
+- [First-person 3D battle presentation](superpowers/specs/2026-08-01-first-person-3d-battle-presentation-design.md) — Authoritative combatants, 3D enemy units, projected HUDs, first-person effects, formations, camera behavior, and migration boundaries.
 - [Controller-driven scan cursor](superpowers/specs/2026-07-14-controller-driven-scan-cursor-design.md) — Historical initial controller scan-pointer and edge-scroll design.
 - [Terminal-to-scan correction](superpowers/specs/2026-07-14-terminal-scan-transition-correction-design.md) — Current terminal shortcut, modal transition, world-aim cursor, and scan-camera behavior.
 - [Design records](superpowers/specs/) — Approved feature designs and decisions captured before implementation.
