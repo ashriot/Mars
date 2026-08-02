@@ -129,6 +129,7 @@ func test_binding_already_defeated_hero_renders_final_state_without_signal() -> 
 	var card := HeroCardScene.instantiate() as HeroCard
 	add_child_autofree(card)
 	var combatant := _combatant()
+	combatant.is_breached = true
 	combatant.is_defeated = true
 	var defeat_signal_count := 0
 	card.actor_defeated.connect(func(_actor): defeat_signal_count += 1)
@@ -136,6 +137,25 @@ func test_binding_already_defeated_hero_renders_final_state_without_signal() -> 
 	card.bind_combatant(combatant)
 
 	assert_eq(card.self_modulate.a, 0.25)
+	assert_null(card.pulse_tween)
+	assert_false(card.breached_label.visible)
+	assert_eq(defeat_signal_count, 0)
+
+
+func test_binding_defeated_combatant_with_retained_danger_skips_transients() -> void:
+	var card := HeroCardScene.instantiate() as HeroCard
+	add_child_autofree(card)
+	var combatant := _combatant()
+	combatant.is_in_danger = true
+	combatant.is_defeated = true
+	var defeat_signal_count := 0
+	card.actor_defeated.connect(func(_actor): defeat_signal_count += 1)
+
+	card.bind_combatant(combatant)
+
+	assert_eq(card.self_modulate.a, 0.25)
+	assert_null(card.pulse_tween)
+	assert_false(card.breached_label.visible)
 	assert_eq(defeat_signal_count, 0)
 
 

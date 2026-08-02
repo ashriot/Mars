@@ -180,13 +180,14 @@ func _render_full_state() -> void:
 	hp_value.text = Utils.commafy(current_hp)
 	update_guard_bar(false)
 	_update_conditions_ui()
+	if is_defeated:
+		_stop_breach_pulse()
+		_show_defeated_visual(true)
+		return
 	if is_breached:
 		_render_breach_state(false)
 	else:
 		_render_danger_state()
-	if is_defeated:
-		_stop_breach_pulse()
-		_show_defeated_visual(true)
 
 
 func _on_combatant_hp_changed(
