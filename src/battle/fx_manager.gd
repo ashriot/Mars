@@ -5,6 +5,8 @@ class_name FXManager
 @export var impact_sparks: PackedScene
 @export var shield_hit: PackedScene
 
+var camera_rig: BattleCameraRig
+
 # Play sparks at the victim's position
 func play_hit_effect(target_pos: Vector2, is_shield_hit: bool = false):
 	var scene_to_use = shield_hit if is_shield_hit else impact_sparks
@@ -16,6 +18,6 @@ func play_hit_effect(target_pos: Vector2, is_shield_hit: bool = false):
 	fx.emitting = true
 
 # Optional: Add a little screen shake for heavy hits
-func trigger_shake(_intensity: float):
-	# You can implement a camera shake logic here
-	pass
+func trigger_shake(intensity: float) -> void:
+	if is_instance_valid(camera_rig):
+		camera_rig.request_shake(intensity)

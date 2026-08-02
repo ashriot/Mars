@@ -61,6 +61,7 @@ var _combatant_exit_callbacks: Dictionary = {}
 var _canceling_active_actor_state := false
 var _orchestration_generation := 0
 var _orchestration_shutting_down := false
+var _assigned_camera_rig: BattleCameraRig
 
 
 func _capture_continuation(
@@ -158,6 +159,8 @@ func _register_presentation(
 		presentation.target_pressed.connect(_on_target_pressed)
 	if not presentation.particles_requested.is_connected(_on_spawn_particles):
 		presentation.particles_requested.connect(_on_spawn_particles)
+	if not presentation.projectile_requested.is_connected(_on_projectile_requested):
+		presentation.projectile_requested.connect(_on_projectile_requested)
 	_connect_presentation_cleanup(combatant, presentation)
 	presentation.set_target_presentation(previous_state)
 	if previous != null and previous != presentation:
@@ -285,6 +288,8 @@ func _disconnect_presentation(presentation: CombatantPresentation) -> void:
 		presentation.target_pressed.disconnect(_on_target_pressed)
 	if presentation.particles_requested.is_connected(_on_spawn_particles):
 		presentation.particles_requested.disconnect(_on_spawn_particles)
+	if presentation.projectile_requested.is_connected(_on_projectile_requested):
+		presentation.projectile_requested.disconnect(_on_projectile_requested)
 	var exit_callback: Callable = _presentation_exit_callbacks.get(
 		presentation, Callable(),
 	)
@@ -409,6 +414,7 @@ func change_state(new_state):
 	battle_state_changed.emit(current_state)
 
 func _ready():
+	_configure_battle_feedback()
 	var continuation := _capture_continuation()
 	UI.modulate.a = 0.0
 	await wait(0.1)
@@ -421,6 +427,7 @@ func _ready():
 
 func _exit_tree() -> void:
 	_invalidate_orchestration(true)
+	_clear_battle_feedback()
 	_clear_all_targeting_ui()
 	if is_instance_valid(action_bar):
 		action_bar.clear_active_hero()
@@ -1296,6 +1303,8 @@ func _connect_combatant_signals(actor: BattleCombatant) -> void:
 		actor.defeated.connect(_on_actor_died)
 	if not actor.revived.is_connected(_on_actor_revived):
 		actor.revived.connect(_on_actor_revived)
+	if not actor.presentation_event.is_connected(_on_combatant_feedback_event):
+		actor.presentation_event.connect(_on_combatant_feedback_event)
 	if actor is HeroCombatant and not (actor as HeroCombatant).focus_changed.is_connected(
 		_on_hero_focus_updated
 	):
@@ -1313,6 +1322,8 @@ func _disconnect_combatant_signals(actor: BattleCombatant) -> void:
 		actor.defeated.disconnect(_on_actor_died)
 	if actor.revived.is_connected(_on_actor_revived):
 		actor.revived.disconnect(_on_actor_revived)
+	if actor.presentation_event.is_connected(_on_combatant_feedback_event):
+		actor.presentation_event.disconnect(_on_combatant_feedback_event)
 	if actor is HeroCombatant and (actor as HeroCombatant).focus_changed.is_connected(
 		_on_hero_focus_updated
 	):
@@ -1343,6 +1354,17 @@ func _on_actor_conditions_changed(_actor: BattleCombatant) -> void:
 	_revalidate_all_enemy_intent_targets()
 	_refresh_all_enemy_intent_presentations()
 	_publish_turn_order(TurnOrderUpdate.REFRESH)
+
+
+func _on_combatant_feedback_event(
+	actor: BattleCombatant,
+	event: StringName,
+	payload: Dictionary,
+) -> void:
+	if event != &"impact" or not (actor is HeroCombatant):
+		return
+	if is_instance_valid(fx_manager):
+		fx_manager.trigger_shake(float(payload.get("intensity", 0.5)))
 
 func _on_action_button_pressed(button: ActionButton):
 	if current_state in [State.LOADING, State.FORCED_TARGET]: return
@@ -1588,6 +1610,34 @@ func _on_spawn_particles(pos: Vector2, _type: String):
 	if not is_instance_valid(fx_manager):
 		return
 	fx_manager.play_hit_effect(pos, false)
+
+
+func _on_projectile_requested(
+	from_screen: Vector2,
+	to_screen: Vector2,
+	effect_type: StringName,
+) -> void:
+	if effect_type != &"laser" \
+		or not has_active_battle_world() \
+		or not is_instance_valid(battle_world.projectile_layer):
+		return
+	battle_world.projectile_layer.fire_laser(from_screen, to_screen, Color.CYAN)
+
+
+func _configure_battle_feedback() -> void:
+	_clear_battle_feedback()
+	if not is_instance_valid(fx_manager) \
+		or not is_instance_valid(battle_world) \
+		or not is_instance_valid(battle_world.camera_rig):
+		return
+	_assigned_camera_rig = battle_world.camera_rig
+	fx_manager.camera_rig = _assigned_camera_rig
+
+
+func _clear_battle_feedback() -> void:
+	if is_instance_valid(fx_manager) and fx_manager.camera_rig == _assigned_camera_rig:
+		fx_manager.camera_rig = null
+	_assigned_camera_rig = null
 
 func wait(duration: float = 0.01) -> void:
 	var scaled_duration = duration / battle_speed

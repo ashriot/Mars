@@ -54,6 +54,8 @@ manager = NodePath("BattleManager")
 
 [node name="Combatants" type="Node" parent="."]
 
+[node name="BattleWorld3D" parent="." instance=ExtResource("2_world")]
+
 [node name="BattleManager" type="Node" parent="." node_paths=PackedStringArray("UI", "fx_manager", "hero_area", "enemy_area", "action_bar", "current_action_panel", "combatant_root", "battle_world")]
 unique_name_in_owner = true
 script = ExtResource("1_6cbqe")
@@ -67,8 +69,6 @@ combatant_root = NodePath("../Combatants")
 battle_world = NodePath("../BattleWorld3D")
 hero_view_scene = ExtResource("1_sft4c")
 enemy_view_scene = ExtResource("1_u5n4n")
-
-[node name="BattleWorld3D" parent="." instance=ExtResource("2_world")]
 
 [node name="UI" type="Control" parent="."]
 layout_mode = 1

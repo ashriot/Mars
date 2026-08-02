@@ -18,6 +18,17 @@ class RegistryTrackingBattleManager extends BattleManager:
 		pass
 
 
+class FixedTargetPresentation extends CombatantPresentation:
+	var target_position := Vector2.ZERO
+	var target_visible := true
+
+	func get_target_screen_position() -> Vector2:
+		return target_position
+
+	func is_target_visible() -> bool:
+		return target_visible
+
+
 func after_each() -> void:
 	for tween: Tween in get_tree().get_processed_tweens():
 		tween.kill()
@@ -279,6 +290,49 @@ func test_tracked_model_routes_animations_and_visible_defeat_fade() -> void:
 	assert_false(fixture.presentation.hud.visible)
 	assert_eq(fixture.presentation.hud.modulate.a, 0.0)
 	assert_eq(fixture.presentation.instance_material.albedo_color.a, 0.0)
+
+
+func test_action_emits_one_laser_for_each_visible_intended_hero_target() -> void:
+	var manager := RegistryTrackingBattleManager.new()
+	add_child_autofree(manager)
+	var world_fixture := _world()
+	var enemy := _enemy()
+	enemy.battle_manager = manager
+	var fixture := _bound_animated_drone(world_fixture, enemy)
+	assert_true(manager.register_presentation(enemy, fixture.presentation))
+	fixture.presentation._process(0.0)
+	var visible_hero := HeroCombatant.new()
+	var hidden_hero := HeroCombatant.new()
+	add_child_autofree(visible_hero)
+	add_child_autofree(hidden_hero)
+	visible_hero.setup_base(ActorStats.new(), BattleCombatant.Faction.HERO, manager)
+	hidden_hero.setup_base(ActorStats.new(), BattleCombatant.Faction.HERO, manager)
+	var visible_presentation := FixedTargetPresentation.new()
+	var hidden_presentation := FixedTargetPresentation.new()
+	manager.add_child(visible_presentation)
+	manager.add_child(hidden_presentation)
+	visible_presentation.target_position = Vector2(640, 710)
+	hidden_presentation.target_position = Vector2(940, 710)
+	hidden_presentation.target_visible = false
+	visible_presentation.bind(visible_hero)
+	hidden_presentation.bind(hidden_hero)
+	assert_true(manager.register_presentation(visible_hero, visible_presentation))
+	assert_true(manager.register_presentation(hidden_hero, hidden_presentation))
+	enemy.intended_targets.assign([visible_hero, hidden_hero])
+	watch_signals(fixture.presentation)
+
+	fixture.presentation.show_action("Burst")
+
+	assert_signal_emit_count(fixture.presentation, &"projectile_requested", 1)
+	assert_signal_emitted_with_parameters(
+		fixture.presentation,
+		&"projectile_requested",
+		[
+			fixture.presentation.get_target_screen_position(),
+			visible_presentation.target_position,
+			&"laser",
+		],
+	)
 
 
 func test_local_eye_drone_smoke_when_installed() -> void:

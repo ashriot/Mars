@@ -102,6 +102,7 @@ func set_acting(active: bool):
 func show_action(_action_name: String) -> void:
 	if _hit_operation != null:
 		_hit_operation.complete()
+	_request_intended_target_projectiles()
 	_action_operation = _start_transient_animation(&"Attack", _action_operation)
 
 
@@ -164,6 +165,27 @@ func _update_projection() -> void:
 func _refresh_details_visibility() -> void:
 	if is_instance_valid(hud):
 		hud.set_details_visible(acting or target_state == TargetState.SELECTED)
+
+
+func _request_intended_target_projectiles() -> void:
+	if not (combatant is EnemyCombatant) or not is_target_visible():
+		return
+	var enemy := combatant as EnemyCombatant
+	var manager := enemy.battle_manager as BattleManager
+	if not is_instance_valid(manager):
+		return
+	var from_screen := get_target_screen_position()
+	for target: BattleCombatant in enemy.intended_targets:
+		if not (target is HeroCombatant) or not is_instance_valid(target):
+			continue
+		var target_presentation := manager.presentation_for(target)
+		if target_presentation == null or not target_presentation.is_target_visible():
+			continue
+		projectile_requested.emit(
+			from_screen,
+			target_presentation.get_target_screen_position(),
+			&"laser",
+		)
 
 
 func _hud_layer_for_viewport() -> Control:

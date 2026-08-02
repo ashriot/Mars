@@ -7,6 +7,11 @@ signal target_hovered(combatant: BattleCombatant)
 signal target_unhovered(combatant: BattleCombatant)
 signal target_pressed(combatant: BattleCombatant)
 signal particles_requested(position: Vector2, type: String)
+signal projectile_requested(
+	from_screen: Vector2,
+	to_screen: Vector2,
+	effect_type: StringName,
+)
 
 var combatant: BattleCombatant
 var target_state := TargetState.NORMAL

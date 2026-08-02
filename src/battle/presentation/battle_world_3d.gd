@@ -4,8 +4,10 @@ class_name BattleWorld3D
 const HUD_SAFE_MARGIN := 24.0
 
 @onready var enemy_views: Node3D = %EnemyViews
+@onready var camera_rig: BattleCameraRig = %CameraRig
 @onready var camera: Camera3D = %BattleCamera
 @onready var hud_layer: Control = %EnemyHUDLayer
+@onready var projectile_layer: BattleProjectileLayer = %BattleProjectileLayer
 
 
 func _ready() -> void:

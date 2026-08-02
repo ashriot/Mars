@@ -3,16 +3,34 @@ extends GutTest
 const HeroCardScene := preload("res://src/battle/hero_card.tscn")
 const EnemyCardScene := preload("res://src/battle/enemy_card.tscn")
 const BattleWorldScene := preload("res://src/battle/presentation/battle_world_3d.tscn")
+const BattleSceneScene := preload("res://src/battle/battle_scene.tscn")
 
 
 class TestBattleManager extends BattleManager:
 	var particle_requests: Array[Dictionary] = []
+	var projectile_requests: Array[Dictionary] = []
 
 	func _ready() -> void:
 		pass
 
 	func _on_spawn_particles(pos: Vector2, type: String) -> void:
 		particle_requests.append({"position": pos, "type": type})
+
+	func _on_projectile_requested(
+		from_screen: Vector2,
+		to_screen: Vector2,
+		effect_type: StringName,
+	) -> void:
+		projectile_requests.append({
+			"from": from_screen,
+			"to": to_screen,
+			"effect": effect_type,
+		})
+
+
+class PassiveBattleManager extends BattleManager:
+	func _ready() -> void:
+		pass
 
 
 class SpawnFailureBattleManager extends TestBattleManager:
@@ -672,6 +690,106 @@ func test_presentation_events_follow_registry_replacement_and_teardown_once() ->
 		{"position": Vector2(10, 20), "type": "first"},
 		{"position": Vector2(50, 60), "type": "replacement"},
 	])
+
+
+func test_projectile_requests_follow_registry_replacement_and_teardown_once() -> void:
+	var manager := TestBattleManager.new()
+	var model := _combatant(100, BattleCombatant.Faction.ENEMY, manager)
+	var first := CombatantPresentation.new()
+	var replacement := CombatantPresentation.new()
+	manager.add_child(first)
+	manager.add_child(replacement)
+	add_child_autofree(manager)
+	first.bind(model)
+	replacement.bind(model)
+
+	manager.register_presentation(model, first)
+	first.projectile_requested.emit(Vector2(10, 20), Vector2(30, 40), &"laser")
+	manager.register_presentation(model, replacement)
+	first.projectile_requested.emit(Vector2.ZERO, Vector2.ONE, &"stale")
+	replacement.projectile_requested.emit(
+		Vector2(50, 60), Vector2(70, 80), &"laser",
+	)
+	manager.unregister_presentation(model)
+	replacement.projectile_requested.emit(Vector2.ONE, Vector2.ZERO, &"detached")
+
+	assert_eq(manager.projectile_requests, [
+		{"from": Vector2(10, 20), "to": Vector2(30, 40), "effect": &"laser"},
+		{"from": Vector2(50, 60), "to": Vector2(70, 80), "effect": &"laser"},
+	])
+
+
+func test_projectile_request_forwards_exact_screen_positions_only_to_active_world() -> void:
+	var manager := PassiveBattleManager.new()
+	var world := BattleWorldScene.instantiate() as BattleWorld3D
+	add_child_autofree(world)
+	add_child_autofree(manager)
+	manager.battle_world = world
+
+	manager._on_projectile_requested(
+		Vector2(123, 234), Vector2(765, 876), &"laser",
+	)
+
+	assert_eq(world.projectile_layer.active_lasers.size(), 1)
+	if world.projectile_layer.active_lasers.is_empty():
+		return
+	assert_eq(
+		world.projectile_layer.active_lasers[0].points,
+		PackedVector2Array([Vector2(123, 234), Vector2(765, 876)]),
+	)
+	world.hide()
+	manager._on_projectile_requested(Vector2.ZERO, Vector2.ONE, &"laser")
+	assert_eq(world.projectile_layer.active_lasers.size(), 1)
+
+
+func test_manager_wires_camera_rig_and_shakes_only_for_hero_impacts() -> void:
+	var saved_intensity := CombatPresentationSettings.shake_intensity
+	CombatPresentationSettings.set_shake_intensity(1.0, false)
+	var manager := TestBattleManager.new()
+	var world := BattleWorldScene.instantiate() as BattleWorld3D
+	var effects := FXManager.new()
+	add_child_autofree(world)
+	add_child_autofree(effects)
+	add_child_autofree(manager)
+	manager.battle_world = world
+	manager.fx_manager = effects
+	manager._configure_battle_feedback()
+	var hero := _combatant(100, BattleCombatant.Faction.HERO, manager)
+	var enemy := _combatant(100, BattleCombatant.Faction.ENEMY, manager)
+	manager._connect_combatant_signals(hero)
+	manager._connect_combatant_signals(enemy)
+
+	assert_same(effects.camera_rig, world.camera_rig)
+	enemy.presentation_event.emit(enemy, &"impact", {"intensity": 0.9})
+	assert_eq(world.camera_rig.trauma, 0.0)
+	hero.presentation_event.emit(hero, &"impact", {"intensity": 0.7})
+	assert_eq(world.camera_rig.trauma, 0.7)
+	manager.free()
+	assert_null(effects.camera_rig)
+	CombatPresentationSettings.set_shake_intensity(saved_intensity, false)
+
+
+func test_packed_battle_scene_wires_world_camera_rig_during_ready() -> void:
+	var battle_scene := BattleSceneScene.instantiate() as BattleScene
+	add_child_autofree(battle_scene)
+	var manager := battle_scene.manager
+
+	assert_not_null(manager.battle_world.camera_rig)
+	assert_same(manager.fx_manager.camera_rig, manager.battle_world.camera_rig)
+
+
+func test_card_shake_setting_zero_is_a_true_no_op() -> void:
+	var saved_intensity := CombatPresentationSettings.shake_intensity
+	CombatPresentationSettings.set_shake_intensity(0.0, false)
+	var card := HeroCardScene.instantiate() as HeroCard
+	add_child_autofree(card)
+	var home_position := card.position
+
+	card.shake_panel(1.0)
+
+	assert_null(card.shake_tween)
+	assert_eq(card.position, home_position)
+	CombatPresentationSettings.set_shake_intensity(saved_intensity, false)
 
 
 func test_card_adapter_forwards_particles_through_presentation_contract() -> void:
