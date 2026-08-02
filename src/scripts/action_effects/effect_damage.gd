@@ -787,7 +787,7 @@ func _process_on_hit_triggers(
 		if condition_met:
 			print("On-hit trigger fired!")
 			for effect in hit_trigger.effects_to_run:
-				var targets := battle_manager.get_targets(
+				var targets: Array[BattleCombatant] = battle_manager.get_targets(
 					effect.target_type, attacker.is_hero(), [target], target,
 				)
 				if effect is Effect_Damage:

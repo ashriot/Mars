@@ -94,7 +94,9 @@ func revalidate_intent_targets(context: EnemyAIContext) -> bool:
 	if rule_index < 0:
 		return false
 	var salt := "%s:%d" % [ability.ability_id, rule_index]
-	var next_targets := rule.selector.select(self, ai_state, context, salt)
+	var next_targets: Array[BattleCombatant] = rule.selector.select(
+		self, ai_state, context, salt,
+	)
 	if next_targets == intended_targets:
 		return false
 	intended_decision.targets.assign(next_targets)

@@ -230,6 +230,19 @@ class TurnCycleBattleManager extends BattleManager:
 		return
 
 
+class InputSafetyBattleManager extends BattleManager:
+	func _ready() -> void:
+		if action_bar:
+			action_bar.action_selected.connect(_on_action_button_pressed)
+			action_bar.shift_button_pressed.connect(_on_shift_button_pressed)
+
+	func wait(_duration: float = 0.01) -> void:
+		return
+
+	func _publish_turn_order(_update_kind: TurnOrderUpdate) -> void:
+		return
+
+
 func test_activate_slot_emits_only_for_visible_enabled_semantic_slot() -> void:
 	var bar := ActionBar.new()
 	bar.actions_ui = Control.new()
@@ -623,11 +636,72 @@ func test_unregistering_selected_presentation_invalidates_battle_target_memory()
 	)
 
 
+func test_controller_cancel_releases_selection_after_final_target_view_is_removed() -> void:
+	var fixture := await _navigation_fixture()
+	var scene := fixture.scene as BattleScene
+	var manager := fixture.manager as TrackingBattleManager
+	var bar := fixture.bar as ActionBar
+	var enemy := fixture.enemy.combatant as EnemyCombatant
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	bar._unhandled_input(_action_event(&"action_1"))
+	await get_tree().process_frame
+	scene._set_current_target(enemy)
+	manager.unregister_presentation(enemy)
+	assert_false(scene._is_targeting())
+	assert_not_null(manager.current_action)
+	assert_not_null(manager.focused_button)
+
+	scene._unhandled_input(_action_event(&"cancel"))
+
+	assert_null(manager.current_action)
+	assert_null(manager.focused_button)
+	assert_eq(manager.current_state, BattleManager.State.PLAYER_ACTION)
+
+
+func test_selected_face_button_cancels_after_final_target_view_is_removed() -> void:
+	var fixture := await _navigation_fixture()
+	var manager := fixture.manager as TrackingBattleManager
+	var bar := fixture.bar as ActionBar
+	var enemy := fixture.enemy.combatant as EnemyCombatant
+	bar._unhandled_input(_action_event(&"action_1"))
+	await get_tree().process_frame
+	manager.unregister_presentation(enemy)
+	assert_not_null(manager.current_action)
+	assert_not_null(manager.focused_button)
+
+	bar._unhandled_input(_action_event(&"action_1"))
+
+	assert_null(manager.current_action)
+	assert_null(manager.focused_button)
+
+
+func test_target_view_invalidation_preserves_selection_when_an_alternative_remains() -> void:
+	var fixture := await _navigation_fixture()
+	var scene := fixture.scene as BattleScene
+	var manager := fixture.manager as TrackingBattleManager
+	var bar := fixture.bar as ActionBar
+	var enemy := fixture.enemy.combatant as EnemyCombatant
+	var alternative := fixture.second_enemy.combatant as EnemyCombatant
+	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
+	bar._unhandled_input(_action_event(&"action_1"))
+	await get_tree().process_frame
+	alternative.is_valid_target = true
+	scene._set_current_target(enemy)
+
+	manager.unregister_presentation(enemy)
+
+	assert_same(scene._current_target, alternative)
+	assert_same(scene._navigation_origin, alternative)
+	assert_not_null(manager.current_action)
+	assert_not_null(manager.focused_button)
+
+
 func test_presentation_lookup_prunes_freed_off_tree_registration() -> void:
 	var manager := TrackingBattleManager.new()
 	var enemy := EnemyCombatant.new()
 	var presentation := VisibleCombatantPresentation.new()
 	presentation.bind(enemy)
+	manager._connect_combatant_signals(enemy)
 	manager.register_presentation(enemy, presentation)
 	manager.actor_list = [enemy]
 	var observed := {was_registered_during_invalidation = true}
@@ -662,6 +736,7 @@ func test_registry_enumeration_prunes_freed_off_tree_combatant() -> void:
 	var enemy := EnemyCombatant.new()
 	var presentation := VisibleCombatantPresentation.new()
 	presentation.bind(enemy)
+	manager._connect_combatant_signals(enemy)
 	manager.register_presentation(enemy, presentation)
 	presentation.set_target_presentation(CombatantPresentation.TargetState.SELECTED)
 	presentation.set_acting(true)
@@ -711,6 +786,7 @@ func test_independently_freed_combatant_cleans_registry_roster_and_handlers() ->
 	manager.add_child(presentation)
 	manager.actor_list = [enemy]
 	manager.current_actor = enemy
+	manager._connect_combatant_signals(enemy)
 	manager.register_presentation(enemy, presentation)
 	scene.manager = manager
 	scene.add_child(manager)
@@ -737,11 +813,172 @@ func test_independently_freed_combatant_cleans_registry_roster_and_handlers() ->
 	assert_signal_emit_count(manager, "target_invalidated", 1)
 
 
+func test_removed_defeated_model_disconnects_every_manager_callback() -> void:
+	var manager := TrackingBattleManager.new()
+	var hero := HeroCombatant.new()
+	var presentation := VisibleCombatantPresentation.new()
+	manager.add_child(hero)
+	manager.add_child(presentation)
+	add_child_autofree(manager)
+	autofree(hero)
+	hero.setup_base(
+		ActorStats.new(), BattleCombatant.Faction.HERO, manager,
+	)
+	hero.hero_data = HeroData.new()
+	hero.is_defeated = true
+	presentation.bind(hero)
+	manager._connect_combatant_signals(hero)
+	manager.register_presentation(hero, presentation)
+
+	manager.remove_child(hero)
+
+	assert_false(hero.hp_changed.is_connected(manager._on_actor_hp_changed))
+	assert_false(hero.guard_changed.is_connected(manager._on_actor_guard_changed))
+	assert_false(hero.conditions_changed.is_connected(manager._on_actor_conditions_changed))
+	assert_false(hero.defeated.is_connected(manager._on_actor_died))
+	assert_false(hero.revived.is_connected(manager._on_actor_revived))
+	assert_false(hero.focus_changed.is_connected(manager._on_hero_focus_updated))
+	assert_null(hero.battle_manager)
+	assert_false(manager._combatant_exit_callbacks.has(hero))
+	assert_false(manager._presentations.has(hero))
+
+	hero.revive()
+	assert_true(
+		manager.actor_list.is_empty(),
+		"a detached defeated model cannot revive back into manager authority",
+	)
+
+
+func test_headless_model_exit_is_tracked_without_a_presentation() -> void:
+	var manager := TrackingBattleManager.new()
+	var hero := HeroCombatant.new()
+	add_child_autofree(manager)
+	manager.add_child(hero)
+	hero.setup_base(
+		ActorStats.new(), BattleCombatant.Faction.HERO, manager,
+	)
+	manager.actor_list = [hero]
+	manager._pending_after_shift_action = hero
+	manager._connect_combatant_signals(hero)
+	assert_true(manager._combatant_exit_callbacks.has(hero))
+
+	hero.free()
+	await get_tree().process_frame
+
+	assert_true(manager.actor_list.is_empty())
+	assert_null(manager._pending_after_shift_action)
+	assert_true(manager._combatant_exit_callbacks.is_empty())
+	assert_true(manager._presentations.is_empty())
+
+
+func test_active_hero_exit_atomically_cancels_action_and_input_state() -> void:
+	var scene := BattleScene.new()
+	var manager := InputSafetyBattleManager.new()
+	var combatants := Node.new()
+	var bar := ImmediateShiftActionBar.new()
+	var actions := Control.new()
+	var left_shift := Control.new()
+	var right_shift := Control.new()
+	var action_panel := PanelContainer.new()
+	actions.name = "Actions"
+	left_shift.name = "LeftShift"
+	right_shift.name = "RightShift"
+	var left_button := Button.new()
+	var right_button := Button.new()
+	left_button.name = "Button"
+	right_button.name = "Button"
+	left_shift.add_child(left_button)
+	right_shift.add_child(right_button)
+	bar.add_child(actions)
+	bar.add_child(left_shift)
+	bar.add_child(right_shift)
+	for index in 4:
+		var button := ActionButtonScene.instantiate() as ActionButton
+		button.action = Action.new()
+		button.visible = true
+		actions.add_child(button)
+	var passive := Panel.new()
+	passive.name = "Passive"
+	actions.add_child(passive)
+	var shift_action := Panel.new()
+	shift_action.name = "ShiftAction"
+	actions.add_child(shift_action)
+	manager.action_bar = bar
+	manager.current_action_panel = action_panel
+	bar.battle_manager = manager
+	scene.manager = manager
+	scene.add_child(manager)
+	scene.add_child(combatants)
+	scene.add_child(bar)
+	scene.add_child(action_panel)
+	add_child_autofree(scene)
+	await get_tree().process_frame
+
+	var hero := HeroCombatant.new()
+	var enemy := EnemyCombatant.new()
+	var hero_presentation := VisibleCombatantPresentation.new()
+	var enemy_presentation := VisibleCombatantPresentation.new()
+	combatants.add_child(hero)
+	combatants.add_child(enemy)
+	scene.add_child(hero_presentation)
+	scene.add_child(enemy_presentation)
+	hero.setup_base(ActorStats.new(), BattleCombatant.Faction.HERO, manager)
+	enemy.setup_base(ActorStats.new(), BattleCombatant.Faction.ENEMY, manager)
+	hero.current_focus = 10
+	hero_presentation.bind(hero)
+	enemy_presentation.bind(enemy)
+	manager.actor_list = [hero, enemy]
+	manager.current_actor = hero
+	manager._pending_after_shift_action = hero
+	manager._connect_combatant_signals(hero)
+	manager._connect_combatant_signals(enemy)
+	manager.register_presentation(hero, hero_presentation)
+	manager.register_presentation(enemy, enemy_presentation)
+	bar.active_hero = hero
+	hero.focus_changed.connect(bar._on_hero_focus_updated)
+	hero.presentation_event.connect(bar._on_hero_presentation_event)
+	var selected_button := actions.get_child(0) as ActionButton
+	manager.focused_button = selected_button
+	selected_button.focused(true)
+	manager.current_action = selected_button.action
+	manager.executing_action = Action.new()
+	manager.executing_action_ct_percent = 35
+	manager.executing_action_ends_turn = true
+	manager.current_state = BattleManager.State.PLAYER_ACTION
+	action_panel.show()
+	enemy.is_valid_target = true
+	scene._set_current_target(enemy)
+	autofree(hero)
+
+	combatants.remove_child(hero)
+	await get_tree().process_frame
+
+	assert_null(manager.current_actor)
+	assert_null(manager.current_action)
+	assert_null(manager.executing_action)
+	assert_eq(manager.executing_action_ct_percent, 100)
+	assert_false(manager.executing_action_ends_turn)
+	assert_null(manager.focused_button)
+	assert_false(action_panel.visible)
+	assert_null(bar.active_hero)
+	assert_false(hero.focus_changed.is_connected(bar._on_hero_focus_updated))
+	assert_false(hero.presentation_event.is_connected(bar._on_hero_presentation_event))
+	assert_eq(manager.current_state, BattleManager.State.LOADING)
+	assert_false(enemy.is_valid_target)
+	assert_null(scene._current_target)
+
+	bar._unhandled_input(_action_event(&"action_2"))
+	scene._unhandled_input(_action_event(&"cancel"))
+	bar._unhandled_input(_action_event(&"shift_left"))
+	assert_engine_error_count(0)
+
+
 func test_manager_teardown_safely_prunes_stale_off_tree_registration() -> void:
 	var manager := TrackingBattleManager.new()
 	var enemy := EnemyCombatant.new()
 	var presentation := VisibleCombatantPresentation.new()
 	presentation.bind(enemy)
+	manager._connect_combatant_signals(enemy)
 	manager.register_presentation(enemy, presentation)
 	enemy.free()
 	add_child(manager)
@@ -751,6 +988,40 @@ func test_manager_teardown_safely_prunes_stale_off_tree_registration() -> void:
 
 	assert_true(manager._presentations.is_empty())
 	assert_true(manager._presentation_exit_callbacks.is_empty())
+	assert_true(manager._combatant_exit_callbacks.is_empty())
+	presentation.free()
+	manager.free()
+
+
+func test_freed_off_tree_current_model_fallback_cancels_action_state() -> void:
+	var manager := TrackingBattleManager.new()
+	var hero := HeroCombatant.new()
+	var presentation := VisibleCombatantPresentation.new()
+	var action := Action.new()
+	presentation.bind(hero)
+	manager.actor_list = [hero]
+	manager.current_actor = hero
+	manager._pending_after_shift_action = hero
+	manager.current_action = action
+	manager.executing_action = action
+	manager.executing_action_ct_percent = 35
+	manager.executing_action_ends_turn = true
+	manager.current_state = BattleManager.State.PLAYER_ACTION
+	manager._connect_combatant_signals(hero)
+	manager.register_presentation(hero, presentation)
+
+	hero.free()
+	manager._all_combatants_with_presentations()
+
+	assert_true(manager.actor_list.is_empty())
+	assert_null(manager.current_actor)
+	assert_null(manager._pending_after_shift_action)
+	assert_null(manager.current_action)
+	assert_null(manager.executing_action)
+	assert_eq(manager.executing_action_ct_percent, 100)
+	assert_false(manager.executing_action_ends_turn)
+	assert_eq(manager.current_state, BattleManager.State.LOADING)
+	assert_true(manager._presentations.is_empty())
 	assert_true(manager._combatant_exit_callbacks.is_empty())
 	presentation.free()
 	manager.free()
@@ -1573,12 +1844,22 @@ func test_battle_adapter_teardown_clears_target_presentation_cursor_hints_and_re
 	var fixture := await _navigation_fixture()
 	var scene: BattleScene = fixture.scene
 	var ux: NavigationUXLayer = fixture.ux
+	var hero := fixture.hero.combatant as HeroCombatant
+	fixture.bar.active_hero = hero
+	hero.focus_changed.connect(fixture.bar._on_hero_focus_updated)
+	hero.presentation_event.connect(fixture.bar._on_hero_presentation_event)
 	fixture.enemy.is_valid_target = true
 	scene._set_current_target(fixture.enemy.combatant)
 	assert_eq(fixture.enemy.get_target_presentation(), ActorCard.TargetPresentation.SELECTED)
 	assert_same(
 		fixture.manager.presentation_for(fixture.enemy.combatant),
 		fixture.enemy.presentation,
+	)
+	fixture.manager._connect_combatant_signals(fixture.enemy.combatant)
+	assert_true(
+		fixture.enemy.combatant.hp_changed.is_connected(
+			fixture.manager._on_actor_hp_changed,
+		),
 	)
 	assert_same(ux._adapter, scene)
 	scene.get_parent().remove_child(scene)
@@ -1587,6 +1868,17 @@ func test_battle_adapter_teardown_clears_target_presentation_cursor_hints_and_re
 	assert_null(fixture.manager.presentation_for(fixture.enemy.combatant))
 	assert_true(fixture.manager._presentation_exit_callbacks.is_empty())
 	assert_true(fixture.manager._combatant_exit_callbacks.is_empty())
+	assert_false(
+		fixture.enemy.combatant.hp_changed.is_connected(
+			fixture.manager._on_actor_hp_changed,
+		),
+	)
+	assert_null(fixture.bar.active_hero)
+	assert_false(hero.focus_changed.is_connected(fixture.bar._on_hero_focus_updated))
+	assert_false(
+		hero.presentation_event.is_connected(fixture.bar._on_hero_presentation_event),
+	)
+	assert_null(fixture.enemy.combatant.battle_manager)
 	assert_null(fixture.enemy._target_pulse_tween)
 	assert_null(ux._adapter)
 	assert_false(ux.cursor.visible)

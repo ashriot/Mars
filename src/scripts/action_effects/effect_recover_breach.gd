@@ -4,7 +4,7 @@ class_name Effect_RecoverBreach
 @export var effect_target_type: Action.TargetType = Action.TargetType.SELF
 
 func execute(attacker: BattleCombatant, primary_targets: Array[BattleCombatant], battle_manager: BattleManager, _action: Action = null, _context: Dictionary = {}) -> void:
-	var targets := battle_manager.get_targets(
+	var targets: Array[BattleCombatant] = battle_manager.get_targets(
 		effect_target_type, attacker.is_hero(), primary_targets, attacker,
 	)
 

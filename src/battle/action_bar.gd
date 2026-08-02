@@ -75,11 +75,29 @@ func apply_display_profile(profile: int, _window_size: Vector2i, _logical_size: 
 				(child as ActionButton).apply_display_profile(profile)
 
 func load_actions(hero: HeroCombatant, shifted: bool = false):
+	if active_hero != null and active_hero != hero:
+		clear_active_hero()
 	active_hero = hero
 	if not active_hero.presentation_event.is_connected(_on_hero_presentation_event):
 		active_hero.presentation_event.connect(_on_hero_presentation_event)
 	update_action_bar(active_hero, shifted)
 	await slide_in()
+
+
+func clear_active_hero(hero: HeroCombatant = null) -> void:
+	if active_hero == null or (hero != null and active_hero != hero):
+		return
+	var previous := active_hero
+	if is_instance_valid(previous):
+		if previous.focus_changed.is_connected(_on_hero_focus_updated):
+			previous.focus_changed.disconnect(_on_hero_focus_updated)
+		if previous.presentation_event.is_connected(_on_hero_presentation_event):
+			previous.presentation_event.disconnect(_on_hero_presentation_event)
+	active_hero = null
+	if flashing_tween and flashing_tween.is_running():
+		flashing_tween.kill()
+	flashing_tween = null
+
 
 func hide_bar():
 	for i in range(4):
@@ -88,7 +106,8 @@ func hide_bar():
 		button.hide()
 		if button.pressed.is_connected(_on_action_button_pressed):
 			button.pressed.disconnect(_on_action_button_pressed)
-	if active_hero.focus_changed.is_connected(_on_hero_focus_updated):
+	if is_instance_valid(active_hero) \
+		and active_hero.focus_changed.is_connected(_on_hero_focus_updated):
 		active_hero.focus_changed.disconnect(_on_hero_focus_updated)
 
 	await slide_out()

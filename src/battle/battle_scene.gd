@@ -99,7 +99,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		confirm_target()
 		if viewport:
 			viewport.set_input_as_handled()
-	elif event.is_action_pressed(&"cancel") and _is_targeting():
+	elif event.is_action_pressed(&"cancel") and _can_cancel_targeting():
 		cancel_targeting()
 		get_viewport().set_input_as_handled()
 
@@ -159,7 +159,7 @@ func confirm_target() -> void:
 
 
 func cancel_targeting() -> void:
-	if not _is_targeting():
+	if not _can_cancel_targeting():
 		return
 	manager.current_action = null
 	_clear_current_target(false)
@@ -252,6 +252,20 @@ func _refresh_targeting() -> void:
 
 func _is_targeting() -> bool:
 	return manager != null and not _valid_targets().is_empty()
+
+
+func _can_cancel_targeting() -> bool:
+	if manager == null \
+		or manager.current_state not in [
+			BattleManager.State.PLAYER_ACTION,
+			BattleManager.State.FORCED_TARGET,
+		]:
+		return false
+	return _is_targeting() \
+		or (
+			manager.current_action != null \
+			or is_instance_valid(manager.focused_button)
+		)
 
 
 func _is_group_targeting() -> bool:

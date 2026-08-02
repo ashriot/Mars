@@ -228,3 +228,69 @@ The unrelated user edit in `src/dev/endgame_battle_lab.tscn` was preserved and w
 - Confirmed deterministic roster ordering and revival behavior remain covered by the existing CTB/revival suites.
 - Confirmed the preserved dirty lab scene was not edited, restored, staged, or committed.
 - No interactive visual or physical-controller acceptance was performed. The changes are orchestration and lifecycle foundations; the automated controller loop and responsive battle layout remain green.
+
+## Fix Round 2
+
+Commit: recorded separately from the original Task 7 and Fix Round 1 commits.
+
+### Findings addressed
+
+- Moved combatant lifetime ownership out of `register_presentation` and into `_connect_combatant_signals`. A headless model is now tracked even when it has no view, while losing only a presentation never detaches the model from battle authority.
+- Added symmetrical combatant teardown for HP, guard, conditions, defeat, revival, hero focus, and tree-exit callbacks. Removing a valid model also clears the manager back-reference, roster, pending-shift owner, and presentation registration, so a detached defeated model cannot revive back into the battle.
+- Made active-actor removal an atomic cancellation boundary. Target state, focused action, current/executing action, recovery snapshot, action panel, ActionBar hero ownership, pending shift state, and current actor are cleared synchronously; the manager enters `LOADING` without advancing the turn.
+- Added a safe fallback for an already-freed off-tree active model. Fallback cancellation runs only when pruning actually removed an invalid authoritative combatant, avoiding changes to intentionally actorless managers.
+- Added explicit ActionBar hero release, including both focus and presentation-event callbacks, and manager-teardown coverage for those closures.
+- Kept targeting cancellation available after the final valid target presentation disappears. Controller cancel and pressing the selected face button both release the action, while invalidating one target with alternatives available preserves the selection and moves to a legal presentation.
+- Explicitly typed every remaining production target-array local returned by `BattleManager.get_targets` or `EnemyTargetSelector.select`, including manager action execution/description paths, enemy planning/revalidation, and triggered action effects.
+
+### TDD and mutation evidence
+
+1. Presentation-independent lifecycle ownership:
+   - RED: `battle_controller_navigation` was 64/66 passing with 323/333 assertions. A detached valid defeated hero retained all manager callbacks and its `battle_manager` reference, revived back into the roster, and a headless model had no tree-exit tracking.
+   - GREEN: 66/66 passing, 333 assertions. Model teardown disconnects the complete manager callback inventory and headless cleanup removes roster/pending state without requiring a presentation.
+2. Active actor removal:
+   - RED: 66/67 passing with 334/348 assertions. Current/focused/executing state, recovery, panel, ActionBar ownership, and targeting survived removal; subsequent face-button and shift input produced invalid `current_focus` and `shift_role` accesses.
+   - GREEN: 67/67 passing, 347 assertions, with no engine errors after action, cancel, and shift input.
+3. Final-target invalidation:
+   - RED: 68/70 passing with 357/361 assertions. Both controller cancel and the selected face button left the action and focus latched after the final target view disappeared; the alternative-target preservation case already passed.
+   - GREEN: 70/70 passing, 361 assertions. Both cancellation paths release cleanly and the alternative-target case remains selected.
+4. Completion self-review added off-tree-current and manager-teardown ownership cases:
+   - RED: 69/71 passing with eight failing assertions. The freed off-tree current model retained action/execution/recovery/state, and manager teardown retained ActionBar hero ownership plus two hero callbacks.
+   - Mutation checks rejected two overly broad fallbacks: one recursed through presentation pruning, and one canceled intentionally actorless test managers. The final fallback is reentrancy-safe and requires an invalid authoritative combatant to have actually been pruned.
+   - GREEN: `battle_controller_navigation` 71/71 passing, 377 assertions.
+
+### Fix Round 2 final verification
+
+Every Godot invocation used `HOME=/tmp/mars-godot-home` and Godot 4.6.3.
+
+- Headless editor parse (`--editor --quit`): exit 0 with no parser errors.
+- `battle_controller_navigation`: 71/71 passing, 377 assertions.
+- `enemy_ai_intents`: 23/23 passing, 71 assertions.
+- Complete GUT suite: 910/911 passing, 14,443/14,444 assertions across 68 scripts. The sole failure remains the unrelated preserved dirty lab scene: its `enemy_hp_multiplier` is `1.0`, while `test_endgame_battle_lab` expects `5.0`.
+- Target-array audit: no untyped production local remains for a `get_targets` or `selector.select` result. The only similarly named inferred local is `preview_targets`, which is a dictionary mapping live to preview combatants rather than a target array.
+- `git diff --check`: clean.
+
+The recurring macOS certificate-store warning, the three expected ignored-inner-class warnings, and documented shutdown resource diagnostics were unchanged.
+
+### Fix Round 2 files changed
+
+- `src/battle/action_bar.gd`
+- `src/battle/battle_manager.gd`
+- `src/battle/battle_scene.gd`
+- `src/battle/combatants/enemy_combatant.gd`
+- `src/scripts/action_effects/effect_damage.gd`
+- `src/scripts/action_effects/effect_modify_focus.gd`
+- `src/scripts/action_effects/effect_recover_breach.gd`
+- `src/scripts/enemies/enemy_decision_engine.gd`
+- `test/integration/test_battle_controller_navigation.gd`
+
+The unrelated user edit in `src/dev/endgame_battle_lab.tscn` was preserved and will remain excluded from the fix commit.
+
+### Fix Round 2 self-review and remaining concerns
+
+- Confirmed lifecycle authority follows model registration, not view registration: presentation replacement/removal does not affect the roster, while model removal disconnects the complete callback inventory and clears manager ownership.
+- Confirmed active-actor teardown is synchronous, does not call `find_and_start_next_turn`, and leaves later controller action/cancel/shift input safe in `LOADING` unless the battle was already over.
+- Confirmed manager exit releases ActionBar hero callbacks even when the hero model remains valid outside the manager subtree.
+- Confirmed final-target invalidation preserves an available alternative and otherwise retains enough selection state for either controller cancellation path to work.
+- Confirmed the preserved dirty lab scene was not edited, restored, staged, or committed.
+- No interactive visual or physical-controller acceptance was performed. This round changes lifecycle, input-safety, and typing foundations without changing the current 2D presentation.

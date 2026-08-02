@@ -5,7 +5,7 @@ class_name Effect_ModifyFocus
 
 func execute(attacker: BattleCombatant, targets: Array[BattleCombatant], battle_manager: BattleManager, _action: Action = null, _context: Dictionary = {}) -> void:
 	print("--- Executing Change Guard Effect ---")
-	var final_targets := battle_manager.get_targets(
+	var final_targets: Array[BattleCombatant] = battle_manager.get_targets(
 		target_type,
 		attacker.is_hero(),
 		targets,

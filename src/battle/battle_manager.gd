@@ -52,6 +52,7 @@ var _combat_rng: RandomNumberGenerator
 var _presentations: Dictionary = {}
 var _presentation_exit_callbacks: Dictionary = {}
 var _combatant_exit_callbacks: Dictionary = {}
+var _canceling_active_actor_state := false
 
 
 func register_presentation(
@@ -77,7 +78,6 @@ func register_presentation(
 	if not presentation.target_pressed.is_connected(_on_target_pressed):
 		presentation.target_pressed.connect(_on_target_pressed)
 	_connect_presentation_cleanup(combatant, presentation)
-	_connect_combatant_cleanup(combatant)
 	presentation.set_target_presentation(previous_state)
 	if previous != null and previous != presentation:
 		presentation.set_acting(previous_acting)
@@ -119,14 +119,32 @@ func _prune_stale_presentations() -> void:
 
 
 func _prune_invalid_combatants() -> void:
+	var removed_invalid_combatant := false
 	for index in range(actor_list.size() - 1, -1, -1):
 		if not is_instance_valid(actor_list[index]):
 			actor_list.remove_at(index)
+			removed_invalid_combatant = true
 	for combatant_value: Variant in _combatant_exit_callbacks.keys():
 		if not is_instance_valid(combatant_value):
 			_combatant_exit_callbacks.erase(combatant_value)
+			removed_invalid_combatant = true
 	if not is_instance_valid(current_actor):
+		var owned_active_state: bool = current_state in [
+			State.PLAYER_ACTION,
+			State.FORCED_TARGET,
+			State.EXECUTING_ACTION,
+		]
+		var should_cancel_active_state: bool = owned_active_state \
+			or current_action != null \
+			or executing_action != null \
+			or focused_button != null \
+			or executing_action_ends_turn \
+			or executing_action_ct_percent != 100
 		current_actor = null
+		if removed_invalid_combatant \
+			and should_cancel_active_state \
+			and not _canceling_active_actor_state:
+			_cancel_active_actor_state()
 	if not is_instance_valid(_pending_after_shift_action):
 		_pending_after_shift_action = null
 
@@ -202,13 +220,37 @@ func _disconnect_combatant_cleanup(combatant: BattleCombatant) -> void:
 
 
 func _on_combatant_tree_exiting(combatant: BattleCombatant) -> void:
-	actor_list.erase(combatant)
 	if current_actor == combatant:
-		current_actor = null
+		_cancel_active_actor_state(combatant)
+	actor_list.erase(combatant)
 	if _pending_after_shift_action == combatant:
 		_pending_after_shift_action = null
 	unregister_presentation(combatant)
-	_disconnect_combatant_cleanup(combatant)
+	_disconnect_combatant_signals(combatant)
+	if combatant.battle_manager == self:
+		combatant.battle_manager = null
+
+
+func _cancel_active_actor_state(combatant: BattleCombatant = null) -> void:
+	if _canceling_active_actor_state:
+		return
+	_canceling_active_actor_state = true
+	_clear_all_targeting_ui()
+	if focused_button:
+		release_focused_button()
+	current_action = null
+	executing_action = null
+	_clear_executing_action_recovery()
+	if is_instance_valid(current_action_panel):
+		current_action_panel.hide()
+	if is_instance_valid(action_bar):
+		action_bar.clear_active_hero()
+	if _pending_after_shift_action == combatant:
+		_pending_after_shift_action = null
+	current_actor = null
+	if current_state != State.BATTLE_OVER:
+		change_state(State.LOADING)
+	_canceling_active_actor_state = false
 
 
 func _set_target_state(
@@ -255,11 +297,16 @@ func _ready():
 
 func _exit_tree() -> void:
 	_clear_all_targeting_ui()
+	if is_instance_valid(action_bar):
+		action_bar.clear_active_hero()
 	for combatant: BattleCombatant in _presentations.keys():
 		unregister_presentation(combatant)
 	for combatant_value: Variant in _combatant_exit_callbacks.keys():
 		if is_instance_valid(combatant_value):
-			_disconnect_combatant_cleanup(combatant_value as BattleCombatant)
+			var combatant := combatant_value as BattleCombatant
+			_disconnect_combatant_signals(combatant)
+			if combatant.battle_manager == self:
+				combatant.battle_manager = null
 		else:
 			_combatant_exit_callbacks.erase(combatant_value)
 
@@ -619,7 +666,9 @@ func set_current_action(action: Action):
 		hero.get_current_role().color
 	)
 	current_action_panel.show()
-	var targets := get_targets(action.target_type, true, [], null, action.can_revive_targets)
+	var targets: Array[BattleCombatant] = get_targets(
+		action.target_type, true, [], null, action.can_revive_targets,
+	)
 	_apply_target_presentation(action, targets)
 
 
@@ -640,7 +689,7 @@ func refresh_current_action_presentation(target: BattleCombatant = null) -> void
 		selected_tooltip = focused_button.tooltip
 	if panel_label == null and selected_tooltip == null:
 		return
-	var presentation_target := target
+	var presentation_target: BattleCombatant = target
 	if not is_instance_valid(presentation_target) \
 		or presentation_target.current_stats == null:
 		presentation_target = null
@@ -761,7 +810,7 @@ func execute_action(actor: BattleCombatant, action: Action, targets: Array[Battl
 			{"paid_focus_cost": paid_focus_cost, "action": action},
 		)
 	var action_context := {"paid_focus_cost": paid_focus_cost}
-	var parent_targets = targets
+	var parent_targets: Array[BattleCombatant] = targets
 	executing_action = action
 	executing_action_ends_turn = ends_turn
 	executing_action_ct_percent = actor.get_action_ct_percent(action) if ends_turn else 100
@@ -872,6 +921,7 @@ func get_living_enemies() -> Array[EnemyCombatant]:
 	return living_enemies
 
 func _connect_combatant_signals(actor: BattleCombatant) -> void:
+	_connect_combatant_cleanup(actor)
 	if not actor.hp_changed.is_connected(_on_actor_hp_changed):
 		actor.hp_changed.connect(_on_actor_hp_changed)
 	if not actor.guard_changed.is_connected(_on_actor_guard_changed):
@@ -886,6 +936,24 @@ func _connect_combatant_signals(actor: BattleCombatant) -> void:
 		_on_hero_focus_updated
 	):
 		(actor as HeroCombatant).focus_changed.connect(_on_hero_focus_updated)
+
+
+func _disconnect_combatant_signals(actor: BattleCombatant) -> void:
+	if actor.hp_changed.is_connected(_on_actor_hp_changed):
+		actor.hp_changed.disconnect(_on_actor_hp_changed)
+	if actor.guard_changed.is_connected(_on_actor_guard_changed):
+		actor.guard_changed.disconnect(_on_actor_guard_changed)
+	if actor.conditions_changed.is_connected(_on_actor_conditions_changed):
+		actor.conditions_changed.disconnect(_on_actor_conditions_changed)
+	if actor.defeated.is_connected(_on_actor_died):
+		actor.defeated.disconnect(_on_actor_died)
+	if actor.revived.is_connected(_on_actor_revived):
+		actor.revived.disconnect(_on_actor_revived)
+	if actor is HeroCombatant and (actor as HeroCombatant).focus_changed.is_connected(
+		_on_hero_focus_updated
+	):
+		(actor as HeroCombatant).focus_changed.disconnect(_on_hero_focus_updated)
+	_disconnect_combatant_cleanup(actor)
 
 
 func _on_hero_focus_updated(_hero: HeroCombatant) -> void:
@@ -998,7 +1066,7 @@ func _on_shift_button_pressed(direction: String):
 		var action = current_hero.get_current_role().shift_action
 		if action.auto_target:
 			print("Auto-executing shift action...")
-			var target_list = get_targets(
+			var target_list: Array[BattleCombatant] = get_targets(
 				action.target_type, true, [], null, action.can_revive_targets,
 			)
 
@@ -1194,7 +1262,7 @@ func _get_rich_description(action: Action, target: BattleCombatant = null) -> St
 		presentation_target = target
 		presentation_targets.append(target)
 	elif is_group_target_action(action):
-		var resolved_targets := get_targets(
+		var resolved_targets: Array[BattleCombatant] = get_targets(
 			action.target_type,
 			current_actor is HeroCombatant,
 			[],

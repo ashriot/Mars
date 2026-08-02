@@ -14,7 +14,9 @@ static func choose(enemy: EnemyCombatant, abilities: Array[EnemyAbility], state:
 				return condition != null and condition.matches(enemy, state, context)):
 				continue
 			var salt := "%s:%d" % [ability.ability_id, index]
-			var targets := rule.selector.select(enemy, state, context, salt) if rule.selector else []
+			var targets: Array[BattleCombatant] = rule.selector.select(
+				enemy, state, context, salt,
+			) if rule.selector else []
 			if targets.is_empty():
 				continue
 			candidates.append({"ability": ability, "rule": rule, "targets": targets, "salt": salt})
