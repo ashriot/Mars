@@ -2,7 +2,7 @@
 
 ## Project
 
-Redshift is a local, pre-alpha game prototype built with Godot 4.6.3. Optimize for safe iteration and clear behavior; there are no public-release or backward-compatibility guarantees yet.
+Redshift is a local, pre-alpha game prototype built with Godot 4.7.1. Optimize for safe iteration and clear behavior; there are no public-release or backward-compatibility guarantees yet.
 
 - `src/` — Gameplay systems, UI, scenes, shaders, and runtime scripts.
 - `data/` — Authored heroes, roles, progression trees, actions, encounters, equipment, and theme resources.
@@ -27,7 +27,7 @@ Positioning and coordinate-space guidance: [`docs/coordinate-spaces.md`](docs/co
 
 ## Godot Files
 
-- Use Godot 4.6.3 unless the user explicitly approves another version; Godot 4.7 is deferred because of known iOS visual issues in this project.
+- Use Godot 4.7.1 at `/Applications/Godot 4.7.app/Contents/MacOS/Godot` unless the user explicitly approves another version. The prior 4.6.3 iPhone verification does not establish 4.7.1 iOS visual acceptance, which must be re-run separately.
 - Preserve and commit required `.uid` and `.import` sidecars; do not discard them as generated noise or manually normalize incidental generated fields.
 - Treat `.godot/` as a local cache and never commit it.
 - Use lowercase snake_case for new files and directories where practical; do not perform unrelated bulk renames.

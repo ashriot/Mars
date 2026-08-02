@@ -6,14 +6,14 @@
 
 **Architecture:** A tracked `BattleWorld3D` sits behind the existing Canvas UI and places generic enemy presentation roots at authored formation transforms. Tracked scenes refer to ignored Quaternius resources only through an optional runtime/editor loader, so clean clones use placeholders without missing-resource errors. `EnemyDronePresentation` adapts the existing authoritative `EnemyCombatant` and cancellation-safe presentation contract to the real model, projected HUD, animation player, camera rig, and 2D first-person effects.
 
-**Tech Stack:** Godot 4.6.3, GDScript, Godot scenes/resources, GUT 9.6.1, POSIX shell for the curated local-asset installer.
+**Tech Stack:** Godot 4.7.1, GDScript, Godot scenes/resources, GUT 9.6.1, POSIX shell for the curated local-asset installer.
 
 ## Global Constraints
 
 - Preserve the unrelated user edit in `src/dev/endgame_battle_lab.tscn`; never edit, stage, restore, or commit it.
 - Work in the primary checkout on the current ordinary feature branch; do not create a Git worktree.
-- Use Godot 4.6.3 and the isolated `HOME` commands in `docs/testing/README.md` for every automated Godot run.
-- Do not change Godot, GUT, or another dependency version.
+- Use Godot 4.7.1 at `/Applications/Godot 4.7.app/Contents/MacOS/Godot` and the isolated `HOME` commands in `docs/testing/README.md` for every automated Godot run.
+- Do not change GUT or another dependency version.
 - Keep every file under `assets/graphics/models/quaternius_local/` ignored and untracked; do not use Git LFS and do not force-add vendor files.
 - Copy only the exact EyeDrone and eight-module environment whitelist from the approved design; do not copy FBX, OBJ, previews, or unused kit content.
 - All ordinary enemies use the same EyeDrone presentation in this slice; additional models, palettes, and profile infrastructure are out of scope.
@@ -1318,7 +1318,7 @@ if is_zero_approx(effective_intensity):
 - [ ] **Step 7: Run camera, projectile, card, and controller tests**
 
 ```bash
-HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot \
+HOME=/tmp/mars-godot-home '/Applications/Godot 4.7.app/Contents/MacOS/Godot' \
   --headless --path "$PWD" -s addons/gut/gut_cmdln.gd \
   -gselect battle_camera_rig -gselect battle_projectile_layer \
   -gselect card_combatant_binding -gselect battle_controller_navigation \
@@ -1361,9 +1361,9 @@ git commit -m "feat: add first person battle feedback"
 - [ ] **Step 1: Run project import and all focused risk suites in the working checkout**
 
 ```bash
-HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot \
+HOME=/tmp/mars-godot-home '/Applications/Godot 4.7.app/Contents/MacOS/Godot' \
   --headless --path "$PWD" --editor --quit
-HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot \
+HOME=/tmp/mars-godot-home '/Applications/Godot 4.7.app/Contents/MacOS/Godot' \
   --headless --path "$PWD" -s addons/gut/gut_cmdln.gd \
   -gselect optional_local_model_3d -gselect combat_presentation_settings \
   -gselect battle_formation_layout -gselect battle_world_3d \
@@ -1378,7 +1378,7 @@ Expected: import exits 0 without parser errors; every focused suite passes. The 
 - [ ] **Step 2: Run the complete suite with exact totals**
 
 ```bash
-HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot \
+HOME=/tmp/mars-godot-home '/Applications/Godot 4.7.app/Contents/MacOS/Godot' \
   --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gexit
 ```
 
@@ -1398,11 +1398,11 @@ VERIFY_HOME=$(mktemp -d /private/tmp/mars-3d-home-XXXXXX)
 git clone --shared --no-checkout /Users/adam/github/mars "$VERIFY_ROOT/repo"
 git -C "$VERIFY_ROOT/repo" checkout --detach SOURCE_SHA
 test ! -e "$VERIFY_ROOT/repo/assets/graphics/models/quaternius_local"
-env HOME="$VERIFY_HOME" /Applications/Godot.app/Contents/MacOS/Godot \
+env HOME="$VERIFY_HOME" '/Applications/Godot 4.7.app/Contents/MacOS/Godot' \
   --headless --path "$VERIFY_ROOT/repo" --editor --quit
-env HOME="$VERIFY_HOME" /Applications/Godot.app/Contents/MacOS/Godot \
+env HOME="$VERIFY_HOME" '/Applications/Godot 4.7.app/Contents/MacOS/Godot' \
   --headless --path "$VERIFY_ROOT/repo" --editor --quit
-env HOME="$VERIFY_HOME" /Applications/Godot.app/Contents/MacOS/Godot \
+env HOME="$VERIFY_HOME" '/Applications/Godot 4.7.app/Contents/MacOS/Godot' \
   --headless --path "$VERIFY_ROOT/repo" -s addons/gut/gut_cmdln.gd -gexit
 ```
 

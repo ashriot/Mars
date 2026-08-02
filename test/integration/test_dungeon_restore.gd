@@ -4,12 +4,25 @@ const DUNGEON_MAP_SCENE := preload("res://src/map/dungeon_map.tscn")
 const NAVIGATION_UX_SCENE := preload("res://src/ui/navigation/navigation_ux_layer.tscn")
 const TERMINAL_SCENE := preload("res://src/map/terminal.tscn")
 
+var _saved_input_mode: InputManager.InputMode
+var _saved_presentation_mode: InputManager.PresentationMode
+var _saved_consumed_mouse_button: MouseButton
+
+
+func before_each() -> void:
+	_saved_input_mode = InputManager._active_mode
+	_saved_presentation_mode = InputManager._presentation_mode
+	_saved_consumed_mouse_button = InputManager._consumed_mouse_button
+
 
 func after_each() -> void:
 	for action: StringName in [
 		&"nav_right", &"camera_pan_right", &"zoom_in", &"recenter",
 	]:
 		Input.action_release(action)
+	InputManager._active_mode = _saved_input_mode
+	InputManager._presentation_mode = _saved_presentation_mode
+	InputManager._consumed_mouse_button = _saved_consumed_mouse_button
 
 
 func _make_map() -> DungeonMap:
@@ -517,6 +530,7 @@ func test_scan_mouse_motion_preserves_controller_pointer_until_consumed_click_ha
 	var navigation := _make_navigation_ux()
 	var setup := await _prepare_navigation_map()
 	var dungeon_map: DungeonMap = setup.map
+	InputManager._consumed_mouse_button = MOUSE_BUTTON_NONE
 	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
 	InputManager._set_presentation_mode(InputManager.PresentationMode.FOCUS)
 	var physical_mouse := dungeon_map.get_viewport().get_mouse_position()

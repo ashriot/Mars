@@ -4,6 +4,22 @@ extends GutTest
 const HUD_SCENE := preload("res://src/battle/presentation/enemy_world_hud.tscn")
 const WORLD_SCENE := preload("res://src/battle/presentation/battle_world_3d.tscn")
 
+var _saved_input_mode: InputManager.InputMode
+var _saved_presentation_mode: InputManager.PresentationMode
+var _saved_consumed_mouse_button: MouseButton
+
+
+func before_each() -> void:
+	_saved_input_mode = InputManager._active_mode
+	_saved_presentation_mode = InputManager._presentation_mode
+	_saved_consumed_mouse_button = InputManager._consumed_mouse_button
+
+
+func after_each() -> void:
+	InputManager._active_mode = _saved_input_mode
+	InputManager._presentation_mode = _saved_presentation_mode
+	InputManager._consumed_mouse_button = _saved_consumed_mouse_button
+
 
 func _hud() -> EnemyWorldHUD:
 	var hud := HUD_SCENE.instantiate() as EnemyWorldHUD
@@ -107,6 +123,9 @@ func test_target_region_forwards_hover_and_press_signals() -> void:
 
 
 func test_intent_tooltip_is_reachable_without_blocking_real_target_input() -> void:
+	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
+	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)
+	InputManager._consumed_mouse_button = MOUSE_BUTTON_NONE
 	var hud := _hud()
 	var enemy := _enemy_with_state(80, 3)
 	var action := Action.new()
@@ -134,6 +153,8 @@ func test_intent_tooltip_is_reachable_without_blocking_real_target_input() -> vo
 	get_viewport().push_input(_mouse_button_at(intent_center, true), true)
 	await get_tree().process_frame
 	assert_signal_emitted(hud, &"pressed")
+	get_viewport().push_input(_mouse_button_at(intent_center, false), true)
+	await get_tree().process_frame
 	TooltipManager.hide_tooltip()
 
 

@@ -1,23 +1,23 @@
 # Testing
 
-The supported development and automated-test runtime is Godot 4.6.3 with vendored GUT 9.6.1. Godot 4.6.3 has been verified on iPhone; Godot 4.7 is deferred because of iOS visual issues.
+The supported development and automated-test runtime is Godot 4.7.1 at `/Applications/Godot 4.7.app/Contents/MacOS/Godot`, with vendored GUT 9.6.1. The prior Godot 4.6.3 iPhone verification does not establish 4.7.1 iOS visual acceptance; repeat that hands-on check before making an iOS claim.
 
 Import and parse the project:
 
 ```sh
-HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" --editor --quit
+HOME=/tmp/mars-godot-home '/Applications/Godot 4.7.app/Contents/MacOS/Godot' --headless --path "$PWD" --editor --quit
 ```
 
 Run the complete automated suite:
 
 ```sh
-HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gexit
+HOME=/tmp/mars-godot-home '/Applications/Godot 4.7.app/Contents/MacOS/Godot' --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gexit
 ```
 
 Run a focused script by matching its filename:
 
 ```sh
-HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect progression_definitions -gexit
+HOME=/tmp/mars-godot-home '/Applications/Godot 4.7.app/Contents/MacOS/Godot' --headless --path "$PWD" -s addons/gut/gut_cmdln.gd -gselect progression_definitions -gexit
 ```
 
 The macOS `get_system_ca_certificates` warning and engine shutdown leak diagnostics may appear without failing the command. Test failures, script parser errors, and crashes are not acceptable.
@@ -27,8 +27,8 @@ The macOS `get_system_ca_certificates` warning and engine shutdown leak diagnost
 Before interactive acceptance at `1280x800` or `1920x1080`, run the import and complete suite from any working directory using the exact isolated commands below:
 
 ```sh
-env HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path /Users/adam/github/mars --editor --quit
-env HOME=/tmp/mars-godot-home /Applications/Godot.app/Contents/MacOS/Godot --headless --path /Users/adam/github/mars -s addons/gut/gut_cmdln.gd -gexit
+env HOME=/tmp/mars-godot-home '/Applications/Godot 4.7.app/Contents/MacOS/Godot' --headless --path /Users/adam/github/mars --editor --quit
+env HOME=/tmp/mars-godot-home '/Applications/Godot 4.7.app/Contents/MacOS/Godot' --headless --path /Users/adam/github/mars -s addons/gut/gut_cmdln.gd -gexit
 ```
 
 Both commands must exit zero and every test must pass. Record the exact test and assertion totals with the tested commit. The documented macOS CA warning and engine-shutdown diagnostics remain acceptable; parser errors, crashes, unexpected failures, and nonzero exits do not.
