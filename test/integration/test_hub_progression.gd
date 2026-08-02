@@ -10,6 +10,8 @@ var saved_input_mode: InputManager.InputMode
 var saved_presentation_mode: InputManager.PresentationMode
 var saved_inventory_equipment: Array[Equipment] = []
 var saved_shake_intensity: float
+var saved_combat_presentation_storage_path: String
+var combat_presentation_test_storage_path: String
 
 
 func before_each() -> void:
@@ -21,6 +23,10 @@ func before_each() -> void:
 	saved_presentation_mode = InputManager._presentation_mode
 	saved_inventory_equipment.assign(SaveSystem.inventory_equipment)
 	saved_shake_intensity = CombatPresentationSettings.shake_intensity
+	saved_combat_presentation_storage_path = CombatPresentationSettings.get_storage_path_for_tests()
+	combat_presentation_test_storage_path = "user://test-combat-presentation-hub-%s-%s.cfg" % [get_instance_id(), Time.get_ticks_usec()]
+	CombatPresentationSettings.configure_storage_path_for_tests(combat_presentation_test_storage_path)
+	CombatPresentationSettings.set_shake_intensity(1.0, false)
 	SaveSystem.storage_root_override = TEST_SAVE_ROOT
 	SaveSystem.current_slot_index = TEST_SLOT
 	SaveSystem.party_roster.clear()
@@ -38,7 +44,13 @@ func after_each() -> void:
 	SaveSystem.storage_root_override = saved_storage_root
 	InputManager._active_mode = saved_input_mode
 	InputManager._presentation_mode = saved_presentation_mode
+	if FileAccess.file_exists(combat_presentation_test_storage_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(combat_presentation_test_storage_path))
+	assert_false(FileAccess.file_exists(combat_presentation_test_storage_path))
+	CombatPresentationSettings.configure_storage_path_for_tests(saved_combat_presentation_storage_path)
 	CombatPresentationSettings.set_shake_intensity(saved_shake_intensity, false)
+	assert_eq(CombatPresentationSettings.get_storage_path_for_tests(), saved_combat_presentation_storage_path)
+	assert_eq(CombatPresentationSettings.shake_intensity, saved_shake_intensity)
 
 
 func _tree() -> RoleTreeDefinition:
@@ -633,6 +645,8 @@ func test_options_tab_focuses_shake_slider_and_updates_setting() -> void:
 	slider.value = 0.0
 	slider.value_changed.emit(0.0)
 	assert_eq(CombatPresentationSettings.shake_intensity, 0.0)
+	assert_eq(CombatPresentationSettings.get_storage_path_for_tests(), combat_presentation_test_storage_path)
+	assert_true(FileAccess.file_exists(combat_presentation_test_storage_path))
 
 
 func test_analog_page_trigger_requires_release_before_another_page_move() -> void:

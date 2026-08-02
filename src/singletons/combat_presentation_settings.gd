@@ -39,6 +39,10 @@ func configure_storage_path_for_tests(path: String) -> void:
 	_storage_path = path
 
 
+func get_storage_path_for_tests() -> String:
+	return _storage_path
+
+
 func _save_settings() -> void:
 	var config := ConfigFile.new()
 	config.set_value(SECTION, KEY, shake_intensity)
