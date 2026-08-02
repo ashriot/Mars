@@ -327,6 +327,21 @@ class EnemyWaitBattleManager extends BattleManager:
 		await super.find_and_start_next_turn()
 
 
+class PostActionPruneBattleManager extends EnemyWaitBattleManager:
+	signal release_post_action_wait
+	var post_action_wait_started := false
+	var _post_action_wait_consumed := false
+
+	func wait(duration: float = 0.01) -> void:
+		if is_equal_approx(duration, 0.15) and not _post_action_wait_consumed:
+			_post_action_wait_consumed = true
+			post_action_wait_started = true
+			await release_post_action_wait
+
+	func _set_actor_acting(_combatant: BattleCombatant, _active: bool) -> void:
+		return
+
+
 func test_activate_slot_emits_only_for_visible_enabled_semantic_slot() -> void:
 	var bar := ActionBar.new()
 	bar.actions_ui = Control.new()
@@ -1229,6 +1244,65 @@ func test_removed_enemy_cancels_suspended_turn_before_cooldown_intent_or_recursi
 	assert_same(enemy.intended_action, recovery)
 	assert_eq(enemy.decide_intent_calls, 0)
 	assert_eq(manager.find_calls, 1)
+	assert_null(manager.current_actor)
+	assert_eq(manager.current_state, BattleManager.State.LOADING)
+	assert_engine_error_count(0)
+
+
+func test_unrelated_stale_model_pruning_does_not_cancel_enemy_turn_handoff() -> void:
+	var manager := PostActionPruneBattleManager.new()
+	var bar := ImmediateShiftActionBar.new()
+	manager.action_bar = bar
+	bar.battle_manager = manager
+	add_child_autofree(manager)
+	autofree(bar)
+	await get_tree().process_frame
+	var enemy := ContinuationEnemy.new()
+	var hero := HeroCombatant.new()
+	for actor: BattleCombatant in [enemy, hero]:
+		manager.add_child(actor)
+		var stats := ActorStats.new()
+		stats.max_hp = 100
+		stats.speed = 100
+		actor.setup_base(
+			stats,
+			BattleCombatant.Faction.HERO \
+				if actor is HeroCombatant else BattleCombatant.Faction.ENEMY,
+			manager,
+		)
+	var stale := EnemyCombatant.new()
+	stale.setup_base(ActorStats.new(), BattleCombatant.Faction.ENEMY, manager)
+	manager._connect_combatant_signals(stale)
+	enemy.current_stats.speed = 200
+	enemy.current_ct = manager.TARGET_CT
+	enemy.is_breached = true
+	var recovery := Action.new()
+	recovery.target_type = Action.TargetType.SELF
+	var enemy_data := EnemyData.new()
+	enemy_data.abilities = []
+	enemy_data.recover_action = recovery
+	enemy.enemy_data = enemy_data
+	enemy.recover_action = recovery
+	var decision := EnemyDecision.new()
+	decision.action = recovery
+	decision.targets = [enemy]
+	decision.is_recovery = true
+	enemy.intended_decision = decision
+	enemy.intended_action = recovery
+	enemy.intended_targets = [enemy]
+	manager.actor_list = [enemy, hero, stale]
+	manager._connect_combatant_signals(enemy)
+
+	manager.find_and_start_next_turn()
+	assert_true(manager.post_action_wait_started)
+	stale.free()
+	manager.release_post_action_wait.emit()
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	assert_eq(enemy.ai_state.completed_turns, 1)
+	assert_eq(enemy.decide_intent_calls, 1)
+	assert_eq(manager.find_calls, 2, "the valid roster continues to its next turn")
 	assert_null(manager.current_actor)
 	assert_eq(manager.current_state, BattleManager.State.LOADING)
 	assert_engine_error_count(0)

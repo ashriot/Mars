@@ -35,7 +35,11 @@ signal target_invalidated(combatant: BattleCombatant)
 @export var enemy_card_scene: PackedScene
 
 # --- Actor Tracking ---
-var current_actor: BattleCombatant
+var _current_actor_was_assigned := false
+var current_actor: BattleCombatant:
+	set(value):
+		current_actor = value
+		_current_actor_was_assigned = value != null
 var current_action: Action = null
 var executing_action: Action = null
 var _pending_after_shift_action: HeroCombatant
@@ -169,7 +173,7 @@ func _prune_invalid_combatants() -> void:
 		if not is_instance_valid(combatant_value):
 			_combatant_exit_callbacks.erase(combatant_value)
 			removed_invalid_combatant = true
-	if not is_instance_valid(current_actor):
+	if _current_actor_was_assigned and not is_instance_valid(current_actor):
 		var owned_active_state: bool = current_state in [
 			State.PLAYER_ACTION,
 			State.FORCED_TARGET,

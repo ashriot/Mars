@@ -322,6 +322,10 @@ Commit: recorded separately from the original Task 7 and prior fix commits.
 4. Completion audit found and corrected two normal-flow ownership details:
    - Enemy turn handoff intentionally clears `current_actor` before battle-end evaluation, so its continuation is recaptured as actor-valid but no longer current-turn-owning before that await.
    - Strict action validation initially exposed two alternate-executor AI tests (21/23 passing, 68/71 assertions). Claiming the locked enemy action before its first wait restored the full `enemy_ai_intents` suite to 23/23 passing, 71 assertions without weakening cancellation checks.
+5. Read-only completion review found an intentional-null versus freed-current distinction:
+   - RED: `battle_controller_navigation` was 76/77 passing with 416/418 assertions when an unrelated off-tree model became stale after enemy action recovery had committed but before handoff. Headless pruning treated the deliberately cleared `current_actor` as a freed turn owner, canceled the continuation, skipped intent refresh, and never requested the next turn.
+   - GREEN: explicit current-actor assignment tracking distinguishes a deliberately null owner from a freed assigned object. The unrelated stale model is pruned while the valid enemy completes, replans, and recurses; the prior freed-current fallback remains green. Final result: 77/77 passing, 418 assertions.
+   - Targeted read-only re-review found the Important issue resolved with no remaining Critical or Important finding.
 
 ### Await and roster audit
 
@@ -334,13 +338,13 @@ Commit: recorded separately from the original Task 7 and prior fix commits.
 Every Godot invocation used `HOME=/tmp/mars-godot-home` and Godot 4.6.3.
 
 - Headless editor parse (`--editor --quit`): exit 0 with no parser errors.
-- `battle_controller_navigation`: 76/76 passing, 411 assertions.
+- `battle_controller_navigation`: 77/77 passing, 418 assertions.
 - `ctb_simulator`: 21/21 passing, 59 assertions.
 - `enemy_ai_intents`: 23/23 passing, 71 assertions.
 - `battle_revival`: 6/6 passing, 27 assertions.
 - `controller_playable_loop`: 2/2 passing, 104 assertions.
 - `endgame_battle_lab`: 6/7 passing, 176/177 assertions. The sole failure remains the preserved user scene's `enemy_hp_multiplier = 1.0` versus the committed test expectation of `5.0`.
-- Final complete GUT suite: 916/917 passing, 14,483/14,484 assertions across 68 scripts. The same unrelated dirty lab-scene expectation is the only failure.
+- Final complete GUT suite: 917/918 passing, 14,490/14,491 assertions across 68 scripts. The same unrelated dirty lab-scene expectation is the only failure.
 - Discovery audit: the repository contains exactly 68 `test_*.gd` files and GUT discovered exactly 68 scripts. No `pending`, `skip`, `should_skip_script`, or `should_skip_test` markers were found.
 - Full-run hazard review found no parser errors, crashes, unexpected failures, skipped tests, or pending tests. The three ignored-inner-class warnings, expected test errors, macOS certificate-store warning, and documented successful-test shutdown resource diagnostics are unchanged.
 - Target/card type scan found no card-typed gameplay arrays. The two `get_targets` assignments reported by the broad inferred-local scan assign into explicitly typed `Array[BattleCombatant]` variables.
@@ -361,5 +365,6 @@ The unrelated user edit in `src/dev/endgame_battle_lab.tscn` was preserved and w
 - Confirmed canceled action, shift, enemy-turn, and manager-teardown continuations do not finish the turn, advance CT, complete cooldowns, replan intent, recurse, or dereference their removed owner after resuming.
 - Confirmed ActionBar logical state can update without a hero while its physical controls remain unavailable until a valid replacement is loaded and synchronized.
 - Confirmed headless combatants are pruned through model authority even when no presentation lookup can run.
+- Confirmed pruning an unrelated stale combatant cannot cancel a legitimate actor-null enemy handoff, while a freed assigned current actor still triggers atomic cancellation.
 - Confirmed the preserved dirty lab scene was not edited, restored, staged, or committed.
 - No interactive visual or physical-controller acceptance was performed. This round changes lifecycle and input-state foundations without changing the current presentation.
