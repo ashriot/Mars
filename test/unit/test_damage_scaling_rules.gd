@@ -23,10 +23,10 @@ class FixedModifierTrait extends Trait:
 	var outgoing_modifier: float
 	var incoming_modifier: float
 
-	func get_damage_dealt_modifier(_target: ActorCard) -> float:
+	func get_damage_dealt_modifier(_target: Node) -> float:
 		return outgoing_modifier
 
-	func get_damage_taken_modifier(_attacker: ActorCard) -> float:
+	func get_damage_taken_modifier(_attacker: Node) -> float:
 		return incoming_modifier
 
 
@@ -263,6 +263,37 @@ func test_source_power_contribution_preserves_outgoing_contribution() -> void:
 	target.free()
 
 
+func test_source_power_bonus_composes_for_combatants() -> void:
+	var attacker := _combatant_with_power(Action.PowerType.ATTACK, 100)
+	var source := _combatant_with_power(Action.PowerType.PSYCHE, 40)
+	var condition := ConditionSourcePowerBonus.new()
+	condition.condition_name = "Source Psy"
+	condition.power_type = Action.PowerType.PSYCHE
+	condition.power_scalar = 1.0
+	condition.damage_dealt_scalar = 0.25
+	condition.attacker = source
+	attacker.active_conditions = [condition]
+	var target := _combatant_with_power(Action.PowerType.ATTACK, 0)
+
+	var contributions := attacker.get_damage_dealt_contributions(target)
+
+	_assert_contribution_once(
+		contributions,
+		&"condition_source_psy",
+		DamageContribution.Stage.POWER,
+		40.0,
+	)
+	_assert_contribution_once(
+		contributions,
+		&"condition_source_psy",
+		DamageContribution.Stage.OUTGOING,
+		0.25,
+	)
+	attacker.free()
+	source.free()
+	target.free()
+
+
 func test_distribution_divides_entire_source_power_bonus() -> void:
 	var attacker := _actor_with_power(Action.PowerType.ATTACK, 100)
 	var source := _actor_with_power(Action.PowerType.PSYCHE, 40)
@@ -353,3 +384,17 @@ func _actor_with_power(power_type: Action.PowerType, value: int) -> ActorCard:
 	elif power_type == Action.PowerType.PSYCHE:
 		actor.current_stats.psyche = value
 	return actor
+
+
+func _combatant_with_power(
+	power_type: Action.PowerType,
+	value: int,
+) -> BattleCombatant:
+	var stats := ActorStats.new()
+	if power_type == Action.PowerType.ATTACK:
+		stats.attack = value
+	elif power_type == Action.PowerType.PSYCHE:
+		stats.psyche = value
+	var combatant := BattleCombatant.new()
+	combatant.setup_base(stats, BattleCombatant.Faction.HERO)
+	return combatant

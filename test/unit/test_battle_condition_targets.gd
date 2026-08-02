@@ -27,14 +27,14 @@ class CapturingBattleManager extends BattleManager:
 		pass
 
 	func execute_triggered_effect(
-		_actor: ActorCard,
+		_actor: Node,
 		_effect: ActionEffect,
 		targets: Array,
 		_action: Action,
 		_context: Dictionary = {},
 	) -> void:
 		captured_targets = targets
-		await _effect.execute(_actor, targets, self, _action, _context)
+		await _effect.execute(_actor as ActorCard, targets, self, _action, _context)
 
 
 class ConditionActor extends ActorCard:

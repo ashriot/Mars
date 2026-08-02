@@ -31,15 +31,15 @@ enum ConditionType { BUFF, DEBUFF }
 @export var remove_on_triggers: Array[Trigger.TriggerType]
 
 var id: String = resource_path.get_file().get_basename()
-var attacker: ActorCard
+var attacker: Node
 
-func get_damage_dealt_power_bonus(_attacker: ActorCard, _target: ActorCard) -> float:
+func get_damage_dealt_power_bonus(_attacker: Node, _target: Node) -> float:
 	return 0.0
 
 
-func get_damage_dealt_modifier(_attacker: ActorCard, _target: ActorCard) -> float:
+func get_damage_dealt_modifier(_attacker: Node, _target: Node) -> float:
 	return damage_dealt_scalar
 
 
-func get_damage_taken_modifier(_attacker: ActorCard, _target: ActorCard) -> float:
+func get_damage_taken_modifier(_attacker: Node, _target: Node) -> float:
 	return damage_taken_scalar

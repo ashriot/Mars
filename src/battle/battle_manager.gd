@@ -34,7 +34,7 @@ signal target_invalidated(actor: ActorCard)
 @export var enemy_card_scene: PackedScene
 
 # --- Actor Tracking ---
-var current_actor: ActorCard = null
+var current_actor = null
 var current_action: Action = null
 var executing_action: Action = null
 var _pending_after_shift_action: HeroCard
@@ -404,7 +404,7 @@ func set_current_action(action: Action):
 	current_action = action
 	current_action_panel.get_node("HBoxContainer/Mask/Icon").texture = current_action.icon
 	refresh_current_action_presentation()
-	var final_percent := current_actor.get_action_ct_percent(current_action)
+	var final_percent: int = current_actor.get_action_ct_percent(current_action)
 	var ct_label := current_action_panel.get_node("HBoxContainer/CTPercent") as Label
 	ct_label.text = "%d%% CT" % final_percent
 	ct_label.add_theme_color_override(
@@ -592,8 +592,8 @@ func execute_action(actor: ActorCard, action: Action, targets: Array, display_na
 	_apply_executing_action_recovery(actor)
 	return
 
-func execute_triggered_effect(actor: ActorCard, effect: ActionEffect, targets: Array, action: Action, context: Dictionary = {}):
-	await effect.execute(actor, targets, self, action, context)
+func execute_triggered_effect(actor: Node, effect: ActionEffect, targets: Array, action: Action, context: Dictionary = {}):
+	await effect.execute(actor as ActorCard, targets, self, action, context)
 
 func execute_enemy_turn(enemy: EnemyCard) -> void:
 	change_state(State.EXECUTING_ACTION)
@@ -795,7 +795,7 @@ func get_targets(
 	target_type: Action.TargetType,
 	friendly: bool,
 	parent_targets: Array = [],
-	attacker: ActorCard = null,
+	attacker: Node = null,
 	include_defeated_heroes: bool = false,
 ) -> Array:
 	var enemies = []

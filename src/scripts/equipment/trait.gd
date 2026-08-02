@@ -4,6 +4,7 @@ class_name Trait
 
 @export var trait_name: String = "New Trait"
 @export_multiline var description_template: String = "Increases effect by {val}%."
+var current_tier := 1
 
 # --- UI HELPER ---
 # Allows the UI to show "Current: +10%" vs "Next: +20%"
@@ -19,15 +20,20 @@ func get_stat_mod(_stat: ActorStats.Stats, _rank: int) -> int:
 	return 0
 
 # 2. Damage Modifiers
-func get_damage_dealt_modifier(_target: ActorCard) -> float:
+func get_damage_dealt_modifier(_target: Node) -> float:
 	return 0.0
 
-func get_damage_taken_modifier(_attacker: ActorCard) -> float:
+func get_damage_taken_modifier(_attacker: Node) -> float:
 	return 0.0
 
 func get_action_ct_multiplier(_action: Action) -> float:
 	return 1.0
 
 # 3. Event Triggers
-func on_trigger(_trigger_type: Trigger.TriggerType, _context: Dictionary, _owner: ActorCard, _rank: int):
+func on_trigger(
+	_trigger_type: Trigger.TriggerType,
+	_context: Dictionary,
+	_owner: Node,
+	_rank: int,
+) -> void:
 	pass
