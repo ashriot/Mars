@@ -1,6 +1,7 @@
 extends GutTest
 
 const DRAW_FIRE := preload("res://data/heroes/sands/conditions/draw_fire.tres")
+const CardTestFactory := preload("res://test/helpers/card_test_factory.gd")
 
 
 class QuietHero extends HeroCard:
@@ -77,9 +78,15 @@ func test_untargetable_hero_is_excluded_from_single_and_group_selectors() -> voi
 
 
 func _fixture() -> Dictionary:
-	var sands := QuietHero.new()
-	var other := QuietHero.new()
-	var enemy := QuietEnemy.new()
+	var sands := CardTestFactory.bind(
+		QuietHero.new(), BattleCombatant.Faction.HERO,
+	) as QuietHero
+	var other := CardTestFactory.bind(
+		QuietHero.new(), BattleCombatant.Faction.HERO,
+	) as QuietHero
+	var enemy := CardTestFactory.bind(
+		QuietEnemy.new(), BattleCombatant.Faction.ENEMY,
+	) as QuietEnemy
 	sands.actor_name = "Sands"
 	other.actor_name = "Asher"
 	sands.battle_priority = 0

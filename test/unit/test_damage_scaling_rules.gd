@@ -1,5 +1,7 @@
 extends GutTest
 
+const CardTestFactory := preload("res://test/helpers/card_test_factory.gd")
+
 
 class SwarmRule extends DamageScalingRule:
 	func resolve(_base_potency: float, context: DamageContext) -> DamageContribution:
@@ -98,10 +100,10 @@ func test_typed_contribution_stages_route_only_to_their_formula_categories() -> 
 	]
 	var context := _context(0, 0, 0)
 	var resolved := DamageResolver.resolve_potency(1.0, rules, context)
-	var attacker := ActorCard.new()
+	var attacker := CardTestFactory.actor()
 	attacker.current_stats = ActorStats.new()
 	attacker.current_stats.attack = 100
-	var target := ActorCard.new()
+	var target := CardTestFactory.actor(BattleCombatant.Faction.ENEMY)
 	target.current_stats = ActorStats.new()
 	var result := DamageResolver.resolve_hit(
 		attacker,
@@ -135,7 +137,7 @@ func test_request_retains_authored_potency_and_labeled_actor_modifiers() -> void
 	var resolved := DamageResolver.resolve_potency(
 		0.8, [scaling_rule], _context(0, 0, 0),
 	)
-	var attacker := ActorCard.new()
+	var attacker := CardTestFactory.actor()
 	attacker.current_stats = ActorStats.new()
 	attacker.current_stats.attack = 100
 	var focus_condition := Condition.new()
@@ -146,7 +148,7 @@ func test_request_retains_authored_potency_and_labeled_actor_modifiers() -> void
 	sharpshooter.outgoing_modifier = 0.2
 	attacker.active_conditions = [focus_condition]
 	attacker.active_traits = [sharpshooter]
-	var target := ActorCard.new()
+	var target := CardTestFactory.actor(BattleCombatant.Faction.ENEMY)
 	target.current_stats = ActorStats.new()
 	var exposed_condition := Condition.new()
 	exposed_condition.condition_name = "Exposed Armor"
@@ -377,7 +379,7 @@ func _context(focus: int, guard: int, other_living_allies: int) -> DamageContext
 
 
 func _actor_with_power(power_type: Action.PowerType, value: int) -> ActorCard:
-	var actor := ActorCard.new()
+	var actor := CardTestFactory.actor()
 	actor.current_stats = ActorStats.new()
 	if power_type == Action.PowerType.ATTACK:
 		actor.current_stats.attack = value

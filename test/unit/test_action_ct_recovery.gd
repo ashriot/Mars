@@ -1,5 +1,7 @@
 extends GutTest
 
+const CardTestFactory := preload("res://test/helpers/card_test_factory.gd")
+
 
 class RecoveryTrait extends Trait:
 	var multiplier := 1.0
@@ -14,7 +16,7 @@ class ImmediateBattleManager extends BattleManager:
 
 
 func _actor() -> HeroCard:
-	var actor := HeroCard.new()
+	var actor := CardTestFactory.hero()
 	actor.current_stats = ActorStats.new()
 	actor.current_stats.speed = 100
 	return actor

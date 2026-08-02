@@ -33,6 +33,7 @@ var is_in_danger := false
 var is_defeated := false
 var active_conditions: Array[Condition] = []
 var active_traits: Array[Trait] = []
+var legacy_effect_actor: ActorCard
 var _lethal_hit_reaction_depth := 0
 var _condition_removal_batch_depth := 0
 var _condition_removal_batch_dirty := false
@@ -54,6 +55,19 @@ func setup_base(
 	is_breached = false
 	is_in_danger = false
 	is_defeated = false
+
+
+func bind_legacy_effect_actor(actor: ActorCard) -> void:
+	assert(actor != null, "BattleCombatant requires a legacy effect actor.")
+	assert(
+		legacy_effect_actor == null or legacy_effect_actor == actor,
+		"BattleCombatant cannot be rebound to another legacy effect actor.",
+	)
+	legacy_effect_actor = actor
+
+
+func _effect_actor() -> Node:
+	return legacy_effect_actor if is_instance_valid(legacy_effect_actor) else self
 
 
 func is_hero() -> bool:
@@ -144,8 +158,8 @@ func take_one_hit(
 		_lethal_hit_reaction_depth += 1
 	var event_context := {
 		"attacker": attacker,
-		"target": self,
-		"targets": [self],
+		"target": _effect_actor(),
+		"targets": [_effect_actor()],
 		"damage_result": result,
 		"attempted_damage": result.final_damage,
 		"actual_damage": actual_damage,
@@ -196,7 +210,7 @@ func modify_guard(amount: int, is_recovering: bool = false) -> void:
 		"is_recovering": is_recovering,
 	})
 	print(actor_name, " gained ", amount, " guard. Total: ", current_guard)
-	var context := {"targets": [self], "guard_gained": amount}
+	var context := {"targets": [_effect_actor()], "guard_gained": amount}
 	if amount > 0 and not is_recovering:
 		await _fire_condition_event(Trigger.TriggerType.ON_GAINING_GUARD, context)
 	if current_guard == 0 and not is_breached:
@@ -217,13 +231,15 @@ func in_danger(value: bool) -> void:
 	)
 
 
-func breach() -> void:
+func breach(before_own_reactions: Callable = Callable()) -> void:
 	is_breached = true
 	in_danger(false)
 	current_ct = 0
 	breached.emit(self)
 	presentation_event.emit(self, &"breach_started", {})
 	print("Breached: ", actor_name, " -> CT: ", current_ct)
+	if before_own_reactions.is_valid():
+		await before_own_reactions.call()
 	await _fire_condition_event(Trigger.TriggerType.ON_BREACHED)
 
 
@@ -267,7 +283,7 @@ func add_condition(condition_resource: Condition) -> void:
 				)
 				for effect: ActionEffect in trigger.effects_to_run:
 					await battle_manager.execute_triggered_effect(
-						self, effect, [self], null, {},
+						_effect_actor(), effect, [_effect_actor()], null, {},
 					)
 				return
 
@@ -368,10 +384,10 @@ func _execute_condition_triggers(
 			if effect == null:
 				continue
 			if effect.target_type == Action.TargetType.SELF:
-				targets = [self]
+				targets = [_effect_actor()]
 			else:
 				var effect_source := condition.attacker \
-					if is_instance_valid(condition.attacker) else self
+					if is_instance_valid(condition.attacker) else _effect_actor()
 				var source_is_hero: bool = effect_source.is_hero() \
 					if effect_source is BattleCombatant else effect_source is HeroCard
 				targets = battle_manager.get_targets(

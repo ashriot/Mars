@@ -1,5 +1,7 @@
 extends GutTest
 
+const CardTestFactory := preload("res://test/helpers/card_test_factory.gd")
+
 
 class QuietHero extends HeroCard:
 	func _update_conditions_ui() -> void:
@@ -71,10 +73,18 @@ func test_low_hp_percentage_selector_and_urgent_heal() -> void:
 
 
 func _fixture() -> Dictionary:
-	var sands := QuietHero.new()
-	var echo := QuietHero.new()
-	var enemy := QuietEnemy.new()
-	var ally := QuietEnemy.new()
+	var sands := CardTestFactory.bind(
+		QuietHero.new(), BattleCombatant.Faction.HERO,
+	) as QuietHero
+	var echo := CardTestFactory.bind(
+		QuietHero.new(), BattleCombatant.Faction.HERO,
+	) as QuietHero
+	var enemy := CardTestFactory.bind(
+		QuietEnemy.new(), BattleCombatant.Faction.ENEMY,
+	) as QuietEnemy
+	var ally := CardTestFactory.bind(
+		QuietEnemy.new(), BattleCombatant.Faction.ENEMY,
+	) as QuietEnemy
 	_initialize_actor(sands, 100, 1, 0)
 	_initialize_actor(echo, 100, 2, 0)
 	_initialize_actor(enemy, 100, 3, 2)

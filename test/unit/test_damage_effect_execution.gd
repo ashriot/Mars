@@ -1,5 +1,7 @@
 extends GutTest
 
+const CardTestFactory := preload("res://test/helpers/card_test_factory.gd")
+
 const HeroCardScene := preload("res://src/battle/hero_card.tscn")
 
 
@@ -363,13 +365,17 @@ func test_lifedrain_cannot_revive_an_attacker_defeated_by_hit_reaction() -> void
 	var manager := ApplicationBattleManager.new()
 	manager.battle_speed = 1.0
 	add_child_autofree(manager)
-	var attacker := FocusRefundHero.new()
+	var attacker := CardTestFactory.bind(
+		FocusRefundHero.new(), BattleCombatant.Faction.HERO, null, manager,
+	) as FocusRefundHero
 	attacker.current_stats = ActorStats.new()
 	attacker.current_stats.attack = 100
 	attacker.current_stats.max_hp = 100
 	attacker.current_hp = 50
 	attacker.battle_manager = manager
-	var target := EchoRuntimeEnemy.new()
+	var target := CardTestFactory.bind(
+		EchoRuntimeEnemy.new(), BattleCombatant.Faction.ENEMY, null, manager,
+	) as EchoRuntimeEnemy
 	target.current_stats = ActorStats.new()
 	target.current_stats.max_hp = 100
 	target.current_hp = 100
@@ -504,7 +510,7 @@ func test_damage_source_identity_reaches_target_on_hit_and_attacker_contexts() -
 
 
 func test_attacker_on_hit_parent_effect_receives_the_hit_target() -> void:
-	var attacker := ActorCard.new()
+	var attacker := CardTestFactory.actor()
 	attacker.current_stats = ActorStats.new()
 	attacker.current_stats.attack = 100
 	attacker.current_stats.max_hp = 1000
@@ -517,6 +523,7 @@ func test_attacker_on_hit_parent_effect_receives_the_hit_target() -> void:
 	manager.add_child(manager.enemy_area)
 	manager.actor_list = [attacker, target]
 	attacker.battle_manager = manager
+	attacker.combatant.battle_manager = manager
 	var parent_effect := RecordingActionEffect.new()
 	parent_effect.target_type = Action.TargetType.PARENT
 	var trigger := Trigger.new()
@@ -1286,7 +1293,9 @@ func _early_lethal_nonrandom_event_log(
 
 func test_execute_action_pays_scaled_focus_once_and_passes_cost_context() -> void:
 	var manager := _recording_action_manager()
-	var hero := RecordingHero.new()
+	var hero := CardTestFactory.bind(
+		RecordingHero.new(), BattleCombatant.Faction.HERO, null, manager,
+	) as RecordingHero
 	hero.current_stats = ActorStats.new()
 	hero.current_focus = 10
 	var discount := Condition.new()
@@ -1313,7 +1322,9 @@ func test_execute_action_pays_scaled_focus_once_and_passes_cost_context() -> voi
 
 func test_free_action_consumes_refund_before_later_paid_action() -> void:
 	var manager := _recording_action_manager()
-	var hero := FocusRefundHero.new()
+	var hero := CardTestFactory.bind(
+		FocusRefundHero.new(), BattleCombatant.Faction.HERO, null, manager,
+	) as FocusRefundHero
 	hero.current_stats = ActorStats.new()
 	hero.current_focus = 5
 	var refund := Condition.new()
@@ -1340,7 +1351,9 @@ func test_free_action_consumes_refund_before_later_paid_action() -> void:
 
 func test_execute_action_rejects_insufficient_scaled_focus_before_effects() -> void:
 	var manager := _recording_action_manager()
-	var hero := RecordingHero.new()
+	var hero := CardTestFactory.bind(
+		RecordingHero.new(), BattleCombatant.Faction.HERO, null, manager,
+	) as RecordingHero
 	hero.current_stats = ActorStats.new()
 	hero.current_focus = 1
 	var capture_effect := RecordingActionEffect.new()
@@ -1396,7 +1409,9 @@ func _execute_recorded_hit(
 
 
 func _recording_actor(base_power: int, overload: int, guard: int) -> RecordingActor:
-	var actor := RecordingActor.new()
+	var actor := CardTestFactory.bind(
+		RecordingActor.new(), BattleCombatant.Faction.HERO,
+	) as RecordingActor
 	actor.current_stats = ActorStats.new()
 	actor.current_stats.attack = base_power
 	actor.current_stats.psyche = base_power
@@ -1419,7 +1434,10 @@ func _application_fixture(hp: int, max_hp: int) -> ApplicationFixture:
 
 	var attacker := HeroCardScene.instantiate() as ActorCard
 	add_child_autofree(attacker)
-	attacker.current_stats = ActorStats.new()
+	CardTestFactory.bind(
+		attacker, BattleCombatant.Faction.HERO, ActorStats.new(),
+		battle_manager, true,
+	)
 	var effect := Effect_Damage.new()
 	effect.damage_type = Action.DamageType.KINETIC
 	for event_type in [
@@ -1454,8 +1472,11 @@ func _application_target(
 		target.add_child(child)
 	scene_card.free()
 	add_child_autofree(target)
-	target.battle_manager = manager
-	target.current_stats = ActorStats.new()
+	var stats := ActorStats.new()
+	stats.max_hp = max_hp
+	CardTestFactory.bind(
+		target, BattleCombatant.Faction.HERO, stats, manager, true,
+	)
 	target.current_stats.max_hp = max_hp
 	target.current_hp = hp
 	target.current_guard = 0
@@ -1495,7 +1516,9 @@ func _application_party_hero(
 ) -> HeroCard:
 	var hero := HeroCardScene.instantiate() as HeroCard
 	manager.hero_area.add_child(hero)
-	hero.battle_manager = manager
+	CardTestFactory.bind(
+		hero, BattleCombatant.Faction.HERO, ActorStats.new(), manager, true,
+	)
 	_configure_application_actor(
 		hero, actor_name, attack, psyche, max_hp, hp, defeated,
 	)
@@ -1610,8 +1633,8 @@ func _echo_runtime_fixture(
 	manager.add_child(hero_area)
 	manager.add_child(enemy_area)
 
-	var echo := _echo_runtime_hero("Echo", 40, 1000)
-	var enemy := _echo_runtime_enemy("Target", 1000)
+	var echo := _echo_runtime_hero("Echo", 40, 1000, manager)
+	var enemy := _echo_runtime_enemy("Target", 1000, manager)
 	hero_area.add_child(echo)
 	enemy_area.add_child(enemy)
 	manager.actor_list = [echo, enemy]
@@ -1620,8 +1643,8 @@ func _echo_runtime_fixture(
 	enemy.battle_manager = manager
 	var fixture := {"manager": manager, "echo": echo, "enemy": enemy}
 	if include_party:
-		var ally := _echo_runtime_hero("Ally", 5, 100)
-		var defeated := _echo_runtime_hero("Defeated", 5, 100)
+		var ally := _echo_runtime_hero("Ally", 5, 100, manager)
+		var defeated := _echo_runtime_hero("Defeated", 5, 100, manager)
 		defeated.current_hp = 0
 		defeated.is_defeated = true
 		hero_area.add_child(ally)
@@ -1632,7 +1655,7 @@ func _echo_runtime_fixture(
 		fixture["ally"] = ally
 		fixture["defeated"] = defeated
 	if include_second_enemy:
-		var other_enemy := _echo_runtime_enemy("Other Target", 1000)
+		var other_enemy := _echo_runtime_enemy("Other Target", 1000, manager)
 		enemy_area.add_child(other_enemy)
 		other_enemy.battle_manager = manager
 		manager.actor_list.append(other_enemy)
@@ -1644,8 +1667,11 @@ func _echo_runtime_hero(
 	actor_name: String,
 	psyche: int,
 	max_hp: int,
+	manager: BattleManager,
 ) -> EchoRuntimeHero:
-	var hero := EchoRuntimeHero.new()
+	var hero := CardTestFactory.bind(
+		EchoRuntimeHero.new(), BattleCombatant.Faction.HERO, null, manager,
+	) as EchoRuntimeHero
 	hero.actor_name = actor_name
 	hero.current_stats = ActorStats.new()
 	hero.current_stats.attack = 100
@@ -1656,8 +1682,14 @@ func _echo_runtime_hero(
 	return hero
 
 
-func _echo_runtime_enemy(actor_name: String, max_hp: int) -> EchoRuntimeEnemy:
-	var enemy := EchoRuntimeEnemy.new()
+func _echo_runtime_enemy(
+	actor_name: String,
+	max_hp: int,
+	manager: BattleManager,
+) -> EchoRuntimeEnemy:
+	var enemy := CardTestFactory.bind(
+		EchoRuntimeEnemy.new(), BattleCombatant.Faction.ENEMY, null, manager,
+	) as EchoRuntimeEnemy
 	enemy.actor_name = actor_name
 	enemy.current_stats = ActorStats.new()
 	enemy.current_stats.max_hp = max_hp

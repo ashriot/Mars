@@ -119,6 +119,7 @@ func bind_combatant(
 	assert(value != null, "ActorCard requires a BattleCombatant.")
 	assert(_combatant == null, "ActorCard cannot be rebound to another BattleCombatant.")
 	_combatant = value
+	value.bind_legacy_effect_actor(self)
 	if legacy_preview:
 		return
 	_ensure_battle_manager()
@@ -179,7 +180,13 @@ func _render_full_state() -> void:
 	hp_value.text = Utils.commafy(current_hp)
 	update_guard_bar(false)
 	_update_conditions_ui()
-	_render_danger_state()
+	if is_breached:
+		_render_breach_state(false)
+	else:
+		_render_danger_state()
+	if is_defeated:
+		_stop_breach_pulse()
+		_show_defeated_visual(true)
 
 
 func _on_combatant_hp_changed(
@@ -187,7 +194,6 @@ func _on_combatant_hp_changed(
 	value: int,
 	max_value: int,
 ) -> void:
-	hp_bar_actual.value = value
 	hp_value.text = Utils.commafy(value)
 	hp_changed.emit(value, max_value)
 
@@ -210,17 +216,25 @@ func _on_combatant_danger_changed(
 
 
 func _on_combatant_breached(_actor: BattleCombatant) -> void:
+	_render_breach_state(true)
+	actor_breached.emit(self)
+
+
+func _render_breach_state(animate: bool) -> void:
 	breached_label.text = "BREACHED"
 	guard_bar.modulate.a = 0.25
-	_start_breach_pulse()
-	shake_panel(1.0)
-	actor_breached.emit(self)
+	if animate:
+		_start_breach_pulse()
+		shake_panel(1.0)
+	else:
+		breached_label.show()
+		breached_label.self_modulate = Color.WHITE
 
 
 func _on_combatant_defeated(_actor: BattleCombatant) -> void:
 	if breached_label.visible:
 		_stop_breach_pulse()
-	_show_defeated_visual()
+	_show_defeated_visual(false)
 	actor_defeated.emit(self)
 
 
@@ -236,13 +250,13 @@ func _on_combatant_presentation_event(
 ) -> void:
 	match event:
 		&"damage_received":
+			hp_bar_actual.value = current_hp
 			_spawn_damage_popup(
 				payload.result.final_damage,
 				payload.damage_type,
 				payload.result.is_critical,
 			)
 			spawn_particles.emit(get_global_rect().get_center(), "gunshot")
-			shake_panel(1.0)
 		&"healing_received":
 			hp_bar_ghost.value = current_hp
 		&"passive_fired":
@@ -258,7 +272,7 @@ func _render_danger_state() -> void:
 		_stop_breach_pulse()
 
 
-func _show_defeated_visual() -> void:
+func _show_defeated_visual(_immediate: bool = false) -> void:
 	pass
 
 
@@ -292,7 +306,10 @@ func in_danger(value: bool):
 	await _require_combatant().in_danger(value)
 
 func breach():
-	await _require_combatant().breach()
+	await _require_combatant().breach(_await_breach_observers)
+
+
+func _await_breach_observers() -> void:
 	if is_instance_valid(battle_manager):
 		await battle_manager._on_actor_breached(self)
 

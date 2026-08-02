@@ -1,5 +1,7 @@
 extends GutTest
 
+const CardTestFactory := preload("res://test/helpers/card_test_factory.gd")
+
 const ActionButtonScene := preload("res://src/battle/action_button.tscn")
 const UXScene := preload("res://src/ui/navigation/navigation_ux_layer.tscn")
 const SYNTHETIC_UNCONNECTED_JOY_DEVICE := 127
@@ -293,7 +295,7 @@ func test_directional_shift_fully_supersedes_selected_action_before_role_ui_load
 
 	var current_action_panel := PanelContainer.new()
 	manager.current_action_panel = current_action_panel
-	var hero := HeroCard.new()
+	var hero := CardTestFactory.hero()
 	manager.current_actor = hero
 	manager.current_state = BattleManager.State.PLAYER_ACTION
 	var action_button := ActionButtonScene.instantiate() as ActionButton
@@ -323,7 +325,9 @@ func test_directional_shift_fully_supersedes_selected_action_before_role_ui_load
 func test_role_shift_publishes_queue_only_after_new_role_is_current() -> void:
 	var manager := RecoveryBattleManager.new()
 	var bar := ImmediateShiftActionBar.new()
-	var hero := ImmediateShiftHero.new()
+	var hero := CardTestFactory.bind(
+		ImmediateShiftHero.new(), BattleCombatant.Faction.HERO, null, manager,
+	) as ImmediateShiftHero
 	var stats := ActorStats.new()
 	stats.speed = 100
 	hero.current_stats = stats
@@ -646,7 +650,9 @@ func test_controller_target_entry_restores_and_falls_back_on_hero_side() -> void
 	var fixture := await _navigation_fixture()
 	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
 	var other_hero := preload("res://src/battle/hero_card.tscn").instantiate() as HeroCard
-	other_hero.battle_manager = fixture.manager
+	CardTestFactory.bind(
+		other_hero, BattleCombatant.Faction.HERO, null, fixture.manager,
+	)
 	other_hero.is_defeated = false
 	fixture.manager.hero_area.add_child(other_hero)
 	fixture.hero.is_valid_target = true
@@ -721,9 +727,9 @@ func test_group_parent_ct_preview_projects_every_affected_actor() -> void:
 	manager.hero_area = hero_area
 	manager.enemy_area = enemy_area
 
-	var hero := HeroCard.new()
-	var first_enemy := EnemyCard.new()
-	var second_enemy := EnemyCard.new()
+	var hero := CardTestFactory.hero()
+	var first_enemy := CardTestFactory.enemy()
+	var second_enemy := CardTestFactory.enemy()
 	for actor: ActorCard in [hero, first_enemy, second_enemy]:
 		var stats := ActorStats.new()
 		stats.speed = 100
@@ -1281,13 +1287,19 @@ func _shift_reaction_fixture(
 	fixture.manager.enemy_area = enemy_area
 	fixture.manager.action_bar = action_bar
 	fixture.manager.rewards_enabled = false
-	fixture.hero = ShiftReactionHero.new()
+	fixture.hero = CardTestFactory.bind(
+		ShiftReactionHero.new(), BattleCombatant.Faction.HERO, null,
+		fixture.manager,
+	) as ShiftReactionHero
 	fixture.hero.events = fixture.events
 	fixture.hero.current_stats = ActorStats.new()
 	fixture.hero.current_stats.speed = 100
 	fixture.hero.is_defeated = false
 	fixture.hero.battle_manager = fixture.manager
-	fixture.target = ShiftReactionHero.new()
+	fixture.target = CardTestFactory.bind(
+		ShiftReactionHero.new(), BattleCombatant.Faction.HERO, null,
+		fixture.manager,
+	) as ShiftReactionHero
 	(fixture.target as ShiftReactionHero).events = fixture.events
 	fixture.target.current_stats = ActorStats.new()
 	fixture.target.is_defeated = false
@@ -1295,7 +1307,10 @@ func _shift_reaction_fixture(
 	hero_area.add_child(fixture.hero)
 	hero_area.add_child(fixture.target)
 	if lethal_action:
-		var enemy := ShiftReactionEnemy.new()
+		var enemy := CardTestFactory.bind(
+			ShiftReactionEnemy.new(), BattleCombatant.Faction.ENEMY, null,
+			fixture.manager,
+		) as ShiftReactionEnemy
 		enemy.current_stats = ActorStats.new()
 		enemy.is_defeated = false
 		enemy_area.add_child(enemy)
@@ -1342,7 +1357,7 @@ func _shift_reaction_fixture(
 
 
 func _ct_actor(current_ct: int, speed: int) -> EnemyCard:
-	var actor := EnemyCard.new()
+	var actor := CardTestFactory.enemy()
 	actor.current_stats = ActorStats.new()
 	actor.current_stats.speed = speed
 	actor.current_ct = current_ct
@@ -1365,24 +1380,32 @@ func _battle_fixture() -> Dictionary:
 	manager.hero_area = hero_area
 	manager.enemy_area = enemy_area
 	var hero := preload("res://src/battle/hero_card.tscn").instantiate() as HeroCard
-	hero.battle_manager = manager
+	CardTestFactory.bind(
+		hero, BattleCombatant.Faction.HERO, null, manager,
+	)
 	hero.position = Vector2(100, 300)
 	hero.is_defeated = false
 	hero_area.add_child(hero)
 	var first := preload("res://src/battle/enemy_card.tscn").instantiate() as EnemyCard
-	first.battle_manager = manager
+	CardTestFactory.bind(
+		first, BattleCombatant.Faction.ENEMY, null, manager,
+	)
 	first.position = Vector2(100, 100)
 	first.is_valid_target = true
 	first.is_defeated = false
 	enemy_area.add_child(first)
 	var defeated := preload("res://src/battle/enemy_card.tscn").instantiate() as EnemyCard
-	defeated.battle_manager = manager
+	CardTestFactory.bind(
+		defeated, BattleCombatant.Faction.ENEMY, null, manager,
+	)
 	defeated.position = Vector2(200, 100)
 	defeated.is_valid_target = true
 	defeated.is_defeated = true
 	enemy_area.add_child(defeated)
 	var right := preload("res://src/battle/enemy_card.tscn").instantiate() as EnemyCard
-	right.battle_manager = manager
+	CardTestFactory.bind(
+		right, BattleCombatant.Faction.ENEMY, null, manager,
+	)
 	right.position = Vector2(300, 100)
 	right.is_valid_target = true
 	right.is_defeated = false
@@ -1480,9 +1503,15 @@ func _navigation_fixture() -> Dictionary:
 	var enemy := preload("res://src/battle/enemy_card.tscn").instantiate() as EnemyCard
 	var second_enemy := preload("res://src/battle/enemy_card.tscn").instantiate() as EnemyCard
 	second_enemy.name = "second_enemy"
-	hero.battle_manager = manager
-	enemy.battle_manager = manager
-	second_enemy.battle_manager = manager
+	CardTestFactory.bind(
+		hero, BattleCombatant.Faction.HERO, null, manager,
+	)
+	CardTestFactory.bind(
+		enemy, BattleCombatant.Faction.ENEMY, null, manager,
+	)
+	CardTestFactory.bind(
+		second_enemy, BattleCombatant.Faction.ENEMY, null, manager,
+	)
 	hero.is_defeated = false
 	enemy.is_defeated = false
 	second_enemy.is_defeated = false

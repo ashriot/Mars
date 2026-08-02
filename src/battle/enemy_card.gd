@@ -234,7 +234,10 @@ func defeated():
 	super.defeated()
 
 
-func _show_defeated_visual() -> void:
+func _show_defeated_visual(immediate: bool = false) -> void:
+	if immediate:
+		modulate.a = 0
+		return
 	var tween = create_tween()
 	tween.tween_property(
 		self,

@@ -1,6 +1,7 @@
 extends GutTest
 
 const BATTLE_SCENE := preload("res://src/battle/battle_scene.tscn")
+const CardTestFactory := preload("res://test/helpers/card_test_factory.gd")
 const MIGRATED := {
 	"res://data/enemies/actions/brace.tres": 75,
 	"res://data/heroes/asher/actions/fusion_ammo.tres": 75,
@@ -41,7 +42,7 @@ func test_action_ct_color_compares_final_recovery_to_authored_base() -> void:
 func test_selected_action_shows_final_effective_ct() -> void:
 	var scene := BATTLE_SCENE.instantiate() as BattleScene
 	var manager := scene.get_node("BattleManager") as BattleManager
-	var actor := HeroCard.new()
+	var actor := CardTestFactory.hero()
 	actor.current_stats = ActorStats.new()
 	var role := RoleData.new()
 	role.source_definition = RoleDefinition.new()

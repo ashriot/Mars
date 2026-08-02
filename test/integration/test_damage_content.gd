@@ -1,5 +1,7 @@
 extends GutTest
 
+const CardTestFactory := preload("res://test/helpers/card_test_factory.gd")
+
 
 class UnsupportedScalingRule extends DamageScalingRule:
 	func resolve(_base_potency: float, _context: DamageContext) -> DamageContribution:
@@ -495,7 +497,7 @@ func before_all() -> void:
 	assert_eq(_effect_binding_regex.compile("\\{effect:([^}]+)\\}"), OK)
 	assert_eq(_obsolete_damage_binding_regex.compile("\\{dmg[0-9]+\\}"), OK)
 	assert_eq(_legacy_formula_regex.compile("\\{(?:atk|psy)[^}]*\\}"), OK)
-	_presentation_actor = HeroCard.new()
+	_presentation_actor = CardTestFactory.hero()
 	_presentation_actor.current_stats = ActorStats.new()
 	_presentation_actor.current_stats.attack = 100
 	_presentation_actor.current_stats.psyche = 100
@@ -1856,10 +1858,12 @@ func _sands_runtime_fixture() -> Dictionary:
 	manager.add_child(manager.hero_area)
 	manager.add_child(manager.enemy_area)
 	manager.add_child(manager.current_action_panel)
-	var sands := _sands_runtime_hero("Sands")
-	var first_ally := _sands_runtime_hero("Asher")
-	var second_ally := _sands_runtime_hero("Echo")
-	var enemy := SandsRuntimeEnemy.new()
+	var sands := _sands_runtime_hero("Sands", manager)
+	var first_ally := _sands_runtime_hero("Asher", manager)
+	var second_ally := _sands_runtime_hero("Echo", manager)
+	var enemy := CardTestFactory.bind(
+		SandsRuntimeEnemy.new(), BattleCombatant.Faction.ENEMY, null, manager,
+	) as SandsRuntimeEnemy
 	enemy.actor_name = "Target"
 	enemy.current_stats = ActorStats.new()
 	enemy.current_stats.max_hp = 2000
@@ -1881,8 +1885,13 @@ func _sands_runtime_fixture() -> Dictionary:
 	}
 
 
-func _sands_runtime_hero(actor_name: String) -> SandsRuntimeHero:
-	var hero := SandsRuntimeHero.new()
+func _sands_runtime_hero(
+	actor_name: String,
+	manager: BattleManager,
+) -> SandsRuntimeHero:
+	var hero := CardTestFactory.bind(
+		SandsRuntimeHero.new(), BattleCombatant.Faction.HERO, null, manager,
+	) as SandsRuntimeHero
 	hero.actor_name = actor_name
 	hero.current_stats = ActorStats.new()
 	hero.current_stats.attack = 100

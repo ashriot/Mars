@@ -1,17 +1,41 @@
 extends GutTest
 
 const HeroCardScene := preload("res://src/battle/hero_card.tscn")
+const EnemyCardScene := preload("res://src/battle/enemy_card.tscn")
+
+
+class TestBattleManager extends BattleManager:
+	func _ready() -> void:
+		pass
+
+
+func _combatant(
+	max_hp: int = 100,
+	faction: BattleCombatant.Faction = BattleCombatant.Faction.HERO,
+	manager: BattleManager = null,
+) -> BattleCombatant:
+	var combatant := BattleCombatant.new()
+	add_child_autofree(combatant)
+	var stats := ActorStats.new()
+	stats.actor_name = "Sands"
+	stats.max_hp = max_hp
+	combatant.setup_base(stats, faction, manager)
+	return combatant
+
+
+func _damage_result(amount: int) -> DamageResult:
+	var request := DamageRequest.new(
+		amount, 0, 0, 1.0, 1, Action.DamageType.KINETIC, 0,
+	)
+	return DamageResult.new(
+		request, amount, 0, 1.0, 1.0, 1.0, amount, amount,
+	)
 
 
 func test_card_mirrors_combatant_without_owning_duplicate_hp() -> void:
 	var card := HeroCardScene.instantiate() as HeroCard
 	add_child_autofree(card)
-	var combatant := BattleCombatant.new()
-	add_child_autofree(combatant)
-	var stats := ActorStats.new()
-	stats.actor_name = "Sands"
-	stats.max_hp = 100
-	combatant.setup_base(stats, BattleCombatant.Faction.HERO)
+	var combatant := _combatant()
 
 	card.bind_combatant(combatant)
 	combatant.current_hp = 40
@@ -19,7 +43,7 @@ func test_card_mirrors_combatant_without_owning_duplicate_hp() -> void:
 	await get_tree().process_frame
 
 	assert_same(card.combatant, combatant)
-	assert_eq(card.hp_bar_actual.value, 40.0)
+	assert_eq(card.hp_bar_actual.value, 100.0)
 	assert_eq(card.current_hp, 40)
 	card.current_hp = 55
 	assert_eq(combatant.current_hp, 55)
@@ -36,3 +60,93 @@ func test_card_adapter_reports_live_screen_geometry() -> void:
 		card.presentation.get_target_screen_position(),
 		card.get_global_rect().get_center(),
 	)
+
+
+func test_damage_stages_actual_hp_then_animates_ghost_without_hit_shake() -> void:
+	var manager := TestBattleManager.new()
+	add_child_autofree(manager)
+	manager.battle_speed = 5.0
+	var card := HeroCardScene.instantiate() as HeroCard
+	add_child_autofree(card)
+	card.battle_manager = manager
+	var combatant := _combatant(100, BattleCombatant.Faction.HERO, manager)
+	card.bind_combatant(combatant)
+
+	await combatant.take_one_hit(
+		_damage_result(40), Effect_Damage.new(), combatant,
+		Action.DamageType.KINETIC,
+	)
+
+	assert_eq(card.hp_bar_actual.value, 60.0)
+	assert_eq(card.hp_bar_ghost.value, 100.0)
+	assert_null(card.shake_tween, "ordinary hits do not shake the actor card")
+	var tween := card.sync_visual_health()
+	assert_not_null(tween)
+	if tween != null:
+		await tween.finished
+	assert_eq(card.hp_bar_ghost.value, 60.0)
+
+
+func test_healing_stages_ghost_hp_then_animates_actual_bar() -> void:
+	var manager := TestBattleManager.new()
+	add_child_autofree(manager)
+	manager.battle_speed = 5.0
+	var card := HeroCardScene.instantiate() as HeroCard
+	add_child_autofree(card)
+	card.battle_manager = manager
+	var combatant := _combatant(100, BattleCombatant.Faction.HERO, manager)
+	combatant.current_hp = 40
+	card.bind_combatant(combatant)
+
+	await combatant.take_healing(20)
+
+	assert_eq(card.hp_bar_actual.value, 40.0)
+	assert_eq(card.hp_bar_ghost.value, 60.0)
+	var tween := card.sync_visual_health()
+	assert_not_null(tween)
+	if tween != null:
+		await tween.finished
+	assert_eq(card.hp_bar_actual.value, 60.0)
+
+
+func test_binding_already_breached_combatant_renders_steady_breach_state() -> void:
+	var card := HeroCardScene.instantiate() as HeroCard
+	add_child_autofree(card)
+	var combatant := _combatant()
+	combatant.is_breached = true
+	var breach_signal_count := 0
+	card.actor_breached.connect(func(_actor): breach_signal_count += 1)
+
+	card.bind_combatant(combatant)
+
+	assert_eq(card.breached_label.text, "BREACHED")
+	assert_eq(card.guard_bar.modulate.a, 0.25)
+	assert_null(card.shake_tween)
+	assert_eq(breach_signal_count, 0)
+
+
+func test_binding_already_defeated_hero_renders_final_state_without_signal() -> void:
+	var card := HeroCardScene.instantiate() as HeroCard
+	add_child_autofree(card)
+	var combatant := _combatant()
+	combatant.is_defeated = true
+	var defeat_signal_count := 0
+	card.actor_defeated.connect(func(_actor): defeat_signal_count += 1)
+
+	card.bind_combatant(combatant)
+
+	assert_eq(card.self_modulate.a, 0.25)
+	assert_eq(defeat_signal_count, 0)
+
+
+func test_binding_already_defeated_enemy_renders_final_state_immediately() -> void:
+	var card := EnemyCardScene.instantiate() as EnemyCard
+	add_child_autofree(card)
+	var combatant := _combatant(
+		100, BattleCombatant.Faction.ENEMY,
+	)
+	combatant.is_defeated = true
+
+	card.bind_combatant(combatant)
+
+	assert_eq(card.modulate.a, 0.0)

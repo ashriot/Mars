@@ -107,7 +107,7 @@ func defeated():
 	super.defeated()
 
 
-func _show_defeated_visual() -> void:
+func _show_defeated_visual(_immediate: bool = false) -> void:
 	self_modulate.a = 0.25
 
 

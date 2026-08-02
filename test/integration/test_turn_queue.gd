@@ -1,5 +1,7 @@
 extends GutTest
 
+const CardTestFactory := preload("res://test/helpers/card_test_factory.gd")
+
 
 const TURN_QUEUE_SCENE := preload("res://src/battle/turn_queue.tscn")
 const BATTLE_SCENE := preload("res://src/battle/battle_scene.tscn")
@@ -30,14 +32,14 @@ func after_each() -> void:
 
 
 func _enemy(actor_name: String) -> EnemyCard:
-	var actor := EnemyCard.new()
+	var actor := CardTestFactory.enemy()
 	actor.actor_name = actor_name
 	actors.append(actor)
 	return actor
 
 
 func _hero(actor_name: String, icon: Texture2D = null, color := Color.WHITE) -> HeroCard:
-	var actor := HeroCard.new()
+	var actor := CardTestFactory.hero()
 	actor.actor_name = actor_name
 	var definition := RoleDefinition.new()
 	definition.icon = icon

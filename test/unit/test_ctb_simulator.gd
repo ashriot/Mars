@@ -142,8 +142,31 @@ class BreachBattleManager extends BattleManager:
 		update_count += 1
 
 
+func _bind_headless(
+	actor: ActorCard,
+	faction: BattleCombatant.Faction,
+	manager: BattleManager = null,
+) -> ActorCard:
+	var combatant := BattleCombatant.new()
+	actor.add_child(combatant)
+	combatant.setup_base(ActorStats.new(), faction, manager)
+	actor.battle_manager = manager
+	actor.bind_combatant(combatant, true)
+	combatant.conditions_changed.connect(
+		func(_actor): actor.actor_conditions_changed.emit()
+	)
+	combatant.breached.connect(
+		func(_actor): actor.actor_breached.emit(actor)
+	)
+	return actor
+
+
 func _actor(hero: bool, speed: int, ct: int, priority: int) -> ActorCard:
 	var actor: ActorCard = HeroCard.new() if hero else EnemyCard.new()
+	_bind_headless(
+		actor,
+		BattleCombatant.Faction.HERO if hero else BattleCombatant.Faction.ENEMY,
+	)
 	var stats := ActorStats.new()
 	stats.speed = speed
 	actor.current_stats = stats
@@ -160,7 +183,9 @@ func test_negative_ct_requires_extra_ticks() -> void:
 
 
 func test_breach_signal_supplies_actor() -> void:
-	var actor := BreachSignalActor.new()
+	var actor := _bind_headless(
+		BreachSignalActor.new(), BattleCombatant.Faction.HERO,
+	) as BreachSignalActor
 	actor.actor_name = "Signal target"
 	actor.breached_label = Label.new()
 	actor.guard_bar = HBoxContainer.new()
@@ -179,10 +204,18 @@ func test_breach_signal_supplies_actor() -> void:
 
 func test_enemy_breach_notifies_only_living_opposing_observers() -> void:
 	var manager := BreachBattleManager.new()
-	var breached_enemy := BreachObserverEnemy.new()
-	var enemy_ally := BreachObserverEnemy.new()
-	var living_hero := BreachObserverHero.new()
-	var defeated_hero := BreachObserverHero.new()
+	var breached_enemy := _bind_headless(
+		BreachObserverEnemy.new(), BattleCombatant.Faction.ENEMY, manager,
+	) as BreachObserverEnemy
+	var enemy_ally := _bind_headless(
+		BreachObserverEnemy.new(), BattleCombatant.Faction.ENEMY, manager,
+	) as BreachObserverEnemy
+	var living_hero := _bind_headless(
+		BreachObserverHero.new(), BattleCombatant.Faction.HERO, manager,
+	) as BreachObserverHero
+	var defeated_hero := _bind_headless(
+		BreachObserverHero.new(), BattleCombatant.Faction.HERO, manager,
+	) as BreachObserverHero
 	breached_enemy.is_defeated = false
 	enemy_ally.is_defeated = false
 	living_hero.is_defeated = false
@@ -211,8 +244,12 @@ func test_enemy_breach_notifies_only_living_opposing_observers() -> void:
 
 func test_breach_awaits_enemy_observer_before_own_breached_event() -> void:
 	var manager := BreachBattleManager.new()
-	var breached_actor := BreachLifecycleActor.new()
-	var observer := HeroCard.new()
+	var breached_actor := _bind_headless(
+		BreachLifecycleActor.new(), BattleCombatant.Faction.ENEMY, manager,
+	) as BreachLifecycleActor
+	var observer := _bind_headless(
+		HeroCard.new(), BattleCombatant.Faction.HERO, manager,
+	) as HeroCard
 	breached_actor.actor_name = "Awaited breach target"
 	breached_actor.breached_label = Label.new()
 	breached_actor.guard_bar = HBoxContainer.new()
@@ -398,11 +435,15 @@ func test_head_starts_add_normalized_ct_without_replacing_passive_adjustment() -
 func test_live_advancement_matches_projected_normalized_ticks() -> void:
 	var manager := AdvancementBattleManager.new()
 	manager.action_bar = ActionBar.new()
-	var winner := AdvancementHero.new()
+	var winner := _bind_headless(
+		AdvancementHero.new(), BattleCombatant.Faction.HERO, manager,
+	) as AdvancementHero
 	winner.current_stats = ActorStats.new()
 	winner.current_stats.speed = 200
 	winner.ct_speed_scale = 0.5
-	var observer := ActorCard.new()
+	var observer := _bind_headless(
+		ActorCard.new(), BattleCombatant.Faction.HERO, manager,
+	)
 	observer.current_stats = ActorStats.new()
 	observer.current_stats.speed = 50
 	observer.ct_speed_scale = 2.0
@@ -474,7 +515,9 @@ func test_manager_publishes_explicit_preview_and_refresh_kinds() -> void:
 
 func test_visible_execution_commits_but_hidden_passive_execution_does_not() -> void:
 	var manager := PublishingBattleManager.new()
-	var actor := PublishingActor.new()
+	var actor := _bind_headless(
+		PublishingActor.new(), BattleCombatant.Faction.HERO, manager,
+	) as PublishingActor
 	actor.current_stats = ActorStats.new()
 	actor.current_stats.speed = 100
 	actor.actor_name = "Publisher"
@@ -496,7 +539,9 @@ func test_visible_execution_commits_but_hidden_passive_execution_does_not() -> v
 
 func test_condition_mutations_publish_one_current_queue_through_manager() -> void:
 	var manager := ConditionBattleManager.new()
-	var actor := ConditionActor.new()
+	var actor := _bind_headless(
+		ConditionActor.new(), BattleCombatant.Faction.HERO, manager,
+	) as ConditionActor
 	actor.current_stats = ActorStats.new()
 	actor.current_stats.speed = 100
 	actor.battle_manager = manager

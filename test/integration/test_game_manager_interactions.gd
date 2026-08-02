@@ -1,5 +1,7 @@
 extends GutTest
 
+const CardTestFactory := preload("res://test/helpers/card_test_factory.gd")
+
 
 class FakeDungeonMap extends DungeonMap:
 	func _ready() -> void:
@@ -218,7 +220,9 @@ func test_explicit_combat_rng_replays_and_can_return_to_default_mode() -> void:
 
 func test_initial_ct_head_starts_use_the_explicit_combat_rng() -> void:
 	var manager := BattleManager.new()
-	var actors: Array[ActorCard] = [ActorCard.new(), ActorCard.new()]
+	var actors: Array[ActorCard] = [
+		CardTestFactory.actor(), CardTestFactory.actor(),
+	]
 	for actor: ActorCard in actors:
 		actor.current_stats = ActorStats.new()
 		actor.current_stats.speed = 100
