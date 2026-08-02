@@ -29,6 +29,46 @@ Automated coverage does not establish the following visual or physical-input beh
 - [ ] Complete a representative battle with mouse input. Hover and click through every valid target, inspect intent and conditions, cancel and retarget actions, and verify damage, Guard, Breach, defeat, revival, and CTB progression remain correct and readable.
 - [ ] Confirm hover transitions and target presentation do not leave stale highlights, stale intent, or mismatched card state after the pointer moves between combatants and action controls.
 
+## First-person 3D battle slice
+
+Automated evidence recorded on 2026-08-02 for exact source commit `ddfb48c3a8188cb1485bc4cf47002661760abbcb` with Godot `4.7.1.stable.official.a13da4feb` at `/Applications/Godot 4.7.app/Contents/MacOS/Godot` and an isolated test `HOME` for every run:
+
+- The working checkout imported successfully with no script, parser, resource, or load errors. Fifteen focused suites covering the optional local model loader, shared shake setting, W/M formations, 3D world and projected HUD, EyeDrone presentation, combatant binding, controller navigation, responsive layout, controller-playable loop, presentation cancellation, CTB ownership, camera rig, projectile layer, and theme bootstrap passed 218/218 tests with 1,423 assertions.
+- The complete working-checkout run passed 1,045/1,046 tests and 15,813/15,814 assertions across 80 scripts. Its sole failure was the intentionally preserved, unrelated `src/dev/endgame_battle_lab.tscn` HP-multiplier edit: the dirty scene contains `1.0` while the committed source and test expect `5.0`.
+- A shared clone detached at the exact source commit began without `.godot/` or `assets/graphics/models/quaternius_local/`. Its first cacheless and second cached Godot 4.7.1 editor imports both exited zero with no script, parser, resource, or load errors; only the documented macOS certificate diagnostic appeared. The asset-free full suite then passed 1,046/1,046 tests with 15,807 assertions across 80 scripts.
+- The working checkout has 33 curated Quaternius source/license files plus 22 local Godot `.import` sidecars (55 files total). The whole local-model root is ignored, the representative EyeDrone path is covered by `.gitignore`, and no Quaternius vendor file is tracked.
+- Interactive acceptance is intended for physical `1280x800` and `1920x1080` windows with the local assets installed. No interactive visual or physical-input path was performed for this record: mouse/keyboard, controller, direct touch, Steam Deck hardware, and iPhone remain unverified.
+
+Headless automation does not establish any item below. Keep each item unchecked until the named visual or physical-input path is performed and record the date, OS/device, input device or connection, physical resolution, and tested commit.
+
+### Room, formation, and projected HUD
+
+- [ ] At physical `1280x800`, verify room scale, camera height, full background coverage, lighting, and readable separation between the first-person scene and hero UI.
+- [ ] At physical `1920x1080`, repeat the room/background check and confirm the established combat UI remains readable, unclipped, and balanced around the 3D view.
+- [ ] Exercise encounters with one through five enemies, including both W and M layouts, and verify overlap, depth, target clarity, and the large-boss center-three layout with one ally on each side.
+- [ ] Verify projected enemy information remains anchored and safely clamped: intent above Guard/HP, condition icons below, hover reveal with mouse, controller reveal for the selected target, and correct teardown after defeat or replacement.
+
+### Motion, feedback, and presentation lifecycle
+
+- [ ] With physical mouse input, verify edge-look is subtle and bounded, returns cleanly toward center, never drifts the selected target, and does not move while controller/focus presentation owns input.
+- [ ] Verify the EyeDrone visibly reaches Idle, Charging, Attack, Hit, defeat, and return-to-Idle states without stale HUD, model, or animation state.
+- [ ] Compare camera and hero-panel shake at `0%`, the default setting, an intermediate setting, and `100%`; confirm zero is truly still and intermediate feedback scales proportionally without obscuring combat information.
+- [ ] Verify each enemy laser begins at the visible attacker, ends at the intended hero panel, renders above the world without covering essential UI, completes cleanly, and produces hero-panel plus camera impact feedback exactly once.
+
+### Physical controller and input ownership
+
+- [ ] At `1280x800`, complete a representative battle using only a physical controller: select skills with face buttons, traverse targets directionally, confirm and cancel, reveal enemy details, and verify focus never becomes ambiguous.
+- [ ] At `1920x1080`, repeat a short controller regression and verify directional targeting remains deterministic across overlapping W/M enemies.
+- [ ] Scroll the CTB rail with the physical controller right stick during targeting and ordinary combat; confirm the rail moves while the camera and selected target remain unchanged.
+- [ ] Repeat the full controller-only battle path on Steam Deck hardware at native `1280x800`; a desktop-sized proxy does not satisfy this item.
+
+### Godot 4.7 visual compatibility
+
+- [ ] Re-run iPhone visual acceptance on Godot 4.7.1; the prior Godot 4.6.3 device result does not establish this pass.
+- [ ] Inspect CTB gauge antialias appearance at both intended desktop resolutions because Godot 4.7 changed CanvasItem line-antialias feathering.
+- [ ] Open representative combat and UI scenes in the Godot 4.7.1 editor and verify fallback-font previews remain legible before runtime theme hydration, while the running game uses the authored SUSE Mono Bold and Archivo fonts.
+- [ ] Exercise direct touch only if touch play remains supported, recording the physical device and noting any projected-HUD, targeting, CTB-scroll, or camera-ownership conflicts.
+
 ## Damage architecture acceptance
 
 Record the viewport, input method, tested commit, and concise observed values for each check.
