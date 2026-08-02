@@ -2,7 +2,7 @@
 
 ## Status
 
-Approved in collaborative design on 2026-08-01. Pending review of this written specification before implementation planning.
+Approved for implementation planning on 2026-08-01.
 
 ## Summary
 
