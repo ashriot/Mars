@@ -9,6 +9,7 @@ var saved_storage_root: String
 var saved_input_mode: InputManager.InputMode
 var saved_presentation_mode: InputManager.PresentationMode
 var saved_inventory_equipment: Array[Equipment] = []
+var saved_shake_intensity: float
 
 
 func before_each() -> void:
@@ -19,6 +20,7 @@ func before_each() -> void:
 	saved_input_mode = InputManager._active_mode
 	saved_presentation_mode = InputManager._presentation_mode
 	saved_inventory_equipment.assign(SaveSystem.inventory_equipment)
+	saved_shake_intensity = CombatPresentationSettings.shake_intensity
 	SaveSystem.storage_root_override = TEST_SAVE_ROOT
 	SaveSystem.current_slot_index = TEST_SLOT
 	SaveSystem.party_roster.clear()
@@ -36,6 +38,7 @@ func after_each() -> void:
 	SaveSystem.storage_root_override = saved_storage_root
 	InputManager._active_mode = saved_input_mode
 	InputManager._presentation_mode = saved_presentation_mode
+	CombatPresentationSettings.set_shake_intensity(saved_shake_intensity, false)
 
 
 func _tree() -> RoleTreeDefinition:
@@ -595,7 +598,7 @@ func test_roles_restore_stable_node_per_hero_role_and_page() -> void:
 	await get_tree().process_frame
 
 
-func test_party_content_entry_back_and_stub_tabs_keep_focus_valid() -> void:
+func test_party_content_entry_back_and_tabs_keep_focus_valid() -> void:
 	var party := await _opened_party_with_three_heroes()
 	assert_true(party.enter_content())
 	assert_eq(party.current_depth, PartyMenu.Depth.CONTENT)
@@ -604,13 +607,32 @@ func test_party_content_entry_back_and_stub_tabs_keep_focus_valid() -> void:
 	assert_eq(party.current_tab, PartyMenu.Tab.ITEMS)
 	party.change_tab(1)
 	assert_eq(party.current_tab, PartyMenu.Tab.OPTIONS)
-	assert_eq(party.current_depth, PartyMenu.Depth.HERO_RAIL)
-	assert_same(get_viewport().gui_get_focus_owner(), party.hero_list_container.get_child(party.current_hero_idx))
-	assert_true(party.get_node("Content/OptionsComingSoon").visible)
+	assert_true(party.enter_content())
+	assert_same(get_viewport().gui_get_focus_owner(), party.options_view.shake_slider)
 	party.change_tab(1)
 	assert_true(party.get_node("Content/JournalComingSoon").visible)
 	party.change_tab(1)
 	assert_eq(party.current_tab, PartyMenu.Tab.ROLES)
+
+
+func test_options_tab_focuses_shake_slider_and_updates_setting() -> void:
+	var navigation := preload("res://src/ui/navigation/navigation_ux_layer.tscn").instantiate() as NavigationUXLayer
+	navigation.name = "NavigationUXLayer"
+	add_child_autofree(navigation)
+	await get_tree().process_frame
+	var menu := await _opened_party_with_three_heroes()
+	menu.change_tab(2)
+	assert_true(menu.enter_content())
+	var slider: HSlider = menu.options_view.shake_slider
+	assert_true(slider.visible)
+	assert_eq(slider.focus_mode, Control.FOCUS_ALL)
+	assert_eq(menu._content_default_focus(), slider)
+	assert_same(get_viewport().gui_get_focus_owner(), slider)
+	assert_true(navigation.is_top_modal(menu))
+	assert_eq(_hint_snapshot(navigation), ["confirm:Select", "cancel:Back"])
+	slider.value = 0.0
+	slider.value_changed.emit(0.0)
+	assert_eq(CombatPresentationSettings.shake_intensity, 0.0)
 
 
 func test_analog_page_trigger_requires_release_before_another_page_move() -> void:

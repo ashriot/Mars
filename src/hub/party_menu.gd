@@ -10,6 +10,7 @@ enum Depth { HERO_RAIL, CONTENT }
 @onready var hero_list_container: VBoxContainer = $HeroList
 @onready var skill_view: SkillTreePanel = $Content/SkillTreePanel
 @onready var inventory_view: InventoryPanel = $Content/InventoryPanel
+@onready var options_view: OptionsPanel = $Content/OptionsPanel
 @onready var mode_tabs: HBoxContainer = $Header/TabStrip
 @onready var tab_buttons: Array[Button] = [
 	$Header/TabStrip/Roles,
@@ -123,7 +124,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			skill_view.enter_tree()
 			return
-	if current_depth == Depth.CONTENT and current_tab != Tab.ROLES and event.is_action_pressed(&"nav_left"):
+	if current_depth == Depth.CONTENT and current_tab == Tab.ITEMS and event.is_action_pressed(&"nav_left"):
 		get_viewport().set_input_as_handled()
 		return_to_hero_rail()
 		return
@@ -326,17 +327,17 @@ func change_tab(delta: int) -> void:
 		return
 	_store_content_focus()
 	current_tab = posmod(int(current_tab) + delta, tab_buttons.size()) as Tab
-	if current_tab in [Tab.OPTIONS, Tab.JOURNAL]:
+	if current_tab == Tab.JOURNAL:
 		current_depth = Depth.HERO_RAIL
 	_update_active_view()
-	if current_depth == Depth.CONTENT and current_tab in [Tab.ROLES, Tab.ITEMS]:
+	if current_depth == Depth.CONTENT and current_tab in [Tab.ROLES, Tab.ITEMS, Tab.OPTIONS]:
 		_restore_content_focus()
 	else:
 		_focus_selected_hero()
 
 
 func enter_content() -> bool:
-	if current_tab in [Tab.OPTIONS, Tab.JOURNAL]:
+	if current_tab == Tab.JOURNAL:
 		return false
 	current_depth = Depth.CONTENT
 	_update_depth_presentation()
@@ -406,6 +407,11 @@ func _restore_content_focus() -> bool:
 		return _restore_roles_focus()
 	if current_tab == Tab.ITEMS:
 		return _restore_items_focus()
+	if current_tab == Tab.OPTIONS:
+		var default_focus := options_view.focus_default()
+		if _is_valid_content_focus(default_focus):
+			default_focus.grab_focus()
+			return true
 	var remembered: Control
 	var remembered_path: NodePath = _content_focus_memory.get(_content_memory_key(), NodePath())
 	if not remembered_path.is_empty():
@@ -489,7 +495,15 @@ func _is_valid_content_focus(control: Control) -> bool:
 			return true
 		var panel := _get_panel_by_index(current_hero_idx)
 		return panel != null and control != panel and panel.is_ancestor_of(control)
+	if current_tab == Tab.OPTIONS:
+		return options_view.is_ancestor_of(control)
 	return false
+
+
+func _content_default_focus() -> Control:
+	if current_tab == Tab.OPTIONS:
+		return options_view.focus_default()
+	return null
 
 
 func _focus_selected_hero() -> void:
@@ -511,7 +525,7 @@ func _update_active_view():
 
 	skill_view.visible = current_tab == Tab.ROLES
 	inventory_view.visible = current_tab == Tab.ITEMS
-	$Content/OptionsComingSoon.visible = current_tab == Tab.OPTIONS
+	options_view.visible = current_tab == Tab.OPTIONS
 	$Content/JournalComingSoon.visible = current_tab == Tab.JOURNAL
 	for index in range(tab_buttons.size()):
 		tab_buttons[index].set_pressed_no_signal(index == current_tab)
