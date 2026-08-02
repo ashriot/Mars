@@ -19,25 +19,6 @@ static func bind(
 	combatant.setup_base(stats if stats != null else ActorStats.new(), faction, manager)
 	card.battle_manager = manager
 	card.bind_combatant(combatant, not with_presentation)
-	if not with_presentation:
-		combatant.hp_changed.connect(
-			func(_actor, value, max_value): card.hp_changed.emit(value, max_value)
-		)
-		combatant.guard_changed.connect(
-			func(_actor, value): card.armor_changed.emit(value)
-		)
-		combatant.conditions_changed.connect(
-			func(_actor): card.actor_conditions_changed.emit()
-		)
-		combatant.breached.connect(
-			func(_actor): card.actor_breached.emit(card)
-		)
-		combatant.defeated.connect(
-			func(_actor): card.actor_defeated.emit(card)
-		)
-		combatant.revived.connect(
-			func(_actor): card.actor_revived.emit(card)
-		)
 	return card
 
 

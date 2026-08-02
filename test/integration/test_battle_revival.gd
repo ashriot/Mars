@@ -156,7 +156,7 @@ func test_defeated_hero_rejoins_projection_through_reviving_heal_once() -> void:
 	_bind_card(hero, hero_stats, BattleCombatant.Faction.HERO, manager)
 	_bind_card(enemy, enemy_stats, BattleCombatant.Faction.ENEMY, manager)
 	hero.current_hp = 0
-	hero.hero_data = HeroData.new()
+	(hero.combatant as HeroCombatant).hero_data = HeroData.new()
 	hero.actor_name = hero_stats.actor_name
 	hero.battle_priority = 0
 	enemy.battle_priority = 1
@@ -229,7 +229,7 @@ func test_nested_simultaneous_lethal_barrier_finalizes_victory_once() -> void:
 		BattleCombatant.Faction.ENEMY,
 		manager,
 	)
-	hero.hero_data = HeroData.new()
+	(hero.combatant as HeroCombatant).hero_data = HeroData.new()
 	hero.actor_name = "Barrier Hero"
 	hero.current_hp = 100
 	hero.current_guard = 0
@@ -318,8 +318,9 @@ func _targeting_fixture() -> Dictionary:
 	role_definition.color = Color.WHITE
 	var role := RoleData.new()
 	role.source_definition = role_definition
-	healer.loaded_roles = [role]
-	healer.current_role_index = 0
+	var healer_model := healer.combatant as HeroCombatant
+	healer_model.loaded_roles = [role]
+	healer_model.current_role_index = 0
 	manager.current_actor = healer
 	manager.actor_list = [healer]
 	return {scene = scene, manager = manager, healer = healer, defeated = defeated}

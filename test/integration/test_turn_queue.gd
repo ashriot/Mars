@@ -46,8 +46,9 @@ func _hero(actor_name: String, icon: Texture2D = null, color := Color.WHITE) -> 
 	definition.color = color
 	var role := RoleData.new()
 	role.source_definition = definition
-	actor.loaded_roles = [role]
-	actor.current_role_index = 0
+	var hero_model := actor.combatant as HeroCombatant
+	hero_model.loaded_roles = [role]
+	hero_model.current_role_index = 0
 	actors.append(actor)
 	return actor
 

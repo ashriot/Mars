@@ -128,7 +128,8 @@ class RecordingHero extends HeroCard:
 	func modify_focus(amount: int, context: Dictionary = {}) -> void:
 		focus_changes.append(amount)
 		focus_contexts.append(context.duplicate(true))
-		current_focus = clampi(current_focus + amount, 0, 10)
+		var model := combatant as HeroCombatant
+		model.current_focus = clampi(model.current_focus + amount, 0, 10)
 
 
 class FocusRefundHero extends HeroCard:
@@ -1072,7 +1073,7 @@ func test_mind_storm_uses_focus_remaining_after_payment() -> void:
 	var fixture := _echo_runtime_fixture()
 	var echo := fixture.echo as EchoRuntimeHero
 	var enemy := fixture.enemy as EchoRuntimeEnemy
-	echo.current_focus = 10
+	(echo.combatant as HeroCombatant).current_focus = 10
 	var action := load("res://data/heroes/echo/actions/mind_storm.tres") as Action
 	var effect := action.effects[0] as Effect_Damage
 
@@ -1297,7 +1298,7 @@ func test_execute_action_pays_scaled_focus_once_and_passes_cost_context() -> voi
 		RecordingHero.new(), BattleCombatant.Faction.HERO, null, manager,
 	) as RecordingHero
 	hero.current_stats = ActorStats.new()
-	hero.current_focus = 10
+	(hero.combatant as HeroCombatant).current_focus = 10
 	var discount := Condition.new()
 	discount.focus_cost_reduction = 0.5
 	hero.active_conditions = [discount]
@@ -1326,7 +1327,7 @@ func test_free_action_consumes_refund_before_later_paid_action() -> void:
 		FocusRefundHero.new(), BattleCombatant.Faction.HERO, null, manager,
 	) as FocusRefundHero
 	hero.current_stats = ActorStats.new()
-	hero.current_focus = 5
+	(hero.combatant as HeroCombatant).current_focus = 5
 	var refund := Condition.new()
 	refund.condition_name = "Coordinate"
 	refund.refund_focus_cost_on_spend = true
@@ -1355,7 +1356,7 @@ func test_execute_action_rejects_insufficient_scaled_focus_before_effects() -> v
 		RecordingHero.new(), BattleCombatant.Faction.HERO, null, manager,
 	) as RecordingHero
 	hero.current_stats = ActorStats.new()
-	hero.current_focus = 1
+	(hero.combatant as HeroCombatant).current_focus = 1
 	var capture_effect := RecordingActionEffect.new()
 	var action := Action.new()
 	action.action_name = "Too Expensive"

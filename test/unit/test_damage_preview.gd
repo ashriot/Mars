@@ -943,7 +943,7 @@ func _intent_hero_target(defense: int) -> HeroCard:
 	definition.color = Color.WHITE
 	var role := RoleData.new()
 	role.source_definition = definition
-	target.loaded_roles = [role]
+	(target.combatant as HeroCombatant).loaded_roles = [role]
 	return target
 
 
@@ -979,7 +979,7 @@ func _hero(
 		_stats(attack, 0, overload, precision, 0),
 		BattleCombatant.Faction.HERO,
 	)
-	hero.current_focus = focus
+	(hero.combatant as HeroCombatant).current_focus = focus
 	hero.current_hp = hero.current_stats.max_hp
 	return hero
 

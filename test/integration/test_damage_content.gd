@@ -66,7 +66,8 @@ class SandsRuntimeHero extends HeroCard:
 
 	func modify_focus(amount: int, _context: Dictionary = {}) -> void:
 		focus_events.append(amount)
-		current_focus = clampi(current_focus + amount, 0, 10)
+		var model := combatant as HeroCombatant
+		model.current_focus = clampi(model.current_focus + amount, 0, 10)
 
 	func take_one_hit(
 		result: DamageResult,
@@ -92,7 +93,7 @@ class SandsRuntimeHero extends HeroCard:
 		return
 
 	func on_turn_started() -> void:
-		shifted_this_turn = false
+		(combatant as HeroCombatant).shifted_this_turn = false
 		await _fire_condition_event(Trigger.TriggerType.ON_TURN_START)
 
 
@@ -503,7 +504,7 @@ func before_all() -> void:
 	_presentation_actor.current_stats.psyche = 100
 	_presentation_actor.current_stats.max_hp = 100
 	_presentation_actor.current_hp = 100
-	_presentation_actor.current_focus = 5
+	(_presentation_actor.combatant as HeroCombatant).current_focus = 5
 	_presentation_actor.current_guard = 3
 
 
@@ -1060,7 +1061,7 @@ func test_focused_bolt_runtime_matches_no_base_remaining_focus_curve() -> void:
 	var manager := fixture.manager as SandsRuntimeBattleManager
 	echo.actor_name = "Echo"
 	echo.current_stats.attack = 100
-	echo.current_focus = 5
+	(echo.combatant as HeroCombatant).current_focus = 5
 	enemy.current_guard = 10
 	var action := load(
 		"res://data/heroes/echo/actions/focused_bolt.tres"
@@ -1171,7 +1172,7 @@ func test_acuity_fires_on_echo_turn_start_and_expires_on_echo_shift() -> void:
 	var ally := fixture.first_ally as SandsRuntimeHero
 	var manager := fixture.manager as SandsRuntimeBattleManager
 	echo.actor_name = "Echo"
-	echo.current_focus = 3
+	(echo.combatant as HeroCombatant).current_focus = 3
 	var acuity := load("res://data/heroes/echo/actions/telepathy.tres") as Action
 
 	await manager.execute_action(echo, acuity, [echo], false)
@@ -1899,9 +1900,10 @@ func _sands_runtime_hero(
 	hero.current_stats.speed = 100
 	hero.current_stats.max_hp = 100
 	hero.current_hp = 100
-	hero.current_focus = 10
-	hero.hero_data = HeroData.new()
-	hero.hero_data.unlocked_role_ids = ["first", "second"]
+	var hero_model := hero.combatant as HeroCombatant
+	hero_model.current_focus = 10
+	hero_model.hero_data = HeroData.new()
+	hero_model.hero_data.unlocked_role_ids = ["first", "second"]
 	return hero
 
 

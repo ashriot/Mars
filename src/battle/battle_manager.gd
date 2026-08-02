@@ -610,7 +610,13 @@ func execute_enemy_turn(enemy: EnemyCard) -> void:
 		return
 
 	var action := enemy.intended_action
-	var targets := enemy.intended_targets
+	var targets: Array[ActorCard] = []
+	for target: BattleCombatant in enemy.intended_targets:
+		assert(
+			target.legacy_effect_actor is ActorCard,
+			"Enemy action execution requires bound card targets until Task 6.",
+		)
+		targets.append(target.legacy_effect_actor as ActorCard)
 
 	if not action:
 		push_error(enemy.actor_name, " is missing an action!")
@@ -636,7 +642,7 @@ func _is_enemy_decision_executable(enemy: EnemyCard, context: EnemyAIContext) ->
 	if not decision.is_valid():
 		return false
 	if decision.is_recovery:
-		return enemy.is_breached and decision.targets == [enemy]
+		return enemy.is_breached and decision.targets == [enemy.combatant]
 	var ability := decision.ability
 	var rule := decision.rule
 	if ability == null or rule == null or rule.selector == null:

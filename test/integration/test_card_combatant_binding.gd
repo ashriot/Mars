@@ -14,7 +14,8 @@ func _combatant(
 	faction: BattleCombatant.Faction = BattleCombatant.Faction.HERO,
 	manager: BattleManager = null,
 ) -> BattleCombatant:
-	var combatant := BattleCombatant.new()
+	var combatant: BattleCombatant = HeroCombatant.new() \
+		if faction == BattleCombatant.Faction.HERO else EnemyCombatant.new()
 	add_child_autofree(combatant)
 	var stats := ActorStats.new()
 	stats.actor_name = "Sands"
@@ -47,6 +48,22 @@ func test_card_mirrors_combatant_without_owning_duplicate_hp() -> void:
 	assert_eq(card.current_hp, 40)
 	card.current_hp = 55
 	assert_eq(combatant.current_hp, 55)
+
+
+func test_bound_hero_forwards_one_model_focus_change_once() -> void:
+	var card := HeroCardScene.instantiate() as HeroCard
+	add_child_autofree(card)
+	var model := _combatant() as HeroCombatant
+	model.hero_data = HeroData.new()
+	model.hero_data.stats = model.current_stats
+	model.current_focus = 5
+	watch_signals(card)
+
+	await card.setup_from_combatant(model)
+	await model.modify_focus(-2, {"paid_focus_cost": 2})
+
+	assert_eq(card.current_focus, 3)
+	assert_signal_emit_count(card, "focus_updated", 1)
 
 
 func test_card_adapter_reports_live_screen_geometry() -> void:

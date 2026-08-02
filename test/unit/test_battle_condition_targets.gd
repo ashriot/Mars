@@ -90,7 +90,7 @@ func test_focus_refund_restores_paid_cost_and_consumes_condition() -> void:
 	var hero := CardTestFactory.bind(
 		ConditionHeroCard.new(), BattleCombatant.Faction.HERO,
 	) as ConditionHeroCard
-	hero.current_focus = 5
+	(hero.combatant as HeroCombatant).current_focus = 5
 	var refund := Condition.new()
 	refund.condition_name = "Coordinate"
 	refund.refund_focus_cost_on_spend = true

@@ -109,7 +109,7 @@ func test_repeated_target_state_assignment_keeps_one_tween_and_exact_normal_clea
 
 func test_focus_bar_nonanimated_sync_matches_current_focus() -> void:
 	var hero := _cards()[0] as HeroCard
-	hero.current_focus = 7
+	(hero.combatant as HeroCombatant).current_focus = 7
 
 	hero.update_focus_bar(false)
 
@@ -118,7 +118,7 @@ func test_focus_bar_nonanimated_sync_matches_current_focus() -> void:
 
 func test_focus_refund_cancels_in_flight_pip_loss_animation() -> void:
 	var hero := _cards()[0] as HeroCard
-	hero.current_focus = 7
+	(hero.combatant as HeroCombatant).current_focus = 7
 	hero.update_focus_bar(false)
 	var coordinate := load(
 		"res://data/heroes/asher/conditions/coordinate.tres"
@@ -144,8 +144,9 @@ func test_acting_outline_matches_queue_gold_and_stays_independent_of_targeting()
 			var role := RoleData.new()
 			role.source_definition = definition
 			var hero := card as HeroCard
-			hero.loaded_roles = [role]
-			hero.current_role_index = 0
+			var hero_model := hero.combatant as HeroCombatant
+			hero_model.loaded_roles = [role]
+			hero_model.current_role_index = 0
 			hero.recolor()
 		assert_eq(acting_style.border_color, CTBGauge.CURRENT_COLOR)
 		assert_eq(acting_outline.modulate, Color.WHITE)

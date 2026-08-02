@@ -47,7 +47,7 @@ func test_selected_action_shows_final_effective_ct() -> void:
 	var role := RoleData.new()
 	role.source_definition = RoleDefinition.new()
 	role.source_definition.color = Color.CORNFLOWER_BLUE
-	actor.loaded_roles = [role]
+	(actor.combatant as HeroCombatant).loaded_roles = [role]
 	manager.current_actor = actor
 	manager.set_current_action(load(
 		"res://data/heroes/asher/actions/targeting_laser.tres"

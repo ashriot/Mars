@@ -32,7 +32,7 @@ class ImmediateShiftActionBar extends MinimalActionBar:
 
 class ImmediateShiftHero extends HeroCard:
 	func shift_role(_direction: String):
-		current_role_index = 1
+		(combatant as HeroCombatant).current_role_index = 1
 
 	func set_target_presentation(_state: TargetPresentation) -> void:
 		return
@@ -79,7 +79,7 @@ class ShiftReactionHero extends HeroCard:
 	var events: Array[String]
 
 	func shift_role(_direction: String):
-		current_role_index = 1
+		(combatant as HeroCombatant).current_role_index = 1
 		events.append("role_changed")
 		await _fire_condition_event(Trigger.TriggerType.ON_SHIFT)
 
@@ -332,14 +332,15 @@ func test_role_shift_publishes_queue_only_after_new_role_is_current() -> void:
 	stats.speed = 100
 	hero.current_stats = stats
 	hero.is_defeated = false
+	var hero_model := hero.combatant as HeroCombatant
 	for icon_color in [Color.RED, Color.BLUE]:
 		var definition := RoleDefinition.new()
 		definition.icon = GradientTexture2D.new()
 		definition.color = icon_color
 		var role := RoleData.new()
 		role.source_definition = definition
-		hero.loaded_roles.append(role)
-	hero.current_role_index = 0
+		hero_model.loaded_roles.append(role)
+	hero_model.current_role_index = 0
 	manager.action_bar = bar
 	manager.current_actor = hero
 	manager.actor_list = [hero]
@@ -928,8 +929,9 @@ func test_active_hero_turn_uses_slide_and_static_queue_gold_border() -> void:
 	definition.color = Color(0.2, 0.65, 0.9, 1.0)
 	var role := RoleData.new()
 	role.source_definition = definition
-	hero.loaded_roles = [role]
-	hero.current_role_index = 0
+	var hero_model := hero.combatant as HeroCombatant
+	hero_model.loaded_roles = [role]
+	hero_model.current_role_index = 0
 	hero.recolor()
 	hero._slide_up()
 	await get_tree().create_timer(hero.duration + 0.01).timeout
@@ -1316,16 +1318,17 @@ func _shift_reaction_fixture(
 		enemy.is_defeated = false
 		enemy_area.add_child(enemy)
 
+	var hero_model := fixture.hero.combatant as HeroCombatant
 	for _role_index in 2:
 		var definition := RoleDefinition.new()
 		definition.color = Color.WHITE
 		var role := RoleData.new()
 		role.source_definition = definition
-		fixture.hero.loaded_roles.append(role)
-	fixture.hero.current_role_index = 0
+		hero_model.loaded_roles.append(role)
+	hero_model.current_role_index = 0
 	var passive := Action.new()
 	passive.action_name = "Shift passive"
-	fixture.hero.loaded_roles[1].passive = passive
+	hero_model.loaded_roles[1].passive = passive
 
 	if automatic_action or targeted_action:
 		var action := Action.new()
@@ -1340,7 +1343,7 @@ func _shift_reaction_fixture(
 			LethalShiftEffect.new(fixture.events) if lethal_action \
 			else ShiftEventEffect.new("shift_action", fixture.events),
 		]
-		fixture.hero.loaded_roles[1].shift_action = action
+		hero_model.loaded_roles[1].shift_action = action
 
 	var after_shift_trigger := Trigger.new()
 	after_shift_trigger.trigger_type = Trigger.TriggerType.AFTER_SHIFT_ACTION
@@ -1504,27 +1507,10 @@ func _navigation_fixture() -> Dictionary:
 	var enemy := preload("res://src/battle/enemy_card.tscn").instantiate() as EnemyCard
 	var second_enemy := preload("res://src/battle/enemy_card.tscn").instantiate() as EnemyCard
 	second_enemy.name = "second_enemy"
-	CardTestFactory.bind(
-		hero, BattleCombatant.Faction.HERO, null, manager,
-	)
-	CardTestFactory.bind(
-		enemy, BattleCombatant.Faction.ENEMY, null, manager,
-	)
-	CardTestFactory.bind(
-		second_enemy, BattleCombatant.Faction.ENEMY, null, manager,
-	)
-	hero.is_defeated = false
-	enemy.is_defeated = false
-	second_enemy.is_defeated = false
-	enemy.is_valid_target = false
-	second_enemy.is_valid_target = false
 	enemy.position = Vector2(100, 100)
 	second_enemy.position = Vector2(300, 100)
 	var hero_area := Control.new()
 	var enemy_area := Control.new()
-	hero_area.add_child(hero)
-	enemy_area.add_child(enemy)
-	enemy_area.add_child(second_enemy)
 	manager.hero_area = hero_area
 	manager.enemy_area = enemy_area
 	manager.current_actor = hero
@@ -1542,4 +1528,22 @@ func _navigation_fixture() -> Dictionary:
 	scene.add_child(bar)
 	add_child_autofree(scene)
 	await get_tree().process_frame
+	hero_area.add_child(hero)
+	enemy_area.add_child(enemy)
+	enemy_area.add_child(second_enemy)
+	await get_tree().process_frame
+	CardTestFactory.bind(
+		hero, BattleCombatant.Faction.HERO, null, manager, true,
+	)
+	CardTestFactory.bind(
+		enemy, BattleCombatant.Faction.ENEMY, null, manager, true,
+	)
+	CardTestFactory.bind(
+		second_enemy, BattleCombatant.Faction.ENEMY, null, manager, true,
+	)
+	hero.is_defeated = false
+	enemy.is_defeated = false
+	second_enemy.is_defeated = false
+	enemy.is_valid_target = false
+	second_enemy.is_valid_target = false
 	return {scene = scene, manager = manager, bar = bar, ux = ux, hero = hero, enemy = enemy, second_enemy = second_enemy}

@@ -19,19 +19,14 @@ signal focus_updated
 # --- Temporary model-backed compatibility properties ---
 var hero_data: HeroData:
 	get: return (combatant as HeroCombatant).hero_data
-	set(value): (combatant as HeroCombatant).hero_data = value
 var loaded_roles: Array[RoleData]:
 	get: return (combatant as HeroCombatant).loaded_roles
-	set(value): (combatant as HeroCombatant).loaded_roles = value
 var current_role_index: int:
 	get: return (combatant as HeroCombatant).current_role_index
-	set(value): (combatant as HeroCombatant).current_role_index = value
 var current_focus: int:
 	get: return (combatant as HeroCombatant).current_focus
-	set(value): (combatant as HeroCombatant).current_focus = value
 var shifted_this_turn: bool:
 	get: return (combatant as HeroCombatant).shifted_this_turn
-	set(value): (combatant as HeroCombatant).shifted_this_turn = value
 
 
 func setup(data: HeroData) -> void:

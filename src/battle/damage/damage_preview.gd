@@ -365,7 +365,9 @@ static func _copy_target(target: ActorCard) -> ActorCard:
 	preview_target.active_conditions = target.active_conditions.duplicate()
 	preview_target.active_traits = target.active_traits.duplicate()
 	if preview_target is HeroCard:
-		(preview_target as HeroCard).current_focus = (target as HeroCard).current_focus
+		(preview_target.combatant as HeroCombatant).current_focus = (
+			target.combatant as HeroCombatant
+		).current_focus
 	return preview_target
 
 
@@ -454,7 +456,9 @@ static func _target_without_condition(
 	preview_target.is_in_danger = target.is_in_danger
 	preview_target.is_defeated = target.is_defeated
 	if preview_target is HeroCard:
-		(preview_target as HeroCard).current_focus = (target as HeroCard).current_focus
+		(preview_target.combatant as HeroCombatant).current_focus = (
+			target.combatant as HeroCombatant
+		).current_focus
 	var retained_conditions: Array[Condition] = []
 	for condition: Condition in target.active_conditions:
 		if condition != excluded_condition:
