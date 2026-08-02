@@ -67,6 +67,86 @@ func test_damage_contributions_require_only_combatants() -> void:
 	assert_almost_eq(attacker.get_damage_dealt_modifier(target), 0.25, 0.0001)
 
 
+func test_damage_and_healing_mutate_state_before_publishing_presentation() -> void:
+	var combatant := _combatant_with_stats(20, 2)
+	var events: Array[StringName] = []
+	combatant.presentation_event.connect(
+		func(_actor: BattleCombatant, event: StringName, _payload: Dictionary):
+			events.append(event)
+	)
+	var request := DamageRequest.new(
+		35, 0, 0, 1.0, 1, Action.DamageType.KINETIC, 0,
+	)
+	var result := DamageResult.new(
+		request, 35.0, 0, 1.0, 1.0, 1.0, 35.0, 35,
+	)
+	var damage_effect := Effect_Damage.new()
+
+	assert_eq(await combatant.take_one_hit(
+		result, damage_effect, combatant, Action.DamageType.KINETIC,
+	), 35)
+	assert_eq(combatant.current_hp, 65)
+	assert_has(events, &"damage_received")
+	await combatant.take_healing(10)
+	assert_eq(combatant.current_hp, 75)
+	assert_has(events, &"healing_received")
+
+
+func test_zero_guard_enters_danger_and_breach_resets_ct() -> void:
+	var combatant := _combatant_with_stats(20, 2)
+	combatant.current_ct = 123
+	await combatant.modify_guard(-2)
+	assert_true(combatant.is_in_danger)
+	await combatant.breach()
+	assert_true(combatant.is_breached)
+	assert_false(combatant.is_in_danger)
+	assert_eq(combatant.current_ct, 0)
+
+
+func test_defeat_and_revival_publish_each_semantic_boundary_once() -> void:
+	var combatant := _combatant_with_stats(20, 2)
+	var events: Array[StringName] = []
+	var revival := {"count": 0}
+	combatant.presentation_event.connect(
+		func(_actor: BattleCombatant, event: StringName, _payload: Dictionary):
+			events.append(event)
+	)
+	combatant.revived.connect(func(_actor: BattleCombatant): revival.count += 1)
+	combatant.current_ct = 80
+
+	combatant.defeat()
+	combatant.defeat()
+	assert_true(combatant.is_defeated)
+	assert_eq(combatant.current_ct, 0)
+	assert_eq(events.count(&"defeat_started"), 1)
+	combatant.revive()
+	combatant.revive()
+	assert_false(combatant.is_defeated)
+	assert_eq(revival.count, 1)
+
+
+func test_breach_recovery_restores_half_starting_guard_for_heroes() -> void:
+	var combatant := _combatant_with_stats(20, 5)
+	combatant.current_guard = 0
+	await combatant.breach()
+
+	await combatant.recover_breach()
+
+	assert_false(combatant.is_breached)
+	assert_eq(combatant.current_guard, 2)
+
+
+func test_nonreviving_healing_does_not_change_a_defeated_combatant() -> void:
+	var combatant := _combatant_with_stats(20, 2)
+	combatant.current_hp = 0
+	combatant.defeat()
+
+	await combatant.take_healing(10)
+
+	assert_eq(combatant.current_hp, 0)
+	assert_true(combatant.is_defeated)
+
+
 func test_add_trait_copies_the_resource_and_assigns_the_requested_tier() -> void:
 	var combatant := _combatant_with_stats(20, 3)
 	var trait_resource := Trait.new()
