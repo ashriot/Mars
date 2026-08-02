@@ -6,6 +6,26 @@ class ActionCtTrait extends Trait:
 		return 0.75
 
 
+class LifecycleRecordingCombatant extends BattleCombatant:
+	var condition_events: Array[Trigger.TriggerType] = []
+	var reaction_heal_amount := 0
+	var defeat_calls := 0
+	var condition_events_at_defeat := -1
+
+	func _fire_condition_event(
+		event_type: Trigger.TriggerType,
+		_context: Dictionary = {},
+	) -> void:
+		condition_events.append(event_type)
+		if event_type == Trigger.TriggerType.ON_BEING_HIT and reaction_heal_amount > 0:
+			await take_healing(reaction_heal_amount)
+
+	func defeat() -> void:
+		defeat_calls += 1
+		condition_events_at_defeat = condition_events.size()
+		super.defeat()
+
+
 func test_setup_owns_state_without_control_or_scene_nodes() -> void:
 	var stats := ActorStats.new()
 	stats.actor_name = "Test Unit"
@@ -92,6 +112,86 @@ func test_damage_and_healing_mutate_state_before_publishing_presentation() -> vo
 	assert_has(events, &"healing_received")
 
 
+func test_lethal_damage_clamps_actual_damage_and_publishes_clamped_payload() -> void:
+	var combatant := _recording_combatant(20, 2)
+	var captured := {"damage_payload": {}}
+	combatant.presentation_event.connect(
+		func(_actor: BattleCombatant, event: StringName, payload: Dictionary):
+			if event == &"damage_received":
+				captured.damage_payload = payload
+	)
+
+	assert_eq(await combatant.take_one_hit(
+		_damage_result(150, Action.DamageType.PIERCING),
+		Effect_Damage.new(),
+		combatant,
+		Action.DamageType.PIERCING,
+	), 100)
+	assert_eq(combatant.current_hp, 0)
+	assert_eq(captured.damage_payload.actual_damage, 100)
+
+
+func test_direct_damage_dispatches_its_resolved_type_before_being_hit() -> void:
+	for damage_type: Action.DamageType in [
+		Action.DamageType.KINETIC,
+		Action.DamageType.ENERGY,
+	]:
+		var combatant := _recording_combatant(20, 2)
+
+		await combatant.take_one_hit(
+			_damage_result(1, damage_type), Effect_Damage.new(), combatant, damage_type,
+		)
+
+		assert_eq(combatant.condition_events, [
+			Trigger.TriggerType.ON_TAKING_KINETIC_DAMAGE
+			if damage_type == Action.DamageType.KINETIC
+			else Trigger.TriggerType.ON_TAKING_ENERGY_DAMAGE,
+			Trigger.TriggerType.ON_BEING_HIT,
+		])
+
+
+func test_indirect_damage_omits_being_hit_condition_callbacks() -> void:
+	var combatant := _recording_combatant(20, 2)
+	var indirect_damage := Effect_Damage.new()
+	indirect_damage.is_indirect = true
+
+	await combatant.take_one_hit(
+		_damage_result(1, Action.DamageType.KINETIC),
+		indirect_damage,
+		combatant,
+		Action.DamageType.KINETIC,
+	)
+
+	assert_eq(combatant.condition_events, [
+		Trigger.TriggerType.ON_TAKING_KINETIC_DAMAGE,
+	])
+
+
+func test_lethal_reaction_healing_is_suppressed_then_defeat_runs_once() -> void:
+	var combatant := _recording_combatant(20, 2)
+	combatant.reaction_heal_amount = 30
+	var defeat_count := {"value": 0}
+	combatant.defeated.connect(
+		func(_actor: BattleCombatant): defeat_count.value += 1
+	)
+
+	assert_eq(await combatant.take_one_hit(
+		_damage_result(100, Action.DamageType.KINETIC),
+		Effect_Damage.new(),
+		combatant,
+		Action.DamageType.KINETIC,
+	), 100)
+	assert_eq(combatant.current_hp, 0)
+	assert_true(combatant.is_defeated)
+	assert_eq(combatant.condition_events, [
+		Trigger.TriggerType.ON_TAKING_KINETIC_DAMAGE,
+		Trigger.TriggerType.ON_BEING_HIT,
+	])
+	assert_eq(combatant.condition_events_at_defeat, 2)
+	assert_eq(combatant.defeat_calls, 1)
+	assert_eq(defeat_count.value, 1)
+
+
 func test_zero_guard_enters_danger_and_breach_resets_ct() -> void:
 	var combatant := _combatant_with_stats(20, 2)
 	combatant.current_ct = 123
@@ -169,3 +269,34 @@ func _combatant_with_stats(speed: int, guard: int) -> BattleCombatant:
 	add_child_autofree(combatant)
 	combatant.setup_base(stats, BattleCombatant.Faction.HERO)
 	return combatant
+
+
+func _recording_combatant(speed: int, guard: int) -> LifecycleRecordingCombatant:
+	var stats := ActorStats.new()
+	stats.actor_name = "Recorder"
+	stats.max_hp = 100
+	stats.starting_guard = guard
+	stats.speed = speed
+	var combatant := LifecycleRecordingCombatant.new()
+	add_child_autofree(combatant)
+	combatant.setup_base(stats, BattleCombatant.Faction.HERO)
+	return combatant
+
+
+func _damage_result(
+	final_damage: int,
+	damage_type: Action.DamageType,
+) -> DamageResult:
+	var request := DamageRequest.new(
+		final_damage, 0, 0, 1.0, 1, damage_type, 0,
+	)
+	return DamageResult.new(
+		request,
+		float(final_damage),
+		0,
+		1.0,
+		1.0,
+		1.0,
+		float(final_damage),
+		final_damage,
+	)
