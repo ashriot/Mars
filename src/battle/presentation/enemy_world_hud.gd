@@ -37,6 +37,9 @@ func _ready() -> void:
 	target_region.mouse_entered.connect(_on_target_mouse_entered)
 	target_region.mouse_exited.connect(_on_target_mouse_exited)
 	target_region.gui_input.connect(_on_target_gui_input)
+	intent_row.mouse_entered.connect(_on_target_mouse_entered)
+	intent_row.mouse_exited.connect(_on_target_mouse_exited)
+	intent_row.gui_input.connect(_on_target_gui_input)
 	details.hide()
 	set_process(false)
 
@@ -73,6 +76,7 @@ func set_target_state(state: CombatantPresentation.TargetState) -> void:
 
 
 func set_details_visible(value: bool) -> void:
+	value = value and _has_live_combatant()
 	if _details_tween != null and _details_tween.is_valid():
 		_details_tween.kill()
 		_details_tween = null
@@ -103,13 +107,13 @@ func set_projected_foot_position(value: Vector2) -> void:
 
 
 func set_projection_visible(value: bool) -> void:
-	visible = value
+	visible = value and _has_live_combatant()
 	target_region.mouse_filter = Control.MOUSE_FILTER_STOP \
-		if value else Control.MOUSE_FILTER_IGNORE
+		if visible else Control.MOUSE_FILTER_IGNORE
 
 
 func has_valid_projection() -> bool:
-	return _has_projected_head
+	return _has_projected_head and visible and _has_live_combatant()
 
 
 func get_desired_compact_rect() -> Rect2:
@@ -148,6 +152,8 @@ func _connect_combatant() -> void:
 	combatant.guard_changed.connect(_on_guard_changed)
 	combatant.conditions_changed.connect(_on_conditions_changed)
 	combatant.presentation_event.connect(_on_presentation_event)
+	combatant.defeated.connect(_on_combatant_defeated)
+	combatant.tree_exiting.connect(_on_combatant_tree_exiting)
 
 
 func _disconnect_combatant() -> void:
@@ -162,6 +168,10 @@ func _disconnect_combatant() -> void:
 		combatant.conditions_changed.disconnect(_on_conditions_changed)
 	if combatant.presentation_event.is_connected(_on_presentation_event):
 		combatant.presentation_event.disconnect(_on_presentation_event)
+	if combatant.defeated.is_connected(_on_combatant_defeated):
+		combatant.defeated.disconnect(_on_combatant_defeated)
+	if combatant.tree_exiting.is_connected(_on_combatant_tree_exiting):
+		combatant.tree_exiting.disconnect(_on_combatant_tree_exiting)
 	combatant = null
 
 
@@ -229,19 +239,35 @@ func _on_presentation_event(
 		refresh_intent()
 
 
+func _on_combatant_defeated(enemy: BattleCombatant) -> void:
+	if enemy == combatant:
+		_invalidate_projection()
+
+
+func _on_combatant_tree_exiting() -> void:
+	_invalidate_projection()
+	_disconnect_combatant()
+
+
 func _on_target_mouse_entered() -> void:
+	if not _is_interactive():
+		return
 	_hovered = true
 	set_details_visible(true)
 	hovered.emit()
 
 
 func _on_target_mouse_exited() -> void:
+	if not _is_interactive():
+		return
 	_hovered = false
 	set_details_visible(target_state == CombatantPresentation.TargetState.SELECTED)
 	unhovered.emit()
 
 
 func _on_target_gui_input(event: InputEvent) -> void:
+	if not _is_interactive():
+		return
 	if event is InputEventMouseButton \
 		and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT \
 		and (event as InputEventMouseButton).pressed:
@@ -268,3 +294,22 @@ func _sync_target_region() -> void:
 		)
 	target_region.global_position = target_rect.position
 	target_region.size = target_rect.size
+
+
+func _invalidate_projection() -> void:
+	_has_projected_head = false
+	_has_projected_foot = false
+	_hovered = false
+	set_details_visible(false)
+	visible = false
+	target_region.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+func _has_live_combatant() -> bool:
+	return is_instance_valid(combatant) and not combatant.is_defeated
+
+
+func _is_interactive() -> bool:
+	return _has_live_combatant() \
+		and visible \
+		and target_region.mouse_filter == Control.MOUSE_FILTER_STOP

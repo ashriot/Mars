@@ -1,7 +1,10 @@
 extends GutTest
 
+const KINETIC_ICON_28 := "[img width=28 height=28]res://assets/graphics/icons/img/bullet_out.png[/img]"
+const KINETIC_ICON_24 := "[img width=24 height=24]res://assets/graphics/icons/img/bullet_out.png[/img]"
 
-func test_single_target_damage_preserves_amount_type_hits_and_target() -> void:
+
+func test_single_target_damage_exactly_preserves_order_hits_icon_and_target_markup() -> void:
 	var target := _hero("ASHE")
 	var enemy := _enemy(100)
 	var action := _damage_action(Action.TargetType.ONE_ENEMY, 0.25, 2)
@@ -10,16 +13,19 @@ func test_single_target_damage_preserves_amount_type_hits_and_target() -> void:
 
 	var result := EnemyIntentFormatter.format(enemy, null)
 
-	assert_string_contains(result.text, "25")
-	assert_string_contains(result.text, "2")
-	assert_string_contains(result.text, Action._get_bbcode_icon("kinetic", 28))
-	assert_string_contains(result.text, "ASHE")
-	assert_string_contains(result.tooltip, action.action_name)
+	assert_eq(
+		result.text,
+		"25x2 %s [color=ffffffff]ASHE" % KINETIC_ICON_28,
+	)
+	assert_eq(
+		result.tooltip,
+		"Locked Burst incoming: Deals 25x2 %s damage." % KINETIC_ICON_24,
+	)
 	enemy.free()
 	target.free()
 
 
-func test_random_multi_hit_preserves_random_suffix() -> void:
+func test_random_multi_hit_exactly_preserves_per_target_hit_text_and_random_suffix() -> void:
 	var first := _hero("ASHE")
 	var second := _hero("ECHO")
 	var enemy := _enemy(100)
@@ -29,11 +35,49 @@ func test_random_multi_hit_preserves_random_suffix() -> void:
 
 	var result := EnemyIntentFormatter.format(enemy, null)
 
-	assert_string_contains(result.text, "RANDOM")
-	assert_string_contains(result.text, "3 hits")
+	assert_eq(
+		result.text,
+		"50 per target %s (3 hits) RANDOM" % KINETIC_ICON_28,
+	)
 	enemy.free()
 	first.free()
 	second.free()
+
+
+func test_group_damage_exactly_preserves_per_target_binding_and_everyone_suffix() -> void:
+	var first := _hero("ASHE")
+	var second := _hero("ECHO")
+	var enemy := _enemy(100)
+	var action := _damage_action(Action.TargetType.ALL_ENEMIES, 0.5, 1)
+	enemy.intended_action = action
+	enemy.intended_targets = [first, second]
+
+	var result := EnemyIntentFormatter.format(enemy, null)
+
+	assert_eq(
+		result.text,
+		"50 per target %s EVERYONE" % KINETIC_ICON_28,
+	)
+	enemy.free()
+	first.free()
+	second.free()
+
+
+func test_missing_targets_exactly_preserve_authored_fallback_and_multi_effect_marker() -> void:
+	var enemy := _enemy(100)
+	var action := _damage_action(Action.TargetType.RANDOM_ENEMY, 0.5, 3)
+	var damage_effect := action.effects[0] as Effect_Damage
+	damage_effect.split_damage = true
+	action.effects.append(ActionEffect.new())
+	enemy.intended_action = action
+
+	var result := EnemyIntentFormatter.format(enemy, null)
+
+	assert_eq(
+		result.text,
+		"50% ATK total " + KINETIC_ICON_28 + " (3 hits) *",
+	)
+	enemy.free()
 
 
 func test_non_damage_intent_preserves_action_and_everyone_suffix() -> void:

@@ -106,6 +106,37 @@ func test_target_region_forwards_hover_and_press_signals() -> void:
 	assert_signal_emitted(hud, &"pressed")
 
 
+func test_intent_tooltip_is_reachable_without_blocking_real_target_input() -> void:
+	var hud := _hud()
+	var enemy := _enemy_with_state(80, 3)
+	var action := Action.new()
+	action.action_name = "Incoming"
+	action.description = "Incoming tooltip"
+	action.effects = [ActionEffect.new()]
+	action.target_type = Action.TargetType.SELF
+	enemy.intended_action = action
+	enemy.intended_targets = [enemy]
+	hud.bind_combatant(enemy)
+	hud.set_projected_head_position(Vector2(500, 300))
+	await get_tree().process_frame
+	watch_signals(hud)
+	TooltipManager.hide_tooltip()
+	assert_eq(TooltipManager._timer.time_left, 0.0)
+	var intent_center := hud.intent_row.get_global_rect().get_center()
+
+	get_viewport().push_input(_mouse_motion_at(Vector2(10, 600)), true)
+	await get_tree().process_frame
+	get_viewport().push_input(_mouse_motion_at(intent_center), true)
+	await get_tree().process_frame
+
+	assert_gt(TooltipManager._timer.time_left, 0.0)
+	assert_signal_emitted(hud, &"hovered")
+	get_viewport().push_input(_mouse_button_at(intent_center, true), true)
+	await get_tree().process_frame
+	assert_signal_emitted(hud, &"pressed")
+	TooltipManager.hide_tooltip()
+
+
 func test_projected_head_positions_compact_rect_above_anchor() -> void:
 	var hud := _hud()
 	hud.bind_combatant(_enemy_with_state(80, 3))
@@ -150,6 +181,60 @@ func test_world_layout_resolves_visible_huds_in_spawn_order() -> void:
 	assert_eq(first.compact_stack.global_position, Vector2(390, 210))
 
 
+func test_defeat_immediately_hides_disables_and_excludes_hud_from_layout() -> void:
+	var world := WORLD_SCENE.instantiate() as BattleWorld3D
+	add_child_autofree(world)
+	var defeated_hud := HUD_SCENE.instantiate() as EnemyWorldHUD
+	var survivor := HUD_SCENE.instantiate() as EnemyWorldHUD
+	world.hud_layer.add_child(defeated_hud)
+	world.hud_layer.add_child(survivor)
+	var defeated_enemy := _enemy_with_state(60, 1)
+	defeated_hud.bind_combatant(defeated_enemy)
+	survivor.bind_combatant(_enemy_with_state(80, 3))
+	defeated_hud.set_projected_head_position(Vector2(500, 300))
+	survivor.set_projected_head_position(Vector2(500, 300))
+	world._layout_enemy_huds()
+	assert_eq(defeated_hud.compact_stack.global_position, Vector2(390, 210))
+	assert_eq(survivor.compact_stack.global_position, Vector2(390, 126))
+	watch_signals(defeated_hud)
+
+	defeated_enemy.defeat()
+	defeated_hud.set_projected_head_position(Vector2(500, 300))
+	defeated_hud.target_region.mouse_entered.emit()
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	defeated_hud.target_region.gui_input.emit(click)
+	world._layout_enemy_huds()
+
+	assert_false(defeated_hud.visible)
+	assert_false(defeated_hud.has_valid_projection())
+	assert_eq(defeated_hud.target_region.mouse_filter, Control.MOUSE_FILTER_IGNORE)
+	assert_signal_not_emitted(defeated_hud, &"hovered")
+	assert_signal_not_emitted(defeated_hud, &"pressed")
+	assert_eq(survivor.compact_stack.global_position, Vector2(390, 210))
+
+
+func test_model_tree_exit_invalidates_and_unbinds_surviving_hud() -> void:
+	var hud := _hud()
+	var enemy := _enemy_with_state(80, 3)
+	hud.bind_combatant(enemy)
+	hud.set_projected_head_position(Vector2(500, 300))
+	watch_signals(hud)
+
+	enemy.free()
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	hud.target_region.gui_input.emit(click)
+
+	assert_null(hud.combatant)
+	assert_false(hud.visible)
+	assert_false(hud.has_valid_projection())
+	assert_eq(hud.target_region.mouse_filter, Control.MOUSE_FILTER_IGNORE)
+	assert_signal_not_emitted(hud, &"pressed")
+
+
 func _enemy_with_state(hp: int, guard: int) -> EnemyCombatant:
 	var enemy := EnemyCombatant.new()
 	add_child_autofree(enemy)
@@ -162,3 +247,19 @@ func _enemy_with_state(hp: int, guard: int) -> EnemyCombatant:
 	enemy.current_hp = hp
 	enemy.current_guard = guard
 	return enemy
+
+
+func _mouse_motion_at(position: Vector2) -> InputEventMouseMotion:
+	var event := InputEventMouseMotion.new()
+	event.position = position
+	event.global_position = position
+	return event
+
+
+func _mouse_button_at(position: Vector2, pressed: bool) -> InputEventMouseButton:
+	var event := InputEventMouseButton.new()
+	event.position = position
+	event.global_position = position
+	event.button_index = MOUSE_BUTTON_LEFT
+	event.pressed = pressed
+	return event

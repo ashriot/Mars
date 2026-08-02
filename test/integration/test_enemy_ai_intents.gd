@@ -173,10 +173,8 @@ func test_legacy_enemy_card_renders_shared_intent_format() -> void:
 	enemy.intended_targets = [target]
 
 	card.refresh_intent_presentation()
-	var formatted := EnemyIntentFormatter.format(enemy, null)
-
-	assert_eq(card.intent_text.text, formatted.text)
-	assert_eq(card.intent_tooltip.bbcode_text, formatted.tooltip)
+	assert_eq(card.intent_text.text, "Disrupt Ashe")
+	assert_eq(card.intent_tooltip.bbcode_text, "Disrupt protocol")
 
 
 func test_clearing_spent_intent_refreshes_without_flashing_again() -> void:
