@@ -368,3 +368,69 @@ The unrelated user edit in `src/dev/endgame_battle_lab.tscn` was preserved and w
 - Confirmed pruning an unrelated stale combatant cannot cancel a legitimate actor-null enemy handoff, while a freed assigned current actor still triggers atomic cancellation.
 - Confirmed the preserved dirty lab scene was not edited, restored, staged, or committed.
 - No interactive visual or physical-controller acceptance was performed. This round changes lifecycle and input-state foundations without changing the current presentation.
+
+## Fix Round 4
+
+Commit: recorded separately from the original Task 7 and prior fix commits.
+
+### Finding addressed
+
+- Split `ActionButton` availability into stored intrinsic and global-override state. Affordability/action disablement and ActionBar's forced/unavailable override now compose into one authoritative value instead of overwriting the child `Button` in whichever setter ran last.
+- Made the combined state drive every consumer: the child button used by mouse input, the `ActionButton.disabled` value used by controller activation, and dynamic-glyph opacity. The child `Button.disabled` presentation is no longer read as gameplay authority.
+- Made focus-cost refresh explicitly update intrinsic affordability. A focus update cannot clear a forced-target override, clearing that override cannot erase an unaffordable action, and later gaining enough focus rearms the action normally.
+- Updated battle-navigation fixtures to set semantic `ActionButton.disabled` state rather than mutating the child presentation button directly.
+
+### TDD and mutation evidence
+
+1. Added a real ActionBar replacement regression before changing production behavior.
+   - RED: `battle_controller_navigation` was 77/78 passing with 424/430 assertions. After the forced-target replacement load, the zero-focus positive-cost action reported enabled, its child button was enabled, its glyph was fully opaque, and controller activation returned true and emitted `action_selected`.
+2. Introduced separate intrinsic and override flags with one apply path.
+   - The regression also changes focus while forced targeting is active, proving affordability refresh cannot defeat the override, then clears forced targeting at zero focus, proving the retained intrinsic state keeps mouse/controller input disabled, then restores enough focus and proves activation emits once.
+   - An intermediate authority mutation exposed one existing fixture that set only the child button: 77/78 passing with 428/430 assertions. Moving all such ActionButton fixture setup to the semantic property removed presentation-state authority from the test suite as well.
+   - GREEN: `battle_controller_navigation` 78/78 passing, 434 assertions.
+3. Mutation check:
+   - Replacing combined application with override-only state reproduces the original zero-focus enablement failure.
+   - Ignoring the override during `update_cost` fails the forced-focus transition.
+   - Latching either layer fails the final affordable rearm assertions.
+
+### Fix Round 4 final verification
+
+Every Godot invocation used `HOME=/tmp/mars-godot-home` and Godot 4.6.3.
+
+- Headless editor parse (`--editor --quit`): exit 0 with no parser errors.
+- `battle_controller_navigation`: 78/78 passing, 434 assertions.
+- `controller_playable_loop`: 2/2 passing, 104 assertions.
+- `battle_responsive_layout`: 2/2 passing, 12 assertions.
+- `ctb_simulator`: 21/21 passing, 59 assertions.
+- `enemy_ai_intents`: 23/23 passing, 71 assertions.
+- `battle_revival`: 6/6 passing, 27 assertions.
+- `actor_card_target_presentation`: 8/8 passing, 61 assertions.
+- `battle_combatant`: 15/15 passing, 49 assertions.
+- `battle_condition_targets`: 19/19 passing, 42 assertions.
+- `ctb_action_content`: 4/4 passing, 20 assertions.
+- `damage_hit_plan`: 4/4 passing, 7 assertions.
+- `damage_preview`: 39/39 passing, 165 assertions.
+- `damage_effect_execution`: 46/46 passing, 193 assertions.
+- `damage_content`: 46/46 passing, 1,572 assertions.
+- `turn_queue`: 19/19 passing, 112 assertions.
+- `game_manager_interactions`: 33/33 passing, 188 assertions.
+- Complete GUT suite: 918/919 passing, 14,506/14,507 assertions across 68 scripts. The sole failure remains the unrelated preserved dirty lab scene: its `enemy_hp_multiplier` is `1.0`, while `test_endgame_battle_lab` expects `5.0`.
+- Discovery audit: the repository contains exactly 68 `test_*.gd` files and GUT discovered exactly 68 scripts. No `pending`, `skip`, `should_skip_script`, or `should_skip_test` markers were found.
+- Full-run hazard review found no parser errors, crashes, unexpected failures, skipped tests, or pending tests. The expected invalid-condition test error, three ignored-inner-class warnings, macOS certificate-store warning, and documented shutdown resource diagnostics are unchanged.
+- ActionButton state-authority audit found no external production write to the child `Button.disabled`; ActionBar writes only `override_disabled`, and affordability writes only the intrinsic property.
+- The Task 7 target/card type scans remain clean, and `git diff --check` passes.
+
+### Fix Round 4 files changed
+
+- `src/battle/action_button.gd`
+- `test/integration/test_battle_controller_navigation.gd`
+
+The unrelated user edit in `src/dev/endgame_battle_lab.tscn` was preserved and will remain excluded from the fix commit.
+
+### Fix Round 4 self-review and remaining concerns
+
+- Confirmed affordability and forced/unavailable state remain independent across setup, hero replacement, focus updates, state transitions, mouse activation, controller activation, and glyph presentation.
+- Confirmed clearing global disablement does not re-enable an intrinsically unavailable action, while clearing either reason eventually restores the control when both reasons are absent.
+- Confirmed tests now configure ActionButton authority rather than relying on child presentation state.
+- Confirmed the preserved dirty lab scene was not edited, restored, staged, or committed.
+- No interactive visual or physical-controller acceptance was performed. This round fixes availability semantics without changing the current visual design or control mapping.

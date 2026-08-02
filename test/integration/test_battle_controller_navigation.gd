@@ -350,7 +350,7 @@ func test_activate_slot_emits_only_for_visible_enabled_semantic_slot() -> void:
 		var action_button := ActionButtonScene.instantiate() as ActionButton
 		action_button.button = action_button.get_node("Button")
 		action_button.visible = index != 3
-		action_button.button.disabled = index == 2
+		action_button.disabled = index == 2
 		bar.actions_ui.add_child(action_button)
 	autofree(bar)
 	watch_signals(bar)
@@ -492,6 +492,59 @@ func test_replacement_hero_rearms_controller_ui_after_forced_target_removal() ->
 	bar._unhandled_input(_action_event(&"shift_right"))
 	assert_signal_emit_count(bar, "action_selected", 1)
 	assert_signal_emitted_with_parameters(bar, "shift_button_pressed", ["right"])
+
+
+func test_replacement_hero_keeps_unaffordable_action_disabled_after_forced_target() -> void:
+	var manager := TurnCycleBattleManager.new()
+	var bar := ActionBarScene.instantiate() as ActionBar
+	bar.battle_manager = manager
+	manager.action_bar = bar
+	manager.add_child(bar)
+	add_child_autofree(manager)
+	await get_tree().process_frame
+	var removed_hero := _action_bar_hero(manager, "Removed")
+	var replacement_hero := _action_bar_hero(manager, "Replacement", 2)
+	manager.add_child(removed_hero)
+	manager.add_child(replacement_hero)
+	manager.actor_list = [removed_hero, replacement_hero]
+	manager._connect_combatant_signals(removed_hero)
+	manager._connect_combatant_signals(replacement_hero)
+	manager.current_actor = removed_hero
+	manager.current_state = BattleManager.State.PLAYER_ACTION
+	await bar.load_actions(removed_hero, false)
+
+	manager.change_state(BattleManager.State.FORCED_TARGET)
+	manager.remove_child(removed_hero)
+	removed_hero.free()
+	manager.current_actor = replacement_hero
+	manager.change_state(BattleManager.State.FORCED_TARGET)
+	await bar.load_actions(replacement_hero, false)
+
+	var first_action := bar.actions_ui.get_child(0) as ActionButton
+	assert_true(first_action.override_disabled)
+	await replacement_hero.modify_focus(2)
+	assert_true(first_action.disabled, "affordability updates cannot clear the global override")
+	assert_true(first_action.button.disabled)
+	assert_almost_eq(first_action.dynamic_glyph.modulate.a, 0.33, 0.001)
+	await replacement_hero.modify_focus(-2)
+	manager.change_state(BattleManager.State.PLAYER_ACTION)
+
+	assert_false(first_action.override_disabled, "the global override clears with forced targeting")
+	assert_true(first_action.disabled, "clearing the override preserves zero-focus affordability")
+	assert_true(first_action.button.disabled, "mouse activation uses the combined disabled state")
+	assert_almost_eq(first_action.dynamic_glyph.modulate.a, 0.33, 0.001)
+	watch_signals(bar)
+	assert_false(bar.activate_slot(0))
+	assert_signal_not_emitted(bar, "action_selected")
+
+	await replacement_hero.modify_focus(2)
+
+	assert_signal_emit_count(bar, "availability_changed", 1)
+	assert_false(first_action.disabled, "an action rearms when the replacement can afford it")
+	assert_false(first_action.button.disabled)
+	assert_almost_eq(first_action.dynamic_glyph.modulate.a, 1.0, 0.001)
+	assert_true(bar.activate_slot(0))
+	assert_signal_emit_count(bar, "action_selected", 1)
 
 
 func test_directional_shift_fully_supersedes_selected_action_before_role_ui_loads() -> void:
@@ -1918,7 +1971,7 @@ func test_different_action_hotkey_replaces_current_selection() -> void:
 	var manager: TrackingBattleManager = fixture.manager
 	var bar: ActionBar = fixture.bar
 	var second := bar.actions_ui.get_child(1) as ActionButton
-	second.button.disabled = false
+	second.disabled = false
 	bar._unhandled_input(_action_event(&"action_1"))
 	bar._unhandled_input(_action_event(&"action_2"))
 	assert_eq(manager.action_select_count, 2)
@@ -1932,7 +1985,7 @@ func test_keyboard_action_replacement_synchronously_clears_shared_target() -> vo
 	var manager: TrackingBattleManager = fixture.manager
 	var bar: ActionBar = fixture.bar
 	var second := bar.actions_ui.get_child(1) as ActionButton
-	second.button.disabled = false
+	second.disabled = false
 	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
 	bar._unhandled_input(_action_event(&"action_1"))
 	fixture.enemy.is_valid_target = true
@@ -2414,7 +2467,11 @@ func _action_event(action: StringName) -> InputEventAction:
 	return event
 
 
-func _action_bar_hero(manager: BattleManager, prefix: String) -> HeroCombatant:
+func _action_bar_hero(
+	manager: BattleManager,
+	prefix: String,
+	action_focus_cost: int = 0,
+) -> HeroCombatant:
 	var hero := HeroCombatant.new()
 	hero.setup_base(ActorStats.new(), BattleCombatant.Faction.HERO, manager)
 	hero.hero_data = HeroData.new()
@@ -2428,6 +2485,7 @@ func _action_bar_hero(manager: BattleManager, prefix: String) -> HeroCombatant:
 		var action := Action.new()
 		action.action_name = "%s action %d" % [prefix, role_index]
 		action.target_type = Action.TargetType.SELF
+		action.focus_cost = action_focus_cost
 		role.actions = [action]
 		hero.loaded_roles.append(role)
 	hero.current_role_index = 0
@@ -2492,7 +2550,7 @@ func _navigation_fixture() -> Dictionary:
 		action_button.label = action_button.get_node("Title")
 		action_button.action = Action.new()
 		action_button.visible = index != 2
-		action_button.button.disabled = index == 1
+		action_button.disabled = index == 1
 		action_button.label.text = "Action %d" % (index + 1)
 		actions.add_child(action_button)
 	var passive := Panel.new()

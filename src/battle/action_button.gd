@@ -23,25 +23,24 @@ var glyph_backing: Panel
 var action : Action
 var user_focus: int
 var focus_cost: int
+var _intrinsic_disabled := false
 var override_disabled: bool :
 	set(value):
 		override_disabled = value
-		button.disabled = value
-		_refresh_disabled_presentation()
-var disabled:
+		_apply_disabled_state()
+var disabled: bool:
 	set(value):
-		button.disabled = value or override_disabled
-		if action:
-			if not value:
-				button.disabled = user_focus < focus_cost or override_disabled
-		_refresh_disabled_presentation()
-	get: return button.disabled
+		_intrinsic_disabled = value
+		_apply_disabled_state()
+	get:
+		return _intrinsic_disabled or override_disabled
 
 
 func _ready() -> void:
 	_ensure_glyph_backing()
 	dynamic_glyph.set_action(glyph_action)
 	apply_display_profile(DisplayProfile.current_profile)
+	_apply_disabled_state()
 
 
 func apply_display_profile(profile: int) -> void:
@@ -119,7 +118,7 @@ func update_cost(current_focus: int):
 				pip_node.modulate.a = 1.0
 		else:
 			pip_node.visible = false
-	self.disabled = false
+	self.disabled = user_focus < focus_cost
 
 func _on_button_pressed():
 	pressed.emit()
@@ -128,6 +127,12 @@ func focused(value: bool):
 	highlight_panel.visible = value
 
 
+func _apply_disabled_state() -> void:
+	if button:
+		button.disabled = disabled
+	_refresh_disabled_presentation()
+
+
 func _refresh_disabled_presentation() -> void:
 	if dynamic_glyph:
-		dynamic_glyph.modulate.a = 0.33 if button and button.disabled else 1.0
+		dynamic_glyph.modulate.a = 0.33 if disabled else 1.0
