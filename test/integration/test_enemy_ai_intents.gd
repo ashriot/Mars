@@ -77,10 +77,10 @@ class ProductionEffectBattleManager extends BattleManager:
 func test_refresh_changes_reactive_intent_without_ticking_cooldowns() -> void:
 	var fixture := await _fixture()
 	fixture.enemy.initialize_ai(77)
-	(fixture.echo.combatant as HeroCombatant).current_focus = 0
+	(fixture.echo as HeroCombatant).current_focus = 0
 	fixture.manager._update_all_enemy_intents()
 	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"basic")
-	(fixture.echo.combatant as HeroCombatant).current_focus = 6
+	(fixture.echo as HeroCombatant).current_focus = 6
 	fixture.manager._update_all_enemy_intents()
 	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"focus_attack")
 	assert_eq(fixture.enemy.ai_state.completed_turns, 0)
@@ -118,10 +118,10 @@ func test_identical_planning_and_presentation_refresh_do_not_flash_again() -> vo
 	var fixture := await _fixture()
 	fixture.enemy.initialize_ai(77)
 	fixture.manager._update_all_enemy_intents()
-	assert_eq(fixture.enemy.intent_flash_count, 1)
+	assert_eq(fixture.enemy_card.intent_flash_count, 1)
 	fixture.manager._update_all_enemy_intents()
-	fixture.enemy.refresh_intent_presentation()
-	assert_eq(fixture.enemy.intent_flash_count, 1)
+	fixture.enemy_card.refresh_intent_presentation()
+	assert_eq(fixture.enemy_card.intent_flash_count, 1)
 	_free_fixture(fixture)
 
 
@@ -152,12 +152,12 @@ func test_clearing_spent_intent_refreshes_without_flashing_again() -> void:
 	var fixture := await _fixture()
 	fixture.enemy.initialize_ai(77)
 	fixture.manager._update_all_enemy_intents()
-	assert_eq(fixture.enemy.intent_flash_count, 1)
+	assert_eq(fixture.enemy_card.intent_flash_count, 1)
 
 	fixture.enemy.clear_intent()
 
 	assert_null(fixture.enemy.intended_action)
-	assert_eq(fixture.enemy.intent_flash_count, 1)
+	assert_eq(fixture.enemy_card.intent_flash_count, 1)
 	_free_fixture(fixture)
 
 
@@ -167,8 +167,8 @@ func test_focus_signal_preserves_locked_intent() -> void:
 	fixture.enemy.initialize_ai(77)
 	fixture.manager._update_all_enemy_intents()
 	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"basic")
-	(fixture.echo.combatant as HeroCombatant).current_focus = 6
-	fixture.echo.focus_updated.emit()
+	(fixture.echo as HeroCombatant).current_focus = 6
+	fixture.echo.focus_changed.emit(fixture.echo)
 	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"basic")
 	assert_eq(fixture.enemy.intent_decision_count, 1)
 	_free_fixture(fixture)
@@ -185,7 +185,7 @@ func test_hp_signal_preserves_locked_intent() -> void:
 	fixture.manager._update_all_enemy_intents()
 	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"basic")
 	fixture.enemy.current_hp = 40
-	fixture.enemy.hp_changed.emit(40, 100)
+	fixture.enemy.hp_changed.emit(fixture.enemy, 40, 100)
 	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"basic")
 	assert_eq(fixture.enemy.intent_decision_count, 1)
 	_free_fixture(fixture)
@@ -202,7 +202,7 @@ func test_guard_signal_preserves_locked_intent() -> void:
 	fixture.manager._update_all_enemy_intents()
 	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"basic")
 	fixture.echo.current_guard = 8
-	fixture.echo.armor_changed.emit(8)
+	fixture.echo.guard_changed.emit(fixture.echo, 8)
 	assert_eq(fixture.enemy.intended_decision.ability.ability_id, &"basic")
 	assert_eq(fixture.enemy.intent_decision_count, 1)
 	_free_fixture(fixture)
@@ -238,7 +238,7 @@ func test_decoy_retargets_locked_action_without_replanning() -> void:
 	assert_eq(fixture.enemy.intended_action, locked_action)
 	assert_ne(fixture.enemy.intended_targets, [original_target])
 	assert_eq(fixture.enemy.intent_decision_count, 1)
-	assert_eq(fixture.enemy.intent_flash_count, 2)
+	assert_eq(fixture.enemy_card.intent_flash_count, 2)
 	_free_fixture(fixture)
 
 
@@ -249,9 +249,9 @@ func test_taunt_redirects_locked_action_without_replanning() -> void:
 	fixture.manager._update_all_enemy_intents()
 	var locked_action: Action = fixture.enemy.intended_action
 	var original_target := fixture.enemy.intended_targets[0] as HeroCombatant
-	var taunter := fixture.sands.combatant as HeroCombatant \
-		if original_target == fixture.echo.combatant \
-		else fixture.echo.combatant as HeroCombatant
+	var taunter := fixture.sands as HeroCombatant \
+		if original_target == fixture.echo \
+		else fixture.echo as HeroCombatant
 	var draw_fire := Condition.new()
 	draw_fire.condition_name = "Draw Fire"
 	draw_fire.is_taunting = true
@@ -259,7 +259,7 @@ func test_taunt_redirects_locked_action_without_replanning() -> void:
 	assert_eq(fixture.enemy.intended_action, locked_action)
 	assert_eq(fixture.enemy.intended_targets, [taunter])
 	assert_eq(fixture.enemy.intent_decision_count, 1)
-	assert_eq(fixture.enemy.intent_flash_count, 2)
+	assert_eq(fixture.enemy_card.intent_flash_count, 2)
 	_free_fixture(fixture)
 
 
@@ -277,7 +277,7 @@ func test_ordinary_condition_does_not_change_locked_targets() -> void:
 	assert_eq(fixture.enemy.intended_action, locked_action)
 	assert_eq(fixture.enemy.intended_targets, locked_targets)
 	assert_eq(fixture.enemy.intent_decision_count, 1)
-	assert_eq(fixture.enemy.intent_flash_count, 1)
+	assert_eq(fixture.enemy_card.intent_flash_count, 1)
 	_free_fixture(fixture)
 
 
@@ -291,13 +291,13 @@ func test_debilitate_refreshes_locked_intent_presentation_without_replanning() -
 		"res://data/heroes/asher/actions/debilitate.tres"
 	) as Action
 	var apply_effect := debilitate_action.effects[0] as Effect_ApplyCondition
-	var enemy := fixture.enemy.combatant as EnemyCombatant
+	var enemy := fixture.enemy as EnemyCombatant
 	enemy.active_conditions.append(apply_effect.condition.duplicate(true))
 	enemy.conditions_changed.emit(enemy)
 	assert_eq(fixture.enemy.intended_action, locked_action)
 	assert_eq(fixture.enemy.intent_decision_count, 1)
-	assert_eq(fixture.enemy.intent_presentation_refresh_count, 1)
-	assert_eq(fixture.enemy.intent_flash_count, 1)
+	assert_eq(fixture.enemy_card.intent_presentation_refresh_count, 1)
+	assert_eq(fixture.enemy_card.intent_flash_count, 1)
 	_free_fixture(fixture)
 
 
@@ -319,7 +319,7 @@ func test_final_startup_timing_refreshes_intents_after_head_starts() -> void:
 func test_completed_turn_sets_only_used_cooldown_and_plans_next_intent() -> void:
 	var fixture := await _fixture()
 	fixture.enemy.initialize_ai(77)
-	(fixture.echo.combatant as HeroCombatant).current_focus = 6
+	(fixture.echo as HeroCombatant).current_focus = 6
 	fixture.manager._update_all_enemy_intents()
 	var used_id: StringName = fixture.enemy.intended_decision.ability.ability_id
 	fixture.enemy.complete_ai_turn(used_id)
@@ -335,7 +335,7 @@ func test_breached_enemy_intends_recovery_and_ticks_a_recovery_turn() -> void:
 	fixture.enemy.initialize_ai(77)
 	fixture.manager._update_all_enemy_intents()
 	fixture.enemy.is_breached = true
-	await fixture.manager._on_combatant_breached(fixture.enemy.combatant)
+	await fixture.manager._on_combatant_breached(fixture.enemy)
 	assert_true(fixture.enemy.intended_decision.is_recovery)
 	assert_eq(fixture.enemy.intent_decision_count, 2)
 	fixture.enemy.complete_ai_turn()
@@ -346,14 +346,14 @@ func test_breached_enemy_intends_recovery_and_ticks_a_recovery_turn() -> void:
 func test_execution_retargets_cached_action_when_target_is_invalid() -> void:
 	var fixture := await _fixture()
 	fixture.enemy.initialize_ai(77)
-	(fixture.echo.combatant as HeroCombatant).current_focus = 6
+	(fixture.echo as HeroCombatant).current_focus = 6
 	fixture.manager._update_all_enemy_intents()
 	var stale_action: Action = fixture.enemy.intended_action
 	fixture.echo.is_defeated = true
-	await fixture.manager.execute_enemy_turn(fixture.enemy.combatant)
+	await fixture.manager.execute_enemy_turn(fixture.enemy)
 	assert_eq(fixture.enemy.intent_decision_count, 1)
 	assert_eq(fixture.manager.executed_action, stale_action)
-	assert_eq(fixture.manager.executed_targets, [fixture.sands.combatant])
+	assert_eq(fixture.manager.executed_targets, [fixture.sands])
 	assert_eq(fixture.enemy.ai_state.completed_turns, 1)
 	assert_eq(fixture.enemy.ai_state.remaining(&"focus_attack"), 3)
 	_free_fixture(fixture)
@@ -362,11 +362,11 @@ func test_execution_retargets_cached_action_when_target_is_invalid() -> void:
 func test_execution_keeps_cached_action_when_trigger_no_longer_matches() -> void:
 	var fixture := await _fixture()
 	fixture.enemy.initialize_ai(77)
-	(fixture.echo.combatant as HeroCombatant).current_focus = 6
+	(fixture.echo as HeroCombatant).current_focus = 6
 	fixture.manager._update_all_enemy_intents()
 	var stale_action: Action = fixture.enemy.intended_action
-	(fixture.echo.combatant as HeroCombatant).current_focus = 0
-	await fixture.manager.execute_enemy_turn(fixture.enemy.combatant)
+	(fixture.echo as HeroCombatant).current_focus = 0
+	await fixture.manager.execute_enemy_turn(fixture.enemy)
 	assert_eq(fixture.enemy.intent_decision_count, 1)
 	assert_eq(fixture.manager.executed_action, stale_action)
 	assert_eq(fixture.enemy.ai_state.remaining(&"focus_attack"), 3)
@@ -376,10 +376,10 @@ func test_execution_keeps_cached_action_when_trigger_no_longer_matches() -> void
 func test_execution_skips_locked_ability_that_became_unavailable() -> void:
 	var fixture := await _fixture()
 	fixture.enemy.initialize_ai(77)
-	(fixture.echo.combatant as HeroCombatant).current_focus = 6
+	(fixture.echo as HeroCombatant).current_focus = 6
 	fixture.manager._update_all_enemy_intents()
 	fixture.enemy.complete_ai_turn(&"focus_attack")
-	await fixture.manager.execute_enemy_turn(fixture.enemy.combatant)
+	await fixture.manager.execute_enemy_turn(fixture.enemy)
 	assert_eq(fixture.enemy.intent_decision_count, 1)
 	assert_null(fixture.manager.executed_action)
 	assert_null(fixture.enemy.intended_action)
@@ -391,11 +391,11 @@ func test_execution_skips_locked_ability_that_became_unavailable() -> void:
 func test_execution_fails_safely_when_locked_action_has_no_legal_target() -> void:
 	var fixture := await _fixture()
 	fixture.enemy.initialize_ai(77)
-	(fixture.echo.combatant as HeroCombatant).current_focus = 6
+	(fixture.echo as HeroCombatant).current_focus = 6
 	fixture.manager._update_all_enemy_intents()
 	fixture.sands.is_defeated = true
 	fixture.echo.is_defeated = true
-	await fixture.manager.execute_enemy_turn(fixture.enemy.combatant)
+	await fixture.manager.execute_enemy_turn(fixture.enemy)
 	assert_eq(fixture.enemy.intent_decision_count, 1)
 	assert_null(fixture.manager.executed_action)
 	assert_eq(fixture.enemy.ai_state.completed_turns, 1)
@@ -407,8 +407,8 @@ func test_execution_fails_safely_when_locked_action_has_no_legal_target() -> voi
 func test_real_enemy_damage_turn_reduces_bound_hero_hp() -> void:
 	var fixture := await _production_execution_fixture()
 	var manager := fixture.manager as BattleManager
-	var enemy := (fixture.enemy as EnemyCard).combatant as EnemyCombatant
-	var hero := (fixture.hero as HeroCard).combatant as HeroCombatant
+	var enemy := fixture.enemy as EnemyCombatant
+	var hero := fixture.hero as HeroCombatant
 	var starting_hp := hero.current_hp
 
 	enemy.initialize_ai(77)
@@ -423,7 +423,7 @@ func test_real_enemy_damage_turn_reduces_bound_hero_hp() -> void:
 func test_real_enemy_recovery_intent_is_executable() -> void:
 	var fixture := await _production_execution_fixture()
 	var manager := fixture.manager as BattleManager
-	var enemy := (fixture.enemy as EnemyCard).combatant as EnemyCombatant
+	var enemy := fixture.enemy as EnemyCombatant
 	enemy.is_breached = true
 	enemy.current_guard = 0
 
@@ -481,9 +481,12 @@ func _fixture() -> Dictionary:
 	enemy_model.presentation_event.connect(enemy._on_enemy_presentation_event)
 	return {
 		"manager": manager,
-		"sands": sands,
-		"echo": echo,
-		"enemy": enemy,
+		"sands": _sands_model,
+		"echo": _echo_model,
+		"enemy": enemy_model,
+		"sands_card": sands,
+		"echo_card": echo,
+		"enemy_card": enemy,
 	}
 
 
@@ -595,8 +598,10 @@ func _production_execution_fixture() -> Dictionary:
 	manager.encounter_seed = 77
 	return {
 		"manager": manager,
-		"hero": hero,
-		"enemy": enemy,
+		"hero": hero_model,
+		"enemy": enemy_model,
+		"hero_card": hero,
+		"enemy_card": enemy,
 	}
 
 

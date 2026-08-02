@@ -7,6 +7,27 @@ All checks below are intentionally unchecked until performed interactively in co
 - [ ] Launch the project with the isolated test `HOME`, enter a representative combat with multiple heroes and duplicate enemy types, and complete the named `1280x800` and `1920x1080` paths below.
 - [ ] Exercise mouse, keyboard, controller, and direct touch input where each check names them; a simulated input family does not count as a physical-device pass.
 
+## Battle combatant foundation regression
+
+Automated evidence recorded on 2026-08-02 with Godot 4.6.3 and an isolated test `HOME`:
+
+- Headless project import and parse exited successfully.
+- Damage preview passed 39/39 tests with 173 assertions; direct Hero and Enemy combatant coverage each passed 4/4 tests with 17 and 21 assertions, respectively.
+- Card/combatant binding passed 11/11 tests with 56 assertions; the controller playable loop passed 2/2 tests with 104 assertions; responsive battle layout passed 2/2 tests with 12 assertions.
+- The complete dirty-workspace run passed 924/925 tests and 14537/14538 assertions. Its sole failure is the intentionally preserved, unrelated `src/dev/endgame_battle_lab.tscn` HP-multiplier edit; a clean committed-state result is recorded in the Task 8 report.
+
+Automated coverage does not establish the following visual or physical-input behavior. Leave every item unchecked until it is performed interactively against the recorded commit.
+
+### Controller-only current 2D presentation
+
+- [ ] Complete a representative battle using only a controller. Use face buttons to choose skills; traverse, confirm, and cancel targets; inspect intent and conditions; and verify damage, Guard, Breach, defeat, revival, and CTB progression remain correct and readable.
+- [ ] Confirm hero and enemy card focus, target availability, selection, acting state, and action affordability remain visually distinct through the complete controller loop.
+
+### Mouse current 2D presentation
+
+- [ ] Complete a representative battle with mouse input. Hover and click through every valid target, inspect intent and conditions, cancel and retarget actions, and verify damage, Guard, Breach, defeat, revival, and CTB progression remain correct and readable.
+- [ ] Confirm hover transitions and target presentation do not leave stale highlights, stale intent, or mismatched card state after the pointer moves between combatants and action controls.
+
 ## Damage architecture acceptance
 
 Record the viewport, input method, tested commit, and concise observed values for each check.

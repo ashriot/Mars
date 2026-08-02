@@ -12,37 +12,7 @@ signal enemy_clicked(enemy_card)
 @onready var nrg_def_gauge: TextureProgressBar = $Panel/NrgDef
 @onready var nrg_def_value: Label = $Panel/NrgDef/Value
 
-# --- Temporary model-backed compatibility properties ---
-var enemy_data: EnemyData:
-	get: return (combatant as EnemyCombatant).enemy_data
-var ai_state: EnemyAIRuntimeState:
-	get: return (combatant as EnemyCombatant).ai_state
-var intended_decision: EnemyDecision:
-	get: return (combatant as EnemyCombatant).intended_decision
-var encounter_seed: int:
-	get: return (combatant as EnemyCombatant).encounter_seed
-var intended_action: Action:
-	get: return (combatant as EnemyCombatant).intended_action
-var intended_targets: Array[BattleCombatant]:
-	get: return (combatant as EnemyCombatant).intended_targets
 var intent_flash_tween: Tween
-
-
-func setup(
-	data: EnemyData,
-	fight_level: int,
-	is_elite: bool,
-	is_boss: bool,
-	hp_multiplier: float = 1.0,
-):
-	_ensure_battle_manager()
-	var model := EnemyCombatant.new()
-	add_child(model)
-	model.setup(
-		data, fight_level, is_elite, is_boss, hp_multiplier, battle_manager,
-	)
-	await setup_from_combatant(model)
-
 
 func setup_from_combatant(model: EnemyCombatant) -> void:
 	_ensure_battle_manager()
@@ -54,7 +24,7 @@ func setup_from_combatant(model: EnemyCombatant) -> void:
 
 func _render_enemy_state() -> void:
 	var model := combatant as EnemyCombatant
-	$Panel/Info/Text.text = "Rk. " + str(enemy_data.level)
+	$Panel/Info/Text.text = "Rk. " + str(model.enemy_data.level)
 	if model.is_elite:
 		$Panel/Info/Text.text += " ELITE"
 		name_label.modulate = Color.ORANGE_RED
@@ -62,9 +32,9 @@ func _render_enemy_state() -> void:
 		$Panel/Info/Text.text += " BOSS"
 		name_label.modulate = Color.MAGENTA
 	update_defenses()
-	name_label.text = enemy_data.stats.actor_name
-	if enemy_data.portrait:
-		portrait_rect.texture = enemy_data.portrait
+	name_label.text = model.enemy_data.stats.actor_name
+	if model.enemy_data.portrait:
+		portrait_rect.texture = model.enemy_data.portrait
 
 
 func _on_enemy_presentation_event(
@@ -78,38 +48,23 @@ func _on_enemy_presentation_event(
 	if bool(payload.get("changed", false)):
 		flash_intent()
 
-func initialize_ai(seed_value: int) -> void:
-	(combatant as EnemyCombatant).initialize_ai(seed_value)
-
-
-func decide_intent(context: EnemyAIContext) -> void:
-	(combatant as EnemyCombatant).decide_intent(context)
-
-
-func complete_ai_turn(used_ability_id: StringName = &"") -> void:
-	(combatant as EnemyCombatant).complete_ai_turn(used_ability_id)
-
-
-func revalidate_intent_targets(context: EnemyAIContext) -> bool:
-	return (combatant as EnemyCombatant).revalidate_intent_targets(context)
-
-
 func refresh_intent_presentation() -> void:
 	_update_intent_ui()
 
 
 func _update_intent_ui():
-	if not intended_action:
+	var model := combatant as EnemyCombatant
+	if not model.intended_action:
 		intent_text.text = ""
 		return
 
-	if intended_action.effects.is_empty():
+	if model.intended_action.effects.is_empty():
 		return
 
-	var first_effect = intended_action.effects[0]
+	var first_effect = model.intended_action.effects[0]
 	var enemy_model := combatant as EnemyCombatant
 	var presentation_targets: Array[BattleCombatant] = []
-	presentation_targets.assign(intended_targets)
+	presentation_targets.assign(model.intended_targets)
 
 	if first_effect is Effect_Damage:
 		var damage_effect: Effect_Damage = first_effect
@@ -118,7 +73,7 @@ func _update_intent_ui():
 			damage_effect,
 			enemy_model,
 			presentation_targets,
-			intended_action,
+			model.intended_action,
 			false,
 			battle_manager,
 		)
@@ -127,7 +82,7 @@ func _update_intent_ui():
 			damage_bindings = damage_effect._get_sequence_bindings(sequence, 28)
 		else:
 			var context := EffectPresentationContext.new(
-				enemy_model, null, intended_action,
+				enemy_model, null, model.intended_action,
 			)
 			damage_bindings = damage_effect.get_presentation(context).bindings
 			damage_bindings.damage_type = damage_effect._get_damage_type_icon(
@@ -139,63 +94,49 @@ func _update_intent_ui():
 			damage_bindings.hit_count_text,
 			damage_bindings.damage_type,
 		]
-		if intended_action.target_type == Action.TargetType.RANDOM_ENEMY \
+		if model.intended_action.target_type == Action.TargetType.RANDOM_ENEMY \
 			and resolved_hit_count > 1 \
 			and damage_bindings.hit_count_text.is_empty():
 			final_text += " (%d hits)" % resolved_hit_count
-		if intended_action.effects.size() > 1:
+		if model.intended_action.effects.size() > 1:
 			final_text += " *"
 
-		if intended_targets:
-			if intended_targets.size() > 1:
-				if intended_action.target_type == Action.TargetType.RANDOM_ENEMY:
+		if model.intended_targets:
+			if model.intended_targets.size() > 1:
+				if model.intended_action.target_type == Action.TargetType.RANDOM_ENEMY:
 					final_text += " RANDOM"
 				else:
 					final_text += " EVERYONE"
 			else:
-				var tar := intended_targets[0] as HeroCombatant
+				var tar := model.intended_targets[0] as HeroCombatant
 				var col := tar.get_current_role().color.to_html()
-				final_text += " [color=" + col + "]" + intended_targets[0].actor_name
+				final_text += " [color=" + col + "]" + model.intended_targets[0].actor_name
 
 		intent_text.text = final_text
 
 	else:
-		var final_text = intended_action.action_name
-		if intended_targets.size() > 1:
+		var final_text = model.intended_action.action_name
+		if model.intended_targets.size() > 1:
 			final_text += " EVERYONE"
-		elif intended_targets.size() == 1:
-			if intended_targets[0].actor_name != actor_name:
-				final_text += " " + intended_targets[0].actor_name
+		elif model.intended_targets.size() == 1:
+			if model.intended_targets[0].actor_name != model.actor_name:
+				final_text += " " + model.intended_targets[0].actor_name
 
 		intent_text.text = final_text
 	var tooltip_target: BattleCombatant = presentation_targets[0] \
-		if intended_targets.size() == 1 else null
-	intent_tooltip.bbcode_text = intended_action.get_rich_description(
+		if model.intended_targets.size() == 1 else null
+	intent_tooltip.bbcode_text = model.intended_action.get_rich_description(
 		combatant, tooltip_target, presentation_targets, battle_manager,
 	)
 
-func clear_intent() -> void:
-	(combatant as EnemyCombatant).clear_intent()
-
-func breach():
-	await super.breach()
-	update_defenses()
-
-func recover_breach():
-	await super.recover_breach()
-	update_defenses()
-
 func update_defenses():
-	var kin_def = enemy_data.stats.kinetic_defense
-	var nrg_def = enemy_data.stats.energy_defense
+	var model := combatant as EnemyCombatant
+	var kin_def = model.enemy_data.stats.kinetic_defense
+	var nrg_def = model.enemy_data.stats.energy_defense
 	kin_def_value.text = str(kin_def) + "%"
 	nrg_def_value.text = str(nrg_def) + "%"
 	kin_def_gauge.value = kin_def
 	nrg_def_gauge.value = nrg_def
-
-func defeated():
-	super.defeated()
-
 
 func _show_defeated_visual(immediate: bool = false) -> void:
 	if immediate:
@@ -232,6 +173,6 @@ func flash_intent(duration: float = 0.3):
 
 func _on_gui_input(event: InputEvent):
 	if event.is_action_pressed("ui_accept"):
-		print("Clicked on: ", actor_name)
+		print("Clicked on: ", _require_combatant().actor_name)
 		enemy_clicked.emit(self)
 		get_viewport().set_input_as_handled()

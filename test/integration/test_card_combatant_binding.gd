@@ -9,25 +9,6 @@ class TestBattleManager extends BattleManager:
 		pass
 
 
-func _gdscript_paths(root: String) -> PackedStringArray:
-	var paths := PackedStringArray()
-	var directory := DirAccess.open(root)
-	assert_not_null(directory, "source directory exists: %s" % root)
-	if directory == null:
-		return paths
-	directory.list_dir_begin()
-	var entry := directory.get_next()
-	while not entry.is_empty():
-		var path := root.path_join(entry)
-		if directory.current_is_dir():
-			paths.append_array(_gdscript_paths(path))
-		elif entry.ends_with(".gd"):
-			paths.append(path)
-		entry = directory.get_next()
-	directory.list_dir_end()
-	return paths
-
-
 func _combatant(
 	max_hp: int = 100,
 	faction: BattleCombatant.Faction = BattleCombatant.Faction.HERO,
@@ -52,32 +33,28 @@ func _damage_result(amount: int) -> DamageResult:
 	)
 
 
-func test_preview_only_card_binding_is_reserved_for_damage_preview_snapshots() -> void:
-	assert_false(
-		FileAccess.file_exists("res://test/helpers/" + "card_test_factory.gd"),
-		"ordinary test fixtures must not default cards into preview-only binding",
+func test_cards_expose_only_bound_identity_and_presentation_behavior() -> void:
+	var card := HeroCardScene.instantiate() as HeroCard
+	add_child_autofree(card)
+	var properties := card.get_property_list().map(
+		func(property: Dictionary): return property.name,
 	)
-	var preview_binding := RegEx.new()
-	assert_eq(
-		preview_binding.compile("bind_combatant\\([^\\)]*,[^\\)]*\\)"),
-		OK,
-	)
-	var allowed_paths := {
-		"res://src/battle/actor_card.gd": true,
-		"res://src/battle/damage/damage_preview.gd": true,
-		"res://test/unit/test_damage_preview.gd": true,
-	}
-	var unexpected_paths := PackedStringArray()
-	for root in ["res://src", "res://test"]:
-		for path in _gdscript_paths(root):
-			var source := FileAccess.get_file_as_string(path)
-			if preview_binding.search(source) != null and not allowed_paths.has(path):
-				unexpected_paths.append(path)
-	assert_eq(
-		unexpected_paths,
-		PackedStringArray(),
-		"preview-only card bindings are limited to detached DamagePreview snapshots",
-	)
+	for state_name: StringName in [
+		&"actor_name", &"current_stats", &"current_hp", &"current_guard",
+		&"current_ct", &"ct_speed_scale", &"battle_priority",
+		&"is_valid_target", &"is_breached", &"is_in_danger",
+		&"is_defeated", &"active_conditions", &"active_traits",
+		&"hero_data", &"loaded_roles", &"current_role_index",
+		&"current_focus", &"shifted_this_turn",
+	]:
+		assert_does_not_have(properties, state_name)
+	for method_name: StringName in [
+		&"take_one_hit", &"modify_guard", &"add_condition", &"shift_role",
+		&"modify_focus", &"get_current_role", &"get_scaled_focus_cost",
+	]:
+		assert_false(card.has_method(method_name), str(method_name))
+	assert_true(card.has_method(&"bind_combatant"))
+	assert_true(card.has_method(&"set_target_presentation"))
 
 
 func test_card_mirrors_combatant_without_owning_duplicate_hp() -> void:
@@ -92,9 +69,7 @@ func test_card_mirrors_combatant_without_owning_duplicate_hp() -> void:
 
 	assert_same(card.combatant, combatant)
 	assert_eq(card.hp_bar_actual.value, 100.0)
-	assert_eq(card.current_hp, 40)
-	card.current_hp = 55
-	assert_eq(combatant.current_hp, 55)
+	assert_eq(combatant.current_hp, 40)
 
 
 func test_stat_modifier_dictionaries_belong_only_to_hero_combatant() -> void:
@@ -114,20 +89,21 @@ func test_stat_modifier_dictionaries_belong_only_to_hero_combatant() -> void:
 	assert_has(model_properties, &"stat_scalars")
 
 
-func test_bound_hero_forwards_one_model_focus_change_once() -> void:
+func test_bound_hero_renders_one_model_focus_change() -> void:
 	var card := HeroCardScene.instantiate() as HeroCard
 	add_child_autofree(card)
 	var model := _combatant() as HeroCombatant
 	model.hero_data = HeroData.new()
 	model.hero_data.stats = model.current_stats
 	model.current_focus = 5
-	watch_signals(card)
-
 	await card.setup_from_combatant(model)
 	await model.modify_focus(-2, {"paid_focus_cost": 2})
+	await get_tree().create_timer(0.25).timeout
 
-	assert_eq(card.current_focus, 3)
-	assert_signal_emit_count(card, "focus_updated", 1)
+	assert_eq(model.current_focus, 3)
+	assert_eq(card.focus_bar.get_children().filter(
+		func(pip: Control): return pip.visible
+	).size(), 3)
 
 
 func test_card_adapter_reports_live_screen_geometry() -> void:
@@ -195,15 +171,11 @@ func test_binding_already_breached_combatant_renders_steady_breach_state() -> vo
 	add_child_autofree(card)
 	var combatant := _combatant()
 	combatant.is_breached = true
-	var breach_signal_count := 0
-	card.actor_breached.connect(func(_actor): breach_signal_count += 1)
-
 	card.bind_combatant(combatant)
 
 	assert_eq(card.breached_label.text, "BREACHED")
 	assert_eq(card.guard_bar.modulate.a, 0.25)
 	assert_null(card.shake_tween)
-	assert_eq(breach_signal_count, 0)
 
 
 func test_binding_already_defeated_hero_renders_final_state_without_signal() -> void:
@@ -212,15 +184,11 @@ func test_binding_already_defeated_hero_renders_final_state_without_signal() -> 
 	var combatant := _combatant()
 	combatant.is_breached = true
 	combatant.is_defeated = true
-	var defeat_signal_count := 0
-	card.actor_defeated.connect(func(_actor): defeat_signal_count += 1)
-
 	card.bind_combatant(combatant)
 
 	assert_eq(card.self_modulate.a, 0.25)
 	assert_null(card.pulse_tween)
 	assert_false(card.breached_label.visible)
-	assert_eq(defeat_signal_count, 0)
 
 
 func test_binding_defeated_combatant_with_retained_danger_skips_transients() -> void:
@@ -229,15 +197,11 @@ func test_binding_defeated_combatant_with_retained_danger_skips_transients() -> 
 	var combatant := _combatant()
 	combatant.is_in_danger = true
 	combatant.is_defeated = true
-	var defeat_signal_count := 0
-	card.actor_defeated.connect(func(_actor): defeat_signal_count += 1)
-
 	card.bind_combatant(combatant)
 
 	assert_eq(card.self_modulate.a, 0.25)
 	assert_null(card.pulse_tween)
 	assert_false(card.breached_label.visible)
-	assert_eq(defeat_signal_count, 0)
 
 
 func test_binding_already_defeated_enemy_renders_final_state_immediately() -> void:

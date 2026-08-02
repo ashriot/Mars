@@ -43,7 +43,7 @@ func test_selected_action_shows_final_effective_ct() -> void:
 	var scene := BATTLE_SCENE.instantiate() as BattleScene
 	var manager := scene.get_node("BattleManager") as BattleManager
 	var actor := CardSceneTestFixture.hero(self)
-	actor.current_stats = ActorStats.new()
+	actor.combatant.current_stats = ActorStats.new()
 	var role := RoleData.new()
 	role.source_definition = RoleDefinition.new()
 	role.source_definition.color = Color.CORNFLOWER_BLUE

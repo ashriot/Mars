@@ -388,11 +388,14 @@ func spawn_encounter(
 		hero.battle_priority = actor_list.size()
 		actor_list.append(hero)
 		_connect_combatant_signals(hero)
-		var hero_card := hero_card_scene.instantiate() as HeroCard
-		hero_area.add_child(hero_card)
-		hero_card.setup_from_combatant(hero)
-		register_presentation(hero, hero_card.presentation)
-		hero_card.spawn_particles.connect(_on_spawn_particles)
+		var hero_view := hero_card_scene.instantiate()
+		hero_area.add_child(hero_view)
+		hero_view.call(&"setup_from_combatant", hero)
+		var hero_presentation := hero_view.get_node(
+			"CombatantPresentation",
+		) as CombatantPresentation
+		register_presentation(hero, hero_presentation)
+		hero_view.connect(&"spawn_particles", _on_spawn_particles)
 		print(hero.actor_name, "'s CT: ", hero.current_ct)
 
 	var spawned_enemies: Array[EnemyCombatant] = []
@@ -434,11 +437,14 @@ func spawn_encounter(
 				enemy.actor_name = new_name
 				enemy.current_stats.actor_name = new_name
 				current_indices[base_name] = idx + 1
-		var enemy_card := enemy_card_scene.instantiate() as EnemyCard
-		enemy_area.add_child(enemy_card)
-		enemy_card.setup_from_combatant(enemy)
-		register_presentation(enemy, enemy_card.presentation)
-		enemy_card.spawn_particles.connect(_on_spawn_particles)
+		var enemy_view := enemy_card_scene.instantiate()
+		enemy_area.add_child(enemy_view)
+		enemy_view.call(&"setup_from_combatant", enemy)
+		var enemy_presentation := enemy_view.get_node(
+			"CombatantPresentation",
+		) as CombatantPresentation
+		register_presentation(enemy, enemy_presentation)
+		enemy_view.connect(&"spawn_particles", _on_spawn_particles)
 		enemy.initialize_ai(encounter_seed)
 		print(enemy.actor_name, "'s CT: ", enemy.current_ct)
 

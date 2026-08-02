@@ -123,15 +123,16 @@ func test_focus_refund_cancels_in_flight_pip_loss_animation() -> void:
 	var coordinate := load(
 		"res://data/heroes/asher/conditions/coordinate.tres"
 	) as Condition
-	hero.active_conditions = [coordinate.duplicate(true)]
+	var model := hero.combatant as HeroCombatant
+	model.active_conditions = [coordinate.duplicate(true)]
 
-	await hero.modify_focus(-5, {"paid_focus_cost": 5})
+	await model.modify_focus(-5, {"paid_focus_cost": 5})
 
 	await get_tree().create_timer(0.25).timeout
 
-	assert_eq(hero.current_focus, 7)
+	assert_eq(model.current_focus, 7)
 	assert_eq(_visible_focus_pips(hero), 7)
-	assert_false(hero.has_condition("Coordinate"))
+	assert_false(model.has_condition("Coordinate"))
 
 
 func test_acting_outline_matches_queue_gold_and_stays_independent_of_targeting() -> void:
@@ -173,7 +174,9 @@ func test_acting_outline_starts_before_turn_start_wait_completes() -> void:
 	card.battle_manager = manager
 	card.combatant.battle_manager = manager
 
-	card.on_turn_started()
+	card.presentation.set_acting(true)
+	card.combatant.call_deferred(&"on_turn_started")
+	await get_tree().process_frame
 
 	assert_true(card.highlight_panel.visible)
 	manager.wait_released.emit()
@@ -187,17 +190,19 @@ func test_acting_outline_ends_after_turn_end_triggers_complete() -> void:
 	var manager := LifecycleBattleManager.new()
 	card.battle_manager = manager
 	card.combatant.battle_manager = manager
-	card.active_conditions = [
+	card.combatant.active_conditions = [
 		_condition_for(Trigger.TriggerType.ON_TURN_END, card.combatant),
 	]
-	card.highlight(true)
+	card.presentation.set_acting(true)
 
-	card.on_turn_ended()
+	card.combatant.call_deferred(&"on_turn_ended")
+	await get_tree().process_frame
 
 	assert_true(manager.effect_started)
 	assert_true(card.highlight_panel.visible)
 	manager.effect_released.emit()
 	await get_tree().process_frame
+	await card.presentation.set_acting(false)
 	assert_false(card.highlight_panel.visible)
 	manager.free()
 

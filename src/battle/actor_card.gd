@@ -7,13 +7,7 @@ enum TargetPresentation { NORMAL, AVAILABLE, SELECTED }
 @export var buff_scene: PackedScene
 @export var debuff_scene: PackedScene
 
-# --- Signals (Shared by both) ---
-signal actor_breached(actor)
-signal actor_defeated(actor)
-signal actor_revived(actor)
-signal hp_changed(new_hp, max_hp)
-signal armor_changed(new_pips)
-signal actor_conditions_changed
+# --- Presentation/input signals ---
 signal spawn_particles(pos, type)
 signal target_hovered(actor: ActorCard)
 signal target_unhovered(actor: ActorCard)
@@ -48,47 +42,6 @@ var _target_pulse_tween: Tween
 var _combatant: BattleCombatant
 var combatant: BattleCombatant:
 	get: return _combatant
-
-# --- Data (Shared by both) ---
-var actor_name: String:
-	get: return _require_combatant().actor_name
-	set(value): _require_combatant().actor_name = value
-var current_stats: ActorStats:
-	get: return _require_combatant().current_stats
-	set(value): _require_combatant().current_stats = value
-var current_hp: int:
-	get: return _require_combatant().current_hp
-	set(value): _require_combatant().current_hp = value
-var current_guard: int:
-	get: return _require_combatant().current_guard
-	set(value): _require_combatant().current_guard = value
-var current_ct: int:
-	get: return _require_combatant().current_ct
-	set(value): _require_combatant().current_ct = value
-var ct_speed_scale: float:
-	get: return _require_combatant().ct_speed_scale
-	set(value): _require_combatant().ct_speed_scale = value
-var battle_priority: int:
-	get: return _require_combatant().battle_priority
-	set(value): _require_combatant().battle_priority = value
-var is_valid_target: bool:
-	get: return _require_combatant().is_valid_target
-	set(value): _require_combatant().is_valid_target = value
-var is_breached: bool:
-	get: return _require_combatant().is_breached
-	set(value): _require_combatant().is_breached = value
-var is_in_danger: bool:
-	get: return _require_combatant().is_in_danger
-	set(value): _require_combatant().is_in_danger = value
-var is_defeated: bool:
-	get: return _require_combatant().is_defeated
-	set(value): _require_combatant().is_defeated = value
-var active_conditions: Array[Condition]:
-	get: return _require_combatant().active_conditions
-	set(value): _require_combatant().active_conditions = value
-var active_traits: Array[Trait]:
-	get: return _require_combatant().active_traits
-	set(value): _require_combatant().active_traits = value
 
 # --- Animation Tweens ---
 var shake_tween: Tween
@@ -139,10 +92,10 @@ func _ensure_battle_manager() -> void:
 
 
 func _setup_card_visuals() -> void:
-	_require_combatant()
-	rich_tooltip.bbcode_text = current_stats._to_string()
-	hp_bar_ghost.max_value = current_stats.max_hp
-	hp_bar_actual.max_value = current_stats.max_hp
+	var model := _require_combatant()
+	rich_tooltip.bbcode_text = model.current_stats._to_string()
+	hp_bar_ghost.max_value = model.current_stats.max_hp
+	hp_bar_actual.max_value = model.current_stats.max_hp
 	panel_home_position = panel.position
 	breached_label.hide()
 	highlight_panel.hide()
@@ -163,20 +116,21 @@ func _setup_card_visuals() -> void:
 func _render_full_state() -> void:
 	if not is_node_ready():
 		return
-	rich_tooltip.bbcode_text = current_stats._to_string()
-	name_label.text = actor_name
-	hp_bar_ghost.max_value = current_stats.max_hp
-	hp_bar_actual.max_value = current_stats.max_hp
-	hp_bar_ghost.value = current_hp
-	hp_bar_actual.value = current_hp
-	hp_value.text = Utils.commafy(current_hp)
+	var model := _require_combatant()
+	rich_tooltip.bbcode_text = model.current_stats._to_string()
+	name_label.text = model.actor_name
+	hp_bar_ghost.max_value = model.current_stats.max_hp
+	hp_bar_actual.max_value = model.current_stats.max_hp
+	hp_bar_ghost.value = model.current_hp
+	hp_bar_actual.value = model.current_hp
+	hp_value.text = Utils.commafy(model.current_hp)
 	update_guard_bar(false)
 	_update_conditions_ui()
-	if is_defeated:
+	if model.is_defeated:
 		_stop_breach_pulse()
 		_show_defeated_visual(true)
 		return
-	if is_breached:
+	if model.is_breached:
 		_render_breach_state(false)
 	else:
 		_render_danger_state()
@@ -188,17 +142,14 @@ func _on_combatant_hp_changed(
 	max_value: int,
 ) -> void:
 	hp_value.text = Utils.commafy(value)
-	hp_changed.emit(value, max_value)
 
 
 func _on_combatant_guard_changed(_actor: BattleCombatant, value: int) -> void:
 	update_guard_bar()
-	armor_changed.emit(value)
 
 
 func _on_combatant_conditions_changed(_actor: BattleCombatant) -> void:
 	_update_conditions_ui()
-	actor_conditions_changed.emit()
 
 
 func _on_combatant_danger_changed(
@@ -210,7 +161,6 @@ func _on_combatant_danger_changed(
 
 func _on_combatant_breached(_actor: BattleCombatant) -> void:
 	_render_breach_state(true)
-	actor_breached.emit(self)
 
 
 func _render_breach_state(animate: bool) -> void:
@@ -228,12 +178,10 @@ func _on_combatant_defeated(_actor: BattleCombatant) -> void:
 	if breached_label.visible:
 		_stop_breach_pulse()
 	_show_defeated_visual(false)
-	actor_defeated.emit(self)
 
 
 func _on_combatant_revived(_actor: BattleCombatant) -> void:
 	_show_revived_visual()
-	actor_revived.emit(self)
 
 
 func _on_combatant_presentation_event(
@@ -243,7 +191,7 @@ func _on_combatant_presentation_event(
 ) -> void:
 	match event:
 		&"damage_received":
-			hp_bar_actual.value = current_hp
+			hp_bar_actual.value = _require_combatant().current_hp
 			_spawn_damage_popup(
 				payload.result.final_damage,
 				payload.damage_type,
@@ -251,19 +199,17 @@ func _on_combatant_presentation_event(
 			)
 			spawn_particles.emit(get_global_rect().get_center(), "gunshot")
 		&"healing_received":
-			hp_bar_ghost.value = current_hp
+			hp_bar_ghost.value = _require_combatant().current_hp
 		&"impact":
 			shake_panel(float(payload.get("intensity", 0.5)))
-		&"passive_fired":
-			if self is HeroCard:
-				(self as HeroCard).passive_fired.emit()
 
 
 func _render_danger_state() -> void:
 	breached_label.text = "VULNERABLE"
-	if is_in_danger:
+	var model := _require_combatant()
+	if model.is_in_danger:
 		_start_breach_pulse()
-	elif not is_breached:
+	elif not model.is_breached:
 		_stop_breach_pulse()
 
 
@@ -274,58 +220,10 @@ func _show_defeated_visual(_immediate: bool = false) -> void:
 func _show_revived_visual() -> void:
 	pass
 
-func on_turn_started() -> void:
-	next_panel.hide()
-	highlight(true)
-	await battle_manager.wait(0.1)
-	await _fire_condition_event(Trigger.TriggerType.ON_TURN_START)
-
-	return
-
-func on_turn_ended() -> void:
-	await battle_manager.wait(0.1)
-	await _fire_condition_event(Trigger.TriggerType.ON_TURN_END)
-	highlight(false)
-
-func take_one_hit(
-	result: DamageResult,
-	damage_effect: Effect_Damage,
-	attacker: BattleCombatant,
-	resolved_damage_type: Action.DamageType,
-) -> int:
-	return await _require_combatant().take_one_hit(
-		result, damage_effect, attacker, resolved_damage_type,
-	)
-
-func in_danger(value: bool):
-	await _require_combatant().in_danger(value)
-
-func breach():
-	await _require_combatant().breach()
-
-func take_healing(heal_amount: int, is_revive: bool = false):
-	await _require_combatant().take_healing(heal_amount, is_revive)
-
-func add_condition(condition_resource: Condition):
-	await _require_combatant().add_condition(condition_resource)
-
-func has_condition(condition_name: String) -> bool:
-	return _require_combatant().has_condition(condition_name)
-
-func remove_condition(condition_name: String, report_missing: bool = true) -> bool:
-	return await _require_combatant().remove_condition(condition_name, report_missing)
-
-
-func remove_debuffs(quantity: int) -> int:
-	return await _require_combatant().remove_debuffs(quantity)
-
-func count_debuffs() -> int:
-	return _require_combatant().count_debuffs()
-
 func sync_visual_health() -> Tween:
 	var actual_hp = hp_bar_actual.value
 	var ghost_hp = hp_bar_ghost.value
-	var real_hp = current_hp
+	var real_hp = _require_combatant().current_hp
 
 	if actual_hp == real_hp and ghost_hp == real_hp:
 		return null
@@ -341,7 +239,7 @@ func sync_visual_health() -> Tween:
 	health_tween.set_ease(Tween.EASE_OUT)
 
 	if actual_hp < real_hp:
-		print(actor_name, " animating heal from ", actual_hp, " to ", real_hp)
+		print(_require_combatant().actor_name, " animating heal from ", actual_hp, " to ", real_hp)
 		health_tween.tween_property(hp_bar_actual, "value", real_hp, DURATION)
 		health_tween.parallel().tween_method(
 			_update_health_display,
@@ -350,58 +248,21 @@ func sync_visual_health() -> Tween:
 			DURATION
 		)
 	elif ghost_hp > real_hp:
-		print(actor_name, " animating damage from ", ghost_hp, " to ", real_hp)
+		print(_require_combatant().actor_name, " animating damage from ", ghost_hp, " to ", real_hp)
 		health_tween.tween_property(hp_bar_ghost, "value", real_hp, DURATION)
 	return health_tween
 
 func _update_health_display(value_from_tween: float):
 	hp_value.text = Utils.commafy(roundi(value_from_tween))
 
-# need to add traits here
-func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary = {}) -> void:
-	await _require_combatant()._fire_condition_event(event_type, context)
-
-
-func _execute_condition_triggers(
-	condition: Condition,
-	event_type: Trigger.TriggerType,
-	context: Dictionary,
-) -> void:
-	await _require_combatant()._execute_condition_triggers(
-		condition, event_type, context,
-	)
-
-
-func _remove_condition_instance(condition: Condition) -> bool:
-	return await _require_combatant()._remove_condition_instance(condition)
-
-
-func _flush_condition_removal_notification() -> void:
-	_require_combatant()._flush_condition_removal_notification()
-
 func update_health_bar():
-	hp_bar_actual.value = current_hp
-	hp_bar_ghost.value = current_hp
-	hp_value.text = str(current_hp)
-
-func defeated():
-	_require_combatant().defeat()
-
-func recover_breach():
-	await _require_combatant().recover_breach()
-	guard_bar.modulate.a = 1
-	_stop_breach_pulse()
-
-func modify_guard(amount: int, is_recovering: bool = false):
-	await _require_combatant().modify_guard(amount, is_recovering)
-
-func is_taunting() -> bool:
-	return _require_combatant().is_taunting()
-
-func is_untargetable() -> bool:
-	return _require_combatant().is_untargetable()
+	var model := _require_combatant()
+	hp_bar_actual.value = model.current_hp
+	hp_bar_ghost.value = model.current_hp
+	hp_value.text = str(model.current_hp)
 
 func update_guard_bar(animate: bool = true):
+	var current_guard := _require_combatant().current_guard
 	guard_value.text = str(current_guard)
 	guard_value.position.x = (current_guard -1) * 38
 	guard_label.visible = current_guard > 0
@@ -448,7 +309,7 @@ func show_next():
 
 func _start_breach_pulse():
 	var color = Color.ORANGE_RED
-	if is_in_danger:
+	if _require_combatant().is_in_danger:
 		color = Color.GOLD
 	breached_label.show()
 	if pulse_tween: pulse_tween.kill()
@@ -581,53 +442,13 @@ func _stop_target_pulse() -> void:
 func _on_gui_input(_event: InputEvent):
 	pass
 
-func get_power(power_type: Action.PowerType) -> int:
-	return _require_combatant().get_power(power_type)
-
-func get_speed() -> int:
-	return _require_combatant().get_speed()
-
-func get_ct_speed() -> int:
-	return _require_combatant().get_ct_speed()
-
-func get_action_ct_percent(action: Action) -> int:
-	return _require_combatant().get_action_ct_percent(action)
-
-func get_aim() -> int:
-	return _require_combatant().get_aim()
-
-func get_incoming_aim_mods() -> int:
-	return _require_combatant().get_incoming_aim_mods()
-
-func get_crit_damage_bonus() -> int:
-	return _require_combatant().get_crit_damage_bonus()
-
-func get_damage_dealt_modifier(target: BattleCombatant) -> float:
-	return _require_combatant().get_damage_dealt_modifier(target)
-
-
-func get_damage_dealt_contributions(
-	target: BattleCombatant,
-) -> Array[DamageContribution]:
-	return _require_combatant().get_damage_dealt_contributions(target)
-
-
-func get_damage_taken_modifier(attacker: BattleCombatant) -> float:
-	return _require_combatant().get_damage_taken_modifier(attacker)
-
-
-func get_damage_taken_contributions(
-	attacker: BattleCombatant,
-) -> Array[DamageContribution]:
-	return _require_combatant().get_damage_taken_contributions(attacker)
-
 func _update_conditions_ui():
 	for child in buffs_panel.get_children():
 		child.queue_free()
 	for child in debuffs_panel.get_children():
 		child.queue_free()
 
-	for condition in active_conditions:
+	for condition in _require_combatant().active_conditions:
 		if condition.is_passive: continue
 		match condition.condition_type:
 			Condition.ConditionType.BUFF:

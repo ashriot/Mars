@@ -123,9 +123,10 @@ class LoopManager extends GameManager:
 		battle_manager.enemy_area.add_child(other_enemy)
 		var other_model := EnemyCombatant.new()
 		battle_manager.combatant_root.add_child(other_model)
+		var first_enemy_model := first_enemy.combatant as EnemyCombatant
 		other_model.setup(
-			first_enemy.enemy_data,
-			first_enemy.enemy_data.level,
+			first_enemy_model.enemy_data,
+			first_enemy_model.enemy_data.level,
 			false,
 			false,
 			1.0,
@@ -350,7 +351,7 @@ func test_controller_events_route_the_complete_playable_loop() -> void:
 	assert_null(router.manager.battle_scene._current_target)
 	assert_false(navigation_ux.cursor.visible)
 	var spawned_hero := router.manager.battle_manager.hero_area.get_child(0) as HeroCard
-	assert_eq(spawned_hero.get_current_role().role_name, "Gunner")
+	assert_eq((spawned_hero.combatant as HeroCombatant).get_current_role().role_name, "Gunner")
 	var battle_actions: Control = router.manager.battle_manager.action_bar.actions_ui
 	var first_action := battle_actions.get_child(0) as ActionButton
 	var second_action := battle_actions.get_child(1) as ActionButton

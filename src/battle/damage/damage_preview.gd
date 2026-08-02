@@ -372,7 +372,10 @@ static func _copy_target(target: BattleCombatant) -> BattleCombatant:
 		func(condition: Condition): return condition.duplicate(true)
 	))
 	preview_target.active_traits.assign(target.active_traits.map(
-		func(trait_item: Trait): return trait_item.duplicate(true)
+		func(trait_item: Trait):
+			var trait_copy := trait_item.duplicate(true) as Trait
+			trait_copy.current_tier = trait_item.current_tier
+			return trait_copy
 	))
 	if preview_target is HeroCombatant and target is HeroCombatant:
 		(preview_target as HeroCombatant).current_focus = (

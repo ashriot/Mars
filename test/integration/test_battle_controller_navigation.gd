@@ -716,7 +716,7 @@ func test_battle_target_change_uses_actor_highlight_without_cursor() -> void:
 	var scene: BattleScene = fixture.scene
 	var manager: TrackingBattleManager = fixture.manager
 	manager.current_action = Action.new()
-	fixture.enemy.is_valid_target = true
+	fixture.enemy.combatant.is_valid_target = true
 	scene._set_current_target(fixture.enemy.combatant)
 	assert_same(scene._current_target, fixture.enemy.combatant)
 	assert_eq(fixture.enemy.get_target_presentation(), ActorCard.TargetPresentation.SELECTED)
@@ -1460,8 +1460,8 @@ func test_pointer_hover_selects_real_hero_and_enemy_cards_and_exit_clears_select
 	var enemy: EnemyCard = fixture.enemy
 	manager.current_action = Action.new()
 	manager.current_state = BattleManager.State.FORCED_TARGET
-	hero.is_valid_target = true
-	enemy.is_valid_target = true
+	hero.combatant.is_valid_target = true
+	enemy.combatant.is_valid_target = true
 	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
 	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)
 
@@ -1489,18 +1489,18 @@ func test_exact_target_changes_refresh_selected_action_presentation_and_fall_bac
 	var hero: HeroCard = fixture.hero
 	var defended: EnemyCard = fixture.enemy
 	var breached: EnemyCard = fixture.second_enemy
-	hero.current_stats = ActorStats.new()
-	hero.current_stats.attack = 100
-	hero.current_stats.overload = 50
-	hero.current_stats.max_hp = 100
-	hero.current_hp = 100
-	defended.current_stats = ActorStats.new()
-	defended.current_stats.kinetic_defense = 50
-	defended.current_guard = 1
-	breached.current_stats = ActorStats.new()
-	breached.is_breached = true
-	defended.is_valid_target = true
-	breached.is_valid_target = true
+	hero.combatant.current_stats = ActorStats.new()
+	hero.combatant.current_stats.attack = 100
+	hero.combatant.current_stats.overload = 50
+	hero.combatant.current_stats.max_hp = 100
+	hero.combatant.current_hp = 100
+	defended.combatant.current_stats = ActorStats.new()
+	defended.combatant.current_stats.kinetic_defense = 50
+	defended.combatant.current_guard = 1
+	breached.combatant.current_stats = ActorStats.new()
+	breached.combatant.is_breached = true
+	defended.combatant.is_valid_target = true
+	breached.combatant.is_valid_target = true
 	var effect := Effect_Damage.new()
 	effect.damage_type = Action.DamageType.KINETIC
 	effect.potency = 1.0
@@ -1539,12 +1539,12 @@ func test_exact_target_changes_refresh_selected_action_presentation_and_fall_bac
 	assert_string_contains(label.text, "100% ATK")
 	assert_string_contains(selected_button.tooltip.bbcode_text, "100% ATK")
 
-	breached.current_stats = null
+	breached.combatant.current_stats = null
 	scene._set_current_target(breached.combatant)
 	assert_string_contains(label.text, "100% ATK")
 	assert_string_contains(selected_button.tooltip.bbcode_text, "100% ATK")
 
-	breached.current_stats = ActorStats.new()
+	breached.combatant.current_stats = ActorStats.new()
 	action.target_type = Action.TargetType.RANDOM_ENEMY
 	scene._set_current_target(defended.combatant)
 	assert_string_contains(label.text, "100% ATK")
@@ -1562,8 +1562,8 @@ func test_exact_target_changes_refresh_selected_action_presentation_and_fall_bac
 
 	manager._focus_button(selected_button)
 	manager.current_action = action
-	defended.is_valid_target = true
-	breached.is_valid_target = true
+	defended.combatant.is_valid_target = true
+	breached.combatant.is_valid_target = true
 	scene._set_current_target(defended.combatant)
 	assert_string_contains(selected_button.tooltip.bbcode_text, "Deals 50")
 	scene.cancel_targeting()
@@ -1575,12 +1575,12 @@ func test_shift_action_completion_resets_exact_target_button_presentation() -> v
 	var manager: TrackingBattleManager = fixture.manager
 	var hero: HeroCard = fixture.hero
 	var defended: EnemyCard = fixture.enemy
-	hero.current_stats = ActorStats.new()
-	hero.current_stats.attack = 100
-	hero.current_stats.max_hp = 100
-	hero.current_hp = 100
-	defended.current_stats = ActorStats.new()
-	defended.current_stats.kinetic_defense = 50
+	hero.combatant.current_stats = ActorStats.new()
+	hero.combatant.current_stats.attack = 100
+	hero.combatant.current_stats.max_hp = 100
+	hero.combatant.current_hp = 100
+	defended.combatant.current_stats = ActorStats.new()
+	defended.combatant.current_stats.kinetic_defense = 50
 	var effect := Effect_Damage.new()
 	effect.damage_type = Action.DamageType.KINETIC
 	effect.potency = 1.0
@@ -1608,8 +1608,8 @@ func test_shift_action_completion_resets_exact_target_button_presentation() -> v
 
 func test_controller_owned_pointer_hover_cannot_replace_current_target() -> void:
 	var fixture := await _navigation_fixture()
-	fixture.hero.is_valid_target = true
-	fixture.enemy.is_valid_target = true
+	fixture.hero.combatant.is_valid_target = true
+	fixture.enemy.combatant.is_valid_target = true
 	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
 	fixture.scene._set_current_target(fixture.enemy.combatant)
 	fixture.hero.panel.mouse_entered.emit()
@@ -1622,8 +1622,8 @@ func test_self_targeting_refresh_retains_active_hero_without_cursor() -> void:
 	var manager: TrackingBattleManager = fixture.manager
 	manager.current_action = Action.new()
 	manager.current_action.target_type = Action.TargetType.SELF
-	fixture.hero.is_valid_target = true
-	fixture.enemy.is_valid_target = false
+	fixture.hero.combatant.is_valid_target = true
+	fixture.enemy.combatant.is_valid_target = false
 	scene._current_target = fixture.hero.combatant
 	scene._refresh_targeting()
 	assert_same(scene._current_target, fixture.hero.combatant)
@@ -1632,8 +1632,8 @@ func test_self_targeting_refresh_retains_active_hero_without_cursor() -> void:
 func test_controller_target_entry_restores_last_valid_same_side_target() -> void:
 	var fixture := await _navigation_fixture()
 	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
-	fixture.enemy.is_valid_target = true
-	fixture.second_enemy.is_valid_target = true
+	fixture.enemy.combatant.is_valid_target = true
+	fixture.second_enemy.combatant.is_valid_target = true
 	fixture.scene._last_enemy_target = fixture.second_enemy.combatant
 	fixture.scene._refresh_targeting()
 	assert_same(fixture.scene._current_target, fixture.second_enemy.combatant)
@@ -1648,17 +1648,17 @@ func test_controller_target_entry_restores_and_falls_back_on_hero_side() -> void
 	CardSceneTestFixture.bind(
 		self, other_hero, BattleCombatant.Faction.HERO, null, fixture.manager,
 	)
-	other_hero.is_defeated = false
+	other_hero.combatant.is_defeated = false
 	other_hero.reparent(fixture.manager.hero_area)
-	fixture.hero.is_valid_target = true
-	other_hero.is_valid_target = true
+	fixture.hero.combatant.is_valid_target = true
+	other_hero.combatant.is_valid_target = true
 	fixture.manager.actor_list.append(other_hero.combatant)
 	fixture.manager.register_presentation(other_hero.combatant, other_hero.presentation)
 	fixture.scene._last_hero_target = other_hero.combatant
 	fixture.scene._refresh_targeting()
 	assert_same(fixture.scene._current_target, other_hero.combatant)
 	fixture.scene._clear_current_target(false)
-	other_hero.is_defeated = true
+	other_hero.combatant.is_defeated = true
 	fixture.scene._refresh_targeting()
 	assert_same(fixture.scene._current_target, fixture.hero.combatant)
 
@@ -1666,9 +1666,9 @@ func test_controller_target_entry_restores_and_falls_back_on_hero_side() -> void
 func test_invalid_remembered_target_falls_back_deterministically() -> void:
 	var fixture := await _navigation_fixture()
 	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
-	fixture.enemy.is_valid_target = true
-	fixture.second_enemy.is_valid_target = true
-	fixture.second_enemy.is_defeated = true
+	fixture.enemy.combatant.is_valid_target = true
+	fixture.second_enemy.combatant.is_valid_target = true
+	fixture.second_enemy.combatant.is_defeated = true
 	fixture.scene._last_enemy_target = fixture.second_enemy.combatant
 	fixture.scene._refresh_targeting()
 	assert_same(fixture.scene._current_target, fixture.enemy.combatant)
@@ -1678,8 +1678,8 @@ func test_keyboard_mouse_entry_starts_without_an_executable_target() -> void:
 	var fixture := await _navigation_fixture()
 	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
 	InputManager._set_presentation_mode(InputManager.PresentationMode.FOCUS)
-	fixture.enemy.is_valid_target = true
-	fixture.second_enemy.is_valid_target = true
+	fixture.enemy.combatant.is_valid_target = true
+	fixture.second_enemy.combatant.is_valid_target = true
 	fixture.scene._refresh_targeting()
 	assert_null(fixture.scene._current_target)
 	assert_null(fixture.scene._navigation_origin)
@@ -1688,8 +1688,8 @@ func test_keyboard_mouse_entry_starts_without_an_executable_target() -> void:
 
 func test_pointer_cleared_origin_restores_before_next_direction_moves() -> void:
 	var fixture := await _navigation_fixture()
-	fixture.enemy.is_valid_target = true
-	fixture.second_enemy.is_valid_target = true
+	fixture.enemy.combatant.is_valid_target = true
+	fixture.second_enemy.combatant.is_valid_target = true
 	fixture.scene._set_current_target(fixture.enemy.combatant)
 	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
 	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)
@@ -1704,8 +1704,8 @@ func test_all_enemy_action_selects_every_affected_card_and_requests_group_previe
 	var fixture := await _navigation_fixture()
 	var action := Action.new()
 	action.target_type = Action.TargetType.ALL_ENEMIES
-	fixture.enemy.is_valid_target = true
-	fixture.second_enemy.is_valid_target = true
+	fixture.enemy.combatant.is_valid_target = true
+	fixture.second_enemy.combatant.is_valid_target = true
 	var targets: Array[BattleCombatant] = [
 		fixture.enemy.combatant,
 		fixture.second_enemy.combatant,
@@ -1737,9 +1737,9 @@ func test_group_parent_ct_preview_projects_every_affected_actor() -> void:
 	for actor: ActorCard in [hero, first_enemy, second_enemy]:
 		var stats := ActorStats.new()
 		stats.speed = 100
-		actor.current_stats = stats
-		actor.current_ct = 0
-		actor.is_defeated = false
+		actor.combatant.current_stats = stats
+		actor.combatant.current_ct = 0
+		actor.combatant.is_defeated = false
 	hero.reparent(hero_area)
 	first_enemy.reparent(enemy_area)
 	second_enemy.reparent(enemy_area)
@@ -1764,8 +1764,8 @@ func test_group_parent_ct_preview_projects_every_affected_actor() -> void:
 			return entry.actor == target.combatant
 		).front() as Dictionary
 		assert_eq(target_turn.ticks_needed, 20, "every group target receives the projected 50% CT boost")
-	assert_eq(first_enemy.current_ct, 0, "preview does not mutate live CT")
-	assert_eq(second_enemy.current_ct, 0, "preview does not mutate live CT")
+	assert_eq(first_enemy.combatant.current_ct, 0, "preview does not mutate live CT")
+	assert_eq(second_enemy.combatant.current_ct, 0, "preview does not mutate live CT")
 	manager.free()
 	hero_area.free()
 	enemy_area.free()
@@ -1881,23 +1881,23 @@ func test_modifier_bearing_shift_preview_matches_non_turn_ending_execution() -> 
 
 func test_invalid_current_target_falls_back_for_controller_and_clears_for_pointer() -> void:
 	var fixture := await _navigation_fixture()
-	fixture.enemy.is_valid_target = true
-	fixture.second_enemy.is_valid_target = true
+	fixture.enemy.combatant.is_valid_target = true
+	fixture.second_enemy.combatant.is_valid_target = true
 	fixture.scene._set_current_target(fixture.enemy.combatant)
-	fixture.enemy.is_defeated = true
+	fixture.enemy.combatant.is_defeated = true
 	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
 	fixture.scene._refresh_targeting()
 	assert_same(fixture.scene._current_target, fixture.second_enemy.combatant)
 	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
 	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)
-	fixture.second_enemy.is_defeated = true
+	fixture.second_enemy.combatant.is_defeated = true
 	fixture.scene._refresh_targeting()
 	assert_null(fixture.scene._current_target)
 
 
 func test_cancel_returns_all_cards_to_normal_and_stops_pulses() -> void:
 	var fixture := await _navigation_fixture()
-	fixture.enemy.is_valid_target = true
+	fixture.enemy.combatant.is_valid_target = true
 	fixture.scene._set_current_target(fixture.enemy.combatant)
 	fixture.scene.cancel_targeting()
 	for actor: ActorCard in [fixture.hero, fixture.enemy, fixture.second_enemy]:
@@ -1912,7 +1912,7 @@ func test_cancel_suppresses_action_preview_and_restores_ordinary_turn_order() ->
 	self_ct_effect.target_type = Action.TargetType.SELF
 	action.effects = [self_ct_effect]
 	fixture.manager.current_action = action
-	fixture.enemy.is_valid_target = true
+	fixture.enemy.combatant.is_valid_target = true
 	fixture.scene._set_current_target(fixture.enemy.combatant)
 	fixture.manager.preview_targets.clear()
 	fixture.manager.ordinary_preview_count = 0
@@ -1988,7 +1988,7 @@ func test_keyboard_action_replacement_synchronously_clears_shared_target() -> vo
 	second.disabled = false
 	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
 	bar._unhandled_input(_action_event(&"action_1"))
-	fixture.enemy.is_valid_target = true
+	fixture.enemy.combatant.is_valid_target = true
 	scene._set_current_target(fixture.enemy.combatant)
 	assert_same(scene._current_target, fixture.enemy.combatant)
 
@@ -2001,8 +2001,8 @@ func test_keyboard_action_replacement_synchronously_clears_shared_target() -> vo
 
 func test_hidden_remembered_target_uses_visible_controller_fallback() -> void:
 	var fixture := await _navigation_fixture()
-	fixture.enemy.is_valid_target = true
-	fixture.second_enemy.is_valid_target = true
+	fixture.enemy.combatant.is_valid_target = true
+	fixture.second_enemy.combatant.is_valid_target = true
 	fixture.second_enemy.hide()
 	fixture.scene._last_enemy_target = fixture.second_enemy.combatant
 	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
@@ -2014,8 +2014,8 @@ func test_hidden_remembered_target_uses_visible_controller_fallback() -> void:
 
 func test_hidden_first_candidate_is_excluded_from_controller_fallback() -> void:
 	var fixture := await _navigation_fixture()
-	fixture.enemy.is_valid_target = true
-	fixture.second_enemy.is_valid_target = true
+	fixture.enemy.combatant.is_valid_target = true
+	fixture.second_enemy.combatant.is_valid_target = true
 	fixture.enemy.hide()
 	fixture.scene._last_enemy_target = null
 	fixture.scene._clear_current_target(false)
@@ -2034,8 +2034,8 @@ func test_real_death_path_immediately_restores_controller_fallback() -> void:
 		fixture.enemy.combatant,
 		fixture.second_enemy.combatant,
 	])
-	fixture.enemy.is_valid_target = true
-	fixture.second_enemy.is_valid_target = true
+	fixture.enemy.combatant.is_valid_target = true
+	fixture.second_enemy.combatant.is_valid_target = true
 	fixture.enemy.combatant.defeated.connect(fixture.manager._on_actor_died)
 	InputManager._set_active_mode(InputManager.InputMode.CONTROLLER)
 	fixture.scene._set_current_target(fixture.enemy.combatant)
@@ -2055,8 +2055,8 @@ func test_real_death_path_immediately_clears_pointer_target_origin_and_memory() 
 		fixture.enemy.combatant,
 		fixture.second_enemy.combatant,
 	])
-	fixture.enemy.is_valid_target = true
-	fixture.second_enemy.is_valid_target = true
+	fixture.enemy.combatant.is_valid_target = true
+	fixture.second_enemy.combatant.is_valid_target = true
 	fixture.enemy.combatant.defeated.connect(fixture.manager._on_actor_died)
 	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
 	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)
@@ -2206,7 +2206,7 @@ func test_combat_keeps_global_hints_hidden_during_targeting() -> void:
 	var manager: TrackingBattleManager = fixture.manager
 	var ux: NavigationUXLayer = fixture.ux
 	manager.current_action = Action.new()
-	fixture.enemy.is_valid_target = true
+	fixture.enemy.combatant.is_valid_target = true
 	scene._current_target = fixture.enemy.combatant
 	ux.publish_hints([{action = &"cancel", label = "Previous Screen", enabled = true}])
 	assert_eq(ux.hint_bar.get_hint_count(), 1)
@@ -2273,7 +2273,7 @@ func test_battle_adapter_teardown_clears_target_presentation_cursor_hints_and_re
 	fixture.bar.active_hero = hero
 	hero.focus_changed.connect(fixture.bar._on_hero_focus_updated)
 	hero.presentation_event.connect(fixture.bar._on_hero_presentation_event)
-	fixture.enemy.is_valid_target = true
+	fixture.enemy.combatant.is_valid_target = true
 	scene._set_current_target(fixture.enemy.combatant)
 	assert_eq(fixture.enemy.get_target_presentation(), ActorCard.TargetPresentation.SELECTED)
 	assert_same(
@@ -2421,31 +2421,31 @@ func _battle_fixture() -> Dictionary:
 		self, hero, BattleCombatant.Faction.HERO, null, manager,
 	)
 	hero.position = Vector2(100, 300)
-	hero.is_defeated = false
+	hero.combatant.is_defeated = false
 	hero.reparent(hero_area)
 	var first := preload("res://src/battle/enemy_card.tscn").instantiate() as EnemyCard
 	CardSceneTestFixture.bind(
 		self, first, BattleCombatant.Faction.ENEMY, null, manager,
 	)
 	first.position = Vector2(100, 100)
-	first.is_valid_target = true
-	first.is_defeated = false
+	first.combatant.is_valid_target = true
+	first.combatant.is_defeated = false
 	first.reparent(enemy_area)
 	var defeated := preload("res://src/battle/enemy_card.tscn").instantiate() as EnemyCard
 	CardSceneTestFixture.bind(
 		self, defeated, BattleCombatant.Faction.ENEMY, null, manager,
 	)
 	defeated.position = Vector2(200, 100)
-	defeated.is_valid_target = true
-	defeated.is_defeated = true
+	defeated.combatant.is_valid_target = true
+	defeated.combatant.is_defeated = true
 	defeated.reparent(enemy_area)
 	var right := preload("res://src/battle/enemy_card.tscn").instantiate() as EnemyCard
 	CardSceneTestFixture.bind(
 		self, right, BattleCombatant.Faction.ENEMY, null, manager,
 	)
 	right.position = Vector2(300, 100)
-	right.is_valid_target = true
-	right.is_defeated = false
+	right.combatant.is_valid_target = true
+	right.combatant.is_defeated = false
 	right.reparent(enemy_area)
 	manager.current_actor = hero.combatant
 	manager.actor_list = [hero.combatant, first.combatant, right.combatant]
@@ -2594,11 +2594,11 @@ func _navigation_fixture() -> Dictionary:
 	CardSceneTestFixture.bind(
 		self, second_enemy, BattleCombatant.Faction.ENEMY, null, manager,
 	)
-	hero.is_defeated = false
-	enemy.is_defeated = false
-	second_enemy.is_defeated = false
-	enemy.is_valid_target = false
-	second_enemy.is_valid_target = false
+	hero.combatant.is_defeated = false
+	enemy.combatant.is_defeated = false
+	second_enemy.combatant.is_defeated = false
+	enemy.combatant.is_valid_target = false
+	second_enemy.combatant.is_valid_target = false
 	manager.current_actor = hero.combatant
 	manager.forced_target = enemy.combatant
 	manager.actor_list = [hero.combatant, enemy.combatant, second_enemy.combatant]

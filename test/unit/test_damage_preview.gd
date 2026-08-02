@@ -67,17 +67,84 @@ func test_plan_uses_nonvisual_combatants_without_mutating_live_state() -> void:
 	target.free()
 
 
-func test_preview_copy_is_a_nonvisual_combatant() -> void:
-	var target := _combatant(BattleCombatant.Faction.ENEMY)
-	target.current_hp = 40
+func test_preview_copy_preserves_specialized_state_without_sharing_mutable_resources() -> void:
+	var hero := HeroCombatant.new()
+	var stats := ActorStats.new()
+	stats.actor_name = "Preview Hero"
+	stats.max_hp = 123
+	stats.starting_guard = 4
+	stats.starting_focus = 5
+	stats.attack = 11
+	stats.psyche = 12
+	stats.overload = 13
+	stats.speed = 14
+	stats.aim = 15
+	stats.precision = 16
+	stats.kinetic_defense = 17
+	stats.energy_defense = 18
+	hero.setup_base(stats, BattleCombatant.Faction.HERO)
+	hero.current_hp = 91
+	hero.current_guard = 3
+	hero.current_ct = 2345
+	hero.ct_speed_scale = 1.75
+	hero.battle_priority = 6
+	hero.is_breached = true
+	hero.is_in_danger = true
+	hero.is_defeated = true
+	hero.current_focus = 7
+	var condition := Condition.new()
+	condition.condition_name = "Original Condition"
+	condition.description = "Live condition"
+	hero.active_conditions = [condition]
+	var trait_item := Trait.new()
+	trait_item.trait_name = "Original Trait"
+	trait_item.current_tier = 4
+	hero.active_traits = [trait_item]
 
-	var copy := DamagePreview._copy_target(target)
+	var hero_copy := DamagePreview._copy_target(hero)
+	var enemy := _combatant(BattleCombatant.Faction.ENEMY)
+	var enemy_copy := DamagePreview._copy_target(enemy)
 
-	assert_true(copy is BattleCombatant)
-	assert_false((copy as Node) is CanvasItem)
-	assert_eq(copy.current_hp, 40)
-	copy.free()
-	target.free()
+	assert_true(hero_copy is HeroCombatant)
+	assert_true(enemy_copy is EnemyCombatant)
+	assert_false((hero_copy as Node) is CanvasItem)
+	assert_not_same(hero_copy.current_stats, stats)
+	assert_eq([
+		hero_copy.current_stats.actor_name,
+		hero_copy.current_stats.max_hp,
+		hero_copy.current_stats.starting_guard,
+		hero_copy.current_stats.starting_focus,
+		hero_copy.current_stats.attack,
+		hero_copy.current_stats.psyche,
+		hero_copy.current_stats.overload,
+		hero_copy.current_stats.speed,
+		hero_copy.current_stats.aim,
+		hero_copy.current_stats.precision,
+		hero_copy.current_stats.kinetic_defense,
+		hero_copy.current_stats.energy_defense,
+	], ["Preview Hero", 123, 4, 5, 11, 12, 13, 14, 15, 16, 17, 18])
+	assert_eq([
+		hero_copy.current_hp,
+		hero_copy.current_guard,
+		hero_copy.current_ct,
+		hero_copy.ct_speed_scale,
+		hero_copy.battle_priority,
+		hero_copy.is_breached,
+		hero_copy.is_in_danger,
+		hero_copy.is_defeated,
+		(hero_copy as HeroCombatant).current_focus,
+	], [91, 3, 2345, 1.75, 6, true, true, true, 7])
+	assert_not_same(hero_copy.active_conditions[0], condition)
+	assert_not_same(hero_copy.active_traits[0], trait_item)
+	assert_eq(hero_copy.active_traits[0].current_tier, 4)
+	hero_copy.active_conditions[0].description = "Preview only"
+	hero_copy.active_traits[0].trait_name = "Preview only"
+	assert_eq(condition.description, "Live condition")
+	assert_eq(trait_item.trait_name, "Original Trait")
+	hero_copy.free()
+	enemy_copy.free()
+	hero.free()
+	enemy.free()
 
 
 func _combatant(faction: BattleCombatant.Faction) -> BattleCombatant:
@@ -809,7 +876,7 @@ func test_enemy_intent_incomplete_random_split_uses_authored_total_budget() -> v
 
 func test_enemy_intent_uses_sequential_guard_to_breach_preview() -> void:
 	var enemy := _intent_enemy(100)
-	enemy.current_stats.overload = 50
+	enemy.combatant.current_stats.overload = 50
 	var effect := _damage_effect(1.0)
 	effect.hit_count = 2
 	var action := Action.new()
@@ -900,7 +967,7 @@ func test_debilitate_reduces_enemy_intent_damage_by_thirty_five_percent() -> voi
 		"res://data/heroes/asher/actions/debilitate.tres"
 	) as Action
 	var apply_effect := debilitate_action.effects[0] as Effect_ApplyCondition
-	enemy.active_conditions = [apply_effect.condition.duplicate(true)]
+	enemy_model.active_conditions = [apply_effect.condition.duplicate(true)]
 	enemy.refresh_intent_presentation()
 
 	assert_string_contains(enemy.intent_text.text, "65")
