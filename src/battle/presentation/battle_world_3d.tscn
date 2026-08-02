@@ -34,7 +34,7 @@ unique_name_in_owner = true
 
 [node name="EnemyHUDCanvas" type="CanvasLayer" parent="."]
 
-[node name="EnemyHUDLayer" type="Control" parent="EnemyHUDCanvas"]
+[node name="EnemyHUDLayer" type="Control" parent="EnemyHUDCanvas" groups=["battle_enemy_hud_layer"]]
 unique_name_in_owner = true
 layout_mode = 3
 anchors_preset = 15

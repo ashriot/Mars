@@ -148,6 +148,37 @@ func test_intent_value_refresh_uses_replaceable_presentation_contract() -> void:
 	assert_eq(presentation.refresh_count, 1)
 
 
+func test_legacy_enemy_card_renders_shared_intent_format() -> void:
+	var card := EnemyCardScene.instantiate() as EnemyCard
+	add_child_autofree(card)
+	var enemy := EnemyCombatant.new()
+	card.add_child(enemy)
+	var enemy_stats := ActorStats.new()
+	enemy_stats.actor_name = "Source"
+	enemy_stats.max_hp = 100
+	enemy.setup_base(enemy_stats, BattleCombatant.Faction.ENEMY)
+	assert_true(card.bind_combatant(enemy))
+	var target := HeroCombatant.new()
+	add_child_autofree(target)
+	var target_stats := ActorStats.new()
+	target_stats.actor_name = "Ashe"
+	target_stats.max_hp = 100
+	target.setup_base(target_stats, BattleCombatant.Faction.HERO)
+	var action := Action.new()
+	action.action_name = "Disrupt"
+	action.description = "Disrupt protocol"
+	action.effects = [ActionEffect.new()]
+	action.target_type = Action.TargetType.ONE_ENEMY
+	enemy.intended_action = action
+	enemy.intended_targets = [target]
+
+	card.refresh_intent_presentation()
+	var formatted := EnemyIntentFormatter.format(enemy, null)
+
+	assert_eq(card.intent_text.text, formatted.text)
+	assert_eq(card.intent_tooltip.bbcode_text, formatted.tooltip)
+
+
 func test_clearing_spent_intent_refreshes_without_flashing_again() -> void:
 	var fixture := await _fixture()
 	fixture.enemy.initialize_ai(77)

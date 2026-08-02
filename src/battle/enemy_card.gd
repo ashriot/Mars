@@ -53,82 +53,11 @@ func refresh_intent_presentation() -> void:
 	_update_intent_ui()
 
 
-func _update_intent_ui():
+func _update_intent_ui() -> void:
 	var model := combatant as EnemyCombatant
-	if not model.intended_action:
-		intent_text.text = ""
-		return
-
-	if model.intended_action.effects.is_empty():
-		return
-
-	var first_effect = model.intended_action.effects[0]
-	var enemy_model := combatant as EnemyCombatant
-	var presentation_targets: Array[BattleCombatant] = []
-	presentation_targets.assign(model.intended_targets)
-
-	if first_effect is Effect_Damage:
-		var damage_effect: Effect_Damage = first_effect
-		var resolved_hit_count := damage_effect._resolve_hit_count(enemy_model)
-		var sequence := DamagePreview.for_plan(
-			damage_effect,
-			enemy_model,
-			presentation_targets,
-			model.intended_action,
-			false,
-			battle_manager,
-		)
-		var damage_bindings: Dictionary
-		if sequence.is_complete and not sequence.results.is_empty():
-			damage_bindings = damage_effect._get_sequence_bindings(sequence, 28)
-		else:
-			var context := EffectPresentationContext.new(
-				enemy_model, null, model.intended_action,
-			)
-			damage_bindings = damage_effect.get_presentation(context).bindings
-			damage_bindings.damage_type = damage_effect._get_damage_type_icon(
-				damage_effect.damage_type, 28,
-			)
-		var final_text := "%s%s%s %s" % [
-			damage_bindings.amount,
-			damage_bindings.amount_qualifier,
-			damage_bindings.hit_count_text,
-			damage_bindings.damage_type,
-		]
-		if model.intended_action.target_type == Action.TargetType.RANDOM_ENEMY \
-			and resolved_hit_count > 1 \
-			and damage_bindings.hit_count_text.is_empty():
-			final_text += " (%d hits)" % resolved_hit_count
-		if model.intended_action.effects.size() > 1:
-			final_text += " *"
-
-		if model.intended_targets:
-			if model.intended_targets.size() > 1:
-				if model.intended_action.target_type == Action.TargetType.RANDOM_ENEMY:
-					final_text += " RANDOM"
-				else:
-					final_text += " EVERYONE"
-			else:
-				var tar := model.intended_targets[0] as HeroCombatant
-				var col := tar.get_current_role().color.to_html()
-				final_text += " [color=" + col + "]" + model.intended_targets[0].actor_name
-
-		intent_text.text = final_text
-
-	else:
-		var final_text = model.intended_action.action_name
-		if model.intended_targets.size() > 1:
-			final_text += " EVERYONE"
-		elif model.intended_targets.size() == 1:
-			if model.intended_targets[0].actor_name != model.actor_name:
-				final_text += " " + model.intended_targets[0].actor_name
-
-		intent_text.text = final_text
-	var tooltip_target: BattleCombatant = presentation_targets[0] \
-		if model.intended_targets.size() == 1 else null
-	intent_tooltip.bbcode_text = model.intended_action.get_rich_description(
-		combatant, tooltip_target, presentation_targets, battle_manager,
-	)
+	var formatted := EnemyIntentFormatter.format(model, battle_manager)
+	intent_text.text = formatted.text
+	intent_tooltip.bbcode_text = formatted.tooltip
 
 func update_defenses():
 	var model := combatant as EnemyCombatant
