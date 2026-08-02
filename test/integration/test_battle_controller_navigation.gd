@@ -15,8 +15,10 @@ class MinimalActionBar extends ActionBar:
 
 class PausingShiftActionBar extends MinimalActionBar:
 	signal continue_slide_out
+	var slide_out_calls := 0
 
 	func slide_out(_duration: float = 0.2):
+		slide_out_calls += 1
 		await continue_slide_out
 
 
@@ -34,6 +36,43 @@ class ImmediateShiftActionBar extends MinimalActionBar:
 class ImmediateShiftHero extends HeroCombatant:
 	func shift_role(_direction: String):
 		current_role_index = 1
+
+
+class TrackingShiftHero extends HeroCombatant:
+	var shift_calls := 0
+
+	func shift_role(_direction: String) -> void:
+		shift_calls += 1
+
+
+class SuspendedActionEffect extends ActionEffect:
+	signal released
+	var started := false
+	var resumed := false
+
+	func execute(
+		_attacker: BattleCombatant,
+		_parent_targets: Array[BattleCombatant],
+		_battle_manager: BattleManager,
+		_action: Action = null,
+		_context: Dictionary = {},
+	) -> void:
+		started = true
+		await released
+		resumed = true
+
+
+class CountingActionEffect extends ActionEffect:
+	var calls := 0
+
+	func execute(
+		_attacker: BattleCombatant,
+		_parent_targets: Array[BattleCombatant],
+		_battle_manager: BattleManager,
+		_action: Action = null,
+		_context: Dictionary = {},
+	) -> void:
+		calls += 1
 
 
 class ShiftEventEffect extends ActionEffect:
@@ -243,6 +282,51 @@ class InputSafetyBattleManager extends BattleManager:
 		return
 
 
+class ContinuationBattleManager extends InputSafetyBattleManager:
+	var turn_advance_calls := 0
+
+	func find_and_start_next_turn() -> void:
+		turn_advance_calls += 1
+
+
+class ContinuationActionBar extends ImmediateShiftActionBar:
+	func hide_bar() -> void:
+		return
+
+
+class ContinuationEnemy extends EnemyCombatant:
+	var decide_intent_calls := 0
+
+	func decide_intent(context: EnemyAIContext) -> void:
+		decide_intent_calls += 1
+		super.decide_intent(context)
+
+
+class EnemyWaitBattleManager extends BattleManager:
+	signal release_enemy_wait
+	var find_calls := 0
+	var enemy_wait_started := false
+	var _enemy_wait_consumed := false
+
+	func _ready() -> void:
+		return
+
+	func wait(duration: float = 0.01) -> void:
+		if duration >= 0.49 and not _enemy_wait_consumed:
+			_enemy_wait_consumed = true
+			enemy_wait_started = true
+			await release_enemy_wait
+
+	func _flush_all_health_animations() -> void:
+		return
+
+	func find_and_start_next_turn() -> void:
+		find_calls += 1
+		if find_calls > 1:
+			return
+		await super.find_and_start_next_turn()
+
+
 func test_activate_slot_emits_only_for_visible_enabled_semantic_slot() -> void:
 	var bar := ActionBar.new()
 	bar.actions_ui = Control.new()
@@ -353,6 +437,46 @@ func test_shift_controls_rearm_when_shifted_hero_returns_on_later_turn() -> void
 	watch_signals(bar)
 	bar._unhandled_input(_action_event(&"shift_left"))
 	assert_signal_emitted_with_parameters(bar, "shift_button_pressed", ["left"])
+
+
+func test_replacement_hero_rearms_controller_ui_after_forced_target_removal() -> void:
+	var manager := TurnCycleBattleManager.new()
+	var bar := ActionBarScene.instantiate() as ActionBar
+	bar.battle_manager = manager
+	manager.action_bar = bar
+	manager.add_child(bar)
+	add_child_autofree(manager)
+	await get_tree().process_frame
+	var removed_hero := _action_bar_hero(manager, "Removed")
+	var replacement_hero := _action_bar_hero(manager, "Replacement")
+	manager.add_child(removed_hero)
+	manager.add_child(replacement_hero)
+	manager.actor_list = [removed_hero, replacement_hero]
+	manager._connect_combatant_signals(removed_hero)
+	manager._connect_combatant_signals(replacement_hero)
+	manager.current_actor = removed_hero
+	manager.current_state = BattleManager.State.PLAYER_ACTION
+	await bar.load_actions(removed_hero, false)
+
+	manager.change_state(BattleManager.State.FORCED_TARGET)
+	assert_true(bar.buttons_disabled)
+	manager.remove_child(removed_hero)
+	removed_hero.free()
+	manager.current_actor = replacement_hero
+	manager.change_state(BattleManager.State.PLAYER_ACTION)
+	await bar.load_actions(replacement_hero, false)
+
+	var first_action := bar.actions_ui.get_child(0) as ActionButton
+	assert_false(bar.buttons_disabled, "the forced-target latch follows battle state, not the old hero")
+	assert_false(first_action.override_disabled)
+	assert_false(first_action.disabled)
+	assert_true(bar.right_shift_ui.visible)
+	assert_false(bar.right_shift_button.disabled)
+	watch_signals(bar)
+	bar._unhandled_input(_action_event(&"action_1"))
+	bar._unhandled_input(_action_event(&"shift_right"))
+	assert_signal_emit_count(bar, "action_selected", 1)
+	assert_signal_emitted_with_parameters(bar, "shift_button_pressed", ["right"])
 
 
 func test_directional_shift_fully_supersedes_selected_action_before_role_ui_loads() -> void:
@@ -971,6 +1095,180 @@ func test_active_hero_exit_atomically_cancels_action_and_input_state() -> void:
 	scene._unhandled_input(_action_event(&"cancel"))
 	bar._unhandled_input(_action_event(&"shift_left"))
 	assert_engine_error_count(0)
+
+
+func test_removed_hero_cancels_suspended_action_before_finish_or_turn_advance() -> void:
+	var manager := ContinuationBattleManager.new()
+	var bar := ContinuationActionBar.new()
+	var action_panel := PanelContainer.new()
+	manager.action_bar = bar
+	manager.current_action_panel = action_panel
+	bar.battle_manager = manager
+	manager.add_child(action_panel)
+	add_child_autofree(manager)
+	autofree(bar)
+	await get_tree().process_frame
+
+	var hero := HeroCombatant.new()
+	var enemy := EnemyCombatant.new()
+	manager.add_child(hero)
+	manager.add_child(enemy)
+	hero.setup_base(ActorStats.new(), BattleCombatant.Faction.HERO, manager)
+	enemy.setup_base(ActorStats.new(), BattleCombatant.Faction.ENEMY, manager)
+	manager.actor_list = [hero, enemy]
+	manager.current_actor = hero
+	manager.current_state = BattleManager.State.PLAYER_ACTION
+	manager._connect_combatant_signals(hero)
+	manager._connect_combatant_signals(enemy)
+	var gate := SuspendedActionEffect.new()
+	var action := Action.new()
+	action.target_type = Action.TargetType.ONE_ENEMY
+	action.effects = [gate]
+	manager.current_action = action
+	enemy.is_valid_target = true
+	autofree(hero)
+
+	manager._on_enemy_clicked(enemy)
+	assert_true(gate.started, "the real selected-action path reaches the held effect")
+	manager.remove_child(hero)
+	gate.released.emit()
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	assert_true(gate.resumed, "the dependency resumed after cancellation")
+	assert_eq(manager.turn_advance_calls, 0)
+	assert_null(manager.current_actor)
+	assert_null(manager.executing_action)
+	assert_eq(manager.current_state, BattleManager.State.LOADING)
+	assert_engine_error_count(0)
+
+
+func test_removed_hero_during_slide_out_never_shifts_or_advances_state() -> void:
+	var manager := ContinuationBattleManager.new()
+	var bar := PausingShiftActionBar.new()
+	manager.action_bar = bar
+	bar.battle_manager = manager
+	add_child_autofree(manager)
+	autofree(bar)
+	await get_tree().process_frame
+	var hero := TrackingShiftHero.new()
+	manager.add_child(hero)
+	hero.setup_base(ActorStats.new(), BattleCombatant.Faction.HERO, manager)
+	manager.actor_list = [hero]
+	manager.current_actor = hero
+	manager.current_state = BattleManager.State.PLAYER_ACTION
+	manager._connect_combatant_signals(hero)
+	autofree(hero)
+
+	manager._on_shift_button_pressed("right")
+	assert_eq(bar.slide_out_calls, 1)
+	manager.remove_child(hero)
+	bar.continue_slide_out.emit()
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	assert_eq(hero.shift_calls, 0)
+	assert_eq(manager.turn_advance_calls, 0)
+	assert_null(manager.current_actor)
+	assert_eq(manager.current_state, BattleManager.State.LOADING)
+	assert_engine_error_count(0)
+
+
+func test_removed_enemy_cancels_suspended_turn_before_cooldown_intent_or_recursion() -> void:
+	var manager := EnemyWaitBattleManager.new()
+	var bar := ImmediateShiftActionBar.new()
+	manager.action_bar = bar
+	bar.battle_manager = manager
+	add_child_autofree(manager)
+	autofree(bar)
+	await get_tree().process_frame
+	var enemy := ContinuationEnemy.new()
+	var hero := HeroCombatant.new()
+	var other_enemy := EnemyCombatant.new()
+	for actor: BattleCombatant in [enemy, hero, other_enemy]:
+		manager.add_child(actor)
+		var stats := ActorStats.new()
+		stats.max_hp = 100
+		stats.speed = 100
+		actor.setup_base(
+			stats,
+			BattleCombatant.Faction.HERO \
+				if actor is HeroCombatant else BattleCombatant.Faction.ENEMY,
+			manager,
+		)
+	enemy.current_stats.speed = 200
+	enemy.current_ct = manager.TARGET_CT
+	enemy.is_breached = true
+	var recovery := Action.new()
+	recovery.target_type = Action.TargetType.SELF
+	var enemy_data := EnemyData.new()
+	enemy_data.abilities = []
+	enemy_data.recover_action = recovery
+	enemy.enemy_data = enemy_data
+	enemy.recover_action = recovery
+	var decision := EnemyDecision.new()
+	decision.action = recovery
+	decision.targets = [enemy]
+	decision.is_recovery = true
+	enemy.intended_decision = decision
+	enemy.intended_action = recovery
+	enemy.intended_targets = [enemy]
+	manager.actor_list = [enemy, hero, other_enemy]
+	manager._connect_combatant_signals(enemy)
+	autofree(enemy)
+
+	manager.find_and_start_next_turn()
+	assert_true(manager.enemy_wait_started, "the real enemy turn reaches its held pre-action wait")
+	assert_same(manager.current_actor, enemy)
+	manager.remove_child(enemy)
+	manager.release_enemy_wait.emit()
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	assert_eq(enemy.ai_state.completed_turns, 0)
+	assert_same(enemy.intended_action, recovery)
+	assert_eq(enemy.decide_intent_calls, 0)
+	assert_eq(manager.find_calls, 1)
+	assert_null(manager.current_actor)
+	assert_eq(manager.current_state, BattleManager.State.LOADING)
+	assert_engine_error_count(0)
+
+
+func test_manager_teardown_invalidates_suspended_action_continuation() -> void:
+	var host := Node.new()
+	var manager := ContinuationBattleManager.new()
+	var bar := ContinuationActionBar.new()
+	var action_panel := PanelContainer.new()
+	manager.action_bar = bar
+	manager.current_action_panel = action_panel
+	bar.battle_manager = manager
+	manager.add_child(action_panel)
+	host.add_child(manager)
+	add_child_autofree(host)
+	autofree(bar)
+	await get_tree().process_frame
+	var hero := HeroCombatant.new()
+	host.add_child(hero)
+	hero.setup_base(ActorStats.new(), BattleCombatant.Faction.HERO, manager)
+	manager.actor_list = [hero]
+	manager.current_actor = hero
+	manager._connect_combatant_signals(hero)
+	var gate := SuspendedActionEffect.new()
+	var after_gate := CountingActionEffect.new()
+	var action := Action.new()
+	action.effects = [gate, after_gate]
+
+	manager.execute_action(hero, action, [], false)
+	assert_true(gate.started)
+	host.remove_child(manager)
+	gate.released.emit()
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	assert_true(gate.resumed)
+	assert_eq(after_gate.calls, 0)
+	assert_engine_error_count(0)
+	manager.free()
 
 
 func test_manager_teardown_safely_prunes_stale_off_tree_registration() -> void:
@@ -2040,6 +2338,26 @@ func _action_event(action: StringName) -> InputEventAction:
 	event.action = action
 	event.pressed = true
 	return event
+
+
+func _action_bar_hero(manager: BattleManager, prefix: String) -> HeroCombatant:
+	var hero := HeroCombatant.new()
+	hero.setup_base(ActorStats.new(), BattleCombatant.Faction.HERO, manager)
+	hero.hero_data = HeroData.new()
+	hero.hero_data.unlocked_role_ids = ["first", "second"]
+	for role_index in 2:
+		var definition := RoleDefinition.new()
+		definition.role_name = "%s %d" % [prefix, role_index]
+		definition.color = Color.WHITE
+		var role := RoleData.new()
+		role.source_definition = definition
+		var action := Action.new()
+		action.action_name = "%s action %d" % [prefix, role_index]
+		action.target_type = Action.TargetType.SELF
+		role.actions = [action]
+		hero.loaded_roles.append(role)
+	hero.current_role_index = 0
+	return hero
 
 
 func _joy_button_zero() -> InputEventJoypadButton:

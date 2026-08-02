@@ -53,6 +53,47 @@ var _presentations: Dictionary = {}
 var _presentation_exit_callbacks: Dictionary = {}
 var _combatant_exit_callbacks: Dictionary = {}
 var _canceling_active_actor_state := false
+var _orchestration_generation := 0
+var _orchestration_shutting_down := false
+
+
+func _capture_continuation(
+	actor: BattleCombatant = null,
+	action: Action = null,
+) -> Dictionary:
+	return {
+		"generation": _orchestration_generation,
+		"actor": actor,
+		"action": action,
+		"owns_current_actor": is_instance_valid(actor) and current_actor == actor,
+	}
+
+
+func _continuation_is_current(
+	continuation: Dictionary,
+	require_executing_action := false,
+) -> bool:
+	if _orchestration_shutting_down \
+		or int(continuation.get("generation", -1)) != _orchestration_generation:
+		return false
+	var actor_value: Variant = continuation.get("actor")
+	if actor_value != null:
+		if not is_instance_valid(actor_value):
+			return false
+		if bool(continuation.get("owns_current_actor", false)) \
+			and current_actor != actor_value:
+			return false
+	if require_executing_action:
+		var action_value: Variant = continuation.get("action")
+		if action_value != null and executing_action != action_value:
+			return false
+	return true
+
+
+func _invalidate_orchestration(shutting_down := false) -> void:
+	_orchestration_generation += 1
+	if shutting_down:
+		_orchestration_shutting_down = true
 
 
 func register_presentation(
@@ -235,6 +276,7 @@ func _cancel_active_actor_state(combatant: BattleCombatant = null) -> void:
 	if _canceling_active_actor_state:
 		return
 	_canceling_active_actor_state = true
+	_invalidate_orchestration()
 	_clear_all_targeting_ui()
 	if focused_button:
 		release_focused_button()
@@ -288,14 +330,18 @@ func change_state(new_state):
 	battle_state_changed.emit(current_state)
 
 func _ready():
+	var continuation := _capture_continuation()
 	UI.modulate.a = 0.0
 	await wait(0.1)
+	if not _continuation_is_current(continuation):
+		return
 	action_bar.action_selected.connect(_on_action_button_pressed)
 	action_bar.shift_button_pressed.connect(_on_shift_button_pressed)
 	current_action_panel.hide()
 
 
 func _exit_tree() -> void:
+	_invalidate_orchestration(true)
 	_clear_all_targeting_ui()
 	if is_instance_valid(action_bar):
 		action_bar.clear_active_hero()
@@ -394,25 +440,45 @@ func spawn_encounter(
 
 	print("Spawning complete.")
 	change_state(State.LOADING)
+	var continuation := _capture_continuation()
 	await _fade_in()
+	if not _continuation_is_current(continuation):
+		return
 	await wait(0.25)
+	if not _continuation_is_current(continuation):
+		return
 	await _flush_all_health_animations()
+	if not _continuation_is_current(continuation):
+		return
 	await wait(0.5)
+	if not _continuation_is_current(continuation):
+		return
 	await _apply_starting_passives()
+	if not _continuation_is_current(continuation):
+		return
 	_finalize_initial_ai_timing()
 	find_and_start_next_turn()
 
 func _apply_starting_passives() -> void:
 	print("--- Applying Starting Passives ---")
-
-	for actor in actor_list:
+	_prune_invalid_combatants()
+	var continuation := _capture_continuation()
+	var starting_actors: Array[BattleCombatant] = actor_list.duplicate()
+	for actor: BattleCombatant in starting_actors:
+		if not _continuation_is_current(continuation):
+			return
+		if not is_instance_valid(actor):
+			continue
 		if actor is HeroCombatant and not actor.is_defeated:
 			await _apply_role_passive(actor as HeroCombatant)
+			if not _continuation_is_current(continuation):
+				return
 	print("--- Starting Passives Applied ---")
 	return
 
 
 func _configure_battle_ct_speed_scale() -> void:
+	_prune_invalid_combatants()
 	var raw_speeds: Array = []
 	for actor: BattleCombatant in actor_list:
 		if is_instance_valid(actor) and not actor.is_defeated:
@@ -424,6 +490,7 @@ func _configure_battle_ct_speed_scale() -> void:
 
 
 func _apply_initial_ct_head_starts(test_rolls: Array = []) -> void:
+	_prune_invalid_combatants()
 	for index in actor_list.size():
 		var actor := actor_list[index]
 		if not is_instance_valid(actor) or actor.is_defeated:
@@ -469,12 +536,14 @@ func _award_victory_xp(amount: int) -> void:
 
 
 func _finalize_initial_ai_timing(head_start_rolls: Array = []) -> void:
+	_prune_invalid_combatants()
 	current_actor = null
 	_configure_battle_ct_speed_scale()
 	_apply_initial_ct_head_starts(head_start_rolls)
 	_update_all_enemy_intents()
 
 func _run_ct_simulation(num_turns := 10, ct_adjustments: Dictionary = {}) -> Array:
+	_prune_invalid_combatants()
 	return CTBSimulator.project(actor_list, TARGET_CT, num_turns, ct_adjustments)
 
 
@@ -489,12 +558,17 @@ func _display_projection(
 	return projection
 
 func find_and_start_next_turn():
+	_prune_invalid_combatants()
 	executing_action = null
 	_clear_executing_action_recovery()
 	if current_state == State.BATTLE_OVER:
 		return
-	if current_actor:
-		await _set_actor_acting(current_actor, false)
+	var outgoing_actor := current_actor
+	var continuation := _capture_continuation(outgoing_actor)
+	if is_instance_valid(outgoing_actor):
+		await _set_actor_acting(outgoing_actor, false)
+		if not _continuation_is_current(continuation):
+			return
 	change_state(State.LOADING)
 
 	var projection := _run_ct_simulation()
@@ -507,52 +581,91 @@ func find_and_start_next_turn():
 	var winner := first_turn_data.actor as BattleCombatant
 	var real_ticks_passed = first_turn_data.ticks_needed
 
-	for actor in actor_list:
+	for actor: BattleCombatant in actor_list:
+		if not is_instance_valid(actor):
+			continue
 		actor.current_ct += actor.get_ct_speed() * real_ticks_passed
 
+	if not is_instance_valid(winner):
+		return
 	winner.current_ct = 0
 	current_actor = winner
+	continuation = _capture_continuation(winner)
 	_publish_turn_order(TurnOrderUpdate.ADVANCE)
 	await _set_actor_acting(winner, true)
+	if not _continuation_is_current(continuation):
+		return
 	if winner is HeroCombatant:
 		if action_bar.sliding:
 			await action_bar.slide_finished
+			if not _continuation_is_current(continuation):
+				return
 		change_state(State.PLAYER_ACTION)
 		await winner.on_turn_started()
+		if not _continuation_is_current(continuation):
+			return
 		await action_bar.load_actions(winner as HeroCombatant, false)
+		if not _continuation_is_current(continuation):
+			return
 		await _flush_all_health_animations()
+		if not _continuation_is_current(continuation):
+			return
 	else:
 		change_state(State.ENEMY_ACTION)
 		await winner.on_turn_started()
+		if not _continuation_is_current(continuation):
+			return
 		await _flush_all_health_animations()
+		if not _continuation_is_current(continuation):
+			return
 		await execute_enemy_turn(winner)
+		if not _continuation_is_current(continuation):
+			return
 		await winner.on_turn_ended()
+		if not _continuation_is_current(continuation):
+			return
 		await _set_actor_acting(winner, false)
+		if not _continuation_is_current(continuation):
+			return
 		current_actor = null
+		continuation = _capture_continuation(winner)
 		if await _check_if_battle_ended():
+			return
+		if not _continuation_is_current(continuation):
 			return
 		change_state(State.LOADING)
 		if is_instance_valid(winner) and not winner.is_defeated:
 			(winner as EnemyCombatant).decide_intent(_enemy_ai_context())
 		await wait(0.5)
+		if not _continuation_is_current(continuation):
+			return
 		find_and_start_next_turn()
 
 func _on_combatant_breached(breached: BattleCombatant) -> void:
+	_prune_invalid_combatants()
+	if not is_instance_valid(breached):
+		return
+	var continuation := _capture_continuation(breached)
 	print("\n Actor was Breached -> New Queue: ")
 	update_turn_order()
 	if breached is EnemyCombatant \
 		and (breached as EnemyCombatant).recover_action != null \
 		and (breached != current_actor or current_state != State.EXECUTING_ACTION):
 		(breached as EnemyCombatant).decide_intent(_enemy_ai_context())
-	for observer: BattleCombatant in actor_list:
+	var observers: Array[BattleCombatant] = actor_list.duplicate()
+	for observer: BattleCombatant in observers:
 		if not is_instance_valid(observer):
 			continue
 		if observer.is_defeated or observer.faction == breached.faction:
 			continue
+		var observer_continuation := _capture_continuation(observer)
 		await observer._fire_condition_event(
 			Trigger.TriggerType.ON_ENEMY_BREACHED,
 			{"target": breached, "targets": [breached]},
 		)
+		if not _continuation_is_current(continuation) \
+			or not _continuation_is_current(observer_continuation):
+			return
 
 func update_turn_order() -> void:
 	_publish_turn_order(TurnOrderUpdate.REFRESH)
@@ -577,6 +690,7 @@ func _clear_executing_action_recovery() -> void:
 	executing_action_ends_turn = false
 
 func _enemy_ai_context() -> EnemyAIContext:
+	_prune_invalid_combatants()
 	var ticks := {}
 	for actor: BattleCombatant in actor_list:
 		if not is_instance_valid(actor) or actor.is_defeated:
@@ -618,6 +732,9 @@ func _refresh_all_enemy_intent_presentations() -> void:
 			presentation.refresh_intent()
 
 func _on_actor_died(actor: BattleCombatant):
+	if not is_instance_valid(actor):
+		return
+	var continuation := _capture_continuation(actor)
 	print(actor.actor_name, " has died. Removing from actor_list.")
 	actor.is_valid_target = false
 	_set_target_state(actor, CombatantPresentation.TargetState.NORMAL)
@@ -630,10 +747,15 @@ func _on_actor_died(actor: BattleCombatant):
 	target_invalidated.emit(actor)
 	if await _check_if_battle_ended():
 		return
+	if not _continuation_is_current(continuation):
+		return
 	_revalidate_all_enemy_intent_targets()
 	update_turn_order()
 
 func _on_actor_revived(actor: BattleCombatant):
+	_prune_invalid_combatants()
+	if not is_instance_valid(actor):
+		return
 	print(actor.actor_name, " has revived! Adding back to actor_list.")
 
 	if actor_list.has(actor):
@@ -768,38 +890,60 @@ func _reset_action_button_presentation(button: ActionButton) -> void:
 func _finish_hero_turn():
 	if current_state == State.BATTLE_OVER:
 		return
+	var finished_actor := current_actor
+	if not is_instance_valid(finished_actor) or not finished_actor is HeroCombatant:
+		return
 	var finished_action := executing_action
+	var continuation := _capture_continuation(finished_actor, finished_action)
 	var is_shift_action := finished_action != null and finished_action.is_shift_action
 	if focused_button:
 		release_focused_button()
 	executing_action = null
 	change_state(BattleManager.State.PLAYER_ACTION)
 	if is_shift_action:
-		await _finish_shift_reactions(current_actor as HeroCombatant)
+		await _finish_shift_reactions(finished_actor as HeroCombatant)
+		if not _continuation_is_current(continuation):
+			return
 	else:
-		await current_actor.on_turn_ended()
+		await finished_actor.on_turn_ended()
+		if not _continuation_is_current(continuation):
+			return
 		find_and_start_next_turn()
 	await wait()
+	if not _continuation_is_current(continuation):
+		return
 
 
 func _finish_shift_reactions(hero: HeroCombatant) -> void:
-	if _pending_after_shift_action != hero:
+	if not is_instance_valid(hero) or _pending_after_shift_action != hero:
 		return
+	var continuation := _capture_continuation(hero)
 	_pending_after_shift_action = null
 	await hero._fire_condition_event(Trigger.TriggerType.AFTER_SHIFT_ACTION)
+	if not _continuation_is_current(continuation):
+		return
 	update_turn_order()
 
 func _apply_role_passive(hero: HeroCombatant):
+	if not is_instance_valid(hero):
+		return
 	current_actor = hero
+	var continuation := _capture_continuation(hero)
 	var current_role = hero.get_current_role()
 	if current_role and current_role.passive:
 		var action: Action = current_role.passive
+		continuation["action"] = action
 		print("Applying passive: ", action.action_name, " to ", hero.actor_name)
 		await execute_action(hero, action, [hero], false)
+		if not _continuation_is_current(continuation, true):
+			return
 		if executing_action == action:
 			executing_action = null
 
 func execute_action(actor: BattleCombatant, action: Action, targets: Array[BattleCombatant], display_name: bool = true, ends_turn: bool = false):
+	if not is_instance_valid(actor) or action == null:
+		return
+	var continuation := _capture_continuation(actor, action)
 	var paid_focus_cost := action.focus_cost
 	if actor is HeroCombatant:
 		paid_focus_cost = (actor as HeroCombatant).get_scaled_focus_cost(action.focus_cost)
@@ -809,6 +953,8 @@ func execute_action(actor: BattleCombatant, action: Action, targets: Array[Battl
 			-paid_focus_cost,
 			{"paid_focus_cost": paid_focus_cost, "action": action},
 		)
+		if not _continuation_is_current(continuation):
+			return
 	var action_context := {"paid_focus_cost": paid_focus_cost}
 	var parent_targets: Array[BattleCombatant] = targets
 	executing_action = action
@@ -823,35 +969,56 @@ func execute_action(actor: BattleCombatant, action: Action, targets: Array[Battl
 		if display_name:
 			_show_action(actor, action.action_name)
 			await wait(0.25)
+			if not _continuation_is_current(continuation, true):
+				return
 		if action.is_shift_action:
 			action_bar.stop_flashing_panel()
 	var actor_name = actor.actor_name
 	print(actor_name, " uses ", action.action_name)
 
 	for effect in action.effects:
+		if not _continuation_is_current(continuation, true):
+			return
 		if effect.target_type in [Action.TargetType.ALL_ALLIES, Action.TargetType.ALL_ENEMIES, Action.TargetType.ALLIES_ONLY, Action.TargetType.LEAST_GUARD_ALLY, Action.TargetType.LEAST_FOCUS_ALLY]:
 			var revives_defeated := effect is Effect_Healing and (effect as Effect_Healing).is_revive
 			targets = get_targets(effect.target_type, actor is HeroCombatant, [], null, revives_defeated)
 		else:
 			if effect.target_type == Action.TargetType.SELF:
-				targets = [current_actor]
+				targets = [actor]
 			else:
 				targets = parent_targets
 		await effect.execute(actor, targets, self, action, action_context)
+		if not _continuation_is_current(continuation, true):
+			return
 	if action.is_attack:
 		var context = { "targets": targets, "action": action }
 		await actor._fire_condition_event(Trigger.TriggerType.AFTER_ATTACKING, context)
+		if not _continuation_is_current(continuation, true):
+			return
 		await _flush_all_health_animations()
+		if not _continuation_is_current(continuation, true):
+			return
 	if display_name:
 		await _hide_action(actor)
+		if not _continuation_is_current(continuation, true):
+			return
 	await _flush_all_health_animations()
+	if not _continuation_is_current(continuation, true):
+		return
 	_apply_executing_action_recovery(actor)
 	return
 
 func execute_triggered_effect(actor: BattleCombatant, effect: ActionEffect, targets: Array[BattleCombatant], action: Action, context: Dictionary = {}):
+	if not is_instance_valid(actor) or effect == null:
+		return
+	var continuation := _capture_continuation(actor, action)
 	await effect.execute(actor, targets, self, action, context)
+	if not _continuation_is_current(continuation):
+		return
 
 func execute_enemy_turn(enemy: EnemyCombatant) -> void:
+	if not is_instance_valid(enemy):
+		return
 	change_state(State.EXECUTING_ACTION)
 	print("\n", enemy.actor_name, " is executing its turn!")
 	var context := _enemy_ai_context()
@@ -866,6 +1033,7 @@ func execute_enemy_turn(enemy: EnemyCombatant) -> void:
 		return
 
 	var action := enemy.intended_action
+	var continuation := _capture_continuation(enemy, action)
 	var targets: Array[BattleCombatant] = []
 	targets.assign(enemy.intended_targets)
 
@@ -875,14 +1043,21 @@ func execute_enemy_turn(enemy: EnemyCombatant) -> void:
 		_clear_executing_action_recovery()
 		return
 
+	executing_action = action
 	var used_ability_id := enemy.intended_decision.ability.ability_id \
 		if enemy.intended_decision.ability != null else &""
 	_show_action(enemy, action.action_name)
 	await wait(0.5)
+	if not _continuation_is_current(continuation, true):
+		return
 	await execute_action(enemy, action, targets, true, true)
+	if not _continuation_is_current(continuation, true):
+		return
 	if current_state == State.BATTLE_OVER:
 		return
 	await wait(0.15)
+	if not _continuation_is_current(continuation, true):
+		return
 	enemy.clear_intent()
 	enemy.complete_ai_turn(used_ability_id)
 	return
@@ -907,6 +1082,7 @@ func _is_enemy_decision_executable(enemy: EnemyCombatant, context: EnemyAIContex
 	return rule.selector.targets_are_legal(enemy, decision.targets, context)
 
 func get_living_heroes() -> Array[HeroCombatant]:
+	_prune_invalid_combatants()
 	var living_heroes: Array[HeroCombatant] = []
 	for actor: BattleCombatant in actor_list:
 		if actor is HeroCombatant and not actor.is_defeated:
@@ -914,6 +1090,7 @@ func get_living_heroes() -> Array[HeroCombatant]:
 	return living_heroes
 
 func get_living_enemies() -> Array[EnemyCombatant]:
+	_prune_invalid_combatants()
 	var living_enemies: Array[EnemyCombatant] = []
 	for actor: BattleCombatant in actor_list:
 		if actor is EnemyCombatant and not actor.is_defeated:
@@ -995,39 +1172,57 @@ func _on_action_button_pressed(button: ActionButton):
 func _on_hero_clicked(target_hero: HeroCombatant):
 	if executing_action: return
 	if not target_hero.is_valid_target: return
+	var actor := current_actor
+	var action := current_action
+	if not is_instance_valid(actor) or action == null:
+		return
+	var continuation := _capture_continuation(actor, action)
 
 	print("Target selected: ", target_hero.actor_name)
 	change_state(State.EXECUTING_ACTION)
-	if not current_action.is_shift_action:
+	if not action.is_shift_action:
 		action_bar.hide_bar()
 
 	var target_list: Array[BattleCombatant] = [target_hero]
-	await execute_action(current_actor, current_action, target_list, true, not current_action.is_shift_action)
+	await execute_action(actor, action, target_list, true, not action.is_shift_action)
+	if not _continuation_is_current(continuation, true):
+		return
 	await _finish_hero_turn()
+	if not _continuation_is_current(continuation):
+		return
 
 func _on_enemy_clicked(target_enemy: EnemyCombatant):
 	if executing_action: return
 	if not target_enemy.is_valid_target: return
+	var actor := current_actor
+	var action := current_action
+	if not is_instance_valid(actor) or action == null:
+		return
+	var continuation := _capture_continuation(actor, action)
 
 	if target_enemy.is_defeated:
 			print("Target is already defeated.")
 			return
 
 	change_state(State.EXECUTING_ACTION)
-	if not current_action.is_shift_action:
+	if not action.is_shift_action:
 		action_bar.hide_bar()
 
 	var targets_array: Array[BattleCombatant] = []
 
-	match current_action.target_type:
+	match action.target_type:
 		Action.TargetType.ONE_ENEMY:
 			targets_array.append(target_enemy)
 
 		Action.TargetType.ALL_ENEMIES, Action.TargetType.RANDOM_ENEMY:
 			targets_array.assign(get_living_enemies())
 
-	await execute_action(current_actor, current_action, targets_array, true, not current_action.is_shift_action)
+	await execute_action(actor, action, targets_array, true, not action.is_shift_action)
+	if not _continuation_is_current(continuation, true):
+		return
 	await _finish_hero_turn()
+	if not _continuation_is_current(continuation):
+		return
 
 func _on_target_hovered(actor: BattleCombatant) -> void:
 	target_hovered.emit(actor)
@@ -1046,6 +1241,9 @@ func _on_target_pressed(actor: BattleCombatant) -> void:
 func _on_shift_button_pressed(direction: String):
 	var current_hero := current_actor as HeroCombatant
 	if current_state in [State.LOADING, State.FORCED_TARGET]: return
+	if not is_instance_valid(current_hero):
+		return
+	var continuation := _capture_continuation(current_hero)
 	_clear_all_targeting_ui()
 	if focused_button:
 		release_focused_button()
@@ -1055,12 +1253,20 @@ func _on_shift_button_pressed(direction: String):
 	current_action = null
 	AudioManager.play_sfx("radiate")
 	await action_bar.slide_out()
-	await current_actor.shift_role(direction)
+	if not _continuation_is_current(continuation):
+		return
+	await current_hero.shift_role(direction)
+	if not _continuation_is_current(continuation):
+		return
 	_pending_after_shift_action = current_hero
 	update_turn_order()
 	action_bar.update_action_bar(current_hero, true)
 	await action_bar.slide_in()
+	if not _continuation_is_current(continuation):
+		return
 	await _apply_role_passive(current_hero)
+	if not _continuation_is_current(continuation):
+		return
 	print("Shift complete. Returning to player's action.")
 	if current_hero.get_current_role().shift_action:
 		var action = current_hero.get_current_role().shift_action
@@ -1070,12 +1276,17 @@ func _on_shift_button_pressed(direction: String):
 				action.target_type, true, [], null, action.can_revive_targets,
 			)
 
-			await execute_action(current_actor, action, target_list)
+			continuation["action"] = action
+			await execute_action(current_hero, action, target_list)
+			if not _continuation_is_current(continuation, true):
+				return
 			if current_state == State.BATTLE_OVER:
 				_pending_after_shift_action = null
 				executing_action = null
 				return
 			await _finish_shift_reactions(current_hero)
+			if not _continuation_is_current(continuation):
+				return
 			executing_action = null
 			change_state(State.PLAYER_ACTION)
 			return
@@ -1085,6 +1296,8 @@ func _on_shift_button_pressed(direction: String):
 		set_current_action(action)
 	else:
 		await _finish_shift_reactions(current_hero)
+		if not _continuation_is_current(continuation):
+			return
 		change_state(State.PLAYER_ACTION)
 
 func get_targets(
@@ -1152,6 +1365,7 @@ func get_targets(
 	return target_list
 
 func _flush_all_health_animations() -> void:
+	var continuation := _capture_continuation(current_actor, executing_action)
 	var tweens_to_await = []
 	for actor: BattleCombatant in _all_combatants_with_presentations():
 		var presentation := presentation_for(actor)
@@ -1164,6 +1378,8 @@ func _flush_all_health_animations() -> void:
 
 	for tween in tweens_to_await:
 		await tween.finished
+		if not _continuation_is_current(continuation):
+			return
 
 func _clear_all_targeting_ui():
 	for actor: BattleCombatant in _all_combatants_with_presentations():
@@ -1283,6 +1499,7 @@ func _get_rich_description(action: Action, target: BattleCombatant = null) -> St
 func _check_if_battle_ended() -> bool:
 	if current_state == State.BATTLE_OVER:
 		return true
+	var continuation := _capture_continuation(current_actor, executing_action)
 	var heroes_alive = not get_living_heroes().is_empty()
 	var enemies_alive = not get_living_enemies().is_empty()
 
@@ -1295,7 +1512,11 @@ func _check_if_battle_ended() -> bool:
 		var xp_reward = 150
 		_award_victory_xp(xp_reward)
 		await wait(0.5)
+		if not _continuation_is_current(continuation):
+			return false
 		await _fade_out()
+		if not _continuation_is_current(continuation):
+			return false
 		battle_ended.emit(true)
 		return true
 
@@ -1305,8 +1526,14 @@ func _check_if_battle_ended() -> bool:
 		change_state(State.BATTLE_OVER)
 		AudioManager.stop_music(2.0)
 		await wait(0.5)
+		if not _continuation_is_current(continuation):
+			return false
 		await _fade_out()
+		if not _continuation_is_current(continuation):
+			return false
 		await wait(2.0)
+		if not _continuation_is_current(continuation):
+			return false
 		battle_ended.emit(false) # Player Lost
 		return true
 

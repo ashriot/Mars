@@ -81,6 +81,7 @@ func load_actions(hero: HeroCombatant, shifted: bool = false):
 	if not active_hero.presentation_event.is_connected(_on_hero_presentation_event):
 		active_hero.presentation_event.connect(_on_hero_presentation_event)
 	update_action_bar(active_hero, shifted)
+	_synchronize_availability()
 	await slide_in()
 
 
@@ -97,6 +98,7 @@ func clear_active_hero(hero: HeroCombatant = null) -> void:
 	if flashing_tween and flashing_tween.is_running():
 		flashing_tween.kill()
 	flashing_tween = null
+	_synchronize_availability()
 
 
 func hide_bar():
@@ -309,15 +311,27 @@ func stop_flashing_panel():
 	shift_action_panel.modulate.a = 0.5
 
 func _on_state_changed(state: BattleManager.State):
-	if not active_hero: return
 	buttons_disabled = state in [BattleManager.State.FORCED_TARGET]
-	for button in actions_ui.get_children():
-		if button is ActionButton:
-			button.override_disabled = buttons_disabled
-	left_shift_button.disabled = buttons_disabled or active_hero.shifted_this_turn
-	right_shift_button.disabled = buttons_disabled or active_hero.shifted_this_turn
-	$LeftShift/DynamicGlyph.modulate.a = 0.33 if left_shift_button.disabled else 1.0
-	$RightShift/DynamicGlyph.modulate.a = 0.33 if right_shift_button.disabled else 1.0
+	_synchronize_availability()
+
+
+func _synchronize_availability() -> void:
+	var hero_available := is_instance_valid(active_hero)
+	if is_instance_valid(actions_ui):
+		for button in actions_ui.get_children():
+			if button is ActionButton:
+				button.override_disabled = buttons_disabled or not hero_available
+	var shifted := active_hero.shifted_this_turn if hero_available else false
+	if is_instance_valid(left_shift_button):
+		left_shift_button.disabled = buttons_disabled or not hero_available or shifted
+	if is_instance_valid(right_shift_button):
+		right_shift_button.disabled = buttons_disabled or not hero_available or shifted
+	var left_glyph := get_node_or_null("LeftShift/DynamicGlyph") as Control
+	var right_glyph := get_node_or_null("RightShift/DynamicGlyph") as Control
+	if left_glyph != null:
+		left_glyph.modulate.a = 0.33 if left_shift_button.disabled else 1.0
+	if right_glyph != null:
+		right_glyph.modulate.a = 0.33 if right_shift_button.disabled else 1.0
 	availability_changed.emit()
 
 func slide_in(duration: float = 0.2):

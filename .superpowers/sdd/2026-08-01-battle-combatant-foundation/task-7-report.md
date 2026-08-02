@@ -294,3 +294,72 @@ The unrelated user edit in `src/dev/endgame_battle_lab.tscn` was preserved and w
 - Confirmed final-target invalidation preserves an available alternative and otherwise retains enough selection state for either controller cancellation path to work.
 - Confirmed the preserved dirty lab scene was not edited, restored, staged, or committed.
 - No interactive visual or physical-controller acceptance was performed. This round changes lifecycle, input-safety, and typing foundations without changing the current 2D presentation.
+
+## Fix Round 3
+
+Commit: recorded separately from the original Task 7 and prior fix commits.
+
+### Findings addressed
+
+- Added an orchestration generation boundary to `BattleManager`. Active-actor cancellation increments the generation before clearing shared action/input state, and manager exit increments it and marks shutdown before teardown. Suspended continuations therefore resume only to validate their captured generation, actor, turn ownership, and (where applicable) executing action, then return quietly when ownership has expired.
+- Captured lexical actor/action identities around hero and enemy target selection, effect execution, turn finishing, enemy cooldown completion and replanning, shift slide/role/passive/automatic/targeted flows, breach reactions, health/presentation waits, startup passives, and battle-result fades. Nested triggered effects share the current generation and never invalidate their parent merely by executing; source-less condition reactions may legitimately carry a null `Action`.
+- Made a locked enemy action authoritative before the pre-action delay. This gives the enemy continuation strict action ownership even when a test or alternate executor overrides `execute_action`, while cancellation still clears that ownership atomically.
+- Decoupled ActionBar's forced-target latch from `active_hero`. State transitions now update the logical latch even while no hero is assigned, and hero clear/load synchronizes action overrides, shift buttons, and shift glyph opacity. A replacement hero can immediately use face-button and shift input after the prior forced-target hero leaves.
+- Pruned invalid combatants at model-authority entry points rather than relying on presentation registry lookup. CT simulation/projection, real turn selection and advancement, living-faction queries, enemy AI context, starting passives, speed scaling, initial CT head starts/final timing, breach, and revival now sanitize the authoritative roster before indexing or dereferencing it.
+
+### TDD and mutation evidence
+
+1. Suspended manager continuations:
+   - RED: `battle_controller_navigation` was 71/75 passing with 396/405 assertions. Removing a hero during a held action still finished/advanced and dereferenced the removed actor; removing during `slide_out` still called `shift_role`; removing an enemy during its pre-action wait still completed cooldown, replanned intent, and recursed; manager teardown still ran a later action effect.
+   - GREEN after generation and ownership guards: 75/75 passing, 403 assertions. All four real suspended paths resume their dependency without post-cancellation turn/state mutation or engine errors.
+2. ActionBar forced-target replacement:
+   - RED: 75/76 passing with 406/411 assertions. `buttons_disabled`, the first action override, and the shift control remained latched, so neither face-button nor shift input emitted.
+   - GREEN after state-independent synchronization: 76/76 passing, 411 assertions. The replacement hero's action and right-shift inputs both emit immediately.
+3. Headless roster authority:
+   - The test overrides acting presentation lookup away, frees an off-tree registered model, then enters the real find/CTB path and reads the real AI context.
+   - Mutation RED after removing explicit turn/CTB pruning: `ctb_simulator` was 20/21 passing with 58/59 assertions; the freed object remained in `actor_list` after the valid hero advanced.
+   - GREEN after restoring authority pruning: 21/21 passing, 59 assertions. The stale entry and callback are removed, the valid hero owns `PLAYER_ACTION`, the AI context contains only that hero, and no engine error occurs.
+4. Completion audit found and corrected two normal-flow ownership details:
+   - Enemy turn handoff intentionally clears `current_actor` before battle-end evaluation, so its continuation is recaptured as actor-valid but no longer current-turn-owning before that await.
+   - Strict action validation initially exposed two alternate-executor AI tests (21/23 passing, 68/71 assertions). Claiming the locked enemy action before its first wait restored the full `enemy_ai_intents` suite to 23/23 passing, 71 assertions without weakening cancellation checks.
+
+### Await and roster audit
+
+- Guarded yielding orchestration: manager readiness; encounter fade/waits/health/start passives; outgoing and incoming acting presentation; ActionBar slide/load; hero and enemy turn-start/end triggers; enemy execution and recursive handoff; breach observers; defeat/battle-end continuations; hero focus payment; every action effect; after-attacking triggers; action-label hide and health flush; triggered effects; selected hero/enemy execution; hero turn finish; shift slide, role change, passive, auto action, forced-target setup, and after-shift reactions.
+- Every guarded continuation validates after each yielding await before its next actor dereference, shared action/state mutation, cooldown/intent update, turn transition, or recursive turn search. Low-level delay/fade helpers and presentation helpers have no manager mutation after their own terminal await; their orchestration callers perform the ownership check.
+- Audited roster dereferences: starting passive snapshot, CT speed scaling, head starts, CT projection and live advancement, breach observer snapshot, AI ticks/context, living hero/enemy filters, revival insertion, targeting, descriptions, health presentation enumeration, and battle-end checks. Authority entry points prune first; post-await snapshots validate actors before reuse.
+
+### Fix Round 3 final verification
+
+Every Godot invocation used `HOME=/tmp/mars-godot-home` and Godot 4.6.3.
+
+- Headless editor parse (`--editor --quit`): exit 0 with no parser errors.
+- `battle_controller_navigation`: 76/76 passing, 411 assertions.
+- `ctb_simulator`: 21/21 passing, 59 assertions.
+- `enemy_ai_intents`: 23/23 passing, 71 assertions.
+- `battle_revival`: 6/6 passing, 27 assertions.
+- `controller_playable_loop`: 2/2 passing, 104 assertions.
+- `endgame_battle_lab`: 6/7 passing, 176/177 assertions. The sole failure remains the preserved user scene's `enemy_hp_multiplier = 1.0` versus the committed test expectation of `5.0`.
+- Final complete GUT suite: 916/917 passing, 14,483/14,484 assertions across 68 scripts. The same unrelated dirty lab-scene expectation is the only failure.
+- Discovery audit: the repository contains exactly 68 `test_*.gd` files and GUT discovered exactly 68 scripts. No `pending`, `skip`, `should_skip_script`, or `should_skip_test` markers were found.
+- Full-run hazard review found no parser errors, crashes, unexpected failures, skipped tests, or pending tests. The three ignored-inner-class warnings, expected test errors, macOS certificate-store warning, and documented successful-test shutdown resource diagnostics are unchanged.
+- Target/card type scan found no card-typed gameplay arrays. The two `get_targets` assignments reported by the broad inferred-local scan assign into explicitly typed `Array[BattleCombatant]` variables.
+- `git diff --check`: clean.
+
+### Fix Round 3 files changed
+
+- `src/battle/action_bar.gd`
+- `src/battle/battle_manager.gd`
+- `test/integration/test_battle_controller_navigation.gd`
+- `test/unit/test_ctb_simulator.gd`
+
+The unrelated user edit in `src/dev/endgame_battle_lab.tscn` was preserved and will remain excluded from the fix commit.
+
+### Fix Round 3 self-review and remaining concerns
+
+- Confirmed generation changes occur only at cancellation/teardown boundaries; nested action and condition execution does not invalidate itself.
+- Confirmed canceled action, shift, enemy-turn, and manager-teardown continuations do not finish the turn, advance CT, complete cooldowns, replan intent, recurse, or dereference their removed owner after resuming.
+- Confirmed ActionBar logical state can update without a hero while its physical controls remain unavailable until a valid replacement is loaded and synchronized.
+- Confirmed headless combatants are pruned through model authority even when no presentation lookup can run.
+- Confirmed the preserved dirty lab scene was not edited, restored, staged, or committed.
+- No interactive visual or physical-controller acceptance was performed. This round changes lifecycle and input-state foundations without changing the current presentation.

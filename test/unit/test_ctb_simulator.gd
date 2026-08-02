@@ -48,6 +48,11 @@ class AdvancementBattleManager extends BattleManager:
 		return false
 
 
+class HeadlessAdvancementBattleManager extends AdvancementBattleManager:
+	func _set_actor_acting(_combatant: BattleCombatant, _active: bool) -> void:
+		return
+
+
 class PublishingBattleManager extends BattleManager:
 	func _flush_all_health_animations() -> void:
 		return
@@ -416,6 +421,35 @@ func test_live_advancement_matches_projected_normalized_ticks() -> void:
 	winner.free()
 	observer.free()
 	manager.action_bar.free()
+	manager.free()
+
+
+func test_turn_authority_prunes_freed_headless_model_before_ct_and_ai_reads() -> void:
+	var manager := HeadlessAdvancementBattleManager.new()
+	manager.action_bar = AdvancementActionBar.new()
+	manager.add_child(manager.action_bar)
+	var stale := EnemyCombatant.new()
+	stale.setup_base(ActorStats.new(), BattleCombatant.Faction.ENEMY, manager)
+	stale.current_stats.speed = 400
+	stale.current_ct = manager.TARGET_CT
+	manager._connect_combatant_signals(stale)
+	var valid := AdvancementHero.new()
+	valid.setup_base(ActorStats.new(), BattleCombatant.Faction.HERO, manager)
+	valid.current_stats.speed = 100
+	valid.current_ct = manager.TARGET_CT
+	manager.add_child(valid)
+	manager.actor_list = [stale, valid]
+	stale.free()
+
+	await manager.find_and_start_next_turn()
+	assert_eq(manager.actor_list, [valid])
+	assert_same(manager.current_actor, valid)
+	assert_eq(manager.current_state, BattleManager.State.PLAYER_ACTION)
+
+	var context := manager._enemy_ai_context()
+	assert_eq(context.heroes, [valid])
+	assert_true(context.enemies.is_empty())
+	assert_engine_error_count(0)
 	manager.free()
 
 
