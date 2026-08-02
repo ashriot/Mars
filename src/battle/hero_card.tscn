@@ -10,6 +10,7 @@
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="8_0mfya"]
 [ext_resource type="Texture2D" uid="uid://bi50x3lsg4gpg" path="res://assets/graphics/icons/textures/shield.png" id="9_0mfya"]
 [ext_resource type="Script" uid="uid://m4vn3jl6sqd6" path="res://src/core/rich_tooltip.gd" id="12_tvdfu"]
+[ext_resource type="Script" uid="uid://mfxysoisklst" path="res://src/battle/presentation/card_combatant_presentation.gd" id="13_presentation"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_nheih"]
 bg_color = Color(0.6, 0.6, 0.6, 0)
@@ -103,6 +104,9 @@ slide_offset_y = -50
 damage_popup_scene = ExtResource("2_nheih")
 buff_scene = ExtResource("3_wyvcu")
 debuff_scene = ExtResource("7_ha0bt")
+
+[node name="CombatantPresentation" type="Node" parent="."]
+script = ExtResource("13_presentation")
 
 [node name="Panel" type="Panel" parent="." unique_id=428660112]
 layout_mode = 1

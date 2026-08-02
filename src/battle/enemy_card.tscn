@@ -13,6 +13,7 @@
 [ext_resource type="Texture2D" uid="uid://dltm5gttkde6o" path="res://assets/graphics/icons/textures/energy.png" id="10_mu8yp"]
 [ext_resource type="Texture2D" uid="uid://blq6w453dyibk" path="res://assets/graphics/sprites/enemies/camera-drone.png" id="12_mu8yp"]
 [ext_resource type="Script" uid="uid://m4vn3jl6sqd6" path="res://src/core/rich_tooltip.gd" id="13_mu8yp"]
+[ext_resource type="Script" uid="uid://mfxysoisklst" path="res://src/battle/presentation/card_combatant_presentation.gd" id="14_presentation"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8i7ma"]
 bg_color = Color(0.6, 0.6, 0.6, 0)
@@ -103,6 +104,9 @@ recover_action = ExtResource("2_dmmmv")
 damage_popup_scene = ExtResource("2_xkcvw")
 buff_scene = ExtResource("3_pdx0h")
 debuff_scene = ExtResource("3_1mnyd")
+
+[node name="CombatantPresentation" type="Node" parent="."]
+script = ExtResource("14_presentation")
 
 [node name="Panel" type="Panel" parent="." unique_id=1383817375]
 layout_mode = 1

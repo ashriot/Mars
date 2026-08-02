@@ -39,31 +39,58 @@ const MAX_GUARD = 10
 @onready var next_panel: Panel = $Panel/NextPanel
 @onready var debuffs_panel: Control = $Debuffs
 @onready var buffs_panel: Control = $Buffs
+@onready var presentation := $CombatantPresentation as CardCombatantPresentation
 
 var battle_manager: BattleManager
-var is_valid_target: bool
 var pip_tweens: Dictionary = {}
 var _target_presentation := TargetPresentation.NORMAL
 var _target_pulse_tween: Tween
+var _combatant: BattleCombatant
+var combatant: BattleCombatant:
+	get: return _combatant
 
 # --- Data (Shared by both) ---
-var actor_name: String
 var stat_mods: Dictionary
 var stat_scalars: Dictionary
-var current_stats: ActorStats
-var current_hp: int
-var current_guard: int
-var current_ct: int = 0
-var ct_speed_scale := 1.0
-var battle_priority: int = 0
-var is_breached: bool
-var is_in_danger: bool
-var is_defeated: bool
-var _lethal_hit_reaction_depth := 0
-var active_conditions: Array[Condition] = []
-var active_traits: Array[Trait] = []
-var _condition_removal_batch_depth := 0
-var _condition_removal_batch_dirty := false
+var actor_name: String:
+	get: return _require_combatant().actor_name
+	set(value): _require_combatant().actor_name = value
+var current_stats: ActorStats:
+	get: return _require_combatant().current_stats
+	set(value): _require_combatant().current_stats = value
+var current_hp: int:
+	get: return _require_combatant().current_hp
+	set(value): _require_combatant().current_hp = value
+var current_guard: int:
+	get: return _require_combatant().current_guard
+	set(value): _require_combatant().current_guard = value
+var current_ct: int:
+	get: return _require_combatant().current_ct
+	set(value): _require_combatant().current_ct = value
+var ct_speed_scale: float:
+	get: return _require_combatant().ct_speed_scale
+	set(value): _require_combatant().ct_speed_scale = value
+var battle_priority: int:
+	get: return _require_combatant().battle_priority
+	set(value): _require_combatant().battle_priority = value
+var is_valid_target: bool:
+	get: return _require_combatant().is_valid_target
+	set(value): _require_combatant().is_valid_target = value
+var is_breached: bool:
+	get: return _require_combatant().is_breached
+	set(value): _require_combatant().is_breached = value
+var is_in_danger: bool:
+	get: return _require_combatant().is_in_danger
+	set(value): _require_combatant().is_in_danger = value
+var is_defeated: bool:
+	get: return _require_combatant().is_defeated
+	set(value): _require_combatant().is_defeated = value
+var active_conditions: Array[Condition]:
+	get: return _require_combatant().active_conditions
+	set(value): _require_combatant().active_conditions = value
+var active_traits: Array[Trait]:
+	get: return _require_combatant().active_traits
+	set(value): _require_combatant().active_traits = value
 
 # --- Animation Tweens ---
 var shake_tween: Tween
@@ -85,22 +112,46 @@ func _on_target_mouse_exited() -> void:
 	target_unhovered.emit(self)
 
 
-func setup_base(stats: ActorStats):
-	if not stats:
-		push_error("ActorCard was given null stats!")
+func bind_combatant(
+	value: BattleCombatant,
+	legacy_preview: bool = false,
+) -> void:
+	assert(value != null, "ActorCard requires a BattleCombatant.")
+	assert(_combatant == null, "ActorCard cannot be rebound to another BattleCombatant.")
+	_combatant = value
+	if legacy_preview:
 		return
-	battle_manager = get_parent().get_node("%BattleManager")
-	current_stats = stats
-	actor_name = stats.actor_name
+	_ensure_battle_manager()
+	presentation.card = self
+	presentation.bind(value)
+	value.hp_changed.connect(_on_combatant_hp_changed)
+	value.guard_changed.connect(_on_combatant_guard_changed)
+	value.conditions_changed.connect(_on_combatant_conditions_changed)
+	value.danger_changed.connect(_on_combatant_danger_changed)
+	value.breached.connect(_on_combatant_breached)
+	value.defeated.connect(_on_combatant_defeated)
+	value.revived.connect(_on_combatant_revived)
+	value.presentation_event.connect(_on_combatant_presentation_event)
+	_render_full_state()
+
+
+func _require_combatant() -> BattleCombatant:
+	assert(_combatant != null, "ActorCard requires a bound BattleCombatant.")
+	return _combatant
+
+
+func _ensure_battle_manager() -> void:
+	if battle_manager == null and get_parent() != null:
+		battle_manager = get_parent().get_node_or_null("%BattleManager") as BattleManager
+
+
+func _setup_card_visuals() -> void:
+	_require_combatant()
 	rich_tooltip.bbcode_text = current_stats._to_string()
 	hp_bar_ghost.max_value = current_stats.max_hp
-	current_hp = current_stats.max_hp
 	hp_bar_actual.max_value = current_stats.max_hp
-	current_guard = current_stats.starting_guard
 	panel_home_position = panel.position
 	breached_label.hide()
-	is_defeated = false
-	is_breached = false
 	highlight_panel.hide()
 	hp_bar_ghost.hide()
 	update_health_bar()
@@ -114,6 +165,105 @@ func setup_base(stats: ActorStats):
 		pip.get_child(0).set_pivot_offset(pip.size / 2.0)
 	update_guard_bar(false)
 	set_target_presentation(TargetPresentation.NORMAL)
+
+
+func _render_full_state() -> void:
+	if not is_node_ready():
+		return
+	rich_tooltip.bbcode_text = current_stats._to_string()
+	name_label.text = actor_name
+	hp_bar_ghost.max_value = current_stats.max_hp
+	hp_bar_actual.max_value = current_stats.max_hp
+	hp_bar_ghost.value = current_hp
+	hp_bar_actual.value = current_hp
+	hp_value.text = Utils.commafy(current_hp)
+	update_guard_bar(false)
+	_update_conditions_ui()
+	_render_danger_state()
+
+
+func _on_combatant_hp_changed(
+	_actor: BattleCombatant,
+	value: int,
+	max_value: int,
+) -> void:
+	hp_bar_actual.value = value
+	hp_value.text = Utils.commafy(value)
+	hp_changed.emit(value, max_value)
+
+
+func _on_combatant_guard_changed(_actor: BattleCombatant, value: int) -> void:
+	update_guard_bar()
+	armor_changed.emit(value)
+
+
+func _on_combatant_conditions_changed(_actor: BattleCombatant) -> void:
+	_update_conditions_ui()
+	actor_conditions_changed.emit()
+
+
+func _on_combatant_danger_changed(
+	_actor: BattleCombatant,
+	_value: bool,
+) -> void:
+	_render_danger_state()
+
+
+func _on_combatant_breached(_actor: BattleCombatant) -> void:
+	breached_label.text = "BREACHED"
+	guard_bar.modulate.a = 0.25
+	_start_breach_pulse()
+	shake_panel(1.0)
+	actor_breached.emit(self)
+
+
+func _on_combatant_defeated(_actor: BattleCombatant) -> void:
+	if breached_label.visible:
+		_stop_breach_pulse()
+	_show_defeated_visual()
+	actor_defeated.emit(self)
+
+
+func _on_combatant_revived(_actor: BattleCombatant) -> void:
+	_show_revived_visual()
+	actor_revived.emit(self)
+
+
+func _on_combatant_presentation_event(
+	_actor: BattleCombatant,
+	event: StringName,
+	payload: Dictionary,
+) -> void:
+	match event:
+		&"damage_received":
+			_spawn_damage_popup(
+				payload.result.final_damage,
+				payload.damage_type,
+				payload.result.is_critical,
+			)
+			spawn_particles.emit(get_global_rect().get_center(), "gunshot")
+			shake_panel(1.0)
+		&"healing_received":
+			hp_bar_ghost.value = current_hp
+		&"passive_fired":
+			if self is HeroCard:
+				(self as HeroCard).passive_fired.emit()
+
+
+func _render_danger_state() -> void:
+	breached_label.text = "VULNERABLE"
+	if is_in_danger:
+		_start_breach_pulse()
+	elif not is_breached:
+		_stop_breach_pulse()
+
+
+func _show_defeated_visual() -> void:
+	pass
+
+
+func _show_revived_visual() -> void:
+	pass
 
 func on_turn_started() -> void:
 	next_panel.hide()
@@ -134,159 +284,36 @@ func take_one_hit(
 	attacker: ActorCard,
 	resolved_damage_type: Action.DamageType,
 ) -> int:
-	if is_defeated:
-		return 0
-
-	var actual_damage := mini(result.final_damage, current_hp)
-	_spawn_damage_popup(
-		result.final_damage,
-		resolved_damage_type,
-		result.is_critical,
+	return await _require_combatant().take_one_hit(
+		result, damage_effect, attacker, resolved_damage_type,
 	)
-	var pos = get_global_rect().get_center()
-	spawn_particles.emit(pos, "gunshot")
-	current_hp -= actual_damage
-	hp_bar_actual.value = current_hp
-	hp_value.text = Utils.commafy(current_hp)
-	hp_changed.emit(current_hp, current_stats.max_hp)
-	print("Hit for ", result.final_damage, " damage!")
-	update_guard_bar()
-
-	var hit_was_lethal := current_hp == 0
-	if hit_was_lethal:
-		_lethal_hit_reaction_depth += 1
-	var event_context := {
-		"attacker": attacker,
-		"target": self,
-		"targets": [self],
-		"damage_result": result,
-		"attempted_damage": result.final_damage,
-		"actual_damage": actual_damage,
-		"resolved_damage_type": resolved_damage_type,
-		"is_critical": result.is_critical,
-		"was_breached": result.was_breached,
-		"source_effect": result.source_effect,
-		"source_action": result.source_action,
-	}
-	if resolved_damage_type == Action.DamageType.KINETIC:
-		await _fire_condition_event(Trigger.TriggerType.ON_TAKING_KINETIC_DAMAGE, event_context)
-	elif resolved_damage_type == Action.DamageType.ENERGY:
-		await _fire_condition_event(Trigger.TriggerType.ON_TAKING_ENERGY_DAMAGE, event_context)
-	if not damage_effect.is_indirect:
-		await _fire_condition_event(Trigger.TriggerType.ON_BEING_HIT, event_context)
-
-	if hit_was_lethal:
-		_lethal_hit_reaction_depth -= 1
-	if current_hp == 0 and not is_defeated:
-		await defeated()
-	return actual_damage
 
 func in_danger(value: bool):
-	is_in_danger = value
-	breached_label.text = "VULNERABLE"
-	if value:
-		_start_breach_pulse()
-	else:
-		_stop_breach_pulse()
+	await _require_combatant().in_danger(value)
 
 func breach():
-	is_breached = true
-	is_in_danger = false
-	breached_label.text = "BREACHED"
-	guard_bar.modulate.a = 0.25
-	current_ct = 0
-	print("Breached: ", actor_name, " -> CT: ", current_ct)
-	actor_breached.emit(self)
+	await _require_combatant().breach()
 	if is_instance_valid(battle_manager):
 		await battle_manager._on_actor_breached(self)
-	_start_breach_pulse()
-	shake_panel(1.0)
-	await _fire_condition_event(Trigger.TriggerType.ON_BREACHED)
 
 func take_healing(heal_amount: int, is_revive: bool = false):
-	if _lethal_hit_reaction_depth > 0 \
-		or (is_defeated and not is_revive) \
-		or heal_amount <= 0:
-		return
-
-	var new_hp = min(current_stats.max_hp, current_hp + heal_amount)
-
-	current_hp = new_hp
-	print(actor_name, " healed for ", heal_amount, ". HP is now: ", current_hp)
-	hp_bar_ghost.value = new_hp
-	hp_changed.emit(current_hp, current_stats.max_hp)
+	await _require_combatant().take_healing(heal_amount, is_revive)
 
 func add_condition(condition_resource: Condition):
-	if not condition_resource:
-		push_error("add_condition was called with a null resource!")
-		return
-
-	var _is_buff = condition_resource.condition_type == Condition.ConditionType.BUFF
-	var is_debuff = condition_resource.condition_type == Condition.ConditionType.DEBUFF
-	for active_cond in active_conditions:
-			for trigger in active_cond.triggers:
-				if trigger.trigger_type == Trigger.TriggerType.BEFORE_DEBUFF_RECEIVED and is_debuff:
-					print("Condition '", active_cond.condition_name, "' is blocking the new condition: ", condition_resource.condition_name)
-					for effect in trigger.effects_to_run:
-						await battle_manager.execute_triggered_effect(self, effect, [self], null, {})
-					return
-
-	if has_condition(condition_resource.condition_name):
-		return
-	var new_condition = condition_resource.duplicate(true)
-	new_condition.attacker = condition_resource.attacker
-	active_conditions.append(new_condition)
-	print(actor_name, " gained condition: ", new_condition.condition_name)
-
-	await _fire_condition_event(Trigger.TriggerType.ON_APPLIED)
-	actor_conditions_changed.emit()
-	_update_conditions_ui()
+	await _require_combatant().add_condition(condition_resource)
 
 func has_condition(condition_name: String) -> bool:
-	for condition in active_conditions:
-		if condition.condition_name == condition_name:
-			return true
-
-	return false
+	return _require_combatant().has_condition(condition_name)
 
 func remove_condition(condition_name: String, report_missing: bool = true) -> bool:
-	for condition: Condition in active_conditions.duplicate():
-		if condition.condition_name == condition_name:
-			return await _remove_condition_instance(condition)
-	if report_missing:
-		push_error(
-			"[ERROR] Trying to remove an invalid condition: %s -> %s" % [
-				actor_name, condition_name,
-			],
-		)
-	return false
+	return await _require_combatant().remove_condition(condition_name, report_missing)
 
 
 func remove_debuffs(quantity: int) -> int:
-	if quantity <= 0:
-		return 0
-	var removed_count := 0
-	var snapshot := active_conditions.duplicate()
-	snapshot.reverse()
-	_condition_removal_batch_depth += 1
-	for condition: Condition in snapshot:
-		if condition == null \
-			or condition.condition_type != Condition.ConditionType.DEBUFF:
-			continue
-		if await _remove_condition_instance(condition):
-			removed_count += 1
-		if removed_count >= quantity:
-			break
-	_condition_removal_batch_depth -= 1
-	_flush_condition_removal_notification()
-	return removed_count
+	return await _require_combatant().remove_debuffs(quantity)
 
 func count_debuffs() -> int:
-	var count = 0
-	for c in active_conditions:
-		if c.condition_type == Condition.ConditionType.DEBUFF and not c.is_passive:
-			count += 1
-	return count
+	return _require_combatant().count_debuffs()
 
 func sync_visual_health() -> Tween:
 	var actual_hp = hp_bar_actual.value
@@ -325,15 +352,7 @@ func _update_health_display(value_from_tween: float):
 
 # need to add traits here
 func _fire_condition_event(event_type: Trigger.TriggerType, context: Dictionary = {}) -> void:
-	var snapshot := active_conditions.duplicate()
-	for condition: Condition in snapshot:
-		if condition == null or not active_conditions.has(condition):
-			continue
-		await _execute_condition_triggers(condition, event_type, context)
-		if condition.remove_on_triggers.has(event_type) \
-			and active_conditions.has(condition):
-			print(actor_name, "'s ", condition.condition_name, " needs to be removed.")
-			await _remove_condition_instance(condition)
+	await _require_combatant()._fire_condition_event(event_type, context)
 
 
 func _execute_condition_triggers(
@@ -341,62 +360,17 @@ func _execute_condition_triggers(
 	event_type: Trigger.TriggerType,
 	context: Dictionary,
 ) -> void:
-	for trigger: Trigger in condition.triggers:
-		if trigger == null or trigger.trigger_type != event_type:
-			continue
-		if trigger.is_attack:
-			await battle_manager.wait(0.25)
-		print(
-			"Condition '", condition.condition_name,
-			"' is firing effects for '", event_type, "'",
-		)
-		var targets: Array = []
-		if context.has("targets"):
-			targets.assign(context.targets)
-		var contextual_attacker: ActorCard = context.get("attacker") as ActorCard
-		var action: Action = context.get("action") as Action
-		for effect: ActionEffect in trigger.effects_to_run:
-			if effect == null:
-				continue
-			if effect.target_type == Action.TargetType.SELF:
-				targets = [self]
-			else:
-				var effect_source := condition.attacker \
-					if is_instance_valid(condition.attacker) else self
-				targets = battle_manager.get_targets(
-					effect.target_type,
-					effect_source is HeroCard,
-					targets,
-					contextual_attacker,
-				)
-			if battle_manager.current_actor is HeroCard \
-				and condition.is_passive \
-				and event_type == Trigger.TriggerType.ON_TURN_START:
-				self.passive_fired.emit()
-			await battle_manager.execute_triggered_effect(
-				condition.attacker, effect, targets, action, context,
-			)
-			if condition.update_turn_order:
-				battle_manager.update_turn_order()
+	await _require_combatant()._execute_condition_triggers(
+		condition, event_type, context,
+	)
 
 
 func _remove_condition_instance(condition: Condition) -> bool:
-	if condition == null or not active_conditions.has(condition):
-		return false
-	active_conditions.erase(condition)
-	print(actor_name, " is removing condition: ", condition.condition_name)
-	await _execute_condition_triggers(condition, Trigger.TriggerType.ON_REMOVED, {})
-	_condition_removal_batch_dirty = true
-	_flush_condition_removal_notification()
-	return true
+	return await _require_combatant()._remove_condition_instance(condition)
 
 
 func _flush_condition_removal_notification() -> void:
-	if _condition_removal_batch_depth > 0 or not _condition_removal_batch_dirty:
-		return
-	_condition_removal_batch_dirty = false
-	_update_conditions_ui()
-	actor_conditions_changed.emit()
+	_require_combatant()._flush_condition_removal_notification()
 
 func update_health_bar():
 	hp_bar_actual.value = current_hp
@@ -404,53 +378,21 @@ func update_health_bar():
 	hp_value.text = str(current_hp)
 
 func defeated():
-	if is_defeated:
-		push_error("Defeated twice!!!!")
-		return
-
-	print(actor_name, " is defeated!")
-	is_defeated = true
-	current_ct = 0
-
-	if breached_label and breached_label.visible:
-		_stop_breach_pulse()
-
-	actor_defeated.emit(self)
+	_require_combatant().defeat()
 
 func recover_breach():
-	is_breached = false
+	await _require_combatant().recover_breach()
 	guard_bar.modulate.a = 1
 	_stop_breach_pulse()
-	var guard_recovery: int = current_stats.starting_guard
-	if self is HeroCard:
-		guard_recovery /= 2
-	await modify_guard(guard_recovery, true)
 
 func modify_guard(amount: int, is_recovering: bool = false):
-	current_guard = clamp(current_guard + amount, 0, MAX_GUARD)
-
-	print(actor_name, " gained ", amount, " guard. Total: ", current_guard)
-	var context = { "targets": [self], "guard_gained": amount}
-	if amount > 0 and not is_recovering:
-		await _fire_condition_event(Trigger.TriggerType.ON_GAINING_GUARD, context)
-	if current_guard == 0 and not is_breached:
-		in_danger(true)
-	elif is_in_danger:
-		in_danger(false)
-
-	update_guard_bar()
+	await _require_combatant().modify_guard(amount, is_recovering)
 
 func is_taunting() -> bool:
-	for c in active_conditions:
-		if c.is_taunting:
-			return true
-	return false
+	return _require_combatant().is_taunting()
 
 func is_untargetable() -> bool:
-	for c in active_conditions:
-		if c.is_untargetable:
-			return true
-	return false
+	return _require_combatant().is_untargetable()
 
 func update_guard_bar(animate: bool = true):
 	guard_value.text = str(current_guard)
@@ -473,7 +415,6 @@ func update_guard_bar(animate: bool = true):
 			else:
 				pip_node.hide()
 
-	armor_changed.emit(current_guard)
 
 func show_action(action_name: String):
 	var duration = 0.1 / battle_manager.battle_speed
@@ -634,146 +575,44 @@ func _on_gui_input(_event: InputEvent):
 	pass
 
 func get_power(power_type: Action.PowerType) -> int:
-	if power_type == Action.PowerType.ATTACK:
-		return current_stats.attack
-	elif power_type == Action.PowerType.PSYCHE:
-		return current_stats.psyche
-	return 0
+	return _require_combatant().get_power(power_type)
 
 func get_speed() -> int:
-	var scalar: float = 1.0
-	for condition in active_conditions:
-		scalar += condition.speed_scalar
-	return int(current_stats.speed * scalar)
+	return _require_combatant().get_speed()
 
 func get_ct_speed() -> int:
-	return CTBSpeed.normalize(get_speed(), ct_speed_scale)
+	return _require_combatant().get_ct_speed()
 
 func get_action_ct_percent(action: Action) -> int:
-	if action == null:
-		return 100
-	var result := float(action.ct_cost_percent)
-	for condition: Condition in active_conditions:
-		result *= condition.action_ct_multiplier
-	for active_trait: Trait in active_traits:
-		result *= active_trait.get_action_ct_multiplier(action)
-	return clampi(roundi(result), 10, 200)
+	return _require_combatant().get_action_ct_percent(action)
 
 func get_aim() -> int:
-	var mod: int = 0
-	for condition in active_conditions:
-		mod += condition.aim_mod
-	return current_stats.aim + mod
+	return _require_combatant().get_aim()
 
 func get_incoming_aim_mods() -> int:
-	var mod: int = 0
-	for condition in active_conditions:
-		mod += condition.incoming_aim_mod
-	return mod
+	return _require_combatant().get_incoming_aim_mods()
 
 func get_crit_damage_bonus() -> int:
-	return current_stats.precision
+	return _require_combatant().get_crit_damage_bonus()
 
 func get_damage_dealt_modifier(target: ActorCard) -> float:
-	return _damage_contribution_total(
-		get_damage_dealt_contributions(target), DamageContribution.Stage.OUTGOING,
-	)
+	return _require_combatant().get_damage_dealt_modifier(target)
 
 
 func get_damage_dealt_contributions(
 	target: ActorCard,
 ) -> Array[DamageContribution]:
-	var contributions: Array[DamageContribution] = []
-	for condition: Condition in active_conditions:
-		var power_bonus := condition.get_damage_dealt_power_bonus(self, target)
-		if not is_zero_approx(power_bonus):
-			contributions.append(DamageContribution.new(
-				_damage_modifier_source(
-					"condition", condition.condition_name, condition.resource_path,
-				),
-				DamageContribution.Stage.POWER,
-				power_bonus,
-			))
-		var amount := condition.get_damage_dealt_modifier(self, target)
-		if not is_zero_approx(amount):
-			contributions.append(DamageContribution.new(
-				_damage_modifier_source(
-					"condition", condition.condition_name, condition.resource_path,
-				),
-				DamageContribution.Stage.OUTGOING,
-				amount,
-			))
-	for trait_item: Trait in active_traits:
-		var amount := trait_item.get_damage_dealt_modifier(target)
-		if is_zero_approx(amount):
-			continue
-		contributions.append(DamageContribution.new(
-			_damage_modifier_source(
-				"trait", trait_item.trait_name, trait_item.resource_path,
-			),
-			DamageContribution.Stage.OUTGOING,
-			amount,
-		))
-	return contributions
+	return _require_combatant().get_damage_dealt_contributions(target)
 
 
 func get_damage_taken_modifier(attacker: ActorCard) -> float:
-	return _damage_contribution_total(
-		get_damage_taken_contributions(attacker), DamageContribution.Stage.INCOMING,
-	)
+	return _require_combatant().get_damage_taken_modifier(attacker)
 
 
 func get_damage_taken_contributions(
 	attacker: ActorCard,
 ) -> Array[DamageContribution]:
-	var contributions: Array[DamageContribution] = []
-	for condition: Condition in active_conditions:
-		var amount := condition.get_damage_taken_modifier(attacker, self)
-		if is_zero_approx(amount):
-			continue
-		contributions.append(DamageContribution.new(
-			_damage_modifier_source(
-				"condition", condition.condition_name, condition.resource_path,
-			),
-			DamageContribution.Stage.INCOMING,
-			amount,
-		))
-	for trait_item: Trait in active_traits:
-		var amount := trait_item.get_damage_taken_modifier(attacker)
-		if is_zero_approx(amount):
-			continue
-		contributions.append(DamageContribution.new(
-			_damage_modifier_source(
-				"trait", trait_item.trait_name, trait_item.resource_path,
-			),
-			DamageContribution.Stage.INCOMING,
-			amount,
-		))
-	return contributions
-
-
-func _damage_contribution_total(
-	contributions: Array[DamageContribution],
-	stage: DamageContribution.Stage,
-) -> float:
-	var total := 0.0
-	for contribution: DamageContribution in contributions:
-		if contribution.stage == stage:
-			total += contribution.amount
-	return total
-
-
-func _damage_modifier_source(
-	prefix: String,
-	display_name: String,
-	modifier_resource_path: String,
-) -> StringName:
-	var identity := display_name.strip_edges()
-	if identity.is_empty() and not modifier_resource_path.is_empty():
-		identity = modifier_resource_path.get_file().get_basename()
-	if identity.is_empty():
-		identity = "unnamed"
-	return StringName("%s_%s" % [prefix, identity.to_snake_case()])
+	return _require_combatant().get_damage_taken_contributions(attacker)
 
 func _update_conditions_ui():
 	for child in buffs_panel.get_children():

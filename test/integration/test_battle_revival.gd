@@ -83,12 +83,17 @@ func test_revive_flag_controls_defeated_ally_targeting() -> void:
 
 func test_non_revive_enemy_heal_ignores_defeated_target() -> void:
 	var manager := RevivalBattleManager.new()
-	var attacker := EnemyCard.new()
-	attacker.current_stats = ActorStats.new()
-	attacker.current_stats.psyche = 20
-	var target := EnemyCard.new()
-	target.current_stats = ActorStats.new()
-	target.current_stats.max_hp = 100
+	var attacker := ENEMY_SCENE.instantiate() as EnemyCard
+	var target := ENEMY_SCENE.instantiate() as EnemyCard
+	add_child_autofree(attacker)
+	add_child_autofree(target)
+	await get_tree().process_frame
+	var attacker_stats := ActorStats.new()
+	attacker_stats.psyche = 20
+	_bind_card(attacker, attacker_stats, BattleCombatant.Faction.ENEMY, manager)
+	var target_stats := ActorStats.new()
+	target_stats.max_hp = 100
+	_bind_card(target, target_stats, BattleCombatant.Faction.ENEMY, manager)
 	target.current_hp = 0
 	target.is_defeated = true
 	var effect := Effect_Healing.new()
@@ -100,8 +105,6 @@ func test_non_revive_enemy_heal_ignores_defeated_target() -> void:
 	assert_eq(target.current_hp, 0)
 	assert_true(target.is_defeated)
 	manager.free()
-	attacker.free()
-	target.free()
 
 
 func test_defeated_card_finishes_delayed_damage_bar_after_leaving_actor_list() -> void:
@@ -117,8 +120,12 @@ func test_defeated_card_finishes_delayed_damage_bar_after_leaving_actor_list() -
 	var hero := HERO_SCENE.instantiate() as HeroCard
 	hero_area.add_child(hero)
 	await get_tree().process_frame
-	hero.battle_manager = manager
-	hero.current_stats = _hero_stats("Defeated Hero")
+	_bind_card(
+		hero,
+		_hero_stats("Defeated Hero"),
+		BattleCombatant.Faction.HERO,
+		manager,
+	)
 	hero.current_hp = 0
 	hero.is_defeated = true
 	hero.hp_bar_actual.max_value = hero.current_stats.max_hp
@@ -135,7 +142,7 @@ func test_defeated_card_finishes_delayed_damage_bar_after_leaving_actor_list() -
 func test_defeated_hero_rejoins_projection_through_reviving_heal_once() -> void:
 	var manager := RevivalBattleManager.new()
 	var hero := HERO_SCENE.instantiate() as HeroCard
-	var enemy := EnemyCard.new()
+	var enemy := ENEMY_SCENE.instantiate() as EnemyCard
 	var hero_stats := ActorStats.new()
 	hero_stats.actor_name = "Revived Hero"
 	hero_stats.max_hp = 100
@@ -143,19 +150,19 @@ func test_defeated_hero_rejoins_projection_through_reviving_heal_once() -> void:
 	hero_stats.speed = 100
 	var enemy_stats := ActorStats.new()
 	enemy_stats.speed = 100
-	hero.current_stats = hero_stats
+	add_child_autofree(hero)
+	add_child_autofree(enemy)
+	await get_tree().process_frame
+	_bind_card(hero, hero_stats, BattleCombatant.Faction.HERO, manager)
+	_bind_card(enemy, enemy_stats, BattleCombatant.Faction.ENEMY, manager)
 	hero.current_hp = 0
 	hero.hero_data = HeroData.new()
 	hero.actor_name = hero_stats.actor_name
-	hero.battle_manager = manager
 	hero.battle_priority = 0
-	enemy.current_stats = enemy_stats
 	enemy.battle_priority = 1
 	manager.actor_list = [hero, enemy]
 	manager.battle_ct_speed_scale = 0.75
 	hero.ct_speed_scale = 3.0
-	add_child_autofree(hero)
-	await get_tree().process_frame
 	hero.actor_defeated.connect(manager._on_actor_died)
 	assert_true(hero.has_signal("actor_revived"), "production heroes expose a revival seam")
 	if hero.has_signal("actor_revived"):
@@ -193,7 +200,6 @@ func test_defeated_hero_rejoins_projection_through_reviving_heal_once() -> void:
 	assert_eq(published_queues.count, queues_after_revive, "ordinary healing does not publish a revival queue")
 
 	manager.free()
-	enemy.free()
 
 
 func test_nested_simultaneous_lethal_barrier_finalizes_victory_once() -> void:
@@ -211,17 +217,25 @@ func test_nested_simultaneous_lethal_barrier_finalizes_victory_once() -> void:
 	manager.enemy_area.add_child(enemy)
 	await get_tree().process_frame
 
-	hero.battle_manager = manager
+	_bind_card(
+		hero,
+		_combat_stats("Barrier Hero", 100, 100),
+		BattleCombatant.Faction.HERO,
+		manager,
+	)
+	_bind_card(
+		enemy,
+		_combat_stats("Lethal Attacker", 100, 5),
+		BattleCombatant.Faction.ENEMY,
+		manager,
+	)
 	hero.hero_data = HeroData.new()
 	hero.actor_name = "Barrier Hero"
-	hero.current_stats = _combat_stats("Barrier Hero", 100, 100)
 	hero.current_hp = 100
 	hero.current_guard = 0
 	hero.is_breached = true
 	hero.update_health_bar()
-	enemy.battle_manager = manager
 	enemy.actor_name = "Lethal Attacker"
-	enemy.current_stats = _combat_stats("Lethal Attacker", 100, 5)
 	enemy.current_hp = 100
 	enemy.current_guard = 0
 	enemy.is_breached = true
@@ -281,26 +295,47 @@ func _targeting_fixture() -> Dictionary:
 
 	var healer := HERO_SCENE.instantiate() as HeroCard
 	var defeated := HERO_SCENE.instantiate() as HeroCard
-	healer.current_stats = _hero_stats("Healer")
-	defeated.current_stats = _hero_stats("Defeated Ally")
+	hero_area.add_child(healer)
+	hero_area.add_child(defeated)
+	await get_tree().process_frame
+	_bind_card(
+		healer,
+		_hero_stats("Healer"),
+		BattleCombatant.Faction.HERO,
+		manager,
+	)
+	_bind_card(
+		defeated,
+		_hero_stats("Defeated Ally"),
+		BattleCombatant.Faction.HERO,
+		manager,
+	)
 	healer.actor_name = "Healer"
 	defeated.actor_name = "Defeated Ally"
 	healer.is_defeated = false
 	defeated.is_defeated = true
-	healer.battle_manager = manager
-	defeated.battle_manager = manager
 	var role_definition := RoleDefinition.new()
 	role_definition.color = Color.WHITE
 	var role := RoleData.new()
 	role.source_definition = role_definition
 	healer.loaded_roles = [role]
 	healer.current_role_index = 0
-	hero_area.add_child(healer)
-	hero_area.add_child(defeated)
 	manager.current_actor = healer
 	manager.actor_list = [healer]
-	await get_tree().process_frame
 	return {scene = scene, manager = manager, healer = healer, defeated = defeated}
+
+
+func _bind_card(
+	card: ActorCard,
+	stats: ActorStats,
+	faction: BattleCombatant.Faction,
+	manager: BattleManager,
+) -> void:
+	var model := BattleCombatant.new()
+	card.add_child(model)
+	card.battle_manager = manager
+	model.setup_base(stats, faction, manager)
+	card.bind_combatant(model)
 
 
 func _action_panel() -> PanelContainer:

@@ -352,8 +352,8 @@ static func _living_counts(
 
 static func _copy_target(target: ActorCard) -> ActorCard:
 	var preview_target: ActorCard = HeroCard.new() if target is HeroCard else ActorCard.new()
+	_bind_preview_card(preview_target, target)
 	preview_target.actor_name = target.actor_name
-	preview_target.current_stats = target.current_stats
 	preview_target.current_hp = target.current_hp
 	preview_target.current_guard = target.current_guard
 	preview_target.current_ct = target.current_ct
@@ -430,7 +430,7 @@ static func _capture_preview_target(
 
 static func _neutral_target() -> ActorCard:
 	var target := ActorCard.new()
-	target.current_stats = ActorStats.new()
+	_bind_preview_card(target)
 	target.current_hp = 0
 	target.current_guard = 0
 	target.is_breached = false
@@ -443,8 +443,8 @@ static func _target_without_condition(
 	excluded_condition: Condition,
 ) -> ActorCard:
 	var preview_target: ActorCard = HeroCard.new() if target is HeroCard else ActorCard.new()
+	_bind_preview_card(preview_target, target)
 	preview_target.actor_name = target.actor_name
-	preview_target.current_stats = target.current_stats
 	preview_target.current_hp = target.current_hp
 	preview_target.current_guard = target.current_guard
 	preview_target.current_ct = target.current_ct
@@ -462,3 +462,36 @@ static func _target_without_condition(
 	preview_target.active_conditions = retained_conditions
 	preview_target.active_traits = target.active_traits.duplicate()
 	return preview_target
+
+
+static func _bind_preview_card(
+	preview_card: ActorCard,
+	source: ActorCard = null,
+) -> void:
+	# Transitional until Task 6 replaces legacy card-typed damage previews.
+	var stats := ActorStats.new()
+	var faction := BattleCombatant.Faction.HERO
+	if source != null:
+		stats = _copy_stats(source.current_stats)
+		faction = source.combatant.faction
+	var model := BattleCombatant.new()
+	preview_card.add_child(model)
+	model.setup_base(stats, faction)
+	preview_card.bind_combatant(model, true)
+
+
+static func _copy_stats(source: ActorStats) -> ActorStats:
+	var stats := ActorStats.new()
+	stats.actor_name = source.actor_name
+	stats.max_hp = source.max_hp
+	stats.starting_guard = source.starting_guard
+	stats.starting_focus = source.starting_focus
+	stats.attack = source.attack
+	stats.psyche = source.psyche
+	stats.overload = source.overload
+	stats.speed = source.speed
+	stats.aim = source.aim
+	stats.precision = source.precision
+	stats.kinetic_defense = source.kinetic_defense
+	stats.energy_defense = source.energy_defense
+	return stats

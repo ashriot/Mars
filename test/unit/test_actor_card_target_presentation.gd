@@ -18,7 +18,7 @@ class LifecycleBattleManager extends BattleManager:
 
 
 	func execute_triggered_effect(
-		_actor: ActorCard,
+		_actor: Node,
 		_effect: ActionEffect,
 		_targets: Array,
 		_action: Action,
@@ -33,6 +33,17 @@ func _cards() -> Array[ActorCard]:
 	for scene: PackedScene in [HeroCardScene, EnemyCardScene]:
 		var card := scene.instantiate() as ActorCard
 		add_child_autofree(card)
+		var model := BattleCombatant.new()
+		card.add_child(model)
+		var stats := ActorStats.new()
+		stats.actor_name = "Card"
+		stats.max_hp = 100
+		model.setup_base(
+			stats,
+			BattleCombatant.Faction.HERO if card is HeroCard \
+			else BattleCombatant.Faction.ENEMY,
+		)
+		card.bind_combatant(model)
 		cards.append(card)
 	return cards
 
@@ -158,6 +169,7 @@ func test_acting_outline_starts_before_turn_start_wait_completes() -> void:
 	var manager := LifecycleBattleManager.new()
 	manager.hold_wait = true
 	card.battle_manager = manager
+	card.combatant.battle_manager = manager
 
 	card.on_turn_started()
 
@@ -172,6 +184,7 @@ func test_acting_outline_ends_after_turn_end_triggers_complete() -> void:
 	var card := _cards()[1]
 	var manager := LifecycleBattleManager.new()
 	card.battle_manager = manager
+	card.combatant.battle_manager = manager
 	card.active_conditions = [_condition_for(Trigger.TriggerType.ON_TURN_END, card)]
 	card.highlight(true)
 

@@ -47,7 +47,12 @@ func setup(
 		1,
 		roundi(enemy_data.stats.max_hp * maxf(hp_multiplier, 1.0)),
 	)
-	setup_base(enemy_data.stats)
+	_ensure_battle_manager()
+	var model := BattleCombatant.new()
+	add_child(model)
+	model.setup_base(enemy_data.stats, BattleCombatant.Faction.ENEMY, battle_manager)
+	bind_combatant(model)
+	await _setup_card_visuals()
 	update_defenses()
 
 	name_label.text = enemy_data.stats.actor_name
@@ -210,11 +215,11 @@ func clear_intent() -> void:
 	_update_intent_ui()
 
 func breach():
-	super.breach()
+	await super.breach()
 	update_defenses()
 
 func recover_breach():
-	super.recover_breach()
+	await super.recover_breach()
 	update_defenses()
 
 func update_defenses():
@@ -227,6 +232,9 @@ func update_defenses():
 
 func defeated():
 	super.defeated()
+
+
+func _show_defeated_visual() -> void:
 	var tween = create_tween()
 	tween.tween_property(
 		self,

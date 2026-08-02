@@ -50,6 +50,36 @@ class FixedContributionRule extends DamageScalingRule:
 		)
 
 
+func test_plan_binds_detached_preview_copy_before_proxy_state_is_written() -> void:
+	var attacker := _headless_bound_actor(BattleCombatant.Faction.HERO)
+	attacker.current_stats.attack = 100
+	var target := _headless_bound_actor(BattleCombatant.Faction.ENEMY)
+	target.current_guard = 1
+	var effect := _damage_effect(1.0)
+
+	var sequence := DamagePreview.for_plan(
+		effect,
+		attacker,
+		[target],
+		Action.new(),
+		false,
+	)
+
+	assert_true(sequence.is_complete)
+	assert_eq(sequence.results.size(), 1)
+	assert_eq(target.current_hp, 100, "preview leaves the live target unchanged")
+	attacker.free()
+	target.free()
+
+
+func _headless_bound_actor(faction: BattleCombatant.Faction) -> ActorCard:
+	var actor := ActorCard.new()
+	var stats := ActorStats.new()
+	stats.max_hp = 100
+	_bind_headless_card(actor, stats, faction)
+	return actor
+
+
 func test_focused_bolt_preview_uses_post_cost_remaining_focus_curve() -> void:
 	var attacker := _hero(100, 5)
 	var target := _target(false, 0, 0)
@@ -250,7 +280,11 @@ func test_consumed_conversion_condition_is_excluded_from_preview_modifiers() -> 
 func test_runtime_conversion_still_consumes_triggered_condition() -> void:
 	var attacker := _hero(100, 0)
 	var target := ConditionTarget.new()
-	target.current_stats = _stats(0, 0, 0, 0, 0)
+	_bind_headless_card(
+		target,
+		_stats(0, 0, 0, 0, 0),
+		BattleCombatant.Faction.ENEMY,
+	)
 	var forced_piercing := _forced_type_condition(Action.DamageType.PIERCING)
 	target.active_conditions = [forced_piercing]
 
@@ -710,7 +744,11 @@ func test_enemy_intent_uses_fixed_split_and_same_resolver() -> void:
 
 func test_enemy_intent_displays_per_target_preview_range_without_averaging() -> void:
 	var enemy := IntentEnemy.new()
-	enemy.current_stats = _stats(120, 0, 0, 0, 0)
+	_bind_headless_card(
+		enemy,
+		_stats(120, 0, 0, 0, 0),
+		BattleCombatant.Faction.ENEMY,
+	)
 	enemy.intent_text = RichTextLabel.new()
 	enemy.intent_tooltip = RichTooltip.new()
 	enemy.intended_action = load("res://data/enemies/actions/rapid_fire.tres") as Action
@@ -872,7 +910,11 @@ func test_debilitate_reduces_enemy_intent_damage_by_thirty_five_percent() -> voi
 
 func _intent_enemy(attack: int) -> IntentEnemy:
 	var enemy := IntentEnemy.new()
-	enemy.current_stats = _stats(attack, 0, 0, 0, 0)
+	_bind_headless_card(
+		enemy,
+		_stats(attack, 0, 0, 0, 0),
+		BattleCombatant.Faction.ENEMY,
+	)
 	enemy.intent_text = RichTextLabel.new()
 	enemy.intent_tooltip = RichTooltip.new()
 	return enemy
@@ -925,7 +967,11 @@ func _hero(
 	precision: int = 0,
 ) -> HeroCard:
 	var hero := HeroCard.new()
-	hero.current_stats = _stats(attack, 0, overload, precision, 0)
+	_bind_headless_card(
+		hero,
+		_stats(attack, 0, overload, precision, 0),
+		BattleCombatant.Faction.HERO,
+	)
 	hero.current_focus = focus
 	hero.current_hp = hero.current_stats.max_hp
 	return hero
@@ -937,7 +983,11 @@ func _target(
 	incoming_modifier: float,
 ) -> ActorCard:
 	var target := ActorCard.new()
-	target.current_stats = _stats(0, 0, 0, 0, defense)
+	_bind_headless_card(
+		target,
+		_stats(0, 0, 0, 0, defense),
+		BattleCombatant.Faction.ENEMY,
+	)
 	target.current_hp = target.current_stats.max_hp
 	target.is_breached = is_breached
 	if not is_zero_approx(incoming_modifier):
@@ -949,7 +999,11 @@ func _target(
 
 func _enemy_target(defense: int) -> EnemyCard:
 	var target := EnemyCard.new()
-	target.current_stats = _stats(0, 0, 0, 0, defense)
+	_bind_headless_card(
+		target,
+		_stats(0, 0, 0, 0, defense),
+		BattleCombatant.Faction.ENEMY,
+	)
 	target.current_hp = target.current_stats.max_hp
 	target.is_defeated = false
 	return target
@@ -957,9 +1011,24 @@ func _enemy_target(defense: int) -> EnemyCard:
 
 func _attacker() -> ActorCard:
 	var attacker := ActorCard.new()
-	attacker.current_stats = _stats(100, 0, 0, 0, 0)
+	_bind_headless_card(
+		attacker,
+		_stats(100, 0, 0, 0, 0),
+		BattleCombatant.Faction.HERO,
+	)
 	attacker.current_hp = attacker.current_stats.max_hp
 	return attacker
+
+
+func _bind_headless_card(
+	card: ActorCard,
+	stats: ActorStats,
+	faction: BattleCombatant.Faction,
+) -> void:
+	var model := BattleCombatant.new()
+	card.add_child(model)
+	model.setup_base(stats, faction)
+	card.bind_combatant(model, true)
 
 
 func _damage_effect(effect_potency: float) -> Effect_Damage:

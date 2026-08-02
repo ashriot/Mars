@@ -27,6 +27,11 @@ var shifted_this_turn: bool
 func setup(data: HeroData):
 	hero_data = data as HeroData
 	hero_data.calculate_stats()
+	_ensure_battle_manager()
+	var model := BattleCombatant.new()
+	add_child(model)
+	model.setup_base(hero_data.stats, BattleCombatant.Faction.HERO, battle_manager)
+	bind_combatant(model)
 	current_role_index = hero_data.active_role_index
 	if hero_data.portrait:
 		portrait_rect.texture = hero_data.portrait
@@ -37,7 +42,7 @@ func setup(data: HeroData):
 		if role:
 			loaded_roles.append(role)
 
-	await super.setup_base(hero_data.stats)
+	await _setup_card_visuals()
 
 	# --- LOAD TRAITS ---
 	active_traits.clear()
@@ -94,18 +99,21 @@ func on_turn_ended() -> void:
 
 func take_healing(heal_amount: int, is_revive: bool = false):
 	var was_defeated := is_defeated
-	if was_defeated and is_revive and heal_amount > 0:
-		print(actor_name, " is revived!")
-		is_defeated = false
-		self_modulate = Color.WHITE
-
-	super.take_healing(heal_amount, is_revive)
-	if was_defeated and not is_defeated:
-		actor_revived.emit(self)
+	await super.take_healing(heal_amount, is_revive)
+	if was_defeated and is_revive and heal_amount > 0 and current_hp > 0:
+		combatant.revive()
 
 func defeated():
 	super.defeated()
+
+
+func _show_defeated_visual() -> void:
 	self_modulate.a = 0.25
+
+
+func _show_revived_visual() -> void:
+	print(actor_name, " is revived!")
+	self_modulate = Color.WHITE
 
 func get_current_role() -> RoleData:
 	if loaded_roles.is_empty(): return null
@@ -177,10 +185,8 @@ func get_scaled_focus_cost(cost: int) -> int:
 	return int(cost * scalar)
 
 func _add_trait(trait_res: Trait, tier: int):
-	var new_trait = trait_res.duplicate()
-	new_trait.current_tier = tier
-	active_traits.append(new_trait)
-	print("Added Trait: ", new_trait.trait_name, " (Tier ", tier, ")")
+	_require_combatant()._add_trait(trait_res, tier)
+	print("Added Trait: ", trait_res.trait_name, " (Tier ", tier, ")")
 
 func highlight(value: bool):
 	highlight_panel.visible = value
