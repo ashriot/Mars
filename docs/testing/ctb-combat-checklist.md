@@ -9,12 +9,12 @@ All checks below are intentionally unchecked until performed interactively in co
 
 ## Battle combatant foundation regression
 
-Automated evidence recorded on 2026-08-02 with Godot 4.6.3 and an isolated test `HOME`:
+Automated evidence recorded on 2026-08-02 with Godot 4.6.3, an isolated test `HOME`, and source commit `5a8226674a74965f7f30061cbd8875ed4b3d1294`:
 
-- Headless project import and parse exited successfully.
-- Damage preview passed 39/39 tests with 173 assertions; direct Hero and Enemy combatant coverage each passed 4/4 tests with 17 and 21 assertions, respectively.
-- Card/combatant binding passed 11/11 tests with 56 assertions; the controller playable loop passed 2/2 tests with 104 assertions; responsive battle layout passed 2/2 tests with 12 assertions.
-- The complete dirty-workspace run passed 924/925 tests and 14537/14538 assertions. Its sole failure is the intentionally preserved, unrelated `src/dev/endgame_battle_lab.tscn` HP-multiplier edit; a clean committed-state result is recorded in the Task 8 report.
+- Headless project import and parse exited successfully in a clean clone of the exact source commit, with no script parser errors.
+- Card/combatant binding passed 18/18 tests with 111 assertions. This includes release-safe ordinary runtime guards for missing view inputs, zero or multiple presentation nodes, off-tree validation, no invalid binding or event registration, and complete encounter rollback before fade, passives, or turn start.
+- The complete clean-clone run passed 932/932 tests with 14593 assertions.
+- The complete dirty-workspace run passed 931/932 tests and 14592/14593 assertions. Its sole failure is the intentionally preserved, unrelated `src/dev/endgame_battle_lab.tscn` HP-multiplier edit: the dirty scene contains `1.0` while the committed expectation is `5.0`.
 
 Automated coverage does not establish the following visual or physical-input behavior. Leave every item unchecked until it is performed interactively against the recorded commit.
 
