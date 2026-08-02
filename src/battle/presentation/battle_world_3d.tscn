@@ -36,9 +36,6 @@ far = 50.0
 [node name="EnemyViews" type="Node3D" parent="."]
 unique_name_in_owner = true
 
-[node name="BattleProjectileLayer" parent="." instance=ExtResource("4_projectiles")]
-unique_name_in_owner = true
-
 [node name="EnemyHUDCanvas" type="CanvasLayer" parent="."]
 layer = -1
 
@@ -51,3 +48,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+
+[node name="BattleProjectileLayer" parent="." instance=ExtResource("4_projectiles")]
+unique_name_in_owner = true

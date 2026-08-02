@@ -33,6 +33,14 @@ class PassiveBattleManager extends BattleManager:
 		pass
 
 
+class TrackingFXManager extends FXManager:
+	var shake_requests: Array[float] = []
+
+	func trigger_shake(intensity: float) -> void:
+		shake_requests.append(intensity)
+		super.trigger_shake(intensity)
+
+
 class SpawnFailureBattleManager extends TestBattleManager:
 	var fade_calls := 0
 	var passive_calls := 0
@@ -784,11 +792,13 @@ func test_card_shake_setting_zero_is_a_true_no_op() -> void:
 	var card := HeroCardScene.instantiate() as HeroCard
 	add_child_autofree(card)
 	var home_position := card.position
+	var visual_home := card.panel.position
 
 	card.shake_panel(1.0)
 
 	assert_null(card.shake_tween)
 	assert_eq(card.position, home_position)
+	assert_eq(card.panel.position, visual_home)
 	CombatPresentationSettings.set_shake_intensity(saved_intensity, false)
 
 
@@ -798,19 +808,139 @@ func test_partial_shake_setting_scales_the_whole_requested_displacement() -> voi
 	var partial_card := HeroCardScene.instantiate() as HeroCard
 	add_child_autofree(full_card)
 	add_child_autofree(partial_card)
-	var full_home := full_card.position
-	var partial_home := partial_card.position
+	var full_home := full_card.panel.position
+	var partial_home := partial_card.panel.position
 	CombatPresentationSettings.set_shake_intensity(1.0, false)
 	full_card.shake_panel(1.0)
 	full_card.shake_tween.custom_step(0.025)
-	var full_displacement := full_card.position.y - full_home.y
+	var full_displacement := full_card.panel.position.y - full_home.y
 	CombatPresentationSettings.set_shake_intensity(0.1, false)
 	partial_card.shake_panel(1.0)
 	partial_card.shake_tween.custom_step(0.025)
-	var partial_displacement := partial_card.position.y - partial_home.y
+	var partial_displacement := partial_card.panel.position.y - partial_home.y
 
 	assert_gt(full_displacement, 0.0)
 	assert_almost_eq(partial_displacement, full_displacement * 0.1, 0.001)
+	CombatPresentationSettings.set_shake_intensity(saved_intensity, false)
+
+
+func test_card_shake_moves_only_inner_visuals_at_intermediate_frame() -> void:
+	var saved_intensity := CombatPresentationSettings.shake_intensity
+	CombatPresentationSettings.set_shake_intensity(1.0, false)
+	var card := HeroCardScene.instantiate() as HeroCard
+	add_child_autofree(card)
+	card.position = Vector2(90, 40)
+	card.size = Vector2(400, 180)
+	await get_tree().process_frame
+	var input_surface := card.get_node_or_null("InputSurface") as Control
+	assert_not_null(input_surface)
+	if input_surface == null:
+		CombatPresentationSettings.set_shake_intensity(saved_intensity, false)
+		return
+	input_surface.grab_focus()
+	var outer_rect := card.get_global_rect()
+	var hit_rect := input_surface.get_global_rect()
+	var visual_home := card.panel.global_position
+
+	card.shake_panel(1.0)
+	card.shake_tween.custom_step(0.025)
+
+	assert_eq(card.get_global_rect(), outer_rect)
+	assert_same(get_viewport().gui_get_focus_owner(), input_surface)
+	assert_eq(input_surface.get_global_rect(), hit_rect)
+	assert_ne(card.panel.global_position, visual_home)
+	CombatPresentationSettings.set_shake_intensity(saved_intensity, false)
+
+
+func test_rapid_card_shake_retrigger_returns_inner_visual_to_neutral() -> void:
+	var saved_intensity := CombatPresentationSettings.shake_intensity
+	CombatPresentationSettings.set_shake_intensity(1.0, false)
+	var card := HeroCardScene.instantiate() as HeroCard
+	add_child_autofree(card)
+	var outer_home := card.position
+	var visual_home := card.panel.position
+
+	card.shake_panel(1.0)
+	card.shake_tween.custom_step(0.025)
+	assert_ne(card.panel.position, visual_home)
+	card.shake_panel(0.5)
+	assert_eq(card.panel.position, visual_home)
+	card.shake_tween.custom_step(1.0)
+
+	assert_eq(card.position, outer_home)
+	assert_eq(card.panel.position, visual_home)
+	CombatPresentationSettings.set_shake_intensity(saved_intensity, false)
+
+
+func test_every_actor_card_variant_has_fixed_input_and_inner_visual_surfaces() -> void:
+	for scene: PackedScene in [HeroCardScene, EnemyCardScene]:
+		var card := scene.instantiate() as ActorCard
+		add_child_autofree(card)
+		var input_surface := card.get_node_or_null("InputSurface") as Control
+		assert_not_null(input_surface)
+		assert_not_null(card.panel)
+		if input_surface != null:
+			assert_eq(input_surface.mouse_filter, Control.MOUSE_FILTER_STOP)
+			assert_eq(input_surface.get_global_rect(), card.get_global_rect())
+		assert_eq(card.panel.mouse_filter, Control.MOUSE_FILTER_IGNORE)
+
+
+func test_breach_state_waits_for_unified_impact_before_shaking_panel() -> void:
+	var saved_intensity := CombatPresentationSettings.shake_intensity
+	CombatPresentationSettings.set_shake_intensity(1.0, false)
+	var manager := PassiveBattleManager.new()
+	add_child_autofree(manager)
+	manager.battle_speed = 1.0
+	var card := HeroCardScene.instantiate() as HeroCard
+	add_child_autofree(card)
+	card.battle_manager = manager
+	var combatant := _combatant()
+	card.bind_combatant(combatant)
+
+	await combatant.breach()
+
+	assert_null(card.shake_tween)
+	combatant.presentation_event.emit(combatant, &"impact", {"intensity": 0.5})
+	assert_not_null(card.shake_tween)
+	CombatPresentationSettings.set_shake_intensity(saved_intensity, false)
+
+
+func test_zero_guard_damage_drives_one_hero_panel_and_camera_impact() -> void:
+	var saved_intensity := CombatPresentationSettings.shake_intensity
+	CombatPresentationSettings.set_shake_intensity(1.0, false)
+	var manager := PassiveBattleManager.new()
+	var world := BattleWorldScene.instantiate() as BattleWorld3D
+	var effects := TrackingFXManager.new()
+	manager.battle_world = world
+	manager.fx_manager = effects
+	manager.add_child(world)
+	manager.add_child(effects)
+	add_child_autofree(manager)
+	manager._configure_battle_feedback()
+	var attacker := _combatant(1000, BattleCombatant.Faction.ENEMY)
+	attacker.current_stats.attack = 25
+	var target := _combatant(1000, BattleCombatant.Faction.HERO)
+	target.current_guard = 0
+	manager._connect_combatant_signals(target)
+	var card := HeroCardScene.instantiate() as HeroCard
+	add_child_autofree(card)
+	card.battle_manager = manager
+	card.bind_combatant(target)
+	var impact_events: Array[Dictionary] = []
+	target.presentation_event.connect(
+		func(_actor: BattleCombatant, event: StringName, payload: Dictionary) -> void:
+			if event == &"impact":
+				impact_events.append(payload.duplicate(true))
+	)
+	var effect := Effect_Damage.new()
+	effect.damage_type = Action.DamageType.KINETIC
+
+	await effect.execute(attacker, [target], manager)
+
+	assert_true(target.is_breached)
+	assert_eq(impact_events, [{"intensity": 0.5}])
+	assert_eq(effects.shake_requests, [0.5])
+	assert_not_null(card.shake_tween)
 	CombatPresentationSettings.set_shake_intensity(saved_intensity, false)
 
 

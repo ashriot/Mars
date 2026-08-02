@@ -517,13 +517,11 @@ func _apply_guard_behavior(
 	target: BattleCombatant,
 	resolved_damage_type: Action.DamageType,
 ) -> void:
-	if not _resolved_type_shreds_guard(resolved_damage_type):
-		target.presentation_event.emit(target, &"impact", {"intensity": 0.5})
-		return
-	if not target.is_breached and target.current_guard == 0:
-		await target.breach()
-		return
-	await target.modify_guard(-1)
+	if _resolved_type_shreds_guard(resolved_damage_type):
+		if not target.is_breached and target.current_guard == 0:
+			await target.breach()
+		else:
+			await target.modify_guard(-1)
 	target.presentation_event.emit(target, &"impact", {"intensity": 0.5})
 
 

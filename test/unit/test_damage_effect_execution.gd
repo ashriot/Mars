@@ -324,6 +324,26 @@ func test_energy_causes_breach_before_damage_and_same_hit_gets_ovr() -> void:
 	assert_almost_eq(outcome.result.effective_power, 175.0, 0.0001)
 
 
+func test_zero_guard_breach_damage_publishes_exactly_one_unified_impact() -> void:
+	var fixture := _application_fixture(100, 100)
+	fixture.attacker.current_stats.attack = 25
+	fixture.target.current_guard = 0
+	var impact_events: Array[Dictionary] = []
+	fixture.target.presentation_event.connect(
+		func(_actor: BattleCombatant, event: StringName, payload: Dictionary) -> void:
+			if event == &"impact":
+				impact_events.append(payload.duplicate(true))
+	)
+
+	await fixture.effect.execute(
+		fixture.attacker, [fixture.target], fixture.battle_manager,
+	)
+
+	assert_true(fixture.target.is_breached)
+	assert_lt(fixture.target.current_hp, 100)
+	assert_eq(impact_events, [{"intensity": 0.5}])
+
+
 func test_intrinsic_and_converted_piercing_never_touch_guard() -> void:
 	var intrinsic := await _execute_recorded_hit(
 		Action.DamageType.PIERCING, 2, false, Action.DamageType.NONE,

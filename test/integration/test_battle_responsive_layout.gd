@@ -99,6 +99,30 @@ func test_enemy_hud_canvas_is_effectively_between_world_and_player_ui() -> void:
 	assert_true(world.hud_layer.visible, "enemy HUD remains a canvas overlay above 3D")
 
 
+func test_packed_battle_projectiles_draw_above_enemy_plane_but_below_player_ui() -> void:
+	var battle := await _battle_in_viewport(DECK_SIZE)
+	var world := battle.manager.battle_world
+	var enemy_hud_canvas := world.get_node("EnemyHUDCanvas") as CanvasLayer
+	var projectile_canvas := world.projectile_layer
+	var player_ui := battle.get_node("UI") as Control
+
+	assert_eq(_effective_canvas_layer(projectile_canvas), enemy_hud_canvas.layer)
+	assert_gt(
+		projectile_canvas.get_index(),
+		enemy_hud_canvas.get_index(),
+		"same-layer projectiles draw after the projected enemy plane",
+	)
+	assert_lt(
+		_effective_canvas_layer(projectile_canvas),
+		_effective_canvas_layer(player_ui),
+		"essential hero, action, and CTB UI draws after projectiles",
+	)
+	assert_eq(
+		projectile_canvas.effect_root.mouse_filter,
+		Control.MOUSE_FILTER_IGNORE,
+	)
+
+
 func test_runtime_world_visibility_switches_fallbacks_and_projected_hud_together() -> void:
 	var battle := await _battle_in_viewport(DECK_SIZE)
 	var world := battle.manager.battle_world

@@ -18,6 +18,7 @@ signal target_unhovered(actor: ActorCard)
 @onready var hp_bar_ghost: ProgressBar = $Panel/HP/BarGhost
 @onready var hp_bar_actual: ProgressBar = $Panel/HP/BarActual
 @onready var panel: Panel = $Panel
+@onready var input_surface: Control = $InputSurface
 @onready var hp_value: Label = $Panel/HP/Value
 @onready var guard_bar: HBoxContainer = $Panel/GuardBar
 @onready var guard_label: Control = $Panel/GuardLabel
@@ -46,6 +47,8 @@ var shake_tween: Tween
 var pulse_tween: Tween
 var health_tween: Tween
 var panel_home_position: Vector2
+var _shake_home_position := Vector2.ZERO
+var _shake_home_is_valid := false
 
 # -- Popup Settings ---
 var last_popup_time: float = 0.0
@@ -175,7 +178,6 @@ func _render_breach_state(animate: bool) -> void:
 	guard_bar.modulate.a = 0.25
 	if animate:
 		_start_breach_pulse()
-		shake_panel(1.0)
 	else:
 		breached_label.show()
 		breached_label.self_modulate = Color.WHITE
@@ -347,16 +349,16 @@ func _stop_breach_pulse():
 	breached_label.self_modulate = Color.WHITE
 
 func shake_panel(intensity: float = 0.5):
+	_stop_panel_shake()
 	var requested_intensity := clampf(intensity, 0.0, 1.0)
 	var shared_setting := clampf(
 		CombatPresentationSettings.shake_intensity, 0.0, 1.0,
 	)
 	if is_zero_approx(requested_intensity * shared_setting):
 		return
-	var home_position = position
-	# Kill old shake if it's running
-	if shake_tween and shake_tween.is_running():
-		shake_tween.kill()
+	var home_position := panel.position
+	_shake_home_position = home_position
+	_shake_home_is_valid = true
 
 	# 1. Define shake properties
 	var shake_strength = (5.0 + 20.0 * requested_intensity) * shared_setting
@@ -364,18 +366,39 @@ func shake_panel(intensity: float = 0.5):
 
 	# 2. Create the tween
 	shake_tween = create_tween().set_ease(Tween.EASE_OUT)
+	var active_tween := shake_tween
 
 	# 3. Add the shake sequence (back-and-forth)
-	shake_tween.tween_property(self, "position",
+	shake_tween.tween_property(panel, "position",
 		home_position + Vector2(0, shake_strength), duration)
-	shake_tween.tween_property(self, "position",
+	shake_tween.tween_property(panel, "position",
 		home_position + Vector2(0, -shake_strength), duration)
-	shake_tween.tween_property(self, "position",
+	shake_tween.tween_property(panel, "position",
 		home_position + Vector2(0, shake_strength / 2), duration)
 
 	# 4. Return to the home position
-	shake_tween.tween_property(self, "position",
+	shake_tween.tween_property(panel, "position",
 		home_position, duration)
+	shake_tween.finished.connect(
+		_complete_panel_shake.bind(active_tween, home_position), CONNECT_ONE_SHOT,
+	)
+
+
+func _stop_panel_shake() -> void:
+	if shake_tween != null and shake_tween.is_valid():
+		shake_tween.kill()
+	shake_tween = null
+	if _shake_home_is_valid and is_instance_valid(panel):
+		panel.position = _shake_home_position
+	_shake_home_is_valid = false
+
+
+func _complete_panel_shake(tween: Tween, home_position: Vector2) -> void:
+	if shake_tween != tween:
+		return
+	panel.position = home_position
+	shake_tween = null
+	_shake_home_is_valid = false
 
 func _animate_pip_gain(pip_node: Control, animate: bool = true):
 	if pip_tweens.has(pip_node):
