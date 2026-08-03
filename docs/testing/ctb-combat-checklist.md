@@ -46,6 +46,8 @@ Headless automation does not establish any item below. Keep each item unchecked 
 
 - [ ] At physical `1280x800`, verify room scale, camera height, full background coverage, lighting, and readable separation between the first-person scene and hero UI.
 - [ ] At physical `1920x1080`, repeat the room/background check and confirm the established combat UI remains readable, unclipped, and balanced around the 3D view.
+- [ ] Confirm every active EyeDrone body sits clearly above the hero-card band and remains visually connected to its overhead Intent/Guard/HP stack in both front and back rows.
+- [ ] Confirm the center of the battlefield reads as a physical dark-metal room rather than a black void: drone surfaces, wall structure, and floor depth remain visible while blue practical lights retain contrast.
 - [ ] Exercise encounters with one through five enemies, including both W and M layouts, and verify overlap, depth, target clarity, and the large-boss center-three layout with one ally on each side.
 - [ ] Verify projected enemy information remains anchored and safely clamped: intent above Guard/HP, condition icons below, hover reveal with mouse, controller reveal for the selected target, and correct teardown after defeat or replacement.
 
