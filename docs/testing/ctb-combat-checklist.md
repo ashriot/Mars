@@ -40,6 +40,17 @@ Automated evidence renewed on 2026-08-02 for exact reviewed source commit `1c245
 - The working checkout has 33 curated Quaternius source/license files plus 22 local Godot `.import` sidecars (55 files total). The whole local-model root is ignored, the representative EyeDrone path is covered by `.gitignore`, and no Quaternius vendor file is tracked.
 - Interactive acceptance is intended for physical `1280x800` and `1920x1080` windows with the local assets installed. No interactive visual or physical-input path was performed for this record: mouse/keyboard, controller, direct touch, Steam Deck hardware, and iPhone remain unverified.
 
+### Industrial room rebuild acceptance — 2026-08-02
+
+Accepted interactively on macOS with Godot `4.7.1`, mouse/keyboard inspection, and local Quaternius assets installed. The tested visual-candidate commit was `54b552ea65dc9c47e56f860b3cbcf3a4451ac57a`.
+
+- [x] At `1920x1080`, the repaired live room was accepted as enclosed and substantially improved: repeated bays provide depth, the local modules do not visibly clip, the sealed bulkhead anchors the back wall, five enemies and projected HUDs remain readable, and the hero/action UI remains legible. Repaired screenshot: `/var/folders/4z/yt0cvhrd7xs5zb13m1d00wf80000gn/T/codex-clipboard-f201d43d-d76e-4247-aca4-e6003e887e68.png`.
+- [x] At `1280x800`, the repaired live runtime was inspected and explicitly accepted in text as “it looks fine.” No new repaired screenshot was retained. The earlier screenshot at `/var/folders/4z/yt0cvhrd7xs5zb13m1d00wf80000gn/T/codex-clipboard-43f034eb-4e18-427c-8316-de38e11e08d1.png` confirms the 16:10 room and UI layout only; it predates the decal-cache repair and does not prove the final local door import.
+- [x] The repaired `1280x800` live launch spawned the encounter and all seven combatants with zero matching `T_Decals`, missing dependency, `Door_Frame_A`, `Door_Metal`, or optional-door fallback errors. The remaining auto-quit RenderingServer/RID shutdown diagnostics were not accompanied by a runtime texture artifact.
+- [x] Fresh isolated verification after the cache repair: editor import exited `0`; `test_battle_world_3d` passed 11/11 tests with 213 assertions; `test_battle_formation_layout` passed 4/4 tests with 15 assertions; the complete suite passed 1,067/1,067 tests with 16,149 assertions across 82 scripts.
+
+The user separately observed that the existing hero/action UI covers too much of the screen and leaves the enemies sitting too far behind it. That concern is explicitly deferred as outside this industrial-room rebuild; this acceptance did not change the UI, battle camera, enemy staging, or scene presentation contracts. Controller, direct-touch, Steam Deck hardware, iPhone, and broader combat-loop items below remain unchecked unless separately performed.
+
 Headless automation does not establish any item below. Keep each item unchecked until the named visual or physical-input path is performed and record the date, OS/device, input device or connection, physical resolution, and tested commit.
 
 ### Room, formation, and projected HUD
