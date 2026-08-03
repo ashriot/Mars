@@ -56,6 +56,19 @@ func test_room_uses_broad_neutral_readability_lighting() -> void:
 	assert_false(fill.shadow_enabled)
 
 
+func test_room_keeps_a_tracked_backdrop_behind_optional_local_modules() -> void:
+	var world := _world()
+	var room := world.get_node("IndustrialRoom3D")
+	var backdrop := room.get_node_or_null("BattleBackdrop") as MeshInstance3D
+	assert_not_null(backdrop)
+	if backdrop == null:
+		return
+	assert_true(backdrop.visible)
+	assert_eq(backdrop.position, Vector3(0.0, 2.5, -7.0))
+	assert_eq(backdrop.scale, Vector3(1.5, 1.25, 1.0))
+	assert_true(backdrop.mesh is BoxMesh)
+
+
 func test_room_uses_eight_optional_local_modules_with_tracked_placeholders() -> void:
 	var world := _world()
 	var room := world.get_node("IndustrialRoom3D")

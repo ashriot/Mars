@@ -54,6 +54,11 @@ height = 3.0
 
 [node name="IndustrialRoom3D" type="Node3D"]
 
+[node name="BattleBackdrop" type="MeshInstance3D" parent="."]
+position = Vector3(0, 2.5, -7)
+scale = Vector3(1.5, 1.25, 1)
+mesh = SubResource("Mesh_wall")
+
 [node name="WallAstra" type="Node3D" parent="." node_paths=PackedStringArray("model_parent", "placeholder")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, -6)
 script = ExtResource("1_optional")
