@@ -3,6 +3,12 @@ extends GutTest
 
 const HUD_SCENE := preload("res://src/battle/presentation/enemy_world_hud.tscn")
 const WORLD_SCENE := preload("res://src/battle/presentation/battle_world_3d.tscn")
+const BOLD_FONT_PATH := "res://data/theme/fonts/suse_mono_bold.tres"
+const COMPACT_WIDTH := 160.0
+const HP_WIDTH := 108.0
+const HP_GUARD_OVERLAP := 4.0
+const GUARD_CONDITIONS_GAP := 5.0
+const DETAILS_GAP := 4.0
 
 var _saved_input_mode: InputManager.InputMode
 var _saved_presentation_mode: InputManager.PresentationMode
@@ -30,15 +36,123 @@ func _hud() -> EnemyWorldHUD:
 	return hud
 
 
-func test_compact_stack_orders_intent_guard_hp_and_conditions() -> void:
+func test_compact_stack_authors_rounded_hp_and_overlapping_guard() -> void:
 	var hud := _hud()
 	var enemy := _enemy_with_state(80, 3)
 
 	assert_true(hud.bind_combatant(enemy))
-	assert_true(hud.intent_row.get_index() < hud.vitals_row.get_index())
-	assert_true(hud.vitals_row.get_index() < hud.conditions_row.get_index())
-	assert_eq(hud.guard_value.text, "3")
-	assert_eq(hud.hp_bar.value, 80.0)
+	await get_tree().process_frame
+	assert_eq(hud.compact_stack.size.x, COMPACT_WIDTH)
+	assert_eq(hud.intent_row.size.x, COMPACT_WIDTH)
+	var hp_node := hud.get_node("%HP") as Control
+	assert_true(hp_node is ProgressBar)
+	var hp := hud.get_node("%HP") as ProgressBar
+	var guard_stack := hud.get_node_or_null("%GuardStack") as EnemyGuardStack
+	assert_not_null(hp)
+	assert_not_null(guard_stack)
+	if hp == null or guard_stack == null:
+		return
+	assert_eq(hp.size.x, HP_WIDTH)
+	assert_false(hp.show_percentage)
+	_assert_rounded_style(hp.get_theme_stylebox(&"background"))
+	_assert_rounded_style(hp.get_theme_stylebox(&"fill"))
+	assert_gt(guard_stack.position.y, hp.position.y)
+	assert_eq(hp.position.y + hp.size.y - guard_stack.position.y, HP_GUARD_OVERLAP)
+	assert_eq(guard_stack.guard_value.text, "3")
+	assert_eq(hp.value, 80.0)
+
+
+func test_guard_depth_moves_conditions_and_details_only_five_pixels_per_layer() -> void:
+	var hud := _hud()
+	var enemy := _enemy_with_state(80, 0)
+	hud.bind_combatant(enemy)
+	await get_tree().process_frame
+	var guard_stack := hud.get_node_or_null("%GuardStack") as EnemyGuardStack
+	assert_not_null(guard_stack)
+	if guard_stack == null:
+		return
+	var condition_positions: Array[float] = []
+	var detail_positions: Array[float] = []
+	var compact_heights: Array[float] = []
+	for guard in [0, 7, 13, 23]:
+		enemy.current_guard = guard
+		enemy.guard_changed.emit(enemy, guard)
+		await get_tree().process_frame
+		var compact_rect := hud.get_desired_compact_rect()
+		assert_eq(compact_rect.size.x, COMPACT_WIDTH)
+		assert_eq(compact_rect.size.y, hud.compact_stack.size.y)
+		assert_eq(
+			hud.conditions_row.position.y,
+			guard_stack.position.y + guard_stack.size.y + GUARD_CONDITIONS_GAP,
+		)
+		assert_eq(hud.details.position.y, hud.compact_stack.size.y + DETAILS_GAP)
+		condition_positions.append(hud.conditions_row.position.y)
+		detail_positions.append(hud.details.position.y)
+		compact_heights.append(compact_rect.size.y)
+	assert_eq(condition_positions[0], condition_positions[1])
+	assert_eq(condition_positions[2] - condition_positions[1], 5.0)
+	assert_eq(condition_positions[3] - condition_positions[2], 5.0)
+	assert_eq(detail_positions[0], detail_positions[1])
+	assert_eq(detail_positions[2] - detail_positions[1], 5.0)
+	assert_eq(detail_positions[3] - detail_positions[2], 5.0)
+	assert_eq(compact_heights[0], compact_heights[1])
+	assert_eq(compact_heights[2] - compact_heights[1], 5.0)
+	assert_eq(compact_heights[3] - compact_heights[2], 5.0)
+
+
+func test_binding_and_guard_state_signals_render_vulnerable_then_breached() -> void:
+	var hud := _hud()
+	var enemy := _enemy_with_state(80, 0)
+	enemy.is_in_danger = true
+	hud.bind_combatant(enemy)
+	var guard_stack := hud.get_node_or_null("%GuardStack") as EnemyGuardStack
+	assert_not_null(guard_stack)
+	if guard_stack == null:
+		return
+	assert_true(guard_stack.status_label.visible)
+	assert_eq(guard_stack.status_label.text, "VULNERABLE")
+
+	enemy.is_in_danger = false
+	enemy.danger_changed.emit(enemy, false)
+	assert_false(guard_stack.status_label.visible)
+	enemy.is_breached = true
+	enemy.breached.emit(enemy)
+	assert_true(guard_stack.status_label.visible)
+	assert_eq(guard_stack.status_label.text, "BREACHED")
+
+
+func test_guard_value_stays_inside_current_shield_through_hud_component() -> void:
+	var hud := _hud()
+	var enemy := _enemy_with_state(80, 13)
+	hud.bind_combatant(enemy)
+	var guard_stack := hud.get_node_or_null("%GuardStack") as EnemyGuardStack
+	assert_not_null(guard_stack)
+	if guard_stack == null:
+		return
+	var current_shield := guard_stack.layers[1].get_child(2) as TextureRect
+	assert_eq(guard_stack.guard_value.text, "13")
+	assert_eq(
+		guard_stack.guard_value.position,
+		guard_stack.layers[1].position + current_shield.position,
+	)
+
+
+func test_hud_keeps_existing_bold_font_resource_and_reports_hover_state() -> void:
+	var hud := _hud()
+	hud.bind_combatant(_enemy_with_state(80, 3))
+	var guard_stack := hud.get_node_or_null("%GuardStack") as EnemyGuardStack
+	assert_not_null(guard_stack)
+	assert_eq(hud.intent_row.get_theme_font(&"normal_font").resource_path, BOLD_FONT_PATH)
+	if guard_stack != null:
+		assert_eq(guard_stack.guard_value.get_theme_font(&"font").resource_path, BOLD_FONT_PATH)
+	assert_true(hud.has_method(&"is_hovered"))
+	if not hud.has_method(&"is_hovered"):
+		return
+	assert_false(hud.call(&"is_hovered"))
+	hud.target_region.mouse_entered.emit()
+	assert_true(hud.call(&"is_hovered"))
+	hud.target_region.mouse_exited.emit()
+	assert_false(hud.call(&"is_hovered"))
 
 
 func test_details_reveal_does_not_reflow_compact_stack() -> void:
@@ -88,7 +202,7 @@ func test_bound_model_signals_refresh_vitals_intent_and_conditions() -> void:
 	enemy.presentation_event.emit(enemy, &"intent_changed", {})
 
 	assert_eq(hud.hp_bar.value, 45.0)
-	assert_eq(hud.guard_value.text, "1")
+	assert_eq(hud.guard_stack.guard_value.text, "1")
 	assert_eq(hud.conditions_row.get_child_count(), 1)
 	assert_same((hud.conditions_row.get_child(0) as TextureRect).texture, condition.icon)
 	assert_eq(hud.intent_row.text, "Repair")
@@ -198,11 +312,11 @@ func test_world_layout_resolves_visible_huds_in_spawn_order() -> void:
 
 	world._layout_enemy_huds()
 
-	assert_eq(first.compact_stack.global_position, Vector2(390, 210))
-	assert_eq(second.compact_stack.global_position, Vector2(390, 126))
+	assert_eq(first.compact_stack.global_position, Vector2(420, 201))
+	assert_eq(second.compact_stack.global_position, Vector2(420, 108))
 	second.set_projection_visible(false)
 	world._layout_enemy_huds()
-	assert_eq(first.compact_stack.global_position, Vector2(390, 210))
+	assert_eq(first.compact_stack.global_position, Vector2(420, 201))
 
 
 func test_controller_selected_details_flip_below_compact_at_safe_top() -> void:
@@ -321,8 +435,8 @@ func test_defeat_immediately_hides_disables_and_excludes_hud_from_layout() -> vo
 	defeated_hud.set_projected_head_position(Vector2(500, 300))
 	survivor.set_projected_head_position(Vector2(500, 300))
 	world._layout_enemy_huds()
-	assert_eq(defeated_hud.compact_stack.global_position, Vector2(390, 210))
-	assert_eq(survivor.compact_stack.global_position, Vector2(390, 126))
+	assert_eq(defeated_hud.compact_stack.global_position, Vector2(420, 201))
+	assert_eq(survivor.compact_stack.global_position, Vector2(420, 108))
 	watch_signals(defeated_hud)
 
 	defeated_enemy.defeat()
@@ -339,7 +453,7 @@ func test_defeat_immediately_hides_disables_and_excludes_hud_from_layout() -> vo
 	assert_eq(defeated_hud.target_region.mouse_filter, Control.MOUSE_FILTER_IGNORE)
 	assert_signal_not_emitted(defeated_hud, &"hovered")
 	assert_signal_not_emitted(defeated_hud, &"pressed")
-	assert_eq(survivor.compact_stack.global_position, Vector2(390, 210))
+	assert_eq(survivor.compact_stack.global_position, Vector2(420, 201))
 
 
 func test_presentation_owned_defeat_preserves_only_the_render_surface() -> void:
@@ -414,7 +528,7 @@ func _world_in_viewport(size: Vector2i) -> Dictionary:
 func _compact_rects(huds: Array[EnemyWorldHUD]) -> Array[Rect2]:
 	var result: Array[Rect2] = []
 	for hud: EnemyWorldHUD in huds:
-		result.append(Rect2(hud.compact_stack.global_position, hud.COMPACT_SIZE))
+		result.append(Rect2(hud.compact_stack.global_position, hud.compact_stack.size))
 	return result
 
 
@@ -424,6 +538,17 @@ func _visible_detail_rects(huds: Array[EnemyWorldHUD]) -> Array[Rect2]:
 		if hud.details.visible:
 			result.append(hud.details.get_global_rect())
 	return result
+
+
+func _assert_rounded_style(style: StyleBox) -> void:
+	assert_true(style is StyleBoxFlat)
+	if not style is StyleBoxFlat:
+		return
+	var flat := style as StyleBoxFlat
+	assert_eq(flat.corner_radius_top_left, 6)
+	assert_eq(flat.corner_radius_top_right, 6)
+	assert_eq(flat.corner_radius_bottom_right, 6)
+	assert_eq(flat.corner_radius_bottom_left, 6)
 
 
 func _mouse_motion_at(position: Vector2) -> InputEventMouseMotion:

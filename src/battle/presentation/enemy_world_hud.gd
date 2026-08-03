@@ -5,10 +5,11 @@ signal hovered
 signal unhovered
 signal pressed
 
-const COMPACT_SIZE := Vector2(220.0, 78.0)
-const DETAILS_SIZE := Vector2(220.0, 44.0)
+const COMPACT_WIDTH := 160.0
+const DETAILS_SIZE := Vector2(160.0, 44.0)
 const DETAILS_GAP := 4.0
 const HEAD_GAP := 12.0
+const GUARD_TOP := 14.0
 const TARGET_PADDING := Vector2(18.0, 18.0)
 const MIN_TARGET_WIDTH := 96.0
 
@@ -20,9 +21,9 @@ const MIN_TARGET_WIDTH := 96.0
 @onready var compact_stack: VBoxContainer = %CompactStack
 @onready var intent_row: RichTextLabel = %IntentRow
 @onready var intent_tooltip: RichTooltip = %IntentTooltip
-@onready var vitals_row: HBoxContainer = %VitalsRow
-@onready var guard_value: Label = %GuardValue
-@onready var hp_bar: TextureProgressBar = %HP
+@onready var vitals_group: Control = %VitalsGroup
+@onready var guard_stack: EnemyGuardStack = %GuardStack
+@onready var hp_bar: ProgressBar = %HP
 @onready var conditions_row: HBoxContainer = %ConditionsRow
 
 var combatant: EnemyCombatant
@@ -47,6 +48,8 @@ func _ready() -> void:
 	intent_row.mouse_exited.connect(_on_target_mouse_exited)
 	intent_row.gui_input.connect(_on_target_gui_input)
 	details.hide()
+	_sync_compact_height()
+	_sync_details_position()
 	set_process(false)
 
 
@@ -152,15 +155,20 @@ func has_valid_projection() -> bool:
 	return _has_projected_head and visible and _has_live_combatant()
 
 
+func is_hovered() -> bool:
+	return _hovered
+
+
 func get_desired_compact_rect() -> Rect2:
+	var compact_size := _get_compact_size()
 	if not _has_projected_head:
-		return Rect2(global_position, COMPACT_SIZE)
+		return Rect2(global_position, compact_size)
 	return Rect2(
 		Vector2(
-			_projected_head.x - COMPACT_SIZE.x * 0.5,
-			_projected_head.y - HEAD_GAP - COMPACT_SIZE.y,
+			_projected_head.x - compact_size.x * 0.5,
+			_projected_head.y - HEAD_GAP - compact_size.y,
 		),
-		COMPACT_SIZE,
+		compact_size,
 	)
 
 
@@ -174,7 +182,7 @@ func apply_details_rect(rect: Rect2) -> void:
 
 
 func get_visible_layout_rect() -> Rect2:
-	var compact_rect := Rect2(compact_stack.global_position, COMPACT_SIZE)
+	var compact_rect := Rect2(compact_stack.global_position, _get_compact_size())
 	if not details.visible:
 		return compact_rect
 	return compact_rect.merge(Rect2(details.global_position, DETAILS_SIZE))
@@ -197,6 +205,8 @@ func get_target_rect() -> Rect2:
 func _connect_combatant() -> void:
 	combatant.hp_changed.connect(_on_hp_changed)
 	combatant.guard_changed.connect(_on_guard_changed)
+	combatant.danger_changed.connect(_on_danger_changed)
+	combatant.breached.connect(_on_breached)
 	combatant.conditions_changed.connect(_on_conditions_changed)
 	combatant.presentation_event.connect(_on_presentation_event)
 	combatant.defeated.connect(_on_combatant_defeated)
@@ -211,6 +221,10 @@ func _disconnect_combatant() -> void:
 		combatant.hp_changed.disconnect(_on_hp_changed)
 	if combatant.guard_changed.is_connected(_on_guard_changed):
 		combatant.guard_changed.disconnect(_on_guard_changed)
+	if combatant.danger_changed.is_connected(_on_danger_changed):
+		combatant.danger_changed.disconnect(_on_danger_changed)
+	if combatant.breached.is_connected(_on_breached):
+		combatant.breached.disconnect(_on_breached)
 	if combatant.conditions_changed.is_connected(_on_conditions_changed):
 		combatant.conditions_changed.disconnect(_on_conditions_changed)
 	if combatant.presentation_event.is_connected(_on_presentation_event):
@@ -241,7 +255,13 @@ func _render_hp() -> void:
 
 
 func _render_guard() -> void:
-	guard_value.text = str(combatant.current_guard)
+	guard_stack.render(
+		combatant.current_guard,
+		combatant.is_in_danger,
+		combatant.is_breached,
+	)
+	_sync_compact_height()
+	call_deferred(&"_sync_details_position")
 
 
 func _render_conditions() -> void:
@@ -270,6 +290,14 @@ func _on_hp_changed(_enemy: BattleCombatant, _hp: int, _max_hp: int) -> void:
 
 
 func _on_guard_changed(_enemy: BattleCombatant, _guard: int) -> void:
+	_render_guard()
+
+
+func _on_danger_changed(_enemy: BattleCombatant, _is_in_danger: bool) -> void:
+	_render_guard()
+
+
+func _on_breached(_enemy: BattleCombatant) -> void:
 	_render_guard()
 
 
@@ -329,7 +357,7 @@ func _on_target_gui_input(event: InputEvent) -> void:
 
 
 func _sync_target_region() -> void:
-	var target_rect := Rect2(global_position, COMPACT_SIZE).grow(TARGET_PADDING.x)
+	var target_rect := Rect2(global_position, _get_compact_size()).grow(TARGET_PADDING.x)
 	if _has_projected_model_bounds:
 		target_rect = _projected_model_bounds.grow(TARGET_PADDING.x)
 	elif _has_projected_head and _has_projected_foot:
@@ -348,6 +376,22 @@ func _sync_target_region() -> void:
 		target_rect = target_rect.intersection(_safe_rect)
 	target_region.global_position = target_rect.position
 	target_region.size = target_rect.size
+
+
+func _sync_compact_height() -> void:
+	vitals_group.custom_minimum_size.y = GUARD_TOP + guard_stack.custom_minimum_size.y
+	var compact_size := _get_compact_size()
+	compact_stack.size = compact_size
+	custom_minimum_size = compact_size
+	size = compact_size
+
+
+func _sync_details_position() -> void:
+	details.position = Vector2(0.0, compact_stack.size.y + DETAILS_GAP)
+
+
+func _get_compact_size() -> Vector2:
+	return Vector2(COMPACT_WIDTH, compact_stack.get_combined_minimum_size().y)
 
 
 func _invalidate_projection(keep_render_surface := false) -> void:
