@@ -200,6 +200,10 @@ func _on_combatant_presentation_event(
 ) -> void:
 	match event:
 		&"damage_received":
+			HealthFeedbackPalette.apply(
+				hp_bar_ghost, HealthFeedbackPalette.Direction.DAMAGE,
+			)
+			hp_bar_ghost.show()
 			hp_bar_actual.value = _require_combatant().current_hp
 			_spawn_damage_popup(
 				payload.result.final_damage,
@@ -208,6 +212,10 @@ func _on_combatant_presentation_event(
 			)
 			spawn_particles.emit(get_global_rect().get_center(), "gunshot")
 		&"healing_received":
+			HealthFeedbackPalette.apply(
+				hp_bar_ghost, HealthFeedbackPalette.Direction.HEALING,
+			)
+			hp_bar_ghost.show()
 			hp_bar_ghost.value = _require_combatant().current_hp
 		&"impact":
 			shake_panel(float(payload.get("intensity", 0.5)))

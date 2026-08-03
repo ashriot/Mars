@@ -1055,6 +1055,7 @@ func test_damage_stages_actual_hp_then_animates_ghost_without_hit_shake() -> voi
 	card.battle_manager = manager
 	var combatant := _combatant(100, BattleCombatant.Faction.HERO, manager)
 	card.bind_combatant(combatant)
+	card.hp_bar_ghost.hide()
 
 	await combatant.take_one_hit(
 		_damage_result(40), Effect_Damage.new(), combatant,
@@ -1063,11 +1064,23 @@ func test_damage_stages_actual_hp_then_animates_ghost_without_hit_shake() -> voi
 
 	assert_eq(card.hp_bar_actual.value, 60.0)
 	assert_eq(card.hp_bar_ghost.value, 100.0)
+	assert_true(card.hp_bar_ghost.visible)
+	var damage_feedback_style := card.hp_bar_ghost.get_theme_stylebox(&"fill")
+	assert_is(damage_feedback_style, StyleBoxFlat)
+	assert_eq(
+		(damage_feedback_style as StyleBoxFlat).bg_color,
+		Color(0.98, 0.76766664, 0.0, 1.0),
+	)
+	assert_eq(
+		(card.hp_bar_ghost.get_theme_stylebox(&"fill") as StyleBoxFlat).bg_color,
+		HealthFeedbackPalette.DAMAGE_YELLOW,
+	)
 	assert_null(card.shake_tween, "ordinary hits do not shake the actor card")
 	var tween := card.sync_visual_health()
 	assert_not_null(tween)
 	if tween != null:
 		await tween.finished
+	assert_eq(card.hp_bar_actual.value, 60.0)
 	assert_eq(card.hp_bar_ghost.value, 60.0)
 
 
@@ -1081,16 +1094,29 @@ func test_healing_stages_ghost_hp_then_animates_actual_bar() -> void:
 	var combatant := _combatant(100, BattleCombatant.Faction.HERO, manager)
 	combatant.current_hp = 40
 	card.bind_combatant(combatant)
+	card.hp_bar_ghost.hide()
 
 	await combatant.take_healing(20)
 
 	assert_eq(card.hp_bar_actual.value, 40.0)
 	assert_eq(card.hp_bar_ghost.value, 60.0)
+	assert_true(card.hp_bar_ghost.visible)
+	var healing_feedback_style := card.hp_bar_ghost.get_theme_stylebox(&"fill")
+	assert_is(healing_feedback_style, StyleBoxFlat)
+	assert_eq(
+		(healing_feedback_style as StyleBoxFlat).bg_color,
+		Color(0.20, 0.90, 0.45, 1.0),
+	)
+	assert_eq(
+		(card.hp_bar_ghost.get_theme_stylebox(&"fill") as StyleBoxFlat).bg_color,
+		HealthFeedbackPalette.HEALING_GREEN,
+	)
 	var tween := card.sync_visual_health()
 	assert_not_null(tween)
 	if tween != null:
 		await tween.finished
 	assert_eq(card.hp_bar_actual.value, 60.0)
+	assert_eq(card.hp_bar_ghost.value, 60.0)
 
 
 func test_binding_already_breached_combatant_renders_steady_breach_state() -> void:
