@@ -95,6 +95,27 @@ func test_hero_and_enemy_share_normal_available_and_selected_target_states() -> 
 		assert_null(card._target_pulse_tween)
 
 
+func test_idle_hero_base_panel_is_borderless_but_target_outline_remains() -> void:
+	var hero := _cards()[0] as HeroCard
+	var base_style := hero.panel.get_theme_stylebox(&"panel") as StyleBoxFlat
+	assert_not_null(base_style)
+	assert_eq(base_style.border_width_left, 0)
+	assert_eq(base_style.border_width_top, 0)
+	assert_eq(base_style.border_width_right, 0)
+	assert_eq(base_style.border_width_bottom, 0)
+	assert_false(hero.highlight_panel.visible)
+	assert_false(hero.target_outline.visible)
+
+	hero.set_target_presentation(ActorCard.TargetPresentation.AVAILABLE)
+
+	var target_style := hero.target_outline.get_theme_stylebox(&"panel") as StyleBoxFlat
+	assert_true(hero.target_outline.visible)
+	assert_eq(target_style.border_width_left, 4)
+	assert_eq(target_style.border_width_top, 4)
+	assert_eq(target_style.border_width_right, 4)
+	assert_eq(target_style.border_width_bottom, 4)
+
+
 func test_repeated_target_state_assignment_keeps_one_tween_and_exact_normal_cleanup() -> void:
 	var card := _cards()[0]
 	card.set_target_presentation(ActorCard.TargetPresentation.SELECTED)

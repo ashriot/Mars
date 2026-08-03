@@ -13,6 +13,19 @@ signal hero_clicked(hero_card)
 @onready var role_label: Label = $Panel/Role
 @onready var role_icon: TextureRect = $Panel/RoleIcon
 
+
+func _ready() -> void:
+	var base_style := panel.get_theme_stylebox(&"panel") as StyleBoxFlat
+	if base_style == null:
+		return
+	var borderless_style := base_style.duplicate() as StyleBoxFlat
+	borderless_style.border_width_left = 0
+	borderless_style.border_width_top = 0
+	borderless_style.border_width_right = 0
+	borderless_style.border_width_bottom = 0
+	panel.add_theme_stylebox_override(&"panel", borderless_style)
+
+
 func setup_from_combatant(model: HeroCombatant) -> void:
 	_ensure_battle_manager()
 	if not bind_combatant(model):
