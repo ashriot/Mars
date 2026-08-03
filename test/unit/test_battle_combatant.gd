@@ -249,6 +249,18 @@ func test_zero_guard_enters_danger_and_breach_resets_ct() -> void:
 	assert_eq(combatant.current_ct, 0)
 
 
+func test_default_guard_cap_clamps_guard_and_enters_danger_at_zero() -> void:
+	var combatant := _combatant_with_stats(20, 2)
+
+	await combatant.modify_guard(99)
+
+	assert_eq(combatant.current_guard, 10)
+	assert_eq(combatant.get_guard_cap(), 10)
+	await combatant.modify_guard(-99)
+	assert_eq(combatant.current_guard, 0)
+	assert_true(combatant.is_in_danger)
+
+
 func test_defeat_and_revival_publish_each_semantic_boundary_once() -> void:
 	var combatant := _combatant_with_stats(20, 2)
 	var events: Array[StringName] = []

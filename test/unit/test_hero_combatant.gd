@@ -36,6 +36,20 @@ func test_focus_and_role_shift_work_without_hero_card() -> void:
 	assert_true(hero.shifted_this_turn)
 
 
+func test_hero_guard_cap_clamps_guard_and_enters_danger_at_zero() -> void:
+	var hero := HeroCombatant.new()
+	add_child_autofree(hero)
+	hero.setup(_hero_data_with_three_roles())
+
+	await hero.modify_guard(99)
+
+	assert_eq(hero.current_guard, 10)
+	assert_eq(hero.get_guard_cap(), 10)
+	await hero.modify_guard(-99)
+	assert_eq(hero.current_guard, 0)
+	assert_true(hero.is_in_danger)
+
+
 func test_setup_loads_equipment_traits_consumes_boons_and_applies_injuries() -> void:
 	var data := _hero_data_with_three_roles()
 	data.stats.max_hp = 100

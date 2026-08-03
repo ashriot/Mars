@@ -92,6 +92,18 @@ func test_recovery_intent_and_clear_are_owned_by_enemy_combatant() -> void:
 	assert_true(enemy.intended_targets.is_empty())
 
 
+func test_enemy_guard_cap_clamps_guard_and_enters_danger_at_zero() -> void:
+	var enemy := _enemy_with_ability(_ability(&"basic", 0, 0))
+
+	await enemy.modify_guard(99)
+
+	assert_eq(enemy.current_guard, 30)
+	assert_eq(enemy.get_guard_cap(), 30)
+	await enemy.modify_guard(-99)
+	assert_eq(enemy.current_guard, 0)
+	assert_true(enemy.is_in_danger)
+
+
 func test_cooldown_completion_and_target_revalidation_are_model_owned() -> void:
 	var ability := _ability(&"burst", 3, 1)
 	var enemy := _enemy_with_ability(ability)

@@ -1,6 +1,8 @@
 extends BattleCombatant
 class_name EnemyCombatant
 
+const MAX_ENEMY_GUARD := 30
+
 var enemy_data: EnemyData
 var ai_state := EnemyAIRuntimeState.new()
 var intended_decision := EnemyDecision.new()
@@ -43,6 +45,10 @@ func _apply_elite_scaling(stats: ActorStats) -> void:
 	stats.attack = int(stats.attack * 1.15)
 	stats.psyche = int(stats.psyche * 1.15)
 	stats.speed = int(stats.speed * 1.15)
+
+
+func get_guard_cap() -> int:
+	return MAX_ENEMY_GUARD
 
 
 func initialize_ai(seed_value: int) -> void:

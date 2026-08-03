@@ -189,7 +189,7 @@ func take_healing(heal_amount: int, is_revive: bool = false) -> void:
 
 
 func modify_guard(amount: int, is_recovering: bool = false) -> void:
-	current_guard = clampi(current_guard + amount, 0, MAX_GUARD)
+	current_guard = clampi(current_guard + amount, 0, get_guard_cap())
 	guard_changed.emit(self, current_guard)
 	presentation_event.emit(self, &"guard_changed", {
 		"amount": amount,
@@ -203,6 +203,10 @@ func modify_guard(amount: int, is_recovering: bool = false) -> void:
 		in_danger(true)
 	elif is_in_danger:
 		in_danger(false)
+
+
+func get_guard_cap() -> int:
+	return MAX_GUARD
 
 
 func in_danger(value: bool) -> void:
