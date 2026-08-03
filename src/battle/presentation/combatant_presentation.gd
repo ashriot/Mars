@@ -16,6 +16,7 @@ signal projectile_requested(
 var combatant: BattleCombatant
 var target_state := TargetState.NORMAL
 var acting := false
+var inspection_focused := false
 var _pending_operations: Array[PresentationOperation] = []
 
 
@@ -49,6 +50,10 @@ func is_target_visible() -> bool:
 
 func set_target_presentation(state: TargetState) -> void:
 	target_state = state
+
+
+func set_inspection_focused(focused: bool) -> void:
+	inspection_focused = focused
 
 
 func set_acting(active: bool):

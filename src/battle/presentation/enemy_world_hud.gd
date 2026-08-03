@@ -100,7 +100,6 @@ func set_target_state(state: CombatantPresentation.TargetState) -> void:
 			compact_stack.modulate = Color(0.65, 1.0, 1.0)
 		CombatantPresentation.TargetState.SELECTED:
 			compact_stack.modulate = Color(1.0, 0.79, 0.29)
-	set_details_visible(_hovered or state == CombatantPresentation.TargetState.SELECTED)
 
 
 func set_details_visible(value: bool) -> void:
@@ -178,10 +177,6 @@ func get_desired_compact_rect() -> Rect2:
 func apply_resolved_compact_rect(rect: Rect2) -> void:
 	global_position = rect.position
 	_sync_target_region()
-
-
-func apply_details_rect(rect: Rect2) -> void:
-	details.global_position = rect.position
 
 
 func get_visible_layout_rect() -> Rect2:
@@ -342,7 +337,7 @@ func _on_target_mouse_exited() -> void:
 	if not _is_interactive():
 		return
 	_hovered = false
-	set_details_visible(target_state == CombatantPresentation.TargetState.SELECTED)
+	set_details_visible(false)
 	unhovered.emit()
 
 

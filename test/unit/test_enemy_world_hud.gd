@@ -208,12 +208,12 @@ func test_bound_model_signals_refresh_vitals_intent_and_conditions() -> void:
 	assert_eq(hud.intent_row.text, "Repair")
 
 
-func test_target_state_and_hover_share_details_reveal() -> void:
+func test_target_state_does_not_reveal_details_but_pointer_hover_does() -> void:
 	var hud := _hud()
 	hud.bind_combatant(_enemy_with_state(80, 3))
 
 	hud.set_target_state(CombatantPresentation.TargetState.SELECTED)
-	assert_true(hud.details.visible)
+	assert_false(hud.details.visible)
 	hud.set_target_state(CombatantPresentation.TargetState.NORMAL)
 	assert_false(hud.details.visible)
 	hud.target_region.mouse_entered.emit()
@@ -324,7 +324,7 @@ func test_projected_head_and_foot_size_padded_model_target_region() -> void:
 	assert_eq(hud.get_target_rect(), Rect2(452, 282, 96, 236))
 
 
-func test_world_layout_resolves_visible_huds_in_spawn_order() -> void:
+func test_world_layout_keeps_close_huds_centered_on_their_own_heads() -> void:
 	var world := WORLD_SCENE.instantiate() as BattleWorld3D
 	add_child_autofree(world)
 	var first := HUD_SCENE.instantiate() as EnemyWorldHUD
@@ -334,118 +334,59 @@ func test_world_layout_resolves_visible_huds_in_spawn_order() -> void:
 	first.bind_combatant(_enemy_with_state(80, 3))
 	second.bind_combatant(_enemy_with_state(60, 1))
 	first.set_projected_head_position(Vector2(500, 300))
-	second.set_projected_head_position(Vector2(500, 300))
+	second.set_projected_head_position(Vector2(530, 300))
 
 	world._layout_enemy_huds()
 
 	assert_eq(first.compact_stack.global_position, Vector2(420, 201))
-	assert_eq(second.compact_stack.global_position, Vector2(420, 108))
+	assert_eq(second.compact_stack.global_position, Vector2(450, 201))
+	assert_eq(first.compact_stack.global_position.y, second.compact_stack.global_position.y)
+	assert_eq(first.compact_stack.get_global_rect().get_center().x, 500.0)
+	assert_eq(second.compact_stack.get_global_rect().get_center().x, 530.0)
 	second.set_projection_visible(false)
 	world._layout_enemy_huds()
 	assert_eq(first.compact_stack.global_position, Vector2(420, 201))
 
 
-func test_controller_selected_details_flip_below_compact_at_safe_top() -> void:
+func test_world_layout_clamps_each_hud_independently_to_safe_edges() -> void:
 	var fixture := _world_in_viewport(Vector2i(1280, 800))
 	var world := fixture.world as BattleWorld3D
-	var hud := HUD_SCENE.instantiate() as EnemyWorldHUD
-	world.hud_layer.add_child(hud)
-	hud.bind_combatant(_enemy_with_state(80, 3))
-	hud.set_projected_head_position(Vector2(500, 114))
-	hud.set_target_state(CombatantPresentation.TargetState.SELECTED)
+	var top_left := HUD_SCENE.instantiate() as EnemyWorldHUD
+	var bottom_right := HUD_SCENE.instantiate() as EnemyWorldHUD
+	world.hud_layer.add_child(top_left)
+	world.hud_layer.add_child(bottom_right)
+	top_left.bind_combatant(_enemy_with_state(80, 3))
+	bottom_right.bind_combatant(_enemy_with_state(60, 1))
+	top_left.set_projected_head_position(Vector2(0, 0))
+	bottom_right.set_projected_head_position(Vector2(1280, 800))
 
 	world._layout_enemy_huds()
 
-	var safe_rect := Rect2(24, 24, 1232, 752)
-	assert_true(hud.details.visible)
-	assert_gt(hud.details.global_position.y, hud.compact_stack.global_position.y)
-	assert_true(safe_rect.encloses(hud.get_visible_layout_rect()))
+	assert_eq(top_left.compact_stack.global_position, Vector2(24, 24))
+	assert_eq(bottom_right.compact_stack.global_position, Vector2(1096, 689))
 
 
-func test_hovered_details_stay_inside_safe_bottom_above_compact() -> void:
-	var fixture := _world_in_viewport(Vector2i(1280, 800))
-	var world := fixture.world as BattleWorld3D
-	var hud := HUD_SCENE.instantiate() as EnemyWorldHUD
-	world.hud_layer.add_child(hud)
-	hud.bind_combatant(_enemy_with_state(80, 3))
-	hud.set_projected_head_position(Vector2(500, 790))
-	hud.target_region.mouse_entered.emit()
-
-	world._layout_enemy_huds()
-
-	var safe_rect := Rect2(24, 24, 1232, 752)
-	assert_true(hud.details.visible)
-	assert_lt(hud.details.global_position.y, hud.compact_stack.global_position.y)
-	assert_true(safe_rect.encloses(hud.get_visible_layout_rect()))
-
-
-func test_multiple_expanded_huds_resolve_without_visible_overlap() -> void:
+func test_visible_details_stay_four_pixels_below_their_own_compact_stack() -> void:
 	var fixture := _world_in_viewport(Vector2i(1280, 800))
 	var world := fixture.world as BattleWorld3D
 	var huds: Array[EnemyWorldHUD] = []
-	for index in 5:
+	for index in 2:
 		var hud := HUD_SCENE.instantiate() as EnemyWorldHUD
 		world.hud_layer.add_child(hud)
 		hud.bind_combatant(_enemy_with_state(80 - index * 10, 3))
-		hud.set_projected_head_position(Vector2(500, 300))
-		hud.set_target_state(CombatantPresentation.TargetState.SELECTED)
+		hud.set_projected_head_position(Vector2(500 + index * 30, 300))
+		hud.set_details_visible(true)
 		huds.append(hud)
 
 	world._layout_enemy_huds()
 
-	var safe_rect := Rect2(24, 24, 1232, 752)
-	var compact_rects := _compact_rects(huds)
-	var placed_details: Array[Rect2] = []
 	for hud: EnemyWorldHUD in huds:
-		var detail_rect := hud.details.get_global_rect()
-		assert_true(safe_rect.encloses(detail_rect))
-		for compact_rect: Rect2 in compact_rects:
-			assert_false(detail_rect.intersects(compact_rect))
-		for prior: Rect2 in placed_details:
-			assert_false(detail_rect.intersects(prior))
-		placed_details.append(detail_rect)
-
-
-func test_details_visibility_never_reflows_resolved_compact_huds() -> void:
-	var fixture := _world_in_viewport(Vector2i(1280, 800))
-	var world := fixture.world as BattleWorld3D
-	var huds: Array[EnemyWorldHUD] = []
-	for index in 5:
-		var hud := HUD_SCENE.instantiate() as EnemyWorldHUD
-		world.hud_layer.add_child(hud)
-		hud.bind_combatant(_enemy_with_state(80 - index * 10, 3))
-		hud.set_projected_head_position(Vector2(500, 300))
-		huds.append(hud)
-	world._layout_enemy_huds()
-	var compact_snapshot := _compact_rects(huds)
-
-	huds[0].set_target_state(CombatantPresentation.TargetState.SELECTED)
-	world._layout_enemy_huds()
-	assert_eq(_compact_rects(huds), compact_snapshot)
-
-	huds[1].target_region.mouse_entered.emit()
-	huds[2].set_target_state(CombatantPresentation.TargetState.SELECTED)
-	world._layout_enemy_huds()
-
-	assert_eq(_compact_rects(huds), compact_snapshot)
-	var safe_rect := Rect2(24, 24, 1232, 752)
-	var placed_details: Array[Rect2] = []
-	for hud: EnemyWorldHUD in huds:
-		if not hud.details.visible:
-			continue
-		var detail_rect := hud.details.get_global_rect()
-		assert_true(safe_rect.encloses(detail_rect))
-		for compact_rect: Rect2 in compact_snapshot:
-			assert_false(detail_rect.intersects(compact_rect))
-		for prior: Rect2 in placed_details:
-			assert_false(detail_rect.intersects(prior))
-		placed_details.append(detail_rect)
-	var detail_snapshot := placed_details.duplicate()
-
-	world._layout_enemy_huds()
-
-	assert_eq(_compact_rects(huds), compact_snapshot)
-	assert_eq(_visible_detail_rects(huds), detail_snapshot)
+		assert_true(hud.details.visible)
+		assert_eq(
+			hud.details.global_position.y,
+			hud.compact_stack.get_global_rect().end.y + DETAILS_GAP,
+		)
+		assert_eq(hud.details.global_position.x, hud.compact_stack.global_position.x)
 
 
 func test_defeat_immediately_hides_disables_and_excludes_hud_from_layout() -> void:
@@ -462,7 +403,7 @@ func test_defeat_immediately_hides_disables_and_excludes_hud_from_layout() -> vo
 	survivor.set_projected_head_position(Vector2(500, 300))
 	world._layout_enemy_huds()
 	assert_eq(defeated_hud.compact_stack.global_position, Vector2(420, 201))
-	assert_eq(survivor.compact_stack.global_position, Vector2(420, 108))
+	assert_eq(survivor.compact_stack.global_position, Vector2(420, 201))
 	watch_signals(defeated_hud)
 
 	defeated_enemy.defeat()
@@ -549,21 +490,6 @@ func _world_in_viewport(size: Vector2i) -> Dictionary:
 	var world := WORLD_SCENE.instantiate() as BattleWorld3D
 	viewport.add_child(world)
 	return {"viewport": viewport, "world": world}
-
-
-func _compact_rects(huds: Array[EnemyWorldHUD]) -> Array[Rect2]:
-	var result: Array[Rect2] = []
-	for hud: EnemyWorldHUD in huds:
-		result.append(Rect2(hud.compact_stack.global_position, hud.compact_stack.size))
-	return result
-
-
-func _visible_detail_rects(huds: Array[EnemyWorldHUD]) -> Array[Rect2]:
-	var result: Array[Rect2] = []
-	for hud: EnemyWorldHUD in huds:
-		if hud.details.visible:
-			result.append(hud.details.get_global_rect())
-	return result
 
 
 func _assert_rounded_style(style: StyleBox) -> void:

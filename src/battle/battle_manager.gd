@@ -138,11 +138,14 @@ func _register_presentation(
 	var previous := presentation_for(combatant)
 	var previous_state := CombatantPresentation.TargetState.NORMAL
 	var previous_acting := false
+	var previous_inspection_focused := false
 	if previous != null:
 		previous_state = previous.target_state
 		previous_acting = previous.acting
+		previous_inspection_focused = previous.inspection_focused
 	if previous != null and previous != presentation:
 		previous.set_target_presentation(CombatantPresentation.TargetState.NORMAL)
+		previous.set_inspection_focused(false)
 		previous.set_acting(false)
 		_disconnect_presentation(previous)
 	_presentations[combatant] = presentation
@@ -163,6 +166,7 @@ func _register_presentation(
 		presentation.projectile_requested.connect(_on_projectile_requested)
 	_connect_presentation_cleanup(combatant, presentation)
 	presentation.set_target_presentation(previous_state)
+	presentation.set_inspection_focused(previous_inspection_focused)
 	if previous != null and previous != presentation:
 		presentation.set_acting(previous_acting)
 		previous.cancel_pending_operations()
@@ -270,6 +274,7 @@ func unregister_presentation(combatant: BattleCombatant) -> void:
 		return
 	if presentation != null:
 		presentation.set_target_presentation(CombatantPresentation.TargetState.NORMAL)
+		presentation.set_inspection_focused(false)
 		presentation.set_acting(false)
 		_disconnect_presentation(presentation)
 	_presentations.erase(combatant)

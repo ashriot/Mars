@@ -188,6 +188,53 @@ func test_acting_detail_visibility_is_independent_of_update_order() -> void:
 		)
 
 
+func test_pointer_hover_reveals_only_its_own_details() -> void:
+	var world_fixture := _world()
+	var first := _bound_drone(world_fixture, _enemy())
+	var second := _bound_drone(world_fixture, _enemy())
+	first.presentation._process(0.0)
+	second.presentation._process(0.0)
+
+	first.presentation.hud.target_region.mouse_entered.emit()
+
+	assert_true(first.presentation.hud.details.visible)
+	assert_false(second.presentation.hud.details.visible)
+	first.presentation.hud.target_region.mouse_exited.emit()
+	assert_false(first.presentation.hud.details.visible)
+
+
+func test_inspection_focus_controls_details_independently_of_target_highlight() -> void:
+	var fixture := _bound_drone(_world(), _enemy())
+
+	fixture.presentation.set_target_presentation(
+		CombatantPresentation.TargetState.SELECTED,
+	)
+	assert_false(fixture.presentation.hud.details.visible)
+
+	fixture.presentation.set_inspection_focused(true)
+	assert_true(fixture.presentation.hud.details.visible)
+	fixture.presentation.set_inspection_focused(false)
+	assert_false(fixture.presentation.hud.details.visible)
+
+
+func test_group_target_highlights_do_not_reveal_multiple_detail_blocks() -> void:
+	var world_fixture := _world()
+	var first := _bound_drone(world_fixture, _enemy())
+	var second := _bound_drone(world_fixture, _enemy())
+
+	first.presentation.set_target_presentation(
+		CombatantPresentation.TargetState.SELECTED,
+	)
+	second.presentation.set_target_presentation(
+		CombatantPresentation.TargetState.SELECTED,
+	)
+
+	assert_eq(first.presentation.target_state, CombatantPresentation.TargetState.SELECTED)
+	assert_eq(second.presentation.target_state, CombatantPresentation.TargetState.SELECTED)
+	assert_false(first.presentation.hud.details.visible)
+	assert_false(second.presentation.hud.details.visible)
+
+
 func test_projection_uses_active_transformed_camera_and_hides_behind_it() -> void:
 	var world_fixture := _world()
 	var fixture := _bound_drone(world_fixture, _enemy())
@@ -481,6 +528,7 @@ func test_manager_replacement_completes_pending_hit_after_registry_switch_once()
 	)
 	var operation: PresentationOperation = fixture.presentation.sync_visual_health()
 	assert_false(operation.is_completed)
+	fixture.presentation.set_inspection_focused(true)
 	var replacement := CombatantPresentation.new()
 	replacement.bind(enemy)
 	manager.add_child(replacement)
@@ -500,6 +548,8 @@ func test_manager_replacement_completes_pending_hit_after_registry_switch_once()
 	assert_eq(completion_count[0], 1)
 	assert_true(registry_was_replaced_on_completion[0])
 	assert_same(manager.presentation_for(enemy), replacement)
+	assert_false(fixture.presentation.inspection_focused)
+	assert_true(replacement.inspection_focused)
 	assert_true(is_instance_valid(fixture.root))
 
 

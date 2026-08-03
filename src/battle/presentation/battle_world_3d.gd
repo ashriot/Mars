@@ -35,124 +35,21 @@ func _layout_enemy_huds() -> void:
 	if layer_size.x <= 0.0 or layer_size.y <= 0.0:
 		layer_size = get_viewport().get_visible_rect().size
 	var safe_rect := Rect2(Vector2.ZERO, layer_size).grow(-HUD_SAFE_MARGIN)
-	var huds: Array[EnemyWorldHUD] = []
-	var desired_rects: Array[Rect2] = []
 	for child: Node in hud_layer.get_children():
-		if child is EnemyWorldHUD:
-			var hud := child as EnemyWorldHUD
-			hud.set_safe_rect(safe_rect)
-			if hud.visible and hud.has_valid_projection():
-				huds.append(hud)
-				desired_rects.append(hud.get_desired_compact_rect())
-	if huds.is_empty():
-		return
-	var resolved := EnemyHUDLayout.resolve(desired_rects, safe_rect)
-	if resolved.size() != huds.size():
-		return
-	for index in huds.size():
-		huds[index].apply_resolved_compact_rect(resolved[index])
-	var occupied: Array[Rect2] = resolved.duplicate()
-	for index in huds.size():
-		var hud := huds[index]
-		if not hud.details.visible:
+		if child is not EnemyWorldHUD:
 			continue
-		var detail_rect := _resolve_details_rect(resolved[index], occupied, safe_rect)
-		if detail_rect.size == Vector2.ZERO:
-			push_error("BattleWorld3D cannot place enemy HUD details inside the safe area.")
+		var hud := child as EnemyWorldHUD
+		hud.set_safe_rect(safe_rect)
+		if not hud.visible or not hud.has_valid_projection():
 			continue
-		hud.apply_details_rect(detail_rect)
-		occupied.append(detail_rect)
-
-
-func _resolve_details_rect(
-	owner_compact: Rect2,
-	occupied: Array[Rect2],
-	safe_rect: Rect2,
-) -> Rect2:
-	var x_positions: Array[float] = [
-		owner_compact.position.x,
-		safe_rect.position.x,
-		safe_rect.end.x - EnemyWorldHUD.DETAILS_SIZE.x,
-	]
-	var y_positions: Array[float] = [
-		owner_compact.position.y - EnemyWorldHUD.DETAILS_GAP \
-			- EnemyWorldHUD.DETAILS_SIZE.y,
-		owner_compact.end.y + EnemyWorldHUD.DETAILS_GAP,
-		safe_rect.position.y,
-		safe_rect.end.y - EnemyWorldHUD.DETAILS_SIZE.y,
-	]
-	for obstacle: Rect2 in occupied:
-		_append_unique_float(x_positions, obstacle.position.x)
-		_append_unique_float(
-			x_positions,
-			obstacle.position.x - EnemyWorldHUD.DETAILS_GAP \
-				- EnemyWorldHUD.DETAILS_SIZE.x,
+		var rect := hud.get_desired_compact_rect()
+		rect.position.x = clampf(
+			rect.position.x, safe_rect.position.x, safe_rect.end.x - rect.size.x,
 		)
-		_append_unique_float(
-			x_positions, obstacle.end.x + EnemyWorldHUD.DETAILS_GAP,
+		rect.position.y = clampf(
+			rect.position.y, safe_rect.position.y, safe_rect.end.y - rect.size.y,
 		)
-		_append_unique_float(y_positions, obstacle.position.y)
-		_append_unique_float(
-			y_positions,
-			obstacle.position.y - EnemyWorldHUD.DETAILS_GAP \
-				- EnemyWorldHUD.DETAILS_SIZE.y,
-		)
-		_append_unique_float(
-			y_positions, obstacle.end.y + EnemyWorldHUD.DETAILS_GAP,
-		)
-
-	var candidates: Array[Rect2] = []
-	for x: float in x_positions:
-		for y: float in y_positions:
-			var candidate := Rect2(
-				Vector2(
-					clampf(
-						x, safe_rect.position.x,
-						safe_rect.end.x - EnemyWorldHUD.DETAILS_SIZE.x,
-					),
-					clampf(
-						y, safe_rect.position.y,
-						safe_rect.end.y - EnemyWorldHUD.DETAILS_SIZE.y,
-					),
-				),
-				EnemyWorldHUD.DETAILS_SIZE,
-			)
-			if not candidates.has(candidate):
-				candidates.append(candidate)
-	var owner_center := owner_compact.get_center()
-	candidates.sort_custom(func(left: Rect2, right: Rect2) -> bool:
-		var left_distance := left.get_center().distance_squared_to(owner_center)
-		var right_distance := right.get_center().distance_squared_to(owner_center)
-		if left_distance != right_distance:
-			return left_distance < right_distance
-		if left.position.y != right.position.y:
-			return left.position.y < right.position.y
-		return left.position.x < right.position.x
-	)
-	for candidate: Rect2 in candidates:
-		if _details_rect_is_clear(candidate, occupied, safe_rect):
-			return candidate
-	return Rect2()
-
-
-func _details_rect_is_clear(
-	candidate: Rect2,
-	occupied: Array[Rect2],
-	safe_rect: Rect2,
-) -> bool:
-	if not safe_rect.encloses(candidate):
-		return false
-	for obstacle: Rect2 in occupied:
-		if candidate.grow(EnemyWorldHUD.DETAILS_GAP * 0.5).intersects(
-			obstacle.grow(EnemyWorldHUD.DETAILS_GAP * 0.5),
-		):
-			return false
-	return true
-
-
-func _append_unique_float(values: Array[float], value: float) -> void:
-	if not values.has(value):
-		values.append(value)
+		hud.apply_resolved_compact_rect(rect)
 
 
 func place_ordinary_view(

@@ -384,10 +384,17 @@ func _set_target_state(
 		presentation.set_target_presentation(state)
 
 
+func _set_inspection_focus(target: BattleCombatant, focused: bool) -> void:
+	var presentation := manager.presentation_for(target) if manager != null else null
+	if presentation != null:
+		presentation.set_inspection_focused(focused)
+
+
 func _set_current_target(target: BattleCombatant) -> void:
 	if not _is_valid_candidate(target):
 		return
 	if is_instance_valid(_current_target) and _current_target != target:
+		_set_inspection_focus(_current_target, false)
 		if _is_group_targeting() and _is_valid_candidate(_current_target):
 			_set_target_state(_current_target, CombatantPresentation.TargetState.SELECTED)
 		else:
@@ -400,6 +407,7 @@ func _set_current_target(target: BattleCombatant) -> void:
 	_current_target = target
 	_navigation_origin = target
 	_set_target_state(target, CombatantPresentation.TargetState.SELECTED)
+	_set_inspection_focus(target, true)
 	if target is EnemyCombatant:
 		_last_enemy_target = target as EnemyCombatant
 	elif target is HeroCombatant:
@@ -409,6 +417,7 @@ func _set_current_target(target: BattleCombatant) -> void:
 
 func _clear_current_target(retain_origin: bool) -> void:
 	if is_instance_valid(_current_target):
+		_set_inspection_focus(_current_target, false)
 		if _is_group_targeting() and _is_valid_candidate(_current_target):
 			_set_target_state(_current_target, CombatantPresentation.TargetState.SELECTED)
 		else:

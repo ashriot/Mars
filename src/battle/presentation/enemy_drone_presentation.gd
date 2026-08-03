@@ -99,6 +99,11 @@ func set_target_presentation(state: TargetState) -> void:
 	_refresh_details_visibility()
 
 
+func set_inspection_focused(focused: bool) -> void:
+	super.set_inspection_focused(focused)
+	_refresh_details_visibility()
+
+
 func set_acting(active: bool):
 	acting = active
 	if not _combatant_is_defeated():
@@ -194,7 +199,7 @@ func _projected_model_bounds() -> Rect2:
 
 func _refresh_details_visibility() -> void:
 	if is_instance_valid(hud):
-		hud.set_details_visible(acting or target_state == TargetState.SELECTED)
+		hud.set_details_visible(acting or inspection_focused or hud.is_hovered())
 
 
 func _request_intended_target_projectiles() -> void:
@@ -274,11 +279,13 @@ func _disconnect_model_events() -> void:
 
 
 func _on_hud_hovered() -> void:
+	_refresh_details_visibility()
 	if _combatant_is_interactive():
 		target_hovered.emit(combatant)
 
 
 func _on_hud_unhovered() -> void:
+	_refresh_details_visibility()
 	if _combatant_is_interactive():
 		target_unhovered.emit(combatant)
 

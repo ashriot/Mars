@@ -795,6 +795,53 @@ func test_drone_targeting_uses_projected_heads_wraps_and_forwards_exact_enemy() 
 	assert_same(manager.selected_enemy, first, "controller confirmation forwards its exact model")
 
 
+func test_controller_target_change_transfers_enemy_inspection_details() -> void:
+	var fixture := await _drone_navigation_fixture()
+	var scene := fixture.scene as BattleScene
+	var enemies: Array = fixture.enemies
+	var presentations: Array = fixture.presentations
+	var first := enemies[0] as EnemyCombatant
+	var second := enemies[1] as EnemyCombatant
+	var first_presentation := presentations[0] as EnemyDronePresentation
+	var second_presentation := presentations[1] as EnemyDronePresentation
+
+	scene._set_current_target(first)
+	assert_true(first_presentation.inspection_focused)
+	assert_true(first_presentation.hud.details.visible)
+	assert_false(second_presentation.inspection_focused)
+	assert_false(second_presentation.hud.details.visible)
+
+	scene._set_current_target(second)
+	assert_false(first_presentation.inspection_focused)
+	assert_false(first_presentation.hud.details.visible)
+	assert_true(second_presentation.inspection_focused)
+	assert_true(second_presentation.hud.details.visible)
+
+	scene._clear_current_target(false)
+	assert_false(second_presentation.inspection_focused)
+	assert_false(second_presentation.hud.details.visible)
+
+
+func test_group_highlights_keep_details_owned_by_one_inspection_target() -> void:
+	var fixture := await _drone_navigation_fixture()
+	var scene := fixture.scene as BattleScene
+	var manager := fixture.manager as TrackingBattleManager
+	var enemies: Array = fixture.enemies
+	var presentations: Array = fixture.presentations
+	var first := enemies[0] as EnemyCombatant
+	var first_presentation := presentations[0] as EnemyDronePresentation
+	var second_presentation := presentations[1] as EnemyDronePresentation
+	manager.current_action.target_type = Action.TargetType.ALL_ENEMIES
+
+	scene._set_current_target(first)
+	scene._refresh_targeting()
+
+	assert_eq(first_presentation.target_state, CombatantPresentation.TargetState.SELECTED)
+	assert_eq(second_presentation.target_state, CombatantPresentation.TargetState.SELECTED)
+	assert_true(first_presentation.hud.details.visible)
+	assert_false(second_presentation.hud.details.visible)
+
+
 func test_runtime_hidden_world_removes_projected_enemies_from_targeting_until_shown() -> void:
 	var fixture := await _drone_navigation_fixture()
 	var scene := fixture.scene as BattleScene
@@ -884,10 +931,13 @@ func test_presentation_replacement_routes_input_only_from_current_registration()
 	manager.register_presentation(enemy, first)
 	scene._set_current_target(enemy)
 	assert_eq(first.target_state, CombatantPresentation.TargetState.SELECTED)
+	assert_true(first.inspection_focused)
 	watch_signals(manager)
 	manager.register_presentation(enemy, replacement)
 	assert_eq(first.target_state, CombatantPresentation.TargetState.NORMAL)
 	assert_eq(replacement.target_state, CombatantPresentation.TargetState.SELECTED)
+	assert_false(first.inspection_focused)
+	assert_true(replacement.inspection_focused)
 	assert_signal_not_emitted(manager, "target_invalidated")
 	assert_false(manager._presentation_exit_callbacks.has(first))
 	assert_true(manager._presentation_exit_callbacks.has(replacement))
@@ -898,6 +948,7 @@ func test_presentation_replacement_routes_input_only_from_current_registration()
 
 	manager.selected_enemy = null
 	manager.unregister_presentation(enemy)
+	assert_false(replacement.inspection_focused)
 	replacement.target_pressed.emit(enemy)
 	assert_null(manager.selected_enemy, "unregistered presentations no longer own pointer input")
 
