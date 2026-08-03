@@ -20,14 +20,16 @@
 
 ---
 
-### Task 1: Protect the Readable World Composition Contract
+### Task 1: Protect and Implement the Readable World Composition Contract
 
 **Files:**
+- Modify: `src/battle/presentation/battle_world_3d.tscn:8-14,36-38`
+- Modify: `src/battle/presentation/industrial_room_3d.tscn:158-169`
 - Modify: `test/integration/test_battle_world_3d.gd:12-46`
 
 **Interfaces:**
 - Consumes: `BattleWorldScene.instantiate()`, `BattleWorld3D.enemy_views`, `WorldEnvironment.environment`, `DirectionalLight3D`, and `OmniLight3D`.
-- Produces: regression coverage for the shared vertical offset and exact tracked lighting baseline.
+- Produces: a `BattleWorld3D` with `EnemyViews.position == Vector3(0.0, 1.0, 0.0)`, a brighter blue-gray environment, neutral front/top room illumination, and regression coverage for the exact tracked baseline.
 
 - [ ] **Step 1: Add failing staging and lighting tests**
 
@@ -88,18 +90,7 @@ Confirm every failure is an expected mismatch for one of these authored values: 
 
 ---
 
-### Task 2: Raise Enemies and Establish the Bright Industrial Baseline
-
-**Files:**
-- Modify: `src/battle/presentation/battle_world_3d.tscn:8-14,36-38`
-- Modify: `src/battle/presentation/industrial_room_3d.tscn:158-169`
-- Test: `test/integration/test_battle_world_3d.gd`
-
-**Interfaces:**
-- Consumes: the exact regression contract added in Task 1.
-- Produces: a `BattleWorld3D` with `EnemyViews.position == Vector3(0.0, 1.0, 0.0)`, a brighter blue-gray environment, and neutral front/top room illumination.
-
-- [ ] **Step 1: Raise the shared enemy layer and brighten the world environment**
+- [ ] **Step 4: Raise the shared enemy layer and brighten the world environment**
 
 Change the environment and enemy-layer sections of `battle_world_3d.tscn` to:
 
@@ -119,7 +110,7 @@ position = Vector3(0, 1, 0)
 unique_name_in_owner = true
 ```
 
-- [ ] **Step 2: Rebalance the tracked room lights**
+- [ ] **Step 5: Rebalance the tracked room lights**
 
 Change the two room lights in `industrial_room_3d.tscn` to:
 
@@ -138,7 +129,7 @@ omni_range = 18.0
 shadow_enabled = false
 ```
 
-- [ ] **Step 3: Import and parse the edited scenes**
+- [ ] **Step 6: Import and parse the edited scenes**
 
 Run:
 
@@ -148,7 +139,7 @@ env HOME=/private/tmp/mars-lighting-test-home '/Applications/Godot 4.7.app/Conte
 
 Expected: exit `0`, with no script, parser, scene-resource, or load errors. The documented macOS certificate diagnostic is acceptable.
 
-- [ ] **Step 4: Run the focused tests to verify GREEN**
+- [ ] **Step 7: Run the focused tests to verify GREEN**
 
 Run:
 
@@ -158,7 +149,7 @@ env HOME=/private/tmp/mars-lighting-test-home '/Applications/Godot 4.7.app/Conte
 
 Expected: all selected tests and assertions pass. This proves the parent offset changed while local formation heights remain `0.0`.
 
-- [ ] **Step 5: Review the focused diff**
+- [ ] **Step 8: Review the focused diff**
 
 Run:
 
@@ -168,9 +159,9 @@ git diff -- src/battle/presentation/battle_world_3d.tscn src/battle/presentation
 git status --short
 ```
 
-Expected: only the three task files plus the already-protected `src/dev/endgame_battle_lab.tscn` edit are present. No file beneath `assets/graphics/models/quaternius_local/` is tracked or modified.
+Expected: only the three task files are present in the isolated worktree. The protected `src/dev/endgame_battle_lab.tscn` edit remains solely in the primary checkout. No file beneath `assets/graphics/models/quaternius_local/` is tracked or modified.
 
-- [ ] **Step 6: Commit the scene correction and test**
+- [ ] **Step 9: Commit the scene correction and test**
 
 ```sh
 git add src/battle/presentation/battle_world_3d.tscn src/battle/presentation/industrial_room_3d.tscn test/integration/test_battle_world_3d.gd
@@ -181,13 +172,13 @@ Do not stage `src/dev/endgame_battle_lab.tscn`.
 
 ---
 
-### Task 3: Verify the Presentation Boundary and Hand Off Visual Acceptance
+### Task 2: Verify the Presentation Boundary and Hand Off Visual Acceptance
 
 **Files:**
 - Modify: `docs/testing/ctb-combat-checklist.md:45-51`
 
 **Interfaces:**
-- Consumes: the committed lighting/framing correction from Task 2 and the repository's existing battle-presentation suites.
+- Consumes: the committed lighting/framing correction from Task 1 and the repository's existing battle-presentation suites.
 - Produces: focused and full automated evidence plus explicit unchecked manual acceptance criteria for the user.
 
 - [ ] **Step 1: Add explicit manual acceptance checks**
@@ -232,4 +223,4 @@ Launch the ordinary playable battle with the installed local Quaternius assets. 
 
 - [ ] **Step 6: Evaluate the screenshot against the approved design**
 
-Accept the pass only if all active drones sit above the hero-card band, their HUD ownership is clear, the central room surfaces are visible, blue accents retain contrast, and the 2D UI is not visually washed out. If illumination or height still misses the target, adjust only the authored values protected by Task 1, rerun Tasks 2 Steps 3-5 and Task 3 Steps 2-3, then request a new screenshot.
+Accept the pass only if all active drones sit above the hero-card band, their HUD ownership is clear, the central room surfaces are visible, blue accents retain contrast, and the 2D UI is not visually washed out. If illumination or height still misses the target, adjust only the authored values protected by Task 1, rerun Task 1 Steps 6-8 and Task 2 Steps 2-3, then request a new screenshot.
