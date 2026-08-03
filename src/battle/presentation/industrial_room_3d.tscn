@@ -200,10 +200,10 @@ light_energy = 1.0
 shadow_enabled = true
 
 [node name="RoomFillLight" type="OmniLight3D" parent="."]
-position = Vector3(0, 3.2, -1.5)
-light_color = Color(0.55, 0.7, 1, 1)
-light_energy = 2.2
-omni_range = 11.0
+position = Vector3(0, 3, 5)
+light_color = Color(0.7, 0.8, 1, 1)
+light_energy = 1.8
+omni_range = 15.0
 shadow_enabled = false
 
 [node name="RoomBounceLight" type="DirectionalLight3D" parent="."]

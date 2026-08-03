@@ -37,9 +37,9 @@ func test_world_environment_uses_readable_industrial_ambient_light() -> void:
 	assert_not_null(environment)
 	assert_eq(environment.ambient_light_source, Environment.AMBIENT_SOURCE_COLOR)
 	assert_eq(environment.background_color, Color(0.06, 0.085, 0.13, 1.0))
-	assert_eq(environment.ambient_light_color, Color(0.35, 0.42, 0.52, 1.0))
-	assert_almost_eq(environment.ambient_light_energy, 0.5, 0.0001)
-	assert_almost_eq(environment.tonemap_exposure, 1.15, 0.0001)
+	assert_eq(environment.ambient_light_color, Color(0.42, 0.48, 0.58, 1.0))
+	assert_almost_eq(environment.ambient_light_energy, 0.8, 0.0001)
+	assert_almost_eq(environment.tonemap_exposure, 1.0, 0.0001)
 
 
 func test_room_uses_mobile_fake_gi_lighting() -> void:
@@ -58,10 +58,10 @@ func test_room_uses_mobile_fake_gi_lighting() -> void:
 	assert_eq(key.light_color, Color(0.72, 0.82, 1.0, 1.0))
 	assert_almost_eq(key.light_energy, 1.0, 0.0001)
 	assert_true(key.shadow_enabled)
-	assert_eq(fill.position, Vector3(0.0, 3.2, -1.5))
-	assert_eq(fill.light_color, Color(0.55, 0.7, 1.0, 1.0))
-	assert_almost_eq(fill.light_energy, 2.2, 0.0001)
-	assert_almost_eq(fill.omni_range, 11.0, 0.0001)
+	assert_eq(fill.position, Vector3(0.0, 3.0, 5.0))
+	assert_eq(fill.light_color, Color(0.7, 0.8, 1.0, 1.0))
+	assert_almost_eq(fill.light_energy, 1.8, 0.0001)
+	assert_almost_eq(fill.omni_range, 15.0, 0.0001)
 	assert_false(fill.shadow_enabled)
 	assert_not_null(bounce)
 	if bounce == null:
