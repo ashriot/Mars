@@ -116,6 +116,38 @@ func test_room_nested_local_modules_all_keep_tracked_placeholders() -> void:
 		assert_not_null(loader.placeholder)
 		assert_true(loader.placeholder is GeometryInstance3D)
 		assert_false(loader.local_resource_path.is_empty())
+	var left_vent := room.get_node("EdgeDressing/LeftVent") as OptionalLocalModel3D
+	assert_not_null(left_vent)
+	assert_not_null(left_vent.model_parent)
+	assert_not_null(left_vent.placeholder)
+	assert_same(left_vent.model_parent, left_vent.get_node("ModelPivot"))
+	assert_same(left_vent.placeholder, left_vent.get_node("Placeholder"))
+	assert_eq(left_vent.local_resource_path, \
+		"res://assets/graphics/models/quaternius_local/environment/industrial/Prop_Vent_Wide.gltf")
+	var right_vent := room.get_node("EdgeDressing/RightVent") as OptionalLocalModel3D
+	assert_not_null(right_vent)
+	assert_not_null(right_vent.model_parent)
+	assert_not_null(right_vent.placeholder)
+	assert_same(right_vent.model_parent, right_vent.get_node("ModelPivot"))
+	assert_same(right_vent.placeholder, right_vent.get_node("Placeholder"))
+	assert_eq(right_vent.local_resource_path, \
+		"res://assets/graphics/models/quaternius_local/environment/industrial/Prop_Vent_Wide.gltf")
+	var left_cable := room.get_node("EdgeDressing/LeftCable") as OptionalLocalModel3D
+	assert_not_null(left_cable)
+	assert_not_null(left_cable.model_parent)
+	assert_not_null(left_cable.placeholder)
+	assert_same(left_cable.model_parent, left_cable.get_node("ModelPivot"))
+	assert_same(left_cable.placeholder, left_cable.get_node("Placeholder"))
+	assert_eq(left_cable.local_resource_path, \
+		"res://assets/graphics/models/quaternius_local/environment/industrial/Prop_Cable_1.gltf")
+	var right_cable := room.get_node("EdgeDressing/RightCable") as OptionalLocalModel3D
+	assert_not_null(right_cable)
+	assert_not_null(right_cable.model_parent)
+	assert_not_null(right_cable.placeholder)
+	assert_same(right_cable.model_parent, right_cable.get_node("ModelPivot"))
+	assert_same(right_cable.placeholder, right_cable.get_node("Placeholder"))
+	assert_eq(right_cable.local_resource_path, \
+		"res://assets/graphics/models/quaternius_local/environment/industrial/Prop_Cable_1.gltf")
 	var frame := room.get_node("RoomShell/BackWall/DoorFrameModel") \
 		as OptionalLocalModel3D
 	var door := room.get_node("RoomShell/BackWall/DoorModel") \
@@ -137,6 +169,7 @@ func test_room_nested_local_modules_all_keep_tracked_placeholders() -> void:
 func test_world_loads_optional_models_nested_below_room_root() -> void:
 	var world := _world()
 	var branch := Node3D.new()
+	var container := Node3D.new()
 	var loader := OptionalLocalModel3D.new()
 	loader.local_resource_path = \
 		"res://test/fixtures/presentation/optional_model_fixture.tscn"
@@ -144,11 +177,13 @@ func test_world_loads_optional_models_nested_below_room_root() -> void:
 	loader.placeholder = MeshInstance3D.new()
 	loader.add_child(loader.model_parent)
 	loader.add_child(loader.placeholder)
-	branch.add_child(loader)
+	branch.add_child(container)
+	container.add_child(loader)
 	add_child_autofree(branch)
 	world._load_optional_local_models(branch)
 	assert_false(loader.using_placeholder)
 	assert_not_null(loader.loaded_model)
+	assert_false(loader.placeholder.visible)
 
 
 func test_five_ordinary_views_are_adopted_and_placed_in_authored_order() -> void:
