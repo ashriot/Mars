@@ -52,25 +52,25 @@ func test_room_uses_mobile_fake_gi_lighting() -> void:
 	assert_not_null(key)
 	assert_not_null(fill)
 	assert_null(front)
-	assert_almost_eq(key.rotation_degrees.x, -42.0, 0.0001)
-	assert_almost_eq(key.rotation_degrees.y, -28.0, 0.0001)
+	assert_almost_eq(key.rotation_degrees.x, -48.0, 0.0001)
+	assert_almost_eq(key.rotation_degrees.y, -24.0, 0.0001)
 	assert_almost_eq(key.rotation_degrees.z, 0.0, 0.0001)
 	assert_eq(key.light_color, Color(0.72, 0.82, 1.0, 1.0))
-	assert_almost_eq(key.light_energy, 1.35, 0.0001)
+	assert_almost_eq(key.light_energy, 1.0, 0.0001)
 	assert_true(key.shadow_enabled)
-	assert_eq(fill.position, Vector3(0.0, 3.4, 0.5))
+	assert_eq(fill.position, Vector3(0.0, 3.2, -1.5))
 	assert_eq(fill.light_color, Color(0.55, 0.7, 1.0, 1.0))
-	assert_almost_eq(fill.light_energy, 3.0, 0.0001)
-	assert_almost_eq(fill.omni_range, 12.0, 0.0001)
+	assert_almost_eq(fill.light_energy, 2.2, 0.0001)
+	assert_almost_eq(fill.omni_range, 11.0, 0.0001)
 	assert_false(fill.shadow_enabled)
 	assert_not_null(bounce)
 	if bounce == null:
 		return
-	assert_almost_eq(bounce.rotation_degrees.x, 138.0, 0.0001)
-	assert_almost_eq(bounce.rotation_degrees.y, -28.0, 0.0001)
+	assert_almost_eq(bounce.rotation_degrees.x, 132.0, 0.0001)
+	assert_almost_eq(bounce.rotation_degrees.y, -24.0, 0.0001)
 	assert_almost_eq(bounce.rotation_degrees.z, 0.0, 0.0001)
 	assert_eq(bounce.light_color, Color(0.28, 0.42, 0.62, 1.0))
-	assert_almost_eq(bounce.light_energy, 0.28, 0.0001)
+	assert_almost_eq(bounce.light_energy, 0.45, 0.0001)
 	assert_almost_eq(bounce.light_specular, 0.0, 0.0001)
 	assert_false(bounce.shadow_enabled)
 
@@ -116,6 +116,22 @@ func test_room_nested_local_modules_all_keep_tracked_placeholders() -> void:
 		assert_not_null(loader.placeholder)
 		assert_true(loader.placeholder is GeometryInstance3D)
 		assert_false(loader.local_resource_path.is_empty())
+	var frame := room.get_node("RoomShell/BackWall/DoorFrameModel") \
+		as OptionalLocalModel3D
+	var door := room.get_node("RoomShell/BackWall/DoorModel") \
+		as OptionalLocalModel3D
+	assert_eq(frame.local_resource_path, \
+		"res://assets/graphics/models/quaternius_local/environment/industrial/Door_Frame_A.gltf")
+	assert_eq(door.local_resource_path, \
+		"res://assets/graphics/models/quaternius_local/environment/industrial/Door_Metal.gltf")
+	for loader: OptionalLocalModel3D in [frame, door]:
+		var pivot_scale := loader.model_parent.scale
+		assert_gte(pivot_scale.x, 0.5)
+		assert_lte(pivot_scale.x, 2.0)
+		assert_gte(pivot_scale.y, 0.5)
+		assert_lte(pivot_scale.y, 2.0)
+		assert_gte(pivot_scale.z, 0.5)
+		assert_lte(pivot_scale.z, 2.0)
 
 
 func test_world_loads_optional_models_nested_below_room_root() -> void:

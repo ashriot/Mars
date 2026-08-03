@@ -49,6 +49,9 @@ model_parent = NodePath("ModelPivot")
 placeholder = NodePath("Placeholder")
 
 [node name="ModelPivot" type="Node3D" parent="LeftWall"]
+position = Vector3(0, -2.5, -2.05)
+rotation_degrees = Vector3(0, 90, 0)
+scale = Vector3(1, 1.666667, 1)
 
 [node name="Placeholder" type="MeshInstance3D" parent="LeftWall"]
 mesh = SubResource("Mesh_wall")
@@ -62,6 +65,9 @@ model_parent = NodePath("ModelPivot")
 placeholder = NodePath("Placeholder")
 
 [node name="ModelPivot" type="Node3D" parent="RightWall"]
+position = Vector3(0, -2.5, 2.05)
+rotation_degrees = Vector3(0, -90, 0)
+scale = Vector3(1, 1.666667, 1)
 
 [node name="Placeholder" type="MeshInstance3D" parent="RightWall"]
 mesh = SubResource("Mesh_wall")
@@ -74,7 +80,8 @@ model_parent = NodePath("ModelPivot")
 placeholder = NodePath("Placeholder")
 
 [node name="ModelPivot" type="Node3D" parent="LeftSupport"]
-scale = Vector3(1, 1.02, 1)
+position = Vector3(0, -2.537, 0.127)
+scale = Vector3(2, 1.683, 0.54)
 
 [node name="Placeholder" type="MeshInstance3D" parent="LeftSupport"]
 mesh = SubResource("Mesh_support")
@@ -87,7 +94,8 @@ model_parent = NodePath("ModelPivot")
 placeholder = NodePath("Placeholder")
 
 [node name="ModelPivot" type="Node3D" parent="RightSupport"]
-scale = Vector3(1, 1.02, 1)
+position = Vector3(0, -2.537, 0.127)
+scale = Vector3(2, 1.683, 0.54)
 
 [node name="Placeholder" type="MeshInstance3D" parent="RightSupport"]
 mesh = SubResource("Mesh_support")
@@ -104,6 +112,9 @@ model_parent = NodePath("ModelPivot")
 placeholder = NodePath("Placeholder")
 
 [node name="ModelPivot" type="Node3D" parent="CeilingBeam"]
+position = Vector3(0, 3.912, -1.85)
+rotation_degrees = Vector3(0, 90, 90)
+scale = Vector3(2, 0.5, 2)
 
 [node name="Placeholder" type="MeshInstance3D" parent="CeilingBeam"]
 mesh = SubResource("Mesh_beam")
@@ -116,6 +127,8 @@ model_parent = NodePath("ModelPivot")
 placeholder = NodePath("Placeholder")
 
 [node name="ModelPivot" type="Node3D" parent="PracticalLight"]
+position = Vector3(1.3202, 0.0437, 0)
+scale = Vector3(2, 0.77, 0.5)
 
 [node name="Placeholder" type="MeshInstance3D" parent="PracticalLight"]
 mesh = SubResource("Mesh_light")

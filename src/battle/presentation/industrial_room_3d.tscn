@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://bxnblkrkqiufw"]
+[gd_scene load_steps=14 format=3 uid="uid://bxnblkrkqiufw"]
 
 [ext_resource type="Script" uid="uid://daidhafirumhc" path="res://src/battle/presentation/optional_local_model_3d.gd" id="1_optional"]
 [ext_resource type="PackedScene" path="res://src/battle/presentation/industrial_room_bay_3d.tscn" id="2_bay"]
@@ -34,6 +34,14 @@ size = Vector3(3.6, 4.5, 0.45)
 [sub_resource type="BoxMesh" id="Mesh_frame"]
 material = SubResource("Material_trim")
 size = Vector3(0.45, 5, 0.55)
+
+[sub_resource type="BoxMesh" id="Mesh_door_frame_placeholder"]
+material = SubResource("Material_trim")
+size = Vector3(4.4, 0.35, 0.46)
+
+[sub_resource type="BoxMesh" id="Mesh_door_placeholder"]
+material = SubResource("Material_dark")
+size = Vector3(4.2, 4.45, 0.12)
 
 [sub_resource type="BoxMesh" id="Mesh_bulkhead_light"]
 material = SubResource("Material_light")
@@ -89,6 +97,34 @@ mesh = SubResource("Mesh_frame")
 position = Vector3(2.15, 2.5, 0.12)
 mesh = SubResource("Mesh_frame")
 
+[node name="DoorFrameModel" type="Node3D" parent="RoomShell/BackWall" node_paths=PackedStringArray("model_parent", "placeholder")]
+script = ExtResource("1_optional")
+local_resource_path = "res://assets/graphics/models/quaternius_local/environment/industrial/Door_Frame_A.gltf"
+model_parent = NodePath("ModelPivot")
+placeholder = NodePath("Placeholder")
+
+[node name="ModelPivot" type="Node3D" parent="RoomShell/BackWall/DoorFrameModel"]
+position = Vector3(0, 0.107, 0.4)
+scale = Vector3(0.9, 0.9, 0.5)
+
+[node name="Placeholder" type="MeshInstance3D" parent="RoomShell/BackWall/DoorFrameModel"]
+position = Vector3(0, 4.47, 0.4)
+mesh = SubResource("Mesh_door_frame_placeholder")
+
+[node name="DoorModel" type="Node3D" parent="RoomShell/BackWall" node_paths=PackedStringArray("model_parent", "placeholder")]
+script = ExtResource("1_optional")
+local_resource_path = "res://assets/graphics/models/quaternius_local/environment/industrial/Door_Metal.gltf"
+model_parent = NodePath("ModelPivot")
+placeholder = NodePath("Placeholder")
+
+[node name="ModelPivot" type="Node3D" parent="RoomShell/BackWall/DoorModel"]
+position = Vector3(2.10572, 0.1, 0.45)
+scale = Vector3(2, 1.1, 1)
+
+[node name="Placeholder" type="MeshInstance3D" parent="RoomShell/BackWall/DoorModel"]
+position = Vector3(0, 2.325, 0.5)
+mesh = SubResource("Mesh_door_placeholder")
+
 [node name="BulkheadLight" type="MeshInstance3D" parent="RoomShell/BackWall"]
 position = Vector3(0, 4.25, 0.28)
 mesh = SubResource("Mesh_bulkhead_light")
@@ -103,6 +139,9 @@ model_parent = NodePath("ModelPivot")
 placeholder = NodePath("Placeholder")
 
 [node name="ModelPivot" type="Node3D" parent="EdgeDressing/LeftVent"]
+position = Vector3(0, 0.0268, -0.0595)
+rotation_degrees = Vector3(90, 0, 0)
+scale = Vector3(1.44, 2, 2)
 
 [node name="Placeholder" type="MeshInstance3D" parent="EdgeDressing/LeftVent"]
 mesh = SubResource("Mesh_vent")
@@ -116,6 +155,9 @@ model_parent = NodePath("ModelPivot")
 placeholder = NodePath("Placeholder")
 
 [node name="ModelPivot" type="Node3D" parent="EdgeDressing/RightVent"]
+position = Vector3(0, 0.0268, -0.0595)
+rotation_degrees = Vector3(90, 0, 0)
+scale = Vector3(1.44, 2, 2)
 
 [node name="Placeholder" type="MeshInstance3D" parent="EdgeDressing/RightVent"]
 mesh = SubResource("Mesh_vent")
@@ -128,6 +170,9 @@ model_parent = NodePath("ModelPivot")
 placeholder = NodePath("Placeholder")
 
 [node name="ModelPivot" type="Node3D" parent="EdgeDressing/LeftCable"]
+position = Vector3(-0.0103, 0.4471, -0.1116)
+rotation_degrees = Vector3(90, 0, 0)
+scale = Vector3(0.5, 2, 1.8)
 
 [node name="Placeholder" type="MeshInstance3D" parent="EdgeDressing/LeftCable"]
 mesh = SubResource("Mesh_cable")
@@ -141,26 +186,29 @@ model_parent = NodePath("ModelPivot")
 placeholder = NodePath("Placeholder")
 
 [node name="ModelPivot" type="Node3D" parent="EdgeDressing/RightCable"]
+position = Vector3(-0.0103, 0.4471, -0.1116)
+rotation_degrees = Vector3(90, 0, 0)
+scale = Vector3(0.5, 2, 1.8)
 
 [node name="Placeholder" type="MeshInstance3D" parent="EdgeDressing/RightCable"]
 mesh = SubResource("Mesh_cable")
 
 [node name="RoomKeyLight" type="DirectionalLight3D" parent="."]
-rotation_degrees = Vector3(-42, -28, 0)
+rotation_degrees = Vector3(-48, -24, 0)
 light_color = Color(0.72, 0.82, 1, 1)
-light_energy = 1.35
+light_energy = 1.0
 shadow_enabled = true
 
 [node name="RoomFillLight" type="OmniLight3D" parent="."]
-position = Vector3(0, 3.4, 0.5)
+position = Vector3(0, 3.2, -1.5)
 light_color = Color(0.55, 0.7, 1, 1)
-light_energy = 3.0
-omni_range = 12.0
+light_energy = 2.2
+omni_range = 11.0
 shadow_enabled = false
 
 [node name="RoomBounceLight" type="DirectionalLight3D" parent="."]
-rotation_degrees = Vector3(138, -28, 0)
+rotation_degrees = Vector3(132, -24, 0)
 light_color = Color(0.28, 0.42, 0.62, 1)
-light_energy = 0.28
+light_energy = 0.45
 light_specular = 0.0
 shadow_enabled = false
