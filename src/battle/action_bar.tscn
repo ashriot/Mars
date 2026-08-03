@@ -90,6 +90,11 @@ glyph_action = &"action_3"
 layout_mode = 2
 glyph_action = &"action_4"
 
+[node name="RightShiftGlyphSlot" type="Control" parent="BottomRow"]
+custom_minimum_size = Vector2(42, 70)
+layout_mode = 2
+mouse_filter = 2
+
 [node name="Passive" type="Panel" parent="TopRow" unique_id=1919149568]
 modulate = Color(1, 1, 1, 0.5019608)
 custom_minimum_size = Vector2(270, 70)
@@ -426,9 +431,9 @@ layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_left = -46.0
+offset_left = -62.0
 offset_top = -21.0
-offset_right = -4.0
+offset_right = -20.0
 offset_bottom = 21.0
 grow_vertical = 2
 mouse_filter = 2

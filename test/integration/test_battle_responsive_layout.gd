@@ -101,6 +101,34 @@ func test_packed_action_bar_uses_ordered_top_and_bottom_containers() -> void:
 		assert_eq((action_button as ActionButton).custom_minimum_size, Vector2(270.0, 100.0))
 
 
+func test_right_shift_glyph_is_reserved_by_layout_and_clears_action_buttons() -> void:
+	var battle := await _battle_in_viewport(Vector2i(1920, 1080))
+	var action_bar := battle.get_node("UI/ActionBar") as ActionBar
+	var bottom_row := action_bar.bottom_row
+	var actions := action_bar.actions_ui
+	var right_shift := action_bar.right_shift_ui
+	var glyph := right_shift.get_node("DynamicGlyph") as DynamicGlyph
+	var actions_index := actions.get_index()
+	var right_shift_index := right_shift.get_index()
+	var reserved_rect := right_shift.get_global_rect()
+
+	for sibling_index in range(actions_index + 1, right_shift_index):
+		var sibling := bottom_row.get_child(sibling_index) as Control
+		if sibling != null:
+			reserved_rect = reserved_rect.merge(sibling.get_global_rect())
+
+	var glyph_rect := glyph.get_global_rect()
+	assert_true(
+		reserved_rect.encloses(glyph_rect),
+		"the container layout reserves the right-shift glyph's complete visual footprint",
+	)
+	for action_button: ActionButton in actions.get_children():
+		assert_false(
+			glyph_rect.intersects(action_button.get_global_rect()),
+			"the right-shift glyph must not cover %s" % action_button.name,
+		)
+
+
 func test_action_bar_rows_animate_without_changing_container_owned_geometry() -> void:
 	var battle := await _battle_in_viewport(Vector2i(1920, 1080))
 	var action_bar := battle.get_node("UI/ActionBar") as ActionBar

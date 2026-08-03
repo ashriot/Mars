@@ -137,6 +137,16 @@ func test_guard_value_stays_inside_current_shield_through_hud_component() -> voi
 	)
 
 
+func test_full_guard_visual_extent_stays_inside_the_compact_hud_rect() -> void:
+	var hud := _hud()
+	var enemy := _enemy_with_state(80, 30)
+	hud.bind_combatant(enemy)
+	await get_tree().process_frame
+	var compact_rect := hud.compact_stack.get_global_rect()
+
+	_assert_guard_visuals_inside(hud.guard_stack, compact_rect)
+
+
 func test_hud_keeps_existing_bold_font_resource_and_reports_hover_state() -> void:
 	var hud := _hud()
 	hud.bind_combatant(_enemy_with_state(80, 3))
@@ -366,6 +376,28 @@ func test_world_layout_clamps_each_hud_independently_to_safe_edges() -> void:
 	assert_eq(bottom_right.compact_stack.global_position, Vector2(1096, 689))
 
 
+func test_world_layout_keeps_full_guard_visuals_inside_both_horizontal_safe_edges() -> void:
+	var fixture := _world_in_viewport(Vector2i(1280, 800))
+	var world := fixture.world as BattleWorld3D
+	var left_hud := HUD_SCENE.instantiate() as EnemyWorldHUD
+	var right_hud := HUD_SCENE.instantiate() as EnemyWorldHUD
+	world.hud_layer.add_child(left_hud)
+	world.hud_layer.add_child(right_hud)
+	left_hud.bind_combatant(_enemy_with_state(80, 30))
+	right_hud.bind_combatant(_enemy_with_state(60, 30))
+	left_hud.set_projected_head_position(Vector2(0, 400))
+	right_hud.set_projected_head_position(Vector2(1280, 400))
+	await get_tree().process_frame
+
+	world._layout_enemy_huds()
+	var safe_rect := Rect2(Vector2(24, 24), Vector2(1232, 752))
+
+	assert_eq(left_hud.compact_stack.global_position.x, safe_rect.position.x)
+	assert_eq(right_hud.compact_stack.get_global_rect().end.x, safe_rect.end.x)
+	_assert_guard_visuals_inside(left_hud.guard_stack, safe_rect)
+	_assert_guard_visuals_inside(right_hud.guard_stack, safe_rect)
+
+
 func test_visible_details_stay_four_pixels_below_their_own_compact_stack() -> void:
 	var fixture := _world_in_viewport(Vector2i(1280, 800))
 	var world := fixture.world as BattleWorld3D
@@ -501,6 +533,17 @@ func _assert_rounded_style(style: StyleBox) -> void:
 	assert_eq(flat.corner_radius_top_right, 6)
 	assert_eq(flat.corner_radius_bottom_right, 6)
 	assert_eq(flat.corner_radius_bottom_left, 6)
+
+
+func _assert_guard_visuals_inside(stack: EnemyGuardStack, bounds: Rect2) -> void:
+	for layer: Control in stack.layers:
+		for pip: TextureRect in layer.get_children():
+			if pip.visible:
+				assert_true(bounds.encloses(pip.get_global_rect()))
+	if stack.guard_value.visible:
+		assert_true(bounds.encloses(stack.guard_value.get_global_rect()))
+	if stack.status_label.visible:
+		assert_true(bounds.encloses(stack.status_label.get_global_rect()))
 
 
 func _mouse_motion_at(position: Vector2) -> InputEventMouseMotion:

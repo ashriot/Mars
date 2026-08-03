@@ -137,9 +137,8 @@ show_percentage = false
 [node name="GuardStack" parent="CompactStack/VitalsAndConditions/VitalsGroup" unique_id=742455786 instance=ExtResource("5_guard_stack")]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = -21.0
 offset_top = 14.0
-offset_right = 181.0
+offset_right = 160.0
 offset_bottom = 36.0
 
 [node name="ConditionsRow" type="HBoxContainer" parent="CompactStack/VitalsAndConditions" unique_id=699932941]

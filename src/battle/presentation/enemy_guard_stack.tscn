@@ -5,10 +5,10 @@
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="3_bold"]
 
 [node name="EnemyGuardStack" type="Control"]
-custom_minimum_size = Vector2(202, 22)
+custom_minimum_size = Vector2(160, 22)
 layout_mode = 3
 anchors_preset = 0
-offset_right = 202.0
+offset_right = 160.0
 offset_bottom = 22.0
 mouse_filter = 2
 script = ExtResource("1_script")
@@ -16,7 +16,7 @@ script = ExtResource("1_script")
 [node name="Layer1" type="Control" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
-offset_right = 202.0
+offset_right = 160.0
 offset_bottom = 22.0
 mouse_filter = 2
 
@@ -31,8 +31,8 @@ stretch_mode = 5
 
 [node name="Pip2" type="TextureRect" parent="Layer1"]
 layout_mode = 0
-offset_left = 20.0
-offset_right = 42.0
+offset_left = 15.0
+offset_right = 37.0
 offset_bottom = 22.0
 mouse_filter = 2
 texture = ExtResource("2_shield")
@@ -41,8 +41,8 @@ stretch_mode = 5
 
 [node name="Pip3" type="TextureRect" parent="Layer1"]
 layout_mode = 0
-offset_left = 40.0
-offset_right = 62.0
+offset_left = 30.0
+offset_right = 52.0
 offset_bottom = 22.0
 mouse_filter = 2
 texture = ExtResource("2_shield")
@@ -50,6 +50,16 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="Pip4" type="TextureRect" parent="Layer1"]
+layout_mode = 0
+offset_left = 45.0
+offset_right = 67.0
+offset_bottom = 22.0
+mouse_filter = 2
+texture = ExtResource("2_shield")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Pip5" type="TextureRect" parent="Layer1"]
 layout_mode = 0
 offset_left = 60.0
 offset_right = 82.0
@@ -59,20 +69,10 @@ texture = ExtResource("2_shield")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Pip5" type="TextureRect" parent="Layer1"]
-layout_mode = 0
-offset_left = 80.0
-offset_right = 102.0
-offset_bottom = 22.0
-mouse_filter = 2
-texture = ExtResource("2_shield")
-expand_mode = 1
-stretch_mode = 5
-
 [node name="Pip6" type="TextureRect" parent="Layer1"]
 layout_mode = 0
-offset_left = 100.0
-offset_right = 122.0
+offset_left = 75.0
+offset_right = 97.0
 offset_bottom = 22.0
 mouse_filter = 2
 texture = ExtResource("2_shield")
@@ -80,6 +80,26 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="Pip7" type="TextureRect" parent="Layer1"]
+layout_mode = 0
+offset_left = 90.0
+offset_right = 112.0
+offset_bottom = 22.0
+mouse_filter = 2
+texture = ExtResource("2_shield")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Pip8" type="TextureRect" parent="Layer1"]
+layout_mode = 0
+offset_left = 105.0
+offset_right = 127.0
+offset_bottom = 22.0
+mouse_filter = 2
+texture = ExtResource("2_shield")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Pip9" type="TextureRect" parent="Layer1"]
 layout_mode = 0
 offset_left = 120.0
 offset_right = 142.0
@@ -89,30 +109,10 @@ texture = ExtResource("2_shield")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Pip8" type="TextureRect" parent="Layer1"]
-layout_mode = 0
-offset_left = 140.0
-offset_right = 162.0
-offset_bottom = 22.0
-mouse_filter = 2
-texture = ExtResource("2_shield")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Pip9" type="TextureRect" parent="Layer1"]
-layout_mode = 0
-offset_left = 160.0
-offset_right = 182.0
-offset_bottom = 22.0
-mouse_filter = 2
-texture = ExtResource("2_shield")
-expand_mode = 1
-stretch_mode = 5
-
 [node name="Pip10" type="TextureRect" parent="Layer1"]
 layout_mode = 0
-offset_left = 180.0
-offset_right = 202.0
+offset_left = 135.0
+offset_right = 157.0
 offset_bottom = 22.0
 mouse_filter = 2
 texture = ExtResource("2_shield")
@@ -123,7 +123,7 @@ stretch_mode = 5
 unique_name_in_owner = true
 layout_mode = 0
 offset_top = 5.0
-offset_right = 202.0
+offset_right = 160.0
 offset_bottom = 27.0
 mouse_filter = 2
 
@@ -138,8 +138,8 @@ stretch_mode = 5
 
 [node name="Pip2" type="TextureRect" parent="Layer2"]
 layout_mode = 0
-offset_left = 20.0
-offset_right = 42.0
+offset_left = 15.0
+offset_right = 37.0
 offset_bottom = 22.0
 mouse_filter = 2
 texture = ExtResource("2_shield")
@@ -148,8 +148,8 @@ stretch_mode = 5
 
 [node name="Pip3" type="TextureRect" parent="Layer2"]
 layout_mode = 0
-offset_left = 40.0
-offset_right = 62.0
+offset_left = 30.0
+offset_right = 52.0
 offset_bottom = 22.0
 mouse_filter = 2
 texture = ExtResource("2_shield")
@@ -157,6 +157,16 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="Pip4" type="TextureRect" parent="Layer2"]
+layout_mode = 0
+offset_left = 45.0
+offset_right = 67.0
+offset_bottom = 22.0
+mouse_filter = 2
+texture = ExtResource("2_shield")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Pip5" type="TextureRect" parent="Layer2"]
 layout_mode = 0
 offset_left = 60.0
 offset_right = 82.0
@@ -166,20 +176,10 @@ texture = ExtResource("2_shield")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Pip5" type="TextureRect" parent="Layer2"]
-layout_mode = 0
-offset_left = 80.0
-offset_right = 102.0
-offset_bottom = 22.0
-mouse_filter = 2
-texture = ExtResource("2_shield")
-expand_mode = 1
-stretch_mode = 5
-
 [node name="Pip6" type="TextureRect" parent="Layer2"]
 layout_mode = 0
-offset_left = 100.0
-offset_right = 122.0
+offset_left = 75.0
+offset_right = 97.0
 offset_bottom = 22.0
 mouse_filter = 2
 texture = ExtResource("2_shield")
@@ -187,6 +187,26 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="Pip7" type="TextureRect" parent="Layer2"]
+layout_mode = 0
+offset_left = 90.0
+offset_right = 112.0
+offset_bottom = 22.0
+mouse_filter = 2
+texture = ExtResource("2_shield")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Pip8" type="TextureRect" parent="Layer2"]
+layout_mode = 0
+offset_left = 105.0
+offset_right = 127.0
+offset_bottom = 22.0
+mouse_filter = 2
+texture = ExtResource("2_shield")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Pip9" type="TextureRect" parent="Layer2"]
 layout_mode = 0
 offset_left = 120.0
 offset_right = 142.0
@@ -196,30 +216,10 @@ texture = ExtResource("2_shield")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Pip8" type="TextureRect" parent="Layer2"]
-layout_mode = 0
-offset_left = 140.0
-offset_right = 162.0
-offset_bottom = 22.0
-mouse_filter = 2
-texture = ExtResource("2_shield")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Pip9" type="TextureRect" parent="Layer2"]
-layout_mode = 0
-offset_left = 160.0
-offset_right = 182.0
-offset_bottom = 22.0
-mouse_filter = 2
-texture = ExtResource("2_shield")
-expand_mode = 1
-stretch_mode = 5
-
 [node name="Pip10" type="TextureRect" parent="Layer2"]
 layout_mode = 0
-offset_left = 180.0
-offset_right = 202.0
+offset_left = 135.0
+offset_right = 157.0
 offset_bottom = 22.0
 mouse_filter = 2
 texture = ExtResource("2_shield")
@@ -230,7 +230,7 @@ stretch_mode = 5
 unique_name_in_owner = true
 layout_mode = 0
 offset_top = 10.0
-offset_right = 202.0
+offset_right = 160.0
 offset_bottom = 32.0
 mouse_filter = 2
 
@@ -245,8 +245,8 @@ stretch_mode = 5
 
 [node name="Pip2" type="TextureRect" parent="Layer3"]
 layout_mode = 0
-offset_left = 20.0
-offset_right = 42.0
+offset_left = 15.0
+offset_right = 37.0
 offset_bottom = 22.0
 mouse_filter = 2
 texture = ExtResource("2_shield")
@@ -255,8 +255,8 @@ stretch_mode = 5
 
 [node name="Pip3" type="TextureRect" parent="Layer3"]
 layout_mode = 0
-offset_left = 40.0
-offset_right = 62.0
+offset_left = 30.0
+offset_right = 52.0
 offset_bottom = 22.0
 mouse_filter = 2
 texture = ExtResource("2_shield")
@@ -264,6 +264,16 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="Pip4" type="TextureRect" parent="Layer3"]
+layout_mode = 0
+offset_left = 45.0
+offset_right = 67.0
+offset_bottom = 22.0
+mouse_filter = 2
+texture = ExtResource("2_shield")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Pip5" type="TextureRect" parent="Layer3"]
 layout_mode = 0
 offset_left = 60.0
 offset_right = 82.0
@@ -273,20 +283,10 @@ texture = ExtResource("2_shield")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Pip5" type="TextureRect" parent="Layer3"]
-layout_mode = 0
-offset_left = 80.0
-offset_right = 102.0
-offset_bottom = 22.0
-mouse_filter = 2
-texture = ExtResource("2_shield")
-expand_mode = 1
-stretch_mode = 5
-
 [node name="Pip6" type="TextureRect" parent="Layer3"]
 layout_mode = 0
-offset_left = 100.0
-offset_right = 122.0
+offset_left = 75.0
+offset_right = 97.0
 offset_bottom = 22.0
 mouse_filter = 2
 texture = ExtResource("2_shield")
@@ -294,6 +294,26 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="Pip7" type="TextureRect" parent="Layer3"]
+layout_mode = 0
+offset_left = 90.0
+offset_right = 112.0
+offset_bottom = 22.0
+mouse_filter = 2
+texture = ExtResource("2_shield")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Pip8" type="TextureRect" parent="Layer3"]
+layout_mode = 0
+offset_left = 105.0
+offset_right = 127.0
+offset_bottom = 22.0
+mouse_filter = 2
+texture = ExtResource("2_shield")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Pip9" type="TextureRect" parent="Layer3"]
 layout_mode = 0
 offset_left = 120.0
 offset_right = 142.0
@@ -303,30 +323,10 @@ texture = ExtResource("2_shield")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Pip8" type="TextureRect" parent="Layer3"]
-layout_mode = 0
-offset_left = 140.0
-offset_right = 162.0
-offset_bottom = 22.0
-mouse_filter = 2
-texture = ExtResource("2_shield")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Pip9" type="TextureRect" parent="Layer3"]
-layout_mode = 0
-offset_left = 160.0
-offset_right = 182.0
-offset_bottom = 22.0
-mouse_filter = 2
-texture = ExtResource("2_shield")
-expand_mode = 1
-stretch_mode = 5
-
 [node name="Pip10" type="TextureRect" parent="Layer3"]
 layout_mode = 0
-offset_left = 180.0
-offset_right = 202.0
+offset_left = 135.0
+offset_right = 157.0
 offset_bottom = 22.0
 mouse_filter = 2
 texture = ExtResource("2_shield")
@@ -347,9 +347,9 @@ vertical_alignment = 1
 
 [node name="StatusLabel" type="Label" parent="."]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(202, 22)
+custom_minimum_size = Vector2(160, 22)
 layout_mode = 0
-offset_right = 202.0
+offset_right = 160.0
 offset_bottom = 22.0
 mouse_filter = 2
 theme_override_fonts/font = ExtResource("3_bold")

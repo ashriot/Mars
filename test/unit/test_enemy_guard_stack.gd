@@ -2,6 +2,8 @@ extends GutTest
 
 
 const GUARD_STACK_SCENE := preload("res://src/battle/presentation/enemy_guard_stack.tscn")
+const COMPACT_WIDTH := 160.0
+const PIP_HEIGHT := 22.0
 const WHITE := Color.WHITE
 const MEDIUM_GRAY := Color(0.62, 0.65, 0.7, 1.0)
 const DARK_GRAY := Color(0.34, 0.37, 0.42, 1.0)
@@ -123,6 +125,36 @@ func test_scene_authored_layers_align_columns_and_step_down_by_five_pixels() -> 
 		assert_eq(_pip(stack, 1, column).position.x, _pip(stack, 2, column).position.x)
 	assert_eq(_layer(stack, 1).position.y - _layer(stack, 0).position.y, 5.0)
 	assert_eq(_layer(stack, 2).position.y - _layer(stack, 1).position.y, 5.0)
+
+
+func test_scene_authored_guard_visuals_fit_the_compact_width_at_full_depth() -> void:
+	var stack := _stack()
+	stack.render(30, false, false)
+	await get_tree().process_frame
+	var compact_bounds := Rect2(Vector2.ZERO, Vector2(COMPACT_WIDTH, stack.size.y))
+
+	assert_eq(stack.custom_minimum_size.x, COMPACT_WIDTH)
+	assert_eq(stack.size.x, COMPACT_WIDTH)
+	for layer_index in 3:
+		var layer := _layer(stack, layer_index)
+		assert_eq(layer.size.x, COMPACT_WIDTH)
+		for pip_index in 10:
+			var pip := _pip(stack, layer_index, pip_index)
+			var visual_rect := Rect2(layer.position + pip.position, pip.size)
+			assert_true(
+				compact_bounds.encloses(visual_rect),
+				"layer %d column %d stays inside the 160 px guard slot" % [
+					layer_index + 1,
+					pip_index + 1,
+				],
+			)
+			assert_eq(pip.size.y, PIP_HEIGHT, "guard pips retain their authored height")
+			assert_eq(
+				pip.position.x,
+				floorf(pip.position.x),
+				"guard columns keep readable integer X positions",
+			)
+	assert_true(compact_bounds.encloses(_guard_value(stack).get_rect()))
 
 
 func _stack() -> Control:
