@@ -35,6 +35,7 @@ func test_world_environment_uses_readable_industrial_ambient_light() -> void:
 	assert_not_null(world_environment)
 	var environment := world_environment.environment
 	assert_not_null(environment)
+	assert_eq(environment.ambient_light_source, Environment.AMBIENT_SOURCE_COLOR)
 	assert_eq(environment.background_color, Color(0.06, 0.085, 0.13, 1.0))
 	assert_eq(environment.ambient_light_color, Color(0.7, 0.76, 0.86, 1.0))
 	assert_almost_eq(environment.ambient_light_energy, 1.5, 0.0001)
@@ -48,7 +49,7 @@ func test_room_uses_broad_neutral_readability_lighting() -> void:
 	var front := room.get_node_or_null("RoomFrontLight") as DirectionalLight3D
 	assert_not_null(key)
 	assert_not_null(fill)
-	assert_not_null(front)
+	assert_null(front)
 	assert_almost_eq(key.light_energy, 2.4, 0.0001)
 	assert_true(key.shadow_enabled)
 	assert_eq(fill.position, Vector3(0.0, 4.0, 5.0))
@@ -56,12 +57,6 @@ func test_room_uses_broad_neutral_readability_lighting() -> void:
 	assert_almost_eq(fill.light_energy, 8.0, 0.0001)
 	assert_almost_eq(fill.omni_range, 24.0, 0.0001)
 	assert_false(fill.shadow_enabled)
-	if front == null:
-		return
-	assert_eq(front.rotation_degrees, Vector3.ZERO)
-	assert_eq(front.light_color, Color(0.95, 0.97, 1.0, 1.0))
-	assert_almost_eq(front.light_energy, 2.25, 0.0001)
-	assert_false(front.shadow_enabled)
 
 
 func test_room_keeps_a_tracked_backdrop_behind_optional_local_modules() -> void:
