@@ -15,9 +15,13 @@ func _ready() -> void:
 	var room := get_node_or_null("IndustrialRoom3D")
 	if room == null:
 		return
-	for child: Node in room.get_children():
-		if child is OptionalLocalModel3D:
-			(child as OptionalLocalModel3D).try_load()
+	_load_optional_local_models(room)
+
+
+func _load_optional_local_models(room: Node) -> void:
+	for node: Node in room.find_children("*", "", true, false):
+		if node is OptionalLocalModel3D:
+			(node as OptionalLocalModel3D).try_load()
 
 
 func _process(_delta: float) -> void:

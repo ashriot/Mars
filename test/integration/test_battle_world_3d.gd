@@ -75,44 +75,64 @@ func test_room_uses_mobile_fake_gi_lighting() -> void:
 	assert_false(bounce.shadow_enabled)
 
 
-func test_room_keeps_a_tracked_backdrop_behind_optional_local_modules() -> void:
+func test_room_builds_a_closed_three_bay_shell_without_backdrop() -> void:
 	var world := _world()
 	var room := world.get_node("IndustrialRoom3D")
-	var backdrop := room.get_node_or_null("BattleBackdrop") as MeshInstance3D
-	assert_not_null(backdrop)
-	if backdrop == null:
-		return
-	assert_true(backdrop.visible)
-	assert_eq(backdrop.position, Vector3(0.0, 2.5, -7.0))
-	assert_eq(backdrop.scale, Vector3(1.5, 1.25, 1.0))
-	assert_true(backdrop.mesh is BoxMesh)
+	assert_null(room.get_node_or_null("BattleBackdrop"))
+	var shell := room.get_node("RoomShell")
+	assert_not_null(shell.get_node("Floor"))
+	assert_not_null(shell.get_node("BackWall/LeftPanel"))
+	assert_not_null(shell.get_node("BackWall/CenterBulkhead"))
+	assert_not_null(shell.get_node("BackWall/RightPanel"))
+	var expected_bays := {
+		"BayNear": Vector3(0.0, 0.0, 2.5),
+		"BayMiddle": Vector3(0.0, 0.0, -1.5),
+		"BayRear": Vector3(0.0, 0.0, -5.5),
+	}
+	for bay_name: String in expected_bays:
+		var bay := shell.get_node(bay_name) as Node3D
+		assert_not_null(bay)
+		assert_eq(bay.position, expected_bays[bay_name])
+		assert_not_null(bay.get_node("LeftWall"))
+		assert_not_null(bay.get_node("RightWall"))
+		assert_not_null(bay.get_node("LeftSupport"))
+		assert_not_null(bay.get_node("RightSupport"))
+		assert_not_null(bay.get_node("CeilingPanel"))
+		assert_not_null(bay.get_node("CeilingBeam"))
+		assert_not_null(bay.get_node("PracticalLight"))
 
 
-func test_room_uses_eight_optional_local_modules_with_tracked_placeholders() -> void:
+func test_room_nested_local_modules_all_keep_tracked_placeholders() -> void:
 	var world := _world()
 	var room := world.get_node("IndustrialRoom3D")
-	var expected_paths := [
-		"res://assets/graphics/models/quaternius_local/environment/industrial/WallAstra_Straight_Flat.gltf",
-		"res://assets/graphics/models/quaternius_local/environment/industrial/TopAstra_Straight.gltf",
-		"res://assets/graphics/models/quaternius_local/environment/industrial/BottomMetal_Straight.gltf",
-		"res://assets/graphics/models/quaternius_local/environment/industrial/Platform_Metal.gltf",
-		"res://assets/graphics/models/quaternius_local/environment/industrial/Column_Astra.gltf",
-		"res://assets/graphics/models/quaternius_local/environment/industrial/Prop_Light_Wide.gltf",
-		"res://assets/graphics/models/quaternius_local/environment/industrial/Prop_Vent_Wide.gltf",
-		"res://assets/graphics/models/quaternius_local/environment/industrial/Prop_Cable_1.gltf",
-	]
-	var loaders: Array[OptionalLocalModel3D] = []
-	for child: Node in room.get_children():
-		if child is OptionalLocalModel3D:
-			loaders.append(child)
-	assert_eq(loaders.size(), 8)
-	var actual_paths: Array[String] = []
-	for loader: OptionalLocalModel3D in loaders:
-		actual_paths.append(loader.local_resource_path)
+	var nodes: Array[Node] = []
+	for node: Node in room.find_children("*", "", true, false):
+		if node is OptionalLocalModel3D:
+			nodes.append(node)
+	assert_gte(nodes.size(), 20)
+	for node: Node in nodes:
+		var loader := node as OptionalLocalModel3D
 		assert_not_null(loader.model_parent)
 		assert_not_null(loader.placeholder)
-		assert_true(loader.placeholder is MeshInstance3D)
-	assert_eq(actual_paths, expected_paths)
+		assert_true(loader.placeholder is GeometryInstance3D)
+		assert_false(loader.local_resource_path.is_empty())
+
+
+func test_world_loads_optional_models_nested_below_room_root() -> void:
+	var world := _world()
+	var branch := Node3D.new()
+	var loader := OptionalLocalModel3D.new()
+	loader.local_resource_path = \
+		"res://test/fixtures/presentation/optional_model_fixture.tscn"
+	loader.model_parent = Node3D.new()
+	loader.placeholder = MeshInstance3D.new()
+	loader.add_child(loader.model_parent)
+	loader.add_child(loader.placeholder)
+	branch.add_child(loader)
+	add_child_autofree(branch)
+	world._load_optional_local_models(branch)
+	assert_false(loader.using_placeholder)
+	assert_not_null(loader.loaded_model)
 
 
 func test_five_ordinary_views_are_adopted_and_placed_in_authored_order() -> void:
