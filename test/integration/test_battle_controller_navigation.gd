@@ -2261,6 +2261,21 @@ func test_action_button_glyph_dims_with_disabled_state() -> void:
 	assert_eq(action_button.dynamic_glyph.modulate.a, 1.0)
 
 
+func test_action_button_reports_its_complete_container_safe_footprint() -> void:
+	var action_button := ActionButtonScene.instantiate() as ActionButton
+	add_child_autofree(action_button)
+	await get_tree().process_frame
+
+	assert_eq(action_button.custom_minimum_size, Vector2(270.0, 100.0))
+	var bounds := Rect2(Vector2.ZERO, Vector2(270.0, 100.0))
+	for path in ["Button", "Mask", "Title", "FocusPips", "DynamicGlyph"]:
+		var control := action_button.get_node(path) as Control
+		assert_true(
+			bounds.encloses(control.get_rect()),
+			"%s stays inside the component" % path,
+		)
+
+
 func test_action_button_glyph_has_opaque_backing_below_texture() -> void:
 	var action_button := ActionButtonScene.instantiate() as ActionButton
 	add_child_autofree(action_button)

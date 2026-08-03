@@ -3,10 +3,10 @@ class_name ActionButton
 
 signal pressed(action_button: ActionButton)
 
-const CONTROL_HEIGHT_DESKTOP := 86.0
-const CONTROL_HEIGHT_COMPACT := 86.0
-const PRIMARY_FONT_SIZE_DESKTOP := 36
-const PRIMARY_FONT_SIZE_COMPACT := 36
+const CONTROL_HEIGHT_DESKTOP := 100.0
+const CONTROL_HEIGHT_COMPACT := 100.0
+const PRIMARY_FONT_SIZE_DESKTOP := 24
+const PRIMARY_FONT_SIZE_COMPACT := 24
 
 @onready var tooltip: RichTooltip = $RichTooltip
 @onready var label = $Title
