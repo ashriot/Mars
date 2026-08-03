@@ -163,12 +163,18 @@ mesh = SubResource("Mesh_cable")
 [node name="RoomKeyLight" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(-42, -28, 0)
 light_color = Color(0.72, 0.82, 1, 1)
-light_energy = 1.6
+light_energy = 2.4
 shadow_enabled = true
 
+[node name="RoomFrontLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(0, 0, 0)
+light_color = Color(0.95, 0.97, 1, 1)
+light_energy = 2.25
+shadow_enabled = false
+
 [node name="RoomFillLight" type="OmniLight3D" parent="."]
-position = Vector3(0, 3.6, 4)
-light_color = Color(0.82, 0.88, 1, 1)
-light_energy = 5.0
-omni_range = 18.0
+position = Vector3(0, 4, 5)
+light_color = Color(0.92, 0.95, 1, 1)
+light_energy = 8.0
+omni_range = 24.0
 shadow_enabled = false
