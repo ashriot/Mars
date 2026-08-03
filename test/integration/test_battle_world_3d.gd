@@ -37,26 +37,42 @@ func test_world_environment_uses_readable_industrial_ambient_light() -> void:
 	assert_not_null(environment)
 	assert_eq(environment.ambient_light_source, Environment.AMBIENT_SOURCE_COLOR)
 	assert_eq(environment.background_color, Color(0.06, 0.085, 0.13, 1.0))
-	assert_eq(environment.ambient_light_color, Color(0.7, 0.76, 0.86, 1.0))
-	assert_almost_eq(environment.ambient_light_energy, 1.5, 0.0001)
+	assert_eq(environment.ambient_light_color, Color(0.35, 0.42, 0.52, 1.0))
+	assert_almost_eq(environment.ambient_light_energy, 0.5, 0.0001)
+	assert_almost_eq(environment.tonemap_exposure, 1.15, 0.0001)
 
 
-func test_room_uses_broad_neutral_readability_lighting() -> void:
+func test_room_uses_mobile_fake_gi_lighting() -> void:
 	var world := _world()
 	var room := world.get_node("IndustrialRoom3D")
 	var key := room.get_node("RoomKeyLight") as DirectionalLight3D
 	var fill := room.get_node("RoomFillLight") as OmniLight3D
+	var bounce := room.get_node_or_null("RoomBounceLight") as DirectionalLight3D
 	var front := room.get_node_or_null("RoomFrontLight") as DirectionalLight3D
 	assert_not_null(key)
 	assert_not_null(fill)
 	assert_null(front)
-	assert_almost_eq(key.light_energy, 2.4, 0.0001)
+	assert_almost_eq(key.rotation_degrees.x, -42.0, 0.0001)
+	assert_almost_eq(key.rotation_degrees.y, -28.0, 0.0001)
+	assert_almost_eq(key.rotation_degrees.z, 0.0, 0.0001)
+	assert_eq(key.light_color, Color(0.72, 0.82, 1.0, 1.0))
+	assert_almost_eq(key.light_energy, 1.35, 0.0001)
 	assert_true(key.shadow_enabled)
-	assert_eq(fill.position, Vector3(0.0, 4.0, 5.0))
-	assert_eq(fill.light_color, Color(0.92, 0.95, 1.0, 1.0))
-	assert_almost_eq(fill.light_energy, 8.0, 0.0001)
-	assert_almost_eq(fill.omni_range, 24.0, 0.0001)
+	assert_eq(fill.position, Vector3(0.0, 3.4, 0.5))
+	assert_eq(fill.light_color, Color(0.55, 0.7, 1.0, 1.0))
+	assert_almost_eq(fill.light_energy, 3.0, 0.0001)
+	assert_almost_eq(fill.omni_range, 12.0, 0.0001)
 	assert_false(fill.shadow_enabled)
+	assert_not_null(bounce)
+	if bounce == null:
+		return
+	assert_almost_eq(bounce.rotation_degrees.x, 138.0, 0.0001)
+	assert_almost_eq(bounce.rotation_degrees.y, -28.0, 0.0001)
+	assert_almost_eq(bounce.rotation_degrees.z, 0.0, 0.0001)
+	assert_eq(bounce.light_color, Color(0.28, 0.42, 0.62, 1.0))
+	assert_almost_eq(bounce.light_energy, 0.28, 0.0001)
+	assert_almost_eq(bounce.light_specular, 0.0, 0.0001)
+	assert_false(bounce.shadow_enabled)
 
 
 func test_room_keeps_a_tracked_backdrop_behind_optional_local_modules() -> void:
