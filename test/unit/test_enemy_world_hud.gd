@@ -239,6 +239,32 @@ func test_target_region_forwards_hover_and_press_signals() -> void:
 	assert_signal_emitted(hud, &"pressed")
 
 
+func test_hp_passes_real_pointer_hover_and_press_to_target_region() -> void:
+	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
+	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)
+	InputManager._consumed_mouse_button = MOUSE_BUTTON_NONE
+	var hud := _hud()
+	hud.bind_combatant(_enemy_with_state(80, 3))
+	hud.set_projected_head_position(Vector2(500, 300))
+	await get_tree().process_frame
+	watch_signals(hud)
+	var hp_center := hud.hp_bar.get_global_rect().get_center()
+
+	get_viewport().push_input(_mouse_motion_at(Vector2(10, 600)), true)
+	await get_tree().process_frame
+	get_viewport().push_input(_mouse_motion_at(hp_center), true)
+	await get_tree().process_frame
+	get_viewport().push_input(_mouse_button_at(hp_center, true), true)
+	await get_tree().process_frame
+
+	assert_eq(hud.hp_bar.mouse_filter, Control.MOUSE_FILTER_PASS)
+	assert_true(hud.is_hovered())
+	assert_signal_emitted(hud, &"hovered")
+	assert_signal_emitted(hud, &"pressed")
+	get_viewport().push_input(_mouse_button_at(hp_center, false), true)
+	await get_tree().process_frame
+
+
 func test_intent_tooltip_is_reachable_without_blocking_real_target_input() -> void:
 	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
 	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)

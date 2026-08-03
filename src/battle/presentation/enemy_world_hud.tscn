@@ -128,6 +128,7 @@ layout_mode = 0
 offset_left = 26.0
 offset_right = 134.0
 offset_bottom = 18.0
+mouse_filter = 1
 theme_override_styles/background = SubResource("StyleBoxFlat_hp_background")
 theme_override_styles/fill = SubResource("StyleBoxFlat_hp_fill")
 value = 100.0
