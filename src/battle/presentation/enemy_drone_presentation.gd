@@ -313,6 +313,7 @@ func _prepare_model(model_root: Node3D) -> void:
 	animation_player = _find_animation_player(model_root)
 	if is_instance_valid(animation_player):
 		animation_player.animation_finished.connect(_on_animation_finished)
+		_configure_ambient_animations()
 		if not _combatant_is_defeated():
 			_play_if_present(&"Idle")
 
@@ -361,6 +362,14 @@ func _find_animation_player(node: Node) -> AnimationPlayer:
 		if found != null:
 			return found
 	return null
+
+
+func _configure_ambient_animations() -> void:
+	if not is_instance_valid(animation_player):
+		return
+	if not animation_player.has_animation(&"Idle"):
+		return
+	animation_player.get_animation(&"Idle").loop_mode = Animation.LOOP_LINEAR
 
 
 func _disconnect_animation_player() -> void:

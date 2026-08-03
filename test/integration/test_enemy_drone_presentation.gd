@@ -100,6 +100,15 @@ func test_two_drones_do_not_share_material_or_animation_state() -> void:
 	assert_eq(second.presentation.animation_player.current_animation, "Idle")
 
 
+func test_binding_loops_idle_without_changing_transient_animation_loop_modes() -> void:
+	var fixture := _bound_animated_drone(_world(), _enemy())
+	var player: AnimationPlayer = fixture.presentation.animation_player
+
+	assert_eq(player.get_animation(&"Idle").loop_mode, Animation.LOOP_LINEAR)
+	assert_eq(player.get_animation(&"Attack").loop_mode, Animation.LOOP_NONE)
+	assert_eq(player.get_animation(&"Hit").loop_mode, Animation.LOOP_NONE)
+
+
 func test_wrong_model_and_second_setup_are_rejected() -> void:
 	var fixture := _drone_view(_world())
 	var hero := HeroCombatant.new()
