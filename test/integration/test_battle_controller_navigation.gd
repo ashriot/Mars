@@ -1193,10 +1193,14 @@ func test_active_hero_exit_atomically_cancels_action_and_input_state() -> void:
 	var manager := InputSafetyBattleManager.new()
 	var combatants := Node.new()
 	var bar := ImmediateShiftActionBar.new()
-	var actions := Control.new()
+	var top_row := HBoxContainer.new()
+	var bottom_row := HBoxContainer.new()
+	var actions := HBoxContainer.new()
 	var left_shift := Control.new()
 	var right_shift := Control.new()
 	var action_panel := PanelContainer.new()
+	top_row.name = "TopRow"
+	bottom_row.name = "BottomRow"
 	actions.name = "Actions"
 	left_shift.name = "LeftShift"
 	right_shift.name = "RightShift"
@@ -1206,9 +1210,11 @@ func test_active_hero_exit_atomically_cancels_action_and_input_state() -> void:
 	right_button.name = "Button"
 	left_shift.add_child(left_button)
 	right_shift.add_child(right_button)
-	bar.add_child(actions)
-	bar.add_child(left_shift)
-	bar.add_child(right_shift)
+	bar.add_child(top_row)
+	bar.add_child(bottom_row)
+	bottom_row.add_child(actions)
+	bottom_row.add_child(left_shift)
+	bottom_row.add_child(right_shift)
 	for index in 4:
 		var button := ActionButtonScene.instantiate() as ActionButton
 		button.action = Action.new()
@@ -1216,10 +1222,10 @@ func test_active_hero_exit_atomically_cancels_action_and_input_state() -> void:
 		actions.add_child(button)
 	var passive := Panel.new()
 	passive.name = "Passive"
-	actions.add_child(passive)
+	top_row.add_child(passive)
 	var shift_action := Panel.new()
 	shift_action.name = "ShiftAction"
-	actions.add_child(shift_action)
+	top_row.add_child(shift_action)
 	manager.action_bar = bar
 	manager.current_action_panel = action_panel
 	bar.battle_manager = manager
@@ -2318,8 +2324,8 @@ func test_real_shift_controls_switch_between_keyboard_and_controller_glyphs() ->
 	bar.battle_manager = manager
 	add_child_autofree(bar)
 	await get_tree().process_frame
-	var left_glyph := bar.get_node("LeftShift/DynamicGlyph") as DynamicGlyph
-	var right_glyph := bar.get_node("RightShift/DynamicGlyph") as DynamicGlyph
+	var left_glyph := bar.get_node("BottomRow/LeftShift/DynamicGlyph") as DynamicGlyph
+	var right_glyph := bar.get_node("BottomRow/RightShift/DynamicGlyph") as DynamicGlyph
 
 	InputManager._input(_pressed_key())
 	assert_eq(left_glyph.texture_normal.resource_path.get_file(), "keyboard_q.svg")
@@ -2796,24 +2802,29 @@ func _navigation_fixture() -> Dictionary:
 	var scene := BattleScene.new()
 	var manager := TrackingBattleManager.new()
 	var bar := MinimalActionBar.new()
-	var actions := Control.new()
+	var top_row := HBoxContainer.new()
+	top_row.name = "TopRow"
+	bar.add_child(top_row)
+	var bottom_row := HBoxContainer.new()
+	bottom_row.name = "BottomRow"
+	bar.add_child(bottom_row)
+	var actions := HBoxContainer.new()
 	actions.name = "Actions"
-	bar.actions_ui = actions
-	bar.add_child(actions)
+	bottom_row.add_child(actions)
 	var left_shift := Control.new()
 	left_shift.name = "LeftShift"
 	var left_button := Button.new()
 	left_button.name = "Button"
 	left_shift.add_child(left_button)
 	left_shift.visible = false
-	bar.add_child(left_shift)
+	bottom_row.add_child(left_shift)
 	var right_shift := Control.new()
 	right_shift.name = "RightShift"
 	var right_button := Button.new()
 	right_button.name = "Button"
 	right_shift.add_child(right_button)
 	right_shift.visible = false
-	bar.add_child(right_shift)
+	bottom_row.add_child(right_shift)
 	for index in 3:
 		var action_button := ActionButtonScene.instantiate() as ActionButton
 		action_button.button = action_button.get_node("Button")
@@ -2825,10 +2836,10 @@ func _navigation_fixture() -> Dictionary:
 		actions.add_child(action_button)
 	var passive := Panel.new()
 	passive.name = "Passive"
-	actions.add_child(passive)
+	top_row.add_child(passive)
 	var shift_action_panel := Panel.new()
 	shift_action_panel.name = "ShiftAction"
-	actions.add_child(shift_action_panel)
+	top_row.add_child(shift_action_panel)
 	bar.battle_manager = manager
 	bar.buttons_disabled = false
 	bar.sliding = false

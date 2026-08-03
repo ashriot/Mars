@@ -7,26 +7,26 @@ signal action_cancelled
 signal shift_button_pressed(direction)
 signal availability_changed
 
-const ACTION_CONTROL_HEIGHT_DESKTOP := 86.0
-const ACTION_CONTROL_HEIGHT_COMPACT := 86.0
+const AUXILIARY_CONTROL_HEIGHT := 70.0
 const HEADER_FONT_SIZE_DESKTOP := 20
 const HEADER_FONT_SIZE_COMPACT := 24
 
 @export var ActionButtonScene : PackedScene
 @export var battle_manager : BattleManager
 
-@onready var actions_ui = $Actions
-@onready var left_shift_button: Button = $LeftShift/Button
-@onready var right_shift_button: Button = $RightShift/Button
-@onready var left_shift_ui = $LeftShift
-@onready var right_shift_ui = $RightShift
-@onready var passive_panel: Panel = $Actions/Passive
-@onready var shift_action_panel: Panel = $Actions/ShiftAction
+@onready var top_row: HBoxContainer = $TopRow
+@onready var bottom_row: HBoxContainer = $BottomRow
+@onready var actions_ui: Control = $BottomRow/Actions
+@onready var left_shift_ui: Control = $BottomRow/LeftShift
+@onready var right_shift_ui: Control = $BottomRow/RightShift
+@onready var left_shift_button: Button = $BottomRow/LeftShift/Button
+@onready var right_shift_button: Button = $BottomRow/RightShift/Button
+@onready var passive_panel: Panel = $TopRow/Passive
+@onready var shift_action_panel: Panel = $TopRow/ShiftAction
 
 var sliding: bool
-var left_shift_on_screen_pos: Vector2
-var right_shift_on_screen_pos: Vector2
-var actions_on_screen_pos: Vector2
+var top_row_on_screen_pos: Vector2
+var bottom_row_on_screen_pos: Vector2
 var passive_flash_tween: Tween
 var flashing_tween: Tween
 var active_hero: HeroCombatant
@@ -39,12 +39,10 @@ func _ready():
 	left_shift_button.pressed.connect(_on_shift_button_pressed.bind("left"))
 	right_shift_button.pressed.connect(_on_shift_button_pressed.bind("right"))
 
-	left_shift_on_screen_pos = left_shift_ui.position
-	right_shift_on_screen_pos = right_shift_ui.position
-	actions_on_screen_pos = actions_ui.position
-	left_shift_ui.modulate.a = 0.0
-	right_shift_ui.modulate.a = 0.0
-	actions_ui.modulate.a = 0.0
+	top_row_on_screen_pos = top_row.position
+	bottom_row_on_screen_pos = bottom_row.position
+	top_row.modulate.a = 0.0
+	bottom_row.modulate.a = 0.0
 	buttons_disabled = false
 
 	slide_out(0.0)
@@ -52,19 +50,15 @@ func _ready():
 
 func apply_display_profile(profile: int, _window_size: Vector2i, _logical_size: Vector2) -> void:
 	var compact := profile == DisplayProfileService.Profile.COMPACT
-	var control_height := (
-		ACTION_CONTROL_HEIGHT_COMPACT if compact else ACTION_CONTROL_HEIGHT_DESKTOP
-	)
 	var header_size := HEADER_FONT_SIZE_COMPACT if compact else HEADER_FONT_SIZE_DESKTOP
-	for path in ["Actions/Passive", "Actions/ShiftAction", "LeftShift", "RightShift"]:
-		var control := get_node_or_null(path) as Control
-		if control:
-			control.custom_minimum_size.y = control_height
+	for control in [passive_panel, shift_action_panel, left_shift_ui, right_shift_ui]:
+		if is_instance_valid(control):
+			control.custom_minimum_size.y = AUXILIARY_CONTROL_HEIGHT
 	for path in [
-		"Actions/Passive/Header",
-		"Actions/ShiftAction/Header",
-		"LeftShift/Header",
-		"RightShift/Header",
+		"TopRow/Passive/Header",
+		"TopRow/ShiftAction/Header",
+		"BottomRow/LeftShift/Header",
+		"BottomRow/RightShift/Header",
 	]:
 		var header := get_node_or_null(path) as Label
 		if header:
@@ -139,21 +133,21 @@ func update_action_bar(hero: HeroCombatant, shifted: bool = false):
 		button.show()
 
 	if current_role.passive:
-		$Actions/Passive/Title.text = current_role.passive.action_name
-		$Actions/Passive/Mask/Icon.texture = current_role.passive.icon
+		$TopRow/Passive/Title.text = current_role.passive.action_name
+		$TopRow/Passive/Mask/Icon.texture = current_role.passive.icon
 		passive_panel.modulate = current_role.color
 		passive_panel.modulate.a = 0.75
-		$Actions/Passive/RichTooltip.bbcode_text = current_role.passive.get_rich_description(hero)
+		$TopRow/Passive/RichTooltip.bbcode_text = current_role.passive.get_rich_description(hero)
 		passive_panel.show()
 	else:
 		passive_panel.hide()
 
 	if current_role.shift_action:
-		$Actions/ShiftAction/Title.text = current_role.shift_action.action_name
-		$Actions/ShiftAction/Mask/Icon.texture = current_role.shift_action.icon
+		$TopRow/ShiftAction/Title.text = current_role.shift_action.action_name
+		$TopRow/ShiftAction/Mask/Icon.texture = current_role.shift_action.icon
 		shift_action_panel.modulate = current_role.color
 		shift_action_panel.modulate.a = 0.75
-		$Actions/ShiftAction/RichTooltip.bbcode_text = current_role.shift_action.get_rich_description(hero)
+		$TopRow/ShiftAction/RichTooltip.bbcode_text = current_role.shift_action.get_rich_description(hero)
 		shift_action_panel.show()
 		var pending = ! hero.get_current_role().shift_action.auto_target
 		if shifted:
@@ -171,19 +165,19 @@ func update_action_bar(hero: HeroCombatant, shifted: bool = false):
 	right_shift_ui.visible = next_role != null
 
 	if prev_role:
-		$LeftShift/Title.text = prev_role.role_name
+		$BottomRow/LeftShift/Title.text = prev_role.role_name
 		left_shift_button.disabled = prev_role == current_role or next_role == prev_role or left_shift_button.disabled
-		left_shift_ui.get_node("RichTooltip").bbcode_text  = prev_role.description
+		$BottomRow/LeftShift/RichTooltip.bbcode_text = prev_role.description
 		left_shift_ui.modulate = prev_role.color
-		$LeftShift/Mask/Icon.texture = prev_role.icon
+		$BottomRow/LeftShift/Mask/Icon.texture = prev_role.icon
 		left_shift_button.disabled = active_hero.shifted_this_turn
 
 	if next_role:
-		$RightShift/Title.text = next_role.role_name
+		$BottomRow/RightShift/Title.text = next_role.role_name
 		right_shift_button.disabled = next_role == current_role or next_role == prev_role or right_shift_button.disabled
-		right_shift_ui.get_node("RichTooltip").bbcode_text = next_role.description
+		$BottomRow/RightShift/RichTooltip.bbcode_text = next_role.description
 		right_shift_ui.modulate = next_role.color
-		$RightShift/Mask/Icon.texture = next_role.icon
+		$BottomRow/RightShift/Mask/Icon.texture = next_role.icon
 		right_shift_button.disabled = active_hero.shifted_this_turn
 	availability_changed.emit()
 
@@ -326,12 +320,12 @@ func _synchronize_availability() -> void:
 		left_shift_button.disabled = buttons_disabled or not hero_available or shifted
 	if is_instance_valid(right_shift_button):
 		right_shift_button.disabled = buttons_disabled or not hero_available or shifted
-	var left_glyph := get_node_or_null("LeftShift/DynamicGlyph") as Control
-	var right_glyph := get_node_or_null("RightShift/DynamicGlyph") as Control
-	if left_glyph != null:
-		left_glyph.modulate.a = 0.33 if left_shift_button.disabled else 1.0
-	if right_glyph != null:
-		right_glyph.modulate.a = 0.33 if right_shift_button.disabled else 1.0
+	var left_shift_glyph := get_node_or_null("BottomRow/LeftShift/DynamicGlyph") as Control
+	var right_shift_glyph := get_node_or_null("BottomRow/RightShift/DynamicGlyph") as Control
+	if left_shift_glyph:
+		left_shift_glyph.modulate.a = 0.33 if left_shift_button.disabled else 1.0
+	if right_shift_glyph:
+		right_shift_glyph.modulate.a = 0.33 if right_shift_button.disabled else 1.0
 	availability_changed.emit()
 
 func slide_in(duration: float = 0.2):
@@ -341,22 +335,15 @@ func slide_in(duration: float = 0.2):
 
 	var tween = create_tween().set_parallel()
 	tween.set_trans(Tween.TRANS_SINE)
-
-	var left_off_screen = left_shift_on_screen_pos - Vector2(left_shift_ui.size.x, 0)
-	left_shift_ui.position = left_off_screen # Set start pos
-	tween.tween_property(left_shift_ui, "position", left_shift_on_screen_pos, duration)
-	tween.tween_property(left_shift_ui, "modulate:a", 1.0, duration)
-
-	var right_off_screen = right_shift_on_screen_pos + Vector2(right_shift_ui.size.x, 0)
-	right_shift_ui.position = right_off_screen # Set start pos
-	tween.tween_property(right_shift_ui, "position", right_shift_on_screen_pos, duration)
-	tween.tween_property(right_shift_ui, "modulate:a", 1.0, duration)
-
-	# 3. Actions slide in FROM the bottom
-	var actions_off_screen = actions_on_screen_pos + Vector2(0, actions_ui.size.y)
-	actions_ui.position = actions_off_screen # Set start pos
-	tween.tween_property(actions_ui, "position", actions_on_screen_pos, duration)
-	tween.tween_property(actions_ui, "modulate:a", 1.0, duration)
+	var row_offset := Vector2(0, bottom_row.size.y)
+	top_row.position = top_row_on_screen_pos + row_offset
+	bottom_row.position = bottom_row_on_screen_pos + row_offset
+	for row in [top_row, bottom_row]:
+		row.modulate.a = 0.0
+	tween.tween_property(top_row, "position", top_row_on_screen_pos, duration)
+	tween.tween_property(top_row, "modulate:a", 1.0, duration)
+	tween.tween_property(bottom_row, "position", bottom_row_on_screen_pos, duration)
+	tween.tween_property(bottom_row, "modulate:a", 1.0, duration)
 
 	await tween.finished
 	slide_finished.emit()
@@ -367,21 +354,11 @@ func slide_out(duration: float = 0.2):
 	duration = duration / battle_manager.battle_speed
 	var tween = create_tween().set_parallel()
 	tween.set_trans(Tween.TRANS_SINE)
-
-	# 1. Left Shift slides back to the left
-	var left_off_screen = left_shift_on_screen_pos - Vector2(left_shift_ui.size.x, 0)
-	tween.tween_property(left_shift_ui, "position", left_off_screen, duration)
-	tween.tween_property(left_shift_ui, "modulate:a", 0.0, duration)
-
-	# 2. Right Shift slides back to the right
-	var right_off_screen = right_shift_on_screen_pos + Vector2(right_shift_ui.size.x, 0)
-	tween.tween_property(right_shift_ui, "position", right_off_screen, duration)
-	tween.tween_property(right_shift_ui, "modulate:a", 0.0, duration)
-
-	# 3. Actions slide back to the bottom
-	var actions_off_screen = actions_on_screen_pos + Vector2(0, actions_ui.size.y)
-	tween.tween_property(actions_ui, "position", actions_off_screen, duration)
-	tween.tween_property(actions_ui, "modulate:a", 0.0, duration)
+	var row_offset := Vector2(0, bottom_row.size.y)
+	tween.tween_property(top_row, "position", top_row_on_screen_pos + row_offset, duration)
+	tween.tween_property(top_row, "modulate:a", 0.0, duration)
+	tween.tween_property(bottom_row, "position", bottom_row_on_screen_pos + row_offset, duration)
+	tween.tween_property(bottom_row, "modulate:a", 0.0, duration)
 
 	await tween.finished
 	slide_finished.emit()

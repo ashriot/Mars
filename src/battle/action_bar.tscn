@@ -22,16 +22,16 @@ corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 
 [node name="ActionBar" type="Control" unique_id=120397505]
-custom_minimum_size = Vector2(1610, 256)
+custom_minimum_size = Vector2(1840, 170)
 layout_mode = 3
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -862.0
-offset_top = -275.0
-offset_right = 862.0
+offset_left = -920.0
+offset_top = -189.0
+offset_right = 920.0
 offset_bottom = -19.0
 grow_horizontal = 2
 grow_vertical = 0
@@ -39,101 +39,78 @@ mouse_filter = 2
 script = ExtResource("1_f8q7d")
 ActionButtonScene = ExtResource("2_664ah")
 
-[node name="Actions" type="Control" parent="." unique_id=616830033]
+[node name="TopRow" type="HBoxContainer" parent="."]
+custom_minimum_size = Vector2(0, 70)
 layout_mode = 1
-anchors_preset = 13
-anchor_left = 0.5
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -502.0
-offset_top = 60.0
-offset_right = 502.0
+anchors_preset = 10
+anchor_right = 1.0
 grow_horizontal = 2
-grow_vertical = 2
 mouse_filter = 2
+theme_override_constants/separation = 20
+alignment = 1
 
-[node name="ActionButtonD" parent="Actions" unique_id=1013694371 instance=ExtResource("2_664ah")]
+[node name="BottomRow" type="HBoxContainer" parent="."]
+custom_minimum_size = Vector2(0, 100)
 layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
+anchors_preset = 12
 anchor_top = 1.0
-anchor_right = 0.5
+anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -160.0
-offset_top = -86.0
-offset_right = 160.0
+offset_top = -100.0
 grow_horizontal = 2
 grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/separation = 20
+alignment = 1
 
-[node name="ActionButtonR" parent="Actions" unique_id=1598418948 instance=ExtResource("2_664ah")]
-layout_mode = 1
-anchors_preset = 6
-anchor_left = 1.0
-anchor_top = 0.5
-anchor_right = 1.0
-anchor_bottom = 0.5
-offset_left = -320.0
-offset_top = -43.0
-offset_bottom = 43.0
-grow_horizontal = 0
-grow_vertical = 2
+[node name="LeftShift" type="Control" parent="BottomRow" unique_id=2002429931]
+custom_minimum_size = Vector2(220, 70)
+layout_mode = 2
+size_flags_vertical = 8
+
+[node name="Actions" type="HBoxContainer" parent="BottomRow" unique_id=979397280]
+custom_minimum_size = Vector2(1152, 100)
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 24
+alignment = 1
+
+[node name="ActionButtonD" parent="BottomRow/Actions" unique_id=1013694371 instance=ExtResource("2_664ah")]
+layout_mode = 2
+
+[node name="ActionButtonR" parent="BottomRow/Actions" unique_id=1598418948 instance=ExtResource("2_664ah")]
+layout_mode = 2
 glyph_action = &"action_2"
 
-[node name="ActionButtonL" parent="Actions" unique_id=2027844806 instance=ExtResource("2_664ah")]
-layout_mode = 1
-anchors_preset = 4
-anchor_top = 0.5
-anchor_bottom = 0.5
-offset_top = -43.0
-offset_right = 320.0
-offset_bottom = 43.0
-grow_vertical = 2
+[node name="ActionButtonL" parent="BottomRow/Actions" unique_id=2027844806 instance=ExtResource("2_664ah")]
+layout_mode = 2
 glyph_action = &"action_3"
 
-[node name="ActionButtonU" parent="Actions" unique_id=471003146 instance=ExtResource("2_664ah")]
-layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -160.0
-offset_right = 160.0
-offset_bottom = 86.0
-grow_horizontal = 2
+[node name="ActionButtonU" parent="BottomRow/Actions" unique_id=471003146 instance=ExtResource("2_664ah")]
+layout_mode = 2
 glyph_action = &"action_4"
 
-[node name="Passive" type="Panel" parent="Actions" unique_id=1919149568]
+[node name="Passive" type="Panel" parent="TopRow" unique_id=1919149568]
 modulate = Color(1, 1, 1, 0.5019608)
-custom_minimum_size = Vector2(320, 86)
-layout_mode = 1
-anchors_preset = 4
-anchor_top = 0.5
-anchor_bottom = 0.5
-offset_left = -360.0
-offset_top = -83.0
-offset_right = -40.0
-offset_bottom = 3.0
-grow_vertical = 2
+custom_minimum_size = Vector2(270, 70)
+layout_mode = 2
 theme_override_styles/panel = ExtResource("3_0s03y")
 
-[node name="RichTooltip" type="Node" parent="Actions/Passive" unique_id=486653067]
+[node name="RichTooltip" type="Node" parent="TopRow/Passive" unique_id=486653067]
 script = ExtResource("4_txve6")
 metadata/_custom_type_script = "uid://m4vn3jl6sqd6"
 
-[node name="Mask" type="Panel" parent="Actions/Passive" unique_id=2058892735]
+[node name="Mask" type="Panel" parent="TopRow/Passive" unique_id=2058892735]
 clip_children = 1
-custom_minimum_size = Vector2(86, 86)
+custom_minimum_size = Vector2(70, 70)
 layout_mode = 1
-anchors_preset = 4
-anchor_top = 0.5
-anchor_bottom = 0.5
-offset_top = -43.0
-offset_right = 86.0
-offset_bottom = 43.0
+anchors_preset = 9
+anchor_bottom = 1.0
 grow_vertical = 2
 mouse_filter = 1
 theme_override_styles/panel = SubResource("StyleBoxFlat_b2vw5")
 
-[node name="Icon" type="TextureRect" parent="Actions/Passive/Mask" unique_id=1904166486]
+[node name="Icon" type="TextureRect" parent="TopRow/Passive/Mask" unique_id=1904166486]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -147,7 +124,7 @@ grow_vertical = 2
 texture = ExtResource("4_g6dho")
 expand_mode = 1
 
-[node name="Header" type="Label" parent="Actions/Passive" unique_id=1047704043]
+[node name="Header" type="Label" parent="TopRow/Passive" unique_id=1047704043]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -163,66 +140,56 @@ text = "ROLE PASSIVE"
 horizontal_alignment = 2
 vertical_alignment = 2
 
-[node name="Title" type="Label" parent="Actions/Passive" unique_id=59057054]
+[node name="Title" type="Label" parent="TopRow/Passive" unique_id=59057054]
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -310.0
-offset_top = -44.0
-offset_right = -15.0
-offset_bottom = -8.0
+offset_left = -301.0
+offset_top = -35.0
+offset_right = -6.0
+offset_bottom = -7.0
 grow_horizontal = 0
 grow_vertical = 0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 20
 theme_override_fonts/font = ExtResource("7_anymx")
-theme_override_font_sizes/font_size = 36
+theme_override_font_sizes/font_size = 24
 text = "Passive Name"
 horizontal_alignment = 2
 
-[node name="ShiftAction" type="Panel" parent="Actions" unique_id=304502294]
+[node name="Spacer" type="Control" parent="TopRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="ShiftAction" type="Panel" parent="TopRow" unique_id=304502294]
 modulate = Color(1, 1, 1, 0.5019608)
-custom_minimum_size = Vector2(320, 86)
-layout_mode = 1
-anchors_preset = 6
-anchor_left = 1.0
-anchor_top = 0.5
-anchor_right = 1.0
-anchor_bottom = 0.5
-offset_left = 40.0
-offset_top = -83.0
-offset_right = 360.0
-offset_bottom = 3.0
-grow_horizontal = 0
-grow_vertical = 2
+custom_minimum_size = Vector2(270, 70)
+layout_mode = 2
 theme_override_styles/panel = ExtResource("3_0s03y")
 
-[node name="RichTooltip" type="Node" parent="Actions/ShiftAction" unique_id=225204043]
+[node name="RichTooltip" type="Node" parent="TopRow/ShiftAction" unique_id=225204043]
 script = ExtResource("4_txve6")
 metadata/_custom_type_script = "uid://m4vn3jl6sqd6"
 
-[node name="Mask" type="Panel" parent="Actions/ShiftAction" unique_id=1831892448]
+[node name="Mask" type="Panel" parent="TopRow/ShiftAction" unique_id=1831892448]
 clip_children = 1
-custom_minimum_size = Vector2(86, 86)
+custom_minimum_size = Vector2(70, 70)
 layout_mode = 1
-anchors_preset = 6
+anchors_preset = 11
 anchor_left = 1.0
-anchor_top = 0.5
 anchor_right = 1.0
-anchor_bottom = 0.5
-offset_left = -86.0
-offset_top = -43.0
-offset_bottom = 43.0
+anchor_bottom = 1.0
 grow_horizontal = 0
 grow_vertical = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_g6dho")
 
-[node name="Icon" type="TextureRect" parent="Actions/ShiftAction/Mask" unique_id=1647770765]
+[node name="Icon" type="TextureRect" parent="TopRow/ShiftAction/Mask" unique_id=1647770765]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -237,7 +204,7 @@ mouse_filter = 2
 texture = ExtResource("4_g6dho")
 expand_mode = 1
 
-[node name="Header" type="Label" parent="Actions/ShiftAction" unique_id=990548722]
+[node name="Header" type="Label" parent="TopRow/ShiftAction" unique_id=990548722]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -252,7 +219,7 @@ theme_override_font_sizes/font_size = 20
 text = "SHIFT ACTION"
 vertical_alignment = 2
 
-[node name="Title" type="Label" parent="Actions/ShiftAction" unique_id=2016272775]
+[node name="Title" type="Label" parent="TopRow/ShiftAction" unique_id=2016272775]
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -260,7 +227,7 @@ anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -144.0
-offset_top = -50.0
+offset_top = -38.0
 offset_right = 144.0
 offset_bottom = -10.0
 grow_horizontal = 2
@@ -269,24 +236,14 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 20
 theme_override_fonts/font = ExtResource("7_anymx")
-theme_override_font_sizes/font_size = 36
+theme_override_font_sizes/font_size = 24
 text = "Shift Action"
 
-[node name="LeftShift" type="Control" parent="." unique_id=2002429931]
-custom_minimum_size = Vector2(320, 86)
-layout_mode = 1
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_top = -86.0
-offset_right = 320.0
-grow_vertical = 0
-
-[node name="RichTooltip" type="Node" parent="LeftShift" unique_id=1328277823]
+[node name="RichTooltip" type="Node" parent="BottomRow/LeftShift" unique_id=1328277823]
 script = ExtResource("4_txve6")
 metadata/_custom_type_script = "uid://m4vn3jl6sqd6"
 
-[node name="Button" type="Button" parent="LeftShift" unique_id=93208167]
+[node name="Button" type="Button" parent="BottomRow/LeftShift" unique_id=93208167]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -296,21 +253,17 @@ grow_vertical = 2
 mouse_filter = 1
 theme_override_font_sizes/font_size = 30
 
-[node name="Mask" type="Panel" parent="LeftShift" unique_id=214748466]
+[node name="Mask" type="Panel" parent="BottomRow/LeftShift" unique_id=214748466]
 clip_children = 1
-custom_minimum_size = Vector2(86, 86)
+custom_minimum_size = Vector2(70, 70)
 layout_mode = 1
-anchors_preset = 4
-anchor_top = 0.5
-anchor_bottom = 0.5
-offset_top = -43.0
-offset_right = 86.0
-offset_bottom = 43.0
+anchors_preset = 9
+anchor_bottom = 1.0
 grow_vertical = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_b2vw5")
 
-[node name="Icon" type="TextureRect" parent="LeftShift/Mask" unique_id=1055667494]
+[node name="Icon" type="TextureRect" parent="BottomRow/LeftShift/Mask" unique_id=1055667494]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -326,16 +279,16 @@ texture = ExtResource("4_g6dho")
 expand_mode = 1
 flip_h = true
 
-[node name="Title" type="Label" parent="LeftShift" unique_id=627758328]
+[node name="Title" type="Label" parent="BottomRow/LeftShift" unique_id=627758328]
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -310.0
-offset_top = -44.0
-offset_right = -15.0
+offset_left = -305.0
+offset_top = -36.0
+offset_right = -10.0
 offset_bottom = -8.0
 grow_horizontal = 0
 grow_vertical = 0
@@ -347,27 +300,28 @@ theme_override_constants/shadow_offset_y = 0
 theme_override_constants/outline_size = 2
 theme_override_constants/shadow_outline_size = 20
 theme_override_fonts/font = ExtResource("7_anymx")
-theme_override_font_sizes/font_size = 36
+theme_override_font_sizes/font_size = 24
 text = "Role Name"
 horizontal_alignment = 2
 
-[node name="Header" type="Label" parent="LeftShift" unique_id=924545736]
+[node name="Header" type="Label" parent="BottomRow/LeftShift" unique_id=924545736]
 layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -130.0
-offset_top = 8.0
-offset_right = 130.0
-offset_bottom = 33.0
-grow_horizontal = 2
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -282.0
+offset_top = 11.0
+offset_right = -22.0
+offset_bottom = 37.0
+grow_horizontal = 0
 theme_override_fonts/font = ExtResource("5_d4ff0")
 theme_override_font_sizes/font_size = 20
-text = "SHIFT"
+text = "Shift Role"
 horizontal_alignment = 2
 vertical_alignment = 2
+uppercase = true
 
-[node name="DynamicGlyph" type="TextureButton" parent="LeftShift" unique_id=408117481]
+[node name="DynamicGlyph" type="TextureButton" parent="BottomRow/LeftShift" unique_id=408117481]
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
@@ -383,24 +337,16 @@ stretch_mode = 0
 script = ExtResource("8_anymx")
 action = &"shift_left"
 
-[node name="RightShift" type="Control" parent="." unique_id=1630691018]
-custom_minimum_size = Vector2(320, 86)
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -320.0
-offset_top = -86.0
-grow_horizontal = 0
-grow_vertical = 0
+[node name="RightShift" type="Control" parent="BottomRow" unique_id=24824000]
+custom_minimum_size = Vector2(220, 70)
+layout_mode = 2
+size_flags_vertical = 8
 
-[node name="RichTooltip" type="Node" parent="RightShift" unique_id=129580185]
+[node name="RichTooltip" type="Node" parent="BottomRow/RightShift" unique_id=131632511]
 script = ExtResource("4_txve6")
 metadata/_custom_type_script = "uid://m4vn3jl6sqd6"
 
-[node name="Button" type="Button" parent="RightShift" unique_id=1230082954]
+[node name="Button" type="Button" parent="BottomRow/RightShift" unique_id=1071099157]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -410,24 +356,20 @@ grow_vertical = 2
 mouse_filter = 1
 theme_override_font_sizes/font_size = 30
 
-[node name="Mask" type="Panel" parent="RightShift" unique_id=1055119661]
+[node name="Mask" type="Panel" parent="BottomRow/RightShift" unique_id=908224885]
 clip_children = 1
-custom_minimum_size = Vector2(86, 86)
+custom_minimum_size = Vector2(70, 70)
 layout_mode = 1
-anchors_preset = 6
+anchors_preset = 11
 anchor_left = 1.0
-anchor_top = 0.5
 anchor_right = 1.0
-anchor_bottom = 0.5
-offset_left = -86.0
-offset_top = -43.0
-offset_bottom = 43.0
+anchor_bottom = 1.0
 grow_horizontal = 0
 grow_vertical = 2
 mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_g6dho")
+theme_override_styles/panel = SubResource("StyleBoxFlat_b2vw5")
 
-[node name="Icon" type="TextureRect" parent="RightShift/Mask" unique_id=239521116]
+[node name="Icon" type="TextureRect" parent="BottomRow/RightShift/Mask" unique_id=1768223506]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -442,33 +384,15 @@ mouse_filter = 2
 texture = ExtResource("4_g6dho")
 expand_mode = 1
 
-[node name="Header" type="Label" parent="RightShift" unique_id=1918570067]
+[node name="Title" type="Label" parent="BottomRow/RightShift" unique_id=382667317]
 layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -130.0
-offset_top = 8.0
-offset_right = 130.0
-offset_bottom = 33.0
-grow_horizontal = 2
-theme_override_fonts/font = ExtResource("5_d4ff0")
-theme_override_font_sizes/font_size = 20
-text = "SHIFT"
-vertical_alignment = 2
-
-[node name="Title" type="Label" parent="RightShift" unique_id=124833593]
-layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
+anchors_preset = 2
 anchor_top = 1.0
-anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -145.0
-offset_top = -50.0
-offset_right = 145.0
+offset_left = 8.0
+offset_top = -38.0
+offset_right = 223.0
 offset_bottom = -10.0
-grow_horizontal = 2
 grow_vertical = 0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.78431374)
@@ -478,18 +402,34 @@ theme_override_constants/shadow_offset_y = 0
 theme_override_constants/outline_size = 2
 theme_override_constants/shadow_outline_size = 20
 theme_override_fonts/font = ExtResource("7_anymx")
-theme_override_font_sizes/font_size = 36
+theme_override_font_sizes/font_size = 24
 text = "Role Name"
 
-[node name="DynamicGlyph" type="TextureButton" parent="RightShift" unique_id=1327067955]
+[node name="Header" type="Label" parent="BottomRow/RightShift" unique_id=207538550]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -199.0
+offset_top = 8.0
+offset_right = 7.0
+offset_bottom = 34.0
+grow_horizontal = 0
+theme_override_fonts/font = ExtResource("5_d4ff0")
+theme_override_font_sizes/font_size = 20
+text = "Shift Role"
+vertical_alignment = 2
+uppercase = true
+
+[node name="DynamicGlyph" type="TextureButton" parent="BottomRow/RightShift" unique_id=1763393243]
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_left = 323.0
-offset_top = -20.0
-offset_right = 365.0
-offset_bottom = 22.0
+offset_left = -46.0
+offset_top = -21.0
+offset_right = -4.0
+offset_bottom = 21.0
 grow_vertical = 2
 mouse_filter = 2
 ignore_texture_size = true

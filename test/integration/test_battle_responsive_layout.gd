@@ -14,7 +14,7 @@ func test_compact_battle_composition_and_controls_fit_deck_output() -> void:
 	var battle := await _battle_in_viewport(DECK_SIZE)
 	var turn_queue := battle.get_node("UI/TurnQueue") as TurnQueue
 	var action_bar := battle.get_node("UI/ActionBar") as ActionBar
-	var action_button := action_bar.get_node("Actions/ActionButtonD") as ActionButton
+	var action_button := action_bar.get_node("BottomRow/Actions/ActionButtonD") as ActionButton
 	var enemy := _enemy("Attack Drone A")
 	turn_queue._on_turn_order_updated([
 		{"actor": enemy, "ticks_needed": 0},
@@ -48,13 +48,13 @@ func test_compact_battle_metadata_remains_readable_at_deck_scale() -> void:
 	await get_tree().process_frame
 
 	assert_eq(
-		(action_bar.get_node("Actions/Passive/Header") as Label).get_theme_font_size(&"font_size"),
+		(action_bar.get_node("TopRow/Passive/Header") as Label).get_theme_font_size(&"font_size"),
 		24,
 	)
 	assert_eq(turn_queue.queue_items[0].enemy_label.get_theme_font_size(&"font_size"), 24)
 	assert_gte(
-		(action_bar.get_node("Actions/ActionButtonD/Title") as Label).get_theme_font_size(&"font_size"),
-		30,
+		(action_bar.get_node("BottomRow/Actions/ActionButtonD/Title") as Label).get_theme_font_size(&"font_size"),
+		24,
 	)
 	battle.apply_display_profile(
 		DisplayProfileService.Profile.DESKTOP,
@@ -63,6 +63,66 @@ func test_compact_battle_metadata_remains_readable_at_deck_scale() -> void:
 	)
 	assert_eq(turn_queue.queue_items[0].enemy_label.get_theme_font_size(&"font_size"), 20)
 	enemy.free()
+
+
+func test_packed_action_bar_uses_ordered_top_and_bottom_containers() -> void:
+	var battle := await _battle_in_viewport(Vector2i(1920, 1080))
+	var action_bar := battle.get_node("UI/ActionBar") as ActionBar
+	var top_row := action_bar.get_node_or_null("TopRow") as HBoxContainer
+	var bottom_row := action_bar.get_node_or_null("BottomRow") as HBoxContainer
+	assert_not_null(top_row)
+	assert_not_null(bottom_row)
+	if top_row == null or bottom_row == null:
+		return
+
+	assert_same(action_bar.passive_panel.get_parent(), top_row)
+	assert_same(action_bar.shift_action_panel.get_parent(), top_row)
+	assert_same(action_bar.left_shift_ui.get_parent(), bottom_row)
+	assert_same(action_bar.right_shift_ui.get_parent(), bottom_row)
+	assert_same(action_bar.actions_ui.get_parent(), bottom_row)
+	assert_eq(action_bar.actions_ui.get_child_count(), 4)
+	var expected_names := [
+		&"ActionButtonD",
+		&"ActionButtonR",
+		&"ActionButtonL",
+		&"ActionButtonU",
+	]
+	for index in 4:
+		var action_button := action_bar.actions_ui.get_child(index) as ActionButton
+		assert_eq(action_button.name, expected_names[index])
+		assert_eq(action_button.glyph_action, StringName("action_%d" % (index + 1)))
+	assert_eq(
+		(action_bar.right_shift_ui.get_node("DynamicGlyph") as DynamicGlyph).action,
+		&"shift_right",
+	)
+	assert_eq(action_bar.left_shift_ui.custom_minimum_size, Vector2(220.0, 70.0))
+	assert_eq(action_bar.right_shift_ui.custom_minimum_size, Vector2(220.0, 70.0))
+	for action_button in action_bar.actions_ui.get_children():
+		assert_eq((action_button as ActionButton).custom_minimum_size, Vector2(270.0, 100.0))
+
+
+func test_action_bar_rows_animate_without_changing_container_owned_geometry() -> void:
+	var battle := await _battle_in_viewport(Vector2i(1920, 1080))
+	var action_bar := battle.get_node("UI/ActionBar") as ActionBar
+	await action_bar.slide_in(0.0)
+	var top_child_positions := _child_positions(action_bar.top_row)
+	var bottom_child_positions := _child_positions(action_bar.bottom_row)
+
+	await action_bar.slide_out(0.0)
+
+	assert_eq(_child_positions(action_bar.top_row), top_child_positions)
+	assert_eq(_child_positions(action_bar.bottom_row), bottom_child_positions)
+	assert_eq(action_bar.top_row.modulate.a, 0.0)
+	assert_eq(action_bar.bottom_row.modulate.a, 0.0)
+
+	await action_bar.slide_in(0.0)
+
+	assert_eq(action_bar.top_row.position, action_bar.top_row_on_screen_pos)
+	assert_eq(action_bar.bottom_row.position, action_bar.bottom_row_on_screen_pos)
+	assert_eq(_child_positions(action_bar.top_row), top_child_positions)
+	assert_eq(_child_positions(action_bar.bottom_row), bottom_child_positions)
+	assert_eq(action_bar.top_row.modulate.a, 1.0)
+	assert_eq(action_bar.bottom_row.modulate.a, 1.0)
 
 
 func test_battle_scene_world_replaces_only_legacy_enemy_lane_and_backdrop() -> void:
@@ -199,6 +259,14 @@ func _battle_in_viewport(window_size: Vector2i) -> BattleScene:
 	)
 	await get_tree().process_frame
 	return battle
+
+
+func _child_positions(container: Container) -> Array[Vector2]:
+	var positions: Array[Vector2] = []
+	for child in container.get_children():
+		if child is Control:
+			positions.append((child as Control).position)
+	return positions
 
 
 func _assert_five_projected_enemy_huds_fit(window_size: Vector2i) -> void:
