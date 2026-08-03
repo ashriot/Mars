@@ -26,8 +26,10 @@ The role passive and Shift Action remain above the command row as subdued booken
 
 ```text
 ActionBar
-├── Passive
-├── ShiftAction
+├── TopRow (HBoxContainer)
+│   ├── Passive
+│   ├── Spacer (expands across the separately authored hero lane)
+│   └── ShiftAction
 └── BottomRow (HBoxContainer)
     ├── LeftShift
     ├── Actions (HBoxContainer)
@@ -38,17 +40,17 @@ ActionBar
     └── RightShift
 ```
 
-`BottomRow` is centered inside a bottom-wide action-bar root and bounded to approximately `1500–1600` logical pixels. `Actions` distributes the four ability controls evenly. The shift endcaps use smaller width allocations than abilities. Container separation, margins, size flags, and stretch ratios determine placement; the six controls do not receive individual horizontal anchors.
+`BottomRow` is centered inside a bottom-wide action-bar root. `Actions` distributes the four ability controls evenly in `D`, `R`, `L`, `U` order, matching `action_1` through `action_4` and the order in which abilities are learned. The shift endcaps use smaller width allocations than abilities. Container separation, margins, size flags, and stretch ratios determine placement; the six controls do not receive individual horizontal anchors.
 
-The interaction height remains `86` logical pixels. The action and shift scenes may use a `76–80` logical-pixel visible panel inside that stable hit rectangle, but this work does not reduce the interaction surface.
+Each action-button component is `270x100` logical pixels and reports its complete visual footprint to its parent container. Its dynamic controller glyph occupies the upper portion inside those bounds; its `270x70` visible action panel sits at the bottom. No glyph draws outside the component bounds, so the HBox and hero-lane spacing need no special overflow calculation.
 
-Passive and Shift Action panels retain their existing behavior and remain independently positioned above the row. Their paths may move to root-level siblings, but they are not inserted into `BottomRow` and do not consume command-row width.
+The left and right role-shift controls are `220x70` logical pixels and belong to `BottomRow`. Passive and Shift Action are `270x70` panels owned by `TopRow`; an expanding center spacer keeps them as upper bookends without placing them in the four-ability `Actions` container. They retain their existing behavior and do not consume command-row width.
 
 ## Responsive Policy
 
 The project renders a `1920x1080` reference UI with `canvas_items` stretch and `expand` aspect handling. At `1280x800`, the logical width remains sufficient for a bounded reference-width command row and the complete UI scales uniformly. The action bar therefore does not implement arbitrary per-button shrinking.
 
-Containers absorb available width within the bounded row. Text truncates before controls overlap. The row must preserve at least 48 physical pixels of height at the compact acceptance size. Supporting substantially smaller windows than `1280x800` is outside this change.
+Containers absorb available width within the bounded row. Text truncates before controls overlap. The complete `100`-pixel action-button component becomes approximately 67 physical pixels tall at `1280x800`, preserving the compact physical-size requirement. Supporting substantially smaller windows than `1280x800` is outside this change.
 
 ## Script Boundary
 
@@ -58,7 +60,7 @@ Scene-owned references change from incidental child placement to explicit paths:
 
 - `actions_ui` resolves the nested `Actions` container;
 - left and right shift controls resolve their nodes inside `BottomRow`;
-- passive and Shift Action resolve their explicit scene paths;
+- passive and Shift Action resolve their nodes inside `TopRow`;
 - responsive sizing and shift-glyph lookups use those stored references rather than repeated string paths.
 
 The public signals and methods remain unchanged, including `activate_slot`, `activate_shift`, `load_actions`, `action_selected`, and `shift_button_pressed`.
