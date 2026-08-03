@@ -28,6 +28,7 @@ Use this page as the index for project knowledge that is more detailed or more l
 - [Local 3D battle slice](superpowers/specs/2026-08-02-local-3d-battle-slice-design.md) — Curated local-only Quaternius assets, EyeDrone reuse, industrial room composition, optional loading, formations, projected HUDs, and verification.
 - [Battle world lighting and framing](superpowers/specs/2026-08-02-battle-world-lighting-and-framing-design.md) — Readable industrial illumination and raised shared enemy staging for the first 3D battle slice.
 - [Responsive action bar layout](superpowers/specs/2026-08-03-responsive-action-bar-layout-design.md) — Container-driven straight ability row with responsive sizing and unchanged controller mappings.
+- [Enemy world HUD alignment](superpowers/specs/2026-08-03-enemy-world-hud-alignment-design.md) — Compact model-anchored enemy vitals, fixed detail reveals, and continuous idle animation.
 - [Controller-driven scan cursor](superpowers/specs/2026-07-14-controller-driven-scan-cursor-design.md) — Historical initial controller scan-pointer and edge-scroll design.
 - [Terminal-to-scan correction](superpowers/specs/2026-07-14-terminal-scan-transition-correction-design.md) — Current terminal shortcut, modal transition, world-aim cursor, and scan-camera behavior.
 - [Design records](superpowers/specs/) — Approved feature designs and decisions captured before implementation.
