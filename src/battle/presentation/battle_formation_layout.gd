@@ -34,6 +34,15 @@ const M_POSITIONS := {
 const BOSS_POSITION := Vector3.ZERO
 const LEFT_BOSS_ALLY_POSITION := Vector3(-4.4, 0.0, 0.0)
 const RIGHT_BOSS_ALLY_POSITION := Vector3(4.4, 0.0, 0.0)
+const PARTY_FOCAL_POINT := Vector3(0.0, 0.0, 9.5)
+
+
+static func _party_facing_basis(position: Vector3) -> Basis:
+	var direction := PARTY_FOCAL_POINT - position
+	direction.y = 0.0
+	if direction.is_zero_approx():
+		return Basis.IDENTITY
+	return Basis.looking_at(direction.normalized(), Vector3.UP, true)
 
 
 static func ordinary_transforms(count: int, layout: Layout) -> Array[Transform3D]:
@@ -45,7 +54,7 @@ static func ordinary_transforms(count: int, layout: Layout) -> Array[Transform3D
 	var positions: Array = W_POSITIONS[count] if layout == Layout.W else M_POSITIONS[count]
 	var transforms: Array[Transform3D] = []
 	for position: Vector3 in positions:
-		transforms.append(Transform3D(Basis.IDENTITY, position))
+		transforms.append(Transform3D(_party_facing_basis(position), position))
 	return transforms
 
 

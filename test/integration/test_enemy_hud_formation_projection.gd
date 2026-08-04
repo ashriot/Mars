@@ -50,6 +50,7 @@ func _assert_projected_formation(
 	await get_tree().process_frame
 
 	var presentations: Array[EnemyDronePresentation] = []
+	var view_roots: Array[Node3D] = []
 	for index: int in 5:
 		var view_root := DRONE_SCENE.instantiate() as Node3D
 		assert_true(world.place_ordinary_view(view_root, index, 5, layout))
@@ -58,10 +59,22 @@ func _assert_projected_formation(
 		) as EnemyDronePresentation
 		assert_true(presentation.setup_view(_enemy(index)))
 		presentations.append(presentation)
+		view_roots.append(view_root)
 
 	await get_tree().process_frame
+	var placed_transforms: Array[Transform3D] = []
+	for view_root: Node3D in view_roots:
+		placed_transforms.append(view_root.transform)
 	for yaw_degrees: float in CAMERA_YAW_DEGREES:
 		world.camera_rig.rotation.y = deg_to_rad(yaw_degrees)
+		for index: int in view_roots.size():
+			assert_eq(
+				view_roots[index].transform,
+				placed_transforms[index],
+				"layout %s camera yaw %s leaves enemy root %d transform unchanged" % [
+					layout, yaw_degrees, index,
+				],
+			)
 		_assert_projection_at_yaw(
 			world,
 			presentations,

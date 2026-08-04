@@ -89,6 +89,19 @@ func test_mixed_rows_keep_at_least_four_world_units_of_depth_separation() -> voi
 			)
 
 
+func test_ordinary_enemies_face_fixed_party_focal_point_with_yaw_only() -> void:
+	var transforms := BattleFormationLayout.ordinary_transforms(5, BattleFormationLayout.Layout.W)
+	for transform: Transform3D in transforms:
+		var expected := BattleFormationLayout.PARTY_FOCAL_POINT - transform.origin
+		expected.y = 0.0
+		expected = expected.normalized()
+		var model_front := (transform.basis * Vector3.BACK).normalized()
+		assert_gt(model_front.dot(expected), 0.999)
+		assert_almost_eq(model_front.y, 0.0, 0.0001)
+	assert_gt(transforms[0].basis.get_euler().y, 0.0)
+	assert_lt(transforms[2].basis.get_euler().y, 0.0)
+
+
 func test_six_ordinary_enemies_is_rejected() -> void:
 	var transforms := BattleFormationLayout.ordinary_transforms(6, BattleFormationLayout.Layout.W)
 	assert_push_error("supports at most five ordinary enemies")
