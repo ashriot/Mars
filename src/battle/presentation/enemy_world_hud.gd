@@ -6,7 +6,7 @@ signal unhovered
 signal pressed
 
 const COMPACT_WIDTH := 220.0
-const DETAILS_SIZE := Vector2(220.0, 44.0)
+const DETAILS_SIZE := Vector2(220.0, 58.0)
 const DETAILS_GAP := 4.0
 const HEAD_GAP := 12.0
 const GUARD_TOP := 14.0
@@ -426,7 +426,7 @@ func _sync_compact_height() -> void:
 
 
 func _sync_details_position() -> void:
-	details.position = Vector2(0.0, compact_stack.size.y + DETAILS_GAP)
+	details.position = Vector2(0.0, -DETAILS_SIZE.y - DETAILS_GAP)
 
 
 func _get_compact_size() -> Vector2:

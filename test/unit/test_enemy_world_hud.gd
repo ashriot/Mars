@@ -5,9 +5,10 @@ const HUD_SCENE := preload("res://src/battle/presentation/enemy_world_hud.tscn")
 const WORLD_SCENE := preload("res://src/battle/presentation/battle_world_3d.tscn")
 const BOLD_FONT_PATH := "res://data/theme/fonts/suse_mono_bold.tres"
 const COMPACT_WIDTH := 220.0
-const HP_WIDTH := 168.0
+const HP_WIDTH := 220.0
 const HP_GUARD_OVERLAP := 4.0
 const GUARD_CONDITIONS_GAP := 5.0
+const DETAILS_SIZE := Vector2(220.0, 58.0)
 const DETAILS_GAP := 4.0
 
 var _saved_input_mode: InputManager.InputMode
@@ -54,7 +55,7 @@ func test_compact_stack_authors_layered_hp_and_overlapping_guard() -> void:
 	assert_not_null(guard_stack)
 	if hp_region == null or feedback == null or actual == null or guard_stack == null:
 		return
-	assert_eq(hp_region.position, Vector2(26.0, 0.0))
+	assert_eq(hp_region.position, Vector2.ZERO)
 	assert_eq(hp_region.size, Vector2(HP_WIDTH, 18.0))
 	assert_eq(hp_region.mouse_filter, Control.MOUSE_FILTER_PASS)
 	assert_eq(feedback.get_rect(), Rect2(Vector2.ZERO, hp_region.size))
@@ -68,17 +69,22 @@ func test_compact_stack_authors_layered_hp_and_overlapping_guard() -> void:
 	assert_true(actual.get_theme_stylebox(&"background") is StyleBoxEmpty)
 	_assert_rounded_style(actual.get_theme_stylebox(&"fill"))
 	assert_gt(actual.z_index, feedback.z_index)
-	assert_eq(guard_stack.position, Vector2(9.0, 14.0))
-	assert_eq(guard_stack.size.x, 202.0)
+	assert_eq(guard_stack.position, Vector2(0.0, 14.0))
+	assert_eq(guard_stack.size.x, HP_WIDTH)
+	assert_gt(guard_stack.z_index, actual.z_index)
 	assert_gt(guard_stack.position.y, hp_region.position.y)
 	assert_eq(hp_region.position.y + hp_region.size.y - guard_stack.position.y, HP_GUARD_OVERLAP)
+	assert_gte(hud.intent_row.get_theme_font_size(&"normal_font_size"), 16)
+	assert_gte(hud.name_label.get_theme_font_size(&"font_size"), 22)
+	assert_gte(hud.kinetic_value.get_theme_font_size(&"font_size"), 17)
+	assert_gte(hud.energy_value.get_theme_font_size(&"font_size"), 17)
 	assert_eq(guard_stack.guard_value.text, "3")
 	assert_eq(feedback.value, 80.0)
 	assert_eq(actual.value, 80.0)
 	assert_eq(hp_region.tooltip_text, "80 / 100 HP")
 
 
-func test_guard_depth_moves_conditions_and_details_only_five_pixels_per_layer() -> void:
+func test_guard_depth_moves_conditions_without_moving_fixed_upper_details() -> void:
 	var hud := _hud()
 	var enemy := _enemy_with_state(80, 0)
 	hud.bind_combatant(enemy)
@@ -101,7 +107,7 @@ func test_guard_depth_moves_conditions_and_details_only_five_pixels_per_layer() 
 			hud.conditions_row.position.y,
 			guard_stack.position.y + guard_stack.size.y + GUARD_CONDITIONS_GAP,
 		)
-		assert_eq(hud.details.position.y, hud.compact_stack.size.y + DETAILS_GAP)
+		assert_eq(hud.details.position.y, -DETAILS_SIZE.y - DETAILS_GAP)
 		condition_positions.append(hud.conditions_row.position.y)
 		detail_positions.append(hud.details.position.y)
 		compact_heights.append(compact_rect.size.y)
@@ -109,8 +115,8 @@ func test_guard_depth_moves_conditions_and_details_only_five_pixels_per_layer() 
 	assert_eq(condition_positions[2] - condition_positions[1], 5.0)
 	assert_eq(condition_positions[3] - condition_positions[2], 5.0)
 	assert_eq(detail_positions[0], detail_positions[1])
-	assert_eq(detail_positions[2] - detail_positions[1], 5.0)
-	assert_eq(detail_positions[3] - detail_positions[2], 5.0)
+	assert_eq(detail_positions[2] - detail_positions[1], 0.0)
+	assert_eq(detail_positions[3] - detail_positions[2], 0.0)
 	assert_eq(compact_heights[0], compact_heights[1])
 	assert_eq(compact_heights[2] - compact_heights[1], 5.0)
 	assert_eq(compact_heights[3] - compact_heights[2], 5.0)
@@ -190,6 +196,12 @@ func test_details_reveal_does_not_reflow_compact_stack() -> void:
 
 	assert_true(hud.details.visible)
 	assert_eq(hud.compact_stack.position, compact_position)
+	assert_eq(hud.details.size, DETAILS_SIZE)
+	assert_eq(hud.details.global_position.x, hud.compact_stack.global_position.x)
+	assert_eq(
+		hud.details.get_global_rect().end.y,
+		hud.compact_stack.global_position.y - DETAILS_GAP,
+	)
 
 
 func test_rebinding_is_rejected_and_teardown_disconnects_model() -> void:
@@ -443,14 +455,14 @@ func test_world_layout_keeps_close_huds_centered_on_their_own_heads() -> void:
 
 	world._layout_enemy_huds()
 
-	assert_eq(first.compact_stack.global_position, Vector2(390, 201))
-	assert_eq(second.compact_stack.global_position, Vector2(420, 201))
+	assert_eq(first.compact_stack.global_position, Vector2(390, 197))
+	assert_eq(second.compact_stack.global_position, Vector2(420, 197))
 	assert_eq(first.compact_stack.global_position.y, second.compact_stack.global_position.y)
 	assert_eq(first.compact_stack.get_global_rect().get_center().x, 500.0)
 	assert_eq(second.compact_stack.get_global_rect().get_center().x, 530.0)
 	second.set_projection_visible(false)
 	world._layout_enemy_huds()
-	assert_eq(first.compact_stack.global_position, Vector2(390, 201))
+	assert_eq(first.compact_stack.global_position, Vector2(390, 197))
 
 
 func test_world_layout_clamps_each_hud_independently_to_safe_edges() -> void:
@@ -468,7 +480,7 @@ func test_world_layout_clamps_each_hud_independently_to_safe_edges() -> void:
 	world._layout_enemy_huds()
 
 	assert_eq(top_left.compact_stack.global_position, Vector2(24, 24))
-	assert_eq(bottom_right.compact_stack.global_position, Vector2(1036, 689))
+	assert_eq(bottom_right.compact_stack.global_position, Vector2(1036, 685))
 
 
 func test_world_layout_keeps_full_guard_visuals_inside_both_horizontal_safe_edges() -> void:
@@ -493,7 +505,7 @@ func test_world_layout_keeps_full_guard_visuals_inside_both_horizontal_safe_edge
 	_assert_guard_visuals_inside(right_hud.guard_stack, safe_rect)
 
 
-func test_visible_details_stay_four_pixels_below_their_own_compact_stack() -> void:
+func test_visible_details_stay_four_pixels_above_their_own_compact_stack() -> void:
 	var fixture := _world_in_viewport(Vector2i(1280, 800))
 	var world := fixture.world as BattleWorld3D
 	var huds: Array[EnemyWorldHUD] = []
@@ -510,8 +522,8 @@ func test_visible_details_stay_four_pixels_below_their_own_compact_stack() -> vo
 	for hud: EnemyWorldHUD in huds:
 		assert_true(hud.details.visible)
 		assert_eq(
-			hud.details.global_position.y,
-			hud.compact_stack.get_global_rect().end.y + DETAILS_GAP,
+			hud.details.get_global_rect().end.y,
+			hud.compact_stack.global_position.y - DETAILS_GAP,
 		)
 		assert_eq(hud.details.global_position.x, hud.compact_stack.global_position.x)
 
@@ -529,8 +541,8 @@ func test_defeat_immediately_hides_disables_and_excludes_hud_from_layout() -> vo
 	defeated_hud.set_projected_head_position(Vector2(500, 300))
 	survivor.set_projected_head_position(Vector2(500, 300))
 	world._layout_enemy_huds()
-	assert_eq(defeated_hud.compact_stack.global_position, Vector2(390, 201))
-	assert_eq(survivor.compact_stack.global_position, Vector2(390, 201))
+	assert_eq(defeated_hud.compact_stack.global_position, Vector2(390, 197))
+	assert_eq(survivor.compact_stack.global_position, Vector2(390, 197))
 	watch_signals(defeated_hud)
 
 	defeated_enemy.defeat()
@@ -547,7 +559,7 @@ func test_defeat_immediately_hides_disables_and_excludes_hud_from_layout() -> vo
 	assert_eq(defeated_hud.target_region.mouse_filter, Control.MOUSE_FILTER_IGNORE)
 	assert_signal_not_emitted(defeated_hud, &"hovered")
 	assert_signal_not_emitted(defeated_hud, &"pressed")
-	assert_eq(survivor.compact_stack.global_position, Vector2(390, 201))
+	assert_eq(survivor.compact_stack.global_position, Vector2(390, 197))
 
 
 func test_presentation_owned_defeat_preserves_only_the_render_surface() -> void:

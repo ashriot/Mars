@@ -139,12 +139,13 @@ func _assert_projection_at_yaw(
 		var detail_rect := presentation.hud.details.get_global_rect()
 		assert_eq(detail_rect.position.x, original_rect.position.x)
 		assert_eq(
-			detail_rect.position.y,
-			original_rect.end.y + DETAILS_GAP,
+			detail_rect.end.y,
+			original_rect.position.y - DETAILS_GAP,
 			"layout %s canvas %s yaw %s detail %d keeps its fixed vertical offset" % [
 				layout, canvas_size, yaw_degrees, index,
 			],
 		)
+		assert_true(safe_rect.encloses(detail_rect))
 		for other_index: int in presentations.size():
 			if other_index == index:
 				continue
