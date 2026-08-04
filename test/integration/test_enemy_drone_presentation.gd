@@ -539,7 +539,47 @@ func test_manager_free_completes_pending_attack_after_unregistration_once() -> v
 	assert_null(manager.presentation_for(enemy))
 
 
-func test_manager_replacement_completes_pending_hit_after_registry_switch_once() -> void:
+func test_manager_free_completes_pending_health_hit_join_and_children_once() -> void:
+	var manager := RegistryTrackingBattleManager.new()
+	add_child_autofree(manager)
+	var enemy := _enemy()
+	var fixture := _bound_animated_drone(_world(), enemy)
+	assert_true(manager.register_presentation(enemy, fixture.presentation))
+	_stage_damage(enemy, 40)
+	var joined: PresentationOperation = fixture.presentation.sync_visual_health()
+	var health: PresentationOperation = fixture.presentation._health_operation
+	var hit: PresentationOperation = fixture.presentation._hit_operation
+	assert_false(joined.is_completed)
+	assert_false(health.is_completed)
+	assert_false(hit.is_completed)
+	var joined_count := [0]
+	var health_count := [0]
+	var hit_count := [0]
+	var registry_was_clear_on_completion := [false]
+	joined.completed.connect(
+		func() -> void:
+			joined_count[0] += 1
+			registry_was_clear_on_completion[0] = \
+				manager.presentation_for(enemy) == null
+	)
+	health.completed.connect(func() -> void: health_count[0] += 1)
+	hit.completed.connect(func() -> void: hit_count[0] += 1)
+
+	fixture.root.free()
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	assert_true(joined.is_completed)
+	assert_true(health.is_completed)
+	assert_true(hit.is_completed)
+	assert_eq(joined_count[0], 1)
+	assert_eq(health_count[0], 1)
+	assert_eq(hit_count[0], 1)
+	assert_true(registry_was_clear_on_completion[0])
+	assert_null(manager.presentation_for(enemy))
+
+
+func test_manager_replacement_completes_pending_health_hit_join_and_children_once() -> void:
 	var manager := RegistryTrackingBattleManager.new()
 	add_child_autofree(manager)
 	var enemy := _enemy()
@@ -547,15 +587,19 @@ func test_manager_replacement_completes_pending_hit_after_registry_switch_once()
 	assert_true(manager.register_presentation(enemy, fixture.presentation))
 	_stage_damage(enemy, 40)
 	var operation: PresentationOperation = fixture.presentation.sync_visual_health()
+	var health: PresentationOperation = fixture.presentation._health_operation
+	var hit: PresentationOperation = fixture.presentation._hit_operation
 	assert_false(operation.is_completed)
-	assert_false(fixture.presentation._health_operation.is_completed)
-	assert_false(fixture.presentation._hit_operation.is_completed)
+	assert_false(health.is_completed)
+	assert_false(hit.is_completed)
 	fixture.presentation.set_inspection_focused(true)
 	var replacement := CombatantPresentation.new()
 	replacement.bind(enemy)
 	manager.add_child(replacement)
 	var registry_was_replaced_on_completion := [false]
 	var completion_count := [0]
+	var health_count := [0]
+	var hit_count := [0]
 	operation.completed.connect(
 		func() -> void:
 			completion_count[0] += 1
@@ -563,11 +607,17 @@ func test_manager_replacement_completes_pending_hit_after_registry_switch_once()
 				manager.presentation_for(enemy) == replacement
 			)
 	)
+	health.completed.connect(func() -> void: health_count[0] += 1)
+	hit.completed.connect(func() -> void: hit_count[0] += 1)
 
 	assert_true(manager.register_presentation(enemy, replacement))
 
 	assert_true(operation.is_completed)
+	assert_true(health.is_completed)
+	assert_true(hit.is_completed)
 	assert_eq(completion_count[0], 1)
+	assert_eq(health_count[0], 1)
+	assert_eq(hit_count[0], 1)
 	assert_true(registry_was_replaced_on_completion[0])
 	assert_same(manager.presentation_for(enemy), replacement)
 	assert_false(fixture.presentation.inspection_focused)
@@ -637,6 +687,45 @@ func test_repeated_health_sync_preserves_attack_and_acting_state() -> void:
 	assert_true(fixture.presentation.acting)
 	fixture.presentation.hud._health_tween.custom_step(1.0)
 	fixture.presentation.animation_player.animation_finished.emit(&"Attack")
+
+
+func test_manager_unregister_completes_pending_health_hit_join_and_children_once() -> void:
+	var manager := RegistryTrackingBattleManager.new()
+	add_child_autofree(manager)
+	var enemy := _enemy()
+	var fixture := _bound_animated_drone(_world(), enemy)
+	assert_true(manager.register_presentation(enemy, fixture.presentation))
+	_stage_damage(enemy, 40)
+	var joined: PresentationOperation = fixture.presentation.sync_visual_health()
+	var health: PresentationOperation = fixture.presentation._health_operation
+	var hit: PresentationOperation = fixture.presentation._hit_operation
+	assert_false(joined.is_completed)
+	assert_false(health.is_completed)
+	assert_false(hit.is_completed)
+	var joined_count := [0]
+	var health_count := [0]
+	var hit_count := [0]
+	var registry_was_clear_on_completion := [false]
+	joined.completed.connect(
+		func() -> void:
+			joined_count[0] += 1
+			registry_was_clear_on_completion[0] = \
+				manager.presentation_for(enemy) == null
+	)
+	health.completed.connect(func() -> void: health_count[0] += 1)
+	hit.completed.connect(func() -> void: hit_count[0] += 1)
+
+	manager.unregister_presentation(enemy)
+
+	assert_true(joined.is_completed)
+	assert_true(health.is_completed)
+	assert_true(hit.is_completed)
+	assert_eq(joined_count[0], 1)
+	assert_eq(health_count[0], 1)
+	assert_eq(hit_count[0], 1)
+	assert_true(registry_was_clear_on_completion[0])
+	assert_null(manager.presentation_for(enemy))
+	assert_true(is_instance_valid(fixture.root))
 
 
 func test_manager_unregister_completes_pending_shutdown_after_registry_clear_once() -> void:
