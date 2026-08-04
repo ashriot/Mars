@@ -25,6 +25,16 @@ class SuspendedActionPresentation extends CombatantPresentation:
 		return _begin_operation()
 
 
+class JoinablePresentation extends CombatantPresentation:
+	func begin_child_operation() -> PresentationOperation:
+		return _begin_operation()
+
+	func operation_when_all(
+		operations: Array[PresentationOperation],
+	) -> PresentationOperation:
+		return _operation_when_all(operations)
+
+
 class OperationTrackingBattleManager extends BattleManager:
 	var acting_resumed := false
 	var acting_resume_presentation: CombatantPresentation
@@ -58,6 +68,51 @@ class OperationTrackingBattleManager extends BattleManager:
 	func begin_hide_action(combatant: BattleCombatant) -> void:
 		await _hide_action(combatant)
 		hide_action_resumed = true
+
+
+func test_operation_when_all_ignores_completed_children_and_waits_for_every_pending_child() -> void:
+	var presentation := JoinablePresentation.new()
+	add_child_autofree(presentation)
+	var completed := PresentationOperation.already_completed()
+	var first := presentation.begin_child_operation()
+	var second := presentation.begin_child_operation()
+	var operations: Array[PresentationOperation] = [completed, first, second]
+
+	var joined := presentation.operation_when_all(operations)
+
+	assert_false(joined.is_completed)
+	first.complete()
+	assert_false(joined.is_completed, "one pending child still owns the wait")
+	second.complete()
+	assert_true(joined.is_completed, "the last pending child completes the join")
+
+
+func test_operation_when_all_is_completed_for_no_pending_children() -> void:
+	var presentation := JoinablePresentation.new()
+	add_child_autofree(presentation)
+	var completed := PresentationOperation.already_completed()
+	var operations: Array[PresentationOperation] = [null, completed]
+
+	var joined := presentation.operation_when_all(operations)
+
+	assert_true(joined.is_completed)
+
+
+func test_completing_operation_when_all_does_not_complete_its_children() -> void:
+	var presentation := JoinablePresentation.new()
+	add_child_autofree(presentation)
+	var first := presentation.begin_child_operation()
+	var second := presentation.begin_child_operation()
+	var operations: Array[PresentationOperation] = [first, second]
+	var joined := presentation.operation_when_all(operations)
+
+	joined.complete()
+
+	assert_true(joined.is_completed)
+	assert_false(first.is_completed, "a join never owns its first child")
+	assert_false(second.is_completed, "a join never owns its second child")
+	first.complete()
+	second.complete()
 
 
 func test_freeing_presentation_resumes_manager_acting_wait() -> void:

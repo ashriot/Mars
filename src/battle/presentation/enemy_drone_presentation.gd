@@ -21,6 +21,7 @@ var instance_material: BaseMaterial3D
 var _instance_materials: Array[BaseMaterial3D] = []
 var _action_operation: PresentationOperation
 var _hit_operation: PresentationOperation
+var _health_operation: PresentationOperation
 var _shutdown_operation: PresentationOperation
 var _fade_tween: Tween
 
@@ -125,12 +126,30 @@ func hide_action():
 	return PresentationOperation.already_completed()
 
 
-func sync_visual_health():
+func sync_visual_health() -> PresentationOperation:
 	if _shutdown_operation != null:
 		return _shutdown_operation
-	if _hit_operation != null:
-		return _hit_operation
-	return PresentationOperation.already_completed()
+	if _health_operation != null:
+		_health_operation.complete()
+	var health_tween: Tween = hud.sync_visual_health() \
+		if is_instance_valid(hud) else null
+	var health_operation := _operation_for_tween(health_tween)
+	_health_operation = health_operation if not health_operation.is_completed else null
+	if _health_operation != null:
+		_health_operation.completed.connect(
+			_on_health_operation_completed.bind(_health_operation),
+			CONNECT_ONE_SHOT,
+		)
+	var operations: Array[PresentationOperation] = [
+		health_operation,
+		_hit_operation,
+	]
+	return _operation_when_all(operations)
+
+
+func _on_health_operation_completed(operation: PresentationOperation) -> void:
+	if _health_operation == operation:
+		_health_operation = null
 
 
 func refresh_intent() -> void:

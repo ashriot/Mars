@@ -363,6 +363,7 @@ func test_freeing_view_removes_its_externally_owned_hud() -> void:
 
 func test_tracked_model_routes_animations_and_visible_defeat_fade() -> void:
 	var fixture := _bound_animated_drone(_world(), _enemy())
+	var enemy: EnemyCombatant = fixture.presentation.combatant
 	var player: AnimationPlayer = fixture.presentation.animation_player
 	assert_not_null(player)
 	for animation_name: StringName in [&"Idle", &"Attack", &"Hit", &"Charging"]:
@@ -375,15 +376,21 @@ func test_tracked_model_routes_animations_and_visible_defeat_fade() -> void:
 	var action_operation: PresentationOperation = fixture.presentation.hide_action()
 	assert_false(action_operation.is_completed)
 
-	fixture.presentation.combatant.presentation_event.emit(
-		fixture.presentation.combatant, &"damage_received", {},
-	)
+	_stage_damage(enemy, 40)
 	assert_true(action_operation.is_completed, "Hit replaces and completes Attack")
 	assert_eq(player.current_animation, "Hit")
-	var hit_operation: PresentationOperation = fixture.presentation.sync_visual_health()
+	var health_operation: PresentationOperation = fixture.presentation.sync_visual_health()
+	var hit_operation: PresentationOperation = fixture.presentation._hit_operation
+	assert_false(fixture.presentation._health_operation.is_completed)
 	assert_false(hit_operation.is_completed)
+	assert_false(health_operation.is_completed)
+	fixture.presentation.hud._health_tween.custom_step(1.0)
+	assert_false(
+		health_operation.is_completed,
+		"health completion still waits for the pending Hit animation",
+	)
 	player.animation_finished.emit(&"Hit")
-	assert_true(hit_operation.is_completed)
+	assert_true(health_operation.is_completed)
 	assert_eq(player.current_animation, "Idle")
 
 	fixture.presentation._process(0.0)
@@ -391,6 +398,7 @@ func test_tracked_model_routes_animations_and_visible_defeat_fade() -> void:
 	fixture.presentation.combatant.defeat()
 	var shutdown_operation: PresentationOperation = fixture.presentation.sync_visual_health()
 	assert_false(shutdown_operation.is_completed)
+	assert_same(fixture.presentation.sync_visual_health(), shutdown_operation)
 	assert_true(
 		fixture.presentation.hud.visible,
 		"defeat keeps the non-interactive HUD renderable during its fade",
@@ -473,11 +481,12 @@ func test_local_eye_drone_smoke_when_installed() -> void:
 		assert_true(fixture.presentation.animation_player.has_animation(animation_name))
 
 
-func test_forced_missing_model_keeps_placeholder_and_never_blocks_clips() -> void:
+func test_missing_model_keeps_hud_health_feedback_without_blocking_on_clips() -> void:
 	var fixture := _drone_view(_world())
 	fixture.presentation.model_loader.local_resource_path = MISSING_MODEL_PATH
+	var enemy := _enemy()
 
-	assert_true(fixture.presentation.setup_view(_enemy()))
+	assert_true(fixture.presentation.setup_view(enemy))
 	assert_true(fixture.presentation.model_loader.using_placeholder)
 	assert_true(fixture.presentation.model_loader.placeholder.visible)
 	assert_null(fixture.presentation.animation_player)
@@ -485,14 +494,18 @@ func test_forced_missing_model_keeps_placeholder_and_never_blocks_clips() -> voi
 	var acting_operation: PresentationOperation = fixture.presentation.set_acting(true)
 	fixture.presentation.show_action("Missing Attack")
 	var action_operation: PresentationOperation = fixture.presentation.hide_action()
-	fixture.presentation.combatant.presentation_event.emit(
-		fixture.presentation.combatant, &"damage_received", {},
-	)
-	var hit_operation: PresentationOperation = fixture.presentation.sync_visual_health()
+	_stage_damage(enemy, 40)
+	var health_operation: PresentationOperation = fixture.presentation.sync_visual_health()
 
 	assert_true(acting_operation.is_completed)
 	assert_true(action_operation.is_completed)
-	assert_true(hit_operation.is_completed)
+	assert_true(fixture.presentation._hit_operation.is_completed)
+	assert_false(health_operation.is_completed)
+	assert_eq(fixture.presentation.hud.hp_bar_actual.value, 60.0)
+	assert_eq(fixture.presentation.hud.hp_bar_feedback.value, 100.0)
+	fixture.presentation.hud._health_tween.custom_step(1.0)
+	assert_true(health_operation.is_completed)
+	assert_eq(fixture.presentation.hud.hp_bar_feedback.value, 60.0)
 	var placeholder := fixture.presentation.model_loader.placeholder as MeshInstance3D
 	assert_same(placeholder.mesh.surface_get_material(0), fixture.presentation.instance_material)
 	assert_null(placeholder.get_surface_override_material(0))
@@ -532,11 +545,11 @@ func test_manager_replacement_completes_pending_hit_after_registry_switch_once()
 	var enemy := _enemy()
 	var fixture := _bound_animated_drone(_world(), enemy)
 	assert_true(manager.register_presentation(enemy, fixture.presentation))
-	fixture.presentation.combatant.presentation_event.emit(
-		fixture.presentation.combatant, &"damage_received", {},
-	)
+	_stage_damage(enemy, 40)
 	var operation: PresentationOperation = fixture.presentation.sync_visual_health()
 	assert_false(operation.is_completed)
+	assert_false(fixture.presentation._health_operation.is_completed)
+	assert_false(fixture.presentation._hit_operation.is_completed)
 	fixture.presentation.set_inspection_focused(true)
 	var replacement := CombatantPresentation.new()
 	replacement.bind(enemy)
@@ -560,6 +573,70 @@ func test_manager_replacement_completes_pending_hit_after_registry_switch_once()
 	assert_false(fixture.presentation.inspection_focused)
 	assert_true(replacement.inspection_focused)
 	assert_true(is_instance_valid(fixture.root))
+
+
+func test_healing_waits_for_hud_health_without_starting_hit() -> void:
+	var enemy := _enemy()
+	enemy.current_hp = 40
+	var fixture := _bound_animated_drone(_world(), enemy)
+
+	enemy.take_healing(20)
+	var operation: PresentationOperation = fixture.presentation.sync_visual_health()
+
+	assert_false(operation.is_completed)
+	assert_null(fixture.presentation._hit_operation)
+	assert_false(fixture.presentation._health_operation.is_completed)
+	assert_eq(fixture.presentation.hud.hp_bar_actual.value, 40.0)
+	assert_eq(fixture.presentation.hud.hp_bar_feedback.value, 60.0)
+	fixture.presentation.hud._health_tween.custom_step(1.0)
+	assert_true(operation.is_completed)
+	assert_eq(fixture.presentation.hud.hp_bar_actual.value, 60.0)
+
+
+func test_repeated_health_sync_replaces_only_health_and_preserves_hit() -> void:
+	var enemy := _enemy()
+	var fixture := _bound_animated_drone(_world(), enemy)
+	_stage_damage(enemy, 40)
+	var first_joined: PresentationOperation = fixture.presentation.sync_visual_health()
+	var first_health: PresentationOperation = fixture.presentation._health_operation
+	var hit: PresentationOperation = fixture.presentation._hit_operation
+
+	enemy.take_healing(10)
+	var second_joined: PresentationOperation = fixture.presentation.sync_visual_health()
+
+	assert_true(first_health.is_completed, "the replaced health wait is released")
+	assert_false(first_joined.is_completed, "the first join still observes Hit")
+	assert_false(hit.is_completed, "health replacement never completes Hit")
+	assert_same(fixture.presentation._hit_operation, hit)
+	assert_false(second_joined.is_completed)
+	assert_false(fixture.presentation._health_operation.is_completed)
+	fixture.presentation.hud._health_tween.custom_step(1.0)
+	assert_false(second_joined.is_completed, "the replacement join still observes Hit")
+	fixture.presentation.animation_player.animation_finished.emit(&"Hit")
+	assert_true(first_joined.is_completed)
+	assert_true(second_joined.is_completed)
+
+
+func test_repeated_health_sync_preserves_attack_and_acting_state() -> void:
+	var enemy := _enemy()
+	enemy.current_hp = 40
+	var fixture := _bound_animated_drone(_world(), enemy)
+	fixture.presentation.set_acting(true)
+	fixture.presentation.show_action("Burst")
+	var attack: PresentationOperation = fixture.presentation._action_operation
+	enemy.take_healing(10)
+	var first_health: PresentationOperation = fixture.presentation.sync_visual_health()
+
+	enemy.take_healing(10)
+	var second_health: PresentationOperation = fixture.presentation.sync_visual_health()
+
+	assert_true(first_health.is_completed)
+	assert_false(second_health.is_completed)
+	assert_false(attack.is_completed, "health replacement preserves Attack")
+	assert_same(fixture.presentation._action_operation, attack)
+	assert_true(fixture.presentation.acting)
+	fixture.presentation.hud._health_tween.custom_step(1.0)
+	fixture.presentation.animation_player.animation_finished.emit(&"Attack")
 
 
 func test_manager_unregister_completes_pending_shutdown_after_registry_clear_once() -> void:
@@ -656,6 +733,12 @@ func _enemy() -> EnemyCombatant:
 	stats.energy_defense = 35
 	enemy.setup_base(stats, BattleCombatant.Faction.ENEMY)
 	return enemy
+
+
+func _stage_damage(enemy: EnemyCombatant, amount: int) -> void:
+	enemy.current_hp -= amount
+	enemy.hp_changed.emit(enemy, enemy.current_hp, enemy.current_stats.max_hp)
+	enemy.presentation_event.emit(enemy, &"damage_received", {"actual_damage": amount})
 
 
 func _collect_presentations(
