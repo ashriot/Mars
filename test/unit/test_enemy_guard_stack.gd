@@ -2,7 +2,8 @@ extends GutTest
 
 
 const GUARD_STACK_SCENE := preload("res://src/battle/presentation/enemy_guard_stack.tscn")
-const COMPACT_WIDTH := 160.0
+const GUARD_WIDTH := 202.0
+const PIP_WIDTH := 22.0
 const PIP_HEIGHT := 22.0
 const WHITE := Color.WHITE
 const MEDIUM_GRAY := Color(0.62, 0.65, 0.7, 1.0)
@@ -131,29 +132,36 @@ func test_scene_authored_guard_visuals_fit_the_compact_width_at_full_depth() -> 
 	var stack := _stack()
 	stack.render(30, false, false)
 	await get_tree().process_frame
-	var compact_bounds := Rect2(Vector2.ZERO, Vector2(COMPACT_WIDTH, stack.size.y))
+	var compact_bounds := Rect2(Vector2.ZERO, Vector2(GUARD_WIDTH, stack.size.y))
 
-	assert_eq(stack.custom_minimum_size.x, COMPACT_WIDTH)
-	assert_eq(stack.size.x, COMPACT_WIDTH)
+	assert_eq(stack.custom_minimum_size.x, GUARD_WIDTH)
+	assert_eq(stack.size.x, GUARD_WIDTH)
 	for layer_index in 3:
 		var layer := _layer(stack, layer_index)
-		assert_eq(layer.size.x, COMPACT_WIDTH)
+		assert_eq(layer.size.x, GUARD_WIDTH)
 		for pip_index in 10:
 			var pip := _pip(stack, layer_index, pip_index)
 			var visual_rect := Rect2(layer.position + pip.position, pip.size)
 			assert_true(
 				compact_bounds.encloses(visual_rect),
-				"layer %d column %d stays inside the 160 px guard slot" % [
+				"layer %d column %d stays inside the 202 px guard slot" % [
 					layer_index + 1,
 					pip_index + 1,
 				],
 			)
 			assert_eq(pip.size.y, PIP_HEIGHT, "guard pips retain their authored height")
+			assert_eq(pip.size.x, PIP_WIDTH, "guard pips retain their authored width")
 			assert_eq(
 				pip.position.x,
 				floorf(pip.position.x),
 				"guard columns keep readable integer X positions",
 			)
+			if pip_index > 0:
+				assert_eq(
+					pip.position.x - _pip(stack, layer_index, pip_index - 1).position.x,
+					20.0,
+					"adjacent guard pips overlap by two pixels",
+				)
 	assert_true(compact_bounds.encloses(_guard_value(stack).get_rect()))
 
 

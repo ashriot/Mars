@@ -5,8 +5,8 @@ signal hovered
 signal unhovered
 signal pressed
 
-const COMPACT_WIDTH := 160.0
-const DETAILS_SIZE := Vector2(160.0, 44.0)
+const COMPACT_WIDTH := 220.0
+const DETAILS_SIZE := Vector2(220.0, 44.0)
 const DETAILS_GAP := 4.0
 const HEAD_GAP := 12.0
 const GUARD_TOP := 14.0
@@ -23,7 +23,9 @@ const MIN_TARGET_WIDTH := 96.0
 @onready var intent_tooltip: RichTooltip = %IntentTooltip
 @onready var vitals_group: Control = %VitalsGroup
 @onready var guard_stack: EnemyGuardStack = %GuardStack
-@onready var hp_bar: ProgressBar = %HP
+@onready var hp_region: Control = %HPRegion
+@onready var hp_bar_feedback: ProgressBar = %HPFeedback
+@onready var hp_bar_actual: ProgressBar = %HPActual
 @onready var conditions_row: HBoxContainer = %ConditionsRow
 
 var combatant: EnemyCombatant
@@ -37,6 +39,7 @@ var _projected_model_bounds := Rect2()
 var _safe_rect := Rect2()
 var _has_projected_model_bounds := false
 var _details_tween: Tween
+var _health_tween: Tween
 var _presentation_owns_defeat_fade := false
 
 
@@ -47,9 +50,9 @@ func _ready() -> void:
 	intent_row.mouse_entered.connect(_on_target_mouse_entered)
 	intent_row.mouse_exited.connect(_on_target_mouse_exited)
 	intent_row.gui_input.connect(_on_target_gui_input)
-	hp_bar.mouse_entered.connect(_on_target_mouse_entered)
-	hp_bar.mouse_exited.connect(_on_target_mouse_exited)
-	hp_bar.gui_input.connect(_on_target_gui_input)
+	hp_region.mouse_entered.connect(_on_target_mouse_entered)
+	hp_region.mouse_exited.connect(_on_target_mouse_exited)
+	hp_region.gui_input.connect(_on_target_gui_input)
 	details.hide()
 	_sync_compact_height()
 	_sync_details_position()
@@ -60,6 +63,8 @@ func _exit_tree() -> void:
 	_disconnect_combatant()
 	if _details_tween != null and _details_tween.is_valid():
 		_details_tween.kill()
+	if _health_tween != null and _health_tween.is_valid():
+		_health_tween.kill()
 
 
 func bind_combatant(enemy: EnemyCombatant) -> bool:
@@ -200,6 +205,28 @@ func get_target_rect() -> Rect2:
 	return target_region.get_global_rect()
 
 
+func sync_visual_health() -> Tween:
+	if not is_instance_valid(combatant):
+		return null
+	var actual_hp := hp_bar_actual.value
+	var feedback_hp := hp_bar_feedback.value
+	var authoritative_hp := float(combatant.current_hp)
+	if is_equal_approx(actual_hp, authoritative_hp) \
+		and is_equal_approx(feedback_hp, authoritative_hp):
+		return null
+	if _health_tween != null and _health_tween.is_valid():
+		_health_tween.kill()
+	_health_tween = create_tween()
+	_health_tween.set_trans(Tween.TRANS_SINE)
+	_health_tween.set_ease(Tween.EASE_OUT)
+	var duration := 0.5 / _get_battle_speed()
+	if actual_hp < authoritative_hp:
+		_health_tween.tween_property(hp_bar_actual, "value", authoritative_hp, duration)
+	elif feedback_hp > authoritative_hp:
+		_health_tween.tween_property(hp_bar_feedback, "value", authoritative_hp, duration)
+	return _health_tween
+
+
 func _connect_combatant() -> void:
 	combatant.hp_changed.connect(_on_hp_changed)
 	combatant.guard_changed.connect(_on_guard_changed)
@@ -238,18 +265,21 @@ func _render_full_state() -> void:
 	name_label.text = combatant.actor_name
 	kinetic_value.text = "KIN %d%%" % combatant.current_stats.kinetic_defense
 	energy_value.text = "NRG %d%%" % combatant.current_stats.energy_defense
-	_render_hp()
+	_render_hp(true)
 	_render_guard()
 	_render_conditions()
 	refresh_intent()
 
 
-func _render_hp() -> void:
-	hp_bar.max_value = combatant.current_stats.max_hp
-	hp_bar.value = combatant.current_hp
-	hp_bar.tooltip_text = "%d / %d HP" % [
+func _render_hp(reset_visual_values := false) -> void:
+	hp_bar_feedback.max_value = combatant.current_stats.max_hp
+	hp_bar_actual.max_value = combatant.current_stats.max_hp
+	hp_region.tooltip_text = "%d / %d HP" % [
 		combatant.current_hp, combatant.current_stats.max_hp,
 	]
+	if reset_visual_values:
+		hp_bar_feedback.value = combatant.current_hp
+		hp_bar_actual.value = combatant.current_hp
 
 
 func _render_guard() -> void:
@@ -308,8 +338,19 @@ func _on_presentation_event(
 	event: StringName,
 	_payload: Dictionary,
 ) -> void:
-	if event == &"intent_changed":
-		refresh_intent()
+	match event:
+		&"damage_received":
+			HealthFeedbackPalette.apply(
+				hp_bar_feedback, HealthFeedbackPalette.Direction.DAMAGE,
+			)
+			hp_bar_actual.value = combatant.current_hp
+		&"healing_received":
+			HealthFeedbackPalette.apply(
+				hp_bar_feedback, HealthFeedbackPalette.Direction.HEALING,
+			)
+			hp_bar_feedback.value = combatant.current_hp
+		&"intent_changed":
+			refresh_intent()
 
 
 func _on_combatant_defeated(enemy: BattleCombatant) -> void:
@@ -390,6 +431,12 @@ func _sync_details_position() -> void:
 
 func _get_compact_size() -> Vector2:
 	return Vector2(COMPACT_WIDTH, compact_stack.get_combined_minimum_size().y)
+
+
+func _get_battle_speed() -> float:
+	if is_instance_valid(combatant) and is_instance_valid(combatant.battle_manager):
+		return combatant.battle_manager.battle_speed
+	return 1.0
 
 
 func _invalidate_projection(keep_render_surface := false) -> void:

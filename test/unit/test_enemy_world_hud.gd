@@ -4,8 +4,8 @@ extends GutTest
 const HUD_SCENE := preload("res://src/battle/presentation/enemy_world_hud.tscn")
 const WORLD_SCENE := preload("res://src/battle/presentation/battle_world_3d.tscn")
 const BOLD_FONT_PATH := "res://data/theme/fonts/suse_mono_bold.tres"
-const COMPACT_WIDTH := 160.0
-const HP_WIDTH := 108.0
+const COMPACT_WIDTH := 220.0
+const HP_WIDTH := 168.0
 const HP_GUARD_OVERLAP := 4.0
 const GUARD_CONDITIONS_GAP := 5.0
 const DETAILS_GAP := 4.0
@@ -36,7 +36,7 @@ func _hud() -> EnemyWorldHUD:
 	return hud
 
 
-func test_compact_stack_authors_rounded_hp_and_overlapping_guard() -> void:
+func test_compact_stack_authors_layered_hp_and_overlapping_guard() -> void:
 	var hud := _hud()
 	var enemy := _enemy_with_state(80, 3)
 
@@ -44,22 +44,38 @@ func test_compact_stack_authors_rounded_hp_and_overlapping_guard() -> void:
 	await get_tree().process_frame
 	assert_eq(hud.compact_stack.size.x, COMPACT_WIDTH)
 	assert_eq(hud.intent_row.size.x, COMPACT_WIDTH)
-	var hp_node := hud.get_node("%HP") as Control
-	assert_true(hp_node is ProgressBar)
-	var hp := hud.get_node("%HP") as ProgressBar
+	var hp_region: Control = hud.hp_region
+	var feedback: ProgressBar = hud.hp_bar_feedback
+	var actual: ProgressBar = hud.hp_bar_actual
 	var guard_stack := hud.get_node_or_null("%GuardStack") as EnemyGuardStack
-	assert_not_null(hp)
+	assert_not_null(hp_region)
+	assert_not_null(feedback)
+	assert_not_null(actual)
 	assert_not_null(guard_stack)
-	if hp == null or guard_stack == null:
+	if hp_region == null or feedback == null or actual == null or guard_stack == null:
 		return
-	assert_eq(hp.size.x, HP_WIDTH)
-	assert_false(hp.show_percentage)
-	_assert_rounded_style(hp.get_theme_stylebox(&"background"))
-	_assert_rounded_style(hp.get_theme_stylebox(&"fill"))
-	assert_gt(guard_stack.position.y, hp.position.y)
-	assert_eq(hp.position.y + hp.size.y - guard_stack.position.y, HP_GUARD_OVERLAP)
+	assert_eq(hp_region.position, Vector2(26.0, 0.0))
+	assert_eq(hp_region.size, Vector2(HP_WIDTH, 18.0))
+	assert_eq(hp_region.mouse_filter, Control.MOUSE_FILTER_PASS)
+	assert_eq(feedback.get_rect(), Rect2(Vector2.ZERO, hp_region.size))
+	assert_eq(actual.get_rect(), Rect2(Vector2.ZERO, hp_region.size))
+	assert_eq(feedback.mouse_filter, Control.MOUSE_FILTER_IGNORE)
+	assert_eq(actual.mouse_filter, Control.MOUSE_FILTER_IGNORE)
+	assert_false(feedback.show_percentage)
+	assert_false(actual.show_percentage)
+	_assert_rounded_style(feedback.get_theme_stylebox(&"background"))
+	_assert_rounded_style(feedback.get_theme_stylebox(&"fill"))
+	assert_true(actual.get_theme_stylebox(&"background") is StyleBoxEmpty)
+	_assert_rounded_style(actual.get_theme_stylebox(&"fill"))
+	assert_gt(actual.z_index, feedback.z_index)
+	assert_eq(guard_stack.position, Vector2(9.0, 14.0))
+	assert_eq(guard_stack.size.x, 202.0)
+	assert_gt(guard_stack.position.y, hp_region.position.y)
+	assert_eq(hp_region.position.y + hp_region.size.y - guard_stack.position.y, HP_GUARD_OVERLAP)
 	assert_eq(guard_stack.guard_value.text, "3")
-	assert_eq(hp.value, 80.0)
+	assert_eq(feedback.value, 80.0)
+	assert_eq(actual.value, 80.0)
+	assert_eq(hp_region.tooltip_text, "80 / 100 HP")
 
 
 func test_guard_depth_moves_conditions_and_details_only_five_pixels_per_layer() -> void:
@@ -211,11 +227,88 @@ func test_bound_model_signals_refresh_vitals_intent_and_conditions() -> void:
 	enemy.intended_targets = [enemy]
 	enemy.presentation_event.emit(enemy, &"intent_changed", {})
 
-	assert_eq(hud.hp_bar.value, 45.0)
+	assert_eq(hud.hp_bar_feedback.max_value, 100.0)
+	assert_eq(hud.hp_bar_actual.max_value, 100.0)
+	assert_eq(hud.hp_region.tooltip_text, "45 / 100 HP")
 	assert_eq(hud.guard_stack.guard_value.text, "1")
 	assert_eq(hud.conditions_row.get_child_count(), 1)
 	assert_same((hud.conditions_row.get_child(0) as TextureRect).texture, condition.icon)
 	assert_eq(hud.intent_row.text, "Repair")
+
+
+func test_damage_stages_yellow_feedback_until_the_hud_health_tween_settles() -> void:
+	var hud := _hud()
+	var enemy := _enemy_with_state(100, 3)
+	assert_true(hud.bind_combatant(enemy))
+	assert_true(hud.has_method(&"sync_visual_health"))
+	if not hud.has_method(&"sync_visual_health"):
+		return
+
+	enemy.current_hp = 60
+	enemy.hp_changed.emit(enemy, 60, 100)
+	enemy.presentation_event.emit(enemy, &"damage_received", {})
+
+	assert_eq(hud.hp_bar_actual.value, 60.0)
+	assert_eq(hud.hp_bar_feedback.value, 100.0)
+	assert_eq(_fill_color(hud.hp_bar_feedback), HealthFeedbackPalette.DAMAGE_YELLOW)
+	var tween := hud.call(&"sync_visual_health") as Tween
+	assert_not_null(tween)
+	await get_tree().create_timer(0.55).timeout
+	assert_eq(hud.hp_bar_actual.value, 60.0)
+	assert_eq(hud.hp_bar_feedback.value, 60.0)
+
+
+func test_healing_stages_green_feedback_until_the_hud_health_tween_settles() -> void:
+	var hud := _hud()
+	var enemy := _enemy_with_state(40, 3)
+	assert_true(hud.bind_combatant(enemy))
+	assert_true(hud.has_method(&"sync_visual_health"))
+	if not hud.has_method(&"sync_visual_health"):
+		return
+
+	enemy.current_hp = 60
+	enemy.hp_changed.emit(enemy, 60, 100)
+	enemy.presentation_event.emit(enemy, &"healing_received", {})
+
+	assert_eq(hud.hp_bar_actual.value, 40.0)
+	assert_eq(hud.hp_bar_feedback.value, 60.0)
+	assert_eq(_fill_color(hud.hp_bar_feedback), HealthFeedbackPalette.HEALING_GREEN)
+	var tween := hud.call(&"sync_visual_health") as Tween
+	assert_not_null(tween)
+	await get_tree().create_timer(0.55).timeout
+	assert_eq(hud.hp_bar_actual.value, 60.0)
+	assert_eq(hud.hp_bar_feedback.value, 60.0)
+
+
+func test_new_health_event_replaces_a_running_tween_from_the_displayed_value() -> void:
+	var hud := _hud()
+	var enemy := _enemy_with_state(100, 3)
+	assert_true(hud.bind_combatant(enemy))
+	assert_true(hud.has_method(&"sync_visual_health"))
+	if not hud.has_method(&"sync_visual_health"):
+		return
+
+	enemy.current_hp = 60
+	enemy.hp_changed.emit(enemy, 60, 100)
+	enemy.presentation_event.emit(enemy, &"damage_received", {})
+	var first_tween := hud.call(&"sync_visual_health") as Tween
+	assert_not_null(first_tween)
+	await get_tree().create_timer(0.2).timeout
+	var displayed_feedback: float = hud.hp_bar_feedback.value
+	assert_between(displayed_feedback, 60.0, 100.0)
+
+	enemy.current_hp = 40
+	enemy.hp_changed.emit(enemy, 40, 100)
+	enemy.presentation_event.emit(enemy, &"damage_received", {})
+	var replacement_tween := hud.call(&"sync_visual_health") as Tween
+	assert_not_null(replacement_tween)
+	assert_ne(replacement_tween, first_tween)
+	await get_tree().process_frame
+	assert_lt(hud.hp_bar_feedback.value, displayed_feedback)
+	assert_gt(hud.hp_bar_feedback.value, 40.0)
+	await get_tree().create_timer(0.55).timeout
+	assert_eq(hud.hp_bar_actual.value, 40.0)
+	assert_eq(hud.hp_bar_feedback.value, 40.0)
 
 
 func test_target_state_does_not_reveal_details_but_pointer_hover_does() -> void:
@@ -249,7 +342,7 @@ func test_target_region_forwards_hover_and_press_signals() -> void:
 	assert_signal_emitted(hud, &"pressed")
 
 
-func test_hp_passes_real_pointer_hover_and_press_to_target_region() -> void:
+func test_hp_region_passes_real_pointer_hover_and_press_to_target_region() -> void:
 	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
 	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)
 	InputManager._consumed_mouse_button = MOUSE_BUTTON_NONE
@@ -258,7 +351,7 @@ func test_hp_passes_real_pointer_hover_and_press_to_target_region() -> void:
 	hud.set_projected_head_position(Vector2(500, 300))
 	await get_tree().process_frame
 	watch_signals(hud)
-	var hp_center := hud.hp_bar.get_global_rect().get_center()
+	var hp_center: Vector2 = hud.hp_region.get_global_rect().get_center()
 
 	get_viewport().push_input(_mouse_motion_at(Vector2(10, 600)), true)
 	await get_tree().process_frame
@@ -267,7 +360,9 @@ func test_hp_passes_real_pointer_hover_and_press_to_target_region() -> void:
 	get_viewport().push_input(_mouse_button_at(hp_center, true), true)
 	await get_tree().process_frame
 
-	assert_eq(hud.hp_bar.mouse_filter, Control.MOUSE_FILTER_PASS)
+	assert_eq(hud.hp_region.mouse_filter, Control.MOUSE_FILTER_PASS)
+	assert_eq(hud.hp_bar_feedback.mouse_filter, Control.MOUSE_FILTER_IGNORE)
+	assert_eq(hud.hp_bar_actual.mouse_filter, Control.MOUSE_FILTER_IGNORE)
 	assert_true(hud.is_hovered())
 	assert_signal_emitted(hud, &"hovered")
 	assert_signal_emitted(hud, &"pressed")
@@ -348,14 +443,14 @@ func test_world_layout_keeps_close_huds_centered_on_their_own_heads() -> void:
 
 	world._layout_enemy_huds()
 
-	assert_eq(first.compact_stack.global_position, Vector2(420, 201))
-	assert_eq(second.compact_stack.global_position, Vector2(450, 201))
+	assert_eq(first.compact_stack.global_position, Vector2(390, 201))
+	assert_eq(second.compact_stack.global_position, Vector2(420, 201))
 	assert_eq(first.compact_stack.global_position.y, second.compact_stack.global_position.y)
 	assert_eq(first.compact_stack.get_global_rect().get_center().x, 500.0)
 	assert_eq(second.compact_stack.get_global_rect().get_center().x, 530.0)
 	second.set_projection_visible(false)
 	world._layout_enemy_huds()
-	assert_eq(first.compact_stack.global_position, Vector2(420, 201))
+	assert_eq(first.compact_stack.global_position, Vector2(390, 201))
 
 
 func test_world_layout_clamps_each_hud_independently_to_safe_edges() -> void:
@@ -373,7 +468,7 @@ func test_world_layout_clamps_each_hud_independently_to_safe_edges() -> void:
 	world._layout_enemy_huds()
 
 	assert_eq(top_left.compact_stack.global_position, Vector2(24, 24))
-	assert_eq(bottom_right.compact_stack.global_position, Vector2(1096, 689))
+	assert_eq(bottom_right.compact_stack.global_position, Vector2(1036, 689))
 
 
 func test_world_layout_keeps_full_guard_visuals_inside_both_horizontal_safe_edges() -> void:
@@ -434,8 +529,8 @@ func test_defeat_immediately_hides_disables_and_excludes_hud_from_layout() -> vo
 	defeated_hud.set_projected_head_position(Vector2(500, 300))
 	survivor.set_projected_head_position(Vector2(500, 300))
 	world._layout_enemy_huds()
-	assert_eq(defeated_hud.compact_stack.global_position, Vector2(420, 201))
-	assert_eq(survivor.compact_stack.global_position, Vector2(420, 201))
+	assert_eq(defeated_hud.compact_stack.global_position, Vector2(390, 201))
+	assert_eq(survivor.compact_stack.global_position, Vector2(390, 201))
 	watch_signals(defeated_hud)
 
 	defeated_enemy.defeat()
@@ -452,7 +547,7 @@ func test_defeat_immediately_hides_disables_and_excludes_hud_from_layout() -> vo
 	assert_eq(defeated_hud.target_region.mouse_filter, Control.MOUSE_FILTER_IGNORE)
 	assert_signal_not_emitted(defeated_hud, &"hovered")
 	assert_signal_not_emitted(defeated_hud, &"pressed")
-	assert_eq(survivor.compact_stack.global_position, Vector2(420, 201))
+	assert_eq(survivor.compact_stack.global_position, Vector2(390, 201))
 
 
 func test_presentation_owned_defeat_preserves_only_the_render_surface() -> void:
@@ -533,6 +628,11 @@ func _assert_rounded_style(style: StyleBox) -> void:
 	assert_eq(flat.corner_radius_top_right, 6)
 	assert_eq(flat.corner_radius_bottom_right, 6)
 	assert_eq(flat.corner_radius_bottom_left, 6)
+
+
+func _fill_color(bar: ProgressBar) -> Color:
+	var fill := bar.get_theme_stylebox(&"fill") as StyleBoxFlat
+	return fill.bg_color if fill != null else Color.TRANSPARENT
 
 
 func _assert_guard_visuals_inside(stack: EnemyGuardStack, bounds: Rect2) -> void:
