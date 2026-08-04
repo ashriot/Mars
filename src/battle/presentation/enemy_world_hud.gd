@@ -6,6 +6,7 @@ signal unhovered
 signal pressed
 
 const COMPACT_WIDTH := 220.0
+const INTENT_WIDTH := 286.0
 const DETAILS_SIZE := Vector2(220.0, 74.0)
 const DETAILS_GAP := 4.0
 const HEAD_GAP := 12.0
@@ -201,7 +202,8 @@ func get_visible_layout_rect() -> Rect2:
 
 
 func get_reserved_layout_rect(compact_rect: Rect2) -> Rect2:
-	return compact_rect.merge(Rect2(compact_rect.position + details.position, DETAILS_SIZE))
+	var reserved := compact_rect.merge(_get_intent_layout_rect(compact_rect))
+	return reserved.merge(Rect2(compact_rect.position + details.position, DETAILS_SIZE))
 
 
 func refresh_intent() -> void:
@@ -487,6 +489,13 @@ func _sync_compact_height() -> void:
 func _sync_details_position() -> void:
 	details.size = DETAILS_SIZE
 	details.position = Vector2(0.0, -DETAILS_SIZE.y - DETAILS_GAP)
+
+
+func _get_intent_layout_rect(compact_rect: Rect2) -> Rect2:
+	return Rect2(
+		Vector2(compact_rect.get_center().x - INTENT_WIDTH * 0.5, compact_rect.position.y),
+		Vector2(INTENT_WIDTH, intent_row.size.y),
+	)
 
 
 func _get_compact_size() -> Vector2:

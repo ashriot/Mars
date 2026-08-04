@@ -6,6 +6,7 @@ const WORLD_SCENE := preload("res://src/battle/presentation/battle_world_3d.tscn
 const DAMAGE_POPUP := preload("res://src/battle/damage_popup.gd")
 const BOLD_FONT_PATH := "res://data/theme/fonts/suse_mono_bold.tres"
 const COMPACT_WIDTH := 220.0
+const INTENT_WIDTH := 286.0
 const HP_SIZE := Vector2(220.0, 32.0)
 const HP_GUARD_OVERLAP := 4.0
 const GUARD_CONDITIONS_GAP := 5.0
@@ -45,7 +46,9 @@ func test_compact_stack_authors_layered_hp_and_overlapping_guard() -> void:
 	assert_true(hud.bind_combatant(enemy))
 	await get_tree().process_frame
 	assert_eq(hud.compact_stack.size.x, COMPACT_WIDTH)
-	assert_eq(hud.intent_row.size.x, COMPACT_WIDTH)
+	assert_eq(hud.intent_row.size.x, INTENT_WIDTH)
+	assert_eq(hud.intent_row.position.x, -(INTENT_WIDTH - COMPACT_WIDTH) * 0.5)
+	assert_eq(hud.intent_row.autowrap_mode, TextServer.AUTOWRAP_OFF)
 	var hp_region: Control = hud.hp_region
 	var feedback: ProgressBar = hud.hp_bar_feedback
 	var actual: ProgressBar = hud.hp_bar_actual
@@ -93,11 +96,26 @@ func test_compact_stack_authors_layered_hp_and_overlapping_guard() -> void:
 	assert_eq(hud.intent_row.get_theme_font_size(&"normal_font_size"), 24)
 	assert_eq(hud.intent_row.get_theme_constant(&"outline_size"), 6)
 	assert_eq(hud.intent_row.get_theme_color(&"default_outline_color"), Color.BLACK)
-	assert_gte(hud.intent_row.custom_minimum_size.y, 36.0)
+	var intent_slot := hud.get_node_or_null("CompactStack/IntentSlot") as Control
+	assert_not_null(intent_slot)
+	if intent_slot == null:
+		return
+	assert_gte(intent_slot.custom_minimum_size.y, 36.0)
 	assert_eq(guard_stack.guard_value.text, "3")
 	assert_eq(feedback.value, 80.0)
 	assert_eq(actual.value, 80.0)
 	assert_eq(hp_region.tooltip_text, "80 / 100 HP")
+
+
+func test_representative_long_intent_stays_on_one_line_and_is_reserved() -> void:
+	var hud := _hud()
+	hud.intent_row.text = "[center]Fortify Attack Drone[/center]"
+	await get_tree().process_frame
+	var compact_rect := Rect2(Vector2(400, 300), hud._get_compact_size())
+	var reserved := hud.get_reserved_layout_rect(compact_rect)
+	assert_eq(hud.intent_row.get_line_count(), 1)
+	assert_eq(reserved.get_center().x, compact_rect.get_center().x)
+	assert_gte(reserved.size.x, INTENT_WIDTH)
 
 
 func test_guard_depth_moves_conditions_without_moving_fixed_upper_details() -> void:
@@ -616,6 +634,14 @@ func test_world_layout_resolves_close_hud_reservations_without_losing_head_colum
 	assert_eq(second.compact_stack.global_position.x, 420.0)
 	assert_eq(first.compact_stack.get_global_rect().get_center().x, 500.0)
 	assert_eq(second.compact_stack.get_global_rect().get_center().x, 530.0)
+	assert_eq(
+		first.compact_stack.global_position.x,
+		first.get_reserved_layout_rect(first.compact_stack.get_global_rect()).position.x + 33.0,
+	)
+	assert_eq(
+		second.compact_stack.global_position.x,
+		second.get_reserved_layout_rect(second.compact_stack.get_global_rect()).position.x + 33.0,
+	)
 	assert_false(first.get_reserved_layout_rect(first.compact_stack.get_global_rect()).intersects(
 		second.compact_stack.get_global_rect(),
 	))
@@ -641,8 +667,8 @@ func test_world_layout_clamps_each_hud_independently_to_safe_edges() -> void:
 
 	world._layout_enemy_huds()
 
-	assert_eq(top_left.compact_stack.global_position, Vector2(24, 102))
-	assert_eq(bottom_right.compact_stack.global_position, Vector2(1036, 656))
+	assert_eq(top_left.compact_stack.global_position, Vector2(57, 102))
+	assert_eq(bottom_right.compact_stack.global_position, Vector2(1003, 656))
 
 
 func test_world_layout_reserves_upper_details_at_the_top_safe_edge() -> void:
@@ -679,8 +705,8 @@ func test_world_layout_keeps_full_guard_visuals_inside_both_horizontal_safe_edge
 	world._layout_enemy_huds()
 	var safe_rect := Rect2(Vector2(24, 24), Vector2(1232, 752))
 
-	assert_eq(left_hud.compact_stack.global_position.x, safe_rect.position.x)
-	assert_eq(right_hud.compact_stack.get_global_rect().end.x, safe_rect.end.x)
+	assert_eq(left_hud.compact_stack.global_position.x, safe_rect.position.x + 33.0)
+	assert_eq(right_hud.compact_stack.get_global_rect().end.x, safe_rect.end.x - 33.0)
 	_assert_guard_visuals_inside(left_hud.guard_stack, safe_rect)
 	_assert_guard_visuals_inside(right_hud.guard_stack, safe_rect)
 

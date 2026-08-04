@@ -37,7 +37,7 @@ func _layout_enemy_huds() -> void:
 	var safe_rect := Rect2(Vector2.ZERO, layer_size).grow(-HUD_SAFE_MARGIN)
 	var visible_huds: Array[EnemyWorldHUD] = []
 	var reserved_rects: Array[Rect2] = []
-	var upper_reservations: Array[float] = []
+	var compact_offsets: Array[Vector2] = []
 	for child: Node in hud_layer.get_children():
 		if child is not EnemyWorldHUD:
 			continue
@@ -46,28 +46,30 @@ func _layout_enemy_huds() -> void:
 		if not hud.visible or not hud.has_valid_projection():
 			continue
 		var rect := hud.get_desired_compact_rect()
-		rect.position.x = clampf(
-			rect.position.x, safe_rect.position.x, safe_rect.end.x - rect.size.x,
-		)
 		var reserved_rect := hud.get_reserved_layout_rect(rect)
-		var upper_reservation := rect.position.y - reserved_rect.position.y
-		var lower_reservation := reserved_rect.end.y - rect.end.y
+		var reservation_head := rect.position - reserved_rect.position
+		var reservation_tail := reserved_rect.end - rect.end
+		rect.position.x = clampf(
+			rect.position.x,
+			safe_rect.position.x + reservation_head.x,
+			safe_rect.end.x - rect.size.x - reservation_tail.x,
+		)
 		rect.position.y = clampf(
 			rect.position.y,
-			safe_rect.position.y + upper_reservation,
-			safe_rect.end.y - rect.size.y - lower_reservation,
+			safe_rect.position.y + reservation_head.y,
+			safe_rect.end.y - rect.size.y - reservation_tail.y,
 		)
+		reserved_rect = hud.get_reserved_layout_rect(rect)
 		visible_huds.append(hud)
-		reserved_rects.append(hud.get_reserved_layout_rect(rect))
-		upper_reservations.append(upper_reservation)
+		reserved_rects.append(reserved_rect)
+		compact_offsets.append(rect.position - reserved_rect.position)
 	var resolved_reserved_rects := EnemyHUDLayout.resolve(reserved_rects, safe_rect)
 	if resolved_reserved_rects.size() != visible_huds.size():
 		return
 	for index: int in visible_huds.size():
 		var hud := visible_huds[index]
-		var reserved_rect := resolved_reserved_rects[index]
 		var compact_rect := Rect2(
-			Vector2(reserved_rect.position.x, reserved_rect.position.y + upper_reservations[index]),
+			resolved_reserved_rects[index].position + compact_offsets[index],
 			hud.get_desired_compact_rect().size,
 		)
 		hud.apply_resolved_compact_rect(compact_rect)

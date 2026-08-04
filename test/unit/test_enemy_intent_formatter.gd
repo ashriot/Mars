@@ -15,8 +15,16 @@ func test_single_target_damage_exactly_preserves_order_hits_icon_and_target_mark
 
 	assert_eq(
 		result.text,
-		"25x2 %s [color=ffffffff]ASHE" % KINETIC_ICON_28,
+		"25x2 %s [color=ffffffff]ASHE[/color]" % KINETIC_ICON_28,
 	)
+	var label := RichTextLabel.new()
+	add_child_autofree(label)
+	label.bbcode_enabled = true
+	label.text = "[center]%s[/center]" % result.text
+	var parsed := label.get_parsed_text()
+	assert_true(parsed.ends_with("ASHE"))
+	assert_false(parsed.contains("[/center]"))
+	assert_false(parsed.contains("[/color]"))
 	assert_eq(
 		result.tooltip,
 		"Locked Burst incoming: Deals 25x2 %s damage." % KINETIC_ICON_24,

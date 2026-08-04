@@ -84,5 +84,5 @@ static func _format_damage(
 	elif targets.size() == 1:
 		var target := targets[0] as HeroCombatant
 		var color := target.get_current_role().color.to_html()
-		final_text += " [color=%s]%s" % [color, target.actor_name]
+		final_text += " [color=%s]%s[/color]" % [color, target.actor_name]
 	return final_text

@@ -5,6 +5,7 @@ const DRONE_SCENE := preload(
 )
 const WORLD_SCENE := preload("res://src/battle/presentation/battle_world_3d.tscn")
 const CANVAS_SIZES: Array[Vector2i] = [
+	Vector2i(1280, 800),
 	Vector2i(1920, 1080),
 	Vector2i(1920, 1200),
 ]
@@ -86,6 +87,7 @@ func _assert_projection_at_yaw(
 	world._layout_enemy_huds()
 
 	var compact_rects: Array[Rect2] = []
+	var reserved_rects: Array[Rect2] = []
 	var model_rects: Array[Rect2] = []
 	var safe_rect := Rect2(
 		Vector2(SAFE_MARGIN, SAFE_MARGIN),
@@ -96,6 +98,7 @@ func _assert_projection_at_yaw(
 		var compact_rect := presentation.hud.compact_stack.get_global_rect()
 		var model_rect := _projected_model_rect(world.camera, presentation)
 		compact_rects.append(compact_rect)
+		reserved_rects.append(presentation.hud.get_reserved_layout_rect(compact_rect))
 		model_rects.append(model_rect)
 		assert_true(presentation.is_target_visible())
 		assert_eq(
@@ -122,7 +125,7 @@ func _assert_projection_at_yaw(
 		)
 
 	_assert_rectangles_do_not_intersect(
-		compact_rects, layout, canvas_size, yaw_degrees,
+		reserved_rects, layout, canvas_size, yaw_degrees,
 	)
 	for front_index: int in front_indices:
 		for back_index: int in back_indices:
