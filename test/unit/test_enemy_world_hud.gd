@@ -127,13 +127,13 @@ func test_guard_depth_moves_conditions_without_moving_fixed_upper_details() -> v
 		condition_positions.append(hud.conditions_row.position.y)
 		detail_positions.append(hud.details.position.y)
 		compact_heights.append(compact_rect.size.y)
-	assert_eq(condition_positions[0], condition_positions[1])
+	assert_lt(condition_positions[0], condition_positions[1])
 	assert_eq(condition_positions[2] - condition_positions[1], 5.0)
 	assert_eq(condition_positions[3] - condition_positions[2], 5.0)
 	assert_eq(detail_positions[0], detail_positions[1])
 	assert_eq(detail_positions[2] - detail_positions[1], 0.0)
 	assert_eq(detail_positions[3] - detail_positions[2], 0.0)
-	assert_eq(compact_heights[0], compact_heights[1])
+	assert_lt(compact_heights[0], compact_heights[1])
 	assert_eq(compact_heights[2] - compact_heights[1], 5.0)
 	assert_eq(compact_heights[3] - compact_heights[2], 5.0)
 
@@ -177,12 +177,31 @@ func test_guard_value_stays_inside_current_shield_through_hud_component() -> voi
 
 func test_full_guard_visual_extent_stays_inside_the_compact_hud_rect() -> void:
 	var hud := _hud()
-	var enemy := _enemy_with_state(80, 30)
+	var enemy := _enemy_with_state(80, 10)
 	hud.bind_combatant(enemy)
 	await get_tree().process_frame
-	var compact_rect := hud.compact_stack.get_global_rect()
 
-	_assert_guard_visuals_inside(hud.guard_stack, compact_rect)
+	for guard in [10, 20, 30]:
+		enemy.current_guard = guard
+		enemy.guard_changed.emit(enemy, guard)
+		await get_tree().process_frame
+		_assert_guard_visuals_inside(
+			hud.guard_stack,
+			hud.compact_stack.get_global_rect(),
+		)
+
+
+func test_status_outline_reserves_space_before_conditions() -> void:
+	var hud := _hud()
+	var enemy := _enemy_with_state(80, 0)
+	enemy.is_in_danger = true
+	hud.bind_combatant(enemy)
+	await get_tree().process_frame
+
+	var status_ink := _label_ink_rect(hud.guard_stack.status_label)
+	var conditions_rect := hud.conditions_row.get_global_rect()
+
+	assert_lte(status_ink.end.y, conditions_rect.position.y)
 
 
 func test_hud_keeps_existing_bold_font_resource_and_reports_hover_state() -> void:
@@ -438,6 +457,29 @@ func test_projection_free_damage_keeps_hp_feedback_without_a_popup() -> void:
 	assert_eq(_fill_color(hud.hp_bar_feedback), HealthFeedbackPalette.DAMAGE_YELLOW)
 
 
+func test_hidden_projection_omits_stale_bounds_popup_but_keeps_hp_feedback() -> void:
+	var canvas := Control.new()
+	add_child_autofree(canvas)
+	var hud := HUD_SCENE.instantiate() as EnemyWorldHUD
+	canvas.add_child(hud)
+	var enemy := _enemy_with_state(100, 3)
+	assert_true(hud.bind_combatant(enemy))
+	hud.set_projected_model_bounds(Rect2(400, 300, 120, 160))
+	hud.set_projection_visible(false)
+	enemy.current_hp = 83
+	enemy.hp_changed.emit(enemy, 83, 100)
+
+	enemy.presentation_event.emit(enemy, &"damage_received", {
+		"result": _damage_result(17, Action.DamageType.ENERGY),
+		"damage_type": Action.DamageType.ENERGY,
+		"actual_damage": 17,
+	})
+
+	assert_eq(_damage_popups(canvas).size(), 0)
+	assert_eq(hud.hp_bar_actual.value, 83.0)
+	assert_eq(_fill_color(hud.hp_bar_feedback), HealthFeedbackPalette.DAMAGE_YELLOW)
+
+
 func test_target_state_does_not_reveal_details_but_pointer_hover_does() -> void:
 	var hud := _hud()
 	hud.bind_combatant(_enemy_with_state(80, 3))
@@ -600,7 +642,7 @@ func test_world_layout_clamps_each_hud_independently_to_safe_edges() -> void:
 	world._layout_enemy_huds()
 
 	assert_eq(top_left.compact_stack.global_position, Vector2(24, 102))
-	assert_eq(bottom_right.compact_stack.global_position, Vector2(1036, 663))
+	assert_eq(bottom_right.compact_stack.global_position, Vector2(1036, 656))
 
 
 func test_world_layout_reserves_upper_details_at_the_top_safe_edge() -> void:
@@ -809,9 +851,32 @@ func _assert_guard_visuals_inside(stack: EnemyGuardStack, bounds: Rect2) -> void
 			if pip.visible:
 				assert_true(bounds.encloses(pip.get_global_rect()))
 	if stack.guard_value.visible:
-		assert_true(bounds.encloses(stack.guard_value.get_global_rect()))
+		assert_true(bounds.encloses(_label_ink_rect(stack.guard_value)))
 	if stack.status_label.visible:
-		assert_true(bounds.encloses(stack.status_label.get_global_rect()))
+		assert_true(bounds.encloses(_label_ink_rect(stack.status_label)))
+
+
+func _label_ink_rect(label: Label) -> Rect2:
+	var font := label.get_theme_font(&"font")
+	var font_size := label.get_theme_font_size(&"font_size")
+	var text_size := Vector2(
+		font.get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x,
+		font.get_height(font_size),
+	)
+	var ink_position := label.global_position
+	match label.horizontal_alignment:
+		HORIZONTAL_ALIGNMENT_CENTER:
+			ink_position.x += (label.size.x - text_size.x) * 0.5
+		HORIZONTAL_ALIGNMENT_RIGHT:
+			ink_position.x += label.size.x - text_size.x
+	match label.vertical_alignment:
+		VERTICAL_ALIGNMENT_CENTER:
+			ink_position.y += (label.size.y - text_size.y) * 0.5
+		VERTICAL_ALIGNMENT_BOTTOM:
+			ink_position.y += label.size.y - text_size.y
+	return Rect2(ink_position, text_size).grow(
+		float(label.get_theme_constant(&"outline_size")),
+	)
 
 
 func _mouse_motion_at(position: Vector2) -> InputEventMouseMotion:

@@ -36,8 +36,13 @@ func render(guard: int, is_in_danger: bool, is_breached: bool) -> void:
 		var current_pip := layers[current_layer].get_child(current_column) as TextureRect
 		guard_value.text = str(value)
 		guard_value.position = layers[current_layer].position + current_pip.position
-		guard_value.position.x = minf(guard_value.position.x, size.x - guard_value.size.x)
-	custom_minimum_size.y = %Layer1.size.y + LAYER_STEP * float(layer_count - 1)
+		_fit_label_ink_horizontally(guard_value)
+	var required_height: float = %Layer1.size.y + LAYER_STEP * float(layer_count - 1)
+	if guard_value.visible:
+		required_height = maxf(required_height, ceilf(_get_label_ink_rect(guard_value).end.y))
+	if status_label.visible:
+		required_height = maxf(required_height, ceilf(_get_label_ink_rect(status_label).end.y))
+	custom_minimum_size.y = required_height
 
 
 func get_visual_layer_count() -> int:
@@ -50,3 +55,34 @@ func _layer_color(layer_index: int, layer_count: int) -> Color:
 	if layer_count == 3 and layer_index == 0:
 		return DARK_GRAY
 	return MEDIUM_GRAY
+
+
+func _fit_label_ink_horizontally(label: Label) -> void:
+	var ink_rect := _get_label_ink_rect(label)
+	if ink_rect.position.x < 0.0:
+		label.position.x -= ink_rect.position.x
+	elif ink_rect.end.x > size.x:
+		label.position.x -= ink_rect.end.x - size.x
+
+
+func _get_label_ink_rect(label: Label) -> Rect2:
+	var font := label.get_theme_font(&"font")
+	var font_size := label.get_theme_font_size(&"font_size")
+	var text_size := Vector2(
+		font.get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x,
+		font.get_height(font_size),
+	)
+	var ink_position := label.position
+	match label.horizontal_alignment:
+		HORIZONTAL_ALIGNMENT_CENTER:
+			ink_position.x += (label.size.x - text_size.x) * 0.5
+		HORIZONTAL_ALIGNMENT_RIGHT:
+			ink_position.x += label.size.x - text_size.x
+	match label.vertical_alignment:
+		VERTICAL_ALIGNMENT_CENTER:
+			ink_position.y += (label.size.y - text_size.y) * 0.5
+		VERTICAL_ALIGNMENT_BOTTOM:
+			ink_position.y += label.size.y - text_size.y
+	return Rect2(ink_position, text_size).grow(
+		float(label.get_theme_constant(&"outline_size")),
+	)

@@ -374,6 +374,8 @@ func _on_presentation_event(
 
 
 func _get_damage_popup_center() -> Variant:
+	if not visible or not _has_live_combatant():
+		return null
 	if _has_projected_model_bounds:
 		return _projected_model_bounds.get_center()
 	if _has_projected_head and _has_projected_foot:
