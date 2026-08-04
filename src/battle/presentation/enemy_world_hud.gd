@@ -188,7 +188,11 @@ func get_visible_layout_rect() -> Rect2:
 	var compact_rect := Rect2(compact_stack.global_position, _get_compact_size())
 	if not details.visible:
 		return compact_rect
-	return compact_rect.merge(Rect2(details.global_position, DETAILS_SIZE))
+	return get_reserved_layout_rect(compact_rect)
+
+
+func get_reserved_layout_rect(compact_rect: Rect2) -> Rect2:
+	return compact_rect.merge(Rect2(compact_rect.position + details.position, DETAILS_SIZE))
 
 
 func refresh_intent() -> void:

@@ -479,8 +479,26 @@ func test_world_layout_clamps_each_hud_independently_to_safe_edges() -> void:
 
 	world._layout_enemy_huds()
 
-	assert_eq(top_left.compact_stack.global_position, Vector2(24, 24))
+	assert_eq(top_left.compact_stack.global_position, Vector2(24, 86))
 	assert_eq(bottom_right.compact_stack.global_position, Vector2(1036, 685))
+
+
+func test_world_layout_reserves_upper_details_at_the_top_safe_edge() -> void:
+	var fixture := _world_in_viewport(Vector2i(1280, 800))
+	var world := fixture.world as BattleWorld3D
+	var hud := HUD_SCENE.instantiate() as EnemyWorldHUD
+	world.hud_layer.add_child(hud)
+	hud.bind_combatant(_enemy_with_state(80, 3))
+	hud.set_projected_head_position(Vector2(500, 0))
+
+	world._layout_enemy_huds()
+	var compact_position := hud.compact_stack.global_position
+	hud.set_details_visible(true)
+
+	assert_eq(hud.compact_stack.global_position, compact_position)
+	assert_true(
+		Rect2(Vector2(24, 24), Vector2(1232, 752)).encloses(hud.get_visible_layout_rect()),
+	)
 
 
 func test_world_layout_keeps_full_guard_visuals_inside_both_horizontal_safe_edges() -> void:

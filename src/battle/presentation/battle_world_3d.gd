@@ -46,8 +46,13 @@ func _layout_enemy_huds() -> void:
 		rect.position.x = clampf(
 			rect.position.x, safe_rect.position.x, safe_rect.end.x - rect.size.x,
 		)
+		var reserved_rect := hud.get_reserved_layout_rect(rect)
+		var upper_reservation := rect.position.y - reserved_rect.position.y
+		var lower_reservation := reserved_rect.end.y - rect.end.y
 		rect.position.y = clampf(
-			rect.position.y, safe_rect.position.y, safe_rect.end.y - rect.size.y,
+			rect.position.y,
+			safe_rect.position.y + upper_reservation,
+			safe_rect.end.y - rect.size.y - lower_reservation,
 		)
 		hud.apply_resolved_compact_rect(rect)
 
