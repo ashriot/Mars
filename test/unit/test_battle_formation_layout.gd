@@ -10,25 +10,25 @@ func _positions(transforms: Array[Transform3D]) -> Array[Vector3]:
 
 func test_w_uses_authored_slots_for_every_supported_count() -> void:
 	var expected := {
-		1: [Vector3(0.0, 0.0, -1.4)],
-		2: [Vector3(-1.8, 0.0, 1.0), Vector3(1.8, 0.0, 1.0)],
+		1: [Vector3(0.0, 0.0, -2.60)],
+		2: [Vector3(-1.72, 0.0, 1.80), Vector3(1.72, 0.0, 1.80)],
 		3: [
-			Vector3(-3.6, 0.0, -1.0),
-			Vector3(0.0, 0.0, -1.4),
-			Vector3(3.6, 0.0, -1.0),
+			Vector3(-5.25, 0.0, -2.20),
+			Vector3(0.0, 0.0, -2.60),
+			Vector3(5.25, 0.0, -2.20),
 		],
 		4: [
-			Vector3(-3.6, 0.0, -1.0),
-			Vector3(3.6, 0.0, -1.0),
-			Vector3(-1.8, 0.0, 1.0),
-			Vector3(1.8, 0.0, 1.0),
+			Vector3(-5.25, 0.0, -2.20),
+			Vector3(5.25, 0.0, -2.20),
+			Vector3(-1.72, 0.0, 1.80),
+			Vector3(1.72, 0.0, 1.80),
 		],
 		5: [
-			Vector3(-3.6, 0.0, -1.0),
-			Vector3(0.0, 0.0, -1.4),
-			Vector3(3.6, 0.0, -1.0),
-			Vector3(-1.8, 0.0, 1.0),
-			Vector3(1.8, 0.0, 1.0),
+			Vector3(-5.25, 0.0, -2.20),
+			Vector3(0.0, 0.0, -2.60),
+			Vector3(5.25, 0.0, -2.20),
+			Vector3(-1.72, 0.0, 1.80),
+			Vector3(1.72, 0.0, 1.80),
 		],
 	}
 	for count: int in expected:
@@ -41,25 +41,25 @@ func test_w_uses_authored_slots_for_every_supported_count() -> void:
 
 func test_m_uses_authored_slots_for_every_supported_count() -> void:
 	var expected := {
-		1: [Vector3(0.0, 0.0, 1.4)],
-		2: [Vector3(-1.8, 0.0, -1.0), Vector3(1.8, 0.0, -1.0)],
+		1: [Vector3(0.0, 0.0, 2.20)],
+		2: [Vector3(-2.50, 0.0, -2.20), Vector3(2.50, 0.0, -2.20)],
 		3: [
-			Vector3(-3.6, 0.0, 1.0),
-			Vector3(0.0, 0.0, 1.4),
-			Vector3(3.6, 0.0, 1.0),
+			Vector3(-3.30, 0.0, 1.80),
+			Vector3(0.0, 0.0, 2.20),
+			Vector3(3.30, 0.0, 1.80),
 		],
 		4: [
-			Vector3(-1.8, 0.0, -1.0),
-			Vector3(1.8, 0.0, -1.0),
-			Vector3(-3.6, 0.0, 1.0),
-			Vector3(3.6, 0.0, 1.0),
+			Vector3(-2.50, 0.0, -2.20),
+			Vector3(2.50, 0.0, -2.20),
+			Vector3(-3.30, 0.0, 1.80),
+			Vector3(3.30, 0.0, 1.80),
 		],
 		5: [
-			Vector3(-1.8, 0.0, -1.0),
-			Vector3(1.8, 0.0, -1.0),
-			Vector3(-3.6, 0.0, 1.0),
-			Vector3(0.0, 0.0, 1.4),
-			Vector3(3.6, 0.0, 1.0),
+			Vector3(-2.50, 0.0, -2.20),
+			Vector3(2.50, 0.0, -2.20),
+			Vector3(-3.30, 0.0, 1.80),
+			Vector3(0.0, 0.0, 2.20),
+			Vector3(3.30, 0.0, 1.80),
 		],
 	}
 	for count: int in expected:
@@ -70,14 +70,43 @@ func test_m_uses_authored_slots_for_every_supported_count() -> void:
 		)
 
 
+func test_mixed_rows_keep_at_least_four_world_units_of_depth_separation() -> void:
+	for layout: BattleFormationLayout.Layout in [
+		BattleFormationLayout.Layout.W,
+		BattleFormationLayout.Layout.M,
+	]:
+		for count: int in [4, 5]:
+			var positions := _positions(BattleFormationLayout.ordinary_transforms(count, layout))
+			var minimum_z := positions[0].z
+			var maximum_z := positions[0].z
+			for position: Vector3 in positions:
+				minimum_z = minf(minimum_z, position.z)
+				maximum_z = maxf(maximum_z, position.z)
+			assert_gte(
+				maximum_z - minimum_z,
+				4.0,
+				"layout %s count %d keeps authored row depth" % [layout, count],
+			)
+
+
 func test_six_ordinary_enemies_is_rejected() -> void:
 	var transforms := BattleFormationLayout.ordinary_transforms(6, BattleFormationLayout.Layout.W)
 	assert_push_error("supports at most five ordinary enemies")
 	assert_true(transforms.is_empty())
 
 
-func test_boss_reserves_center_volume_and_two_outer_allies() -> void:
-	var layout := BattleFormationLayout.boss_transforms(2)
-	assert_eq(layout.boss, Transform3D(Basis.IDENTITY, Vector3.ZERO))
-	assert_eq(layout.left_ally, Transform3D(Basis.IDENTITY, Vector3(-4.4, 0.0, 0.0)))
-	assert_eq(layout.right_ally, Transform3D(Basis.IDENTITY, Vector3(4.4, 0.0, 0.0)))
+func test_boss_reserves_unchanged_center_and_outer_ally_transforms() -> void:
+	var boss_only := BattleFormationLayout.boss_transforms(0)
+	var one_ally := BattleFormationLayout.boss_transforms(1)
+	var two_allies := BattleFormationLayout.boss_transforms(2)
+	var boss_transform := Transform3D(Basis.IDENTITY, Vector3.ZERO)
+	var left_transform := Transform3D(Basis.IDENTITY, Vector3(-4.4, 0.0, 0.0))
+	var right_transform := Transform3D(Basis.IDENTITY, Vector3(4.4, 0.0, 0.0))
+
+	assert_eq(boss_only, {"boss": boss_transform})
+	assert_eq(one_ally, {"boss": boss_transform, "left_ally": left_transform})
+	assert_eq(two_allies, {
+		"boss": boss_transform,
+		"left_ally": left_transform,
+		"right_ally": right_transform,
+	})

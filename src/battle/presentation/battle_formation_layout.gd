@@ -3,50 +3,32 @@ class_name BattleFormationLayout
 
 enum Layout { W, M }
 
+const W_BACK_LEFT := Vector3(-5.25, 0.0, -2.20)
+const W_BACK_CENTER := Vector3(0.0, 0.0, -2.60)
+const W_BACK_RIGHT := Vector3(5.25, 0.0, -2.20)
+const W_FRONT_LEFT := Vector3(-1.72, 0.0, 1.80)
+const W_FRONT_RIGHT := Vector3(1.72, 0.0, 1.80)
+
+const M_BACK_LEFT := Vector3(-2.50, 0.0, -2.20)
+const M_BACK_RIGHT := Vector3(2.50, 0.0, -2.20)
+const M_FRONT_LEFT := Vector3(-3.30, 0.0, 1.80)
+const M_FRONT_CENTER := Vector3(0.0, 0.0, 2.20)
+const M_FRONT_RIGHT := Vector3(3.30, 0.0, 1.80)
+
 const W_POSITIONS := {
-	1: [Vector3(0.0, 0.0, -1.4)],
-	2: [Vector3(-1.8, 0.0, 1.0), Vector3(1.8, 0.0, 1.0)],
-	3: [
-		Vector3(-3.6, 0.0, -1.0),
-		Vector3(0.0, 0.0, -1.4),
-		Vector3(3.6, 0.0, -1.0),
-	],
-	4: [
-		Vector3(-3.6, 0.0, -1.0),
-		Vector3(3.6, 0.0, -1.0),
-		Vector3(-1.8, 0.0, 1.0),
-		Vector3(1.8, 0.0, 1.0),
-	],
-	5: [
-		Vector3(-3.6, 0.0, -1.0),
-		Vector3(0.0, 0.0, -1.4),
-		Vector3(3.6, 0.0, -1.0),
-		Vector3(-1.8, 0.0, 1.0),
-		Vector3(1.8, 0.0, 1.0),
-	],
+	1: [W_BACK_CENTER],
+	2: [W_FRONT_LEFT, W_FRONT_RIGHT],
+	3: [W_BACK_LEFT, W_BACK_CENTER, W_BACK_RIGHT],
+	4: [W_BACK_LEFT, W_BACK_RIGHT, W_FRONT_LEFT, W_FRONT_RIGHT],
+	5: [W_BACK_LEFT, W_BACK_CENTER, W_BACK_RIGHT, W_FRONT_LEFT, W_FRONT_RIGHT],
 }
 
 const M_POSITIONS := {
-	1: [Vector3(0.0, 0.0, 1.4)],
-	2: [Vector3(-1.8, 0.0, -1.0), Vector3(1.8, 0.0, -1.0)],
-	3: [
-		Vector3(-3.6, 0.0, 1.0),
-		Vector3(0.0, 0.0, 1.4),
-		Vector3(3.6, 0.0, 1.0),
-	],
-	4: [
-		Vector3(-1.8, 0.0, -1.0),
-		Vector3(1.8, 0.0, -1.0),
-		Vector3(-3.6, 0.0, 1.0),
-		Vector3(3.6, 0.0, 1.0),
-	],
-	5: [
-		Vector3(-1.8, 0.0, -1.0),
-		Vector3(1.8, 0.0, -1.0),
-		Vector3(-3.6, 0.0, 1.0),
-		Vector3(0.0, 0.0, 1.4),
-		Vector3(3.6, 0.0, 1.0),
-	],
+	1: [M_FRONT_CENTER],
+	2: [M_BACK_LEFT, M_BACK_RIGHT],
+	3: [M_FRONT_LEFT, M_FRONT_CENTER, M_FRONT_RIGHT],
+	4: [M_BACK_LEFT, M_BACK_RIGHT, M_FRONT_LEFT, M_FRONT_RIGHT],
+	5: [M_BACK_LEFT, M_BACK_RIGHT, M_FRONT_LEFT, M_FRONT_CENTER, M_FRONT_RIGHT],
 }
 
 const BOSS_POSITION := Vector3.ZERO
