@@ -129,6 +129,8 @@ func hide_action():
 func sync_visual_health() -> PresentationOperation:
 	if _shutdown_operation != null:
 		return _shutdown_operation
+	if _combatant_is_defeated():
+		return PresentationOperation.already_completed()
 	if _health_operation != null:
 		_health_operation.complete()
 	var health_tween: Tween = hud.sync_visual_health() \

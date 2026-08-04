@@ -112,8 +112,8 @@ func _assert_projection_at_yaw(
 			],
 		)
 		assert_true(
-			presentation.hud.get_target_rect().has_point(model_rect.get_center()),
-			"layout %s canvas %s yaw %s HUD %d targets its own projected model center" % [
+			presentation.hud.get_target_rect().encloses(model_rect),
+			"layout %s canvas %s yaw %s HUD %d target encloses its complete projected model" % [
 				layout, canvas_size, yaw_degrees, index,
 			],
 		)

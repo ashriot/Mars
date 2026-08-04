@@ -425,6 +425,36 @@ func test_tracked_model_routes_animations_and_visible_defeat_fade() -> void:
 	assert_eq(fixture.presentation.instance_material.albedo_color.a, 0.0)
 
 
+func test_lethal_hit_shutdown_settles_later_health_sync_without_hidden_tween() -> void:
+	var fixture := _bound_animated_drone(_world(), _enemy())
+	var enemy: EnemyCombatant = fixture.presentation.combatant
+
+	await enemy.take_one_hit(
+		_damage_result(100), Effect_Damage.new(), enemy, Action.DamageType.KINETIC,
+	)
+	assert_true(enemy.is_defeated)
+	assert_eq(fixture.presentation.hud.hp_bar_actual.value, 0.0)
+	assert_eq(fixture.presentation.hud.hp_bar_feedback.value, 100.0)
+	var shutdown_operation: PresentationOperation = fixture.presentation.sync_visual_health()
+	assert_false(shutdown_operation.is_completed)
+	fixture.presentation._fade_tween.custom_step(
+		fixture.presentation.DEFEAT_FADE_DURATION,
+	)
+	assert_true(shutdown_operation.is_completed)
+	assert_false(fixture.presentation.hud.visible)
+	assert_null(fixture.presentation._shutdown_operation)
+	assert_null(fixture.presentation.hud._health_tween)
+
+	var settled_operation: PresentationOperation = fixture.presentation.sync_visual_health()
+
+	assert_true(
+		settled_operation.is_completed,
+		"post-shutdown health synchronization never delays teardown",
+	)
+	assert_null(fixture.presentation._health_operation)
+	assert_null(fixture.presentation.hud._health_tween)
+
+
 func test_action_emits_one_laser_for_each_visible_intended_hero_target() -> void:
 	var manager := RegistryTrackingBattleManager.new()
 	add_child_autofree(manager)
@@ -822,6 +852,15 @@ func _enemy() -> EnemyCombatant:
 	stats.energy_defense = 35
 	enemy.setup_base(stats, BattleCombatant.Faction.ENEMY)
 	return enemy
+
+
+func _damage_result(amount: int) -> DamageResult:
+	var request := DamageRequest.new(
+		amount, 0, 0, 1.0, 1, Action.DamageType.KINETIC, 0,
+	)
+	return DamageResult.new(
+		request, amount, 0, 1.0, 1.0, 1.0, amount, amount,
+	)
 
 
 func _stage_damage(enemy: EnemyCombatant, amount: int) -> void:
