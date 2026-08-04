@@ -196,12 +196,21 @@ func apply_resolved_compact_rect(rect: Rect2) -> void:
 
 func get_visible_layout_rect() -> Rect2:
 	var compact_rect := Rect2(compact_stack.global_position, _get_compact_size())
-	if not details.visible:
-		return compact_rect
-	return get_reserved_layout_rect(compact_rect)
+	var visible_rect := _get_always_visible_layout_rect(compact_rect)
+	if details.visible:
+		visible_rect = visible_rect.merge(Rect2(
+			compact_rect.position + details.position, DETAILS_SIZE,
+		))
+	return visible_rect
 
 
 func get_reserved_layout_rect(compact_rect: Rect2) -> Rect2:
+	return _get_always_visible_layout_rect(compact_rect).merge(Rect2(
+		compact_rect.position + details.position, DETAILS_SIZE,
+	))
+
+
+func _get_always_visible_layout_rect(compact_rect: Rect2) -> Rect2:
 	var reserved := compact_rect.merge(_get_intent_layout_rect(compact_rect))
 	var guard_visual := guard_stack.get_visual_rect()
 	if guard_visual.has_area():
@@ -210,7 +219,7 @@ func get_reserved_layout_rect(compact_rect: Rect2) -> Rect2:
 			compact_rect.position + guard_offset + guard_visual.position,
 			guard_visual.size,
 		))
-	return reserved.merge(Rect2(compact_rect.position + details.position, DETAILS_SIZE))
+	return reserved
 
 
 func refresh_intent() -> void:

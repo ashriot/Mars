@@ -108,7 +108,7 @@ func get_visual_rect() -> Rect2:
 		bounds = bounds.merge(value_rect) if has_bounds else value_rect
 		has_bounds = true
 	if status_label.visible:
-		var status_rect := Rect2(status_label.position, status_label.size)
+		var status_rect := _get_label_ink_rect(status_label)
 		bounds = bounds.merge(status_rect) if has_bounds else status_rect
 		has_bounds = true
 	return bounds

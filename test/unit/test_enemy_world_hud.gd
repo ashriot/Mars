@@ -107,15 +107,77 @@ func test_compact_stack_authors_layered_hp_and_overlapping_guard() -> void:
 	assert_eq(hp_region.tooltip_text, "80 / 100 HP")
 
 
-func test_representative_long_intent_stays_on_one_line_and_is_reserved() -> void:
+func test_representative_attack_intents_fit_outlined_ink_inside_fixed_lane() -> void:
 	var hud := _hud()
-	hud.intent_row.text = "[center]Fortify Attack Drone[/center]"
+	var enemy := _enemy_with_state(80, 0, 120)
+	var ashe := _hero_target("ASHE")
+	var echo := _hero_target("ECHO")
+	assert_true(hud.bind_combatant(enemy))
 	await get_tree().process_frame
-	var compact_rect := Rect2(Vector2(400, 300), hud._get_compact_size())
-	var reserved := hud.get_reserved_layout_rect(compact_rect)
-	assert_eq(hud.intent_row.get_line_count(), 1)
-	assert_eq(reserved.get_center().x, compact_rect.get_center().x)
-	assert_gte(reserved.size.x, INTENT_WIDTH)
+	var cases: Array[Dictionary] = [
+		{
+			"action": _damage_action(Action.TargetType.ONE_ENEMY, 0.25, 1),
+			"targets": [ashe],
+			"visible_text": "25 ASHE",
+		},
+		{
+			"action": _damage_action(Action.TargetType.ONE_ENEMY, 0.25, 2),
+			"targets": [ashe],
+			"visible_text": "25x2 ASHE",
+		},
+		{
+			"action": load("res://data/enemies/actions/rapid_fire.tres") as Action,
+			"targets": [ashe, echo],
+			"visible_text": "50x3 RANDOM",
+		},
+		{
+			"action": _damage_action(Action.TargetType.ALL_ENEMIES, 0.5, 1),
+			"targets": [ashe, echo],
+			"visible_text": "60 EVERYONE",
+		},
+	]
+	for case: Dictionary in cases:
+		enemy.intended_action = case.action
+		enemy.intended_targets.assign(case.targets)
+		hud.refresh_intent()
+		await get_tree().process_frame
+		var rendered_width := hud.intent_row.get_content_width() \
+			+ 2.0 * hud.intent_row.get_theme_constant(&"outline_size")
+		assert_lte(
+			rendered_width,
+			INTENT_WIDTH,
+			"%s outlined ink fits the 286 px intent lane" % case.visible_text,
+		)
+		assert_eq(hud.intent_row.get_line_count(), 1)
+
+
+func test_hidden_details_visible_bounds_include_intent_and_active_shield_overhang() -> void:
+	var hud := _hud()
+	var enemy := _enemy_with_state(80, 30)
+	assert_true(hud.bind_combatant(enemy))
+	await get_tree().process_frame
+	var compact_rect := Rect2(hud.compact_stack.global_position, hud._get_compact_size())
+	var visible_rect := hud.get_visible_layout_rect()
+	var guard_rect := _global_guard_visual_rect(hud.guard_stack)
+
+	assert_false(hud.details.visible)
+	assert_true(visible_rect.encloses(hud._get_intent_layout_rect(compact_rect)))
+	assert_true(visible_rect.encloses(guard_rect))
+
+
+func test_visible_details_bounds_add_details_to_always_visible_overhangs() -> void:
+	var hud := _hud()
+	var enemy := _enemy_with_state(80, 30)
+	assert_true(hud.bind_combatant(enemy))
+	hud.set_details_visible(true)
+	await get_tree().process_frame
+	var compact_rect := Rect2(hud.compact_stack.global_position, hud._get_compact_size())
+	var visible_rect := hud.get_visible_layout_rect()
+
+	assert_true(hud.details.visible)
+	assert_true(visible_rect.encloses(hud._get_intent_layout_rect(compact_rect)))
+	assert_true(visible_rect.encloses(_global_guard_visual_rect(hud.guard_stack)))
+	assert_true(visible_rect.encloses(hud.details.get_global_rect()))
 
 
 func test_guard_depth_moves_conditions_without_moving_fixed_upper_details() -> void:
@@ -812,18 +874,52 @@ func test_model_tree_exit_invalidates_and_unbinds_surviving_hud() -> void:
 	assert_signal_not_emitted(hud, &"pressed")
 
 
-func _enemy_with_state(hp: int, guard: int) -> EnemyCombatant:
+func _enemy_with_state(hp: int, guard: int, attack := 0) -> EnemyCombatant:
 	var enemy := EnemyCombatant.new()
 	add_child_autofree(enemy)
 	var stats := ActorStats.new()
 	stats.actor_name = "Eye Drone"
 	stats.max_hp = 100
+	stats.attack = attack
 	stats.kinetic_defense = 20
 	stats.energy_defense = 35
 	enemy.setup_base(stats, BattleCombatant.Faction.ENEMY)
 	enemy.current_hp = hp
 	enemy.current_guard = guard
 	return enemy
+
+
+func _hero_target(actor_name: String) -> HeroCombatant:
+	var hero := HeroCombatant.new()
+	add_child_autofree(hero)
+	var stats := ActorStats.new()
+	stats.actor_name = actor_name
+	stats.max_hp = 100
+	var definition := RoleDefinition.new()
+	definition.color = Color.WHITE
+	var role := RoleData.new()
+	role.source_definition = definition
+	hero.setup_base(stats, BattleCombatant.Faction.HERO)
+	hero.loaded_roles = [role]
+	hero.current_hp = stats.max_hp
+	return hero
+
+
+func _damage_action(
+	target_type: Action.TargetType,
+	potency: float,
+	hit_count: int,
+) -> Action:
+	var effect := Effect_Damage.new()
+	effect.potency = potency
+	effect.damage_type = Action.DamageType.KINETIC
+	effect.hit_count = hit_count
+	var action := Action.new()
+	action.action_name = "Test Attack"
+	action.description = "{effect:1}"
+	action.target_type = target_type
+	action.effects = [effect]
+	return action
 
 
 func _damage_result(

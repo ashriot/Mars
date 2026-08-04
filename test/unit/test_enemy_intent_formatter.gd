@@ -33,7 +33,7 @@ func test_single_target_damage_exactly_preserves_order_hits_icon_and_target_mark
 	target.free()
 
 
-func test_random_multi_hit_exactly_preserves_per_target_hit_text_and_random_suffix() -> void:
+func test_random_multi_hit_uses_compact_hit_count_and_random_suffix() -> void:
 	var first := _hero("ASHE")
 	var second := _hero("ECHO")
 	var enemy := _enemy(100)
@@ -45,14 +45,14 @@ func test_random_multi_hit_exactly_preserves_per_target_hit_text_and_random_suff
 
 	assert_eq(
 		result.text,
-		"50 per target %s (3 hits) RANDOM" % KINETIC_ICON_28,
+		"50x3 %s RANDOM" % KINETIC_ICON_28,
 	)
 	enemy.free()
 	first.free()
 	second.free()
 
 
-func test_group_damage_exactly_preserves_per_target_binding_and_everyone_suffix() -> void:
+func test_group_damage_uses_compact_amount_and_everyone_suffix() -> void:
 	var first := _hero("ASHE")
 	var second := _hero("ECHO")
 	var enemy := _enemy(100)
@@ -64,8 +64,28 @@ func test_group_damage_exactly_preserves_per_target_binding_and_everyone_suffix(
 
 	assert_eq(
 		result.text,
-		"50 per target %s EVERYONE" % KINETIC_ICON_28,
+		"50 %s EVERYONE" % KINETIC_ICON_28,
 	)
+	enemy.free()
+	first.free()
+	second.free()
+
+
+func test_authored_rapid_fire_uses_compact_resolved_damage_language_and_detailed_tooltip() -> void:
+	var first := _hero("ASHE")
+	var second := _hero("ECHO")
+	var enemy := _enemy(120)
+	enemy.intended_action = load("res://data/enemies/actions/rapid_fire.tres") as Action
+	enemy.intended_targets = [first, second]
+
+	var result := EnemyIntentFormatter.format(enemy, null)
+
+	assert_eq(result.text, "50x3 %s RANDOM" % KINETIC_ICON_28)
+	assert_false(result.text.contains("Rapid Fire"))
+	assert_false(result.text.contains("per target"))
+	assert_false(result.text.contains("(3 hits)"))
+	assert_string_contains(result.tooltip, "Targets three enemies at random.")
+	assert_string_contains(result.tooltip, "split across 3 hits")
 	enemy.free()
 	first.free()
 	second.free()
@@ -83,8 +103,9 @@ func test_missing_targets_exactly_preserve_authored_fallback_and_multi_effect_ma
 
 	assert_eq(
 		result.text,
-		"50% ATK total " + KINETIC_ICON_28 + " (3 hits) *",
+		"50% ATK total x3 " + KINETIC_ICON_28 + " *",
 	)
+	assert_false(result.text.contains("(3 hits)"))
 	enemy.free()
 
 

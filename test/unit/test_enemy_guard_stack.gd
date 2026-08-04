@@ -24,6 +24,7 @@ func test_zero_guard_in_danger_shows_vulnerable_in_one_layer_slot() -> void:
 	assert_eq(_status_label(stack).text, "VULNERABLE")
 	assert_false(_guard_value(stack).visible)
 	assert_eq(stack.get_visual_layer_count(), 1)
+	assert_true(stack.get_visual_rect().encloses(_label_ink_rect(_status_label(stack))))
 	assert_gte(
 		stack.custom_minimum_size.y,
 		ceilf(_label_ink_rect(_status_label(stack)).end.y),
@@ -39,6 +40,7 @@ func test_zero_guard_breached_takes_precedence_over_vulnerable() -> void:
 	assert_true(_status_label(stack).visible)
 	assert_eq(_status_label(stack).text, "BREACHED")
 	assert_eq(stack.get_visual_layer_count(), 1)
+	assert_true(stack.get_visual_rect().encloses(_label_ink_rect(_status_label(stack))))
 	assert_gte(
 		stack.custom_minimum_size.y,
 		ceilf(_label_ink_rect(_status_label(stack)).end.y),
