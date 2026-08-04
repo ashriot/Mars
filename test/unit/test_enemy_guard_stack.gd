@@ -2,9 +2,10 @@ extends GutTest
 
 
 const GUARD_STACK_SCENE := preload("res://src/battle/presentation/enemy_guard_stack.tscn")
-const GUARD_WIDTH := 202.0
-const PIP_WIDTH := 22.0
+const GUARD_WIDTH := 220.0
+const PIP_WIDTH := 21.0
 const PIP_HEIGHT := 22.0
+const PIP_STEP := 22.0
 const WHITE := Color.WHITE
 const MEDIUM_GRAY := Color(0.62, 0.65, 0.7, 1.0)
 const DARK_GRAY := Color(0.34, 0.37, 0.42, 1.0)
@@ -144,7 +145,7 @@ func test_scene_authored_guard_visuals_fit_the_compact_width_at_full_depth() -> 
 			var visual_rect := Rect2(layer.position + pip.position, pip.size)
 			assert_true(
 				compact_bounds.encloses(visual_rect),
-				"layer %d column %d stays inside the 202 px guard slot" % [
+				"layer %d column %d stays inside the 220 px guard slot" % [
 					layer_index + 1,
 					pip_index + 1,
 				],
@@ -159,10 +160,21 @@ func test_scene_authored_guard_visuals_fit_the_compact_width_at_full_depth() -> 
 			if pip_index > 0:
 				assert_eq(
 					pip.position.x - _pip(stack, layer_index, pip_index - 1).position.x,
-					20.0,
-					"adjacent guard pips overlap by two pixels",
+					PIP_STEP,
+					"adjacent guard pips retain a one-pixel gap",
 				)
-	assert_true(compact_bounds.encloses(_guard_value(stack).get_rect()))
+				assert_eq(
+					pip.position.x - _pip(stack, layer_index, pip_index - 1).get_rect().end.x,
+					1.0,
+					"adjacent guard visuals do not merge",
+				)
+	var guard_value := _guard_value(stack)
+	assert_eq(guard_value.size.x, PIP_WIDTH)
+	assert_gte(guard_value.get_theme_font_size(&"font_size"), 16)
+	assert_eq(guard_value.position, _layer(stack, 2).position + _pip(stack, 2, 9).position)
+	assert_true(compact_bounds.encloses(guard_value.get_rect()))
+	assert_eq(_status_label(stack).size.x, GUARD_WIDTH)
+	assert_gte(_status_label(stack).get_theme_font_size(&"font_size"), 16)
 
 
 func _stack() -> Control:
