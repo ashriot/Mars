@@ -53,6 +53,18 @@ The user separately observed that the existing hero/action UI covers too much of
 
 Headless automation does not establish any item below. Keep each item unchecked until the named visual or physical-input path is performed and record the date, OS/device, input device or connection, physical resolution, and tested commit.
 
+### Readable enemy HUD and formation — pending hands-on acceptance
+
+Run every item at physical `1920x1080` and the desktop-proxy `1280x800` window. Steam Deck hardware acceptance remains distinct from the desktop proxy and is still pending.
+
+- [ ] Verify W and M five-enemy encounters retain correct model/HUD attribution and visibly distinct depth rows.
+- [ ] Verify compact enemy HUDs do not overlap, including long intent text, `23/30` Guard, conditions, safe-edge clamping, and one open detail block.
+- [ ] Verify the rounded `168`-pixel HP display is readable without permanent exact-HP text, and its tooltip shows `current / max`.
+- [ ] Verify delayed damage is yellow and delayed healing is green on enemies and on every hero/actor card.
+- [ ] Verify mouse model clicking and green valid-target outlines; then verify controller selection/inspection and unchanged face-button skill selection.
+- [ ] Verify Idle motion continues uninterrupted after enemy attacks and hits.
+- [ ] Verify no regression to room lighting, ceiling practicals, model readability, action-bar behavior, hero-card height, or Exo 2 typography.
+
 ### Room, formation, and projected HUD
 
 - [ ] At physical `1280x800`, verify room scale, camera height, full background coverage, lighting, and readable separation between the first-person scene and hero UI.
