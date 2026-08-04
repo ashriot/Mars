@@ -5,10 +5,10 @@ const HUD_SCENE := preload("res://src/battle/presentation/enemy_world_hud.tscn")
 const WORLD_SCENE := preload("res://src/battle/presentation/battle_world_3d.tscn")
 const BOLD_FONT_PATH := "res://data/theme/fonts/suse_mono_bold.tres"
 const COMPACT_WIDTH := 220.0
-const HP_WIDTH := 220.0
+const HP_SIZE := Vector2(220.0, 32.0)
 const HP_GUARD_OVERLAP := 4.0
 const GUARD_CONDITIONS_GAP := 5.0
-const DETAILS_SIZE := Vector2(220.0, 58.0)
+const DETAILS_SIZE := Vector2(220.0, 74.0)
 const DETAILS_GAP := 4.0
 
 var _saved_input_mode: InputManager.InputMode
@@ -48,18 +48,20 @@ func test_compact_stack_authors_layered_hp_and_overlapping_guard() -> void:
 	var hp_region: Control = hud.hp_region
 	var feedback: ProgressBar = hud.hp_bar_feedback
 	var actual: ProgressBar = hud.hp_bar_actual
+	var hp_value := hud.get_node_or_null("%HPValue") as Label
 	var guard_stack := hud.get_node_or_null("%GuardStack") as EnemyGuardStack
 	assert_not_null(hp_region)
 	assert_not_null(feedback)
 	assert_not_null(actual)
+	assert_not_null(hp_value)
 	assert_not_null(guard_stack)
-	if hp_region == null or feedback == null or actual == null or guard_stack == null:
+	if hp_region == null or feedback == null or actual == null or hp_value == null or guard_stack == null:
 		return
 	assert_eq(hp_region.position, Vector2.ZERO)
-	assert_eq(hp_region.size, Vector2(HP_WIDTH, 18.0))
+	assert_eq(hp_region.size, HP_SIZE)
 	assert_eq(hp_region.mouse_filter, Control.MOUSE_FILTER_PASS)
-	assert_eq(feedback.get_rect(), Rect2(Vector2.ZERO, hp_region.size))
-	assert_eq(actual.get_rect(), Rect2(Vector2.ZERO, hp_region.size))
+	assert_eq(feedback.get_rect(), Rect2(Vector2.ZERO, HP_SIZE))
+	assert_eq(actual.get_rect(), Rect2(Vector2.ZERO, HP_SIZE))
 	assert_eq(feedback.mouse_filter, Control.MOUSE_FILTER_IGNORE)
 	assert_eq(actual.mouse_filter, Control.MOUSE_FILTER_IGNORE)
 	assert_false(feedback.show_percentage)
@@ -69,15 +71,28 @@ func test_compact_stack_authors_layered_hp_and_overlapping_guard() -> void:
 	assert_true(actual.get_theme_stylebox(&"background") is StyleBoxEmpty)
 	_assert_rounded_style(actual.get_theme_stylebox(&"fill"))
 	assert_gt(actual.z_index, feedback.z_index)
-	assert_eq(guard_stack.position, Vector2(0.0, 14.0))
-	assert_eq(guard_stack.size.x, HP_WIDTH)
+	assert_gt(hp_value.z_index, actual.z_index)
+	assert_eq(hp_value.text, "80 / 100")
+	assert_eq(hp_value.horizontal_alignment, HORIZONTAL_ALIGNMENT_CENTER)
+	assert_eq(hp_value.vertical_alignment, VERTICAL_ALIGNMENT_CENTER)
+	assert_eq(hp_value.get_theme_font_size(&"font_size"), 24)
+	assert_eq(hp_value.get_theme_constant(&"outline_size"), 6)
+	assert_eq(hp_value.get_theme_color(&"font_outline_color"), Color.BLACK)
+	assert_eq(guard_stack.position, Vector2(0.0, 28.0))
+	assert_eq(guard_stack.size.x, HP_SIZE.x)
 	assert_gt(guard_stack.z_index, actual.z_index)
 	assert_gt(guard_stack.position.y, hp_region.position.y)
-	assert_eq(hp_region.position.y + hp_region.size.y - guard_stack.position.y, HP_GUARD_OVERLAP)
-	assert_gte(hud.intent_row.get_theme_font_size(&"normal_font_size"), 16)
-	assert_gte(hud.name_label.get_theme_font_size(&"font_size"), 22)
-	assert_gte(hud.kinetic_value.get_theme_font_size(&"font_size"), 17)
-	assert_gte(hud.energy_value.get_theme_font_size(&"font_size"), 17)
+	assert_eq(HP_SIZE.y - guard_stack.position.y, HP_GUARD_OVERLAP)
+	assert_eq(hud.name_label.get_theme_font_size(&"font_size"), 28)
+	assert_eq(hud.name_label.get_theme_constant(&"outline_size"), 8)
+	assert_eq(hud.kinetic_value.get_theme_font_size(&"font_size"), 24)
+	assert_eq(hud.energy_value.get_theme_font_size(&"font_size"), 24)
+	assert_eq(hud.kinetic_value.get_theme_constant(&"outline_size"), 6)
+	assert_eq(hud.energy_value.get_theme_constant(&"outline_size"), 6)
+	assert_eq(hud.intent_row.get_theme_font_size(&"normal_font_size"), 24)
+	assert_eq(hud.intent_row.get_theme_constant(&"outline_size"), 6)
+	assert_eq(hud.intent_row.get_theme_color(&"default_outline_color"), Color.BLACK)
+	assert_gte(hud.intent_row.custom_minimum_size.y, 36.0)
 	assert_eq(guard_stack.guard_value.text, "3")
 	assert_eq(feedback.value, 80.0)
 	assert_eq(actual.value, 80.0)
@@ -242,10 +257,12 @@ func test_bound_model_signals_refresh_vitals_intent_and_conditions() -> void:
 	assert_eq(hud.hp_bar_feedback.max_value, 100.0)
 	assert_eq(hud.hp_bar_actual.max_value, 100.0)
 	assert_eq(hud.hp_region.tooltip_text, "45 / 100 HP")
+	assert_eq(hud.hp_value.text, "45 / 100")
 	assert_eq(hud.guard_stack.guard_value.text, "1")
 	assert_eq(hud.conditions_row.get_child_count(), 1)
 	assert_same((hud.conditions_row.get_child(0) as TextureRect).texture, condition.icon)
-	assert_eq(hud.intent_row.text, "Repair")
+	assert_eq(hud.intent_row.text, "[center]Repair[/center]")
+	assert_eq(hud.intent_row.get_parsed_text(), "Repair")
 
 
 func test_damage_stages_yellow_feedback_until_the_hud_health_tween_settles() -> void:
@@ -441,7 +458,7 @@ func test_projected_head_and_foot_size_padded_model_target_region() -> void:
 	assert_eq(hud.get_target_rect(), Rect2(452, 282, 96, 236))
 
 
-func test_world_layout_keeps_close_huds_centered_on_their_own_heads() -> void:
+func test_world_layout_resolves_close_hud_reservations_without_losing_head_columns() -> void:
 	var world := WORLD_SCENE.instantiate() as BattleWorld3D
 	add_child_autofree(world)
 	var first := HUD_SCENE.instantiate() as EnemyWorldHUD
@@ -455,14 +472,19 @@ func test_world_layout_keeps_close_huds_centered_on_their_own_heads() -> void:
 
 	world._layout_enemy_huds()
 
-	assert_eq(first.compact_stack.global_position, Vector2(390, 197))
-	assert_eq(second.compact_stack.global_position, Vector2(420, 197))
-	assert_eq(first.compact_stack.global_position.y, second.compact_stack.global_position.y)
+	assert_eq(first.compact_stack.global_position.x, 390.0)
+	assert_eq(second.compact_stack.global_position.x, 420.0)
 	assert_eq(first.compact_stack.get_global_rect().get_center().x, 500.0)
 	assert_eq(second.compact_stack.get_global_rect().get_center().x, 530.0)
+	assert_false(first.get_reserved_layout_rect(first.compact_stack.get_global_rect()).intersects(
+		second.compact_stack.get_global_rect(),
+	))
+	assert_false(second.get_reserved_layout_rect(second.compact_stack.get_global_rect()).intersects(
+		first.compact_stack.get_global_rect(),
+	))
 	second.set_projection_visible(false)
 	world._layout_enemy_huds()
-	assert_eq(first.compact_stack.global_position, Vector2(390, 197))
+	assert_eq(first.compact_stack.global_position, first.get_desired_compact_rect().position)
 
 
 func test_world_layout_clamps_each_hud_independently_to_safe_edges() -> void:
@@ -479,8 +501,8 @@ func test_world_layout_clamps_each_hud_independently_to_safe_edges() -> void:
 
 	world._layout_enemy_huds()
 
-	assert_eq(top_left.compact_stack.global_position, Vector2(24, 86))
-	assert_eq(bottom_right.compact_stack.global_position, Vector2(1036, 685))
+	assert_eq(top_left.compact_stack.global_position, Vector2(24, 102))
+	assert_eq(bottom_right.compact_stack.global_position, Vector2(1036, 663))
 
 
 func test_world_layout_reserves_upper_details_at_the_top_safe_edge() -> void:
@@ -559,8 +581,7 @@ func test_defeat_immediately_hides_disables_and_excludes_hud_from_layout() -> vo
 	defeated_hud.set_projected_head_position(Vector2(500, 300))
 	survivor.set_projected_head_position(Vector2(500, 300))
 	world._layout_enemy_huds()
-	assert_eq(defeated_hud.compact_stack.global_position, Vector2(390, 197))
-	assert_eq(survivor.compact_stack.global_position, Vector2(390, 197))
+	assert_ne(defeated_hud.compact_stack.global_position, survivor.compact_stack.global_position)
 	watch_signals(defeated_hud)
 
 	defeated_enemy.defeat()
@@ -577,7 +598,7 @@ func test_defeat_immediately_hides_disables_and_excludes_hud_from_layout() -> vo
 	assert_eq(defeated_hud.target_region.mouse_filter, Control.MOUSE_FILTER_IGNORE)
 	assert_signal_not_emitted(defeated_hud, &"hovered")
 	assert_signal_not_emitted(defeated_hud, &"pressed")
-	assert_eq(survivor.compact_stack.global_position, Vector2(390, 197))
+	assert_eq(survivor.compact_stack.global_position, survivor.get_desired_compact_rect().position)
 
 
 func test_presentation_owned_defeat_preserves_only_the_render_surface() -> void:

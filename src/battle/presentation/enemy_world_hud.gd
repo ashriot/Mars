@@ -6,15 +6,15 @@ signal unhovered
 signal pressed
 
 const COMPACT_WIDTH := 220.0
-const DETAILS_SIZE := Vector2(220.0, 58.0)
+const DETAILS_SIZE := Vector2(220.0, 74.0)
 const DETAILS_GAP := 4.0
 const HEAD_GAP := 12.0
-const GUARD_TOP := 14.0
+const GUARD_TOP := 28.0
 const TARGET_PADDING := Vector2(18.0, 18.0)
 const MIN_TARGET_WIDTH := 96.0
 
 @onready var target_region: Control = %TargetRegion
-@onready var details: MarginContainer = %Details
+@onready var details: Control = %Details
 @onready var name_label: Label = %Name
 @onready var kinetic_value: Label = %Kinetic
 @onready var energy_value: Label = %Energy
@@ -26,6 +26,7 @@ const MIN_TARGET_WIDTH := 96.0
 @onready var hp_region: Control = %HPRegion
 @onready var hp_bar_feedback: ProgressBar = %HPFeedback
 @onready var hp_bar_actual: ProgressBar = %HPActual
+@onready var hp_value: Label = %HPValue
 @onready var conditions_row: HBoxContainer = %ConditionsRow
 
 var combatant: EnemyCombatant
@@ -119,6 +120,7 @@ func set_details_visible(value: bool) -> void:
 	if details.visible and is_equal_approx(details.modulate.a, 1.0):
 		return
 	details.show()
+	_sync_details_position()
 	details.modulate.a = 0.0
 	_details_tween = create_tween()
 	_details_tween.tween_property(details, "modulate:a", 1.0, 0.12)
@@ -201,7 +203,7 @@ func refresh_intent() -> void:
 		intent_tooltip.bbcode_text = ""
 		return
 	var formatted := EnemyIntentFormatter.format(combatant, combatant.battle_manager)
-	intent_row.text = formatted.text
+	intent_row.text = "[center]%s[/center]" % formatted.text
 	intent_tooltip.bbcode_text = formatted.tooltip
 
 
@@ -267,8 +269,8 @@ func _disconnect_combatant() -> void:
 
 func _render_full_state() -> void:
 	name_label.text = combatant.actor_name
-	kinetic_value.text = "KIN %d%%" % combatant.current_stats.kinetic_defense
-	energy_value.text = "NRG %d%%" % combatant.current_stats.energy_defense
+	kinetic_value.text = "KIN%d%%" % combatant.current_stats.kinetic_defense
+	energy_value.text = "NRG%d%%" % combatant.current_stats.energy_defense
 	_render_hp(true)
 	_render_guard()
 	_render_conditions()
@@ -278,6 +280,9 @@ func _render_full_state() -> void:
 func _render_hp(reset_visual_values := false) -> void:
 	hp_bar_feedback.max_value = combatant.current_stats.max_hp
 	hp_bar_actual.max_value = combatant.current_stats.max_hp
+	hp_value.text = "%d / %d" % [
+		combatant.current_hp, combatant.current_stats.max_hp,
+	]
 	hp_region.tooltip_text = "%d / %d HP" % [
 		combatant.current_hp, combatant.current_stats.max_hp,
 	]
@@ -430,6 +435,7 @@ func _sync_compact_height() -> void:
 
 
 func _sync_details_position() -> void:
+	details.size = DETAILS_SIZE
 	details.position = Vector2(0.0, -DETAILS_SIZE.y - DETAILS_GAP)
 
 

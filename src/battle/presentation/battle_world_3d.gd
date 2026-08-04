@@ -35,6 +35,9 @@ func _layout_enemy_huds() -> void:
 	if layer_size.x <= 0.0 or layer_size.y <= 0.0:
 		layer_size = get_viewport().get_visible_rect().size
 	var safe_rect := Rect2(Vector2.ZERO, layer_size).grow(-HUD_SAFE_MARGIN)
+	var visible_huds: Array[EnemyWorldHUD] = []
+	var reserved_rects: Array[Rect2] = []
+	var upper_reservations: Array[float] = []
 	for child: Node in hud_layer.get_children():
 		if child is not EnemyWorldHUD:
 			continue
@@ -54,7 +57,20 @@ func _layout_enemy_huds() -> void:
 			safe_rect.position.y + upper_reservation,
 			safe_rect.end.y - rect.size.y - lower_reservation,
 		)
-		hud.apply_resolved_compact_rect(rect)
+		visible_huds.append(hud)
+		reserved_rects.append(hud.get_reserved_layout_rect(rect))
+		upper_reservations.append(upper_reservation)
+	var resolved_reserved_rects := EnemyHUDLayout.resolve(reserved_rects, safe_rect)
+	if resolved_reserved_rects.size() != visible_huds.size():
+		return
+	for index: int in visible_huds.size():
+		var hud := visible_huds[index]
+		var reserved_rect := resolved_reserved_rects[index]
+		var compact_rect := Rect2(
+			Vector2(reserved_rect.position.x, reserved_rect.position.y + upper_reservations[index]),
+			hud.get_desired_compact_rect().size,
+		)
+		hud.apply_resolved_compact_rect(compact_rect)
 
 
 func place_ordinary_view(

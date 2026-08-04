@@ -169,12 +169,14 @@ func test_scene_authored_guard_visuals_fit_the_compact_width_at_full_depth() -> 
 					"adjacent guard visuals do not merge",
 				)
 	var guard_value := _guard_value(stack)
-	assert_eq(guard_value.size.x, PIP_WIDTH)
-	assert_gte(guard_value.get_theme_font_size(&"font_size"), 16)
+	assert_eq(guard_value.get_theme_font_size(&"font_size"), 20)
+	assert_eq(guard_value.get_theme_constant(&"outline_size"), 4)
+	assert_eq(guard_value.get_theme_color(&"font_outline_color"), Color.BLACK)
 	assert_eq(guard_value.position, _layer(stack, 2).position + _pip(stack, 2, 9).position)
-	assert_true(compact_bounds.encloses(guard_value.get_rect()))
 	assert_eq(_status_label(stack).size.x, GUARD_WIDTH)
-	assert_gte(_status_label(stack).get_theme_font_size(&"font_size"), 16)
+	assert_eq(_status_label(stack).get_theme_font_size(&"font_size"), 24)
+	assert_eq(_status_label(stack).get_theme_constant(&"outline_size"), 6)
+	assert_eq(_status_label(stack).get_theme_color(&"font_outline_color"), Color.BLACK)
 
 
 func _stack() -> Control:

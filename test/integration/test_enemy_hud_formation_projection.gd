@@ -105,6 +105,9 @@ func _assert_projection_at_yaw(
 				layout, canvas_size, yaw_degrees, index,
 			],
 		)
+		assert_eq(presentation.hud.hp_region.size, Vector2(220.0, 32.0))
+		assert_eq(presentation.hud.get_node("%HPValue").size, Vector2(220.0, 32.0))
+		assert_true(safe_rect.encloses(presentation.hud.get_reserved_layout_rect(compact_rect)))
 		assert_true(
 			safe_rect.encloses(compact_rect),
 			"layout %s canvas %s yaw %s HUD %d stays inside the safe rect: %s" % [
@@ -151,8 +154,9 @@ func _assert_projection_at_yaw(
 				continue
 			assert_false(
 				detail_rect.intersects(compact_rects[other_index]),
-				"layout %s canvas %s yaw %s detail %d avoids compact HUD %d" % [
+				"layout %s canvas %s yaw %s detail %d avoids compact HUD %d: %s / %s" % [
 					layout, canvas_size, yaw_degrees, index, other_index,
+					detail_rect, compact_rects[other_index],
 				],
 			)
 		presentation.set_inspection_focused(false)

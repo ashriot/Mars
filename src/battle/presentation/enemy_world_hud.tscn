@@ -45,50 +45,62 @@ offset_top = -18.0
 offset_right = 238.0
 offset_bottom = 105.0
 
-[node name="Details" type="MarginContainer" parent="." unique_id=967648943]
+[node name="Details" type="Control" parent="." unique_id=967648943]
 unique_name_in_owner = true
 visible = false
 modulate = Color(1, 1, 1, 0)
 layout_mode = 0
 offset_right = 220.0
-offset_bottom = 58.0
+offset_bottom = 74.0
 mouse_filter = 2
-theme_override_constants/margin_left = 6
-theme_override_constants/margin_top = 3
-theme_override_constants/margin_right = 6
-theme_override_constants/margin_bottom = 3
+clip_contents = true
 
 [node name="VBoxContainer" type="VBoxContainer" parent="Details" unique_id=641481546]
-layout_mode = 2
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 3.0
+offset_right = -6.0
+offset_bottom = -3.0
+grow_horizontal = 2
+grow_vertical = 2
 theme_override_constants/separation = 1
 
 [node name="Name" type="Label" parent="Details/VBoxContainer" unique_id=2085984305]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_fonts/font = ExtResource("3_bold")
-theme_override_font_sizes/font_size = 22
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 28
 text = "ENEMY"
 horizontal_alignment = 1
 
 [node name="Defenses" type="HBoxContainer" parent="Details/VBoxContainer" unique_id=232453557]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 0
 alignment = 1
 
 [node name="Kinetic" type="Label" parent="Details/VBoxContainer/Defenses" unique_id=771423064]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.55, 0.2, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("3_bold")
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 24
 text = "KIN 0%"
 
 [node name="Energy" type="Label" parent="Details/VBoxContainer/Defenses" unique_id=1135217025]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.2, 0.9, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("3_bold")
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 24
 text = "NRG 0%"
 
 [node name="CompactStack" type="VBoxContainer" parent="." unique_id=1823291038]
@@ -102,12 +114,14 @@ theme_override_constants/separation = 2
 
 [node name="IntentRow" type="RichTextLabel" parent="CompactStack" unique_id=1627062900]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(220, 28)
+custom_minimum_size = Vector2(220, 36)
 layout_mode = 2
 mouse_filter = 1
 theme_override_colors/default_color = Color(1, 0.85, 0.48, 1)
+theme_override_colors/default_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
 theme_override_fonts/normal_font = ExtResource("3_bold")
-theme_override_font_sizes/normal_font_size = 16
+theme_override_font_sizes/normal_font_size = 24
 bbcode_enabled = true
 text = "INTENT"
 fit_content = true
@@ -131,17 +145,17 @@ mouse_filter = 2
 
 [node name="HPRegion" type="Control" parent="CompactStack/VitalsAndConditions/VitalsGroup" unique_id=851604958]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(220, 18)
+custom_minimum_size = Vector2(220, 32)
 layout_mode = 0
 offset_right = 220.0
-offset_bottom = 18.0
+offset_bottom = 32.0
 mouse_filter = 1
 
 [node name="HPFeedback" type="ProgressBar" parent="CompactStack/VitalsAndConditions/VitalsGroup/HPRegion"]
 unique_name_in_owner = true
 layout_mode = 0
 offset_right = 220.0
-offset_bottom = 18.0
+offset_bottom = 32.0
 mouse_filter = 2
 theme_override_styles/background = SubResource("StyleBoxFlat_hp_background")
 theme_override_styles/fill = SubResource("StyleBoxFlat_hp_feedback_fill")
@@ -152,7 +166,7 @@ show_percentage = false
 unique_name_in_owner = true
 layout_mode = 0
 offset_right = 220.0
-offset_bottom = 18.0
+offset_bottom = 32.0
 mouse_filter = 2
 z_index = 1
 theme_override_styles/background = SubResource("StyleBoxEmpty_hp_actual_background")
@@ -160,13 +174,28 @@ theme_override_styles/fill = SubResource("StyleBoxFlat_hp_fill")
 value = 100.0
 show_percentage = false
 
+[node name="HPValue" type="Label" parent="CompactStack/VitalsAndConditions/VitalsGroup/HPRegion"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_right = 220.0
+offset_bottom = 32.0
+mouse_filter = 2
+z_index = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("3_bold")
+theme_override_font_sizes/font_size = 24
+text = "100 / 100"
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="GuardStack" parent="CompactStack/VitalsAndConditions/VitalsGroup" unique_id=742455786 instance=ExtResource("5_guard_stack")]
 unique_name_in_owner = true
 layout_mode = 0
-offset_top = 14.0
+offset_top = 28.0
 offset_right = 220.0
-offset_bottom = 36.0
-z_index = 2
+offset_bottom = 50.0
+z_index = 3
 
 [node name="ConditionsRow" type="HBoxContainer" parent="CompactStack/VitalsAndConditions" unique_id=699932941]
 unique_name_in_owner = true
