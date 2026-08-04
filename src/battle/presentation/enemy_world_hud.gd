@@ -203,6 +203,13 @@ func get_visible_layout_rect() -> Rect2:
 
 func get_reserved_layout_rect(compact_rect: Rect2) -> Rect2:
 	var reserved := compact_rect.merge(_get_intent_layout_rect(compact_rect))
+	var guard_visual := guard_stack.get_visual_rect()
+	if guard_visual.has_area():
+		var guard_offset := guard_stack.global_position - compact_stack.global_position
+		reserved = reserved.merge(Rect2(
+			compact_rect.position + guard_offset + guard_visual.position,
+			guard_visual.size,
+		))
 	return reserved.merge(Rect2(compact_rect.position + details.position, DETAILS_SIZE))
 
 

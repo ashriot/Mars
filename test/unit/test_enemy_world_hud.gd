@@ -193,7 +193,7 @@ func test_guard_value_stays_inside_current_shield_through_hud_component() -> voi
 	)
 
 
-func test_full_guard_visual_extent_stays_inside_the_compact_hud_rect() -> void:
+func test_full_guard_visual_extent_is_reserved_beyond_the_compact_hud_rect() -> void:
 	var hud := _hud()
 	var enemy := _enemy_with_state(80, 10)
 	hud.bind_combatant(enemy)
@@ -203,10 +203,10 @@ func test_full_guard_visual_extent_stays_inside_the_compact_hud_rect() -> void:
 		enemy.current_guard = guard
 		enemy.guard_changed.emit(enemy, guard)
 		await get_tree().process_frame
-		_assert_guard_visuals_inside(
-			hud.guard_stack,
-			hud.compact_stack.get_global_rect(),
-		)
+		var compact_rect := hud.compact_stack.get_global_rect()
+		var guard_visual := _global_guard_visual_rect(hud.guard_stack)
+		assert_gt(guard_visual.end.x, compact_rect.end.x)
+		assert_true(hud.get_reserved_layout_rect(compact_rect).encloses(guard_visual))
 
 
 func test_status_outline_reserves_space_before_conditions() -> void:
@@ -668,7 +668,7 @@ func test_world_layout_clamps_each_hud_independently_to_safe_edges() -> void:
 	world._layout_enemy_huds()
 
 	assert_eq(top_left.compact_stack.global_position, Vector2(57, 102))
-	assert_eq(bottom_right.compact_stack.global_position, Vector2(1003, 656))
+	assert_eq(bottom_right.compact_stack.global_position, Vector2(1003, 653))
 
 
 func test_world_layout_reserves_upper_details_at_the_top_safe_edge() -> void:
@@ -707,8 +707,8 @@ func test_world_layout_keeps_full_guard_visuals_inside_both_horizontal_safe_edge
 
 	assert_eq(left_hud.compact_stack.global_position.x, safe_rect.position.x + 33.0)
 	assert_eq(right_hud.compact_stack.get_global_rect().end.x, safe_rect.end.x - 33.0)
-	_assert_guard_visuals_inside(left_hud.guard_stack, safe_rect)
-	_assert_guard_visuals_inside(right_hud.guard_stack, safe_rect)
+	assert_true(safe_rect.encloses(_global_guard_visual_rect(left_hud.guard_stack)))
+	assert_true(safe_rect.encloses(_global_guard_visual_rect(right_hud.guard_stack)))
 
 
 func test_visible_details_stay_four_pixels_above_their_own_compact_stack() -> void:
@@ -871,15 +871,9 @@ func _fill_color(bar: ProgressBar) -> Color:
 	return fill.bg_color if fill != null else Color.TRANSPARENT
 
 
-func _assert_guard_visuals_inside(stack: EnemyGuardStack, bounds: Rect2) -> void:
-	for layer: Control in stack.layers:
-		for pip: TextureRect in layer.get_children():
-			if pip.visible:
-				assert_true(bounds.encloses(pip.get_global_rect()))
-	if stack.guard_value.visible:
-		assert_true(bounds.encloses(_label_ink_rect(stack.guard_value)))
-	if stack.status_label.visible:
-		assert_true(bounds.encloses(_label_ink_rect(stack.status_label)))
+func _global_guard_visual_rect(stack: EnemyGuardStack) -> Rect2:
+	var visual_rect: Rect2 = stack.get_visual_rect()
+	return Rect2(stack.global_position + visual_rect.position, visual_rect.size)
 
 
 func _label_ink_rect(label: Label) -> Rect2:
