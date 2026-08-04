@@ -344,7 +344,6 @@ theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
 theme_override_fonts/font = ExtResource("3_bold")
 theme_override_font_sizes/font_size = 20
-scale = Vector2(0.875, 1)
 horizontal_alignment = 1
 vertical_alignment = 1
 

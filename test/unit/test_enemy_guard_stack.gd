@@ -103,7 +103,8 @@ func test_thirty_guard_fills_all_layers_and_places_value_in_last_pip() -> void:
 
 	assert_eq(_visible_pip_count(stack), 30)
 	assert_eq(_guard_value(stack).text, "30")
-	assert_eq(_guard_value(stack).position, _layer(stack, 2).position + _pip(stack, 2, 9).position)
+	assert_eq(_guard_value(stack).position.y, _layer(stack, 2).position.y + _pip(stack, 2, 9).position.y)
+	assert_lte(_guard_value(stack).get_global_rect().end.x, GUARD_WIDTH)
 	assert_eq(stack.get_visual_layer_count(), 3)
 
 
@@ -172,7 +173,11 @@ func test_scene_authored_guard_visuals_fit_the_compact_width_at_full_depth() -> 
 	assert_eq(guard_value.get_theme_font_size(&"font_size"), 20)
 	assert_eq(guard_value.get_theme_constant(&"outline_size"), 4)
 	assert_eq(guard_value.get_theme_color(&"font_outline_color"), Color.BLACK)
-	assert_eq(guard_value.position, _layer(stack, 2).position + _pip(stack, 2, 9).position)
+	assert_eq(guard_value.scale, Vector2.ONE)
+	for guard in [10, 20, 30]:
+		stack.render(guard, false, false)
+		assert_lte(guard_value.get_global_rect().end.x, GUARD_WIDTH,
+			"guard %d value remains inside the 220 px guard slot" % guard)
 	assert_eq(_status_label(stack).size.x, GUARD_WIDTH)
 	assert_eq(_status_label(stack).get_theme_font_size(&"font_size"), 24)
 	assert_eq(_status_label(stack).get_theme_constant(&"outline_size"), 6)

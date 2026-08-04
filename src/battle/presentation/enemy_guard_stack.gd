@@ -36,6 +36,7 @@ func render(guard: int, is_in_danger: bool, is_breached: bool) -> void:
 		var current_pip := layers[current_layer].get_child(current_column) as TextureRect
 		guard_value.text = str(value)
 		guard_value.position = layers[current_layer].position + current_pip.position
+		guard_value.position.x = minf(guard_value.position.x, size.x - guard_value.size.x)
 	custom_minimum_size.y = %Layer1.size.y + LAYER_STEP * float(layer_count - 1)
 
 
