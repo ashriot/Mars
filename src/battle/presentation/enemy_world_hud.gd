@@ -12,6 +12,11 @@ const HEAD_GAP := 12.0
 const GUARD_TOP := 28.0
 const TARGET_PADDING := Vector2(18.0, 18.0)
 const MIN_TARGET_WIDTH := 96.0
+const POPUP_SPACING_TIME_MSEC := 1000
+const POPUP_HORIZONTAL_STEP := 60.0
+const POPUP_VERTICAL_STEP := 30.0
+
+@export var damage_popup_scene: PackedScene
 
 @onready var target_region: Control = %TargetRegion
 @onready var details: Control = %Details
@@ -42,6 +47,8 @@ var _has_projected_model_bounds := false
 var _details_tween: Tween
 var _health_tween: Tween
 var _presentation_owns_defeat_fade := false
+var _last_popup_time_msec := -POPUP_SPACING_TIME_MSEC
+var _popup_stack_offset := 0
 
 
 func _ready() -> void:
@@ -345,7 +352,7 @@ func _on_conditions_changed(_enemy: BattleCombatant) -> void:
 func _on_presentation_event(
 	_enemy: BattleCombatant,
 	event: StringName,
-	_payload: Dictionary,
+	payload: Dictionary,
 ) -> void:
 	match event:
 		&"damage_received":
@@ -353,6 +360,10 @@ func _on_presentation_event(
 				hp_bar_feedback, HealthFeedbackPalette.Direction.DAMAGE,
 			)
 			hp_bar_actual.value = combatant.current_hp
+			var result := payload.get("result") as DamageResult
+			if result != null and payload.has("damage_type"):
+				var damage_type: Action.DamageType = payload["damage_type"]
+				_spawn_damage_popup(result, damage_type)
 		&"healing_received":
 			HealthFeedbackPalette.apply(
 				hp_bar_feedback, HealthFeedbackPalette.Direction.HEALING,
@@ -360,6 +371,43 @@ func _on_presentation_event(
 			hp_bar_feedback.value = combatant.current_hp
 		&"intent_changed":
 			refresh_intent()
+
+
+func _get_damage_popup_center() -> Variant:
+	if _has_projected_model_bounds:
+		return _projected_model_bounds.get_center()
+	if _has_projected_head and _has_projected_foot:
+		return (_projected_head + _projected_foot) * 0.5
+	return null
+
+
+func _spawn_damage_popup(
+	result: DamageResult,
+	damage_type: Action.DamageType,
+) -> void:
+	if damage_popup_scene == null or not _has_live_combatant():
+		return
+	var popup_center: Variant = _get_damage_popup_center()
+	if popup_center == null or get_parent() == null:
+		return
+	var popup := damage_popup_scene.instantiate() as DamagePopup
+	if popup == null:
+		return
+	get_parent().add_child(popup)
+	var target_center: Vector2 = popup_center
+	var current_time_msec := Time.get_ticks_msec()
+	if current_time_msec - _last_popup_time_msec < POPUP_SPACING_TIME_MSEC:
+		_popup_stack_offset += 1
+		var side := 1.0 if _popup_stack_offset % 2 == 0 else -1.0
+		target_center.x += side * POPUP_HORIZONTAL_STEP
+		target_center.y -= float(_popup_stack_offset) * POPUP_VERTICAL_STEP
+	else:
+		_popup_stack_offset = 0
+	popup.global_position = target_center - popup.pivot_offset
+	_last_popup_time_msec = current_time_msec
+	popup.show_damage(
+		result.final_damage, damage_type, _get_battle_speed(), result.is_critical,
+	)
 
 
 func _on_combatant_defeated(enemy: BattleCombatant) -> void:

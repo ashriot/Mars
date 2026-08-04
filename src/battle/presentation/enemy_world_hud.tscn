@@ -1,9 +1,10 @@
-[gd_scene load_steps=9 format=3 uid="uid://d0q4mwn17xj5h"]
+[gd_scene load_steps=10 format=3 uid="uid://d0q4mwn17xj5h"]
 
 [ext_resource type="Script" uid="uid://c8686deql6he" path="res://src/battle/presentation/enemy_world_hud.gd" id="1_hud"]
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="3_bold"]
 [ext_resource type="Script" uid="uid://m4vn3jl6sqd6" path="res://src/core/rich_tooltip.gd" id="4_tooltip"]
 [ext_resource type="PackedScene" path="res://src/battle/presentation/enemy_guard_stack.tscn" id="5_guard_stack"]
+[ext_resource type="PackedScene" uid="uid://ckw8rm3jl32bx" path="res://src/battle/damage_popup.tscn" id="6_damage_popup"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_background"]
 bg_color = Color(0.12, 0.05, 0.08, 0.9)
@@ -36,6 +37,7 @@ offset_right = 220.0
 offset_bottom = 87.0
 mouse_filter = 2
 script = ExtResource("1_hud")
+damage_popup_scene = ExtResource("6_damage_popup")
 
 [node name="TargetRegion" type="Control" parent="." unique_id=571879907]
 unique_name_in_owner = true

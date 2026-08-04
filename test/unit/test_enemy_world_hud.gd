@@ -3,6 +3,7 @@ extends GutTest
 
 const HUD_SCENE := preload("res://src/battle/presentation/enemy_world_hud.tscn")
 const WORLD_SCENE := preload("res://src/battle/presentation/battle_world_3d.tscn")
+const DAMAGE_POPUP := preload("res://src/battle/damage_popup.gd")
 const BOLD_FONT_PATH := "res://data/theme/fonts/suse_mono_bold.tres"
 const COMPACT_WIDTH := 220.0
 const HP_SIZE := Vector2(220.0, 32.0)
@@ -340,6 +341,103 @@ func test_new_health_event_replaces_a_running_tween_from_the_displayed_value() -
 	assert_eq(hud.hp_bar_feedback.value, 40.0)
 
 
+func test_real_damage_event_spawns_critical_popup_at_projected_model_center() -> void:
+	var canvas := Control.new()
+	add_child_autofree(canvas)
+	var hud := HUD_SCENE.instantiate() as EnemyWorldHUD
+	canvas.add_child(hud)
+	var enemy := _enemy_with_state(100, 3)
+	assert_true(hud.bind_combatant(enemy))
+	hud.set_projected_model_bounds(Rect2(400, 300, 120, 160))
+
+	await enemy.take_one_hit(
+		_damage_result(17, Action.DamageType.ENERGY, true),
+		Effect_Damage.new(),
+		null,
+		Action.DamageType.ENERGY,
+	)
+
+	var popups := _damage_popups(canvas)
+	assert_eq(popups.size(), 1)
+	if popups.size() != 1:
+		return
+	var popup := popups[0]
+	assert_eq(popup.global_position + popup.pivot_offset, Vector2(460, 380))
+	assert_eq(popup.label.text, "17!")
+	assert_eq(popup.label.modulate, Color("00ffff"))
+
+
+func test_rapid_complete_damage_events_use_distinct_popup_positions() -> void:
+	var canvas := Control.new()
+	add_child_autofree(canvas)
+	var hud := HUD_SCENE.instantiate() as EnemyWorldHUD
+	canvas.add_child(hud)
+	var enemy := _enemy_with_state(100, 3)
+	assert_true(hud.bind_combatant(enemy))
+	hud.set_projected_model_bounds(Rect2(400, 300, 120, 160))
+	var payload := {
+		"result": _damage_result(8, Action.DamageType.KINETIC),
+		"damage_type": Action.DamageType.KINETIC,
+		"actual_damage": 8,
+	}
+
+	enemy.presentation_event.emit(enemy, &"damage_received", payload)
+	enemy.presentation_event.emit(enemy, &"damage_received", payload)
+
+	var popups := _damage_popups(canvas)
+	assert_eq(popups.size(), 2)
+	if popups.size() != 2:
+		return
+	assert_ne(
+		popups[0].global_position + popups[0].pivot_offset,
+		popups[1].global_position + popups[1].pivot_offset,
+	)
+
+
+func test_damage_popup_uses_head_and_foot_midpoint_without_model_bounds() -> void:
+	var canvas := Control.new()
+	add_child_autofree(canvas)
+	var hud := HUD_SCENE.instantiate() as EnemyWorldHUD
+	canvas.add_child(hud)
+	var enemy := _enemy_with_state(100, 3)
+	assert_true(hud.bind_combatant(enemy))
+	hud.set_projected_head_position(Vector2(420, 280))
+	hud.set_projected_foot_position(Vector2(500, 480))
+
+	enemy.presentation_event.emit(enemy, &"damage_received", {
+		"result": _damage_result(9, Action.DamageType.PIERCING),
+		"damage_type": Action.DamageType.PIERCING,
+		"actual_damage": 9,
+	})
+
+	var popups := _damage_popups(canvas)
+	assert_eq(popups.size(), 1)
+	if popups.size() != 1:
+		return
+	assert_eq(popups[0].global_position + popups[0].pivot_offset, Vector2(460, 380))
+
+
+func test_projection_free_damage_keeps_hp_feedback_without_a_popup() -> void:
+	var canvas := Control.new()
+	add_child_autofree(canvas)
+	var hud := HUD_SCENE.instantiate() as EnemyWorldHUD
+	canvas.add_child(hud)
+	var enemy := _enemy_with_state(100, 3)
+	assert_true(hud.bind_combatant(enemy))
+	enemy.current_hp = 83
+	enemy.hp_changed.emit(enemy, 83, 100)
+
+	enemy.presentation_event.emit(enemy, &"damage_received", {
+		"result": _damage_result(17, Action.DamageType.ENERGY),
+		"damage_type": Action.DamageType.ENERGY,
+		"actual_damage": 17,
+	})
+
+	assert_eq(_damage_popups(canvas).size(), 0)
+	assert_eq(hud.hp_bar_actual.value, 83.0)
+	assert_eq(_fill_color(hud.hp_bar_feedback), HealthFeedbackPalette.DAMAGE_YELLOW)
+
+
 func test_target_state_does_not_reveal_details_but_pointer_hover_does() -> void:
 	var hud := _hud()
 	hud.bind_combatant(_enemy_with_state(80, 3))
@@ -658,6 +756,25 @@ func _enemy_with_state(hp: int, guard: int) -> EnemyCombatant:
 	enemy.current_hp = hp
 	enemy.current_guard = guard
 	return enemy
+
+
+func _damage_result(
+	amount: int,
+	damage_type: Action.DamageType,
+	is_critical := false,
+) -> DamageResult:
+	var request := DamageRequest.new(amount, 0, 0, 1.0, 1, damage_type, 0)
+	return DamageResult.new(
+		request, amount, 0, 1.0, 1.0, 1.0, amount, amount, is_critical,
+	)
+
+
+func _damage_popups(parent: Node) -> Array[DamagePopup]:
+	var popups: Array[DamagePopup] = []
+	for child: Node in parent.get_children():
+		if child is DamagePopup:
+			popups.append(child as DamagePopup)
+	return popups
 
 
 func _world_in_viewport(size: Vector2i) -> Dictionary:

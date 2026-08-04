@@ -59,8 +59,9 @@ Run every item at physical `1920x1080` and the desktop-proxy `1280x800` window. 
 
 - [ ] Verify W and M five-enemy encounters retain correct model/HUD attribution and visibly distinct depth rows.
 - [ ] Verify compact enemy HUDs do not overlap, including long intent text, `23/30` Guard, conditions, safe-edge clamping, and one open detail block.
-- [ ] Verify the rounded full-width HP display is readable without permanent exact-HP text, its tooltip shows `current / max`, and Guard pips visibly render in front of the bar with a gap between adjacent shields.
-- [ ] Verify intent, name, defense, Guard, `VULNERABLE`, and `BREACHED` type is visibly larger and legible at both acceptance outputs.
+- [ ] Verify every enemy HP bar is `220x32`, permanently displays centered `current / max` text, and keeps rounded pink actual health over yellow delayed damage or green delayed healing.
+- [ ] Verify inspected name, centered intent, defenses, exact HP, Guard, `VULNERABLE`, and `BREACHED` remain readable over both bright walls and dark room regions at physical `1920x1080` and desktop-proxy `1280x800`.
+- [ ] Damage each outer, inner, and center enemy with kinetic, energy, piercing, rapid, and critical hits; verify each value appears over the struck model center with the established color and critical `!`, while rapid values remain distinguishable.
 - [ ] Verify inspection details open above the persistent compact HUD with a visible gap and do not obscure another compact HUD.
 - [ ] Verify delayed damage is yellow and delayed healing is green on enemies and on every hero/actor card.
 - [ ] Verify mouse model clicking and green valid-target outlines; then verify controller selection/inspection and unchanged face-button skill selection.
