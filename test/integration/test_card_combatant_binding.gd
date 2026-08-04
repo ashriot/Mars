@@ -438,21 +438,21 @@ func test_failed_later_enemy_view_rolls_back_only_exact_spawn_roots() -> void:
 
 func test_spawn_encounter_places_five_enemy_view_roots_in_w_layout() -> void:
 	await _assert_world_spawn(BattleFormationLayout.Layout.W, [
-		Vector3(-5.25, 0.0, -2.20),
-		Vector3(0.0, 0.0, -2.60),
-		Vector3(5.25, 0.0, -2.20),
-		Vector3(-1.72, 0.0, 1.80),
-		Vector3(1.72, 0.0, 1.80),
+		Vector3(-5.00, 0.0, -0.21),
+		Vector3(0.0, 0.0, -0.61),
+		Vector3(5.00, 0.0, -0.21),
+		Vector3(-1.44, 0.0, 3.80),
+		Vector3(1.44, 0.0, 3.80),
 	])
 
 
 func test_boss_flagged_encounter_still_places_five_enemy_roots_in_ordinary_m_layout() -> void:
 	await _assert_world_spawn(BattleFormationLayout.Layout.M, [
-		Vector3(-2.50, 0.0, -2.20),
-		Vector3(2.50, 0.0, -2.20),
-		Vector3(-3.30, 0.0, 1.80),
-		Vector3(0.0, 0.0, 2.20),
-		Vector3(3.30, 0.0, 1.80),
+		Vector3(-2.70, 0.0, -0.71),
+		Vector3(2.70, 0.0, -0.71),
+		Vector3(-3.17, 0.0, 3.30),
+		Vector3(0.0, 0.0, 3.70),
+		Vector3(3.17, 0.0, 3.30),
 	], true)
 
 

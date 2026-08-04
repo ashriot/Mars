@@ -3,17 +3,17 @@ class_name BattleFormationLayout
 
 enum Layout { W, M }
 
-const W_BACK_LEFT := Vector3(-5.25, 0.0, -2.20)
-const W_BACK_CENTER := Vector3(0.0, 0.0, -2.60)
-const W_BACK_RIGHT := Vector3(5.25, 0.0, -2.20)
-const W_FRONT_LEFT := Vector3(-1.72, 0.0, 1.80)
-const W_FRONT_RIGHT := Vector3(1.72, 0.0, 1.80)
+const W_BACK_LEFT := Vector3(-5.00, 0.0, -0.21)
+const W_BACK_CENTER := Vector3(0.0, 0.0, -0.61)
+const W_BACK_RIGHT := Vector3(5.00, 0.0, -0.21)
+const W_FRONT_LEFT := Vector3(-1.44, 0.0, 3.80)
+const W_FRONT_RIGHT := Vector3(1.44, 0.0, 3.80)
 
-const M_BACK_LEFT := Vector3(-2.50, 0.0, -2.20)
-const M_BACK_RIGHT := Vector3(2.50, 0.0, -2.20)
-const M_FRONT_LEFT := Vector3(-3.30, 0.0, 1.80)
-const M_FRONT_CENTER := Vector3(0.0, 0.0, 2.20)
-const M_FRONT_RIGHT := Vector3(3.30, 0.0, 1.80)
+const M_BACK_LEFT := Vector3(-2.70, 0.0, -0.71)
+const M_BACK_RIGHT := Vector3(2.70, 0.0, -0.71)
+const M_FRONT_LEFT := Vector3(-3.17, 0.0, 3.30)
+const M_FRONT_CENTER := Vector3(0.0, 0.0, 3.70)
+const M_FRONT_RIGHT := Vector3(3.17, 0.0, 3.30)
 
 const W_POSITIONS := {
 	1: [W_BACK_CENTER],

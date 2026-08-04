@@ -10,25 +10,25 @@ func _positions(transforms: Array[Transform3D]) -> Array[Vector3]:
 
 func test_w_uses_authored_slots_for_every_supported_count() -> void:
 	var expected := {
-		1: [Vector3(0.0, 0.0, -2.60)],
-		2: [Vector3(-1.72, 0.0, 1.80), Vector3(1.72, 0.0, 1.80)],
+		1: [Vector3(0.0, 0.0, -0.61)],
+		2: [Vector3(-1.44, 0.0, 3.80), Vector3(1.44, 0.0, 3.80)],
 		3: [
-			Vector3(-5.25, 0.0, -2.20),
-			Vector3(0.0, 0.0, -2.60),
-			Vector3(5.25, 0.0, -2.20),
+			Vector3(-5.00, 0.0, -0.21),
+			Vector3(0.0, 0.0, -0.61),
+			Vector3(5.00, 0.0, -0.21),
 		],
 		4: [
-			Vector3(-5.25, 0.0, -2.20),
-			Vector3(5.25, 0.0, -2.20),
-			Vector3(-1.72, 0.0, 1.80),
-			Vector3(1.72, 0.0, 1.80),
+			Vector3(-5.00, 0.0, -0.21),
+			Vector3(5.00, 0.0, -0.21),
+			Vector3(-1.44, 0.0, 3.80),
+			Vector3(1.44, 0.0, 3.80),
 		],
 		5: [
-			Vector3(-5.25, 0.0, -2.20),
-			Vector3(0.0, 0.0, -2.60),
-			Vector3(5.25, 0.0, -2.20),
-			Vector3(-1.72, 0.0, 1.80),
-			Vector3(1.72, 0.0, 1.80),
+			Vector3(-5.00, 0.0, -0.21),
+			Vector3(0.0, 0.0, -0.61),
+			Vector3(5.00, 0.0, -0.21),
+			Vector3(-1.44, 0.0, 3.80),
+			Vector3(1.44, 0.0, 3.80),
 		],
 	}
 	for count: int in expected:
@@ -41,25 +41,25 @@ func test_w_uses_authored_slots_for_every_supported_count() -> void:
 
 func test_m_uses_authored_slots_for_every_supported_count() -> void:
 	var expected := {
-		1: [Vector3(0.0, 0.0, 2.20)],
-		2: [Vector3(-2.50, 0.0, -2.20), Vector3(2.50, 0.0, -2.20)],
+		1: [Vector3(0.0, 0.0, 3.70)],
+		2: [Vector3(-2.70, 0.0, -0.71), Vector3(2.70, 0.0, -0.71)],
 		3: [
-			Vector3(-3.30, 0.0, 1.80),
-			Vector3(0.0, 0.0, 2.20),
-			Vector3(3.30, 0.0, 1.80),
+			Vector3(-3.17, 0.0, 3.30),
+			Vector3(0.0, 0.0, 3.70),
+			Vector3(3.17, 0.0, 3.30),
 		],
 		4: [
-			Vector3(-2.50, 0.0, -2.20),
-			Vector3(2.50, 0.0, -2.20),
-			Vector3(-3.30, 0.0, 1.80),
-			Vector3(3.30, 0.0, 1.80),
+			Vector3(-2.70, 0.0, -0.71),
+			Vector3(2.70, 0.0, -0.71),
+			Vector3(-3.17, 0.0, 3.30),
+			Vector3(3.17, 0.0, 3.30),
 		],
 		5: [
-			Vector3(-2.50, 0.0, -2.20),
-			Vector3(2.50, 0.0, -2.20),
-			Vector3(-3.30, 0.0, 1.80),
-			Vector3(0.0, 0.0, 2.20),
-			Vector3(3.30, 0.0, 1.80),
+			Vector3(-2.70, 0.0, -0.71),
+			Vector3(2.70, 0.0, -0.71),
+			Vector3(-3.17, 0.0, 3.30),
+			Vector3(0.0, 0.0, 3.70),
+			Vector3(3.17, 0.0, 3.30),
 		],
 	}
 	for count: int in expected:

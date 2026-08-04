@@ -11,9 +11,10 @@ const CANVAS_SIZES: Array[Vector2i] = [
 const SAFE_MARGIN := 24.0
 const COMPACT_WIDTH := 220.0
 const DETAILS_GAP := 4.0
+const CAMERA_YAW_DEGREES: Array[float] = [-3.0, 0.0, 3.0]
 
 
-func test_w_projects_five_stable_readable_hud_columns() -> void:
+func test_w_projects_five_stable_readable_hud_columns_across_camera_yaw() -> void:
 	for canvas_size: Vector2i in CANVAS_SIZES:
 		await _assert_projected_formation(
 			BattleFormationLayout.Layout.W,
@@ -23,7 +24,7 @@ func test_w_projects_five_stable_readable_hud_columns() -> void:
 		)
 
 
-func test_m_projects_five_stable_readable_hud_columns() -> void:
+func test_m_projects_five_stable_readable_hud_columns_across_camera_yaw() -> void:
 	for canvas_size: Vector2i in CANVAS_SIZES:
 		await _assert_projected_formation(
 			BattleFormationLayout.Layout.M,
@@ -58,6 +59,28 @@ func _assert_projected_formation(
 		presentations.append(presentation)
 
 	await get_tree().process_frame
+	for yaw_degrees: float in CAMERA_YAW_DEGREES:
+		world.camera_rig.rotation.y = deg_to_rad(yaw_degrees)
+		_assert_projection_at_yaw(
+			world,
+			presentations,
+			layout,
+			canvas_size,
+			back_indices,
+			front_indices,
+			yaw_degrees,
+		)
+
+
+func _assert_projection_at_yaw(
+	world: BattleWorld3D,
+	presentations: Array[EnemyDronePresentation],
+	layout: BattleFormationLayout.Layout,
+	canvas_size: Vector2i,
+	back_indices: Array,
+	front_indices: Array,
+	yaw_degrees: float,
+) -> void:
 	for presentation: EnemyDronePresentation in presentations:
 		presentation._process(0.0)
 	world._layout_enemy_huds()
@@ -78,32 +101,34 @@ func _assert_projected_formation(
 		assert_eq(
 			compact_rect.size.x,
 			COMPACT_WIDTH,
-			"layout %s canvas %s HUD %d keeps the readable width" % [
-				layout, canvas_size, index,
+			"layout %s canvas %s yaw %s HUD %d keeps the readable width" % [
+				layout, canvas_size, yaw_degrees, index,
 			],
 		)
 		assert_true(
 			safe_rect.encloses(compact_rect),
-			"layout %s canvas %s HUD %d stays inside the safe rect: %s" % [
-				layout, canvas_size, index, compact_rect,
+			"layout %s canvas %s yaw %s HUD %d stays inside the safe rect: %s" % [
+				layout, canvas_size, yaw_degrees, index, compact_rect,
 			],
 		)
 		assert_true(
 			presentation.hud.get_target_rect().has_point(model_rect.get_center()),
-			"layout %s canvas %s HUD %d targets its own projected model center" % [
-				layout, canvas_size, index,
+			"layout %s canvas %s yaw %s HUD %d targets its own projected model center" % [
+				layout, canvas_size, yaw_degrees, index,
 			],
 		)
 
-	_assert_rectangles_do_not_intersect(compact_rects, layout, canvas_size)
+	_assert_rectangles_do_not_intersect(
+		compact_rects, layout, canvas_size, yaw_degrees,
+	)
 	for front_index: int in front_indices:
 		for back_index: int in back_indices:
 			for axis: int in [Vector2.AXIS_X, Vector2.AXIS_Y]:
 				assert_gt(
 					model_rects[front_index].size[axis],
 					model_rects[back_index].size[axis],
-					"layout %s canvas %s front model %d projects larger on axis %d than back model %d" % [
-						layout, canvas_size, front_index, axis, back_index,
+					"layout %s canvas %s yaw %s front model %d projects larger on axis %d than back model %d" % [
+						layout, canvas_size, yaw_degrees, front_index, axis, back_index,
 					],
 				)
 
@@ -116,8 +141,8 @@ func _assert_projected_formation(
 		assert_eq(
 			detail_rect.position.y,
 			original_rect.end.y + DETAILS_GAP,
-			"layout %s canvas %s detail %d keeps its fixed vertical offset" % [
-				layout, canvas_size, index,
+			"layout %s canvas %s yaw %s detail %d keeps its fixed vertical offset" % [
+				layout, canvas_size, yaw_degrees, index,
 			],
 		)
 		for other_index: int in presentations.size():
@@ -125,8 +150,8 @@ func _assert_projected_formation(
 				continue
 			assert_false(
 				detail_rect.intersects(compact_rects[other_index]),
-				"layout %s canvas %s detail %d avoids compact HUD %d" % [
-					layout, canvas_size, index, other_index,
+				"layout %s canvas %s yaw %s detail %d avoids compact HUD %d" % [
+					layout, canvas_size, yaw_degrees, index, other_index,
 				],
 			)
 		presentation.set_inspection_focused(false)
@@ -140,8 +165,8 @@ func _assert_projected_formation(
 			assert_eq(
 				presentation.hud.compact_stack.get_global_rect(),
 				original_rect,
-				"layout %s canvas %s state %s does not move compact HUD %d" % [
-					layout, canvas_size, state, index,
+				"layout %s canvas %s yaw %s state %s does not move compact HUD %d" % [
+					layout, canvas_size, yaw_degrees, state, index,
 				],
 			)
 
@@ -150,14 +175,16 @@ func _assert_rectangles_do_not_intersect(
 	rectangles: Array[Rect2],
 	layout: BattleFormationLayout.Layout,
 	canvas_size: Vector2i,
+	yaw_degrees: float,
 ) -> void:
 	for first_index: int in rectangles.size():
 		for second_index: int in range(first_index + 1, rectangles.size()):
 			assert_false(
 				rectangles[first_index].intersects(rectangles[second_index]),
-				"layout %s canvas %s compact HUDs %d and %d do not intersect: %s / %s" % [
+				"layout %s canvas %s yaw %s compact HUDs %d and %d do not intersect: %s / %s" % [
 					layout,
 					canvas_size,
+					yaw_degrees,
 					first_index,
 					second_index,
 					rectangles[first_index],
