@@ -1,12 +1,13 @@
-[gd_resource type="FontVariation" load_steps=2 format=3 uid="uid://cnjisphqjicqu"]
+[gd_resource type="FontVariation" format=3 uid="uid://cnjisphqjicqu"]
 
-[ext_resource type="FontFile" uid="uid://br6yyrmma2wm" path="res://data/theme/fonts/base_fonts/SUSEMono-VariableFont_wght.ttf" id="1_5ync4"]
+[ext_resource type="FontFile" uid="uid://v3giojsv757y" path="res://data/theme/fonts/base_fonts/Oxanium-VariableFont_wght.ttf" id="1_5ync4"]
 
 [resource]
 base_font = ExtResource("1_5ync4")
 variation_opentype = {
-2003265652: 800
+2003265652: 600
 }
 opentype_features = {
-1818847073: 1
+1886287213: 1,
+2053468783: 1
 }

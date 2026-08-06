@@ -1,6 +1,6 @@
-[gd_resource type="FontVariation" load_steps=2 format=3 uid="uid://c0je4m574ytir"]
+[gd_resource type="FontVariation" format=3 uid="uid://c0je4m574ytir"]
 
-[ext_resource type="FontFile" uid="uid://br6yyrmma2wm" path="res://data/theme/fonts/base_fonts/SUSEMono-VariableFont_wght.ttf" id="1_xn7av"]
+[ext_resource type="FontFile" uid="uid://bngamonal1d40" path="res://data/theme/fonts/base_fonts/union_gothic-variable.ttf" id="1_xn7av"]
 
 [resource]
 base_font = ExtResource("1_xn7av")

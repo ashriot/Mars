@@ -1,6 +1,14 @@
-[gd_resource type="FontVariation" load_steps=2 format=3 uid="uid://bk8iy3u13b88f"]
+[gd_resource type="FontVariation" format=3 uid="uid://ctbo5rtks0co5"]
 
-[ext_resource type="FontFile" uid="uid://dp2d1ubplaoni" path="res://data/theme/fonts/base_fonts/Archivo-Italic-VariableFont_wdth,wght.ttf" id="1_16kdk"]
+[ext_resource type="FontFile" uid="uid://v3giojsv757y" path="res://data/theme/fonts/base_fonts/Oxanium-VariableFont_wght.ttf" id="1_16kdk"]
 
 [resource]
 base_font = ExtResource("1_16kdk")
+variation_opentype = {
+2003265652: 500
+}
+variation_transform = Transform2D(1, 0.25, 0, 1, 0, 0)
+opentype_features = {
+1886287213: 1,
+2053468783: 1
+}
