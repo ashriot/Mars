@@ -192,6 +192,46 @@ func test_lab_start_and_result_do_not_mutate_save_or_run_singletons() -> void:
 	assert_eq(_snapshot_global_state(), before)
 
 
+func test_pointer_can_commit_one_enemy_action_through_projected_drone_body() -> void:
+	InputManager._set_active_mode(InputManager.InputMode.KEYBOARD_MOUSE)
+	InputManager._set_presentation_mode(InputManager.PresentationMode.POINTER)
+	var viewport := SubViewport.new()
+	viewport.size = Vector2i(1920, 1080)
+	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	add_child_autofree(viewport)
+	var lab := LabScene.instantiate() as EndgameBattleLab
+	viewport.add_child(lab)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var manager := lab.battle_scene.manager
+	var hero := manager.get_living_heroes()[0] as HeroCombatant
+	var action: Action
+	for candidate: Action in hero.get_current_role().actions:
+		if candidate.target_type == Action.TargetType.ONE_ENEMY:
+			action = candidate
+			break
+	assert_not_null(action)
+	if action == null:
+		return
+	manager.current_actor = hero
+	manager.change_state(BattleManager.State.FORCED_TARGET)
+	manager.set_current_action(action)
+	lab.battle_scene._refresh_targeting()
+	await get_tree().process_frame
+	var enemy := manager.get_living_enemies()[0] as EnemyCombatant
+	var presentation := manager.presentation_for(enemy) as EnemyDronePresentation
+	var target_center := presentation.hud.get_target_rect().get_center()
+	viewport.push_input(_mouse_motion_at(Vector2(12, 740)), true)
+	await get_tree().process_frame
+	viewport.push_input(_mouse_motion_at(target_center), true)
+	await get_tree().process_frame
+	viewport.push_input(_mouse_button_at(target_center, true), true)
+	viewport.push_input(_mouse_button_at(target_center, false), true)
+	await get_tree().process_frame
+
+	assert_eq(manager.current_state, BattleManager.State.EXECUTING_ACTION)
+
+
 func test_isolation_snapshot_tracks_and_restores_run_manager_roster_alias() -> void:
 	var snapshot := _snapshot_global_state()
 
@@ -301,6 +341,22 @@ func _spawned_enemy_ids(enemies: Array) -> Array[String]:
 	for enemy: EnemyCombatant in enemies:
 		ids.append(enemy.enemy_data.enemy_id)
 	return ids
+
+
+func _mouse_motion_at(position: Vector2) -> InputEventMouseMotion:
+	var event := InputEventMouseMotion.new()
+	event.position = position
+	event.global_position = position
+	return event
+
+
+func _mouse_button_at(position: Vector2, pressed: bool) -> InputEventMouseButton:
+	var event := InputEventMouseButton.new()
+	event.position = position
+	event.global_position = position
+	event.button_index = MOUSE_BUTTON_LEFT
+	event.pressed = pressed
+	return event
 
 
 func _spawned_hero_by_id(lab: EndgameBattleLab, hero_id: String) -> HeroCombatant:

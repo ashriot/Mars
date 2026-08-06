@@ -98,6 +98,11 @@ func test_two_drones_do_not_share_material_or_animation_state() -> void:
 	assert_ne(first.presentation.animation_player, second.presentation.animation_player)
 	assert_eq(first.presentation.animation_player.current_animation, "Charging")
 	assert_eq(second.presentation.animation_player.current_animation, "Idle")
+	first.presentation.set_target_presentation(
+		CombatantPresentation.TargetState.AVAILABLE,
+	)
+	assert_not_null(first.presentation.instance_material.next_pass)
+	assert_null(second.presentation.instance_material.next_pass)
 
 
 func test_binding_loops_idle_without_changing_transient_animation_loop_modes() -> void:
@@ -107,6 +112,54 @@ func test_binding_loops_idle_without_changing_transient_animation_loop_modes() -
 	assert_eq(player.get_animation(&"Idle").loop_mode, Animation.LOOP_LINEAR)
 	assert_eq(player.get_animation(&"Attack").loop_mode, Animation.LOOP_NONE)
 	assert_eq(player.get_animation(&"Hit").loop_mode, Animation.LOOP_NONE)
+
+
+func test_loaded_drone_material_is_tuned_for_readable_stage_lighting() -> void:
+	var fixture := _bound_animated_drone(_world(), _enemy())
+
+	assert_false(fixture.presentation._instance_materials.is_empty())
+	for material: BaseMaterial3D in fixture.presentation._instance_materials:
+		assert_almost_eq(material.metallic, 0.2, 0.0001)
+		assert_almost_eq(material.roughness, 0.5, 0.0001)
+
+
+func test_valid_target_outline_brightens_when_selected_and_clears_when_normal() -> void:
+	var fixture := _bound_animated_drone(_world(), _enemy())
+	var materials: Array[BaseMaterial3D] = fixture.presentation._instance_materials
+	assert_false(materials.is_empty())
+	for material: BaseMaterial3D in materials:
+		assert_null(material.next_pass)
+
+	fixture.presentation.set_target_presentation(
+		CombatantPresentation.TargetState.AVAILABLE,
+	)
+	var available_outline := materials[0].next_pass as BaseMaterial3D
+	assert_not_null(available_outline)
+	assert_true(available_outline.grow)
+	assert_eq(available_outline.cull_mode, BaseMaterial3D.CULL_FRONT)
+	assert_eq(
+		available_outline.shading_mode,
+		BaseMaterial3D.SHADING_MODE_UNSHADED,
+	)
+	assert_gt(available_outline.albedo_color.g, available_outline.albedo_color.r)
+	assert_gt(available_outline.albedo_color.g, available_outline.albedo_color.b)
+	var available_width := available_outline.grow_amount
+	for material: BaseMaterial3D in materials:
+		assert_same(material.next_pass, available_outline)
+
+	fixture.presentation.set_target_presentation(
+		CombatantPresentation.TargetState.SELECTED,
+	)
+	var selected_outline := materials[0].next_pass as BaseMaterial3D
+	assert_same(selected_outline, available_outline)
+	assert_gt(selected_outline.grow_amount, available_width)
+	assert_gt(selected_outline.albedo_color.g, available_outline.albedo_color.r)
+
+	fixture.presentation.set_target_presentation(
+		CombatantPresentation.TargetState.NORMAL,
+	)
+	for material: BaseMaterial3D in materials:
+		assert_null(material.next_pass)
 
 
 func test_wrong_model_and_second_setup_are_rejected() -> void:
@@ -399,6 +452,7 @@ func test_tracked_model_routes_animations_and_visible_defeat_fade() -> void:
 	var shutdown_operation: PresentationOperation = fixture.presentation.sync_visual_health()
 	assert_false(shutdown_operation.is_completed)
 	assert_same(fixture.presentation.sync_visual_health(), shutdown_operation)
+	assert_null(fixture.presentation.instance_material.next_pass)
 	assert_true(
 		fixture.presentation.hud.visible,
 		"defeat keeps the non-interactive HUD renderable during its fade",
@@ -826,6 +880,8 @@ func _bound_animated_drone(
 func _populate_animated_model(model_root: Node3D) -> void:
 	var material := StandardMaterial3D.new()
 	material.albedo_color = Color(0.8, 0.25, 0.35)
+	material.metallic = 1.0
+	material.roughness = 0.1
 	var mesh := SphereMesh.new()
 	mesh.material = material
 	var mesh_instance := MeshInstance3D.new()
