@@ -30,6 +30,7 @@ Use this page as the index for project knowledge that is more detailed or more l
 - [Responsive action bar layout](superpowers/specs/2026-08-03-responsive-action-bar-layout-design.md) — Container-driven straight ability row with responsive sizing and unchanged controller mappings.
 - [Enemy world HUD alignment](superpowers/specs/2026-08-03-enemy-world-hud-alignment-design.md) — Compact model-anchored enemy vitals, fixed detail reveals, and continuous idle animation.
 - [Readable enemy HUD and formation](superpowers/specs/2026-08-03-readable-enemy-hud-and-formation-design.md) — Superseding 220-pixel enemy HUD, pronounced W/M diorama depth, and yellow-damage/green-healing feedback.
+- [Combat HUD redesign](superpowers/specs/2026-08-05-combat-hud-redesign-design.md) — Shared UI palette, theme type variations, the `SegmentBar` widget, and the superseding battle HUD composition and colour rules.
 - [Controller-driven scan cursor](superpowers/specs/2026-07-14-controller-driven-scan-cursor-design.md) — Historical initial controller scan-pointer and edge-scroll design.
 - [Terminal-to-scan correction](superpowers/specs/2026-07-14-terminal-scan-transition-correction-design.md) — Current terminal shortcut, modal transition, world-aim cursor, and scan-camera behavior.
 - [Design records](superpowers/specs/) — Approved feature designs and decisions captured before implementation.
