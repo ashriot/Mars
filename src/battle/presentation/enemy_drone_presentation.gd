@@ -3,6 +3,12 @@ class_name EnemyDronePresentation
 
 const HUD_SCENE := preload("res://src/battle/presentation/enemy_world_hud.tscn")
 const DEFEAT_FADE_DURATION := 0.2
+const STAGE_METALLIC_MAX := 0.2
+const STAGE_ROUGHNESS_MIN := 0.5
+const TARGET_OUTLINE_AVAILABLE_COLOR := Color(0.08, 0.82, 0.24)
+const TARGET_OUTLINE_SELECTED_COLOR := Color(0.22, 1.0, 0.38)
+const TARGET_OUTLINE_AVAILABLE_WIDTH := 0.025
+const TARGET_OUTLINE_SELECTED_WIDTH := 0.045
 
 @export var view_root: Node3D
 @export var model_loader: OptionalLocalModel3D
@@ -24,6 +30,7 @@ var _hit_operation: PresentationOperation
 var _health_operation: PresentationOperation
 var _shutdown_operation: PresentationOperation
 var _fade_tween: Tween
+var _target_outline_material: StandardMaterial3D
 
 
 func _ready() -> void:
@@ -97,6 +104,7 @@ func set_target_presentation(state: TargetState) -> void:
 	super.set_target_presentation(state)
 	if is_instance_valid(hud):
 		hud.set_target_state(state)
+	_refresh_target_outline()
 	_refresh_details_visibility()
 
 
@@ -331,6 +339,7 @@ func _prepare_model(model_root: Node3D) -> void:
 	if not is_instance_valid(model_root):
 		return
 	_duplicate_mesh_materials(model_root)
+	_refresh_target_outline()
 	animation_player = _find_animation_player(model_root)
 	if is_instance_valid(animation_player):
 		animation_player.animation_finished.connect(_on_animation_finished)
@@ -370,9 +379,37 @@ func _remember_material(material: Material) -> void:
 	if not (material is BaseMaterial3D):
 		return
 	var base_material := material as BaseMaterial3D
+	base_material.metallic = minf(base_material.metallic, STAGE_METALLIC_MAX)
+	base_material.roughness = maxf(base_material.roughness, STAGE_ROUGHNESS_MIN)
 	_instance_materials.append(base_material)
 	if instance_material == null:
 		instance_material = base_material
+
+
+func _refresh_target_outline() -> void:
+	var outline_enabled := (
+		target_state != TargetState.NORMAL
+		and not _combatant_is_defeated()
+	)
+	if outline_enabled and not is_instance_valid(_target_outline_material):
+		_target_outline_material = StandardMaterial3D.new()
+		_target_outline_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_target_outline_material.cull_mode = BaseMaterial3D.CULL_FRONT
+		_target_outline_material.grow = true
+	if outline_enabled:
+		var selected := target_state == TargetState.SELECTED
+		_target_outline_material.albedo_color = (
+			TARGET_OUTLINE_SELECTED_COLOR
+			if selected
+			else TARGET_OUTLINE_AVAILABLE_COLOR
+		)
+		_target_outline_material.grow_amount = (
+			TARGET_OUTLINE_SELECTED_WIDTH
+			if selected
+			else TARGET_OUTLINE_AVAILABLE_WIDTH
+		)
+	for material: BaseMaterial3D in _instance_materials:
+		material.next_pass = _target_outline_material if outline_enabled else null
 
 
 func _find_animation_player(node: Node) -> AnimationPlayer:
@@ -473,6 +510,7 @@ func _begin_shutdown_fade() -> void:
 		hud.set_target_state(TargetState.NORMAL)
 		hud.set_details_visible(false)
 		hud.begin_presentation_owned_defeat_fade()
+	_refresh_target_outline()
 	if _action_operation != null:
 		_action_operation.complete()
 	if _hit_operation != null:

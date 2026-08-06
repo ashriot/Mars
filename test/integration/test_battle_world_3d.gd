@@ -39,7 +39,8 @@ func test_world_environment_uses_readable_industrial_ambient_light() -> void:
 	assert_eq(environment.background_color, Color(0.06, 0.085, 0.13, 1.0))
 	assert_eq(environment.ambient_light_color, Color(0.42, 0.48, 0.58, 1.0))
 	assert_almost_eq(environment.ambient_light_energy, 0.8, 0.0001)
-	assert_almost_eq(environment.tonemap_exposure, 1.0, 0.0001)
+	assert_almost_eq(environment.tonemap_exposure, 1.15, 0.0001)
+	assert_true(environment.glow_enabled)
 
 
 func test_room_uses_mobile_fake_gi_lighting() -> void:
@@ -100,6 +101,21 @@ func test_room_builds_a_closed_three_bay_shell_without_backdrop() -> void:
 		assert_not_null(bay.get_node("CeilingPanel"))
 		assert_not_null(bay.get_node("CeilingBeam"))
 		assert_not_null(bay.get_node("PracticalLight"))
+		var emitter := bay.get_node_or_null("PracticalEmitter") as MeshInstance3D
+		var area_light := bay.get_node_or_null("PracticalAreaLight") as AreaLight3D
+		assert_not_null(emitter)
+		assert_not_null(area_light)
+		if emitter != null:
+			var material := emitter.get_active_material(0) as BaseMaterial3D
+			assert_not_null(material)
+			if material != null:
+				assert_true(material.emission_enabled)
+				assert_gt(material.emission_energy_multiplier, 1.0)
+		if area_light != null:
+			assert_false(area_light.shadow_enabled)
+			assert_gt(area_light.light_energy, 0.0)
+			assert_lte(area_light.area_size.x, 4.0)
+			assert_lte(area_light.area_size.y, 1.0)
 
 
 func test_room_nested_local_modules_all_keep_tracked_placeholders() -> void:
