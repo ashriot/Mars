@@ -2,7 +2,7 @@ extends GutTest
 
 const TURN_QUEUE_SCENE := preload("res://src/battle/turn_queue.tscn")
 const BATTLE_SCENE := preload("res://src/battle/battle_scene.tscn")
-const ARCHIVO := preload("res://data/theme/fonts/oxanium.tres")
+const OXANIUM := preload("res://data/theme/fonts/oxanium.tres")
 const ResponsiveFixture = preload("res://test/fixtures/responsive_viewport_fixture.gd")
 
 var queue: TurnQueue
@@ -100,7 +100,7 @@ func test_real_queue_uses_one_uniform_scrollable_list() -> void:
 	assert_eq(queue.queue_items[2].occurrence_index, 1)
 
 
-func test_queue_uses_role_color_archivo_and_faction_presentation() -> void:
+func test_queue_uses_role_color_oxanium_and_faction_presentation() -> void:
 	var icon := GradientTexture2D.new()
 	var hero := _hero("Echo", icon, Color("4f6fff"))
 	var enemy := _enemy("Attack Drone A")
@@ -113,7 +113,7 @@ func test_queue_uses_role_color_archivo_and_faction_presentation() -> void:
 	assert_same(queue.queue_items[0].role_icon.texture, icon)
 	assert_eq(queue.queue_items[0].role_icon.self_modulate, Color("4f6fff"))
 	assert_eq(queue.queue_items[1].enemy_label.text, "AD A")
-	assert_same(queue.queue_items[1].enemy_label.get_theme_font("font"), ARCHIVO)
+	assert_same(queue.queue_items[1].enemy_label.get_theme_font("font"), OXANIUM)
 	assert_eq(
 		queue.queue_items[1].enemy_label.get_theme_color("font_color"),
 		CTBGauge.ENEMY_COLOR,

@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://c2o3dssew3lm2" path="res://src/battle/actor_queue.gd" id="1_gqsil"]
 [ext_resource type="Script" path="res://src/battle/ctb_gauge.gd" id="2_gauge"]
-[ext_resource type="FontVariation" uid="uid://da34kbi1ndel7" path="res://data/theme/fonts/oxanium.tres" id="3_archivo"]
+[ext_resource type="FontVariation" uid="uid://da34kbi1ndel7" path="res://data/theme/fonts/oxanium.tres" id="3_oxanium"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_interior"]
 resource_local_to_scene = true
@@ -60,7 +60,7 @@ mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.35686275, 0.78431374, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
-theme_override_fonts/font = ExtResource("3_archivo")
+theme_override_fonts/font = ExtResource("3_oxanium")
 theme_override_font_sizes/font_size = 19
 horizontal_alignment = 1
 vertical_alignment = 1
