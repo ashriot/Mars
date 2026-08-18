@@ -79,9 +79,14 @@ The font swap already exists on `feat/oxanium-typeface` but lands its files unde
 - Rename: `data/theme/fonts/archivo.tres` → `data/theme/fonts/oxanium.tres`
 - Rename: `data/theme/fonts/archivo_italic.tres` → `data/theme/fonts/oxanium_italic.tres`
 - Rename: `data/theme/fonts/suse_mono_bold.tres` → `data/theme/fonts/oxanium_bold.tres`
-- Delete: `data/theme/fonts/suse_mono.tres`
+- Rename: `data/theme/fonts/suse_mono.tres` → `data/theme/fonts/oxanium_regular.tres`
+- Modify: `src/map/terminal.tscn`, `src/map/terminal_protocol_row.tscn`, `src/deadbeef/game_piece.tscn`
 - Modify: `src/ui/theme_bootstrap.gd`
 - Modify: `test/unit/test_theme_bootstrap.gd`
+
+**`suse_mono.tres` is live — do not delete it.** It is referenced as a per-scene font override by `terminal.tscn`, `terminal_protocol_row.tscn` and `game_piece.tscn`. Deleting it dangles those references and breaks the terminal tests. It becomes `oxanium_regular.tres` instead.
+
+**Watch out for a slip in the font branch.** `feat/oxanium-typeface` repoints `suse_mono.tres` at `union_gothic-variable.ttf`, not at Oxanium. That is not intentional — repoint it to Oxanium as part of Step 5. `archivo_narrow.tres` and `union_gothic.tres`, by contrast, are genuinely unreferenced and the merge deletes them correctly.
 
 - [ ] **Step 1: Merge the font branch**
 
@@ -102,6 +107,7 @@ const PROJECT_THEME_PATH := "res://data/theme/default_theme.tres"
 const OXANIUM := preload("res://data/theme/fonts/oxanium.tres")
 const OXANIUM_ITALIC := preload("res://data/theme/fonts/oxanium_italic.tres")
 const OXANIUM_BOLD := preload("res://data/theme/fonts/oxanium_bold.tres")
+const OXANIUM_REGULAR := preload("res://data/theme/fonts/oxanium_regular.tres")
 
 
 func test_project_theme_is_bootstrap_safe_before_imported_fonts_exist() -> void:
@@ -111,6 +117,7 @@ func test_project_theme_is_bootstrap_safe_before_imported_fonts_exist() -> void:
 	assert_false(source.contains("res://data/theme/fonts/oxanium.tres"))
 	assert_false(source.contains("res://data/theme/fonts/oxanium_italic.tres"))
 	assert_false(source.contains("res://data/theme/fonts/oxanium_bold.tres"))
+	assert_false(source.contains("res://data/theme/fonts/oxanium_regular.tres"))
 
 
 func test_runtime_project_theme_hydrates_the_authored_fonts() -> void:
@@ -122,10 +129,18 @@ func test_runtime_project_theme_hydrates_the_authored_fonts() -> void:
 	assert_same(project_theme.get_font(&"italics_font", &"RichTextLabel"), OXANIUM_ITALIC)
 
 
+# OpenType feature tags are stored (and exposed at runtime) as their 32-bit
+# integer form, not as StringNames -- FontVariation.opentype_features always
+# keys by tag int, even for resources authored entirely in the editor.
+const TNUM_FEATURE_TAG := 1953396077
+
+
 func test_authored_fonts_use_tabular_figures() -> void:
-	for font: FontVariation in [OXANIUM, OXANIUM_ITALIC, OXANIUM_BOLD]:
-		assert_eq(font.opentype_features.get(&"tnum", 0), 1)
+	for font: FontVariation in [OXANIUM, OXANIUM_ITALIC, OXANIUM_BOLD, OXANIUM_REGULAR]:
+		assert_eq(font.opentype_features.get(TNUM_FEATURE_TAG, 0), 1)
 ```
+
+**Do not key this dictionary by `&"tnum"`.** `FontVariation.opentype_features` is always keyed by the tag's 32-bit integer form at runtime, regardless of how the resource was authored, so a `StringName` lookup silently returns the default and the assertion passes for the wrong reason. Verified in engine.
 
 **Why the bootstrap-safety test matters:** the project theme is loaded before the font resources are guaranteed to be imported, so `default_theme.tres` must never reference a font path. Fonts are attached at runtime by `ThemeBootstrap`. Keep this constraint in mind for Task 3 — type variations may set sizes in the theme file but never fonts.
 
@@ -143,7 +158,7 @@ Expected: a parser error on the `preload` of `oxanium.tres`, because the file do
 git mv data/theme/fonts/archivo.tres data/theme/fonts/oxanium.tres
 git mv data/theme/fonts/archivo_italic.tres data/theme/fonts/oxanium_italic.tres
 git mv data/theme/fonts/suse_mono_bold.tres data/theme/fonts/oxanium_bold.tres
-git rm data/theme/fonts/suse_mono.tres
+git mv data/theme/fonts/suse_mono.tres data/theme/fonts/oxanium_regular.tres
 ```
 
 Godot tracks these resources by the `uid` in their headers, not by filename, so renaming does not break references. Leave each `uid` exactly as it is.
@@ -165,7 +180,17 @@ opentype_features = {
 
 `2003265652` is the `wght` axis; `1953396077` is the `tnum` feature. Godot stores OpenType tags as their 32-bit integer form in `.tres` files. In GDScript you may write `{"tnum": 1}` and the engine converts.
 
-Apply the same `opentype_features` block to `oxanium_italic.tres` and `oxanium_bold.tres`. Set `wght` to `500` for regular and italic, and `700` for bold.
+Apply the same `opentype_features` block to `oxanium_italic.tres`, `oxanium_bold.tres` and `oxanium_regular.tres`. Set `wght` to `500` for `oxanium.tres` and `oxanium_italic.tres`, `700` for `oxanium_bold.tres`, and `400` for `oxanium_regular.tres`. The `ExtResource` id differs per file — use whatever each file already has rather than copying `1_h1fwm`.
+
+`oxanium_regular.tres` needs three extra things because it arrives from the font branch mispointed:
+
+- Repoint its `ext_resource` to `res://data/theme/fonts/base_fonts/Oxanium-VariableFont_wght.ttf`. Confirm that file's `uid` from its own `.import` sidecar rather than assuming one.
+- Keep the resource's **own** `uid="uid://c0je4m574ytir"` unchanged, so the three consuming scenes keep resolving it.
+- Drop the inherited `liga` feature (`1818847073`). It was not a deliberate choice and Oxanium does not need it.
+
+Then update the three consuming scenes — `src/map/terminal.tscn`, `src/map/terminal_protocol_row.tscn`, `src/deadbeef/game_piece.tscn` — repointing any literal `path="res://data/theme/fonts/suse_mono.tres"` to the new filename. Entries resolving purely by `uid://c0je4m574ytir` need no edit, but check each one; Godot usually writes both.
+
+These scenes lose their monospaced look, which is accepted: tabular figures cover the digit-alignment need that actually mattered.
 
 - [ ] **Step 6: Point the bootstrap at the new names**
 
@@ -202,6 +227,8 @@ func hydrate_project_theme() -> bool:
 	return true
 ```
 
+`oxanium_regular.tres` is deliberately **not** loaded here. It is a per-scene override, not a project-theme default, so it stays out of `hydrate_project_theme` and out of the `TYPE_VARIATIONS` list added in Task 3.
+
 - [ ] **Step 7: Find and fix every remaining reference**
 
 ```bash
@@ -217,7 +244,15 @@ env HOME=/tmp/mars-godot-home '/Applications/Godot 4.7.app/Contents/MacOS/Godot'
 env HOME=/tmp/mars-godot-home '/Applications/Godot 4.7.app/Contents/MacOS/Godot' --headless --path /Users/adam/github/mars -s addons/gut/gut_cmdln.gd -gselect=test_theme_bootstrap -gexit
 ```
 
-Expected: 3/3 passing.
+Expected: 4/4 passing.
+
+Then run the tests covering the scenes repointed in Step 5, and report their results separately:
+
+```bash
+env HOME=/tmp/mars-godot-home '/Applications/Godot 4.7.app/Contents/MacOS/Godot' --headless --path /Users/adam/github/mars -s addons/gut/gut_cmdln.gd -gselect=test_terminal -gexit
+```
+
+Expected: all passing. These exercise the terminal scenes whose font resource just moved, so they are the blast radius of this task.
 
 - [ ] **Step 9: Run the full suite**
 
