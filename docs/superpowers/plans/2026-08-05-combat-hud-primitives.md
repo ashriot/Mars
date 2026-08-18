@@ -244,7 +244,7 @@ env HOME=/tmp/mars-godot-home '/Applications/Godot 4.7.app/Contents/MacOS/Godot'
 env HOME=/tmp/mars-godot-home '/Applications/Godot 4.7.app/Contents/MacOS/Godot' --headless --path /Users/adam/github/mars -s addons/gut/gut_cmdln.gd -gselect=test_theme_bootstrap -gexit
 ```
 
-Expected: 4/4 passing.
+Expected: 3/3 passing, 13 asserts. Three test functions, four fonts — the tabular-figures test loops over all four.
 
 Then run the tests covering the scenes repointed in Step 5, and report their results separately:
 
