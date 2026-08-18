@@ -2,7 +2,7 @@ extends GutTest
 
 const TURN_QUEUE_SCENE := preload("res://src/battle/turn_queue.tscn")
 const BATTLE_SCENE := preload("res://src/battle/battle_scene.tscn")
-const ARCHIVO := preload("res://data/theme/fonts/archivo.tres")
+const ARCHIVO := preload("res://data/theme/fonts/oxanium.tres")
 const ResponsiveFixture = preload("res://test/fixtures/responsive_viewport_fixture.gd")
 
 var queue: TurnQueue

@@ -4,7 +4,7 @@
 [ext_resource type="Resource" uid="uid://lapq7v4xfd17" path="res://data/enemies/dungeon_profiles/level_one.tres" id="2_gb5ag"]
 [ext_resource type="Texture2D" uid="uid://5g78sj1okle7" path="res://assets/graphics/backgrounds/apartment.webp" id="2_n1oa3"]
 [ext_resource type="Texture2D" uid="uid://b0a4ghiukj8yg" path="res://src/effects/Flare_small.PNG" id="3_c3p1t"]
-[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="4_bfsw3"]
+[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/oxanium_bold.tres" id="4_bfsw3"]
 [ext_resource type="Texture2D" uid="uid://57er1ylqh81y" path="res://assets/graphics/icons/hub/home.png" id="5_gb5ag"]
 [ext_resource type="PackedScene" uid="uid://1qbutp7j5oji" path="res://src/hub/party_menu.tscn" id="10_yo4oc"]
 

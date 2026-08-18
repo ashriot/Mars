@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://bmfgtwon1vl3q" path="res://assets/graphics/icons/equipment/rifle.png" id="2_pnfj5"]
 [ext_resource type="Texture2D" uid="uid://64kylgef8r0s" path="res://assets/graphics/icons/hub/maint_normal.png" id="3_4ftbt"]
 [ext_resource type="Texture2D" uid="uid://dq071pxxnd0qt" path="res://assets/graphics/sprites/equipment/ar.png" id="3_kfb1c"]
-[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="3_pnfj5"]
+[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/oxanium_bold.tres" id="3_pnfj5"]
 [ext_resource type="Texture2D" uid="uid://ud83slvg21iv" path="res://assets/graphics/icons/hub/maint_pressed.png" id="4_w6u3g"]
 [ext_resource type="Texture2D" uid="uid://c0pbt1n7ptuui" path="res://assets/graphics/icons/hub/maint_disabled.png" id="5_dghca"]
 [ext_resource type="PackedScene" uid="uid://d1s2fic8fbwev" path="res://src/hub/mod_slot.tscn" id="8_4ftbt"]

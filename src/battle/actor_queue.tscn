@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://c2o3dssew3lm2" path="res://src/battle/actor_queue.gd" id="1_gqsil"]
 [ext_resource type="Script" path="res://src/battle/ctb_gauge.gd" id="2_gauge"]
-[ext_resource type="FontVariation" uid="uid://da34kbi1ndel7" path="res://data/theme/fonts/archivo.tres" id="3_archivo"]
+[ext_resource type="FontVariation" uid="uid://da34kbi1ndel7" path="res://data/theme/fonts/oxanium.tres" id="3_archivo"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_interior"]
 resource_local_to_scene = true

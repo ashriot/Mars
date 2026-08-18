@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://cavapca75k2nq" path="res://src/core/floating_text.gd" id="1_0u83x"]
 [ext_resource type="Texture2D" uid="uid://blq6w453dyibk" path="res://assets/graphics/sprites/enemies/camera-drone.png" id="2_02eor"]
-[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="2_svyeq"]
+[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/oxanium_bold.tres" id="2_svyeq"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_svyeq"]
 bg_color = Color(1, 1, 1, 0.9411765)

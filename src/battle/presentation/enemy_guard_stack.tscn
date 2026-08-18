@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://src/battle/presentation/enemy_guard_stack.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://bi50x3lsg4gpg" path="res://assets/graphics/icons/textures/shield.png" id="2_shield"]
-[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="3_bold"]
+[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/oxanium_bold.tres" id="3_bold"]
 
 [node name="EnemyGuardStack" type="Control"]
 custom_minimum_size = Vector2(220, 22)

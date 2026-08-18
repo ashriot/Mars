@@ -4,7 +4,7 @@
 [ext_resource type="Script" uid="uid://m4vn3jl6sqd6" path="res://src/core/rich_tooltip.gd" id="2_83fjm"]
 [ext_resource type="Texture2D" uid="uid://dldmpu0c4mvsl" path="res://assets/graphics/icons/skills/empty-chessboard.png" id="2_pk42m"]
 [ext_resource type="Texture2D" uid="uid://8q1o0oaginc0" path="res://assets/graphics/icons/textures/bolt_sm.png" id="4_83fjm"]
-[ext_resource type="FontVariation" uid="uid://da34kbi1ndel7" path="res://data/theme/fonts/archivo.tres" id="4_lgg24"]
+[ext_resource type="FontVariation" uid="uid://da34kbi1ndel7" path="res://data/theme/fonts/oxanium.tres" id="4_lgg24"]
 [ext_resource type="Script" uid="uid://b684sdqsvpn3p" path="res://src/battle/dynamic_glyph.gd" id="6_lyfxd"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mvr6q"]

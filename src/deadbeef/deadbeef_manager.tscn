@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://cofotb1kj045s" path="res://src/deadbeef/hex_chip.tscn" id="2_e8ltb"]
 [ext_resource type="PackedScene" uid="uid://bmfik6nt4y0j0" path="res://src/deadbeef/game_piece.tscn" id="3_4i8lp"]
 [ext_resource type="Texture2D" uid="uid://fptqehalo870" path="res://assets/graphics/icons/map/delivery-drone.png" id="3_tp4km"]
-[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="5_4i8lp"]
+[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/oxanium_bold.tres" id="5_4i8lp"]
 
 [node name="DeadbeefManager" type="Control"]
 layout_mode = 3

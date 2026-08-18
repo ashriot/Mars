@@ -4,7 +4,7 @@ extends GutTest
 const HUD_SCENE := preload("res://src/battle/presentation/enemy_world_hud.tscn")
 const WORLD_SCENE := preload("res://src/battle/presentation/battle_world_3d.tscn")
 const DAMAGE_POPUP := preload("res://src/battle/damage_popup.gd")
-const BOLD_FONT_PATH := "res://data/theme/fonts/suse_mono_bold.tres"
+const BOLD_FONT_PATH := "res://data/theme/fonts/oxanium_bold.tres"
 const COMPACT_WIDTH := 220.0
 const INTENT_WIDTH := 286.0
 const HP_SIZE := Vector2(220.0, 32.0)

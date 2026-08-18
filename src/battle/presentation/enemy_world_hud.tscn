@@ -1,7 +1,7 @@
 [gd_scene load_steps=10 format=3 uid="uid://d0q4mwn17xj5h"]
 
 [ext_resource type="Script" uid="uid://c8686deql6he" path="res://src/battle/presentation/enemy_world_hud.gd" id="1_hud"]
-[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="3_bold"]
+[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/oxanium_bold.tres" id="3_bold"]
 [ext_resource type="Script" uid="uid://m4vn3jl6sqd6" path="res://src/core/rich_tooltip.gd" id="4_tooltip"]
 [ext_resource type="PackedScene" path="res://src/battle/presentation/enemy_guard_stack.tscn" id="5_guard_stack"]
 [ext_resource type="PackedScene" uid="uid://ckw8rm3jl32bx" path="res://src/battle/damage_popup.tscn" id="6_damage_popup"]

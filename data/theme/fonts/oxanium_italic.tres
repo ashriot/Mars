@@ -9,6 +9,5 @@ variation_opentype = {
 }
 variation_transform = Transform2D(1, 0.25, 0, 1, 0, 0)
 opentype_features = {
-1886287213: 1,
-2053468783: 1
+1953396077: 1
 }

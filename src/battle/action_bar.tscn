@@ -5,8 +5,8 @@
 [ext_resource type="StyleBox" uid="uid://3o7lhriwwhfs" path="res://data/theme/styleboxes/shift_panel.tres" id="3_0s03y"]
 [ext_resource type="Texture2D" uid="uid://dldmpu0c4mvsl" path="res://assets/graphics/icons/skills/empty-chessboard.png" id="4_g6dho"]
 [ext_resource type="Script" uid="uid://m4vn3jl6sqd6" path="res://src/core/rich_tooltip.gd" id="4_txve6"]
-[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="5_d4ff0"]
-[ext_resource type="FontVariation" uid="uid://da34kbi1ndel7" path="res://data/theme/fonts/archivo.tres" id="7_anymx"]
+[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/oxanium_bold.tres" id="5_d4ff0"]
+[ext_resource type="FontVariation" uid="uid://da34kbi1ndel7" path="res://data/theme/fonts/oxanium.tres" id="7_anymx"]
 [ext_resource type="Script" uid="uid://b684sdqsvpn3p" path="res://src/battle/dynamic_glyph.gd" id="8_anymx"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_b2vw5"]
