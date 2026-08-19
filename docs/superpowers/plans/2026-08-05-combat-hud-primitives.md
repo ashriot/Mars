@@ -311,17 +311,31 @@ func test_palette_resource_defines_every_required_color() -> void:
 func test_guard_is_achromatic_so_it_never_competes_with_the_hp_ramp() -> void:
 	var palette := load(PALETTE_PATH) as UIPalette
 
-	assert_almost_eq(palette.guard.s, 0.0, 0.05)
+	assert_lt(palette.guard.s, 0.10, "guard reads as a neutral steel white")
 
 
-func test_hp_ramp_escalates_from_calm_to_alarming() -> void:
+func test_hp_ramp_starts_achromatic_and_alarms_warm() -> void:
 	var palette := load(PALETTE_PATH) as UIPalette
 
-	assert_lt(palette.hp_ok.s, palette.hp_warn.s)
-	assert_lt(palette.hp_warn.s, palette.hp_crit.s)
+	assert_lt(palette.hp_ok.s, 0.30, "a healthy unit is achromatic steel")
+	assert_gt(palette.hp_warn.s, 0.50, "warn is unmistakably warm")
+	assert_gt(palette.hp_crit.s, 0.50, "crit is unmistakably warm")
+
+
+func test_hp_ramp_escalates_from_cool_through_amber_to_red() -> void:
+	var palette := load(PALETTE_PATH) as UIPalette
+
+	assert_between(palette.hp_ok.h, 0.45, 0.75, "ok sits in the cool blues")
+	assert_between(palette.hp_warn.h, 0.05, 0.15, "warn sits in the ambers")
+	assert_true(
+		palette.hp_crit.h <= 0.03 or palette.hp_crit.h >= 0.97,
+		"crit sits at red",
+	)
 ```
 
-The saturation assertions encode the design rules rather than the literal hex values, so retuning a colour does not break the test but abandoning a rule does.
+These assertions encode the design rules rather than literal hex values, so retuning a colour does not break the test but abandoning a rule does.
+
+**The ramp escalates in hue, not saturation.** Measured: `hp_ok` is 210° at 20% saturation, `hp_warn` is 35° at 75%, `hp_crit` is 0° at 71%. Amber is *more* saturated than red — that is how those hues work, not a defect — so any assertion that saturation rises monotonically across the ramp is measuring the wrong thing and will fail against the real palette. `guard` sits at 6% saturation on `hp_ok`'s 210° hue: a deliberate cool white, achromatic to the eye, so the tolerance must accommodate it. Godot's `Color.h` is 0..1, not degrees, and the `hp_crit` check is an or-comparison because red straddles the 0/1 wrap.
 
 - [ ] **Step 2: Run it to verify it fails**
 
