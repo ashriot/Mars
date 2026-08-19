@@ -484,7 +484,7 @@ func test_every_type_variation_clears_the_deck_cap_height_floor() -> void:
 		if font == null:
 			continue
 		var authored_size: int = EXPECTED_SIZES[variation]
-		var cap_height := font.get_char_size("H".unicode_at(0), authored_size).y
+		var cap_height := _cap_height(font, authored_size, CAPITAL_H)
 		var rendered_cap := cap_height * scale
 		assert_gte(
 			rendered_cap,
@@ -495,7 +495,36 @@ func test_every_type_variation_clears_the_deck_cap_height_floor() -> void:
 		)
 ```
 
-**Why `get_char_size` and not `get_height`:** `get_height()` includes ascent and descent, so it overstates glyph height and would let a font slip under Valve's floor while the test passes. The cap height of a capital H is the measurement the requirement is actually about.
+**Measuring cap height needs `TextServer`, not `Font`.** Both `Font.get_height()` and `Font.get_char_size().y` return LINE height — ascent plus descent — and are identical for every glyph. Measured on Oxanium at size 27, `H`, `x`, `g` and `.` all report `28.0`. Using either would make this gate roughly a third more generous than Valve's requirement, so a typeface that genuinely failed the floor would pass. Per-glyph metrics come from `TextServerManager.get_primary_interface()`; the glyph offset's negated y is the baseline-to-top distance, which for a capital H is cap height by definition:
+
+```gdscript
+const CAPITAL_H := 72
+const FULL_STOP := 46
+
+
+func _cap_height(font: Font, size: int, character: int) -> float:
+	var rids := font.get_rids()
+	if rids.is_empty():
+		return 0.0
+	var text_server := TextServerManager.get_primary_interface()
+	var glyph := text_server.font_get_glyph_index(rids[0], size, character, 0)
+	return -text_server.font_get_glyph_offset(rids[0], Vector2i(size, 0), glyph).y
+```
+
+`TextServer` methods are not static — calling them on the class directly is a parse error.
+
+Add a test asserting a capital H measures meaningfully taller than a full stop. That is the check that catches this exact bug recurring; without it an engine change could silently restore the line-height measurement and nothing would notice. Add the 12px recommendation as a separate assertion from the 9px requirement, with failure messages that distinguish which is mandatory.
+
+Measured on Oxanium, all four tokens clear both:
+
+| Token | Size | Cap height | Ratio | At 1280x800 |
+|---|---:|---:|---:|---:|
+| `LabelMicro` | 27 | 19.0 | 0.704 | 14.07 |
+| `LabelLabel` | 30 | 22.0 | 0.733 | 16.30 |
+| `LabelValue` | 33 | 25.0 | 0.758 | 18.52 |
+| `LabelSub` | 27 | 19.0 | 0.704 | 14.07 |
+
+Note that measuring through `project_theme.get_font()` in a bare `SceneTree` harness returns the engine's fallback font, because the `ThemeBootstrap` autoload has not hydrated yet. Measure under GUT, or load the font resource directly.
 
 - [ ] **Step 2: Run it to verify it fails**
 
