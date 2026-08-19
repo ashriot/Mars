@@ -19,6 +19,8 @@ const COOL_COLORS: Array[StringName] = [
 	&"accent", &"hp_ok", &"guard",
 ]
 
+const WARM_COLORS: Array[StringName] = [&"stroke_warm", &"hp_warn", &"hp_crit", &"threat"]
+
 
 func test_palette_resource_defines_every_required_color() -> void:
 	assert_not_null(PALETTE)
@@ -51,6 +53,20 @@ func test_palette_declares_exactly_the_required_colors() -> void:
 		)
 
 
+func test_every_color_is_classified_cool_or_warm() -> void:
+	var classified := COOL_COLORS + WARM_COLORS
+
+	assert_eq(
+		classified.size(), REQUIRED_COLORS.size(),
+		"every palette colour must be classified cool or warm exactly once",
+	)
+	for property: StringName in REQUIRED_COLORS:
+		assert_true(
+			property in classified,
+			"%s is guarded by neither the cool nor the warm rule" % property,
+		)
+
+
 func test_guard_is_achromatic_so_it_never_competes_with_the_hp_ramp() -> void:
 	assert_lt(PALETTE.guard.s, 0.15, "guard reads as a neutral steel white")
 
@@ -77,7 +93,7 @@ func test_only_the_alarm_colors_are_warm() -> void:
 		var color: Color = PALETTE.get(property)
 		assert_between(
 			color.h, 0.45, 0.75,
-			"%s must stay cool; only hp_warn, hp_crit, threat and stroke_warm may be warm" % property,
+			"%s must stay cool; only %s may be warm" % [property, ", ".join(WARM_COLORS)],
 		)
 
 
