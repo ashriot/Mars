@@ -1,4 +1,3 @@
-@tool
 class_name UIPalette
 extends Resource
 
@@ -32,7 +31,7 @@ extends Resource
 @export var hp_warn := Color("f0a63c")
 @export var hp_crit := Color("ff4b4b")
 
-@export_group("Other")
+@export_group("Signals")
 ## Achromatic on purpose: guard must never compete with the HP ramp.
 @export var guard := Color("e8f0f8")
 ## Lethal forecast only.
