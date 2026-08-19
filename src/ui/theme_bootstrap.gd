@@ -4,6 +4,10 @@ const OXANIUM_PATH := "res://data/theme/fonts/oxanium.tres"
 const OXANIUM_ITALIC_PATH := "res://data/theme/fonts/oxanium_italic.tres"
 const OXANIUM_BOLD_PATH := "res://data/theme/fonts/oxanium_bold.tres"
 
+const TYPE_VARIATIONS: Array[StringName] = [
+	&"LabelMicro", &"LabelLabel", &"LabelValue", &"LabelSub",
+]
+
 
 func _ready() -> void:
 	if Engine.is_editor_hint():
@@ -25,4 +29,6 @@ func hydrate_project_theme() -> bool:
 	project_theme.default_font = oxanium_bold
 	project_theme.set_font(&"normal_font", &"RichTextLabel", oxanium)
 	project_theme.set_font(&"italics_font", &"RichTextLabel", oxanium_italic)
+	for variation: StringName in TYPE_VARIATIONS:
+		project_theme.set_font(&"font", variation, oxanium_bold)
 	return true
