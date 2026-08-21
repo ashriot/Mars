@@ -440,8 +440,8 @@ Create `test/unit/test_type_scale.gd`:
 ```gdscript
 extends GutTest
 
-const REFERENCE_HEIGHT := 1080.0
-const COMPACT_HEIGHT := 800.0
+const ResponsiveFixture = preload("res://test/fixtures/responsive_viewport_fixture.gd")
+const DECK_OUTPUT := Vector2i(1280, 800)
 const DECK_CAP_FLOOR := 9.0
 
 const EXPECTED_SIZES := {
@@ -476,7 +476,7 @@ func test_every_type_variation_derives_from_label() -> void:
 
 func test_every_type_variation_clears_the_deck_cap_height_floor() -> void:
 	var project_theme := ThemeDB.get_project_theme()
-	var scale := COMPACT_HEIGHT / REFERENCE_HEIGHT
+	var scale := ResponsiveFixture.output_scale_for(DECK_OUTPUT)
 
 	for variation: StringName in EXPECTED_SIZES:
 		var font := project_theme.get_font(&"font", variation)
@@ -519,10 +519,12 @@ Measured on Oxanium, all four tokens clear both:
 
 | Token | Size | Cap height | Ratio | At 1280x800 |
 |---|---:|---:|---:|---:|
-| `LabelMicro` | 27 | 19.0 | 0.704 | 14.07 |
-| `LabelLabel` | 30 | 22.0 | 0.733 | 16.30 |
-| `LabelValue` | 33 | 25.0 | 0.758 | 18.52 |
-| `LabelSub` | 27 | 19.0 | 0.704 | 14.07 |
+| `LabelMicro` | 27 | 19.0 | 0.704 | 12.67 |
+| `LabelLabel` | 30 | 22.0 | 0.733 | 14.67 |
+| `LabelValue` | 33 | 25.0 | 0.758 | 16.67 |
+| `LabelSub` | 27 | 19.0 | 0.704 | 12.67 |
+
+**The scale is 2/3, not 800/1080.** With `expand` aspect a 1280x800 output maps to a 1920x1200 logical canvas — the width binds at 16:10 — so the output scale is `min(1280/1920, 800/1080)` = 2/3, exactly what `DisplayProfileService.output_scale_for` returns and what `test_display_profile_service` already pins. Derive the scale from `test/fixtures/responsive_viewport_fixture.gd` rather than restating any ratio in the test. Dividing by the height alone overstates every rendered cap by 11% and reports margins that do not exist: `LabelMicro` clears the 12px recommendation by 0.67px, not 2.07px.
 
 Note that measuring through `project_theme.get_font()` in a bare `SceneTree` harness returns the engine's fallback font, because the `ThemeBootstrap` autoload has not hydrated yet. Measure under GUT, or load the font resource directly.
 
