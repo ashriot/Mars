@@ -236,6 +236,84 @@ func test_wrapped_draw_quads_fill_precedes_unfilled_in_row_order() -> void:
 	assert_eq(kinds, expected)
 
 
+func test_tally_inserts_a_group_gap_every_group_every_cells() -> void:
+	var bar := _bar()
+	bar.style = SegmentBar.Style.TALLY
+	bar.cells = 10
+	bar.cell_size = Vector2(9, 24)
+	bar.cell_gap = 3.0
+	bar.group_every = 5
+	bar.group_gap = 10.5
+	bar.skew_px = 0.0
+
+	var minimum := bar.get_minimum_size()
+
+	assert_almost_eq(minimum.x, 10.0 * 9.0 + 9.0 * 3.0 + 10.5, 0.01)
+
+
+func test_tally_without_grouping_has_no_extra_width() -> void:
+	var bar := _bar()
+	bar.style = SegmentBar.Style.TALLY
+	bar.cells = 10
+	bar.cell_size = Vector2(9, 24)
+	bar.cell_gap = 3.0
+	bar.group_every = 0
+	bar.skew_px = 0.0
+
+	var minimum := bar.get_minimum_size()
+
+	assert_almost_eq(minimum.x, 10.0 * 9.0 + 9.0 * 3.0, 0.01)
+
+
+func test_ability_cost_sizes_itself_to_the_cost() -> void:
+	var bar := _bar()
+	bar.style = SegmentBar.Style.TALLY
+	bar.cells = 3
+	bar.cell_size = Vector2(9, 21)
+	bar.cell_gap = 3.0
+	bar.group_every = 5
+	bar.skew_px = 0.0
+
+	var minimum := bar.get_minimum_size()
+
+	assert_almost_eq(minimum.x, 3.0 * 9.0 + 2.0 * 3.0, 0.01)
+
+
+func test_tally_draw_quads_stay_within_and_reach_minimum_size() -> void:
+	# Mirrors test_wrapped_draw_quads_stay_within_and_reach_minimum_size:
+	# reads the real draw path via get_draw_quads() rather than re-deriving
+	# the group-gap stepping here, so a dropped or mis-indexed group_gap
+	# step shows up as a mismatch instead of staying invisible.
+	var bar := _bar()
+	bar.style = SegmentBar.Style.TALLY
+	bar.cells = 10
+	bar.cell_size = Vector2(9, 24)
+	bar.cell_gap = 3.0
+	bar.group_every = 5
+	bar.group_gap = 10.5
+	bar.skew_px = 3.0
+
+	var minimum := bar.get_minimum_size()
+
+	var leftmost := INF
+	var rightmost := -INF
+	var topmost := INF
+	var bottommost := -INF
+	for entry in bar.get_draw_quads():
+		if entry.kind != &"track":
+			continue
+		for point in entry.quad:
+			leftmost = minf(leftmost, point.x)
+			rightmost = maxf(rightmost, point.x)
+			topmost = minf(topmost, point.y)
+			bottommost = maxf(bottommost, point.y)
+
+	assert_almost_eq(leftmost, 0.0, 0.001)
+	assert_almost_eq(rightmost, minimum.x, 0.001)
+	assert_almost_eq(topmost, 0.0, 0.001)
+	assert_almost_eq(bottommost, minimum.y, 0.001)
+
+
 func _guard_bar(cap: float) -> SegmentBar:
 	var bar := _bar()
 	bar.style = SegmentBar.Style.WRAPPED

@@ -57,6 +57,20 @@ enum Style {
 		queue_redraw()
 		update_minimum_size()
 
+## TALLY only. Insert group_gap every N cells so the eye subitises in fives
+## instead of counting. 0 disables grouping.
+@export var group_every: int = 0:
+	set(v):
+		group_every = maxi(v, 0)
+		queue_redraw()
+		update_minimum_size()
+
+@export var group_gap: float = 10.5:
+	set(v):
+		group_gap = v
+		queue_redraw()
+		update_minimum_size()
+
 ## WRAPPED only. One cell equals one hit at a CONSTANT size — never rescale
 ## cells to fit a bigger ceiling. The gauge wraps instead: max_value cells
 ## laid out per_row at a time. Row count then IS the cap, so nothing can
@@ -123,6 +137,8 @@ func _get_minimum_size() -> Vector2:
 		return Vector2(width, height)
 
 	var width := cells * cell_size.x + maxf(cells - 1, 0) * cell_gap
+	if style == Style.TALLY and group_every > 0:
+		width += group_gap * floorf(float(cells - 1) / float(group_every))
 	return Vector2(width + absf(skew_px), cell_size.y)
 
 
@@ -211,6 +227,9 @@ func _build_pips_quads(pad: float) -> Array[Dictionary]:
 	var x := pad
 
 	for i in cells:
+		if style == Style.TALLY and group_every > 0 and i > 0 and i % group_every == 0:
+			x += group_gap
+
 		var fill := 0.0
 		var partial := false
 		if i < full:
@@ -249,8 +268,11 @@ func _build_wrapped_quads(pad: float) -> Array[Dictionary]:
 		var x := pad + column * (w + cell_gap)
 		var offset := Vector2(0.0, row * (h + row_gap))
 
-		# PackedVector2Array is copy-on-write, so track and fill can share
-		# one built quad instead of building the same geometry twice.
+		# track and fill share one built quad instead of building the same
+		# geometry twice. Safe because nothing mutates the returned quads —
+		# _draw() only reads them and _stroke() duplicates before appending.
+		# The two entries alias one buffer: an in-place edit to either
+		# (quad[i] = ...) would move the other. Rebuild rather than edit.
 		var cell_quad := _translate_quad(_quad(x, 0.0, h, w), offset)
 		quads.append({quad = cell_quad, kind = &"track"})
 		if i < filled:
