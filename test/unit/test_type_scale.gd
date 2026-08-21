@@ -15,6 +15,16 @@ const EXPECTED_SIZES := {
 }
 
 
+## Theme.has_font() returns true whenever default_font is set, for ANY theme
+## type name -- including ones that were never declared -- so it cannot detect
+## a deleted hydration loop. get_font_list() only lists fonts actually set on
+## that exact theme_type, which is the check that catches that regression.
+## (Theme.has_theme_item(DATA_TYPE_FONT, ...) is equivalent here; it is NOT an
+## alias for has_font, which is the surprising part.)
+func _has_own_font(theme: Theme, variation: StringName) -> bool:
+	return theme.get_font_list(variation).has(&"font")
+
+
 ## Cap height is the distance from the baseline to the top of a capital H.
 ## Font.get_char_size().y and Font.get_height() both return LINE height --
 ## ascent plus descent, identical for every glyph including a period -- which
@@ -22,15 +32,6 @@ const EXPECTED_SIZES := {
 ## under Valve's floor while this test passed. TextServer glyph metrics are the
 ## only per-glyph measurement available, and the glyph offset's negated y is
 ## the baseline-to-top distance.
-## Theme.has_font() resolves through the type-variation base chain (LabelMicro
-## -> Label) all the way to default_font, so it reports true even when nothing
-## was ever hydrated onto the variation itself -- it cannot detect a deleted
-## hydration loop. get_font_list() only lists fonts actually set on that exact
-## theme_type, which is the check that catches that regression.
-func _has_own_font(theme: Theme, variation: StringName) -> bool:
-	return theme.get_font_list(variation).has(&"font")
-
-
 func _cap_height(font: Font, size: int, character: int) -> float:
 	var rids := font.get_rids()
 	if rids.is_empty():
@@ -58,11 +59,12 @@ func _assert_cap_height_clears(threshold: float, label: String) -> void:
 	var scale := ResponsiveFixture.output_scale_for(DECK_OUTPUT)
 
 	for variation: StringName in EXPECTED_SIZES:
+		var hydrated := _has_own_font(project_theme, variation)
 		assert_true(
-			_has_own_font(project_theme, variation),
+			hydrated,
 			"%s has a font hydrated onto the variation itself, not inherited from default_font" % variation,
 		)
-		if not _has_own_font(project_theme, variation):
+		if not hydrated:
 			continue
 		var font := project_theme.get_font(&"font", variation)
 		var authored_size := project_theme.get_font_size(&"font_size", variation)
@@ -127,11 +129,12 @@ func test_every_type_variation_meets_the_deck_cap_height_recommendation() -> voi
 
 func test_cap_height_measurement_is_per_glyph() -> void:
 	var project_theme := ThemeDB.get_project_theme()
+	var hydrated := _has_own_font(project_theme, &"LabelMicro")
 	assert_true(
-		_has_own_font(project_theme, &"LabelMicro"),
+		hydrated,
 		"LabelMicro has a font hydrated onto the variation itself, not inherited from default_font",
 	)
-	if not _has_own_font(project_theme, &"LabelMicro"):
+	if not hydrated:
 		return
 	var font := project_theme.get_font(&"font", &"LabelMicro")
 	var authored_size := project_theme.get_font_size(&"font_size", &"LabelMicro")
