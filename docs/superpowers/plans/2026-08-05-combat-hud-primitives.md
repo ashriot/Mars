@@ -990,12 +990,17 @@ Replace `_draw`:
 
 ```gdscript
 func _draw() -> void:
-	var pad := maxf(skew_px, 0.0) * 0.5
+	# absf, not maxf(skew_px, 0.0): negative skew shifts a cell's top-left
+	# corner left of x = 0, so the strip needs the same containment padding
+	# on that side too.
+	var pad := absf(skew_px) * 0.5
 	if style == Style.WRAPPED:
 		_draw_wrapped(pad)
 	else:
 		_draw_cells(pad)
 ```
+
+Keep the `absf` padding — Task 4's review fixed exactly this, and reverting to `maxf(skew_px, 0.0)` would silently spill negative-skew drawing left of the control's rect again.
 
 Then add:
 
