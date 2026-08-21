@@ -19,6 +19,8 @@ enum Style {
 		queue_redraw()
 		update_minimum_size()
 
+## Current amount. WRAPPED treats this as an integer hit count: rounded
+## half-away-from-zero (0.5 -> 1, 2.5 -> 3) before being clamped into cells.
 @export var value: float = 100.0:
 	set(v):
 		value = v
@@ -58,8 +60,13 @@ enum Style {
 ## WRAPPED only. One cell equals one hit at a CONSTANT size — never rescale
 ## cells to fit a bigger ceiling. The gauge wraps instead: max_value cells
 ## laid out per_row at a time. Row count then IS the cap, so nothing can
-## overfill a bar whose ceiling you cannot see, and the widget's width is
-## identical for every unit.
+## overfill a bar whose ceiling you cannot see. Minimum-size width always
+## reserves the full per_row columns, even when the cap doesn't fill a
+## row — a cap of 3 is exactly as wide as a cap of 10 or 30, so the
+## widget's width is identical for every unit regardless of its guard cap.
+## The one exception is a cap of 0 (no guard mechanic at all), which
+## collapses to Vector2.ZERO instead of drawing a phantom empty cell — see
+## get_row_count().
 @export var per_row: int = 10:
 	set(v):
 		per_row = maxi(v, 1)
@@ -109,8 +116,9 @@ func get_partial_cell_fill() -> float:
 func _get_minimum_size() -> Vector2:
 	if style == Style.WRAPPED:
 		var rows := get_row_count()
-		var columns := mini(maxi(int(round(max_value)), 1), per_row)
-		var width := columns * cell_size.x + maxf(columns - 1, 0) * cell_gap + absf(skew_px)
+		if rows == 0:
+			return Vector2.ZERO
+		var width := per_row * cell_size.x + maxf(per_row - 1, 0) * cell_gap + absf(skew_px)
 		var height := rows * cell_size.y + maxf(rows - 1, 0) * row_gap
 		return Vector2(width, height)
 
@@ -120,12 +128,24 @@ func _get_minimum_size() -> Vector2:
 
 ## WRAPPED only. Row count IS the cap: max_value cells laid out per_row at a
 ## time, so a bar's row count (and therefore height) is fixed by its ceiling
-## alone, never by the live value. Other styles are single-row.
+## alone, never by the live value. A cap of 0 (or negative) has no cells at
+## all and reports 0 rows, not 1 — see _wrapped_cell_count(). Other styles
+## are single-row.
 func get_row_count() -> int:
 	if style != Style.WRAPPED:
 		return 1
-	var count := maxi(int(round(max_value)), 1)
+	var count := _wrapped_cell_count()
+	if count == 0:
+		return 0
 	return ceili(float(count) / float(per_row))
+
+
+## WRAPPED cell count: one cell per point of max_value, floored at 0 (not 1)
+## so a unit with no guard mechanic (max_value <= 0) collapses to no cells
+## instead of drawing one phantom empty cell. Shared by get_row_count() and
+## _build_wrapped_quads() so the two derivations can't drift apart.
+func _wrapped_cell_count() -> int:
+	return maxi(int(round(max_value)), 0)
 
 
 ## Left padding that keeps every cell's polygon inside [0, get_minimum_size().x]
@@ -220,7 +240,7 @@ func _build_wrapped_quads(pad: float) -> Array[Dictionary]:
 	var quads: Array[Dictionary] = []
 	var h := cell_size.y
 	var w := cell_size.x
-	var count := maxi(int(round(max_value)), 1)
+	var count := _wrapped_cell_count()
 	var filled := clampi(int(round(value)), 0, count)
 
 	for i in count:
@@ -229,9 +249,12 @@ func _build_wrapped_quads(pad: float) -> Array[Dictionary]:
 		var x := pad + column * (w + cell_gap)
 		var offset := Vector2(0.0, row * (h + row_gap))
 
-		quads.append({quad = _translate_quad(_quad(x, 0.0, h, w), offset), kind = &"track"})
+		# PackedVector2Array is copy-on-write, so track and fill can share
+		# one built quad instead of building the same geometry twice.
+		var cell_quad := _translate_quad(_quad(x, 0.0, h, w), offset)
+		quads.append({quad = cell_quad, kind = &"track"})
 		if i < filled:
-			quads.append({quad = _translate_quad(_quad(x, 0.0, h, w), offset), kind = &"fill"})
+			quads.append({quad = cell_quad, kind = &"fill"})
 
 	return quads
 

@@ -123,14 +123,24 @@ func test_wrapped_gauge_is_three_rows_at_a_cap_of_thirty() -> void:
 
 
 func test_wrapped_gauge_width_is_identical_at_every_cap() -> void:
+	# Minimum-size width always reserves the full per_row columns, even
+	# when the cap doesn't fill a row — a cap of 3 must be exactly as wide
+	# as a cap of 10 or 30, not narrower, so every unit's gauge lines up.
 	var narrow := _guard_bar(10.0)
 	var wide := _guard_bar(30.0)
+	var sparse := _guard_bar(3.0)
 
 	assert_almost_eq(
 		narrow.get_minimum_size().x,
 		wide.get_minimum_size().x,
 		0.01,
 		"a ten-guard unit and a thirty-guard unit occupy the same width",
+	)
+	assert_almost_eq(
+		narrow.get_minimum_size().x,
+		sparse.get_minimum_size().x,
+		0.01,
+		"a three-guard unit reserves the same width as a ten-guard unit",
 	)
 
 
@@ -152,6 +162,45 @@ func test_wrapped_gauge_partial_cap_still_reserves_a_whole_row() -> void:
 	var bar := _guard_bar(12.0)
 
 	assert_eq(bar.get_row_count(), 2)
+
+
+func test_wrapped_gauge_at_zero_cap_collapses_to_no_cells() -> void:
+	# A unit with no guard mechanic (max_value <= 0) must draw nothing, not
+	# one phantom empty cell reading as "1 guard, broken".
+	var bar := _guard_bar(0.0)
+
+	assert_eq(bar.get_row_count(), 0)
+	assert_eq(bar.get_draw_quads().size(), 0)
+	assert_eq(bar.get_minimum_size(), Vector2.ZERO)
+
+
+func test_wrapped_draw_quads_stay_within_and_reach_minimum_size() -> void:
+	# Mirrors test_negative_skew_drawn_cells_stay_within_minimum_size for
+	# WRAPPED, across both axes: reads the real draw path via
+	# get_draw_quads() rather than re-deriving row/column math here, and
+	# checks the layout both stays inside get_minimum_size() and actually
+	# reaches every edge of it (so a dropped row_gap, a wrapped-off column
+	# step, or a fixed row all show up as a mismatch).
+	var bar := _guard_bar(30.0)
+	var minimum := bar.get_minimum_size()
+
+	var leftmost := INF
+	var rightmost := -INF
+	var topmost := INF
+	var bottommost := -INF
+	for entry in bar.get_draw_quads():
+		if entry.kind != &"track":
+			continue
+		for point in entry.quad:
+			leftmost = minf(leftmost, point.x)
+			rightmost = maxf(rightmost, point.x)
+			topmost = minf(topmost, point.y)
+			bottommost = maxf(bottommost, point.y)
+
+	assert_almost_eq(leftmost, 0.0, 0.001)
+	assert_almost_eq(rightmost, minimum.x, 0.001)
+	assert_almost_eq(topmost, 0.0, 0.001)
+	assert_almost_eq(bottommost, minimum.y, 0.001)
 
 
 func test_wrapped_draw_quads_yields_track_per_cell_and_fill_up_to_value() -> void:
