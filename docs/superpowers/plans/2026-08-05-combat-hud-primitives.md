@@ -982,7 +982,7 @@ func _get_minimum_size() -> Vector2:
 	return Vector2(width + absf(skew_px), cell_size.y)
 ```
 
-**Note the width rule:** columns are capped at `per_row`, so a cap of 10 and a cap of 30 both produce ten columns and therefore identical width. That is the property `test_wrapped_gauge_width_is_identical_at_every_cap` protects, and it is what lets five enemy plates keep a uniform footprint.
+**The width rule:** the WRAPPED minimum width always reserves the full `per_row` columns — `per_row * cell_size.x + (per_row - 1) * cell_gap + absf(skew_px)` — regardless of cap, so a cap-3 unit occupies the same width as a cap-30 unit. That is the property `test_wrapped_gauge_width_is_identical_at_every_cap` protects, and it is what lets five enemy plates keep a uniform footprint. The one exception: a cap of zero means the unit has no guard mechanic at all, so the gauge collapses entirely — zero rows, zero quads, `Vector2.ZERO` minimum size — rather than drawing a phantom empty cell that would read as "1 guard, broken".
 
 - [ ] **Step 5: Add wrapped drawing**
 
