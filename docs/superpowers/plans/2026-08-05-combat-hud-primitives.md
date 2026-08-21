@@ -706,10 +706,6 @@ enum Style {
 	TALLY,   ## N cells grouped every group_every, read as tally marks.
 }
 
-enum FillState { OK, WARN, CRIT }
-
-signal state_changed(state: FillState)
-
 @export var style: Style = Style.PIPS:
 	set(v):
 		style = v
@@ -719,13 +715,11 @@ signal state_changed(state: FillState)
 @export var value: float = 100.0:
 	set(v):
 		value = v
-		_refresh_state()
 		queue_redraw()
 
 @export var max_value: float = 100.0:
 	set(v):
 		max_value = maxf(v, 0.001)
-		_refresh_state()
 		queue_redraw()
 
 @export_group("Layout")
@@ -755,31 +749,12 @@ signal state_changed(state: FillState)
 		update_minimum_size()
 
 @export_group("Colour")
-@export var use_alarm_states: bool = true:
-	set(v):
-		use_alarm_states = v
-		_refresh_state()
-		queue_redraw()
-
-@export var color_ok := Color("a2b6ca")
-@export var color_warn := Color("f0a63c")
-@export var color_crit := Color("ff4b4b")
-@export var flat_color := Color("e8f0f8")
-
-@export_range(0.0, 1.0) var warn_below: float = 0.50
-@export_range(0.0, 1.0) var crit_below: float = 0.25
-
+@export var fill_color := Color("a2b6ca")
 @export var track_fill := Color(1, 1, 1, 0.055)
 @export var track_line := Color(1, 1, 1, 0.11)
 ## Bright edge on the partially drained cell. Alpha 0 disables it.
 @export var waterline := Color("f0f5fa", 0.9)
 @export var waterline_px: float = 3.0
-
-var _state: FillState = FillState.OK
-
-
-func _ready() -> void:
-	_refresh_state()
 
 
 func get_ratio() -> float:
@@ -793,38 +768,6 @@ func get_full_cell_count() -> int:
 func get_partial_cell_fill() -> float:
 	var exact := get_ratio() * float(cells)
 	return exact - float(floori(exact))
-
-
-func _refresh_state() -> void:
-	var previous := _state
-	if not use_alarm_states:
-		_state = FillState.OK
-	else:
-		var ratio := get_ratio()
-		if ratio <= crit_below:
-			_state = FillState.CRIT
-		elif ratio <= warn_below:
-			_state = FillState.WARN
-		else:
-			_state = FillState.OK
-	if _state != previous:
-		state_changed.emit(_state)
-
-
-func get_fill_state() -> FillState:
-	return _state
-
-
-func _fill_color() -> Color:
-	if not use_alarm_states:
-		return flat_color
-	match _state:
-		FillState.CRIT:
-			return color_crit
-		FillState.WARN:
-			return color_warn
-		_:
-			return color_ok
 
 
 func _get_minimum_size() -> Vector2:
@@ -853,13 +796,15 @@ func _stroke(quad: PackedVector2Array, col: Color, width: float = 1.0) -> void:
 
 
 func _draw() -> void:
-	_draw_cells(maxf(skew_px, 0.0) * 0.5)
+	# absf, not maxf(skew_px, 0.0): negative skew shifts a cell's top-left
+	# corner left of x = 0, so the strip needs the same containment padding
+	# on that side too.
+	_draw_cells(absf(skew_px) * 0.5)
 
 
 func _draw_cells(pad: float) -> void:
 	var h := cell_size.y
 	var w := cell_size.x
-	var col := _fill_color()
 	var full := get_full_cell_count()
 	var frac := get_partial_cell_fill()
 	var x := pad
@@ -881,7 +826,7 @@ func _draw_cells(pad: float) -> void:
 
 		if fill > 0.0:
 			var top := h * (1.0 - fill)
-			draw_colored_polygon(_quad(x, top, h, w), col)
+			draw_colored_polygon(_quad(x, top, h, w), fill_color)
 			if partial and waterline.a > 0.0:
 				var edge := _quad(x, top, minf(top + waterline_px, h), w)
 				draw_colored_polygon(edge, waterline)
@@ -1218,7 +1163,7 @@ git commit -m "feat: add the grouped tally style to SegmentBar"
 
 ## Task 7: Alarm states, the critical pulse, and safe animation
 
-This task fixes the three defects in the supplied script: a tween that does not replace its predecessor, `set_process` that only reacts in `_ready`, and unguarded editor-time animation.
+Tasks 4-6 shipped `SegmentBar` without any alarm machinery — a deliberate rescope so each task stays minimal. This task therefore BUILDS the alarm scaffolding (the `FillState` enum, the `state_changed` signal, the alarm colour exports replacing the plain `fill_color`, `_refresh_state`, `_fill_color`) and then adds the critical pulse and animation helpers. It also avoids the three defects the originally supplied script carried: a tween that does not replace its predecessor, `set_process` that only reacts in `_ready`, and unguarded editor-time animation.
 
 **Files:**
 - Modify: `src/ui/segment_bar.gd`
@@ -1311,11 +1256,34 @@ env HOME=/tmp/mars-godot-home '/Applications/Godot 4.7.app/Contents/MacOS/Godot'
 
 Expected: FAIL — `tween_to`, `get_active_tween` and `pulse_when_critical` do not exist.
 
-- [ ] **Step 3: Add the pulse group and tween state**
+- [ ] **Step 3: Build the alarm scaffolding**
 
-After the Colour group in `src/ui/segment_bar.gd`:
+In `src/ui/segment_bar.gd`, add the enum and signal after `Style`:
 
 ```gdscript
+enum FillState { OK, WARN, CRIT }
+
+signal state_changed(state: FillState)
+```
+
+Make the `value` and `max_value` setters call `_refresh_state()` before `queue_redraw()`. Replace the Colour group's plain `fill_color` with the alarm set (existing `track_fill`/`track_line`/`waterline` lines stay):
+
+```gdscript
+@export_group("Colour")
+@export var use_alarm_states: bool = true:
+	set(v):
+		use_alarm_states = v
+		_refresh_state()
+		queue_redraw()
+
+@export var color_ok := Color("a2b6ca")
+@export var color_warn := Color("f0a63c")
+@export var color_crit := Color("ff4b4b")
+@export var flat_color := Color("e8f0f8")
+
+@export_range(0.0, 1.0) var warn_below: float = 0.50
+@export_range(0.0, 1.0) var crit_below: float = 0.25
+
 @export_group("Critical pulse")
 @export var pulse_when_critical: bool = true:
 	set(v):
@@ -1325,16 +1293,41 @@ After the Colour group in `src/ui/segment_bar.gd`:
 @export_range(0.0, 1.0) var pulse_depth: float = 0.35
 ```
 
-And beside `var _state`:
+Add the state after the exports, and the state machinery:
 
 ```gdscript
+var _state: FillState = FillState.OK
 var _phase: float = 0.0
 var _tween: Tween
+
+
+func get_fill_state() -> FillState:
+	return _state
+
+
+func _refresh_state() -> void:
+	var previous := _state
+	if not use_alarm_states:
+		_state = FillState.OK
+	else:
+		var ratio := get_ratio()
+		if ratio <= crit_below:
+			_state = FillState.CRIT
+		elif ratio <= warn_below:
+			_state = FillState.WARN
+		else:
+			_state = FillState.OK
+	if _state != previous:
+		if _state != FillState.CRIT:
+			_phase = 0.0
+		state_changed.emit(_state)
 ```
+
+In `_draw_cells`, replace the two direct uses of `fill_color` with a local `var col := _fill_color()` fetched once at the top, drawn for both the fill quad and (unchanged) the waterline logic. `_fill_color` arrives in Step 6.
 
 - [ ] **Step 4: Drive processing from the setting, not from `_ready` alone**
 
-Replace `_ready` and add the helper:
+Add `_ready`, the processing helper, and `_process`:
 
 ```gdscript
 func _ready() -> void:
@@ -1358,20 +1351,13 @@ func _process(delta: float) -> void:
 
 The `Engine.is_editor_hint()` guard stops a `@tool` script animating in the editor while still letting the property drive processing at runtime.
 
-- [ ] **Step 5: Reset the phase when leaving critical**
+- [ ] **Step 5: Confirm the phase resets when leaving critical**
 
-In `_refresh_state`, replace the transition block at the end:
+Step 3's `_refresh_state` already zeroes `_phase` on any transition out of CRIT; nothing further to write, but keep it when editing.
 
-```gdscript
-	if _state != previous:
-		if _state != FillState.CRIT:
-			_phase = 0.0
-		state_changed.emit(_state)
-```
+- [ ] **Step 6: Add `_fill_color` with the breathing critical fill**
 
-- [ ] **Step 6: Breathe brightness on the critical fill**
-
-Replace the `FillState.CRIT` arm of `_fill_color` so the whole function reads:
+Add the colour resolver `_draw_cells` now consumes:
 
 ```gdscript
 func _fill_color() -> Color:
