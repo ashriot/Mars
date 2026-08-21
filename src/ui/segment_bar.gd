@@ -55,6 +55,23 @@ enum Style {
 		queue_redraw()
 		update_minimum_size()
 
+## WRAPPED only. One cell equals one hit at a CONSTANT size — never rescale
+## cells to fit a bigger ceiling. The gauge wraps instead: max_value cells
+## laid out per_row at a time. Row count then IS the cap, so nothing can
+## overfill a bar whose ceiling you cannot see, and the widget's width is
+## identical for every unit.
+@export var per_row: int = 10:
+	set(v):
+		per_row = maxi(v, 1)
+		queue_redraw()
+		update_minimum_size()
+
+@export var row_gap: float = 3.0:
+	set(v):
+		row_gap = v
+		queue_redraw()
+		update_minimum_size()
+
 @export_group("Colour")
 @export var fill_color := Color("a2b6ca")
 @export var track_fill := Color(1, 1, 1, 0.055)
@@ -75,8 +92,8 @@ func get_ratio() -> float:
 
 ## Full cell count under the PIPS fill model: get_ratio() scaled to cell
 ## count and floored, so cells fill left-to-right as one continuous ramp.
-## WRAPPED (Task 5) fills one cell per point of max_value with integer
-## fill instead, and does not call this.
+## WRAPPED fills one cell per point of max_value with integer fill instead
+## (see _build_wrapped_quads), and does not call this.
 func get_full_cell_count() -> int:
 	return floori(get_ratio() * float(cells))
 
@@ -90,8 +107,25 @@ func get_partial_cell_fill() -> float:
 
 
 func _get_minimum_size() -> Vector2:
+	if style == Style.WRAPPED:
+		var rows := get_row_count()
+		var columns := mini(maxi(int(round(max_value)), 1), per_row)
+		var width := columns * cell_size.x + maxf(columns - 1, 0) * cell_gap + absf(skew_px)
+		var height := rows * cell_size.y + maxf(rows - 1, 0) * row_gap
+		return Vector2(width, height)
+
 	var width := cells * cell_size.x + maxf(cells - 1, 0) * cell_gap
 	return Vector2(width + absf(skew_px), cell_size.y)
+
+
+## WRAPPED only. Row count IS the cap: max_value cells laid out per_row at a
+## time, so a bar's row count (and therefore height) is fixed by its ceiling
+## alone, never by the live value. Other styles are single-row.
+func get_row_count() -> int:
+	if style != Style.WRAPPED:
+		return 1
+	var count := maxi(int(round(max_value)), 1)
+	return ceili(float(count) / float(per_row))
 
 
 ## Left padding that keeps every cell's polygon inside [0, get_minimum_size().x]
@@ -117,6 +151,15 @@ static func build_quad(x: float, y0: float, y1: float, w: float, h: float, skew:
 	])
 
 
+## Translates every point of a quad by offset. Static and pure, used to move
+## a cell-local quad (built with y in [0, cell_size.y]) down into its row.
+static func _translate_quad(quad: PackedVector2Array, offset: Vector2) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	for point in quad:
+		out.append(point + offset)
+	return out
+
+
 func _quad(x: float, y0: float, y1: float, w: float) -> PackedVector2Array:
 	return build_quad(x, y0, y1, w, cell_size.y, skew_px)
 
@@ -127,16 +170,20 @@ func _stroke(quad: PackedVector2Array, col: Color, width: float = 1.0) -> void:
 	draw_polyline(loop, col, width, false)
 
 
-func _draw() -> void:
-	# The fill and track polygons stay exactly inside
-	# [0, get_minimum_size().x] at any skew sign — see left_pad(). The 1px
-	# track-line stroke drawn over that boundary is centred on it, though,
-	# so its ink overhangs by ~0.5px; that's cosmetic at 1px/11% alpha and
-	# left as-is.
-	_draw_cells(left_pad(skew_px))
+## Every quad this bar would draw for its current state, in draw order,
+## as { quad: PackedVector2Array, kind: StringName } dictionaries. kind is
+## &"track", &"fill", or &"waterline". _draw() paints exactly this list;
+## tests read it, so layout coverage is the real layout, not a parallel
+## derivation.
+func get_draw_quads() -> Array[Dictionary]:
+	var pad := left_pad(skew_px)
+	if style == Style.WRAPPED:
+		return _build_wrapped_quads(pad)
+	return _build_pips_quads(pad)
 
 
-func _draw_cells(pad: float) -> void:
+func _build_pips_quads(pad: float) -> Array[Dictionary]:
+	var quads: Array[Dictionary] = []
 	var h := cell_size.y
 	var w := cell_size.x
 	var full := get_full_cell_count()
@@ -152,17 +199,59 @@ func _draw_cells(pad: float) -> void:
 			fill = frac
 			partial = true
 
-		var track := _quad(x, 0.0, h, w)
-		if track_fill.a > 0.0:
-			draw_colored_polygon(track, track_fill)
-		if track_line.a > 0.0:
-			_stroke(track, track_line)
+		quads.append({quad = _quad(x, 0.0, h, w), kind = &"track"})
 
 		if fill > 0.0:
 			var top := h * (1.0 - fill)
-			draw_colored_polygon(_quad(x, top, h, w), fill_color)
-			if partial and waterline.a > 0.0:
-				var edge := _quad(x, top, minf(top + waterline_px, h), w)
-				draw_colored_polygon(edge, waterline)
+			quads.append({quad = _quad(x, top, h, w), kind = &"fill"})
+			if partial:
+				var edge_bottom := minf(top + waterline_px, h)
+				quads.append({quad = _quad(x, top, edge_bottom, w), kind = &"waterline"})
 
 		x += w + cell_gap
+
+	return quads
+
+
+## WRAPPED: one cell per point of max_value, at constant cell_size, wrapped
+## per_row per line — filled from the first cell forward. No partial cell,
+## no waterline in this style.
+func _build_wrapped_quads(pad: float) -> Array[Dictionary]:
+	var quads: Array[Dictionary] = []
+	var h := cell_size.y
+	var w := cell_size.x
+	var count := maxi(int(round(max_value)), 1)
+	var filled := clampi(int(round(value)), 0, count)
+
+	for i in count:
+		var row := i / per_row
+		var column := i % per_row
+		var x := pad + column * (w + cell_gap)
+		var offset := Vector2(0.0, row * (h + row_gap))
+
+		quads.append({quad = _translate_quad(_quad(x, 0.0, h, w), offset), kind = &"track"})
+		if i < filled:
+			quads.append({quad = _translate_quad(_quad(x, 0.0, h, w), offset), kind = &"fill"})
+
+	return quads
+
+
+func _draw() -> void:
+	# The fill and track polygons stay exactly inside
+	# [0, get_minimum_size().x] at any skew sign — see left_pad(). The 1px
+	# track-line stroke drawn over that boundary is centred on it, though,
+	# so its ink overhangs by ~0.5px; that's cosmetic at 1px/11% alpha and
+	# left as-is.
+	for entry in get_draw_quads():
+		var quad: PackedVector2Array = entry.quad
+		match entry.kind:
+			&"track":
+				if track_fill.a > 0.0:
+					draw_colored_polygon(quad, track_fill)
+				if track_line.a > 0.0:
+					_stroke(quad, track_line)
+			&"fill":
+				draw_colored_polygon(quad, fill_color)
+			&"waterline":
+				if waterline.a > 0.0:
+					draw_colored_polygon(quad, waterline)
