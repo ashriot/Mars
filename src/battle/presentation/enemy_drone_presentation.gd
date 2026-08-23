@@ -3,6 +3,8 @@ class_name EnemyDronePresentation
 
 const HUD_SCENE := preload("res://src/battle/presentation/enemy_world_hud.tscn")
 const DEFEAT_FADE_DURATION := 0.2
+const READABILITY_MAX_METALLIC := 0.35
+const READABILITY_MIN_ROUGHNESS := 0.6
 
 @export var view_root: Node3D
 @export var model_loader: OptionalLocalModel3D
@@ -370,6 +372,8 @@ func _remember_material(material: Material) -> void:
 	if not (material is BaseMaterial3D):
 		return
 	var base_material := material as BaseMaterial3D
+	base_material.metallic = minf(base_material.metallic, READABILITY_MAX_METALLIC)
+	base_material.roughness = maxf(base_material.roughness, READABILITY_MIN_ROUGHNESS)
 	_instance_materials.append(base_material)
 	if instance_material == null:
 		instance_material = base_material

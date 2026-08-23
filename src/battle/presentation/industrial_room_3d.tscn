@@ -4,9 +4,9 @@
 [ext_resource type="PackedScene" path="res://src/battle/presentation/industrial_room_bay_3d.tscn" id="2_bay"]
 
 [sub_resource type="StandardMaterial3D" id="Material_dark"]
-albedo_color = Color(0.075, 0.09, 0.115, 1)
-metallic = 0.75
-roughness = 0.48
+albedo_color = Color(0.32, 0.37, 0.48, 1)
+metallic = 0.18
+roughness = 0.75
 
 [sub_resource type="StandardMaterial3D" id="Material_trim"]
 albedo_color = Color(0.18, 0.205, 0.24, 1)

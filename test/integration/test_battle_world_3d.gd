@@ -84,6 +84,20 @@ func test_room_uses_mobile_lighting_hierarchy() -> void:
 	assert_eq(shadow_light_count, 1)
 
 
+func test_room_dark_materials_retain_a_diffuse_readability_response() -> void:
+	var world := _world()
+	var room := world.get_node("IndustrialRoom3D")
+	var floor := room.get_node("RoomShell/Floor") as MeshInstance3D
+	var bay_wall := room.get_node("RoomShell/BayNear/LeftWall/Placeholder") as MeshInstance3D
+	var floor_material := floor.mesh.surface_get_material(0) as StandardMaterial3D
+	var bay_wall_material := bay_wall.mesh.surface_get_material(0) as StandardMaterial3D
+
+	for material: StandardMaterial3D in [floor_material, bay_wall_material]:
+		assert_eq(material.albedo_color, Color(0.32, 0.37, 0.48, 1.0))
+		assert_almost_eq(material.metallic, 0.18, 0.001)
+		assert_almost_eq(material.roughness, 0.75, 0.001)
+
+
 func test_room_builds_a_closed_three_bay_shell_without_backdrop() -> void:
 	var world := _world()
 	var room := world.get_node("IndustrialRoom3D")
