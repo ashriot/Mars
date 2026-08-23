@@ -2,6 +2,7 @@ extends GutTest
 
 const ResponsiveFixture = preload("res://test/fixtures/responsive_viewport_fixture.gd")
 const BattleSceneResource = preload("res://src/battle/battle_scene.tscn")
+const GameManagerResource = preload("res://src/battle/game_manager.tscn")
 const DECK_SIZE := Vector2i(1280, 800)
 
 
@@ -187,6 +188,41 @@ func test_enemy_hud_canvas_is_effectively_between_world_and_player_ui() -> void:
 	assert_true(world.hud_layer.visible, "enemy HUD remains a canvas overlay above 3D")
 
 
+func test_battle_hud_canvases_draw_in_front_of_the_3d_environment() -> void:
+	# Battles are normally parented by GameManager's OverlayLayer. Exercise
+	# that real ancestry so the test guards the canvas-layer ordering players
+	# see, rather than the isolated BattleScene fixture's fallback layer.
+	var game := GameManagerResource.instantiate() as GameManager
+	var battle := BattleSceneResource.instantiate() as BattleScene
+	var overlay := game.get_node("DungeonMap/OverlayLayer") as CanvasLayer
+	var environment := (game.get_node("WorldEnvironment") as WorldEnvironment).environment
+	var dungeon_hud := game.get_node("DungeonMap/CanvasLayer/HUD") as Control
+	overlay.add_child(battle)
+
+	var world := battle.get_node("BattleWorld3D") as BattleWorld3D
+	var enemy_hud_canvas := world.get_node("EnemyHUDCanvas") as CanvasLayer
+	var projectile_canvas := world.get_node("BattleProjectileLayer") as CanvasLayer
+	var player_ui_layer := _effective_canvas_layer(battle.get_node("UI"))
+
+	assert_lte(
+		_effective_canvas_layer(dungeon_hud),
+		environment.background_canvas_max_layer,
+		"the dungeon-map canvas must remain behind the 3D world during battle",
+	)
+	assert_gt(
+		enemy_hud_canvas.layer,
+		environment.background_canvas_max_layer,
+		"the projected enemy HUD must draw in front of the 3D environment",
+	)
+	assert_eq(projectile_canvas.layer, enemy_hud_canvas.layer)
+	assert_lt(
+		enemy_hud_canvas.layer,
+		player_ui_layer,
+		"essential player UI must draw above projected enemy HUDs and projectiles",
+	)
+	game.free()
+
+
 func test_packed_battle_projectiles_draw_above_enemy_plane_but_below_player_ui() -> void:
 	var battle := await _battle_in_viewport(DECK_SIZE)
 	var world := battle.manager.battle_world
@@ -278,8 +314,11 @@ func _battle_in_viewport(window_size: Vector2i) -> BattleScene:
 	var viewport := SubViewport.new()
 	viewport.size = Vector2i(ResponsiveFixture.logical_size_for(window_size))
 	add_child_autofree(viewport)
+	var overlay := CanvasLayer.new()
+	overlay.layer = 4
+	viewport.add_child(overlay)
 	var battle := BattleSceneResource.instantiate() as BattleScene
-	viewport.add_child(battle)
+	overlay.add_child(battle)
 	battle.apply_display_profile(
 		DisplayProfileService.profile_for(window_size),
 		window_size,

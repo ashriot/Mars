@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://src/battle/presentation/battle_projectile_layer.gd" id="1_projectiles"]
 
 [node name="BattleProjectileLayer" type="CanvasLayer"]
-layer = -1
+layer = 3
 script = ExtResource("1_projectiles")
 
 [node name="EffectRoot" type="Control" parent="."]

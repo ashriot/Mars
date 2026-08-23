@@ -39,7 +39,7 @@ position = Vector3(0, 1, 0)
 unique_name_in_owner = true
 
 [node name="EnemyHUDCanvas" type="CanvasLayer" parent="."]
-layer = -1
+layer = 3
 
 [node name="EnemyHUDLayer" type="Control" parent="EnemyHUDCanvas" groups=["battle_enemy_hud_layer"]]
 unique_name_in_owner = true
