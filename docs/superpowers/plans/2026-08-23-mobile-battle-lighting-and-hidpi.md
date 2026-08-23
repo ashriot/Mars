@@ -289,3 +289,53 @@ following bounded extension.
   Task 3 numeric light-value assertions are superseded only where a
   framebuffer-backed calibration requires it; all Mobile light-budget
   assertions remain binding.
+
+## Task 6: Restore PBR reflection contrast with a mobile-safe environment sky
+
+**Files:**
+
+- Modify: `src/battle/presentation/battle_world_3d.tscn`
+- Modify: `test/integration/test_battle_world_3d.gd`
+
+The last three bounded light/material experiments failed visual acceptance.
+Runtime inspection established that the live GLTF walls and drones are fully
+metallic PBR materials with non-black base textures, while the WorldEnvironment
+has only a near-black flat color source. This task tests one architectural
+hypothesis: give those existing surfaces a controlled, dark procedural sky to
+reflect, without adding direct light or GI.
+
+- [ ] **6.1 Write the environment contract before the scene change.**
+
+  Extend `test_world_environment_uses_readable_industrial_ambient_light` to
+  require a `Sky` using `ProceduralSkyMaterial`, `Sky.RADIANCE_SIZE_64`, a
+  retained `Environment.BG_COLOR` background, `AMBIENT_SOURCE_SKY`, and
+  `REFLECTION_SOURCE_SKY`. The colors must be a restrained cool gradient:
+  top `(0.02, 0.04, 0.09)`, horizon `(0.09, 0.16, 0.29)`, ground horizon
+  `(0.035, 0.055, 0.10)`, and ground bottom `(0.008, 0.012, 0.024)`; use sky
+  energy `0.75`, sky multiplier `0.85`, and ground multiplier `0.22`.
+  Keep the existing room-light test unchanged, including exactly one
+  shadow-casting light. The focused test must fail before the scene edit.
+
+- [ ] **6.2 Add only the static sky/reflection resource.**
+
+  In `battle_world_3d.tscn`, add a `ProceduralSkyMaterial` and a `Sky`
+  subresource at `RADIANCE_SIZE_64`. Keep `background_mode = BG_COLOR` and
+  the existing background color so the fully enclosed interior does not gain a
+  visible outdoor backdrop. Set the ambient and reflected-light sources to
+  `SKY`. Do not change the light hierarchy, room materials, imported assets,
+  exposure, add GI, lightmaps, probes, fog, or screen-space effects.
+
+- [ ] **6.3 Verify code and real pixels.**
+
+  Run the focused `battle_world_3d` test under the isolated test HOME. Then
+  use the temporary, non-headless framebuffer probe to capture the actual lab
+  at 1920×1080. Accept this task only if the floor, outer drones, fixtures,
+  and rear bulkhead become distinguishable without a broad front wash. If it
+  fails, restore the scene/test changes and record the failed hypothesis; do
+  not start another scalar calibration.
+
+- [ ] **6.4 Commit the isolated experiment.**
+
+  Stage only the scene and its focused test, commit with
+  `feat: add mobile battle reflection sky`, then have a fresh reviewer inspect
+  both the contract and the real framebuffer capture.
