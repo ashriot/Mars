@@ -1,5 +1,7 @@
 extends GutTest
 
+const PALETTE := preload("res://data/theme/ui_palette.tres")
+
 
 func test_pips_minimum_size_covers_every_cell_its_gaps_and_the_skew() -> void:
 	var bar := _bar()
@@ -510,3 +512,21 @@ func test_pulse_phase_only_advances_while_critical() -> void:
 	await wait_process_frames(5)
 
 	assert_eq(bar._phase, 0.0, "phase must not advance outside CRIT")
+
+
+func test_assigning_a_palette_adopts_its_alarm_ramp() -> void:
+	var bar := _bar()
+
+	bar.palette = PALETTE
+
+	assert_eq(bar.color_ok, PALETTE.hp_ok)
+	assert_eq(bar.color_warn, PALETTE.hp_warn)
+	assert_eq(bar.color_crit, PALETTE.hp_crit)
+
+
+func test_assigning_a_palette_adopts_its_achromatic_guard_as_the_flat_colour() -> void:
+	var bar := _bar()
+
+	bar.palette = PALETTE
+
+	assert_eq(bar.flat_color, PALETTE.guard)

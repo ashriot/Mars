@@ -100,6 +100,18 @@ signal state_changed(state: FillState)
 		update_minimum_size()
 
 @export_group("Colour")
+## Assigning a palette overwrites this bar's colours from it. Leave null to
+## tune a bar by hand — useful in the lab scene, not in shipped UI.
+@export var palette: UIPalette:
+	set(v):
+		palette = v
+		if palette != null:
+			color_ok = palette.hp_ok
+			color_warn = palette.hp_warn
+			color_crit = palette.hp_crit
+			flat_color = palette.guard
+		queue_redraw()
+
 @export var use_alarm_states: bool = true:
 	set(v):
 		use_alarm_states = v
