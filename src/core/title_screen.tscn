@@ -5,7 +5,7 @@
 [ext_resource type="FontVariation" uid="uid://busejf1art6n0" path="res://data/theme/fonts/nebula_hollow.tres" id="2_vayli"]
 [ext_resource type="FontVariation" uid="uid://d0rv8u3y8y67d" path="res://data/theme/fonts/nebula.tres" id="3_616sk"]
 [ext_resource type="Shader" uid="uid://cg8j5a78td0ei" path="res://src/battle/chroma.gdshader" id="3_gc8o6"]
-[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="4_vedi7"]
+[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/oxanium_bold.tres" id="4_vedi7"]
 [ext_resource type="StyleBox" uid="uid://bhjtch4mfk4jc" path="res://data/theme/styleboxes/btn_opaque_normal.tres" id="8_tlpw0"]
 [ext_resource type="StyleBox" uid="uid://1p4tyofjick6" path="res://data/theme/styleboxes/btn_opaque_hover.tres" id="9_6ron6"]
 [ext_resource type="StyleBox" uid="uid://buhq36mq775hf" path="res://data/theme/styleboxes/btn_opaque_pressed.tres" id="9_036v4"]

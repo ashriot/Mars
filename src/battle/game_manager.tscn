@@ -28,6 +28,7 @@ environment = SubResource("Environment_jr7q5")
 position = Vector2(960, 540)
 
 [node name="OverlayLayer" type="CanvasLayer" parent="DungeonMap"]
+layer = 4
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 

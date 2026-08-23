@@ -6,15 +6,21 @@ signal unhovered
 signal pressed
 
 const COMPACT_WIDTH := 220.0
-const DETAILS_SIZE := Vector2(220.0, 58.0)
+const INTENT_WIDTH := 286.0
+const DETAILS_SIZE := Vector2(220.0, 74.0)
 const DETAILS_GAP := 4.0
 const HEAD_GAP := 12.0
-const GUARD_TOP := 14.0
+const GUARD_TOP := 28.0
 const TARGET_PADDING := Vector2(18.0, 18.0)
 const MIN_TARGET_WIDTH := 96.0
+const POPUP_SPACING_TIME_MSEC := 1000
+const POPUP_HORIZONTAL_STEP := 60.0
+const POPUP_VERTICAL_STEP := 30.0
+
+@export var damage_popup_scene: PackedScene
 
 @onready var target_region: Control = %TargetRegion
-@onready var details: MarginContainer = %Details
+@onready var details: Control = %Details
 @onready var name_label: Label = %Name
 @onready var kinetic_value: Label = %Kinetic
 @onready var energy_value: Label = %Energy
@@ -26,6 +32,7 @@ const MIN_TARGET_WIDTH := 96.0
 @onready var hp_region: Control = %HPRegion
 @onready var hp_bar_feedback: ProgressBar = %HPFeedback
 @onready var hp_bar_actual: ProgressBar = %HPActual
+@onready var hp_value: Label = %HPValue
 @onready var conditions_row: HBoxContainer = %ConditionsRow
 
 var combatant: EnemyCombatant
@@ -41,6 +48,8 @@ var _has_projected_model_bounds := false
 var _details_tween: Tween
 var _health_tween: Tween
 var _presentation_owns_defeat_fade := false
+var _last_popup_time_msec := -POPUP_SPACING_TIME_MSEC
+var _popup_stack_offset := 0
 
 
 func _ready() -> void:
@@ -119,6 +128,7 @@ func set_details_visible(value: bool) -> void:
 	if details.visible and is_equal_approx(details.modulate.a, 1.0):
 		return
 	details.show()
+	_sync_details_position()
 	details.modulate.a = 0.0
 	_details_tween = create_tween()
 	_details_tween.tween_property(details, "modulate:a", 1.0, 0.12)
@@ -186,13 +196,30 @@ func apply_resolved_compact_rect(rect: Rect2) -> void:
 
 func get_visible_layout_rect() -> Rect2:
 	var compact_rect := Rect2(compact_stack.global_position, _get_compact_size())
-	if not details.visible:
-		return compact_rect
-	return get_reserved_layout_rect(compact_rect)
+	var visible_rect := _get_always_visible_layout_rect(compact_rect)
+	if details.visible:
+		visible_rect = visible_rect.merge(Rect2(
+			compact_rect.position + details.position, DETAILS_SIZE,
+		))
+	return visible_rect
 
 
 func get_reserved_layout_rect(compact_rect: Rect2) -> Rect2:
-	return compact_rect.merge(Rect2(compact_rect.position + details.position, DETAILS_SIZE))
+	return _get_always_visible_layout_rect(compact_rect).merge(Rect2(
+		compact_rect.position + details.position, DETAILS_SIZE,
+	))
+
+
+func _get_always_visible_layout_rect(compact_rect: Rect2) -> Rect2:
+	var reserved := compact_rect.merge(_get_intent_layout_rect(compact_rect))
+	var guard_visual := guard_stack.get_visual_rect()
+	if guard_visual.has_area():
+		var guard_offset := guard_stack.global_position - compact_stack.global_position
+		reserved = reserved.merge(Rect2(
+			compact_rect.position + guard_offset + guard_visual.position,
+			guard_visual.size,
+		))
+	return reserved
 
 
 func refresh_intent() -> void:
@@ -201,7 +228,7 @@ func refresh_intent() -> void:
 		intent_tooltip.bbcode_text = ""
 		return
 	var formatted := EnemyIntentFormatter.format(combatant, combatant.battle_manager)
-	intent_row.text = formatted.text
+	intent_row.text = "[center]%s[/center]" % formatted.text
 	intent_tooltip.bbcode_text = formatted.tooltip
 
 
@@ -267,8 +294,8 @@ func _disconnect_combatant() -> void:
 
 func _render_full_state() -> void:
 	name_label.text = combatant.actor_name
-	kinetic_value.text = "KIN %d%%" % combatant.current_stats.kinetic_defense
-	energy_value.text = "NRG %d%%" % combatant.current_stats.energy_defense
+	kinetic_value.text = "KIN%d%%" % combatant.current_stats.kinetic_defense
+	energy_value.text = "NRG%d%%" % combatant.current_stats.energy_defense
 	_render_hp(true)
 	_render_guard()
 	_render_conditions()
@@ -278,6 +305,9 @@ func _render_full_state() -> void:
 func _render_hp(reset_visual_values := false) -> void:
 	hp_bar_feedback.max_value = combatant.current_stats.max_hp
 	hp_bar_actual.max_value = combatant.current_stats.max_hp
+	hp_value.text = "%d / %d" % [
+		combatant.current_hp, combatant.current_stats.max_hp,
+	]
 	hp_region.tooltip_text = "%d / %d HP" % [
 		combatant.current_hp, combatant.current_stats.max_hp,
 	]
@@ -340,7 +370,7 @@ func _on_conditions_changed(_enemy: BattleCombatant) -> void:
 func _on_presentation_event(
 	_enemy: BattleCombatant,
 	event: StringName,
-	_payload: Dictionary,
+	payload: Dictionary,
 ) -> void:
 	match event:
 		&"damage_received":
@@ -348,6 +378,10 @@ func _on_presentation_event(
 				hp_bar_feedback, HealthFeedbackPalette.Direction.DAMAGE,
 			)
 			hp_bar_actual.value = combatant.current_hp
+			var result := payload.get("result") as DamageResult
+			if result != null and payload.has("damage_type"):
+				var damage_type: Action.DamageType = payload["damage_type"]
+				_spawn_damage_popup(result, damage_type)
 		&"healing_received":
 			HealthFeedbackPalette.apply(
 				hp_bar_feedback, HealthFeedbackPalette.Direction.HEALING,
@@ -355,6 +389,45 @@ func _on_presentation_event(
 			hp_bar_feedback.value = combatant.current_hp
 		&"intent_changed":
 			refresh_intent()
+
+
+func _get_damage_popup_center() -> Variant:
+	if not visible or not _has_live_combatant():
+		return null
+	if _has_projected_model_bounds:
+		return _projected_model_bounds.get_center()
+	if _has_projected_head and _has_projected_foot:
+		return (_projected_head + _projected_foot) * 0.5
+	return null
+
+
+func _spawn_damage_popup(
+	result: DamageResult,
+	damage_type: Action.DamageType,
+) -> void:
+	if damage_popup_scene == null or not _has_live_combatant():
+		return
+	var popup_center: Variant = _get_damage_popup_center()
+	if popup_center == null or get_parent() == null:
+		return
+	var popup := damage_popup_scene.instantiate() as DamagePopup
+	if popup == null:
+		return
+	get_parent().add_child(popup)
+	var target_center: Vector2 = popup_center
+	var current_time_msec := Time.get_ticks_msec()
+	if current_time_msec - _last_popup_time_msec < POPUP_SPACING_TIME_MSEC:
+		_popup_stack_offset += 1
+		var side := 1.0 if _popup_stack_offset % 2 == 0 else -1.0
+		target_center.x += side * POPUP_HORIZONTAL_STEP
+		target_center.y -= float(_popup_stack_offset) * POPUP_VERTICAL_STEP
+	else:
+		_popup_stack_offset = 0
+	popup.global_position = target_center - popup.pivot_offset
+	_last_popup_time_msec = current_time_msec
+	popup.show_damage(
+		result.final_damage, damage_type, _get_battle_speed(), result.is_critical,
+	)
 
 
 func _on_combatant_defeated(enemy: BattleCombatant) -> void:
@@ -430,7 +503,15 @@ func _sync_compact_height() -> void:
 
 
 func _sync_details_position() -> void:
+	details.size = DETAILS_SIZE
 	details.position = Vector2(0.0, -DETAILS_SIZE.y - DETAILS_GAP)
+
+
+func _get_intent_layout_rect(compact_rect: Rect2) -> Rect2:
+	return Rect2(
+		Vector2(compact_rect.get_center().x - INTENT_WIDTH * 0.5, compact_rect.position.y),
+		Vector2(INTENT_WIDTH, intent_row.size.y),
+	)
 
 
 func _get_compact_size() -> Vector2:

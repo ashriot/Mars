@@ -1,0 +1,12 @@
+[gd_resource type="FontVariation" format=3 uid="uid://da34kbi1ndel7"]
+
+[ext_resource type="FontFile" uid="uid://v3giojsv757y" path="res://data/theme/fonts/base_fonts/Oxanium-VariableFont_wght.ttf" id="1_h1fwm"]
+
+[resource]
+base_font = ExtResource("1_h1fwm")
+variation_opentype = {
+2003265652: 500
+}
+opentype_features = {
+1953396077: 1
+}

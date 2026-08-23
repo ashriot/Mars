@@ -5,6 +5,7 @@ const DRONE_SCENE := preload(
 )
 const WORLD_SCENE := preload("res://src/battle/presentation/battle_world_3d.tscn")
 const CANVAS_SIZES: Array[Vector2i] = [
+	Vector2i(1280, 800),
 	Vector2i(1920, 1080),
 	Vector2i(1920, 1200),
 ]
@@ -49,6 +50,7 @@ func _assert_projected_formation(
 	await get_tree().process_frame
 
 	var presentations: Array[EnemyDronePresentation] = []
+	var view_roots: Array[Node3D] = []
 	for index: int in 5:
 		var view_root := DRONE_SCENE.instantiate() as Node3D
 		assert_true(world.place_ordinary_view(view_root, index, 5, layout))
@@ -57,10 +59,22 @@ func _assert_projected_formation(
 		) as EnemyDronePresentation
 		assert_true(presentation.setup_view(_enemy(index)))
 		presentations.append(presentation)
+		view_roots.append(view_root)
 
 	await get_tree().process_frame
+	var placed_transforms: Array[Transform3D] = []
+	for view_root: Node3D in view_roots:
+		placed_transforms.append(view_root.transform)
 	for yaw_degrees: float in CAMERA_YAW_DEGREES:
 		world.camera_rig.rotation.y = deg_to_rad(yaw_degrees)
+		for index: int in view_roots.size():
+			assert_eq(
+				view_roots[index].transform,
+				placed_transforms[index],
+				"layout %s camera yaw %s leaves enemy root %d transform unchanged" % [
+					layout, yaw_degrees, index,
+				],
+			)
 		_assert_projection_at_yaw(
 			world,
 			presentations,
@@ -86,6 +100,7 @@ func _assert_projection_at_yaw(
 	world._layout_enemy_huds()
 
 	var compact_rects: Array[Rect2] = []
+	var reserved_rects: Array[Rect2] = []
 	var model_rects: Array[Rect2] = []
 	var safe_rect := Rect2(
 		Vector2(SAFE_MARGIN, SAFE_MARGIN),
@@ -96,6 +111,7 @@ func _assert_projection_at_yaw(
 		var compact_rect := presentation.hud.compact_stack.get_global_rect()
 		var model_rect := _projected_model_rect(world.camera, presentation)
 		compact_rects.append(compact_rect)
+		reserved_rects.append(presentation.hud.get_reserved_layout_rect(compact_rect))
 		model_rects.append(model_rect)
 		assert_true(presentation.is_target_visible())
 		assert_eq(
@@ -105,6 +121,9 @@ func _assert_projection_at_yaw(
 				layout, canvas_size, yaw_degrees, index,
 			],
 		)
+		assert_eq(presentation.hud.hp_region.size, Vector2(220.0, 32.0))
+		assert_eq(presentation.hud.get_node("%HPValue").size, Vector2(220.0, 32.0))
+		assert_true(safe_rect.encloses(presentation.hud.get_reserved_layout_rect(compact_rect)))
 		assert_true(
 			safe_rect.encloses(compact_rect),
 			"layout %s canvas %s yaw %s HUD %d stays inside the safe rect: %s" % [
@@ -119,7 +138,7 @@ func _assert_projection_at_yaw(
 		)
 
 	_assert_rectangles_do_not_intersect(
-		compact_rects, layout, canvas_size, yaw_degrees,
+		reserved_rects, layout, canvas_size, yaw_degrees,
 	)
 	for front_index: int in front_indices:
 		for back_index: int in back_indices:
@@ -151,8 +170,9 @@ func _assert_projection_at_yaw(
 				continue
 			assert_false(
 				detail_rect.intersects(compact_rects[other_index]),
-				"layout %s canvas %s yaw %s detail %d avoids compact HUD %d" % [
+				"layout %s canvas %s yaw %s detail %d avoids compact HUD %d: %s / %s" % [
 					layout, canvas_size, yaw_degrees, index, other_index,
+					detail_rect, compact_rects[other_index],
 				],
 			)
 		presentation.set_inspection_focused(false)

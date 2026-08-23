@@ -813,7 +813,7 @@ func test_enemy_intent_uses_fixed_split_and_same_resolver() -> void:
 	target.free()
 
 
-func test_enemy_intent_displays_per_target_preview_range_without_averaging() -> void:
+func test_enemy_intent_displays_compact_preview_range_without_averaging() -> void:
 	var enemy := _intent_enemy(120)
 	var enemy_model := enemy.combatant as EnemyCombatant
 	enemy_model.intended_action = load("res://data/enemies/actions/rapid_fire.tres") as Action
@@ -824,8 +824,9 @@ func test_enemy_intent_displays_per_target_preview_range_without_averaging() -> 
 	enemy._update_intent_ui()
 
 	assert_string_contains(enemy.intent_text.text, "25-50")
-	assert_string_contains(enemy.intent_text.text, "3 hits")
-	assert_false(enemy.intent_text.text.contains("x3"))
+	assert_string_contains(enemy.intent_text.text, "x3")
+	assert_false(enemy.intent_text.text.contains("per target"))
+	assert_false(enemy.intent_text.text.contains("(3 hits)"))
 	assert_string_contains(enemy.intent_text.text, "RANDOM")
 	_free_intent_enemy(enemy, [unarmored, armored])
 
@@ -861,8 +862,8 @@ func test_enemy_intent_incomplete_random_split_uses_authored_total_budget() -> v
 
 	assert_false(sequence.is_complete)
 	assert_string_contains(enemy.intent_text.text, "125% ATK total")
-	assert_string_contains(enemy.intent_text.text, "(3 hits)")
-	assert_false(enemy.intent_text.text.contains("x3"))
+	assert_string_contains(enemy.intent_text.text, "x3")
+	assert_false(enemy.intent_text.text.contains("(3 hits)"))
 	assert_string_contains(enemy.intent_tooltip.bbcode_text, "125% ATK total")
 	assert_string_contains(enemy.intent_tooltip.bbcode_text, "split across 3 hits")
 	assert_false(enemy.intent_tooltip.bbcode_text.contains("x3"))

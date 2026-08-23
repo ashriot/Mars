@@ -63,16 +63,21 @@ static func _format_damage(
 			damage_effect.damage_type, 28,
 		)
 
-	var final_text := "%s%s%s %s" % [
-		damage_bindings.amount,
-		damage_bindings.amount_qualifier,
-		damage_bindings.hit_count_text,
-		damage_bindings.damage_type,
-	]
+	var amount_qualifier: String = damage_bindings.amount_qualifier
+	if amount_qualifier == " per target":
+		amount_qualifier = ""
+	var final_text := "%s%s" % [damage_bindings.amount, amount_qualifier]
+	var hit_count_text: String = damage_bindings.hit_count_text
 	if enemy.intended_action.target_type == Action.TargetType.RANDOM_ENEMY \
-		and resolved_hit_count > 1 \
-		and damage_bindings.hit_count_text.is_empty():
-		final_text += " (%d hits)" % resolved_hit_count
+		and resolved_hit_count > 1:
+		hit_count_text = "x%d" % resolved_hit_count
+	if not hit_count_text.is_empty():
+		if damage_bindings.damage_type.is_empty() or not amount_qualifier.is_empty():
+			final_text += " " + hit_count_text
+		else:
+			final_text += hit_count_text
+	if not damage_bindings.damage_type.is_empty():
+		final_text += " " + damage_bindings.damage_type
 	if enemy.intended_action.effects.size() > 1:
 		final_text += " *"
 
@@ -84,5 +89,5 @@ static func _format_damage(
 	elif targets.size() == 1:
 		var target := targets[0] as HeroCombatant
 		var color := target.get_current_role().color.to_html()
-		final_text += " [color=%s]%s" % [color, target.actor_name]
+		final_text += " [color=%s]%s[/color]" % [color, target.actor_name]
 	return final_text

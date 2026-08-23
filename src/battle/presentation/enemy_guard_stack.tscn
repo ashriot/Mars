@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://src/battle/presentation/enemy_guard_stack.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://bi50x3lsg4gpg" path="res://assets/graphics/icons/textures/shield.png" id="2_shield"]
-[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="3_bold"]
+[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/oxanium_bold.tres" id="3_bold"]
 
 [node name="EnemyGuardStack" type="Control"]
 custom_minimum_size = Vector2(220, 22)
@@ -12,6 +12,19 @@ offset_right = 220.0
 offset_bottom = 22.0
 mouse_filter = 2
 script = ExtResource("1_script")
+
+[node name="ActiveShieldShadow" type="TextureRect" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+offset_right = 36.0
+offset_bottom = 34.0
+mouse_filter = 2
+modulate = Color(0, 0, 0, 0.5)
+texture = ExtResource("2_shield")
+expand_mode = 1
+stretch_mode = 5
+z_index = 9
 
 [node name="Layer1" type="Control" parent="."]
 unique_name_in_owner = true
@@ -336,12 +349,14 @@ stretch_mode = 5
 [node name="GuardValue" type="Label" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
-offset_right = 21.0
-offset_bottom = 22.0
+offset_right = 36.0
+offset_bottom = 34.0
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.19607843, 0.19607843, 0.19607843, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
 theme_override_fonts/font = ExtResource("3_bold")
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 20
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -352,7 +367,9 @@ layout_mode = 0
 offset_right = 220.0
 offset_bottom = 22.0
 mouse_filter = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("3_bold")
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 24
 horizontal_alignment = 1
 vertical_alignment = 1

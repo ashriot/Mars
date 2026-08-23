@@ -2,8 +2,8 @@
 
 [ext_resource type="Script" uid="uid://cfc3x0j8xdanv" path="res://src/map/terminal.gd" id="1_terminal"]
 [ext_resource type="PackedScene" path="res://src/map/terminal_protocol_row.tscn" id="2_row"]
-[ext_resource type="FontVariation" uid="uid://c0je4m574ytir" path="res://data/theme/fonts/suse_mono.tres" id="3_regular"]
-[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="4_bold"]
+[ext_resource type="FontVariation" uid="uid://c0je4m574ytir" path="res://data/theme/fonts/oxanium_regular.tres" id="3_regular"]
+[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/oxanium_bold.tres" id="4_bold"]
 [ext_resource type="Texture2D" uid="uid://y2kx6im08fe7" path="res://assets/graphics/icons/map/cancel.png" id="5_cancel"]
 [ext_resource type="Script" uid="uid://b684sdqsvpn3p" path="res://src/battle/dynamic_glyph.gd" id="6_glyph"]
 [ext_resource type="Shader" uid="uid://dg4j3qt72ayqd" path="res://src/map/crt.gdshader" id="7_filter"]

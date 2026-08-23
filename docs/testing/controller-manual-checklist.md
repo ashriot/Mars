@@ -176,7 +176,7 @@ Run this sequence once over USB and once over Bluetooth. Fill in both rows befor
 
 ## Sign-off
 
-The hub visual redesign remains deferred. The controls hint-bar redesign also remains deferred; a future pass should make it a deliberate floating panel, use Archivo for sentence-case informational copy, and reserve monospace typography for uppercase labels and other all-caps interface text.
+The hub visual redesign remains deferred. The controls hint-bar redesign also remains deferred; a future pass should make it a deliberate floating panel and differentiate sentence-case informational copy from uppercase labels by weight or size within the single Oxanium family, since the project no longer carries separate proportional and monospace font families to split that work across.
 
 - [ ] Xbox physical hardware passed — device/build/date/notes:
 - [ ] PlayStation physical hardware passed — device/build/date/notes:

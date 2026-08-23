@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://dp2d1ubplaoni"
-path="res://.godot/imported/Archivo-Italic-VariableFont_wdth,wght.ttf-6724fbc86f0bd01adb0e6c27aa9dd003.fontdata"
+uid="uid://v3giojsv757y"
+path="res://.godot/imported/Oxanium-VariableFont_wght.ttf-bd77de20c53f243d187976939b12a8a0.fontdata"
 
 [deps]
 
-source_file="res://data/theme/fonts/base_fonts/Archivo-Italic-VariableFont_wdth,wght.ttf"
-dest_files=["res://.godot/imported/Archivo-Italic-VariableFont_wdth,wght.ttf-6724fbc86f0bd01adb0e6c27aa9dd003.fontdata"]
+source_file="res://data/theme/fonts/base_fonts/Oxanium-VariableFont_wght.ttf"
+dest_files=["res://.godot/imported/Oxanium-VariableFont_wght.ttf-bd77de20c53f243d187976939b12a8a0.fontdata"]
 
 [params]
 

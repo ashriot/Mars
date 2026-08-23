@@ -1,6 +1,0 @@
-[gd_resource type="FontVariation" load_steps=2 format=3 uid="uid://da34kbi1ndel7"]
-
-[ext_resource type="FontFile" uid="uid://sao2qawbj5ft" path="res://data/theme/fonts/base_fonts/Archivo-VariableFont_wdth,wght.ttf" id="1_h1fwm"]
-
-[resource]
-base_font = ExtResource("1_h1fwm")

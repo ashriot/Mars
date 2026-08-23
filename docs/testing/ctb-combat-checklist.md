@@ -59,8 +59,9 @@ Run every item at physical `1920x1080` and the desktop-proxy `1280x800` window. 
 
 - [ ] Verify W and M five-enemy encounters retain correct model/HUD attribution and visibly distinct depth rows.
 - [ ] Verify compact enemy HUDs do not overlap, including long intent text, `23/30` Guard, conditions, safe-edge clamping, and one open detail block.
-- [ ] Verify the rounded full-width HP display is readable without permanent exact-HP text, its tooltip shows `current / max`, and Guard pips visibly render in front of the bar with a gap between adjacent shields.
-- [ ] Verify intent, name, defense, Guard, `VULNERABLE`, and `BREACHED` type is visibly larger and legible at both acceptance outputs.
+- [ ] Verify every enemy HP bar is `220x32`, permanently displays centered `current / max` text, and keeps rounded pink actual health over yellow delayed damage or green delayed healing.
+- [ ] Verify inspected name, centered intent, defenses, exact HP, Guard, `VULNERABLE`, and `BREACHED` remain readable over both bright walls and dark room regions at physical `1920x1080` and desktop-proxy `1280x800`.
+- [ ] Damage each outer, inner, and center enemy with kinetic, energy, piercing, rapid, and critical hits; verify each value appears over the struck model center with the established color and critical `!`, while rapid values remain distinguishable.
 - [ ] Verify inspection details open above the persistent compact HUD with a visible gap and do not obscure another compact HUD.
 - [ ] Verify delayed damage is yellow and delayed healing is green on enemies and on every hero/actor card.
 - [ ] Verify mouse model clicking and green valid-target outlines; then verify controller selection/inspection and unchanged face-button skill selection.
@@ -94,7 +95,7 @@ Run every item at physical `1920x1080` and the desktop-proxy `1280x800` window. 
 
 - [ ] Re-run iPhone visual acceptance on Godot 4.7.1; the prior Godot 4.6.3 device result does not establish this pass.
 - [ ] Inspect CTB gauge antialias appearance at both intended desktop resolutions because Godot 4.7 changed CanvasItem line-antialias feathering.
-- [ ] Open representative combat and UI scenes in the Godot 4.7.1 editor and verify fallback-font previews remain legible before runtime theme hydration, while the running game uses the authored SUSE Mono Bold and Archivo fonts.
+- [ ] Open representative combat and UI scenes in the Godot 4.7.1 editor and verify fallback-font previews remain legible before runtime theme hydration, while the running game uses the authored Oxanium fonts.
 - [ ] Exercise direct touch only if touch play remains supported, recording the physical device and noting any projected-HUD, targeting, CTB-scroll, or camera-ownership conflicts.
 
 ## Damage architecture acceptance
@@ -160,7 +161,7 @@ Record the date, OS/device, controller and connection, physical resolution, test
 - [ ] The acting battlefield card uses the exact queue gold for the full hero or enemy turn.
 - [ ] Target availability, selection outline, and pulse remain independently visible while the acting gold outline persists beneath them.
 - [ ] Every queue entry is a uniform `72x72` square, and only the current entry has a gold perimeter.
-- [ ] Hero entries use their authored role icon and role color; enemy entries use readable Archivo abbreviations in magenta.
+- [ ] Hero entries use their authored role icon and role color; enemy entries use readable Oxanium abbreviations in magenta.
 - [ ] At `1920x1080`, the rail exposes at least eight complete queue cards at once and allows inspection of all twenty projected future turns.
 - [ ] The inset scrollbar is hidden at the top and remains visible while the rail is displaced.
 - [ ] The bottom overflow fade appears only while additional future turns remain below the visible rail and disappears at the end of the list.

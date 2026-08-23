@@ -1,7 +1,7 @@
 [gd_scene load_steps=7 format=3 uid="uid://c3sqmfckgaala"]
 
 [ext_resource type="Script" uid="uid://lqyabhv1vfuk" path="res://src/hub/hero_panel.gd" id="1_r4b5v"]
-[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/suse_mono_bold.tres" id="1_tilru"]
+[ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/oxanium_bold.tres" id="1_tilru"]
 [ext_resource type="Texture2D" uid="uid://cqweju3y7kwst" path="res://assets/graphics/icons/textures/shield_sm.png" id="2_r4b5v"]
 [ext_resource type="PackedScene" uid="uid://bc5k1xyxevh03" path="res://src/hub/equipment_panel.tscn" id="4_p6r37"]
 
