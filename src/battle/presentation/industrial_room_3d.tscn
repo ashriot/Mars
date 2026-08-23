@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://bxnblkrkqiufw"]
+[gd_scene load_steps=18 format=3 uid="uid://bxnblkrkqiufw"]
 
 [ext_resource type="Script" uid="uid://daidhafirumhc" path="res://src/battle/presentation/optional_local_model_3d.gd" id="1_optional"]
 [ext_resource type="PackedScene" path="res://src/battle/presentation/industrial_room_bay_3d.tscn" id="2_bay"]
@@ -13,6 +13,14 @@ albedo_color = Color(0.18, 0.205, 0.24, 1)
 metallic = 0.85
 roughness = 0.32
 
+[sub_resource type="StandardMaterial3D" id="Material_entry_canopy"]
+albedo_color = Color(0.16, 0.22, 0.34, 1)
+metallic = 0.6
+roughness = 0.56
+emission_enabled = true
+emission = Color(0.08, 0.13, 0.24, 1)
+emission_energy_multiplier = 1.2
+
 [sub_resource type="StandardMaterial3D" id="Material_light"]
 albedo_color = Color(0.25, 0.65, 0.95, 1)
 emission_enabled = true
@@ -21,7 +29,19 @@ emission_energy_multiplier = 4.0
 
 [sub_resource type="BoxMesh" id="Mesh_floor"]
 material = SubResource("Material_dark")
-size = Vector3(12, 0.3, 12)
+size = Vector3(12, 0.3, 18)
+
+[sub_resource type="BoxMesh" id="Mesh_entry_canopy"]
+material = SubResource("Material_entry_canopy")
+size = Vector3(12, 0.25, 8)
+
+[sub_resource type="BoxMesh" id="Mesh_ceiling_backer"]
+material = SubResource("Material_entry_canopy")
+size = Vector3(18, 0.2, 21)
+
+[sub_resource type="BoxMesh" id="Mesh_entry_wall"]
+material = SubResource("Material_dark")
+size = Vector3(0.3, 5, 8)
 
 [sub_resource type="BoxMesh" id="Mesh_back_panel"]
 material = SubResource("Material_dark")
@@ -62,8 +82,24 @@ height = 3.0
 [node name="RoomShell" type="Node3D" parent="."]
 
 [node name="Floor" type="MeshInstance3D" parent="RoomShell"]
-position = Vector3(0, -0.3, -1.5)
+position = Vector3(0, -0.3, 1.5)
 mesh = SubResource("Mesh_floor")
+
+[node name="EntryCanopy" type="MeshInstance3D" parent="RoomShell"]
+position = Vector3(0, 5.2, 8.5)
+mesh = SubResource("Mesh_entry_canopy")
+
+[node name="CeilingBacker" type="MeshInstance3D" parent="RoomShell"]
+position = Vector3(0, 5.45, 1.5)
+mesh = SubResource("Mesh_ceiling_backer")
+
+[node name="EntryLeftWall" type="MeshInstance3D" parent="RoomShell"]
+position = Vector3(-5.85, 2.5, 8.5)
+mesh = SubResource("Mesh_entry_wall")
+
+[node name="EntryRightWall" type="MeshInstance3D" parent="RoomShell"]
+position = Vector3(5.85, 2.5, 8.5)
+mesh = SubResource("Mesh_entry_wall")
 
 [node name="BayNear" parent="RoomShell" instance=ExtResource("2_bay")]
 position = Vector3(0, 0, 2.5)
