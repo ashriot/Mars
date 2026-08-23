@@ -3,6 +3,7 @@
 [ext_resource type="Resource" uid="uid://cbruwytkh444f" path="res://data/enemies/actions/potshot.tres" id="3_kt2l0"]
 [ext_resource type="Resource" uid="uid://43gi1cxcpjxo" path="res://data/enemies/actions/stun_baton.tres" id="4_0ggm0"]
 [ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://src/scripts/data/enemy_data.gd" id="7_2vyhf"]
+[ext_resource type="Resource" uid="uid://bg7k6ixvwst7t" path="res://data/enemies/actions/recover_breach.tres" id="7_a1ki8"]
 [ext_resource type="Script" uid="uid://c8h2tm5pykaq" path="res://src/scripts/enemies/enemy_decision_condition.gd" id="8_condition"]
 [ext_resource type="Script" uid="uid://btr3kn6uh6qgm" path="res://src/scripts/enemies/enemy_target_selector.gd" id="9_selector"]
 [ext_resource type="Script" uid="uid://bwhnoji7ew1mg" path="res://src/scripts/enemies/enemy_decision_rule.gd" id="10_rule"]

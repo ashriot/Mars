@@ -2,6 +2,7 @@
 
 [ext_resource type="Resource" uid="uid://d0m01fmh2ig2s" path="res://data/enemies/actions/gunshot.tres" id="2_wckpy"]
 [ext_resource type="Resource" uid="uid://m5wgycabl2ij" path="res://data/enemies/actions/fortify.tres" id="4_j7iu0"]
+[ext_resource type="Resource" uid="uid://bg7k6ixvwst7t" path="res://data/enemies/actions/recover_breach.tres" id="7_cbp0k"]
 [ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://src/scripts/data/enemy_data.gd" id="8_rvaar"]
 [ext_resource type="Script" uid="uid://c8h2tm5pykaq" path="res://src/scripts/enemies/enemy_decision_condition.gd" id="9_condition"]
 [ext_resource type="Script" uid="uid://btr3kn6uh6qgm" path="res://src/scripts/enemies/enemy_target_selector.gd" id="10_selector"]
