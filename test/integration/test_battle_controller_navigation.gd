@@ -2775,6 +2775,12 @@ func _packed_drone_pointer_fixture() -> Dictionary:
 	viewport.size = Vector2i(1280, 800)
 	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	add_child_autofree(viewport)
+	# GameManager parents battles through OverlayLayer (layer 4). Preserve that
+	# real canvas relationship so player controls remain above the projected
+	# enemy HUD and projectile canvas (layer 3).
+	var overlay := CanvasLayer.new()
+	overlay.layer = 4
+	viewport.add_child(overlay)
 	var battle := BattleSceneResource.instantiate() as BattleScene
 	var packed_manager := battle.manager
 	var manager := TrackingBattleManager.new()
@@ -2795,7 +2801,7 @@ func _packed_drone_pointer_fixture() -> Dictionary:
 	battle.manager = manager
 	manager.action_bar.battle_manager = manager
 	(battle.get_node("UI/TurnQueue") as TurnQueue).battle_manager = manager
-	viewport.add_child(battle)
+	overlay.add_child(battle)
 	await get_tree().process_frame
 	await get_tree().process_frame
 
