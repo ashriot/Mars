@@ -142,6 +142,50 @@ func test_room_builds_a_closed_three_bay_shell_without_backdrop() -> void:
 		assert_not_null(bay.get_node("PracticalLight"))
 
 
+func test_camera_side_floor_overlaps_the_entry_walls() -> void:
+	var world := _world()
+	var shell := world.get_node("IndustrialRoom3D/RoomShell")
+	var floor := shell.get_node("Floor") as MeshInstance3D
+
+	for wall_path: String in ["EntryLeftWall", "EntryRightWall"]:
+		var wall := shell.get_node(wall_path) as MeshInstance3D
+		assert_gte(
+			_world_bounds(floor).end.y,
+			_world_bounds(wall).position.y + 0.01,
+			"%s must overlap the floor so the room cannot expose the clear color at its base" % wall_path,
+		)
+
+
+func test_camera_side_ceiling_overlaps_the_entry_walls() -> void:
+	var world := _world()
+	var shell := world.get_node("IndustrialRoom3D/RoomShell")
+	var ceiling := shell.get_node("CeilingBacker") as MeshInstance3D
+
+	for wall_path: String in ["EntryLeftWall", "EntryRightWall"]:
+		var wall := shell.get_node(wall_path) as MeshInstance3D
+		assert_gte(
+			_world_bounds(wall).end.y,
+			_world_bounds(ceiling).position.y + 0.01,
+			"%s must overlap the ceiling so the room cannot expose the clear color at its top edge" % wall_path,
+		)
+
+
+func _world_bounds(mesh_instance: MeshInstance3D) -> AABB:
+	var local_bounds := mesh_instance.mesh.get_aabb()
+	var world_bounds := AABB()
+	var initialized := false
+	for x: float in [local_bounds.position.x, local_bounds.end.x]:
+		for y: float in [local_bounds.position.y, local_bounds.end.y]:
+			for z: float in [local_bounds.position.z, local_bounds.end.z]:
+				var point := mesh_instance.global_transform * Vector3(x, y, z)
+				if initialized:
+					world_bounds = world_bounds.expand(point)
+				else:
+					world_bounds = AABB(point, Vector3.ZERO)
+					initialized = true
+	return world_bounds
+
+
 func test_room_nested_local_modules_all_keep_tracked_placeholders() -> void:
 	var world := _world()
 	var room := world.get_node("IndustrialRoom3D")

@@ -66,6 +66,23 @@ func test_compact_battle_metadata_remains_readable_at_deck_scale() -> void:
 	enemy.free()
 
 
+func test_hero_cards_begin_below_the_projected_enemy_stage() -> void:
+	var battle := await _battle_in_viewport(Vector2i(1920, 1080))
+	var heroes := battle.get_node("UI/Heroes") as Control
+	var action_bar := battle.get_node("UI/ActionBar") as ActionBar
+
+	assert_gte(
+		heroes.get_global_rect().position.y,
+		700.0,
+		"hero cards must leave the central projected-enemy stage unobscured",
+	)
+	assert_lte(
+		heroes.get_global_rect().end.y,
+		action_bar.get_global_rect().position.y,
+		"hero cards must clear the action bar below them",
+	)
+
+
 func test_packed_action_bar_uses_ordered_top_and_bottom_containers() -> void:
 	var battle := await _battle_in_viewport(Vector2i(1920, 1080))
 	var action_bar := battle.get_node("UI/ActionBar") as ActionBar
