@@ -6,6 +6,7 @@
 [ext_resource type="Resource" uid="uid://5sx21pdqqpbi" path="res://data/enemies/actions/rapid_fire.tres" id="5_sbo5v"]
 [ext_resource type="Script" uid="uid://b3t5esgv1d2ku" path="res://src/scripts/data/enemy_data.gd" id="6_hlj5o"]
 [ext_resource type="Script" uid="uid://c8h2tm5pykaq" path="res://src/scripts/enemies/enemy_decision_condition.gd" id="8_condition"]
+[ext_resource type="Resource" uid="uid://bg7k6ixvwst7t" path="res://data/enemies/actions/recover_breach.tres" id="9_sbo5v"]
 [ext_resource type="Script" uid="uid://btr3kn6uh6qgm" path="res://src/scripts/enemies/enemy_target_selector.gd" id="9_selector"]
 [ext_resource type="Script" uid="uid://bwhnoji7ew1mg" path="res://src/scripts/enemies/enemy_decision_rule.gd" id="10_rule"]
 [ext_resource type="Script" uid="uid://ban2jvuk6cs6k" path="res://src/scripts/enemies/enemy_ability.gd" id="11_ability"]

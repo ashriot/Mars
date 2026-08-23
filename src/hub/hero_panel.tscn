@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://c3sqmfckgaala"]
+[gd_scene format=3 uid="uid://c3sqmfckgaala"]
 
 [ext_resource type="Script" uid="uid://lqyabhv1vfuk" path="res://src/hub/hero_panel.gd" id="1_r4b5v"]
 [ext_resource type="FontVariation" uid="uid://cnjisphqjicqu" path="res://data/theme/fonts/oxanium_bold.tres" id="1_tilru"]
@@ -20,7 +20,7 @@ corner_radius_bottom_left = 12
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_fgavx"]
 load_path = "res://.godot/imported/bolt_sm.png-54f352b5e50e80987f5f73607db947d7.ctex"
 
-[node name="HeroPanel" type="Panel"]
+[node name="HeroPanel" type="Panel" unique_id=1985096907]
 custom_minimum_size = Vector2(300, 96)
 anchors_preset = 4
 anchor_top = 0.5
@@ -32,7 +32,7 @@ grow_vertical = 2
 focus_mode = 2
 script = ExtResource("1_r4b5v")
 
-[node name="Content" type="Control" parent="."]
+[node name="Content" type="Control" parent="." unique_id=490056162]
 clip_contents = true
 layout_mode = 1
 anchors_preset = 15
@@ -43,7 +43,7 @@ grow_vertical = 2
 mouse_filter = 1
 metadata/_edit_group_ = true
 
-[node name="Header" type="Panel" parent="Content"]
+[node name="Header" type="Panel" parent="Content" unique_id=299583689]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -53,7 +53,7 @@ grow_vertical = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_p6r37")
 
-[node name="Label" type="Label" parent="Content/Header"]
+[node name="Label" type="Label" parent="Content/Header" unique_id=1485643558]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
@@ -65,7 +65,7 @@ text = "ASHER"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Stats" type="VBoxContainer" parent="Content"]
+[node name="Stats" type="VBoxContainer" parent="Content" unique_id=1226769518]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -77,26 +77,27 @@ offset_bottom = 284.0
 grow_horizontal = 2
 theme_override_constants/separation = -2
 
-[node name="Summary" type="HBoxContainer" parent="Content/Stats"]
+[node name="Summary" type="HBoxContainer" parent="Content/Stats" unique_id=928987864]
 custom_minimum_size = Vector2(0, 41)
 layout_mode = 2
 theme_override_constants/separation = 0
 
-[node name="HP" type="HBoxContainer" parent="Content/Stats/Summary"]
+[node name="HP" type="HBoxContainer" parent="Content/Stats/Summary" unique_id=358219847]
 modulate = Color(0.30588236, 0.7607843, 0.34117648, 1)
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="Label" type="RichTextLabel" parent="Content/Stats/Summary/HP"]
+[node name="Label" type="RichTextLabel" parent="Content/Stats/Summary/HP" unique_id=520462851]
 custom_minimum_size = Vector2(42, 0)
 layout_mode = 2
 mouse_filter = 2
 theme_override_fonts/normal_font = ExtResource("1_tilru")
 theme_override_font_sizes/normal_font_size = 32
 text = "HP"
+scroll_active = false
 horizontal_alignment = 2
 
-[node name="Value" type="RichTextLabel" parent="Content/Stats/Summary/HP"]
+[node name="Value" type="RichTextLabel" parent="Content/Stats/Summary/HP" unique_id=175400739]
 custom_minimum_size = Vector2(90, 0)
 layout_mode = 2
 mouse_filter = 2
@@ -104,17 +105,18 @@ theme_override_fonts/normal_font = ExtResource("1_tilru")
 theme_override_font_sizes/normal_font_size = 32
 bbcode_enabled = true
 text = "[color=\"fff2\"]0[color=\"fff\"]100"
+scroll_active = false
 
-[node name="Spacer" type="Control" parent="Content/Stats/Summary"]
+[node name="Spacer" type="Control" parent="Content/Stats/Summary" unique_id=1783522170]
 custom_minimum_size = Vector2(8, 0)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="XP" type="HBoxContainer" parent="Content/Stats/Summary"]
+[node name="XP" type="HBoxContainer" parent="Content/Stats/Summary" unique_id=2144178233]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="Label" type="RichTextLabel" parent="Content/Stats/Summary/XP"]
+[node name="Label" type="RichTextLabel" parent="Content/Stats/Summary/XP" unique_id=1570638481]
 custom_minimum_size = Vector2(42, 0)
 layout_mode = 2
 mouse_filter = 2
@@ -122,25 +124,26 @@ theme_override_fonts/normal_font = ExtResource("1_tilru")
 theme_override_font_sizes/normal_font_size = 32
 text = "XP"
 
-[node name="Value" type="RichTextLabel" parent="Content/Stats/Summary/XP"]
-custom_minimum_size = Vector2(95, 0)
+[node name="Value" type="RichTextLabel" parent="Content/Stats/Summary/XP" unique_id=269974166]
+custom_minimum_size = Vector2(85, 0)
 layout_mode = 2
 mouse_filter = 2
 theme_override_fonts/normal_font = ExtResource("1_tilru")
 theme_override_font_sizes/normal_font_size = 32
 text = "0"
+scroll_active = false
 horizontal_alignment = 2
 
-[node name="Resources" type="HBoxContainer" parent="Content/Stats"]
+[node name="Resources" type="HBoxContainer" parent="Content/Stats" unique_id=122350291]
 layout_mode = 2
 alignment = 1
 
-[node name="Guard" type="Control" parent="Content/Stats/Resources"]
+[node name="Guard" type="Control" parent="Content/Stats/Resources" unique_id=1016984106]
 custom_minimum_size = Vector2(100, 41)
 layout_mode = 2
 mouse_filter = 1
 
-[node name="Pip1" type="TextureRect" parent="Content/Stats/Resources/Guard"]
+[node name="Pip1" type="TextureRect" parent="Content/Stats/Resources/Guard" unique_id=797997578]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 1
 anchors_preset = 8
@@ -157,7 +160,7 @@ grow_vertical = 2
 texture = ExtResource("2_r4b5v")
 expand_mode = 1
 
-[node name="Value" type="RichTextLabel" parent="Content/Stats/Resources/Guard"]
+[node name="Value" type="RichTextLabel" parent="Content/Stats/Resources/Guard" unique_id=139836299]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -178,12 +181,12 @@ text = "05  03"
 scroll_active = false
 horizontal_alignment = 2
 
-[node name="Focus" type="Control" parent="Content/Stats/Resources"]
+[node name="Focus" type="Control" parent="Content/Stats/Resources" unique_id=1276347042]
 custom_minimum_size = Vector2(100, 41)
 layout_mode = 2
 mouse_filter = 1
 
-[node name="Value" type="RichTextLabel" parent="Content/Stats/Resources/Focus"]
+[node name="Value" type="RichTextLabel" parent="Content/Stats/Resources/Focus" unique_id=1526432352]
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
@@ -201,7 +204,7 @@ text = "05"
 scroll_active = false
 horizontal_alignment = 2
 
-[node name="Pip1" type="TextureRect" parent="Content/Stats/Resources/Focus"]
+[node name="Pip1" type="TextureRect" parent="Content/Stats/Resources/Focus" unique_id=792071507]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 1
 anchors_preset = 8
@@ -218,18 +221,18 @@ grow_vertical = 2
 texture = SubResource("CompressedTexture2D_fgavx")
 expand_mode = 1
 
-[node name="POW" type="HBoxContainer" parent="Content/Stats"]
+[node name="POW" type="HBoxContainer" parent="Content/Stats" unique_id=777460192]
 layout_mode = 2
 theme_override_constants/separation = 0
 alignment = 2
 
-[node name="ATK" type="HBoxContainer" parent="Content/Stats/POW"]
+[node name="ATK" type="HBoxContainer" parent="Content/Stats/POW" unique_id=1744751011]
 modulate = Color(1, 0.36862746, 0.36862746, 1)
 custom_minimum_size = Vector2(0, 41)
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Label" type="Label" parent="Content/Stats/POW/ATK"]
+[node name="Label" type="Label" parent="Content/Stats/POW/ATK" unique_id=1316929446]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("1_tilru")
@@ -237,7 +240,7 @@ text = "atk"
 horizontal_alignment = 2
 uppercase = true
 
-[node name="Value" type="RichTextLabel" parent="Content/Stats/POW/ATK"]
+[node name="Value" type="RichTextLabel" parent="Content/Stats/POW/ATK" unique_id=910795924]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 mouse_filter = 2
@@ -247,14 +250,14 @@ bbcode_enabled = true
 text = "003"
 scroll_active = false
 
-[node name="PSY" type="HBoxContainer" parent="Content/Stats/POW"]
+[node name="PSY" type="HBoxContainer" parent="Content/Stats/POW" unique_id=497399172]
 modulate = Color(0.43137255, 0.6392157, 1, 1)
 custom_minimum_size = Vector2(0, 41)
 layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 1
 
-[node name="Label" type="Label" parent="Content/Stats/POW/PSY"]
+[node name="Label" type="Label" parent="Content/Stats/POW/PSY" unique_id=172776602]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("1_tilru")
@@ -262,7 +265,7 @@ text = "psy"
 horizontal_alignment = 2
 uppercase = true
 
-[node name="Value" type="RichTextLabel" parent="Content/Stats/POW/PSY"]
+[node name="Value" type="RichTextLabel" parent="Content/Stats/POW/PSY" unique_id=1735539008]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 mouse_filter = 2
@@ -272,18 +275,18 @@ bbcode_enabled = true
 text = "005"
 scroll_active = false
 
-[node name="SUB" type="HBoxContainer" parent="Content/Stats"]
+[node name="SUB" type="HBoxContainer" parent="Content/Stats" unique_id=1772807119]
 layout_mode = 2
 theme_override_constants/separation = 0
 alignment = 2
 
-[node name="OVR" type="HBoxContainer" parent="Content/Stats/SUB"]
+[node name="OVR" type="HBoxContainer" parent="Content/Stats/SUB" unique_id=1228837325]
 modulate = Color(0.52156866, 0.42745098, 1, 1)
 custom_minimum_size = Vector2(0, 41)
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Label" type="Label" parent="Content/Stats/SUB/OVR"]
+[node name="Label" type="Label" parent="Content/Stats/SUB/OVR" unique_id=775032060]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("1_tilru")
@@ -291,7 +294,7 @@ text = "ovr"
 horizontal_alignment = 2
 uppercase = true
 
-[node name="Value" type="RichTextLabel" parent="Content/Stats/SUB/OVR"]
+[node name="Value" type="RichTextLabel" parent="Content/Stats/SUB/OVR" unique_id=1247577086]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 mouse_filter = 2
@@ -301,14 +304,14 @@ bbcode_enabled = true
 text = "003"
 scroll_active = false
 
-[node name="SPD" type="HBoxContainer" parent="Content/Stats/SUB"]
+[node name="SPD" type="HBoxContainer" parent="Content/Stats/SUB" unique_id=134675092]
 modulate = Color(1, 0.7764706, 0.32941177, 1)
 custom_minimum_size = Vector2(0, 41)
 layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 1
 
-[node name="Label" type="Label" parent="Content/Stats/SUB/SPD"]
+[node name="Label" type="Label" parent="Content/Stats/SUB/SPD" unique_id=16153177]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("1_tilru")
@@ -316,7 +319,7 @@ text = "spd"
 horizontal_alignment = 2
 uppercase = true
 
-[node name="Value" type="RichTextLabel" parent="Content/Stats/SUB/SPD"]
+[node name="Value" type="RichTextLabel" parent="Content/Stats/SUB/SPD" unique_id=2117862770]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 mouse_filter = 2
@@ -326,18 +329,18 @@ bbcode_enabled = true
 text = "005"
 scroll_active = false
 
-[node name="AIM" type="HBoxContainer" parent="Content/Stats"]
+[node name="AIM" type="HBoxContainer" parent="Content/Stats" unique_id=767106433]
 modulate = Color(0.9529412, 0.50980395, 1, 1)
 layout_mode = 2
 theme_override_constants/separation = 0
 alignment = 2
 
-[node name="AIM" type="HBoxContainer" parent="Content/Stats/AIM"]
+[node name="AIM" type="HBoxContainer" parent="Content/Stats/AIM" unique_id=1297096665]
 custom_minimum_size = Vector2(0, 41)
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Label" type="Label" parent="Content/Stats/AIM/AIM"]
+[node name="Label" type="Label" parent="Content/Stats/AIM/AIM" unique_id=1620423757]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("1_tilru")
@@ -345,7 +348,7 @@ text = "aim"
 horizontal_alignment = 2
 uppercase = true
 
-[node name="Value" type="RichTextLabel" parent="Content/Stats/AIM/AIM"]
+[node name="Value" type="RichTextLabel" parent="Content/Stats/AIM/AIM" unique_id=440974481]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 mouse_filter = 2
@@ -355,13 +358,13 @@ bbcode_enabled = true
 text = "25%"
 scroll_active = false
 
-[node name="PRE" type="HBoxContainer" parent="Content/Stats/AIM"]
+[node name="PRE" type="HBoxContainer" parent="Content/Stats/AIM" unique_id=1269231740]
 custom_minimum_size = Vector2(0, 41)
 layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 1
 
-[node name="Label" type="Label" parent="Content/Stats/AIM/PRE"]
+[node name="Label" type="Label" parent="Content/Stats/AIM/PRE" unique_id=1356088893]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("1_tilru")
@@ -369,7 +372,7 @@ text = "pre"
 horizontal_alignment = 2
 uppercase = true
 
-[node name="Value" type="RichTextLabel" parent="Content/Stats/AIM/PRE"]
+[node name="Value" type="RichTextLabel" parent="Content/Stats/AIM/PRE" unique_id=18700712]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 mouse_filter = 2
@@ -379,18 +382,18 @@ bbcode_enabled = true
 text = "003"
 scroll_active = false
 
-[node name="DEF" type="HBoxContainer" parent="Content/Stats"]
+[node name="DEF" type="HBoxContainer" parent="Content/Stats" unique_id=1150957700]
 layout_mode = 2
 theme_override_constants/separation = 0
 alignment = 2
 
-[node name="KIN" type="HBoxContainer" parent="Content/Stats/DEF"]
+[node name="KIN" type="HBoxContainer" parent="Content/Stats/DEF" unique_id=1487252024]
 modulate = Color(1, 0.4745098, 0.16862746, 1)
 custom_minimum_size = Vector2(0, 41)
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Label" type="Label" parent="Content/Stats/DEF/KIN"]
+[node name="Label" type="Label" parent="Content/Stats/DEF/KIN" unique_id=681944013]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("1_tilru")
@@ -398,7 +401,7 @@ text = "kin"
 horizontal_alignment = 2
 uppercase = true
 
-[node name="Value" type="RichTextLabel" parent="Content/Stats/DEF/KIN"]
+[node name="Value" type="RichTextLabel" parent="Content/Stats/DEF/KIN" unique_id=2116190171]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 mouse_filter = 2
@@ -408,14 +411,14 @@ bbcode_enabled = true
 text = "25%"
 scroll_active = false
 
-[node name="NRG" type="HBoxContainer" parent="Content/Stats/DEF"]
+[node name="NRG" type="HBoxContainer" parent="Content/Stats/DEF" unique_id=842287561]
 modulate = Color(0.25882354, 1, 0.9254902, 1)
 custom_minimum_size = Vector2(0, 41)
 layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 1
 
-[node name="Label" type="Label" parent="Content/Stats/DEF/NRG"]
+[node name="Label" type="Label" parent="Content/Stats/DEF/NRG" unique_id=760532878]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("1_tilru")
@@ -423,7 +426,7 @@ text = "nrg"
 horizontal_alignment = 2
 uppercase = true
 
-[node name="Value" type="RichTextLabel" parent="Content/Stats/DEF/NRG"]
+[node name="Value" type="RichTextLabel" parent="Content/Stats/DEF/NRG" unique_id=970745479]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 mouse_filter = 2
@@ -433,7 +436,7 @@ bbcode_enabled = true
 text = "50%"
 scroll_active = false
 
-[node name="Equipment" type="HBoxContainer" parent="."]
+[node name="Equipment" type="HBoxContainer" parent="." unique_id=1596077363]
 layout_mode = 1
 anchors_preset = 11
 anchor_left = 1.0
@@ -446,8 +449,8 @@ grow_vertical = 2
 mouse_filter = 2
 theme_override_constants/separation = 12
 
-[node name="WeaponPanel" parent="Equipment" instance=ExtResource("4_p6r37")]
+[node name="WeaponPanel" parent="Equipment" unique_id=1407005325 instance=ExtResource("4_p6r37")]
 layout_mode = 2
 
-[node name="ArmorPanel" parent="Equipment" instance=ExtResource("4_p6r37")]
+[node name="ArmorPanel" parent="Equipment" unique_id=39483716 instance=ExtResource("4_p6r37")]
 layout_mode = 2
