@@ -322,6 +322,7 @@ func _guard_bar(cap: float) -> SegmentBar:
 	bar.cell_gap = 3.0
 	bar.row_gap = 3.0
 	bar.skew_px = 3.0
+	bar.use_alarm_states = false
 	bar.max_value = cap
 	bar.value = cap
 	return bar
@@ -403,3 +404,109 @@ func test_pulse_processing_follows_the_pulse_setting() -> void:
 	bar.pulse_when_critical = true
 
 	assert_true(bar.is_processing())
+
+
+func test_guard_gauge_stays_achromatic_and_calm_at_any_value() -> void:
+	# Guard must never compete with the HP ramp: a nearly-broken guard is
+	# still flat, still OK, and never pulses.
+	var bar := _guard_bar(30.0)
+
+	bar.value = 2.0
+
+	assert_eq(bar.get_fill_state(), SegmentBar.FillState.OK)
+	assert_eq(bar.get_fill_color(), bar.flat_color)
+
+
+func test_fill_color_follows_the_alarm_ramp() -> void:
+	var bar := _bar()
+	bar.pulse_when_critical = false
+	bar.max_value = 100.0
+
+	bar.value = 80.0
+	assert_eq(bar.get_fill_color(), bar.color_ok)
+	bar.value = 40.0
+	assert_eq(bar.get_fill_color(), bar.color_warn)
+	bar.value = 10.0
+	assert_eq(bar.get_fill_color(), bar.color_crit)
+
+
+func test_alarm_thresholds_are_inclusive_at_the_boundary() -> void:
+	var bar := _bar()
+	bar.max_value = 100.0
+
+	bar.value = 50.0
+	assert_eq(bar.get_fill_state(), SegmentBar.FillState.WARN, "exactly warn_below is WARN")
+	bar.value = 25.0
+	assert_eq(bar.get_fill_state(), SegmentBar.FillState.CRIT, "exactly crit_below is CRIT")
+
+
+func test_retuning_a_threshold_refreshes_state_immediately() -> void:
+	var bar := _bar()
+	bar.max_value = 100.0
+	bar.value = 60.0
+	assert_eq(bar.get_fill_state(), SegmentBar.FillState.OK)
+
+	bar.crit_below = 0.9
+
+	assert_eq(bar.get_fill_state(), SegmentBar.FillState.CRIT)
+
+
+func test_collapsed_bar_with_no_cap_never_alarms() -> void:
+	var bar := _bar()
+	bar.max_value = 100.0
+	bar.value = 10.0
+	assert_eq(bar.get_fill_state(), SegmentBar.FillState.CRIT)
+
+	bar.max_value = 0.0
+
+	assert_eq(bar.get_fill_state(), SegmentBar.FillState.OK, "no cap means no mechanic, not a mechanic at zero")
+
+
+func test_set_values_can_collapse_the_cap_to_zero() -> void:
+	var bar := _bar()
+	bar.set_values(50.0, 100.0)
+
+	bar.set_values(0.0, 0.0)
+
+	assert_eq(bar.max_value, 0.0)
+
+
+func test_critical_pulse_breathes_the_fill_color() -> void:
+	var bar := _bar()
+	bar.max_value = 100.0
+	bar.value = 10.0
+	var resting := bar.get_fill_color()
+
+	bar._phase = PI * 0.5   # sin peak -- poking private animation state directly is
+	                         # acceptable for a unit test of private animation phase.
+	var peak := bar.get_fill_color()
+
+	# HSV .v is not a usable brightness proxy here: color_crit's red channel
+	# is already at 1.0, so lightened() (which pulls every channel toward
+	# white) can never raise max(r,g,b) further -- .v is pinned at 1.0 both
+	# at rest and at peak. Luminance (a weighted sum of all three channels)
+	# actually rises as green/blue lift toward white, so it's the metric
+	# that reflects what "breathes brighter" means for this colour.
+	assert_ne(peak, resting, "the critical fill breathes with the pulse phase")
+	assert_gt(peak.get_luminance(), resting.get_luminance(), "breathing brightens, never dims or fades")
+
+
+func test_should_process_only_runs_the_pulse_outside_the_editor() -> void:
+	assert_false(SegmentBar.should_process(true, true), "editor hint suppresses processing even when pulse wants it")
+	assert_true(SegmentBar.should_process(true, false), "outside the editor, a pulse request runs")
+
+
+func test_pulse_phase_only_advances_while_critical() -> void:
+	# is_processing() is driven by pulse_when_critical alone (see
+	# should_process()), so _process() runs every frame regardless of
+	# alarm state; it's _process()'s own internal guard that must keep the
+	# phase pinned at rest outside CRIT. Advance real frames rather than
+	# poking _phase, so a dropped guard actually shows up.
+	var bar := _bar()
+	bar.max_value = 100.0
+	bar.value = 80.0
+	bar.pulse_when_critical = true
+
+	await wait_process_frames(5)
+
+	assert_eq(bar._phase, 0.0, "phase must not advance outside CRIT")

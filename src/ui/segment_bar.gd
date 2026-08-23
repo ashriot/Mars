@@ -106,21 +106,47 @@ signal state_changed(state: FillState)
 		_refresh_state()
 		queue_redraw()
 
-@export var color_ok := Color("a2b6ca")
-@export var color_warn := Color("f0a63c")
-@export var color_crit := Color("ff4b4b")
-@export var flat_color := Color("e8f0f8")
+@export var color_ok := Color("a2b6ca"):
+	set(v):
+		color_ok = v
+		queue_redraw()
+@export var color_warn := Color("f0a63c"):
+	set(v):
+		color_warn = v
+		queue_redraw()
+@export var color_crit := Color("ff4b4b"):
+	set(v):
+		color_crit = v
+		queue_redraw()
+@export var flat_color := Color("e8f0f8"):
+	set(v):
+		flat_color = v
+		queue_redraw()
 
-@export_range(0.0, 1.0) var warn_below: float = 0.50
-@export_range(0.0, 1.0) var crit_below: float = 0.25
+@export_range(0.0, 1.0) var warn_below: float = 0.50:
+	set(v):
+		warn_below = v
+		_refresh_state()
+		queue_redraw()
+@export_range(0.0, 1.0) var crit_below: float = 0.25:
+	set(v):
+		crit_below = v
+		_refresh_state()
+		queue_redraw()
 
 @export_group("Critical pulse")
 @export var pulse_when_critical: bool = true:
 	set(v):
 		pulse_when_critical = v
 		_refresh_processing()
-@export var pulse_hz: float = 0.66
-@export_range(0.0, 1.0) var pulse_depth: float = 0.35
+@export var pulse_hz: float = 0.66:
+	set(v):
+		pulse_hz = v
+		queue_redraw()
+@export_range(0.0, 1.0) var pulse_depth: float = 0.35:
+	set(v):
+		pulse_depth = v
+		queue_redraw()
 
 @export var track_fill := Color(1, 1, 1, 0.055)
 @export var track_line := Color(1, 1, 1, 0.11)
@@ -149,7 +175,7 @@ func get_fill_state() -> FillState:
 
 func _refresh_state() -> void:
 	var previous := _state
-	if not use_alarm_states:
+	if not use_alarm_states or max_value <= 0.0:
 		_state = FillState.OK
 	else:
 		var ratio := get_ratio()
@@ -174,7 +200,15 @@ func _refresh_processing() -> void:
 	if not is_inside_tree():
 		set_process(pulse_when_critical)
 		return
-	set_process(pulse_when_critical and not Engine.is_editor_hint())
+	set_process(should_process(pulse_when_critical, Engine.is_editor_hint()))
+
+
+## Pure predicate behind _refresh_processing()'s in-tree branch: pulse
+## animation only runs outside the editor, so a tool-mode inspector preview
+## never spins the CPU. Static and pure so tests can pin the logic without
+## an editor context (Engine.is_editor_hint() is not toggleable headless).
+static func should_process(pulse: bool, editor_hint: bool) -> bool:
+	return pulse and not editor_hint
 
 
 func _process(delta: float) -> void:
@@ -184,7 +218,11 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
-func _fill_color() -> Color:
+## Colour the current fill would draw, including the critical-pulse breathe.
+## Public and doc-commented so tests (and any other caller) can assert on
+## the colour directly instead of re-deriving the alarm ramp in parallel —
+## the same convention as get_draw_quads() for layout.
+func get_fill_color() -> Color:
 	if not use_alarm_states:
 		return flat_color
 	var col: Color
@@ -377,7 +415,7 @@ func _draw() -> void:
 	# track-line stroke drawn over that boundary is centred on it, though,
 	# so its ink overhangs by ~0.5px; that's cosmetic at 1px/11% alpha and
 	# left as-is.
-	var col := _fill_color()
+	var col := get_fill_color()
 	for entry in get_draw_quads():
 		var quad: PackedVector2Array = entry.quad
 		match entry.kind:
@@ -395,8 +433,11 @@ func _draw() -> void:
 
 ## Drive this from the combat model. Returns the resulting state so callers
 ## can trigger audio or haptics on the OK -> WARN -> CRIT transitions.
+## new_max's sentinel is its default, -1.0, meaning "leave max_value
+## unchanged" — any non-negative value, including 0.0, sets it, so a real
+## cap collapse to zero is reachable and isn't mistaken for "no change".
 func set_values(new_value: float, new_max: float = -1.0) -> FillState:
-	if new_max > 0.0:
+	if new_max >= 0.0:
 		max_value = new_max
 	value = new_value
 	return _state
