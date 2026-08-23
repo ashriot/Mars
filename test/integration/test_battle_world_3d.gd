@@ -149,9 +149,9 @@ func test_camera_side_floor_overlaps_the_entry_walls() -> void:
 
 	for wall_path: String in ["EntryLeftWall", "EntryRightWall"]:
 		var wall := shell.get_node(wall_path) as MeshInstance3D
-		assert_gte(
-			_world_bounds(floor).end.y,
-			_world_bounds(wall).position.y + 0.01,
+		_assert_world_bounds_overlap(
+			floor,
+			wall,
 			"%s must overlap the floor so the room cannot expose the clear color at its base" % wall_path,
 		)
 
@@ -163,11 +163,18 @@ func test_camera_side_ceiling_overlaps_the_entry_walls() -> void:
 
 	for wall_path: String in ["EntryLeftWall", "EntryRightWall"]:
 		var wall := shell.get_node(wall_path) as MeshInstance3D
-		assert_gte(
-			_world_bounds(wall).end.y,
-			_world_bounds(ceiling).position.y + 0.01,
+		_assert_world_bounds_overlap(
+			wall,
+			ceiling,
 			"%s must overlap the ceiling so the room cannot expose the clear color at its top edge" % wall_path,
 		)
+
+
+func _assert_world_bounds_overlap(first: MeshInstance3D, second: MeshInstance3D, message: String) -> void:
+	var overlap := _world_bounds(first).intersection(_world_bounds(second))
+	assert_gt(overlap.size.x, 0.0, "%s (x)" % message)
+	assert_gt(overlap.size.y, 0.0, "%s (y)" % message)
+	assert_gt(overlap.size.z, 0.0, "%s (z)" % message)
 
 
 func _world_bounds(mesh_instance: MeshInstance3D) -> AABB:
