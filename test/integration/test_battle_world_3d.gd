@@ -37,42 +37,51 @@ func test_world_environment_uses_readable_industrial_ambient_light() -> void:
 	assert_not_null(environment)
 	assert_eq(environment.ambient_light_source, Environment.AMBIENT_SOURCE_COLOR)
 	assert_eq(environment.background_color, Color(0.06, 0.085, 0.13, 1.0))
-	assert_eq(environment.ambient_light_color, Color(0.42, 0.48, 0.58, 1.0))
-	assert_almost_eq(environment.ambient_light_energy, 0.8, 0.0001)
-	assert_almost_eq(environment.tonemap_exposure, 1.0, 0.0001)
+	assert_eq(environment.ambient_light_color, Color(0.22, 0.28, 0.40, 1.0))
+	assert_almost_eq(environment.ambient_light_energy, 0.45, 0.001)
+	assert_almost_eq(environment.tonemap_exposure, 1.0, 0.001)
 
 
-func test_room_uses_mobile_fake_gi_lighting() -> void:
+func test_room_uses_mobile_lighting_hierarchy() -> void:
 	var world := _world()
 	var room := world.get_node("IndustrialRoom3D")
 	var key := room.get_node("RoomKeyLight") as DirectionalLight3D
 	var fill := room.get_node("RoomFillLight") as OmniLight3D
-	var bounce := room.get_node_or_null("RoomBounceLight") as DirectionalLight3D
+	var accent := room.get_node_or_null("RoomAccentLight") as OmniLight3D
+	var bounce := room.get_node("RoomBounceLight") as DirectionalLight3D
 	var front := room.get_node_or_null("RoomFrontLight") as DirectionalLight3D
 	assert_not_null(key)
 	assert_not_null(fill)
-	assert_null(front)
-	assert_almost_eq(key.rotation_degrees.x, -48.0, 0.0001)
-	assert_almost_eq(key.rotation_degrees.y, -24.0, 0.0001)
-	assert_almost_eq(key.rotation_degrees.z, 0.0, 0.0001)
-	assert_eq(key.light_color, Color(0.72, 0.82, 1.0, 1.0))
-	assert_almost_eq(key.light_energy, 1.0, 0.0001)
-	assert_true(key.shadow_enabled)
-	assert_eq(fill.position, Vector3(0.0, 3.0, 5.0))
-	assert_eq(fill.light_color, Color(0.7, 0.8, 1.0, 1.0))
-	assert_almost_eq(fill.light_energy, 1.8, 0.0001)
-	assert_almost_eq(fill.omni_range, 15.0, 0.0001)
-	assert_false(fill.shadow_enabled)
+	assert_not_null(accent)
 	assert_not_null(bounce)
-	if bounce == null:
+	assert_null(front)
+	if accent == null:
 		return
-	assert_almost_eq(bounce.rotation_degrees.x, 132.0, 0.0001)
-	assert_almost_eq(bounce.rotation_degrees.y, -24.0, 0.0001)
-	assert_almost_eq(bounce.rotation_degrees.z, 0.0, 0.0001)
-	assert_eq(bounce.light_color, Color(0.28, 0.42, 0.62, 1.0))
-	assert_almost_eq(bounce.light_energy, 0.45, 0.0001)
-	assert_almost_eq(bounce.light_specular, 0.0, 0.0001)
+	assert_almost_eq(key.rotation_degrees.x, -52.0, 0.001)
+	assert_almost_eq(key.rotation_degrees.y, -34.0, 0.001)
+	assert_almost_eq(key.rotation_degrees.z, 0.0, 0.001)
+	assert_eq(key.light_color, Color(0.76, 0.86, 1.0, 1.0))
+	assert_almost_eq(key.light_energy, 1.35, 0.001)
+	assert_true(key.shadow_enabled)
+	assert_eq(fill.position, Vector3(-2.5, 2.6, 5.0))
+	assert_eq(fill.light_color, Color(0.34, 0.52, 0.85, 1.0))
+	assert_almost_eq(fill.light_energy, 1.25, 0.001)
+	assert_almost_eq(fill.omni_range, 9.0, 0.001)
+	assert_false(fill.shadow_enabled)
+	assert_eq(accent.position, Vector3(0.0, 3.6, -5.5))
+	assert_eq(accent.light_color, Color(0.92, 0.28, 0.18, 1.0))
+	assert_almost_eq(accent.light_energy, 1.10, 0.001)
+	assert_almost_eq(accent.omni_range, 7.0, 0.001)
+	assert_false(accent.shadow_enabled)
+	assert_almost_eq(bounce.light_energy, 0.20, 0.001)
+	assert_almost_eq(bounce.light_specular, 0.0, 0.001)
 	assert_false(bounce.shadow_enabled)
+	var room_lights: Array[Light3D] = [key, fill, accent, bounce]
+	var shadow_light_count := 0
+	for light: Light3D in room_lights:
+		if light.shadow_enabled:
+			shadow_light_count += 1
+	assert_eq(shadow_light_count, 1)
 
 
 func test_room_builds_a_closed_three_bay_shell_without_backdrop() -> void:
