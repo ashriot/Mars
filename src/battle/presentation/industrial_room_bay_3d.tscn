@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" uid="uid://daidhafirumhc" path="res://src/battle/presentation/optional_local_model_3d.gd" id="1_optional"]
 
@@ -11,6 +11,14 @@ roughness = 0.48
 albedo_color = Color(0.18, 0.205, 0.24, 1)
 metallic = 0.85
 roughness = 0.32
+
+[sub_resource type="StandardMaterial3D" id="Material_ceiling"]
+albedo_color = Color(0.16, 0.22, 0.34, 1)
+metallic = 0.6
+roughness = 0.56
+emission_enabled = true
+emission = Color(0.08, 0.13, 0.24, 1)
+emission_energy_multiplier = 1.2
 
 [sub_resource type="StandardMaterial3D" id="Material_light"]
 albedo_color = Color(0.25, 0.65, 0.95, 1)
@@ -27,7 +35,7 @@ material = SubResource("Material_trim")
 size = Vector3(0.65, 5.1, 0.65)
 
 [sub_resource type="BoxMesh" id="Mesh_ceiling"]
-material = SubResource("Material_trim")
+material = SubResource("Material_ceiling")
 size = Vector3(12, 0.25, 4)
 
 [sub_resource type="BoxMesh" id="Mesh_beam"]

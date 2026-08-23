@@ -80,7 +80,47 @@ func test_room_builds_a_closed_three_bay_shell_without_backdrop() -> void:
 	var room := world.get_node("IndustrialRoom3D")
 	assert_null(room.get_node_or_null("BattleBackdrop"))
 	var shell := room.get_node("RoomShell")
-	assert_not_null(shell.get_node("Floor"))
+	var floor := shell.get_node("Floor") as MeshInstance3D
+	assert_not_null(floor)
+	if floor != null:
+		assert_gte(
+			(floor.mesh as BoxMesh).size.z,
+			18.0,
+			"the floor must reach the camera-side entry, not stop at the nearest bay",
+		)
+	var canopy := shell.get_node_or_null("EntryCanopy") as MeshInstance3D
+	assert_not_null(canopy, "the entry canopy must close the camera-side ceiling gap")
+	if canopy != null:
+		var canopy_material := canopy.mesh.surface_get_material(0) as StandardMaterial3D
+		assert_true(
+			canopy_material.emission_enabled,
+			"the camera-side ceiling needs a visible underside instead of reading as empty black space",
+		)
+	var near_ceiling := shell.get_node("BayNear/CeilingPanel") as MeshInstance3D
+	var near_ceiling_material := near_ceiling.mesh.surface_get_material(0) as StandardMaterial3D
+	assert_true(
+		near_ceiling_material.emission_enabled,
+		"every bay ceiling needs the same readable underside as the camera-side entry",
+	)
+	var ceiling_backer := shell.get_node_or_null("CeilingBacker") as MeshInstance3D
+	assert_not_null(
+		ceiling_backer,
+		"a continuous ceiling backer must prevent gaps between the detailed bay modules from exposing the clear color",
+	)
+	if ceiling_backer != null:
+		assert_gte(
+			(ceiling_backer.mesh as BoxMesh).size.z,
+			20.0,
+			"the ceiling backer must span the complete room, including the camera-side entry",
+		)
+	assert_not_null(
+		shell.get_node_or_null("EntryLeftWall"),
+		"the entry must continue the left wall up to the camera",
+	)
+	assert_not_null(
+		shell.get_node_or_null("EntryRightWall"),
+		"the entry must continue the right wall up to the camera",
+	)
 	assert_not_null(shell.get_node("BackWall/LeftPanel"))
 	assert_not_null(shell.get_node("BackWall/CenterBulkhead"))
 	assert_not_null(shell.get_node("BackWall/RightPanel"))
