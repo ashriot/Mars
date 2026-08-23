@@ -13,6 +13,10 @@ enum Style {
 	TALLY,   ## N cells grouped every group_every, read as tally marks.
 }
 
+enum FillState { OK, WARN, CRIT }
+
+signal state_changed(state: FillState)
+
 @export var style: Style = Style.PIPS:
 	set(v):
 		style = v
@@ -24,11 +28,13 @@ enum Style {
 @export var value: float = 100.0:
 	set(v):
 		value = v
+		_refresh_state()
 		queue_redraw()
 
 @export var max_value: float = 100.0:
 	set(v):
 		max_value = v
+		_refresh_state()
 		queue_redraw()
 
 @export_group("Layout")
@@ -94,12 +100,38 @@ enum Style {
 		update_minimum_size()
 
 @export_group("Colour")
-@export var fill_color := Color("a2b6ca")
+@export var use_alarm_states: bool = true:
+	set(v):
+		use_alarm_states = v
+		_refresh_state()
+		queue_redraw()
+
+@export var color_ok := Color("a2b6ca")
+@export var color_warn := Color("f0a63c")
+@export var color_crit := Color("ff4b4b")
+@export var flat_color := Color("e8f0f8")
+
+@export_range(0.0, 1.0) var warn_below: float = 0.50
+@export_range(0.0, 1.0) var crit_below: float = 0.25
+
+@export_group("Critical pulse")
+@export var pulse_when_critical: bool = true:
+	set(v):
+		pulse_when_critical = v
+		_refresh_processing()
+@export var pulse_hz: float = 0.66
+@export_range(0.0, 1.0) var pulse_depth: float = 0.35
+
 @export var track_fill := Color(1, 1, 1, 0.055)
 @export var track_line := Color(1, 1, 1, 0.11)
 ## Bright edge on the partially drained cell. Alpha 0 disables it.
 @export var waterline := Color("f0f5fa", 0.9)
 @export var waterline_px: float = 3.0
+
+
+var _state: FillState = FillState.OK
+var _phase: float = 0.0
+var _tween: Tween
 
 
 ## Named so it isn't confused with any other tolerance in this file — the
@@ -109,6 +141,64 @@ const PARTIAL_CELL_EPSILON := 0.001
 
 func get_ratio() -> float:
 	return clampf(value / max_value, 0.0, 1.0) if max_value > 0.0 else 0.0
+
+
+func get_fill_state() -> FillState:
+	return _state
+
+
+func _refresh_state() -> void:
+	var previous := _state
+	if not use_alarm_states:
+		_state = FillState.OK
+	else:
+		var ratio := get_ratio()
+		if ratio <= crit_below:
+			_state = FillState.CRIT
+		elif ratio <= warn_below:
+			_state = FillState.WARN
+		else:
+			_state = FillState.OK
+	if _state != previous:
+		if _state != FillState.CRIT:
+			_phase = 0.0
+		state_changed.emit(_state)
+
+
+func _ready() -> void:
+	_refresh_state()
+	_refresh_processing()
+
+
+func _refresh_processing() -> void:
+	if not is_inside_tree():
+		set_process(pulse_when_critical)
+		return
+	set_process(pulse_when_critical and not Engine.is_editor_hint())
+
+
+func _process(delta: float) -> void:
+	if _state != FillState.CRIT or not pulse_when_critical:
+		return
+	_phase = fmod(_phase + delta * pulse_hz * TAU, TAU)
+	queue_redraw()
+
+
+func _fill_color() -> Color:
+	if not use_alarm_states:
+		return flat_color
+	var col: Color
+	match _state:
+		FillState.CRIT:
+			col = color_crit
+		FillState.WARN:
+			col = color_warn
+		_:
+			col = color_ok
+	if _state == FillState.CRIT and pulse_when_critical:
+		# Breathe brightness rather than alpha, so the bar stays legible.
+		col = col.lightened(pulse_depth * 0.5 * (0.5 + 0.5 * sin(_phase)))
+	return col
 
 
 ## Full cell count under the PIPS fill model: get_ratio() scaled to cell
@@ -287,6 +377,7 @@ func _draw() -> void:
 	# track-line stroke drawn over that boundary is centred on it, though,
 	# so its ink overhangs by ~0.5px; that's cosmetic at 1px/11% alpha and
 	# left as-is.
+	var col := _fill_color()
 	for entry in get_draw_quads():
 		var quad: PackedVector2Array = entry.quad
 		match entry.kind:
@@ -296,7 +387,30 @@ func _draw() -> void:
 				if track_line.a > 0.0:
 					_stroke(quad, track_line)
 			&"fill":
-				draw_colored_polygon(quad, fill_color)
+				draw_colored_polygon(quad, col)
 			&"waterline":
 				if waterline.a > 0.0:
 					draw_colored_polygon(quad, waterline)
+
+
+## Drive this from the combat model. Returns the resulting state so callers
+## can trigger audio or haptics on the OK -> WARN -> CRIT transitions.
+func set_values(new_value: float, new_max: float = -1.0) -> FillState:
+	if new_max > 0.0:
+		max_value = new_max
+	value = new_value
+	return _state
+
+
+## Animate a change instead of snapping. Replaces any tween already running,
+## so rapid repeated damage does not animate two targets at once.
+func tween_to(new_value: float, duration: float = 0.26) -> void:
+	if _tween != null and _tween.is_valid():
+		_tween.kill()
+	_tween = create_tween()
+	_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_tween.tween_property(self, "value", new_value, duration)
+
+
+func get_active_tween() -> Tween:
+	return _tween

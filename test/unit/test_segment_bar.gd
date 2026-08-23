@@ -331,3 +331,75 @@ func _bar() -> SegmentBar:
 	var bar := SegmentBar.new()
 	add_child_autofree(bar)
 	return bar
+
+
+func test_alarm_state_escalates_as_the_ratio_falls() -> void:
+	var bar := _bar()
+	bar.max_value = 100.0
+
+	bar.value = 80.0
+	assert_eq(bar.get_fill_state(), SegmentBar.FillState.OK)
+	bar.value = 40.0
+	assert_eq(bar.get_fill_state(), SegmentBar.FillState.WARN)
+	bar.value = 10.0
+	assert_eq(bar.get_fill_state(), SegmentBar.FillState.CRIT)
+
+
+func test_state_changed_fires_only_on_a_real_transition() -> void:
+	var bar := _bar()
+	bar.max_value = 100.0
+	bar.value = 100.0
+	watch_signals(bar)
+
+	bar.value = 90.0
+	assert_signal_not_emitted(bar, "state_changed")
+
+	bar.value = 40.0
+	assert_signal_emitted(bar, "state_changed")
+
+
+func test_a_gauge_without_alarm_states_stays_ok_at_any_value() -> void:
+	var bar := _bar()
+	bar.use_alarm_states = false
+	bar.max_value = 100.0
+
+	bar.value = 1.0
+
+	assert_eq(bar.get_fill_state(), SegmentBar.FillState.OK)
+
+
+func test_tween_to_replaces_its_predecessor_instead_of_racing_it() -> void:
+	var bar := _bar()
+	bar.max_value = 100.0
+	bar.value = 100.0
+
+	bar.tween_to(60.0, 0.2)
+	var first := bar.get_active_tween()
+	bar.tween_to(20.0, 0.2)
+	var second := bar.get_active_tween()
+
+	assert_not_null(second)
+	assert_false(first.is_valid(), "the superseded tween is killed, not left running")
+	assert_true(second.is_valid())
+
+
+func test_tween_to_reaches_its_target_value() -> void:
+	var bar := _bar()
+	bar.max_value = 100.0
+	bar.value = 100.0
+
+	bar.tween_to(40.0, 0.05)
+	await wait_seconds(0.15)
+
+	assert_almost_eq(bar.value, 40.0, 0.001)
+
+
+func test_pulse_processing_follows_the_pulse_setting() -> void:
+	var bar := _bar()
+	bar.pulse_when_critical = false
+
+	assert_false(bar.is_processing())
+
+	bar.pulse_when_critical = true
+
+	assert_true(bar.is_processing())
