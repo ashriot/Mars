@@ -266,3 +266,26 @@
   3. `feat: add mobile battle lighting hierarchy`
 
   Do not stage or modify the unrelated actor/theme/hub work already present in the checkout.
+
+## Approved calibration amendment
+
+The initial Task 3 rig passed its data contract but failed Task 4's
+1920×1080 framebuffer criterion: light-only restoration could improve wall
+planes but could not reveal the near-black floor, ceiling fixtures, and loaded
+drone surfaces without approaching a broad front wash. The user approved the
+following bounded extension.
+
+- Preserve the Forward Mobile hierarchy, exactly one shadowed light, ACES
+  exposure, and the source GLTF assets.
+- Tune the existing dark room `StandardMaterial3D` resources in
+  `industrial_room_3d.tscn` and `industrial_room_bay_3d.tscn` for a modestly
+  higher diffuse/readability response; do not introduce new materials or asset
+  replacements.
+- In `EnemyDronePresentation`, adjust only its existing duplicated
+  per-instance `BaseMaterial3D` values to give each loaded drone a restrained
+  readability floor. Preserve `set_instance_tint()` and defeat fading.
+- Add focused behavior tests before changing the material values, then repeat
+  the exact windowed 1280×800, 1920×1080, and 3840×2160 probe. The original
+  Task 3 numeric light-value assertions are superseded only where a
+  framebuffer-backed calibration requires it; all Mobile light-budget
+  assertions remain binding.

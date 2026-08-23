@@ -8,6 +8,21 @@ Make the fixed industrial battle room read as a dimensional, enclosed combat spa
 
 This effort changes the battle-room lighting rig and protects the established canvas scaling policy with automated coverage. It does not introduce GI, light baking, reflection probes, a graphics-settings screen, saved display preferences, material replacement, or changes to combat layout and rules.
 
+### Approved material-response amendment
+
+The first windowed calibration established that light-only changes cannot make
+the near-black floor and loaded drone models readable within the Mobile light
+budget. This permits a narrow material-response pass without replacing any
+assets: tune the existing authored dark `StandardMaterial3D` resources in the
+room scenes, and apply a low-strength readability floor only to the
+per-instance duplicate materials already created by `EnemyDronePresentation`.
+
+The pass must preserve the source GLTF assets, existing faction tint behavior,
+defeat fade behavior, the one-shadowed-light budget, and all lighting-system
+exclusions below. It must not add lights, GI, asset replacements, or a general
+material framework. Final material values are selected only by the same
+windowed framebuffer probes used for lighting acceptance.
+
 ## Display Policy
 
 The project keeps its existing 1920x1080 logical authoring reference and `canvas_items` / `expand` stretch policy.
@@ -50,6 +65,8 @@ Windowed framebuffer probes are authoritative for visual approval at 1280x800, 1
 ## Out of Scope
 
 - Global illumination, baking, reflection probes, fog, and post-process overhaul.
-- 3D material/asset replacement or room geometry redesign.
+- 3D asset replacement or room geometry redesign. The narrowly approved
+  material-response amendment above is the sole exception to the previous
+  material restriction.
 - Player-selectable graphics modes and full-screen/resolution persistence.
 - Changes to the approved hero-row or HUD canvas layering fixes.
