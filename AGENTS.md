@@ -46,6 +46,7 @@ When a local GLTF replaces a scene placeholder through `OptionalLocalModel3D`, i
 ## Testing
 
 Testing instructions: [`docs/testing/README.md`](docs/testing/README.md).
+Windowed capture probes for visual, lighting, and feel questions: [`docs/testing/windowed-probes.md`](docs/testing/windowed-probes.md) — `--headless` renders nothing, so anything about colour, layout, legibility, or timing needs a windowed probe.
 
 - The isolated `HOME` documented there is mandatory for automated Godot runs; never allow tests to read or write ordinary local save data.
 - Use explicit test storage overrides or temporary directories for every save-related test, and restore any fixture state during teardown.
