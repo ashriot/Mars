@@ -11,6 +11,7 @@ Mobile renderer over a Control-heavy 2D interface:
 
 - `godot-3d-lighting` — lights, shadows, environment/ambient patterns.
 - `godot-3d-materials` — PBR pitfalls (e.g. metallic surfaces under flat ambient).
+- `godot-3d-world-building` — room/level geometry and world presentation (referenced by `AGENTS.md`).
 - `godot-particles` — GPU particles, sub-emitters, VFX pooling for combat.
 - `godot-shaders-basics` — hitflash, dissolve, post-FX recipes.
 - `godot-camera-systems` — shake, framing, cinematic transitions.
