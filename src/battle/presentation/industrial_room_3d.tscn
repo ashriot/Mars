@@ -4,14 +4,14 @@
 [ext_resource type="PackedScene" path="res://src/battle/presentation/industrial_room_bay_3d.tscn" id="2_bay"]
 
 [sub_resource type="StandardMaterial3D" id="Material_dark"]
-albedo_color = Color(0.075, 0.09, 0.115, 1)
-metallic = 0.75
-roughness = 0.48
+albedo_color = Color(0.11, 0.13, 0.165, 1)
+metallic = 0.4
+roughness = 0.62
 
 [sub_resource type="StandardMaterial3D" id="Material_trim"]
-albedo_color = Color(0.18, 0.205, 0.24, 1)
-metallic = 0.85
-roughness = 0.32
+albedo_color = Color(0.2, 0.23, 0.27, 1)
+metallic = 0.6
+roughness = 0.42
 
 [sub_resource type="StandardMaterial3D" id="Material_entry_canopy"]
 albedo_color = Color(0.16, 0.22, 0.34, 1)
@@ -87,10 +87,12 @@ mesh = SubResource("Mesh_floor")
 
 [node name="EntryCanopy" type="MeshInstance3D" parent="RoomShell"]
 position = Vector3(0, 5.2, 8.5)
+cast_shadow = 0
 mesh = SubResource("Mesh_entry_canopy")
 
 [node name="CeilingBacker" type="MeshInstance3D" parent="RoomShell"]
 position = Vector3(0, 5.45, 1.5)
+cast_shadow = 0
 mesh = SubResource("Mesh_ceiling_backer")
 
 [node name="EntryLeftWall" type="MeshInstance3D" parent="RoomShell"]
@@ -236,10 +238,17 @@ light_energy = 1.0
 shadow_enabled = true
 
 [node name="RoomFillLight" type="OmniLight3D" parent="."]
-position = Vector3(0, 3, 5)
+position = Vector3(0, 3.4, 5.5)
 light_color = Color(0.7, 0.8, 1, 1)
-light_energy = 1.8
-omni_range = 15.0
+light_energy = 2.6
+omni_range = 22.0
+shadow_enabled = false
+
+[node name="RoomFrontFill" type="OmniLight3D" parent="."]
+position = Vector3(0, 2.4, 8.6)
+light_color = Color(0.82, 0.88, 1, 1)
+light_energy = 1.4
+omni_range = 18.0
 shadow_enabled = false
 
 [node name="RoomBounceLight" type="DirectionalLight3D" parent="."]

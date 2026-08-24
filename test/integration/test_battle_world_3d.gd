@@ -29,17 +29,20 @@ func test_world_raises_enemy_views_without_changing_local_formation_height() -> 
 		assert_eq(slot.origin.y, 0.0)
 
 
-func test_world_environment_uses_readable_industrial_ambient_light() -> void:
+func test_camera_environment_uses_readable_industrial_ambient_light() -> void:
 	var world := _world()
-	var world_environment := world.get_node("WorldEnvironment") as WorldEnvironment
-	assert_not_null(world_environment)
-	var environment := world_environment.environment
+	# The environment rides on the battle camera so it wins over any host
+	# scene's WorldEnvironment (GameManager owned one that left the arena
+	# unlit); the world scene itself must not add a competing WorldEnvironment.
+	assert_null(world.get_node_or_null("WorldEnvironment"))
+	var environment := world.camera.environment
 	assert_not_null(environment)
+	assert_eq(environment.background_mode, Environment.BG_COLOR)
 	assert_eq(environment.ambient_light_source, Environment.AMBIENT_SOURCE_COLOR)
 	assert_eq(environment.background_color, Color(0.06, 0.085, 0.13, 1.0))
 	assert_eq(environment.ambient_light_color, Color(0.42, 0.48, 0.58, 1.0))
-	assert_almost_eq(environment.ambient_light_energy, 0.8, 0.0001)
-	assert_almost_eq(environment.tonemap_exposure, 1.0, 0.0001)
+	assert_almost_eq(environment.ambient_light_energy, 1.2, 0.0001)
+	assert_almost_eq(environment.tonemap_exposure, 1.1, 0.0001)
 
 
 func test_room_uses_mobile_fake_gi_lighting() -> void:
@@ -58,11 +61,20 @@ func test_room_uses_mobile_fake_gi_lighting() -> void:
 	assert_eq(key.light_color, Color(0.72, 0.82, 1.0, 1.0))
 	assert_almost_eq(key.light_energy, 1.0, 0.0001)
 	assert_true(key.shadow_enabled)
-	assert_eq(fill.position, Vector3(0.0, 3.0, 5.0))
+	assert_eq(fill.position, Vector3(0.0, 3.4, 5.5))
 	assert_eq(fill.light_color, Color(0.7, 0.8, 1.0, 1.0))
-	assert_almost_eq(fill.light_energy, 1.8, 0.0001)
-	assert_almost_eq(fill.omni_range, 15.0, 0.0001)
+	assert_almost_eq(fill.light_energy, 2.6, 0.0001)
+	assert_almost_eq(fill.omni_range, 22.0, 0.0001)
 	assert_false(fill.shadow_enabled)
+	var front_fill := room.get_node("RoomFrontFill") as OmniLight3D
+	assert_not_null(front_fill)
+	assert_false(front_fill.shadow_enabled)
+	# The shoebox ceiling must not shadow the interior, or the key light
+	# contributes nothing inside the closed room.
+	var canopy := room.get_node("RoomShell/EntryCanopy") as MeshInstance3D
+	var ceiling := room.get_node("RoomShell/CeilingBacker") as MeshInstance3D
+	assert_eq(canopy.cast_shadow, GeometryInstance3D.SHADOW_CASTING_SETTING_OFF)
+	assert_eq(ceiling.cast_shadow, GeometryInstance3D.SHADOW_CASTING_SETTING_OFF)
 	assert_not_null(bounce)
 	if bounce == null:
 		return

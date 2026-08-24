@@ -195,8 +195,6 @@ func test_battle_hud_canvases_draw_in_front_of_the_3d_environment() -> void:
 	var game := GameManagerResource.instantiate() as GameManager
 	var battle := BattleSceneResource.instantiate() as BattleScene
 	var overlay := game.get_node("DungeonMap/OverlayLayer") as CanvasLayer
-	var environment := (game.get_node("WorldEnvironment") as WorldEnvironment).environment
-	var dungeon_hud := game.get_node("DungeonMap/CanvasLayer/HUD") as Control
 	overlay.add_child(battle)
 
 	var world := battle.get_node("BattleWorld3D") as BattleWorld3D
@@ -204,14 +202,27 @@ func test_battle_hud_canvases_draw_in_front_of_the_3d_environment() -> void:
 	var projectile_canvas := world.get_node("BattleProjectileLayer") as CanvasLayer
 	var player_ui_layer := _effective_canvas_layer(battle.get_node("UI"))
 
-	assert_lte(
-		_effective_canvas_layer(dungeon_hud),
-		environment.background_canvas_max_layer,
-		"the dungeon-map canvas must remain behind the 3D world during battle",
+	# GameManager must not own a WorldEnvironment: a second WorldEnvironment
+	# would silently win over the battle camera's canvas-background split and
+	# previously left the arena unlit with the projected HUDs swallowed.
+	assert_null(
+		game.get_node_or_null("WorldEnvironment"),
+		"GameManager must not compete with the battle camera's environment",
+	)
+	var camera := world.get_node("CameraRig/BattleCamera") as Camera3D
+	var camera_environment := camera.environment
+	assert_not_null(
+		camera_environment,
+		"the battle camera carries the arena environment so it applies in-game",
+	)
+	assert_eq(
+		camera_environment.background_mode,
+		Environment.BG_COLOR,
+		"the arena paints an opaque backdrop; the dungeon map hides during battle",
 	)
 	assert_gt(
 		enemy_hud_canvas.layer,
-		environment.background_canvas_max_layer,
+		0,
 		"the projected enemy HUD must draw in front of the 3D environment",
 	)
 	assert_eq(projectile_canvas.layer, enemy_hud_canvas.layer)

@@ -135,6 +135,10 @@ func _start_encounter(encounter: Encounter):
 	InputManager.restore_active_mode(inherited_input_mode)
 	battle_scene = battle_scene_packed.instantiate()
 	overlay_layer.add_child(battle_scene)
+	# The battle camera's environment paints an opaque backdrop, so the map's
+	# canvas would otherwise draw over the 3D arena. OverlayLayer is a
+	# CanvasLayer and stays visible.
+	dungeon_map.visible = false
 	battle_scene.setup_battle(encounter)
 	battle_scene.battle_ended.connect(end_encounter)
 
@@ -145,6 +149,7 @@ func end_encounter(won: bool):
 	var result := _result_for_battle_end(won)
 	current_encounter = null
 
+	dungeon_map.visible = true
 	dungeon_map.exit_battle_visuals(1.0)
 
 	if result == -1:
