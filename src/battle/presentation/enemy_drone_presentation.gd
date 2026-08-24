@@ -3,6 +3,9 @@ class_name EnemyDronePresentation
 
 const HUD_SCENE := preload("res://src/battle/presentation/enemy_world_hud.tscn")
 const DEFEAT_FADE_DURATION := 0.2
+const OUTLINE_GROW_AMOUNT := 0.045
+const OUTLINE_AVAILABLE_COLOR := Color(0.65, 1.0, 1.0)
+const OUTLINE_SELECTED_COLOR := Color(1.0, 0.79, 0.29)
 const READABILITY_MAX_METALLIC := 0.35
 const READABILITY_MIN_ROUGHNESS := 0.6
 
@@ -26,6 +29,7 @@ var _hit_operation: PresentationOperation
 var _health_operation: PresentationOperation
 var _shutdown_operation: PresentationOperation
 var _fade_tween: Tween
+var _outline_material: StandardMaterial3D
 
 
 func _ready() -> void:
@@ -99,7 +103,30 @@ func set_target_presentation(state: TargetState) -> void:
 	super.set_target_presentation(state)
 	if is_instance_valid(hud):
 		hud.set_target_state(state)
+	_apply_model_highlight(state)
 	_refresh_details_visibility()
+
+
+func _apply_model_highlight(state: TargetState) -> void:
+	if state == TargetState.NORMAL or _combatant_is_defeated():
+		for material: BaseMaterial3D in _instance_materials:
+			if material.next_pass == _outline_material:
+				material.next_pass = null
+		return
+	var color := OUTLINE_SELECTED_COLOR \
+		if state == TargetState.SELECTED else OUTLINE_AVAILABLE_COLOR
+	if _outline_material == null:
+		# Inverted hull: the mesh redrawn slightly grown with front faces
+		# culled reads as a silhouette outline, and stays within the Mobile
+		# renderer's feature set (no post-process or stencil required).
+		_outline_material = StandardMaterial3D.new()
+		_outline_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_outline_material.cull_mode = BaseMaterial3D.CULL_FRONT
+		_outline_material.grow = true
+		_outline_material.grow_amount = OUTLINE_GROW_AMOUNT
+	_outline_material.albedo_color = color
+	for material: BaseMaterial3D in _instance_materials:
+		material.next_pass = _outline_material
 
 
 func set_inspection_focused(focused: bool) -> void:
@@ -333,6 +360,7 @@ func _prepare_model(model_root: Node3D) -> void:
 	if not is_instance_valid(model_root):
 		return
 	_duplicate_mesh_materials(model_root)
+	_apply_model_highlight(target_state)
 	animation_player = _find_animation_player(model_root)
 	if is_instance_valid(animation_player):
 		animation_player.animation_finished.connect(_on_animation_finished)
@@ -473,6 +501,7 @@ func _begin_shutdown_fade() -> void:
 	if _shutdown_operation != null:
 		return
 	set_process(false)
+	_apply_model_highlight(TargetState.NORMAL)
 	if is_instance_valid(hud):
 		hud.set_target_state(TargetState.NORMAL)
 		hud.set_details_visible(false)
