@@ -33,6 +33,16 @@ Positioning and coordinate-space guidance: [`docs/coordinate-spaces.md`](docs/co
 - Use lowercase snake_case for new files and directories where practical; do not perform unrelated bulk renames.
 - Treat `.tscn`, `.tres`, `.gd`, `.gdshader`, JSON, and other text resources as source code and keep edits reviewable.
 
+## Godot 3D References
+
+Use the installed skills before changing the corresponding rendering systems:
+
+- `godot-3d-lighting` for Mobile/Forward+ light budgets, shadows, environment lighting, and GI decisions. Source: <https://github.com/thedivergentai/GD-Agentic-Skills/tree/main/skills/godot-3d-lighting>.
+- `godot-3d-materials` for `StandardMaterial3D`, imported PBR textures, metallic/roughness workflows, and runtime material overrides. Source: <https://github.com/thedivergentai/GD-Agentic-Skills/tree/main/skills/godot-3d-materials>.
+- `godot-3d-world-building` for room/level geometry, `WorldEnvironment`, and world-presentation work. Source: <https://github.com/thedivergentai/GD-Agentic-Skills/tree/main/skills/godot-3d-world-building>.
+
+When a local GLTF replaces a scene placeholder through `OptionalLocalModel3D`, inspect the runtime imported material before tuning the placeholder resource.
+
 ## Testing
 
 Testing instructions: [`docs/testing/README.md`](docs/testing/README.md).

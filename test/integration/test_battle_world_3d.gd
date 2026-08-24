@@ -40,51 +40,65 @@ func test_camera_environment_uses_readable_industrial_ambient_light() -> void:
 	assert_eq(environment.background_mode, Environment.BG_COLOR)
 	assert_eq(environment.ambient_light_source, Environment.AMBIENT_SOURCE_COLOR)
 	assert_eq(environment.background_color, Color(0.06, 0.085, 0.13, 1.0))
-	assert_eq(environment.ambient_light_color, Color(0.42, 0.48, 0.58, 1.0))
-	assert_almost_eq(environment.ambient_light_energy, 1.2, 0.0001)
-	assert_almost_eq(environment.tonemap_exposure, 1.1, 0.0001)
+	assert_eq(environment.ambient_light_color, Color(0.22, 0.28, 0.40, 1.0))
+	assert_almost_eq(environment.ambient_light_energy, 0.45, 0.001)
+	assert_almost_eq(environment.tonemap_exposure, 1.0, 0.001)
 
 
-func test_room_uses_mobile_fake_gi_lighting() -> void:
+func test_room_uses_mobile_lighting_hierarchy() -> void:
 	var world := _world()
 	var room := world.get_node("IndustrialRoom3D")
 	var key := room.get_node("RoomKeyLight") as DirectionalLight3D
 	var fill := room.get_node("RoomFillLight") as OmniLight3D
-	var bounce := room.get_node_or_null("RoomBounceLight") as DirectionalLight3D
+	var accent := room.get_node_or_null("RoomAccentLight") as OmniLight3D
+	var bounce := room.get_node("RoomBounceLight") as DirectionalLight3D
 	var front := room.get_node_or_null("RoomFrontLight") as DirectionalLight3D
 	assert_not_null(key)
 	assert_not_null(fill)
-	assert_null(front)
-	assert_almost_eq(key.rotation_degrees.x, -48.0, 0.0001)
-	assert_almost_eq(key.rotation_degrees.y, -24.0, 0.0001)
-	assert_almost_eq(key.rotation_degrees.z, 0.0, 0.0001)
-	assert_eq(key.light_color, Color(0.72, 0.82, 1.0, 1.0))
-	assert_almost_eq(key.light_energy, 1.0, 0.0001)
-	assert_true(key.shadow_enabled)
-	assert_eq(fill.position, Vector3(0.0, 3.4, 5.5))
-	assert_eq(fill.light_color, Color(0.7, 0.8, 1.0, 1.0))
-	assert_almost_eq(fill.light_energy, 2.6, 0.0001)
-	assert_almost_eq(fill.omni_range, 22.0, 0.0001)
-	assert_false(fill.shadow_enabled)
-	var front_fill := room.get_node("RoomFrontFill") as OmniLight3D
-	assert_not_null(front_fill)
-	assert_false(front_fill.shadow_enabled)
-	# The shoebox ceiling must not shadow the interior, or the key light
-	# contributes nothing inside the closed room.
-	var canopy := room.get_node("RoomShell/EntryCanopy") as MeshInstance3D
-	var ceiling := room.get_node("RoomShell/CeilingBacker") as MeshInstance3D
-	assert_eq(canopy.cast_shadow, GeometryInstance3D.SHADOW_CASTING_SETTING_OFF)
-	assert_eq(ceiling.cast_shadow, GeometryInstance3D.SHADOW_CASTING_SETTING_OFF)
+	assert_not_null(accent)
 	assert_not_null(bounce)
-	if bounce == null:
+	assert_null(front)
+	if accent == null:
 		return
-	assert_almost_eq(bounce.rotation_degrees.x, 132.0, 0.0001)
-	assert_almost_eq(bounce.rotation_degrees.y, -24.0, 0.0001)
-	assert_almost_eq(bounce.rotation_degrees.z, 0.0, 0.0001)
-	assert_eq(bounce.light_color, Color(0.28, 0.42, 0.62, 1.0))
-	assert_almost_eq(bounce.light_energy, 0.45, 0.0001)
-	assert_almost_eq(bounce.light_specular, 0.0, 0.0001)
+	assert_almost_eq(key.rotation_degrees.x, -52.0, 0.001)
+	assert_almost_eq(key.rotation_degrees.y, -34.0, 0.001)
+	assert_almost_eq(key.rotation_degrees.z, 0.0, 0.001)
+	assert_eq(key.light_color, Color(0.76, 0.86, 1.0, 1.0))
+	assert_almost_eq(key.light_energy, 1.35, 0.001)
+	assert_true(key.shadow_enabled)
+	assert_eq(fill.position, Vector3(-2.5, 2.6, 5.0))
+	assert_eq(fill.light_color, Color(0.34, 0.52, 0.85, 1.0))
+	assert_almost_eq(fill.light_energy, 1.25, 0.001)
+	assert_almost_eq(fill.omni_range, 9.0, 0.001)
+	assert_false(fill.shadow_enabled)
+	assert_eq(accent.position, Vector3(0.0, 3.6, -5.5))
+	assert_eq(accent.light_color, Color(0.92, 0.28, 0.18, 1.0))
+	assert_almost_eq(accent.light_energy, 1.10, 0.001)
+	assert_almost_eq(accent.omni_range, 7.0, 0.001)
+	assert_false(accent.shadow_enabled)
+	assert_almost_eq(bounce.light_energy, 0.20, 0.001)
+	assert_almost_eq(bounce.light_specular, 0.0, 0.001)
 	assert_false(bounce.shadow_enabled)
+	var room_lights: Array[Light3D] = [key, fill, accent, bounce]
+	var shadow_light_count := 0
+	for light: Light3D in room_lights:
+		if light.shadow_enabled:
+			shadow_light_count += 1
+	assert_eq(shadow_light_count, 1)
+
+
+func test_room_dark_materials_retain_a_diffuse_readability_response() -> void:
+	var world := _world()
+	var room := world.get_node("IndustrialRoom3D")
+	var floor := room.get_node("RoomShell/Floor") as MeshInstance3D
+	var bay_wall := room.get_node("RoomShell/BayNear/LeftWall/Placeholder") as MeshInstance3D
+	var floor_material := floor.mesh.surface_get_material(0) as StandardMaterial3D
+	var bay_wall_material := bay_wall.mesh.surface_get_material(0) as StandardMaterial3D
+
+	for material: StandardMaterial3D in [floor_material, bay_wall_material]:
+		assert_eq(material.albedo_color, Color(0.32, 0.37, 0.48, 1.0))
+		assert_almost_eq(material.metallic, 0.18, 0.001)
+		assert_almost_eq(material.roughness, 0.75, 0.001)
 
 
 func test_room_builds_a_closed_three_bay_shell_without_backdrop() -> void:
@@ -152,6 +166,57 @@ func test_room_builds_a_closed_three_bay_shell_without_backdrop() -> void:
 		assert_not_null(bay.get_node("CeilingPanel"))
 		assert_not_null(bay.get_node("CeilingBeam"))
 		assert_not_null(bay.get_node("PracticalLight"))
+
+
+func test_camera_side_floor_overlaps_the_entry_walls() -> void:
+	var world := _world()
+	var shell := world.get_node("IndustrialRoom3D/RoomShell")
+	var floor := shell.get_node("Floor") as MeshInstance3D
+
+	for wall_path: String in ["EntryLeftWall", "EntryRightWall"]:
+		var wall := shell.get_node(wall_path) as MeshInstance3D
+		_assert_world_bounds_overlap(
+			floor,
+			wall,
+			"%s must overlap the floor so the room cannot expose the clear color at its base" % wall_path,
+		)
+
+
+func test_camera_side_ceiling_overlaps_the_entry_walls() -> void:
+	var world := _world()
+	var shell := world.get_node("IndustrialRoom3D/RoomShell")
+	var ceiling := shell.get_node("CeilingBacker") as MeshInstance3D
+
+	for wall_path: String in ["EntryLeftWall", "EntryRightWall"]:
+		var wall := shell.get_node(wall_path) as MeshInstance3D
+		_assert_world_bounds_overlap(
+			wall,
+			ceiling,
+			"%s must overlap the ceiling so the room cannot expose the clear color at its top edge" % wall_path,
+		)
+
+
+func _assert_world_bounds_overlap(first: MeshInstance3D, second: MeshInstance3D, message: String) -> void:
+	var overlap := _world_bounds(first).intersection(_world_bounds(second))
+	assert_gt(overlap.size.x, 0.0, "%s (x)" % message)
+	assert_gt(overlap.size.y, 0.0, "%s (y)" % message)
+	assert_gt(overlap.size.z, 0.0, "%s (z)" % message)
+
+
+func _world_bounds(mesh_instance: MeshInstance3D) -> AABB:
+	var local_bounds := mesh_instance.mesh.get_aabb()
+	var world_bounds := AABB()
+	var initialized := false
+	for x: float in [local_bounds.position.x, local_bounds.end.x]:
+		for y: float in [local_bounds.position.y, local_bounds.end.y]:
+			for z: float in [local_bounds.position.z, local_bounds.end.z]:
+				var point := mesh_instance.global_transform * Vector3(x, y, z)
+				if initialized:
+					world_bounds = world_bounds.expand(point)
+				else:
+					world_bounds = AABB(point, Vector3.ZERO)
+					initialized = true
+	return world_bounds
 
 
 func test_room_nested_local_modules_all_keep_tracked_placeholders() -> void:

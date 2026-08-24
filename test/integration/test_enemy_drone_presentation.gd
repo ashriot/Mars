@@ -100,6 +100,20 @@ func test_two_drones_do_not_share_material_or_animation_state() -> void:
 	assert_eq(second.presentation.animation_player.current_animation, "Idle")
 
 
+func test_duplicated_drone_materials_keep_a_restrained_diffuse_readability_floor() -> void:
+	var fixture := _bound_animated_drone(_world(), _enemy())
+	var tint := Color(0.28, 0.65, 0.9, 1.0)
+
+	assert_false(fixture.presentation._instance_materials.is_empty())
+	for material: BaseMaterial3D in fixture.presentation._instance_materials:
+		assert_almost_eq(material.metallic, 0.35, 0.001)
+		assert_almost_eq(material.roughness, 0.6, 0.001)
+
+	fixture.presentation.set_instance_tint(tint)
+	for material: BaseMaterial3D in fixture.presentation._instance_materials:
+		assert_eq(material.albedo_color, tint)
+
+
 func test_binding_loops_idle_without_changing_transient_animation_loop_modes() -> void:
 	var fixture := _bound_animated_drone(_world(), _enemy())
 	var player: AnimationPlayer = fixture.presentation.animation_player
@@ -826,6 +840,8 @@ func _bound_animated_drone(
 func _populate_animated_model(model_root: Node3D) -> void:
 	var material := StandardMaterial3D.new()
 	material.albedo_color = Color(0.8, 0.25, 0.35)
+	material.metallic = 0.85
+	material.roughness = 0.35
 	var mesh := SphereMesh.new()
 	mesh.material = material
 	var mesh_instance := MeshInstance3D.new()
