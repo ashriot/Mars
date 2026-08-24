@@ -29,12 +29,15 @@ func test_world_raises_enemy_views_without_changing_local_formation_height() -> 
 		assert_eq(slot.origin.y, 0.0)
 
 
-func test_world_environment_uses_readable_industrial_ambient_light() -> void:
+func test_camera_environment_uses_readable_industrial_ambient_light() -> void:
 	var world := _world()
-	var world_environment := world.get_node("WorldEnvironment") as WorldEnvironment
-	assert_not_null(world_environment)
-	var environment := world_environment.environment
+	# The environment rides on the battle camera so it wins over any host
+	# scene's WorldEnvironment (GameManager owned one that left the arena
+	# unlit); the world scene itself must not add a competing WorldEnvironment.
+	assert_null(world.get_node_or_null("WorldEnvironment"))
+	var environment := world.camera.environment
 	assert_not_null(environment)
+	assert_eq(environment.background_mode, Environment.BG_COLOR)
 	assert_eq(environment.ambient_light_source, Environment.AMBIENT_SOURCE_COLOR)
 	assert_eq(environment.background_color, Color(0.06, 0.085, 0.13, 1.0))
 	assert_eq(environment.ambient_light_color, Color(0.22, 0.28, 0.40, 1.0))

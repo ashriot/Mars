@@ -658,6 +658,23 @@ func test_battle_defeat_presents_defeat_and_only_routes_run_ended() -> void:
 	manager.free()
 
 
+func test_end_encounter_restores_the_dungeon_map_hidden_for_battle() -> void:
+	# _start_encounter hides the map because the battle camera's environment
+	# paints an opaque backdrop; ending the encounter must always bring it back.
+	var manager := EndingManagerDouble.new()
+	var dungeon_map := BattleDungeonMap.new()
+	manager.dungeon_map = dungeon_map
+	manager.overlay_layer = Node.new()
+	manager.add_child(manager.dungeon_map)
+	manager.add_child(manager.overlay_layer)
+	dungeon_map.visible = false
+
+	manager.end_encounter(true)
+
+	assert_true(dungeon_map.visible)
+	manager.free()
+
+
 func test_begin_run_end_is_guarded_clears_once_and_keeps_map_locked() -> void:
 	var manager := EndingManagerDouble.new()
 	manager.dungeon_map = FakeDungeonMap.new()
