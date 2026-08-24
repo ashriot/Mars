@@ -114,6 +114,28 @@ func test_duplicated_drone_materials_keep_a_restrained_diffuse_readability_floor
 		assert_eq(material.albedo_color, tint)
 
 
+func test_target_states_outline_the_drone_model() -> void:
+	var fixture := _bound_animated_drone(_world(), _enemy())
+	var presentation: EnemyDronePresentation = fixture.presentation
+
+	presentation.set_target_presentation(CombatantPresentation.TargetState.AVAILABLE)
+	var outline: StandardMaterial3D = presentation._outline_material
+	assert_not_null(outline, "targeting must attach a silhouette outline to the model")
+	assert_eq(outline.cull_mode, BaseMaterial3D.CULL_FRONT)
+	assert_eq(outline.shading_mode, BaseMaterial3D.SHADING_MODE_UNSHADED)
+	assert_true(outline.grow)
+	assert_eq(outline.albedo_color, EnemyDronePresentation.OUTLINE_AVAILABLE_COLOR)
+	for material: BaseMaterial3D in presentation._instance_materials:
+		assert_same(material.next_pass, outline)
+
+	presentation.set_target_presentation(CombatantPresentation.TargetState.SELECTED)
+	assert_eq(outline.albedo_color, EnemyDronePresentation.OUTLINE_SELECTED_COLOR)
+
+	presentation.set_target_presentation(CombatantPresentation.TargetState.NORMAL)
+	for material: BaseMaterial3D in presentation._instance_materials:
+		assert_null(material.next_pass, "clearing the target state must remove the outline")
+
+
 func test_binding_loops_idle_without_changing_transient_animation_loop_modes() -> void:
 	var fixture := _bound_animated_drone(_world(), _enemy())
 	var player: AnimationPlayer = fixture.presentation.animation_player

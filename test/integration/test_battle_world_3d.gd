@@ -39,10 +39,16 @@ func test_camera_environment_uses_readable_industrial_ambient_light() -> void:
 	assert_not_null(environment)
 	assert_eq(environment.background_mode, Environment.BG_COLOR)
 	assert_eq(environment.ambient_light_source, Environment.AMBIENT_SOURCE_COLOR)
-	assert_eq(environment.background_color, Color(0.06, 0.085, 0.13, 1.0))
-	assert_eq(environment.ambient_light_color, Color(0.22, 0.28, 0.40, 1.0))
-	assert_almost_eq(environment.ambient_light_energy, 0.45, 0.001)
-	assert_almost_eq(environment.tonemap_exposure, 1.0, 0.001)
+	assert_eq(environment.background_color, Color(0.08, 0.1, 0.15, 1.0))
+	assert_eq(environment.ambient_light_color, Color(0.56, 0.62, 0.74, 1.0))
+	assert_almost_eq(environment.ambient_light_energy, 0.8, 0.001)
+	assert_almost_eq(environment.tonemap_exposure, 1.05, 0.001)
+	assert_true(environment.glow_enabled, "emissive practicals bloom like the kit reference")
+	assert_gte(
+		environment.glow_hdr_threshold,
+		1.1,
+		"glow must stay above the LDR range so the 2D battle UI never blooms",
+	)
 
 
 func test_room_uses_mobile_lighting_hierarchy() -> void:
@@ -52,39 +58,50 @@ func test_room_uses_mobile_lighting_hierarchy() -> void:
 	var fill := room.get_node("RoomFillLight") as OmniLight3D
 	var accent := room.get_node_or_null("RoomAccentLight") as OmniLight3D
 	var bounce := room.get_node("RoomBounceLight") as DirectionalLight3D
-	var front := room.get_node_or_null("RoomFrontLight") as DirectionalLight3D
+	var front_fill := room.get_node_or_null("RoomFrontFill") as OmniLight3D
 	assert_not_null(key)
 	assert_not_null(fill)
 	assert_not_null(accent)
 	assert_not_null(bounce)
-	assert_null(front)
-	if accent == null:
+	assert_not_null(front_fill)
+	if accent == null or front_fill == null:
 		return
 	assert_almost_eq(key.rotation_degrees.x, -52.0, 0.001)
-	assert_almost_eq(key.rotation_degrees.y, -34.0, 0.001)
+	assert_almost_eq(key.rotation_degrees.y, -30.0, 0.001)
 	assert_almost_eq(key.rotation_degrees.z, 0.0, 0.001)
-	assert_eq(key.light_color, Color(0.76, 0.86, 1.0, 1.0))
-	assert_almost_eq(key.light_energy, 1.35, 0.001)
+	assert_eq(key.light_color, Color(0.95, 0.97, 1.0, 1.0))
+	assert_almost_eq(key.light_energy, 1.1, 0.001)
 	assert_true(key.shadow_enabled)
-	assert_eq(fill.position, Vector3(-2.5, 2.6, 5.0))
-	assert_eq(fill.light_color, Color(0.34, 0.52, 0.85, 1.0))
-	assert_almost_eq(fill.light_energy, 1.25, 0.001)
-	assert_almost_eq(fill.omni_range, 9.0, 0.001)
+	assert_eq(fill.position, Vector3(-2.5, 3.2, 4.5))
+	assert_eq(fill.light_color, Color(0.45, 0.62, 0.95, 1.0))
+	assert_almost_eq(fill.light_energy, 1.6, 0.001)
+	assert_almost_eq(fill.omni_range, 14.0, 0.001)
 	assert_false(fill.shadow_enabled)
+	assert_eq(front_fill.position, Vector3(0.0, 2.4, 8.4))
+	assert_almost_eq(front_fill.light_energy, 0.9, 0.001)
+	assert_false(front_fill.shadow_enabled)
 	assert_eq(accent.position, Vector3(0.0, 3.6, -5.5))
 	assert_eq(accent.light_color, Color(0.92, 0.28, 0.18, 1.0))
-	assert_almost_eq(accent.light_energy, 1.10, 0.001)
-	assert_almost_eq(accent.omni_range, 7.0, 0.001)
+	assert_almost_eq(accent.light_energy, 1.30, 0.001)
+	assert_almost_eq(accent.omni_range, 8.0, 0.001)
 	assert_false(accent.shadow_enabled)
-	assert_almost_eq(bounce.light_energy, 0.20, 0.001)
+	assert_almost_eq(bounce.light_energy, 0.30, 0.001)
 	assert_almost_eq(bounce.light_specular, 0.0, 0.001)
 	assert_false(bounce.shadow_enabled)
-	var room_lights: Array[Light3D] = [key, fill, accent, bounce]
+	var room_lights: Array[Light3D] = [key, fill, front_fill, accent, bounce]
 	var shadow_light_count := 0
 	for light: Light3D in room_lights:
 		if light.shadow_enabled:
 			shadow_light_count += 1
 	assert_eq(shadow_light_count, 1)
+	# The shoebox ceiling pieces must not shadow the interior, or the single
+	# shadowed key cannot define the pillars and floor of the closed room.
+	var canopy := room.get_node("RoomShell/EntryCanopy") as MeshInstance3D
+	var ceiling := room.get_node("RoomShell/CeilingBacker") as MeshInstance3D
+	var bay_ceiling := room.get_node("RoomShell/BayNear/CeilingPanel") as MeshInstance3D
+	assert_eq(canopy.cast_shadow, GeometryInstance3D.SHADOW_CASTING_SETTING_OFF)
+	assert_eq(ceiling.cast_shadow, GeometryInstance3D.SHADOW_CASTING_SETTING_OFF)
+	assert_eq(bay_ceiling.cast_shadow, GeometryInstance3D.SHADOW_CASTING_SETTING_OFF)
 
 
 func test_room_dark_materials_retain_a_diffuse_readability_response() -> void:

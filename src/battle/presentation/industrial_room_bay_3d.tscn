@@ -8,9 +8,9 @@ metallic = 0.18
 roughness = 0.75
 
 [sub_resource type="StandardMaterial3D" id="Material_trim"]
-albedo_color = Color(0.18, 0.205, 0.24, 1)
-metallic = 0.85
-roughness = 0.32
+albedo_color = Color(0.26, 0.29, 0.35, 1)
+metallic = 0.45
+roughness = 0.5
 
 [sub_resource type="StandardMaterial3D" id="Material_ceiling"]
 albedo_color = Color(0.16, 0.22, 0.34, 1)
@@ -110,6 +110,7 @@ mesh = SubResource("Mesh_support")
 
 [node name="CeilingPanel" type="MeshInstance3D" parent="."]
 position = Vector3(0, 5.2, 0)
+cast_shadow = 0
 mesh = SubResource("Mesh_ceiling")
 
 [node name="CeilingBeam" type="Node3D" parent="." node_paths=PackedStringArray("model_parent", "placeholder")]
